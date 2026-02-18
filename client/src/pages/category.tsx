@@ -119,7 +119,7 @@ export default function CategoryPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.05 * i }}
             >
-              <Link href={`/siparis?kategori=${animalSlug}&alt=${sub.slug}`}>
+              <Link href={sub.slug === "mama-markalari" ? `/kategori/${animalSlug}/${sub.slug}` : `/siparis?kategori=${animalSlug}&alt=${sub.slug}`}>
                 <div
                   className="rounded-xl p-5 cursor-pointer flex items-center justify-center min-h-[90px]"
                   style={{ backgroundColor: sub.color }}
