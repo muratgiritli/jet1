@@ -2,7 +2,6 @@ import { Link, useRoute } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 
 import royalCaninLogo from "@/assets/images/brands/royal-canin.png";
 import proPlanLogo from "@/assets/images/brands/pro-plan.png";
@@ -11,6 +10,12 @@ import britLogo from "@/assets/images/brands/brit.png";
 import prochoiceLogo from "@/assets/images/brands/prochoice.png";
 import reflexLogo from "@/assets/images/brands/reflex.png";
 import reflexPlusLogo from "@/assets/images/brands/reflex-plus.png";
+import acanaLogo from "@/assets/images/brands/acana.png";
+import orijenLogo from "@/assets/images/brands/orijen.png";
+import gimdogLogo from "@/assets/images/brands/gimdog.png";
+import pedigreeLogo from "@/assets/images/brands/pedigree.png";
+import goodyLogo from "@/assets/images/brands/goody.png";
+import bonusLogo from "@/assets/images/brands/bonus.png";
 
 interface Brand {
   name: string;
@@ -37,6 +42,12 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
         { name: "ProChoice", slug: "prochoice", logo: prochoiceLogo },
         { name: "Reflex", slug: "reflex", logo: reflexLogo },
         { name: "Reflex Plus", slug: "reflex-plus", logo: reflexPlusLogo },
+        { name: "Acana", slug: "acana", logo: acanaLogo },
+        { name: "Orijen", slug: "orijen", logo: orijenLogo },
+        { name: "GimDog", slug: "gimdog", logo: gimdogLogo },
+        { name: "Pedigree", slug: "pedigree", logo: pedigreeLogo },
+        { name: "Goody", slug: "goody", logo: goodyLogo },
+        { name: "Bonus", slug: "bonus", logo: bonusLogo },
       ],
     },
   },
@@ -52,6 +63,10 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
         { name: "ProChoice", slug: "prochoice", logo: prochoiceLogo },
         { name: "Reflex", slug: "reflex", logo: reflexLogo },
         { name: "Reflex Plus", slug: "reflex-plus", logo: reflexPlusLogo },
+        { name: "Acana", slug: "acana", logo: acanaLogo },
+        { name: "Orijen", slug: "orijen", logo: orijenLogo },
+        { name: "Goody", slug: "goody", logo: goodyLogo },
+        { name: "Bonus", slug: "bonus", logo: bonusLogo },
       ],
     },
   },
@@ -66,7 +81,7 @@ export default function BrandsPage() {
 
   if (!brandData) {
     return (
-      <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f0f2f5" }}>
+      <div className="min-h-screen flex flex-col bg-white">
         <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
             <Link href={`/kategori/${animalSlug}`}>
@@ -88,7 +103,7 @@ export default function BrandsPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f0f2f5" }}>
+    <div className="min-h-screen flex flex-col bg-white">
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <Link href={`/kategori/${animalSlug}`}>
@@ -123,11 +138,14 @@ export default function BrandsPage() {
               className="w-full max-w-[280px]"
             >
               <Link href={`/siparis?kategori=${animalSlug}&alt=${subSlug}&marka=${brand.slug}`}>
-                <Card
-                  className="cursor-pointer hover-elevate overflow-visible"
+                <div
+                  className="rounded-md border-2 cursor-pointer overflow-hidden transition-colors duration-200"
+                  style={{ borderColor: "#64B5F6" }}
+                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#EF4444"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#64B5F6"; }}
                   data-testid={`card-brand-${brand.slug}`}
                 >
-                  <div className="flex items-center justify-center overflow-hidden rounded-md">
+                  <div className="flex items-center justify-center bg-white">
                     <img
                       src={brand.logo}
                       alt={brand.name}
@@ -136,7 +154,7 @@ export default function BrandsPage() {
                     />
                     <span className="sr-only" data-testid={`text-brand-name-${brand.slug}`}>{brand.name}</span>
                   </div>
-                </Card>
+                </div>
               </Link>
             </motion.div>
           ))}
