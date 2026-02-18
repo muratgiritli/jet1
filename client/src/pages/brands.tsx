@@ -113,24 +113,25 @@ export default function BrandsPage() {
           </p>
         </div>
 
-        <div className="flex flex-col gap-3" data-testid="list-brands">
+        <div className="flex flex-col gap-2.5 items-center" data-testid="list-brands">
           {brandData.brands.map((brand, i) => (
             <motion.div
               key={brand.slug}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25, delay: 0.05 * i }}
+              className="w-full max-w-[280px]"
             >
               <Link href={`/siparis?kategori=${animalSlug}&alt=${subSlug}&marka=${brand.slug}`}>
                 <Card
                   className="cursor-pointer hover-elevate overflow-visible"
                   data-testid={`card-brand-${brand.slug}`}
                 >
-                  <div className="flex items-center justify-center p-0">
+                  <div className="flex items-center justify-center px-4 py-2.5">
                     <img
                       src={brand.logo}
                       alt={brand.name}
-                      className="w-full h-full object-cover rounded-md"
+                      className="h-8 max-w-[200px] object-contain"
                       data-testid={`img-brand-${brand.slug}`}
                     />
                     <span className="sr-only" data-testid={`text-brand-name-${brand.slug}`}>{brand.name}</span>
