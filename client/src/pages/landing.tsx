@@ -34,13 +34,11 @@ export default function Landing() {
           <ul className="flex items-center justify-center gap-0 py-1.5 flex-wrap" data-testid="nav-categories">
             {NAV_ITEMS.map((item) => (
               <li key={item}>
-                <Link href="/siparis">
-                  <button
-                    className="px-4 py-1 text-sm font-medium text-white/90 hover:text-white transition-colors"
-                    data-testid={`nav-link-${item}`}
-                  >
-                    {item}
-                  </button>
+                <Link href="/siparis"
+                  className="px-4 py-1 text-sm font-medium text-white/90"
+                  data-testid={`nav-link-${item}`}
+                >
+                  {item}
                 </Link>
               </li>
             ))}
@@ -143,7 +141,7 @@ export default function Landing() {
           Tüm Petshop Ürünleri
         </p>
         <Link href="/siparis">
-          <p className="text-white/80 text-sm mt-0.5 cursor-pointer hover:text-white transition-colors" data-testid="text-footer-cta">
+          <p className="text-white/80 text-sm mt-0.5 cursor-pointer" data-testid="text-footer-cta">
             Sipariş Ver - Hemen Kapına Gelsin
           </p>
         </Link>
