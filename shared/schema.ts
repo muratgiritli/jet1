@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, real, serial } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, real, serial, boolean } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -37,6 +37,7 @@ export const products = pgTable("products", {
   skt: text("skt"),
   img: text("img"),
   brandCategoryId: integer("brand_category_id").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });

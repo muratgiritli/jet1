@@ -27,6 +27,8 @@ import {
   Package,
   Loader2,
   Lock,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product, BrandCategory } from "@shared/schema";
@@ -246,7 +248,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   });
 
   const { data: allProducts = [], isLoading } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
+    queryKey: ["/api/products", "all"],
+    queryFn: async () => {
+      const res = await fetch("/api/products?all=true", { credentials: "include" });
+      return res.json();
+    },
   });
 
   const filteredProducts =
@@ -293,6 +299,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/brand-categories"] });
       setCategoryDialogOpen(false);
+    },
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/products/${id}`, { isActive });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/brand-products"] });
     },
   });
 
@@ -492,6 +508,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           <Badge variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate">
                             {getCategoryName(product.brandCategoryId)}
                           </Badge>
+                          {product.isActive ? (
+                            <Badge className="text-[10px] no-default-hover-elevate no-default-active-elevate" style={{ backgroundColor: "#2ecc40", color: "#fff" }}>
+                              Aktif
+                            </Badge>
+                          ) : (
+                            <Badge className="text-[10px] no-default-hover-elevate no-default-active-elevate" style={{ backgroundColor: "#ff9800", color: "#fff" }}>
+                              Yakında Gelecek
+                            </Badge>
+                          )}
                           {product.skt && (
                             <span className="text-[10px] text-muted-foreground">
                               SKT: {product.skt}
@@ -500,6 +525,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => toggleActiveMutation.mutate({ id: product.id, isActive: !product.isActive })}
+                          title={product.isActive ? "Yakında Gelecek olarak işaretle" : "Aktif et"}
+                          data-testid={`btn-toggle-active-${product.id}`}
+                        >
+                          {product.isActive ? <Eye className="w-4 h-4" /> : <EyeOff className="w-4 h-4" />}
+                        </Button>
                         <Button
                           variant="outline"
                           size="icon"

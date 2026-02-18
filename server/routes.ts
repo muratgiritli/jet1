@@ -56,7 +56,8 @@ export async function registerRoutes(
     const category = await storage.getBrandCategory(id);
     if (!category) return res.status(404).json({ message: "Category not found" });
     const prods = await storage.getProductsByBrandCategory(id);
-    res.json({ category, products: prods });
+    const activeOnly = req.query.all !== "true";
+    res.json({ category, products: activeOnly ? prods.filter(p => p.isActive) : prods });
   });
 
   app.get("/api/brand-products/:animal/:subcategory/:brandSlug", async (req, res) => {
@@ -64,12 +65,13 @@ export async function registerRoutes(
     const category = await storage.getBrandCategoryBySlug(animal, subcategory, brandSlug);
     if (!category) return res.status(404).json({ message: "Brand category not found" });
     const prods = await storage.getProductsByBrandCategory(category.id);
-    res.json({ category, products: prods });
+    res.json({ category, products: prods.filter(p => p.isActive) });
   });
 
-  app.get("/api/products", async (_req, res) => {
+  app.get("/api/products", async (req, res) => {
     const allProducts = await storage.getAllProducts();
-    res.json(allProducts);
+    const activeOnly = req.query.all !== "true";
+    res.json(activeOnly ? allProducts.filter(p => p.isActive) : allProducts);
   });
 
   app.post("/api/admin/login", async (req, res) => {
