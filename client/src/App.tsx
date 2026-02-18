@@ -10,6 +10,7 @@ import Checkout from "@/pages/checkout";
 import CategoryPage from "@/pages/category";
 import BrandsPage from "@/pages/brands";
 import BrandProductsPage from "@/pages/brand-products";
+import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -21,6 +22,7 @@ function Router() {
       <Route path="/kategori/:animal" component={CategoryPage} />
       <Route path="/siparis" component={Home} />
       <Route path="/odeme" component={Checkout} />
+      <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
   );

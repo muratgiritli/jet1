@@ -1,10 +1,21 @@
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   CONFIG,
   PAYMENT_OPTIONS,
-  getAllProducts,
-  type Product,
+  MAIN_PRODUCTS,
+  CATEGORIES,
 } from "@/lib/data";
+import type { Product as DbProduct } from "@shared/schema";
+
+interface CartProduct {
+  id: string;
+  name: string;
+  price: number;
+  img?: string | null;
+  skt?: string | null;
+  originalPrice?: number | null;
+}
 
 type BasketItems = Record<string, number>;
 
@@ -14,7 +25,7 @@ interface CartContextType {
   setPaymentId: (id: string) => void;
   updateQty: (id: string, delta: number) => void;
   subtotal: number;
-  selectedProducts: { product: Product; qty: number }[];
+  selectedProducts: { product: CartProduct; qty: number }[];
   shipping: number;
   discount: number;
   grandTotal: number;
@@ -36,6 +47,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [basket, setBasket] = useState<BasketItems>({});
   const [paymentId, setPaymentId] = useState("nakit");
 
+  const { data: dbProducts = [] } = useQuery<DbProduct[]>({
+    queryKey: ["/api/products"],
+  });
+
+  const allProducts: CartProduct[] = useMemo(() => {
+    const staticProducts: CartProduct[] = [
+      ...MAIN_PRODUCTS,
+      ...CATEGORIES.flatMap((c) => c.items),
+    ];
+    const apiProducts: CartProduct[] = dbProducts.map((p) => ({
+      id: String(p.id),
+      name: p.name,
+      price: p.price,
+      img: p.img,
+      skt: p.skt,
+      originalPrice: p.originalPrice,
+    }));
+    return [...staticProducts, ...apiProducts];
+  }, [dbProducts]);
+
   const updateQty = useCallback((id: string, delta: number) => {
     setBasket((prev) => {
       const next = (prev[id] || 0) + delta;
@@ -48,13 +79,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const allProducts = useMemo(() => getAllProducts(), []);
-
   const { subtotal, selectedProducts, shipping, discount, grandTotal, minReached } = useMemo(() => {
     let sub = 0;
-    const selected: { product: Product; qty: number }[] = [];
+    const selected: { product: CartProduct; qty: number }[] = [];
     allProducts.forEach((p) => {
-      const qty = basket[p.id] || 0;
+      const key = p.id;
+      const qty = basket[key] || 0;
       if (qty > 0) {
         sub += qty * p.price;
         selected.push({ product: p, qty });

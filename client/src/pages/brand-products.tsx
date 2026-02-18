@@ -3,8 +3,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRoute } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft } from "lucide-react";
-import { getBrandProducts, type Product } from "@/lib/data";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import FloatingCartBar from "@/components/FloatingCartBar";
 
@@ -58,27 +59,28 @@ function BrandProductCard({
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
+  const pid = String(product.id);
 
   return (
     <Card
       className={`overflow-visible transition-all duration-200 ${isActive ? "ring-2 ring-primary ring-offset-1" : ""}`}
-      data-testid={`card-product-${product.id}`}
+      data-testid={`card-product-${pid}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
         {product.img && (
-          <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative" data-testid={`img-container-${product.id}`}>
+          <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative" data-testid={`img-container-${pid}`}>
             <img
               src={product.img}
               alt={product.name}
               className="w-full h-full object-contain"
               loading="lazy"
-              data-testid={`img-product-${product.id}`}
+              data-testid={`img-product-${pid}`}
             />
             {product.skt && (
               <Badge
                 variant="secondary"
                 className="absolute top-1 left-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
-                data-testid={`badge-skt-${product.id}`}
+                data-testid={`badge-skt-${pid}`}
               >
                 SKT: {product.skt}
               </Badge>
@@ -87,28 +89,28 @@ function BrandProductCard({
               <Badge
                 className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
                 style={{ backgroundColor: "#e53935", color: "#fff" }}
-                data-testid={`badge-discount-${product.id}`}
+                data-testid={`badge-discount-${pid}`}
               >
                 %{discount}
               </Badge>
             )}
           </div>
         )}
-        <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${product.id}`}>
+        <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${pid}`}>
           {product.name}
         </p>
         <div className="flex flex-col items-center gap-0.5">
           {product.originalPrice && product.originalPrice > product.price && (
-            <span className="text-[11px] text-muted-foreground line-through" data-testid={`text-original-price-${product.id}`}>
+            <span className="text-[11px] text-muted-foreground line-through" data-testid={`text-original-price-${pid}`}>
               {product.originalPrice.toLocaleString("tr-TR")} TL
             </span>
           )}
-          <span className="text-sm font-bold text-foreground" data-testid={`text-price-${product.id}`}>
+          <span className="text-sm font-bold text-foreground" data-testid={`text-price-${pid}`}>
             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
         </div>
         <QuantityControl
-          productId={product.id}
+          productId={pid}
           quantity={quantity}
           onUpdate={onUpdate}
         />
@@ -125,9 +127,35 @@ export default function BrandProductsPage() {
 
   const { basket, updateQty, grandTotal, itemCount } = useCart();
 
-  const brandData = getBrandProducts(animal, subcategory, brandSlug);
+  const { data, isLoading } = useQuery<{ category: BrandCategory; products: Product[] }>({
+    queryKey: ["/api/brand-products", animal, subcategory, brandSlug],
+    enabled: !!(animal && subcategory && brandSlug),
+  });
 
-  if (!brandData) {
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex flex-col bg-white">
+        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
+          <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
+            <Link href={`/kategori/${animal}/${subcategory}`}>
+              <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
+                <ArrowLeft />
+              </Button>
+            </Link>
+            <h1 className="text-xl font-extrabold tracking-tight" data-testid="text-brand-logo">
+              <span style={{ color: "#ffffff" }}>JET</span>
+              <span style={{ color: "#1a7a1a" }}>GO</span>
+            </h1>
+          </div>
+        </header>
+        <div className="flex-1 flex items-center justify-center">
+          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!data) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
         <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
@@ -180,15 +208,15 @@ export default function BrandProductsPage() {
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6 pb-28">
         <div className="text-center mb-6">
           <h2 className="text-xl font-extrabold" data-testid="text-brand-title">
-            {brandData.brandName}
+            {data.category.brandName}
           </h2>
           <p className="text-sm text-muted-foreground mt-1" data-testid="text-product-count">
-            {brandData.products.length} ürün
+            {data.products.length} ürün
           </p>
         </div>
 
         <div className="grid grid-cols-2 gap-3" data-testid="grid-products">
-          {brandData.products.map((product, i) => (
+          {data.products.map((product, i) => (
             <motion.div
               key={product.id}
               initial={{ opacity: 0, y: 10 }}
@@ -197,7 +225,7 @@ export default function BrandProductsPage() {
             >
               <BrandProductCard
                 product={product}
-                quantity={basket[product.id] || 0}
+                quantity={basket[String(product.id)] || 0}
                 onUpdate={updateQty}
               />
             </motion.div>

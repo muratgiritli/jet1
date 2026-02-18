@@ -136,7 +136,7 @@ export default function Checkout() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => updateQty(product.id, -1)}
+                              onClick={() => updateQty(String(product.id), -1)}
                               data-testid={`btn-checkout-minus-${product.id}`}
                             >
                               {qty === 1 ? <Trash2 /> : <Minus />}
@@ -147,7 +147,7 @@ export default function Checkout() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => updateQty(product.id, 1)}
+                              onClick={() => updateQty(String(product.id), 1)}
                               data-testid={`btn-checkout-plus-${product.id}`}
                             >
                               <Plus />
