@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
 import Landing from "@/pages/landing";
 import Home from "@/pages/home";
+import Checkout from "@/pages/checkout";
 import CategoryPage from "@/pages/category";
 import BrandsPage from "@/pages/brands";
 import NotFound from "@/pages/not-found";
@@ -17,6 +18,7 @@ function Router() {
       <Route path="/kategori/:animal/:subcategory" component={BrandsPage} />
       <Route path="/kategori/:animal" component={CategoryPage} />
       <Route path="/siparis" component={Home} />
+      <Route path="/odeme" component={Checkout} />
       <Route component={NotFound} />
     </Switch>
   );

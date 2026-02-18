@@ -26,7 +26,7 @@ export default function FloatingCartBar() {
                 </span>
               </div>
             </div>
-            <Link href="/siparis">
+            <Link href="/odeme">
               <Button variant="default" data-testid="btn-float-go-cart">
                 <ShoppingCart className="w-4 h-4" />
                 Sepete Git

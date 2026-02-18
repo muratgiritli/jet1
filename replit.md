@@ -11,24 +11,31 @@ Pet shop quick ordering application converted from static HTML to modern React/T
 ## Key Files
 - `client/src/pages/landing.tsx` - Landing/home page with category cards, banners, footer
 - `client/src/pages/category.tsx` - Animal category pages (Köpek, Kedi, Kuş, Kemirgen) with subcategory grids
-- `client/src/pages/home.tsx` - Ordering page with product catalog and cart
+- `client/src/pages/home.tsx` - Product browsing page with catalog
+- `client/src/pages/checkout.tsx` - Cart/checkout page with payment options and WhatsApp order
+- `client/src/contexts/CartContext.tsx` - Global cart state provider
+- `client/src/components/FloatingCartBar.tsx` - Floating cart indicator shown on all pages
 - `client/src/lib/data.ts` - Product data, categories, payment options, config
 - `client/src/App.tsx` - Root component with routing
 
 ## Routes
 - `/` - Landing page (vitrin)
 - `/kategori/:animal` - Animal category page (kopek, kedi, kus, kemirgen)
-- `/siparis` - Ordering page with products and cart
+- `/siparis` - Product browsing page with catalog
+- `/odeme` - Cart/checkout page with payment, summary, WhatsApp order
 
 ## Features
 - Landing page with JETGO branding, promotional banners, 2x2 animal category grid
 - Animal category pages with colorful subcategory grids (e.g., Mama Markaları, Yaş Mama, Bakım)
 - Product browsing with categorized tabs (Kedi Kumu, Ödüller, Malt, Yaş Mama, Aksesuar)
 - Quantity controls for each product
+- Global cart system - single cart persists across all pages via CartContext
+- Separate checkout page with payment options, progress bars, order summary
 - Payment method selection with radio buttons (Nakit %10 indirim, EFT, QR, Kredi Kartı)
 - Progress bars for minimum order (500 TL) and free shipping (1000 TL)
-- Order summary with WhatsApp integration
-- Sticky bottom bar showing cart total
+- WhatsApp order submission from checkout page
+- Floating cart bar on all pages showing item count and total
+- Sticky bottom bar on product page linking to checkout
 - Mobile-first responsive design
 
 ## Config
