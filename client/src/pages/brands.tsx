@@ -58,7 +58,7 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
       title: "Kedi Maması",
       subtitle: "Buradan markanızı seçebilirsiniz.",
       brands: [
-        { name: "Proplan", slug: "proplan", color: "#1565C0" },
+        { name: "Pro Plan", slug: "pro-plan", color: "#1565C0" },
         { name: "Royal Canin", slug: "royal-canin", color: "#C62828" },
         { name: "Hills", slug: "hills", color: "#2E7D32" },
         { name: "Lavital", slug: "lavital", color: "#8BC34A" },
