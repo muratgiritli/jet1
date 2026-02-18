@@ -1,5 +1,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import FloatingCartBar from "@/components/FloatingCartBar";
 
 import bannerScooter from "@/assets/images/banner-scooter.png";
 import bannerCity from "@/assets/images/banner-city.png";
@@ -151,6 +152,7 @@ export default function Landing() {
           </p>
         </Link>
       </div>
+      <FloatingCartBar />
     </div>
   );
 }

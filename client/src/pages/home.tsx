@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useMemo } from "react";
+import { useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -26,11 +26,9 @@ import {
   MAIN_PRODUCTS,
   CATEGORIES,
   PAYMENT_OPTIONS,
-  getAllProducts,
   type Product,
 } from "@/lib/data";
-
-type BasketItems = Record<string, number>;
+import { useCart } from "@/contexts/CartContext";
 
 function QuantityControl({
   productId,
@@ -146,55 +144,22 @@ const paymentIcons: Record<string, typeof CreditCard> = {
 };
 
 export default function Home() {
-  const [basket, setBasket] = useState<BasketItems>({});
-  const [paymentId, setPaymentId] = useState("nakit");
+  const {
+    basket,
+    paymentId,
+    setPaymentId,
+    updateQty,
+    subtotal,
+    selectedProducts,
+    shipping,
+    discount,
+    grandTotal,
+    minReached,
+    itemCount,
+    minPerc,
+    shipPerc,
+  } = useCart();
   const summaryRef = useRef<HTMLDivElement>(null);
-
-  const updateQty = useCallback((id: string, delta: number) => {
-    setBasket((prev) => {
-      const next = (prev[id] || 0) + delta;
-      if (next <= 0) {
-        const copy = { ...prev };
-        delete copy[id];
-        return copy;
-      }
-      return { ...prev, [id]: next };
-    });
-  }, []);
-
-  const allProducts = useMemo(() => getAllProducts(), []);
-
-  const { subtotal, selectedProducts, shipping, discount, grandTotal, minReached } = useMemo(() => {
-    let sub = 0;
-    const selected: { product: Product; qty: number }[] = [];
-    allProducts.forEach((p) => {
-      const qty = basket[p.id] || 0;
-      if (qty > 0) {
-        sub += qty * p.price;
-        selected.push({ product: p, qty });
-      }
-    });
-
-    const pay = PAYMENT_OPTIONS.find((p) => p.id === paymentId)!;
-    const disc = sub * pay.disc;
-    const afterDisc = sub - disc;
-    const ship = afterDisc >= CONFIG.shipLimit ? 0 : CONFIG.shipFee;
-    const total = afterDisc + ship;
-    const min = sub >= CONFIG.minLimit;
-
-    return {
-      subtotal: sub,
-      selectedProducts: selected,
-      shipping: ship,
-      discount: disc,
-      grandTotal: total,
-      minReached: min,
-    };
-  }, [basket, paymentId, allProducts]);
-
-  const minPerc = Math.min((subtotal / CONFIG.minLimit) * 100, 100);
-  const shipPerc = Math.min((subtotal / CONFIG.shipLimit) * 100, 100);
-  const itemCount = Object.values(basket).reduce((a, b) => a + b, 0);
 
   const handleOrder = () => {
     if (!minReached || selectedProducts.length === 0) return;

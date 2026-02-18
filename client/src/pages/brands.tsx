@@ -2,6 +2,7 @@ import { Link, useRoute } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import FloatingCartBar from "@/components/FloatingCartBar";
 
 import royalCaninLogo from "@/assets/images/brands/royal-canin.png";
 import proPlanLogo from "@/assets/images/brands/pro-plan.png";
@@ -169,6 +170,7 @@ export default function BrandsPage() {
           Havale / Kapıda nakit / Kapıda kredi kartı / QR ödeme
         </p>
       </footer>
+      <FloatingCartBar />
     </div>
   );
 }

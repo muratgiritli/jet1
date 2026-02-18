@@ -2,6 +2,7 @@ import { Link, useRoute } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import FloatingCartBar from "@/components/FloatingCartBar";
 
 interface SubCategory {
   name: string;
@@ -143,6 +144,7 @@ export default function CategoryPage() {
           Havale / Kapıda nakit / Kapıda kredi kartı / QR ödeme
         </p>
       </footer>
+      <FloatingCartBar />
     </div>
   );
 }
