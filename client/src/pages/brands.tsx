@@ -194,7 +194,7 @@ export default function BrandsPage() {
               transition={{ duration: 0.25, delay: 0.05 * i }}
               className="w-full max-w-[280px]"
             >
-              <Link href={`/siparis?kategori=${animalSlug}&alt=${subSlug}&marka=${brand.slug}`}>
+              <Link href={`/siparis/${animalSlug}/${subSlug}/${brand.slug}`}>
                 {brand.logo ? (
                   <div
                     className="rounded-md border overflow-visible hover-elevate active-elevate-2"

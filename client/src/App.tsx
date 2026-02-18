@@ -9,12 +9,14 @@ import Home from "@/pages/home";
 import Checkout from "@/pages/checkout";
 import CategoryPage from "@/pages/category";
 import BrandsPage from "@/pages/brands";
+import BrandProductsPage from "@/pages/brand-products";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Landing} />
+      <Route path="/siparis/:animal/:subcategory/:brand" component={BrandProductsPage} />
       <Route path="/kategori/:animal/:subcategory" component={BrandsPage} />
       <Route path="/kategori/:animal" component={CategoryPage} />
       <Route path="/siparis" component={Home} />
