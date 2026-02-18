@@ -277,6 +277,11 @@ export const BRAND_PRODUCTS: BrandProductCategory[] = [
       { id: "hl21", name: "Hill's Science Plan Yetişkin Ton Balıklı Kedi Maması 1,5 kg", price: 914.06, originalPrice: 1345, skt: "04.2027", img: "https://www.mamatoptancisi.com/hills-science-plan-yetiskin-ton-balikli-kedi-mamasi-1-1067149-53-O.jpg" },
       { id: "hl22", name: "Hill's Science Plan Kısırlaştırılmış Tavuklu Yavru Kedi Maması 3 kg", price: 1730.65, originalPrice: 2555, skt: "10.2026", img: "https://www.mamatoptancisi.com/hills-science-plan-kisirlastirilmis-tavuklu-yavru-kedi-mamasi-3-kg-1063369-59-O.jpg" },
       { id: "hl23", name: "Hill's Science Plan Üriner Sağlık +1 Yetişkin Tavuklu Kedi Maması 1,5 kg", price: 1087.45, originalPrice: 1615, skt: "01.2027", img: "https://www.mamatoptancisi.com/hills-science-plan-uriner-saglik-1-yetiskin-tavuklu-kedi-mamasi-1-1067159-53-O.jpg" },
+      { id: "hl24", name: "Hill's Science Plan Tavuklu Yavru Kedi Maması 5 Kg (+2 kg Hediyeli)", price: 2851.57, originalPrice: 3630, skt: "12.2026", img: "https://www.mamatoptancisi.com/hills-science-plan-tavuklu-yavru-kedi-mamasi-52-kg-1043579-26-O.jpg" },
+      { id: "hl25", name: "Hill's Science Plan Yetişkin Kuzulu Kedi Maması 1,5 kg", price: 904.23, originalPrice: 1330, skt: "02.2027", img: "https://www.mamatoptancisi.com/hills-science-plan-yetiskin-kuzulu-kedi-mamasi-1-1037656-22-O.jpg" },
+      { id: "hl26", name: "Hill's Science Plan Yetişkin Kuzulu Kedi Maması 3 kg", price: 1517.03, originalPrice: 2235, skt: "02.2027", img: "https://www.mamatoptancisi.com/hills-science-plan-yetiskin-kuzulu-kedi-mamasi-3-kg-1064343-21-O.jpg" },
+      { id: "hl27", name: "Hill's Science Plan Tavuklu Yetişkin Kedi Maması 8 kg + 2 kg", price: 3837.28, originalPrice: 4915, skt: "05.2027", img: "https://www.mamatoptancisi.com/hills-science-plan-yetiskin-tavuklu-kedi-mamasi-82-kg-1059587-18-O.jpg" },
+      { id: "hl28", name: "Hill's Science Plan Tüy Yumağı Önleyici Mükemmel Tüyler İçin Tavuklu Kedi Maması 1,5 kg", price: 1073.25, originalPrice: 1580, skt: "10.2026", img: "https://www.mamatoptancisi.com/hills-hairball-perfect-coat-tavuklu-kedi-mamasi-1-1037598-20-O.jpg" },
     ],
   },
 ];
