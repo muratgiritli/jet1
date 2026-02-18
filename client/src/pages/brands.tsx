@@ -21,7 +21,8 @@ import bonusLogo from "@/assets/images/brands/bonus.png";
 interface Brand {
   name: string;
   slug: string;
-  logo: string;
+  logo?: string;
+  color?: string;
 }
 
 interface SubcategoryBrands {
@@ -53,21 +54,76 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
     },
   },
   kedi: {
-    "mama-markalari": {
-      title: "Kedi Mama Markaları",
+    "kedi-mamasi": {
+      title: "Kedi Maması",
       subtitle: "Buradan markanızı seçebilirsiniz.",
       brands: [
+        { name: "Proplan", slug: "proplan", logo: proPlanLogo },
         { name: "Royal Canin", slug: "royal-canin", logo: royalCaninLogo },
-        { name: "Pro Plan", slug: "pro-plan", logo: proPlanLogo },
         { name: "Hills", slug: "hills", logo: hillsLogo },
-        { name: "Brit", slug: "brit", logo: britLogo },
-        { name: "ProChoice", slug: "prochoice", logo: prochoiceLogo },
+        { name: "Lavital", slug: "lavital", color: "#8BC34A" },
+        { name: "Prochoice", slug: "prochoice", logo: prochoiceLogo },
+        { name: "Properformance", slug: "properformance", color: "#FF5722" },
+        { name: "Enjoy", slug: "enjoy", color: "#E91E63" },
         { name: "Reflex", slug: "reflex", logo: reflexLogo },
-        { name: "Reflex Plus", slug: "reflex-plus", logo: reflexPlusLogo },
-        { name: "Acana", slug: "acana", logo: acanaLogo },
-        { name: "Orijen", slug: "orijen", logo: orijenLogo },
-        { name: "Goody", slug: "goody", logo: goodyLogo },
-        { name: "Bonus", slug: "bonus", logo: bonusLogo },
+        { name: "Pronature", slug: "pronature", color: "#4CAF50" },
+        { name: "Brit Care", slug: "brit-care", logo: britLogo },
+        { name: "Felicia", slug: "felicia", color: "#9C27B0" },
+        { name: "Friskies", slug: "friskies", color: "#FF9800" },
+        { name: "N&D", slug: "nd", color: "#3F51B5" },
+        { name: "Uygun Çuval Mamalar", slug: "uygun-cuval", color: "#607D8B" },
+      ],
+    },
+    "kedi-kumu": {
+      title: "Kedi Kumu",
+      subtitle: "Buradan markanızı seçebilirsiniz.",
+      brands: [
+        { name: "Proline", slug: "proline", color: "#2196F3" },
+        { name: "Vancat", slug: "vancat", color: "#00BCD4" },
+        { name: "Biokats", slug: "biokats", color: "#795548" },
+        { name: "Sanicat", slug: "sanicat", color: "#FF9800" },
+        { name: "Diğer Markalar", slug: "diger", color: "#607D8B" },
+      ],
+    },
+    "kedi-malti": {
+      title: "Kedi Maltı",
+      subtitle: "Buradan markanızı seçebilirsiniz.",
+      brands: [
+        { name: "Beaphar", slug: "beaphar", color: "#4CAF50" },
+        { name: "Gimcat", slug: "gimcat", color: "#FF5722" },
+        { name: "Dr. Clauder's", slug: "dr-clauders", color: "#3F51B5" },
+        { name: "Garden Mix", slug: "garden-mix", color: "#8BC34A" },
+      ],
+    },
+    "kedi-odulu": {
+      title: "Kedi Ödülü",
+      subtitle: "Buradan markanızı seçebilirsiniz.",
+      brands: [
+        { name: "Crocus", slug: "crocus", color: "#9C27B0" },
+        { name: "Dreamies", slug: "dreamies", color: "#E91E63" },
+        { name: "GimCat", slug: "gimcat", color: "#FF5722" },
+        { name: "Me-O", slug: "me-o", color: "#2196F3" },
+        { name: "Miamor", slug: "miamor", color: "#00BCD4" },
+        { name: "Nutri Feline", slug: "nutri-feline", color: "#4CAF50" },
+        { name: "Reflex", slug: "reflex", logo: reflexLogo },
+        { name: "Wanpy", slug: "wanpy", color: "#FF9800" },
+      ],
+    },
+    "kedi-konserve": {
+      title: "Kedi Konserve Mamaları",
+      subtitle: "Buradan markanızı seçebilirsiniz.",
+      brands: [
+        { name: "Felix", slug: "felix", color: "#F44336" },
+        { name: "GimCat", slug: "gimcat", color: "#FF5722" },
+        { name: "Gourmet Gold", slug: "gourmet-gold", color: "#FFC107" },
+        { name: "Hill's", slug: "hills", logo: hillsLogo },
+        { name: "Me-O", slug: "me-o", color: "#2196F3" },
+        { name: "Molly", slug: "molly", color: "#E91E63" },
+        { name: "Nutri Feline", slug: "nutri-feline", color: "#4CAF50" },
+        { name: "Pro Plan", slug: "pro-plan", logo: proPlanLogo },
+        { name: "Royal Canin", slug: "royal-canin", logo: royalCaninLogo },
+        { name: "Wanpy", slug: "wanpy", color: "#FF9800" },
+        { name: "Whiskas", slug: "whiskas", color: "#7B1FA2" },
       ],
     },
   },
@@ -132,30 +188,39 @@ export default function BrandsPage() {
         <div className="flex flex-col gap-2.5 items-center" data-testid="list-brands">
           {brandData.brands.map((brand, i) => (
             <motion.div
-              key={brand.slug}
+              key={brand.slug + "-" + i}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.25, delay: 0.05 * i }}
               className="w-full max-w-[280px]"
             >
               <Link href={`/siparis?kategori=${animalSlug}&alt=${subSlug}&marka=${brand.slug}`}>
-                <div
-                  className="rounded-md border-2 cursor-pointer overflow-hidden transition-colors duration-200"
-                  style={{ borderColor: "#64B5F6" }}
-                  onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#EF4444"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#64B5F6"; }}
-                  data-testid={`card-brand-${brand.slug}`}
-                >
-                  <div className="flex items-center justify-center bg-white">
-                    <img
-                      src={brand.logo}
-                      alt={brand.name}
-                      className="w-full h-[52px] object-cover"
-                      data-testid={`img-brand-${brand.slug}`}
-                    />
-                    <span className="sr-only" data-testid={`text-brand-name-${brand.slug}`}>{brand.name}</span>
+                {brand.logo ? (
+                  <div
+                    className="rounded-md border overflow-visible hover-elevate active-elevate-2"
+                    data-testid={`card-brand-${brand.slug}`}
+                  >
+                    <div className="flex items-center justify-center bg-white rounded-md py-2 px-3">
+                      <img
+                        src={brand.logo}
+                        alt={brand.name}
+                        className="w-full max-h-10 object-contain"
+                        data-testid={`img-brand-${brand.slug}`}
+                      />
+                      <span className="sr-only" data-testid={`text-brand-name-${brand.slug}`}>{brand.name}</span>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div
+                    className="rounded-md overflow-visible hover-elevate active-elevate-2 flex items-center justify-center py-3 px-4"
+                    style={{ backgroundColor: brand.color || "#607D8B" }}
+                    data-testid={`card-brand-${brand.slug}`}
+                  >
+                    <span className="text-white font-bold text-base tracking-wide" data-testid={`text-brand-name-${brand.slug}`}>
+                      {brand.name}
+                    </span>
+                  </div>
+                )}
               </Link>
             </motion.div>
           ))}

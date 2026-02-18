@@ -8,6 +8,7 @@ interface SubCategory {
   name: string;
   slug: string;
   color: string;
+  hasBrands?: boolean;
 }
 
 interface AnimalCategory {
@@ -23,7 +24,7 @@ const ANIMAL_CATEGORIES: Record<string, AnimalCategory> = {
     titleHighlight: "Kategorileri",
     subtitle: "LÜTFEN KATEGORİ SEÇİNİZ",
     subcategories: [
-      { name: "Mama\nMarkaları", slug: "mama-markalari", color: "#2196F3" },
+      { name: "Mama\nMarkaları", slug: "mama-markalari", color: "#2196F3", hasBrands: true },
       { name: "Açık Mama\nÇeşitleri", slug: "acik-mama", color: "#00BFA5" },
       { name: "Tuvalet\nMalzemeleri", slug: "tuvalet-malzemeleri", color: "#7B1FA2" },
       { name: "Yaş Mama\nÇeşitleri", slug: "yas-mama", color: "#FF9800" },
@@ -38,14 +39,14 @@ const ANIMAL_CATEGORIES: Record<string, AnimalCategory> = {
     titleHighlight: "Kategorileri",
     subtitle: "LÜTFEN KATEGORİ SEÇİNİZ",
     subcategories: [
-      { name: "Mama\nMarkaları", slug: "mama-markalari", color: "#E91E63" },
-      { name: "Kedi Kumu\nÇeşitleri", slug: "kedi-kumu", color: "#00BCD4" },
-      { name: "Yaş Mama\nÇeşitleri", slug: "yas-mama", color: "#FF5722" },
-      { name: "Ödül ve\nÇeşitleri", slug: "odul", color: "#9C27B0" },
-      { name: "Malt\nMacunları", slug: "malt", color: "#3F51B5" },
-      { name: "Bakım ve\nAksesuar", slug: "bakim-aksesuar", color: "#009688" },
-      { name: "Bakım ve\nSağlık", slug: "bakim-saglik", color: "#4CAF50" },
-      { name: "Uygun Çuval\nMamalar", slug: "uygun-cuval", color: "#37474F" },
+      { name: "Kedi\nMaması", slug: "kedi-mamasi", color: "#E91E63", hasBrands: true },
+      { name: "Kedi\nKumu", slug: "kedi-kumu", color: "#00BCD4", hasBrands: true },
+      { name: "Kedi\nMaltı", slug: "kedi-malti", color: "#3F51B5", hasBrands: true },
+      { name: "Kedi\nÖdülü", slug: "kedi-odulu", color: "#9C27B0", hasBrands: true },
+      { name: "Kedi Bakım\nSağlık", slug: "kedi-bakim-saglik", color: "#4CAF50" },
+      { name: "Kedi\nTaşıma", slug: "kedi-tasima", color: "#37474F" },
+      { name: "Kedi\nTuvaleti", slug: "kedi-tuvaleti", color: "#795548" },
+      { name: "Kedi Konserve\nMamaları", slug: "kedi-konserve", color: "#FF5722", hasBrands: true },
     ],
   },
   kus: {
@@ -120,7 +121,7 @@ export default function CategoryPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.05 * i }}
             >
-              <Link href={sub.slug === "mama-markalari" ? `/kategori/${animalSlug}/${sub.slug}` : `/siparis?kategori=${animalSlug}&alt=${sub.slug}`}>
+              <Link href={sub.hasBrands ? `/kategori/${animalSlug}/${sub.slug}` : `/siparis?kategori=${animalSlug}&alt=${sub.slug}`}>
                 <div
                   className="rounded-xl p-5 cursor-pointer flex items-center justify-center min-h-[90px]"
                   style={{ backgroundColor: sub.color }}
