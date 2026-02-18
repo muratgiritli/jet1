@@ -1,57 +1,46 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Truck, Banknote, CreditCard, QrCode, Phone } from "lucide-react";
-import { SiWhatsapp } from "react-icons/si";
 
-import bannerDelivery from "@/assets/images/banner-delivery.png";
-import bannerPromo from "@/assets/images/banner-promo.png";
-import categoryDog from "@/assets/images/category-dog.jpg";
-import categoryCat from "@/assets/images/category-cat.jpg";
-import categoryBird from "@/assets/images/category-bird.jpg";
-import categoryRabbit from "@/assets/images/category-rabbit.jpg";
+import bannerScooter from "@/assets/images/banner-scooter.png";
+import bannerCity from "@/assets/images/banner-city.png";
+import catDog from "@/assets/images/cat-dog.png";
+import catCat from "@/assets/images/cat-cat.png";
+import catBird from "@/assets/images/cat-bird.png";
+import catRabbit from "@/assets/images/cat-rabbit.png";
 
-const ANIMAL_CATEGORIES = [
-  { name: "Kedi", image: categoryCat, href: "/siparis" },
-  { name: "Köpek", image: categoryDog, href: "/siparis" },
-  { name: "Kuş", image: categoryBird, href: "/siparis" },
-  { name: "Kemirgen", image: categoryRabbit, href: "/siparis" },
+const CATEGORIES = [
+  { name: "Köpek", image: catDog, href: "/siparis" },
+  { name: "Kedi", image: catCat, href: "/siparis" },
+  { name: "Kuş", image: catBird, href: "/siparis" },
+  { name: "Kemirgen", image: catRabbit, href: "/siparis" },
 ];
 
 const NAV_ITEMS = ["Kedi", "Köpek", "Kuş", "Kemirgen"];
 
-const stagger = {
-  hidden: {},
-  show: { transition: { staggerChildren: 0.1 } },
-};
-
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-};
-
 export default function Landing() {
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="sticky top-0 z-[9999] bg-primary text-primary-foreground">
-        <div className="max-w-4xl mx-auto px-4 py-3 flex items-center justify-center">
-          <h1 className="text-2xl font-extrabold tracking-tight" data-testid="text-brand-logo">
-            JET<span className="text-primary-foreground/80">GO</span>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f5f5f5" }}>
+      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-center">
+          <h1 className="text-3xl font-extrabold tracking-tight" data-testid="text-brand-logo">
+            <span style={{ color: "#ffffff" }}>JET</span>
+            <span style={{ color: "#1a7a1a" }}>GO</span>
           </h1>
         </div>
       </header>
 
-      <nav className="bg-muted border-b sticky top-[52px] z-[9998]">
-        <div className="max-w-4xl mx-auto px-4">
-          <ul className="flex items-center justify-center gap-1 py-2 flex-wrap" data-testid="nav-categories">
+      <nav className="sticky top-[52px] z-[9998]" style={{ backgroundColor: "#7c4dff" }}>
+        <div className="max-w-lg mx-auto px-2">
+          <ul className="flex items-center justify-center gap-0 py-1.5 flex-wrap" data-testid="nav-categories">
             {NAV_ITEMS.map((item) => (
               <li key={item}>
                 <Link href="/siparis">
-                  <Button variant="ghost" size="sm" data-testid={`nav-link-${item}`}>
+                  <button
+                    className="px-4 py-1 text-sm font-medium text-white/90 hover:text-white transition-colors"
+                    data-testid={`nav-link-${item}`}
+                  >
                     {item}
-                  </Button>
+                  </button>
                 </Link>
               </li>
             ))}
@@ -59,65 +48,68 @@ export default function Landing() {
         </div>
       </nav>
 
-      <main className="flex-1 max-w-4xl mx-auto px-4 w-full">
-        <section className="mt-4 grid grid-cols-2 gap-3" data-testid="section-banners">
+      <main className="flex-1 max-w-lg mx-auto px-3 w-full">
+        <section className="mt-3 grid grid-cols-2 gap-2.5" data-testid="section-banners">
           <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className="relative rounded-md overflow-hidden aspect-square"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4 }}
           >
-            <img
-              src={bannerDelivery}
-              alt="Sen İste Jet İle Gelsin"
-              className="w-full h-full object-cover"
-              data-testid="img-banner-delivery"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
-              <p className="text-white font-bold text-sm leading-tight drop-shadow-lg" data-testid="text-banner-slogan">
-                Sen İste<br />Jet İle Gelsin
-              </p>
-            </div>
-          </motion.div>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            className="relative rounded-md overflow-hidden aspect-square"
-          >
-            <img
-              src={bannerPromo}
-              alt="JetGo Şimdi Samsun'da"
-              className="w-full h-full object-cover"
-              data-testid="img-banner-promo"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-3">
-              <div>
-                <p className="text-white font-extrabold text-base leading-tight drop-shadow-lg">JETGO</p>
-                <p className="text-white/90 font-semibold text-xs drop-shadow-lg" data-testid="text-banner-city">
-                  Şimdi Samsun'da
-                </p>
+            <Link href="/siparis">
+              <div className="relative rounded-xl overflow-hidden aspect-square cursor-pointer" data-testid="banner-delivery">
+                <img
+                  src={bannerScooter}
+                  alt="Sen İste Jet İle Gelsin"
+                  className="w-full h-full object-cover"
+                  data-testid="img-banner-delivery"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-end p-3">
+                  <p className="text-white font-extrabold text-base leading-tight drop-shadow-lg" data-testid="text-banner-slogan">
+                    Sen İste<br />Jet İle Gelsin
+                  </p>
+                </div>
               </div>
-            </div>
+            </Link>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <Link href="/siparis">
+              <div className="relative rounded-xl overflow-hidden aspect-square cursor-pointer" data-testid="banner-promo">
+                <img
+                  src={bannerCity}
+                  alt="JetGo Şimdi Samsun'da"
+                  className="w-full h-full object-cover"
+                  data-testid="img-banner-promo"
+                />
+                <div className="absolute inset-0 flex flex-col items-center justify-center p-3">
+                  <p className="font-extrabold text-2xl leading-none drop-shadow-lg" style={{ color: "#2ecc40" }} data-testid="text-banner-brand">
+                    JETGO
+                  </p>
+                  <p className="font-bold text-sm mt-1 drop-shadow-lg" style={{ color: "#d32f2f" }} data-testid="text-banner-city">
+                    Şimdi SAMSUN'DA
+                  </p>
+                </div>
+              </div>
+            </Link>
           </motion.div>
         </section>
 
-        <section className="mt-8 mb-6">
-          <h2 className="text-lg font-bold text-center mb-4" data-testid="text-categories-heading">
-            Kategoriler
-          </h2>
-          <motion.div
-            className="grid grid-cols-2 gap-4"
-            variants={stagger}
-            initial="hidden"
-            animate="show"
-            data-testid="grid-categories"
-          >
-            {ANIMAL_CATEGORIES.map((cat) => (
-              <motion.div key={cat.name} variants={fadeUp}>
+        <section className="mt-4 mb-4">
+          <div className="grid grid-cols-2 gap-3" data-testid="grid-categories">
+            {CATEGORIES.map((cat, i) => (
+              <motion.div
+                key={cat.name}
+                initial={{ opacity: 0, y: 15 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35, delay: 0.1 * i }}
+              >
                 <Link href={cat.href}>
-                  <Card className="overflow-visible hover-elevate cursor-pointer" data-testid={`card-category-${cat.name}`}>
-                    <div className="relative aspect-square overflow-hidden rounded-t-md">
+                  <div className="cursor-pointer" data-testid={`card-category-${cat.name}`}>
+                    <div className="rounded-xl overflow-hidden aspect-square shadow-sm">
                       <img
                         src={cat.image}
                         alt={cat.name}
@@ -126,89 +118,36 @@ export default function Landing() {
                         data-testid={`img-category-${cat.name}`}
                       />
                     </div>
-                    <div className="p-3 text-center">
-                      <span className="text-lg font-bold" data-testid={`text-category-name-${cat.name}`}>
-                        {cat.name}
-                      </span>
-                    </div>
-                  </Card>
+                    <p className="text-center font-bold text-lg mt-1.5" style={{ color: "#333" }} data-testid={`text-category-name-${cat.name}`}>
+                      {cat.name}
+                    </p>
+                  </div>
                 </Link>
               </motion.div>
             ))}
-          </motion.div>
-        </section>
-
-        <section className="mb-6">
-          <Link href="/siparis">
-            <Button className="w-full" size="lg" data-testid="btn-order-now">
-              <Truck className="w-5 h-5" />
-              Hemen Sipariş Ver
-            </Button>
-          </Link>
-        </section>
-
-        <section className="mb-8">
-          <Card>
-            <div className="p-5 text-center space-y-4">
-              <p className="text-sm font-semibold text-primary" data-testid="text-delivery-info">
-                Samsun içinde kapınıza getiriyoruz..
-              </p>
-              <div className="flex items-center justify-center gap-4 flex-wrap" data-testid="list-payment-methods">
-                <div className="flex items-center gap-1.5">
-                  <Banknote className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Havale</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <Banknote className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Kapıda nakit</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <CreditCard className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">Kapıda kredi kartı</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <QrCode className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-xs text-muted-foreground">QR ödeme</span>
-                </div>
-              </div>
-              <div className="flex items-center justify-center gap-2 flex-wrap">
-                <Badge variant="secondary" className="no-default-hover-elevate" data-testid="badge-min-order">Min. 500 TL</Badge>
-                <Badge variant="secondary" className="no-default-hover-elevate" data-testid="badge-free-shipping">1000 TL üzeri ücretsiz teslimat</Badge>
-              </div>
-            </div>
-          </Card>
+          </div>
         </section>
       </main>
 
-      <footer className="bg-primary text-primary-foreground">
-        <div className="max-w-4xl mx-auto px-4 py-6 text-center space-y-3">
-          <p className="font-bold text-lg" data-testid="text-footer-brand">
-            JetGo - Tüm Petshop Ürünleri
-          </p>
-          <p className="text-sm text-primary-foreground/80" data-testid="text-footer-tagline">
+      <footer style={{ backgroundColor: "#2ecc40" }} className="py-5 px-4 text-center">
+        <p className="text-white font-semibold text-sm leading-relaxed" data-testid="text-delivery-info">
+          Samsun içinde kapınıza getiriyoruz..
+        </p>
+        <p className="text-white/90 text-sm mt-1" data-testid="text-payment-methods">
+          Havale / Kapıda nakit / Kapıda kredi kartı / QR ödeme
+        </p>
+      </footer>
+
+      <div style={{ backgroundColor: "#333" }} className="py-4 px-4 text-center">
+        <p className="text-white font-bold text-sm" data-testid="text-footer-brand">
+          Tüm Petshop Ürünleri
+        </p>
+        <Link href="/siparis">
+          <p className="text-white/80 text-sm mt-0.5 cursor-pointer hover:text-white transition-colors" data-testid="text-footer-cta">
             Sipariş Ver - Hemen Kapına Gelsin
           </p>
-          <div className="flex items-center justify-center gap-3 flex-wrap">
-            <a
-              href="https://wa.me/908508403959"
-              target="_blank"
-              rel="noopener noreferrer"
-              data-testid="link-whatsapp"
-            >
-              <Button variant="outline" size="sm" className="border-primary-foreground/30 text-primary-foreground" data-testid="btn-whatsapp">
-                <SiWhatsapp className="w-4 h-4" />
-                WhatsApp
-              </Button>
-            </a>
-            <a href="tel:+908508403959" data-testid="link-phone">
-              <Button variant="outline" size="sm" className="border-primary-foreground/30 text-primary-foreground" data-testid="btn-phone">
-                <Phone className="w-4 h-4" />
-                Ara
-              </Button>
-            </a>
-          </div>
-        </div>
-      </footer>
+        </Link>
+      </div>
     </div>
   );
 }
