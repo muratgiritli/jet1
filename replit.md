@@ -9,9 +9,10 @@ Pet shop quick ordering application converted from static HTML to modern React/T
 - **No database needed** - all product data is static, orders go to WhatsApp
 
 ## Key Files
-- `client/src/pages/home.tsx` - Main ordering page with all functionality
+- `client/src/pages/landing.tsx` - Landing/home page with category cards, banners, footer
+- `client/src/pages/home.tsx` - Ordering page with product catalog and cart
 - `client/src/lib/data.ts` - Product data, categories, payment options, config
-- `client/src/App.tsx` - Root component with routing
+- `client/src/App.tsx` - Root component with routing (/ = landing, /siparis = ordering)
 
 ## Features
 - Product browsing with categorized tabs (Kedi Kumu, Ödüller, Malt, Yaş Mama, Aksesuar)

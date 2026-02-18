@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Link } from "wouter";
 import {
   ShoppingCart,
   Plus,
@@ -17,7 +18,7 @@ import {
   Wallet,
   Package,
   Check,
-  Cat,
+  ArrowLeft,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import {
@@ -224,9 +225,11 @@ export default function Home() {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2 flex-wrap">
-            <div className="flex items-center justify-center w-9 h-9 rounded-md bg-primary text-primary-foreground">
-              <Cat className="w-5 h-5" />
-            </div>
+            <Link href="/">
+              <Button variant="ghost" size="icon" data-testid="btn-back">
+                <ArrowLeft />
+              </Button>
+            </Link>
             <div>
               <h1 className="text-lg font-bold leading-tight" data-testid="text-brand">JetGo</h1>
               <p className="text-xs text-muted-foreground" data-testid="text-brand-subtitle">Hızlı Sipariş</p>
