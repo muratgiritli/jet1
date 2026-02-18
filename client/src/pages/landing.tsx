@@ -9,13 +9,18 @@ import catBird from "@/assets/images/cat-bird.png";
 import catRabbit from "@/assets/images/cat-rabbit.png";
 
 const CATEGORIES = [
-  { name: "Köpek", image: catDog, href: "/siparis" },
-  { name: "Kedi", image: catCat, href: "/siparis" },
-  { name: "Kuş", image: catBird, href: "/siparis" },
-  { name: "Kemirgen", image: catRabbit, href: "/siparis" },
+  { name: "Köpek", image: catDog, href: "/kategori/kopek" },
+  { name: "Kedi", image: catCat, href: "/kategori/kedi" },
+  { name: "Kuş", image: catBird, href: "/kategori/kus" },
+  { name: "Kemirgen", image: catRabbit, href: "/kategori/kemirgen" },
 ];
 
-const NAV_ITEMS = ["Kedi", "Köpek", "Kuş", "Kemirgen"];
+const NAV_ITEMS = [
+  { name: "Kedi", href: "/kategori/kedi" },
+  { name: "Köpek", href: "/kategori/kopek" },
+  { name: "Kuş", href: "/kategori/kus" },
+  { name: "Kemirgen", href: "/kategori/kemirgen" },
+];
 
 export default function Landing() {
   return (
@@ -33,12 +38,12 @@ export default function Landing() {
         <div className="max-w-lg mx-auto px-2">
           <ul className="flex items-center justify-center gap-0 py-1.5 flex-wrap" data-testid="nav-categories">
             {NAV_ITEMS.map((item) => (
-              <li key={item}>
-                <Link href="/siparis"
+              <li key={item.name}>
+                <Link href={item.href}
                   className="px-4 py-1 text-sm font-medium text-white/90"
-                  data-testid={`nav-link-${item}`}
+                  data-testid={`nav-link-${item.name}`}
                 >
-                  {item}
+                  {item.name}
                 </Link>
               </li>
             ))}

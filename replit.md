@@ -10,11 +10,19 @@ Pet shop quick ordering application converted from static HTML to modern React/T
 
 ## Key Files
 - `client/src/pages/landing.tsx` - Landing/home page with category cards, banners, footer
+- `client/src/pages/category.tsx` - Animal category pages (Köpek, Kedi, Kuş, Kemirgen) with subcategory grids
 - `client/src/pages/home.tsx` - Ordering page with product catalog and cart
 - `client/src/lib/data.ts` - Product data, categories, payment options, config
-- `client/src/App.tsx` - Root component with routing (/ = landing, /siparis = ordering)
+- `client/src/App.tsx` - Root component with routing
+
+## Routes
+- `/` - Landing page (vitrin)
+- `/kategori/:animal` - Animal category page (kopek, kedi, kus, kemirgen)
+- `/siparis` - Ordering page with products and cart
 
 ## Features
+- Landing page with JETGO branding, promotional banners, 2x2 animal category grid
+- Animal category pages with colorful subcategory grids (e.g., Mama Markaları, Yaş Mama, Bakım)
 - Product browsing with categorized tabs (Kedi Kumu, Ödüller, Malt, Yaş Mama, Aksesuar)
 - Quantity controls for each product
 - Payment method selection with radio buttons (Nakit %10 indirim, EFT, QR, Kredi Kartı)
