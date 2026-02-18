@@ -127,11 +127,11 @@ export default function BrandsPage() {
                   className="cursor-pointer hover-elevate overflow-visible"
                   data-testid={`card-brand-${brand.slug}`}
                 >
-                  <div className="flex items-center justify-center px-4 py-2.5">
+                  <div className="flex items-center justify-center overflow-hidden rounded-md">
                     <img
                       src={brand.logo}
                       alt={brand.name}
-                      className="h-8 max-w-[200px] object-contain"
+                      className="w-full h-[52px] object-cover"
                       data-testid={`img-brand-${brand.slug}`}
                     />
                     <span className="sr-only" data-testid={`text-brand-name-${brand.slug}`}>{brand.name}</span>
