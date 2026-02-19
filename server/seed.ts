@@ -1,7 +1,25 @@
 import { db } from "./storage";
 import { brandCategories, products } from "@shared/schema";
+import { eq, and } from "drizzle-orm";
+import brandDataJson from "./brand_data.json";
 
-const BRAND_PRODUCTS_DATA = [
+interface BrandProductData {
+  brandName: string;
+  brandSlug: string;
+  animal: string;
+  subcategory: string;
+  products: {
+    name: string;
+    price: number;
+    originalPrice?: number;
+    skt?: string;
+    img?: string;
+  }[];
+}
+
+const EXTRA_BRAND_DATA: BrandProductData[] = brandDataJson as BrandProductData[];
+
+const SEED_BRAND_DATA: BrandProductData[] = [
   {
     brandName: "Brit Care",
     brandSlug: "brit-care",
@@ -68,16 +86,25 @@ const BRAND_PRODUCTS_DATA = [
   },
 ];
 
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA];
+
 export async function seedDatabase() {
-  const existingCategories = await db.select().from(brandCategories);
-  if (existingCategories.length > 0) {
-    console.log("Database already seeded, skipping...");
-    return;
-  }
+  console.log("Checking database for missing brand data...");
 
-  console.log("Seeding database with brand products...");
+  for (const brand of ALL_BRAND_DATA) {
+    const existing = await db.select().from(brandCategories).where(
+      and(
+        eq(brandCategories.brandSlug, brand.brandSlug),
+        eq(brandCategories.animal, brand.animal),
+        eq(brandCategories.subcategory, brand.subcategory)
+      )
+    );
 
-  for (const brand of BRAND_PRODUCTS_DATA) {
+    if (existing.length > 0) {
+      console.log(`Brand ${brand.brandName} (${brand.animal}/${brand.subcategory}) already exists, skipping...`);
+      continue;
+    }
+
     const [category] = await db.insert(brandCategories).values({
       brandName: brand.brandName,
       brandSlug: brand.brandSlug,
@@ -96,7 +123,7 @@ export async function seedDatabase() {
       });
     }
 
-    console.log(`Seeded ${brand.products.length} products for ${brand.brandName}`);
+    console.log(`Seeded ${brand.products.length} products for ${brand.brandName} (${brand.animal}/${brand.subcategory})`);
   }
 
   console.log("Database seeding complete!");
