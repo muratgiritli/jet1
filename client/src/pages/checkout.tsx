@@ -63,7 +63,7 @@ export default function Checkout() {
     setOrderLoading(true);
     try {
       const orderItems = selectedProducts.map(({ product, qty }) => ({
-        productId: typeof product.id === "string" ? parseInt(product.id) : product.id,
+        productId: product.id,
         name: product.name,
         price: product.price,
         quantity: qty,

@@ -68,7 +68,7 @@ export type InsertCrossSellItem = z.infer<typeof insertCrossSellItemSchema>;
 export type CrossSellItem = typeof crossSellItems.$inferSelect;
 
 export const orderItemSchema = z.object({
-  productId: z.number(),
+  productId: z.union([z.number(), z.string()]),
   name: z.string(),
   price: z.number(),
   quantity: z.number(),
