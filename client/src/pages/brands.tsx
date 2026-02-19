@@ -86,16 +86,6 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
         { name: "Diğer Markalar", slug: "diger", color: "#607D8B" },
       ],
     },
-    "kedi-malti": {
-      title: "Kedi Maltı",
-      subtitle: "Buradan markanızı seçebilirsiniz.",
-      brands: [
-        { name: "Beaphar", slug: "beaphar", color: "#4CAF50" },
-        { name: "Gimcat", slug: "gimcat", color: "#FF5722" },
-        { name: "Dr. Clauder's", slug: "dr-clauders", color: "#3F51B5" },
-        { name: "Garden Mix", slug: "garden-mix", color: "#8BC34A" },
-      ],
-    },
     "kedi-odulu": {
       title: "Kedi Ödülü",
       subtitle: "Buradan markanızı seçebilirsiniz.",
