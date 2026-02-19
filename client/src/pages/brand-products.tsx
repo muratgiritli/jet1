@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRoute } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, Eye } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -163,11 +163,12 @@ function BrandProductCard({
             Gelince Haber Ver
           </div>
         ) : (
-          <QuantityControl
-            productId={pid}
-            quantity={quantity}
-            onUpdate={onUpdate}
-          />
+          <Link href={`/urun/${product.id}`} className="w-full">
+            <Button variant="default" size="sm" className="w-full" data-testid={`btn-incele-${pid}`}>
+              <Eye className="w-3.5 h-3.5" />
+              İncele
+            </Button>
+          </Link>
         )}
       </CardContent>
     </Card>
@@ -233,11 +234,12 @@ function InlineSubcategoryProductCard({
             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
         </div>
-        <QuantityControl
-          productId={product.id}
-          quantity={quantity}
-          onUpdate={onUpdate}
-        />
+        <Link href={`/urun/${product.id}`} className="w-full">
+          <Button variant="default" size="sm" className="w-full" data-testid={`btn-incele-inline-${product.id}`}>
+            <Eye className="w-3.5 h-3.5" />
+            İncele
+          </Button>
+        </Link>
       </CardContent>
     </Card>
   );

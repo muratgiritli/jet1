@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRoute } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, Eye } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory, CrossSellSection } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -146,9 +146,10 @@ function CrossSellProductCard({
               Tukendi
             </div>
           ) : (
-            <div onClick={(e) => e.preventDefault()}>
-              <QuantityControl productId={pid} quantity={quantity} onUpdate={onUpdate} />
-            </div>
+            <Button variant="default" size="sm" className="w-full text-[11px]" data-testid={`btn-incele-cross-${pid}`}>
+              <Eye className="w-3 h-3" />
+              İncele
+            </Button>
           )}
         </CardContent>
       </Card>
@@ -215,11 +216,12 @@ function InlineSubcategoryProductCard({
             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
         </div>
-        <QuantityControl
-          productId={product.id}
-          quantity={quantity}
-          onUpdate={onUpdate}
-        />
+        <Link href={`/urun/${product.id}`} className="w-full">
+          <Button variant="default" size="sm" className="w-full" data-testid={`btn-incele-inline-${product.id}`}>
+            <Eye className="w-3.5 h-3.5" />
+            İncele
+          </Button>
+        </Link>
       </CardContent>
     </Card>
   );
@@ -367,15 +369,46 @@ function InlineSubcategories({
 export default function ProductDetailPage() {
   const [, params] = useRoute("/urun/:id");
   const productId = params?.id || "";
+  const isNumericId = /^\d+$/.test(productId);
 
   const { basket, updateQty, grandTotal, itemCount } = useCart();
 
+  const staticProduct = useMemo(() => {
+    if (isNumericId) return null;
+    for (const cat of CATEGORIES) {
+      const found = cat.items.find((item) => item.id === productId);
+      if (found) return found;
+    }
+    return null;
+  }, [productId, isNumericId]);
+
   const { data, isLoading } = useQuery<ProductDetailData>({
     queryKey: ["/api/product-detail", productId],
-    enabled: !!productId,
+    enabled: !!productId && isNumericId,
   });
 
-  if (isLoading) {
+  const staticData = useMemo(() => {
+    if (!staticProduct) return null;
+    return {
+      product: {
+        id: staticProduct.id as any,
+        name: staticProduct.name,
+        price: staticProduct.price,
+        originalPrice: staticProduct.originalPrice || null,
+        img: staticProduct.img || null,
+        skt: staticProduct.skt || null,
+        stock: 100,
+        isActive: true,
+        brandCategoryId: 0,
+      },
+      category: null,
+      crossSellSections: [],
+    } as ProductDetailData;
+  }, [staticProduct]);
+
+  const resolvedData = isNumericId ? data : staticData;
+
+  if (isLoading && isNumericId) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
@@ -396,7 +429,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  if (!data) {
+  if (!resolvedData) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
         <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
@@ -417,7 +450,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  const { product, category, crossSellSections } = data;
+  const { product, category, crossSellSections } = resolvedData;
   const pid = String(product.id);
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)

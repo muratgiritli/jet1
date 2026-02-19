@@ -9,6 +9,7 @@ import {
   Plus,
   Minus,
   ArrowLeft,
+  Eye,
 } from "lucide-react";
 import {
   CATEGORIES,
@@ -100,11 +101,12 @@ function ProductCard({
         <span className="text-sm font-bold text-foreground" data-testid={`text-price-${product.id}`}>
           {product.price} TL
         </span>
-        <QuantityControl
-          productId={product.id}
-          quantity={quantity}
-          onUpdate={onUpdate}
-        />
+        <Link href={`/urun/${product.id}`} className="w-full">
+          <Button variant="default" size="sm" className="w-full" data-testid={`btn-incele-${product.id}`}>
+            <Eye className="w-3.5 h-3.5" />
+            İncele
+          </Button>
+        </Link>
       </CardContent>
     </Card>
   );
