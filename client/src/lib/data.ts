@@ -34,7 +34,7 @@ export const MAIN_PRODUCTS: Product[] = [
 
 export const CATEGORIES: Category[] = [
   {
-    title: "KEDİ KUMU",
+    title: "KUMU",
     items: [
       { id: "kk1", name: "Van Cat Naturel Kokusuz İnce Taneli Kedi Kumu 10 Lt", price: 218, img: "https://www.mamatoptancisi.com/van-cat-naturel-kokusuz-ince-taneli-topaklanan-bentonit-kedi-kumu-10-lt-1065633-10-O.jpg" },
       { id: "kk2", name: "Ever Clean Multi Kristal Koku Önleyici Kedi Kumu 6 Lt", price: 715, img: "https://www.mamatoptancisi.com/ever-clean-multi-kristal-koku-onleyici-kedi-kumu-6-lt-1068122-10-O.jpg" },
@@ -99,7 +99,7 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
-    title: "KEDİ ÖDÜLLERİ",
+    title: "ÖDÜLLERİ",
     items: [
       { id: "ko1", name: "Wanpy Uskumru Fileto Kedi Ödül Maması 25 gr", price: 69.20, originalPrice: 125, skt: "08.2027", img: "https://www.mamatoptancisi.com/wanpy-uskumru-fileto-kedi-odul-mamasi-25-gr-1059974-10-O.jpg" },
       { id: "ko2", name: "Garden Mix Dana Etli Kedi Stick Ödül 3X5 gr", price: 42.51, originalPrice: 48.29, skt: "01.2027", img: "https://www.mamatoptancisi.com/gardenmix-dana-etli-kedi-stick-odul-35g-1054004-51-O.jpg" },
@@ -150,7 +150,7 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
-    title: "KEDİ MALT",
+    title: "MALT",
     items: [
       { id: "malt1", name: "Gimcat Multi Vitamin Paste Kedi Macunu 20 gr", price: 61.62, originalPrice: 105.09, skt: "06.2027", img: "https://www.mamatoptancisi.com/gimcat-multi-vitamin-paste-kedi-macunu-20-gr-1068817-73-O.jpg" },
       { id: "malt2", name: "Gimcat Malt Soft Extra 100 gr", price: 300.17, originalPrice: 535.05, skt: "07.2027", img: "https://www.mamatoptancisi.com/gimcat-malt-soft-extra-100-gr-1071695-63-O.jpg" },
@@ -176,7 +176,7 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
-    title: "KEDİ YAŞ MAMASI",
+    title: "YAŞ MAMASI",
     items: [
       { id: "ym1", name: "Proplan yavru yaş mama", price: 35, img: "https://static.wixstatic.com/media/63853e_26b590fe701c4ca3a2dfa8e636d0d0a0~mv2.webp" },
       { id: "ym2", name: "Proplan Adult Tavuklu", price: 35, img: "https://static.wixstatic.com/media/63853e_3e1f871338284c54adc3c4f8e5c2a6e7~mv2.png" },
@@ -248,7 +248,7 @@ export const CATEGORIES: Category[] = [
     ],
   },
   {
-    title: "KEDİ UYGUN ÇUVAL",
+    title: "UYGUN ÇUVAL",
     items: [
       { id: "kuc1", name: "Thunder Tavuklu Yetişkin Kedi Maması 15 kg", price: 809.09, originalPrice: 1199, skt: "08.2026", img: "https://www.mamatoptancisi.com/thunder-tavuklu-yetiskin-kedi-mamasi-15-kg-1069745-92-O.jpg" },
       { id: "kuc2", name: "Challenge Kuzu Etli Yetişkin Kedi Maması 15 kg", price: 852, originalPrice: 1199, skt: "06.2027", img: "https://www.mamatoptancisi.com/challenge-kuzu-etli-yetiskin-kedi-mamasi-15-kg-1070698-65-O.jpg" },

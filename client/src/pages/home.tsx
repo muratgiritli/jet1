@@ -18,15 +18,15 @@ import { useCart } from "@/contexts/CartContext";
 import BackNavigation from "@/components/BackNavigation";
 
 const SLUG_TO_CATEGORY: Record<string, string> = {
-  "kedi-malti": "KEDİ MALT",
+  "kedi-malti": "MALT",
   "kedi-bakim-saglik": "BAKIM VE AKSESUAR",
-  "uygun-cuval": "KEDİ UYGUN ÇUVAL",
-  "kedi-tuvaleti": "KEDİ KUMU",
-  "acik-mama": "KEDİ KUMU",
-  "tuvalet-malzemeleri": "KEDİ KUMU",
-  "yas-mama": "KEDİ YAŞ MAMASI",
-  "odul-kemik": "KEDİ ÖDÜLLERİ",
-  "kedi-odulu": "KEDİ ÖDÜLLERİ",
+  "uygun-cuval": "UYGUN ÇUVAL",
+  "kedi-tuvaleti": "KUMU",
+  "acik-mama": "KUMU",
+  "tuvalet-malzemeleri": "KUMU",
+  "yas-mama": "YAŞ MAMASI",
+  "odul-kemik": "ÖDÜLLERİ",
+  "kedi-odulu": "ÖDÜLLERİ",
   "bakim-saglik": "BAKIM VE AKSESUAR",
 };
 
