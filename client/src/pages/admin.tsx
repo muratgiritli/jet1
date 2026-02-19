@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -30,9 +30,58 @@ import {
   Lock,
   Eye,
   EyeOff,
+  ChevronDown,
+  ChevronRight,
+  Dog,
+  Cat,
+  Bird,
+  Rabbit,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order } from "@shared/schema";
+
+const ANIMALS = [
+  { id: "kedi", name: "Kedi", icon: Cat },
+  { id: "kopek", name: "Köpek", icon: Dog },
+  { id: "kus", name: "Kuş", icon: Bird },
+  { id: "kemirgen", name: "Kemirgen", icon: Rabbit },
+];
+
+const SUBCATEGORIES: Record<string, { slug: string; name: string }[]> = {
+  kedi: [
+    { slug: "kedi-mamasi", name: "Kedi Maması" },
+    { slug: "kedi-kumu", name: "Kedi Kumu" },
+    { slug: "kedi-malti", name: "Kedi Maltı" },
+    { slug: "kedi-odulu", name: "Kedi Ödülleri" },
+    { slug: "kedi-bakim-saglik", name: "Bakım ve Aksesuar" },
+    { slug: "kedi-tasima", name: "Kedi Taşıma" },
+    { slug: "kedi-tuvaleti", name: "Kedi Tuvaleti" },
+    { slug: "kedi-konserve", name: "Kedi Yaş Maması" },
+    { slug: "uygun-cuval", name: "Uygun Çuval Mamalar" },
+  ],
+  kopek: [
+    { slug: "mama-markalari", name: "Mama Markaları" },
+    { slug: "acik-mama", name: "Açık Mama" },
+    { slug: "tuvalet-malzemeleri", name: "Tuvalet Malzemeleri" },
+    { slug: "yas-mama", name: "Yaş Mama" },
+    { slug: "odul-kemik", name: "Ödül Kemik" },
+    { slug: "tasima-kulube", name: "Taşıma ve Kulübeler" },
+    { slug: "bakim-saglik", name: "Bakım ve Sağlık" },
+    { slug: "uygun-cuval", name: "Uygun Çuval Mamalar" },
+  ],
+  kus: [
+    { slug: "kus-yemi", name: "Kuş Yemi" },
+    { slug: "kus-kafesi", name: "Kuş Kafesi" },
+    { slug: "kus-vitamin", name: "Kuş Vitaminleri" },
+    { slug: "bakim-aksesuar", name: "Bakım ve Aksesuar" },
+  ],
+  kemirgen: [
+    { slug: "kemirgen-yemi", name: "Kemirgen Yemleri" },
+    { slug: "kemirgen-kafesi", name: "Kemirgen Kafesleri" },
+    { slug: "bakim-aksesuar", name: "Bakım ve Aksesuar" },
+    { slug: "vitamin-takviye", name: "Vitamin ve Takviye" },
+  ],
+};
 
 function LoginForm({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState("");
@@ -120,6 +169,12 @@ function ProductForm({
   onSave: (data: any) => void;
   isPending: boolean;
 }) {
+  const existingCat = product
+    ? categories.find((c) => c.id === product.brandCategoryId)
+    : null;
+
+  const [selectedAnimal, setSelectedAnimal] = useState(existingCat?.animal || "");
+  const [selectedSubcategory, setSelectedSubcategory] = useState(existingCat?.subcategory || "");
   const [name, setName] = useState(product?.name || "");
   const [price, setPrice] = useState(product?.price?.toString() || "");
   const [originalPrice, setOriginalPrice] = useState(product?.originalPrice?.toString() || "");
@@ -128,6 +183,12 @@ function ProductForm({
   const [stock, setStock] = useState(product?.stock?.toString() ?? "10");
   const [brandCategoryId, setBrandCategoryId] = useState(
     product?.brandCategoryId?.toString() || ""
+  );
+
+  const availableSubcategories = SUBCATEGORIES[selectedAnimal] || [];
+
+  const filteredCategories = categories.filter(
+    (c) => c.animal === selectedAnimal && c.subcategory === selectedSubcategory
   );
 
   return (
@@ -146,21 +207,76 @@ function ProductForm({
       }}
       className="space-y-4"
     >
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>Ana Kategori</Label>
+          <Select
+            value={selectedAnimal}
+            onValueChange={(val) => {
+              setSelectedAnimal(val);
+              setSelectedSubcategory("");
+              setBrandCategoryId("");
+            }}
+          >
+            <SelectTrigger data-testid="select-animal">
+              <SelectValue placeholder="Hayvan seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {ANIMALS.map((a) => (
+                <SelectItem key={a.id} value={a.id} data-testid={`option-animal-${a.id}`}>
+                  {a.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Alt Kategori</Label>
+          <Select
+            value={selectedSubcategory}
+            onValueChange={(val) => {
+              setSelectedSubcategory(val);
+              setBrandCategoryId("");
+            }}
+            disabled={!selectedAnimal}
+          >
+            <SelectTrigger data-testid="select-subcategory">
+              <SelectValue placeholder="Alt kategori seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableSubcategories.map((sc) => (
+                <SelectItem key={sc.slug} value={sc.slug} data-testid={`option-subcategory-${sc.slug}`}>
+                  {sc.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
       <div className="space-y-2">
-        <Label>Marka Kategorisi</Label>
-        <Select value={brandCategoryId} onValueChange={setBrandCategoryId}>
+        <Label>Marka</Label>
+        <Select
+          value={brandCategoryId}
+          onValueChange={setBrandCategoryId}
+          disabled={!selectedSubcategory}
+        >
           <SelectTrigger data-testid="select-brand-category">
-            <SelectValue placeholder="Kategori seçin" />
+            <SelectValue placeholder={filteredCategories.length === 0 ? "Bu alt kategoride marka yok" : "Marka seçin"} />
           </SelectTrigger>
           <SelectContent>
-            {categories.map((c) => (
+            {filteredCategories.map((c) => (
               <SelectItem key={c.id} value={String(c.id)} data-testid={`option-category-${c.id}`}>
-                {c.brandName} ({c.animal} / {c.subcategory})
+                {c.brandName}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {selectedSubcategory && filteredCategories.length === 0 && (
+          <p className="text-xs text-muted-foreground">Bu alt kategoride henüz marka eklenmemiş</p>
+        )}
       </div>
+
       <div className="space-y-2">
         <Label>Ürün Adı</Label>
         <Input value={name} onChange={(e) => setName(e.target.value)} required data-testid="input-product-name" />
@@ -189,7 +305,7 @@ function ProductForm({
           <Input value={img} onChange={(e) => setImg(e.target.value)} placeholder="https://..." data-testid="input-product-img" />
         </div>
       </div>
-      <Button type="submit" className="w-full" disabled={isPending} data-testid="btn-save-product">
+      <Button type="submit" className="w-full" disabled={isPending || !brandCategoryId} data-testid="btn-save-product">
         {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : product ? "Güncelle" : "Ekle"}
       </Button>
     </form>
@@ -208,35 +324,56 @@ function CategoryForm({
   const [animal, setAnimal] = useState("");
   const [subcategory, setSubcategory] = useState("");
 
+  const availableSubcategories = SUBCATEGORIES[animal] || [];
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        onSave({ brandName, brandSlug, animal, subcategory });
+        const slug = brandSlug || brandName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+        onSave({ brandName, brandSlug: slug, animal, subcategory });
       }}
       className="space-y-4"
     >
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>Ana Kategori</Label>
+          <Select value={animal} onValueChange={(val) => { setAnimal(val); setSubcategory(""); }}>
+            <SelectTrigger data-testid="input-category-animal">
+              <SelectValue placeholder="Hayvan seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {ANIMALS.map((a) => (
+                <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Alt Kategori</Label>
+          <Select value={subcategory} onValueChange={setSubcategory} disabled={!animal}>
+            <SelectTrigger data-testid="input-category-subcategory">
+              <SelectValue placeholder="Alt kategori seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {availableSubcategories.map((sc) => (
+                <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <Label>Marka Adı</Label>
           <Input value={brandName} onChange={(e) => setBrandName(e.target.value)} required data-testid="input-category-brand-name" />
         </div>
         <div className="space-y-2">
-          <Label>Marka Slug</Label>
-          <Input value={brandSlug} onChange={(e) => setBrandSlug(e.target.value)} required placeholder="brit-care" data-testid="input-category-brand-slug" />
+          <Label>Marka Slug (opsiyonel)</Label>
+          <Input value={brandSlug} onChange={(e) => setBrandSlug(e.target.value)} placeholder="otomatik oluşturulur" data-testid="input-category-brand-slug" />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
-        <div className="space-y-2">
-          <Label>Hayvan</Label>
-          <Input value={animal} onChange={(e) => setAnimal(e.target.value)} required placeholder="kedi" data-testid="input-category-animal" />
-        </div>
-        <div className="space-y-2">
-          <Label>Alt Kategori</Label>
-          <Input value={subcategory} onChange={(e) => setSubcategory(e.target.value)} required placeholder="kedi-mamasi" data-testid="input-category-subcategory" />
-        </div>
-      </div>
-      <Button type="submit" className="w-full" disabled={isPending} data-testid="btn-save-category">
+      <Button type="submit" className="w-full" disabled={isPending || !animal || !subcategory || !brandName} data-testid="btn-save-category">
         {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Kategori Ekle"}
       </Button>
     </form>
@@ -248,7 +385,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
-  const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("all");
+  const [selectedAnimalFilter, setSelectedAnimalFilter] = useState<string>("all");
+  const [selectedSubcategoryFilter, setSelectedSubcategoryFilter] = useState<string>("all");
+  const [expandedAnimals, setExpandedAnimals] = useState<Record<string, boolean>>({});
 
   const { data: allOrders = [], isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/admin/orders"],
@@ -275,10 +414,22 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
   });
 
-  const filteredProducts =
-    selectedCategoryFilter === "all"
-      ? allProducts
-      : allProducts.filter((p) => String(p.brandCategoryId) === selectedCategoryFilter);
+  const filteredProducts = useMemo(() => {
+    let products = allProducts;
+    if (selectedAnimalFilter !== "all") {
+      const catIds = categories
+        .filter((c) => c.animal === selectedAnimalFilter)
+        .map((c) => c.id);
+      products = products.filter((p) => catIds.includes(p.brandCategoryId));
+    }
+    if (selectedSubcategoryFilter !== "all") {
+      const catIds = categories
+        .filter((c) => c.subcategory === selectedSubcategoryFilter)
+        .map((c) => c.id);
+      products = products.filter((p) => catIds.includes(p.brandCategoryId));
+    }
+    return products;
+  }, [allProducts, selectedAnimalFilter, selectedSubcategoryFilter, categories]);
 
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -406,6 +557,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     const cat = categories.find((c) => c.id === id);
     return cat ? cat.brandName : "Bilinmeyen";
   };
+
+  const getSubcategoryName = (animal: string, slug: string) => {
+    const subs = SUBCATEGORIES[animal] || [];
+    const sc = subs.find((s) => s.slug === slug);
+    return sc ? sc.name : slug;
+  };
+
+  const toggleAnimalExpand = (animalId: string) => {
+    setExpandedAnimals((prev) => ({ ...prev, [animalId]: !prev[animalId] }));
+  };
+
+  const categoriesByAnimal = useMemo(() => {
+    const grouped: Record<string, Record<string, BrandCategory[]>> = {};
+    for (const cat of categories) {
+      if (!grouped[cat.animal]) grouped[cat.animal] = {};
+      if (!grouped[cat.animal][cat.subcategory]) grouped[cat.animal][cat.subcategory] = [];
+      grouped[cat.animal][cat.subcategory].push(cat);
+    }
+    return grouped;
+  }, [categories]);
 
   return (
     <div className="min-h-screen bg-muted/30">
@@ -546,17 +717,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
         <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-            <h2 className="text-lg font-bold" data-testid="text-section-categories">Marka Kategorileri</h2>
+            <h2 className="text-lg font-bold" data-testid="text-section-categories">Kategoriler</h2>
             <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
               <DialogTrigger asChild>
                 <Button data-testid="btn-add-category">
                   <Plus className="w-4 h-4" />
-                  Yeni Kategori
+                  Yeni Marka Ekle
                 </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
-                  <DialogTitle>Yeni Marka Kategorisi</DialogTitle>
+                  <DialogTitle>Yeni Marka Ekle</DialogTitle>
                 </DialogHeader>
                 <CategoryForm
                   onSave={(data) => createCategoryMutation.mutate(data)}
@@ -566,35 +737,76 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </Dialog>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3" data-testid="grid-categories">
-            {categories.map((cat) => {
-              const productCount = allProducts.filter(
-                (p) => p.brandCategoryId === cat.id
+          <div className="space-y-3" data-testid="grid-categories">
+            {ANIMALS.map((animalInfo) => {
+              const animalCats = categoriesByAnimal[animalInfo.id] || {};
+              const totalBrands = Object.values(animalCats).flat().length;
+              const totalProducts = allProducts.filter(
+                (p) => categories.find((c) => c.id === p.brandCategoryId)?.animal === animalInfo.id
               ).length;
+              const isExpanded = expandedAnimals[animalInfo.id];
+              const AnimalIcon = animalInfo.icon;
+
               return (
-                <Card key={cat.id} data-testid={`card-category-${cat.id}`}>
-                  <CardContent className="p-4 flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="font-semibold truncate" data-testid={`text-category-name-${cat.id}`}>{cat.brandName}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {cat.animal} / {cat.subcategory}
-                      </p>
-                      <Badge variant="secondary" className="mt-1 text-xs no-default-hover-elevate no-default-active-elevate">
-                        {productCount} ürün
-                      </Badge>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => {
-                        if (confirm(`"${cat.brandName}" kategorisi ve tüm ürünleri silinecek. Emin misiniz?`)) {
-                          deleteCategoryMutation.mutate(cat.id);
-                        }
-                      }}
-                      data-testid={`btn-delete-category-${cat.id}`}
+                <Card key={animalInfo.id} data-testid={`card-animal-${animalInfo.id}`}>
+                  <CardContent className="p-0">
+                    <button
+                      className="w-full p-4 flex items-center justify-between gap-3 text-left"
+                      onClick={() => toggleAnimalExpand(animalInfo.id)}
+                      data-testid={`btn-expand-${animalInfo.id}`}
                     >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#2ecc40" }}>
+                          <AnimalIcon className="w-5 h-5 text-white" />
+                        </div>
+                        <div>
+                          <p className="font-bold text-base">{animalInfo.name}</p>
+                          <p className="text-xs text-muted-foreground">{totalBrands} marka, {totalProducts} ürün</p>
+                        </div>
+                      </div>
+                      {isExpanded ? <ChevronDown className="w-5 h-5 text-muted-foreground" /> : <ChevronRight className="w-5 h-5 text-muted-foreground" />}
+                    </button>
+
+                    {isExpanded && (
+                      <div className="px-4 pb-4 space-y-3">
+                        {(SUBCATEGORIES[animalInfo.id] || []).map((sc) => {
+                          const brands = animalCats[sc.slug] || [];
+                          if (brands.length === 0) return null;
+                          return (
+                            <div key={sc.slug} className="rounded-lg bg-muted/30 p-3" data-testid={`section-subcategory-${sc.slug}`}>
+                              <p className="text-sm font-semibold mb-2">{sc.name}</p>
+                              <div className="flex flex-wrap gap-2">
+                                {brands.map((brand) => {
+                                  const count = allProducts.filter((p) => p.brandCategoryId === brand.id).length;
+                                  return (
+                                    <div key={brand.id} className="flex items-center gap-1.5 bg-background rounded-md px-2.5 py-1.5 border" data-testid={`brand-tag-${brand.id}`}>
+                                      <span className="text-xs font-medium">{brand.brandName}</span>
+                                      <Badge variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate">
+                                        {count}
+                                      </Badge>
+                                      <button
+                                        className="text-muted-foreground/50 ml-0.5"
+                                        onClick={() => {
+                                          if (confirm(`"${brand.brandName}" markası ve tüm ürünleri silinecek. Emin misiniz?`)) {
+                                            deleteCategoryMutation.mutate(brand.id);
+                                          }
+                                        }}
+                                        data-testid={`btn-delete-category-${brand.id}`}
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {Object.keys(animalCats).length === 0 && (
+                          <p className="text-sm text-muted-foreground text-center py-2">Bu kategoride henüz marka yok</p>
+                        )}
+                      </div>
+                    )}
                   </CardContent>
                 </Card>
               );
@@ -611,19 +823,30 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   ({filteredProducts.length})
                 </span>
               </h2>
-              <Select value={selectedCategoryFilter} onValueChange={setSelectedCategoryFilter}>
-                <SelectTrigger className="w-[200px]" data-testid="select-filter-category">
+              <Select value={selectedAnimalFilter} onValueChange={(val) => { setSelectedAnimalFilter(val); setSelectedSubcategoryFilter("all"); }}>
+                <SelectTrigger className="w-[140px]" data-testid="select-filter-animal">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Tüm Kategoriler</SelectItem>
-                  {categories.map((c) => (
-                    <SelectItem key={c.id} value={String(c.id)}>
-                      {c.brandName}
-                    </SelectItem>
+                  <SelectItem value="all">Tümü</SelectItem>
+                  {ANIMALS.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
+              {selectedAnimalFilter !== "all" && (
+                <Select value={selectedSubcategoryFilter} onValueChange={setSelectedSubcategoryFilter}>
+                  <SelectTrigger className="w-[180px]" data-testid="select-filter-subcategory">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tüm Alt Kategoriler</SelectItem>
+                    {(SUBCATEGORIES[selectedAnimalFilter] || []).map((sc) => (
+                      <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
             </div>
 
             <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
@@ -663,6 +886,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 const discount = product.originalPrice
                   ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
                   : 0;
+                const cat = categories.find((c) => c.id === product.brandCategoryId);
 
                 return (
                   <Card key={product.id} data-testid={`card-admin-product-${product.id}`}>
@@ -696,9 +920,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               %{discount}
                             </Badge>
                           )}
-                          <Badge variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate">
-                            {getCategoryName(product.brandCategoryId)}
-                          </Badge>
+                          {cat && (
+                            <Badge variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate">
+                              {cat.brandName}
+                            </Badge>
+                          )}
+                          {cat && (
+                            <span className="text-[10px] text-muted-foreground">
+                              {ANIMALS.find((a) => a.id === cat.animal)?.name} / {getSubcategoryName(cat.animal, cat.subcategory)}
+                            </span>
+                          )}
                           {product.isActive ? (
                             <Badge className="text-[10px] no-default-hover-elevate no-default-active-elevate" style={{ backgroundColor: "#2ecc40", color: "#fff" }}>
                               Aktif
