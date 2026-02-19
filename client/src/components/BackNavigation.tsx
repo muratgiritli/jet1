@@ -1,21 +1,19 @@
 import { ArrowLeft } from "lucide-react";
-import { useLocation } from "wouter";
+import { Button } from "@/components/ui/button";
 
 export default function BackNavigation() {
-  const [location] = useLocation();
-
-  if (location === "/") return null;
-
   return (
-    <div
-      className="max-w-2xl mx-auto px-4 py-2 cursor-pointer flex items-center gap-2"
-      onClick={() => window.history.back()}
-      data-testid="btn-back-navigation"
-    >
-      <ArrowLeft className="w-4 h-4 text-muted-foreground shrink-0" />
-      <span className="text-sm font-medium text-muted-foreground">
+    <div className="max-w-2xl mx-auto px-4 py-2">
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => window.history.back()}
+        className="text-muted-foreground gap-2 px-2"
+        data-testid="button-back-navigation"
+      >
+        <ArrowLeft className="w-4 h-4 shrink-0" />
         ÖNCEKİ SAYFA GERİ DÖN
-      </span>
+      </Button>
     </div>
   );
 }
