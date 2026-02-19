@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
 import { seedDatabase } from "./seed";
-import { insertBrandCategorySchema, insertProductSchema } from "@shared/schema";
+import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
@@ -131,6 +131,72 @@ export async function registerRoutes(
   app.delete("/api/admin/products/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     await storage.deleteProduct(id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.get("/api/product-detail/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    const product = await storage.getProduct(id);
+    if (!product) return res.status(404).json({ message: "Product not found" });
+    const category = await storage.getBrandCategory(product.brandCategoryId);
+    const allSections = await storage.getAllCrossSellSections();
+    const activeSections = allSections.filter(s => s.isActive).sort((a, b) => a.sortOrder - b.sortOrder);
+    const sectionsWithProducts = await Promise.all(
+      activeSections.map(async (section) => {
+        const items = await storage.getCrossSellItemsBySection(section.id);
+        const sectionProducts = (await Promise.all(
+          items.sort((a, b) => a.sortOrder - b.sortOrder).map(async (item) => {
+            const p = await storage.getProduct(item.productId);
+            return p && p.isActive ? p : null;
+          })
+        )).filter(Boolean);
+        return { ...section, products: sectionProducts };
+      })
+    );
+    res.json({ product, category, crossSellSections: sectionsWithProducts.filter(s => s.products.length > 0) });
+  });
+
+  app.get("/api/cross-sell-sections", async (_req, res) => {
+    const sections = await storage.getAllCrossSellSections();
+    const sectionsWithItems = await Promise.all(
+      sections.sort((a, b) => a.sortOrder - b.sortOrder).map(async (section) => {
+        const items = await storage.getCrossSellItemsBySection(section.id);
+        return { ...section, items };
+      })
+    );
+    res.json(sectionsWithItems);
+  });
+
+  app.post("/api/admin/cross-sell-sections", requireAdmin, async (req, res) => {
+    const parsed = insertCrossSellSectionSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
+    const section = await storage.createCrossSellSection(parsed.data);
+    res.status(201).json(section);
+  });
+
+  app.patch("/api/admin/cross-sell-sections/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const section = await storage.updateCrossSellSection(id, req.body);
+    if (!section) return res.status(404).json({ message: "Section not found" });
+    res.json(section);
+  });
+
+  app.delete("/api/admin/cross-sell-sections/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteCrossSellSection(id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.post("/api/admin/cross-sell-items", requireAdmin, async (req, res) => {
+    const parsed = insertCrossSellItemSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
+    const item = await storage.addCrossSellItem(parsed.data);
+    res.status(201).json(item);
+  });
+
+  app.delete("/api/admin/cross-sell-items/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.removeCrossSellItem(id);
     res.json({ message: "Deleted" });
   });
 

@@ -5,7 +5,9 @@ import {
   type User, type InsertUser,
   type BrandCategory, type InsertBrandCategory,
   type Product, type InsertProduct,
-  users, brandCategories, products,
+  type CrossSellSection, type InsertCrossSellSection,
+  type CrossSellItem, type InsertCrossSellItem,
+  users, brandCategories, products, crossSellSections, crossSellItems,
 } from "@shared/schema";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -28,6 +30,16 @@ export interface IStorage {
   createProduct(data: InsertProduct): Promise<Product>;
   updateProduct(id: number, data: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<void>;
+
+  getAllCrossSellSections(): Promise<CrossSellSection[]>;
+  getCrossSellSection(id: number): Promise<CrossSellSection | undefined>;
+  createCrossSellSection(data: InsertCrossSellSection): Promise<CrossSellSection>;
+  updateCrossSellSection(id: number, data: Partial<InsertCrossSellSection>): Promise<CrossSellSection | undefined>;
+  deleteCrossSellSection(id: number): Promise<void>;
+
+  getCrossSellItemsBySection(sectionId: number): Promise<CrossSellItem[]>;
+  addCrossSellItem(data: InsertCrossSellItem): Promise<CrossSellItem>;
+  removeCrossSellItem(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -94,7 +106,45 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteProduct(id: number): Promise<void> {
+    await db.delete(crossSellItems).where(eq(crossSellItems.productId, id));
     await db.delete(products).where(eq(products.id, id));
+  }
+
+  async getAllCrossSellSections(): Promise<CrossSellSection[]> {
+    return db.select().from(crossSellSections);
+  }
+
+  async getCrossSellSection(id: number): Promise<CrossSellSection | undefined> {
+    const [section] = await db.select().from(crossSellSections).where(eq(crossSellSections.id, id));
+    return section;
+  }
+
+  async createCrossSellSection(data: InsertCrossSellSection): Promise<CrossSellSection> {
+    const [section] = await db.insert(crossSellSections).values(data).returning();
+    return section;
+  }
+
+  async updateCrossSellSection(id: number, data: Partial<InsertCrossSellSection>): Promise<CrossSellSection | undefined> {
+    const [section] = await db.update(crossSellSections).set(data).where(eq(crossSellSections.id, id)).returning();
+    return section;
+  }
+
+  async deleteCrossSellSection(id: number): Promise<void> {
+    await db.delete(crossSellItems).where(eq(crossSellItems.sectionId, id));
+    await db.delete(crossSellSections).where(eq(crossSellSections.id, id));
+  }
+
+  async getCrossSellItemsBySection(sectionId: number): Promise<CrossSellItem[]> {
+    return db.select().from(crossSellItems).where(eq(crossSellItems.sectionId, sectionId));
+  }
+
+  async addCrossSellItem(data: InsertCrossSellItem): Promise<CrossSellItem> {
+    const [item] = await db.insert(crossSellItems).values(data).returning();
+    return item;
+  }
+
+  async removeCrossSellItem(id: number): Promise<void> {
+    await db.delete(crossSellItems).where(eq(crossSellItems.id, id));
   }
 }
 

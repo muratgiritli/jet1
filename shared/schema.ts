@@ -44,3 +44,25 @@ export const products = pgTable("products", {
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export type InsertProduct = z.infer<typeof insertProductSchema>;
 export type Product = typeof products.$inferSelect;
+
+export const crossSellSections = pgTable("cross_sell_sections", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+});
+
+export const insertCrossSellSectionSchema = createInsertSchema(crossSellSections).omit({ id: true });
+export type InsertCrossSellSection = z.infer<typeof insertCrossSellSectionSchema>;
+export type CrossSellSection = typeof crossSellSections.$inferSelect;
+
+export const crossSellItems = pgTable("cross_sell_items", {
+  id: serial("id").primaryKey(),
+  sectionId: integer("section_id").notNull(),
+  productId: integer("product_id").notNull(),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const insertCrossSellItemSchema = createInsertSchema(crossSellItems).omit({ id: true });
+export type InsertCrossSellItem = z.infer<typeof insertCrossSellItemSchema>;
+export type CrossSellItem = typeof crossSellItems.$inferSelect;

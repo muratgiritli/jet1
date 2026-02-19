@@ -32,7 +32,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Product, BrandCategory } from "@shared/schema";
+import type { Product, BrandCategory, CrossSellSection, CrossSellItem } from "@shared/schema";
 
 function LoginForm({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState("");
@@ -329,6 +329,59 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
   });
 
+  const [crossSellDialogOpen, setCrossSellDialogOpen] = useState(false);
+  const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
+  const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null);
+  const [newSectionTitle, setNewSectionTitle] = useState("");
+  const [newSectionSortOrder, setNewSectionSortOrder] = useState("0");
+  const [selectedProductId, setSelectedProductId] = useState("");
+
+  const { data: crossSellSections = [] } = useQuery<(CrossSellSection & { items: CrossSellItem[] })[]>({
+    queryKey: ["/api/cross-sell-sections"],
+  });
+
+  const createSectionMutation = useMutation({
+    mutationFn: async (data: { title: string; sortOrder: number; isActive: boolean }) => {
+      await apiRequest("POST", "/api/admin/cross-sell-sections", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cross-sell-sections"] });
+      setCrossSellDialogOpen(false);
+      setNewSectionTitle("");
+      setNewSectionSortOrder("0");
+    },
+  });
+
+  const deleteSectionMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/cross-sell-sections/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cross-sell-sections"] });
+    },
+  });
+
+  const addItemMutation = useMutation({
+    mutationFn: async (data: { sectionId: number; productId: number; sortOrder: number }) => {
+      await apiRequest("POST", "/api/admin/cross-sell-items", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cross-sell-sections"] });
+      setAddItemDialogOpen(false);
+      setSelectedProductId("");
+      setSelectedSectionId(null);
+    },
+  });
+
+  const removeItemMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/cross-sell-items/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cross-sell-sections"] });
+    },
+  });
+
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/admin/logout");
@@ -603,6 +656,178 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 isPending={updateProductMutation.isPending}
               />
             )}
+          </DialogContent>
+        </Dialog>
+
+        <section>
+          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+            <h2 className="text-lg font-bold" data-testid="text-section-cross-sell">Ürün Sayfası Öneri Bölümleri</h2>
+            <Dialog open={crossSellDialogOpen} onOpenChange={setCrossSellDialogOpen}>
+              <DialogTrigger asChild>
+                <Button data-testid="btn-add-cross-sell-section">
+                  <Plus className="w-4 h-4" />
+                  Yeni Bölüm
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Yeni Öneri Bölümü</DialogTitle>
+                </DialogHeader>
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    createSectionMutation.mutate({
+                      title: newSectionTitle,
+                      sortOrder: parseInt(newSectionSortOrder) || 0,
+                      isActive: true,
+                    });
+                  }}
+                  className="space-y-4"
+                >
+                  <div className="space-y-2">
+                    <Label>Bölüm Başlığı</Label>
+                    <Input
+                      value={newSectionTitle}
+                      onChange={(e) => setNewSectionTitle(e.target.value)}
+                      required
+                      data-testid="input-cross-sell-section-title"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sıralama</Label>
+                    <Input
+                      type="number"
+                      value={newSectionSortOrder}
+                      onChange={(e) => setNewSectionSortOrder(e.target.value)}
+                      data-testid="input-cross-sell-section-sort-order"
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={createSectionMutation.isPending} data-testid="btn-save-cross-sell-section">
+                    {createSectionMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Bölüm Ekle"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </div>
+
+          <div className="space-y-3" data-testid="list-cross-sell-sections">
+            {crossSellSections.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center">
+                  <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                  <p className="text-muted-foreground" data-testid="text-no-cross-sell-sections">Henüz öneri bölümü eklenmemiş</p>
+                </CardContent>
+              </Card>
+            ) : (
+              crossSellSections.map((section) => (
+                <Card key={section.id} data-testid={`card-cross-sell-section-${section.id}`}>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-semibold" data-testid={`text-cross-sell-section-title-${section.id}`}>{section.title}</span>
+                        <Badge variant="secondary" className="text-xs no-default-hover-elevate no-default-active-elevate" data-testid={`badge-cross-sell-item-count-${section.id}`}>
+                          {section.items.length} ürün
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setSelectedSectionId(section.id);
+                            setAddItemDialogOpen(true);
+                          }}
+                          data-testid={`btn-add-item-to-section-${section.id}`}
+                        >
+                          <Plus className="w-4 h-4" />
+                          Ürün Ekle
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            if (confirm(`"${section.title}" bölümü silinecek. Emin misiniz?`)) {
+                              deleteSectionMutation.mutate(section.id);
+                            }
+                          }}
+                          data-testid={`btn-delete-cross-sell-section-${section.id}`}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    {section.items.length > 0 && (
+                      <div className="space-y-1">
+                        {section.items.map((item) => {
+                          const product = allProducts.find((p) => p.id === item.productId);
+                          return (
+                            <div key={item.id} className="flex items-center justify-between gap-3 py-1 px-2 rounded-md bg-muted/30" data-testid={`row-cross-sell-item-${item.id}`}>
+                              <span className="text-sm truncate" data-testid={`text-cross-sell-item-name-${item.id}`}>
+                                {product ? product.name : `Ürün #${item.productId}`}
+                              </span>
+                              <Button
+                                variant="outline"
+                                size="icon"
+                                onClick={() => removeItemMutation.mutate(item.id)}
+                                data-testid={`btn-remove-cross-sell-item-${item.id}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </div>
+        </section>
+
+        <Dialog open={addItemDialogOpen} onOpenChange={(open) => {
+          setAddItemDialogOpen(open);
+          if (!open) {
+            setSelectedProductId("");
+            setSelectedSectionId(null);
+          }
+        }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Bölüme Ürün Ekle</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Ürün Seçin</Label>
+                <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                  <SelectTrigger data-testid="select-cross-sell-product">
+                    <SelectValue placeholder="Ürün seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allProducts.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)} data-testid={`option-cross-sell-product-${p.id}`}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button
+                className="w-full"
+                disabled={!selectedProductId || addItemMutation.isPending}
+                onClick={() => {
+                  if (selectedSectionId && selectedProductId) {
+                    addItemMutation.mutate({
+                      sectionId: selectedSectionId,
+                      productId: parseInt(selectedProductId),
+                      sortOrder: 0,
+                    });
+                  }
+                }}
+                data-testid="btn-confirm-add-cross-sell-item"
+              >
+                {addItemMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ekle"}
+              </Button>
+            </div>
           </DialogContent>
         </Dialog>
       </main>
