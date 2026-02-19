@@ -19,15 +19,15 @@ import BackNavigation from "@/components/BackNavigation";
 
 const SLUG_TO_CATEGORY: Record<string, string> = {
   "kedi-malti": "MALT",
-  "kedi-bakim-saglik": "BAKIM VE AKSESUAR",
-  "uygun-cuval": "UYGUN ÇUVAL",
-  "kedi-tuvaleti": "KUMU",
-  "acik-mama": "KUMU",
-  "tuvalet-malzemeleri": "KUMU",
-  "yas-mama": "YAŞ MAMASI",
-  "odul-kemik": "ÖDÜLLERİ",
-  "kedi-odulu": "ÖDÜLLERİ",
-  "bakim-saglik": "BAKIM VE AKSESUAR",
+  "kedi-bakim-saglik": "BAKIM VE SAĞLIK",
+  "uygun-cuval": "ÇUVAL MAMA",
+  "kedi-tuvaleti": "KUM",
+  "acik-mama": "KUM",
+  "tuvalet-malzemeleri": "KUM",
+  "yas-mama": "YAŞ MAMA",
+  "odul-kemik": "ÖDÜL",
+  "kedi-odulu": "ÖDÜL",
+  "bakim-saglik": "BAKIM VE SAĞLIK",
 };
 
 function QuantityControl({
