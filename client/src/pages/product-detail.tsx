@@ -282,13 +282,6 @@ function InlineSubcategories({
     return [];
   }, [selectedSc, allBrandCategories, allDbProducts, animal]);
 
-  useEffect(() => {
-    if (selectedSlug && sectionRef.current) {
-      setTimeout(() => {
-        sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    }
-  }, [selectedSlug]);
 
   return (
     <section className="mt-8" data-testid="section-other-categories" ref={sectionRef}>

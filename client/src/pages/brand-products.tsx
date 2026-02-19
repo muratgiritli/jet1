@@ -300,14 +300,6 @@ function InlineSubcategories({
     return [];
   }, [selectedSc, allBrandCategories, allDbProducts, animal]);
 
-  useEffect(() => {
-    if (selectedSlug && sectionRef.current) {
-      setTimeout(() => {
-        sectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }, 100);
-    }
-  }, [selectedSlug]);
-
   return (
     <section className="mt-8" data-testid="section-other-categories" ref={sectionRef}>
       <h3 className="text-sm font-bold text-center text-muted-foreground mb-3 uppercase tracking-wide" data-testid="text-other-categories-title">
