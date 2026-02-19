@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FloatingCartBar from "@/components/FloatingCartBar";
+import BackNavigation from "@/components/BackNavigation";
 
 interface SubCategory {
   name: string;
@@ -101,6 +102,8 @@ export default function CategoryPage() {
           </h1>
         </div>
       </header>
+
+      <BackNavigation />
 
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
         <div className="text-center mb-6">

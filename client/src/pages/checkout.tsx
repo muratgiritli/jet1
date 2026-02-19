@@ -25,6 +25,7 @@ import {
   PAYMENT_OPTIONS,
 } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
+import BackNavigation from "@/components/BackNavigation";
 
 const paymentIcons: Record<string, typeof CreditCard> = {
   nakit: Banknote,
@@ -91,6 +92,8 @@ export default function Checkout() {
           )}
         </div>
       </header>
+
+      <BackNavigation />
 
       <main className="max-w-2xl mx-auto px-4 pb-8">
         {selectedProducts.length === 0 ? (

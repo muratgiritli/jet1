@@ -16,6 +16,7 @@ import {
   type Product,
 } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
+import BackNavigation from "@/components/BackNavigation";
 
 function QuantityControl({
   productId,
@@ -159,6 +160,8 @@ export default function Home() {
           )}
         </div>
       </header>
+
+      <BackNavigation />
 
       <main className="max-w-2xl mx-auto px-4 pb-24">
         <section className="mt-6">

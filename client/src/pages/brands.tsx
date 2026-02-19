@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import FloatingCartBar from "@/components/FloatingCartBar";
+import BackNavigation from "@/components/BackNavigation";
 
 import royalCaninLogo from "@/assets/images/brands/royal-canin.png";
 import proPlanLogo from "@/assets/images/brands/pro-plan.png";
@@ -174,6 +175,8 @@ export default function BrandsPage() {
           </h1>
         </div>
       </header>
+
+      <BackNavigation />
 
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
         <div className="text-center mb-6">

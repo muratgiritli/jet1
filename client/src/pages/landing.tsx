@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import FloatingCartBar from "@/components/FloatingCartBar";
+import BackNavigation from "@/components/BackNavigation";
 
 import bannerScooter from "@/assets/images/banner-scooter.png";
 import bannerCity from "@/assets/images/banner-city.png";
@@ -51,6 +52,8 @@ export default function Landing() {
           </ul>
         </div>
       </nav>
+
+      <BackNavigation />
 
       <main className="flex-1 max-w-lg mx-auto px-3 w-full">
         <section className="mt-3 grid grid-cols-2 gap-2.5" data-testid="section-banners">

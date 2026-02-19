@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import FloatingCartBar from "@/components/FloatingCartBar";
+import BackNavigation from "@/components/BackNavigation";
 
 function QuantityControl({
   productId,
@@ -204,6 +205,8 @@ export default function BrandProductsPage() {
           )}
         </div>
       </header>
+
+      <BackNavigation />
 
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6 pb-28">
         <div className="text-center mb-6">

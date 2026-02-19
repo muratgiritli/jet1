@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import BackNavigation from "@/components/BackNavigation";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -351,6 +352,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </Button>
         </div>
       </header>
+
+      <BackNavigation />
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         <section>
