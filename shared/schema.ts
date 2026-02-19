@@ -38,6 +38,7 @@ export const products = pgTable("products", {
   img: text("img"),
   brandCategoryId: integer("brand_category_id").notNull(),
   isActive: boolean("is_active").notNull().default(true),
+  stock: integer("stock").notNull().default(10),
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });

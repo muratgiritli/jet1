@@ -125,6 +125,7 @@ function ProductForm({
   const [originalPrice, setOriginalPrice] = useState(product?.originalPrice?.toString() || "");
   const [skt, setSkt] = useState(product?.skt || "");
   const [img, setImg] = useState(product?.img || "");
+  const [stock, setStock] = useState(product?.stock?.toString() ?? "10");
   const [brandCategoryId, setBrandCategoryId] = useState(
     product?.brandCategoryId?.toString() || ""
   );
@@ -140,6 +141,7 @@ function ProductForm({
           skt: skt || null,
           img: img || null,
           brandCategoryId: parseInt(brandCategoryId),
+          stock: parseInt(stock) || 0,
         });
       }}
       className="space-y-4"
@@ -173,10 +175,14 @@ function ProductForm({
           <Input type="number" step="0.01" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} data-testid="input-product-original-price" />
         </div>
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="space-y-2">
           <Label>SKT</Label>
           <Input value={skt} onChange={(e) => setSkt(e.target.value)} placeholder="03.2027" data-testid="input-product-skt" />
+        </div>
+        <div className="space-y-2">
+          <Label>Stok</Label>
+          <Input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} data-testid="input-product-stock" />
         </div>
         <div className="space-y-2">
           <Label>Görsel URL</Label>
@@ -520,6 +526,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               Yakında Gelecek
                             </Badge>
                           )}
+                          <Badge
+                            className="text-[10px] no-default-hover-elevate no-default-active-elevate"
+                            style={{
+                              backgroundColor: product.stock > 0 ? "#1976d2" : "#d32f2f",
+                              color: "#fff",
+                            }}
+                            data-testid={`badge-stock-${product.id}`}
+                          >
+                            Stok: {product.stock}
+                          </Badge>
                           {product.skt && (
                             <span className="text-[10px] text-muted-foreground">
                               SKT: {product.skt}

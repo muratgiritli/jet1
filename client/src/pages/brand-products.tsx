@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRoute } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2 } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -110,11 +110,18 @@ function BrandProductCard({
             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
         </div>
-        <QuantityControl
-          productId={pid}
-          quantity={quantity}
-          onUpdate={onUpdate}
-        />
+        {product.stock === 0 ? (
+          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold" style={{ backgroundColor: "#fff3e0", color: "#e65100" }} data-testid={`badge-out-of-stock-${pid}`}>
+            <Bell className="w-3.5 h-3.5" />
+            Gelince Haber Ver
+          </div>
+        ) : (
+          <QuantityControl
+            productId={pid}
+            quantity={quantity}
+            onUpdate={onUpdate}
+          />
+        )}
       </CardContent>
     </Card>
   );
