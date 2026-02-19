@@ -5,24 +5,9 @@ import { Button } from "@/components/ui/button";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
 
-import royalCaninLogo from "@/assets/images/brands/royal-canin.png";
-import proPlanLogo from "@/assets/images/brands/pro-plan.png";
-import hillsLogo from "@/assets/images/brands/hills.png";
-import britLogo from "@/assets/images/brands/brit.png";
-import prochoiceLogo from "@/assets/images/brands/prochoice.png";
-import reflexLogo from "@/assets/images/brands/reflex.png";
-import reflexPlusLogo from "@/assets/images/brands/reflex-plus.png";
-import acanaLogo from "@/assets/images/brands/acana.png";
-import orijenLogo from "@/assets/images/brands/orijen.png";
-import gimdogLogo from "@/assets/images/brands/gimdog.png";
-import pedigreeLogo from "@/assets/images/brands/pedigree.png";
-import goodyLogo from "@/assets/images/brands/goody.png";
-import bonusLogo from "@/assets/images/brands/bonus.png";
-
 interface Brand {
   name: string;
   slug: string;
-  logo?: string;
   color?: string;
 }
 
@@ -35,23 +20,34 @@ interface SubcategoryBrands {
 const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
   kopek: {
     "mama-markalari": {
-      title: "Köpek Mama Markaları",
+      title: "Köpek Maması",
       subtitle: "Buradan markanızı seçebilirsiniz.",
       brands: [
-        { name: "Royal Canin", slug: "royal-canin", logo: royalCaninLogo },
-        { name: "Pro Plan", slug: "pro-plan", logo: proPlanLogo },
-        { name: "Hills", slug: "hills", logo: hillsLogo },
-        { name: "Brit", slug: "brit", logo: britLogo },
-        { name: "ProChoice", slug: "prochoice", logo: prochoiceLogo },
-        { name: "Reflex", slug: "reflex", logo: reflexLogo },
-        { name: "Reflex Plus", slug: "reflex-plus", logo: reflexPlusLogo },
-        { name: "Acana", slug: "acana", logo: acanaLogo },
-        { name: "Orijen", slug: "orijen", logo: orijenLogo },
-        { name: "GimDog", slug: "gimdog", logo: gimdogLogo },
-        { name: "Pedigree", slug: "pedigree", logo: pedigreeLogo },
-        { name: "Goody", slug: "goody", logo: goodyLogo },
-        { name: "Bonus", slug: "bonus", logo: bonusLogo },
+        { name: "Royal Canin", slug: "royal-canin", color: "#C62828" },
+        { name: "Pro Plan", slug: "pro-plan", color: "#1565C0" },
+        { name: "Hill's", slug: "hills", color: "#2E7D32" },
+        { name: "Brit", slug: "brit", color: "#0277BD" },
+        { name: "ProChoice", slug: "prochoice", color: "#00838F" },
+        { name: "Reflex", slug: "reflex", color: "#F57F17" },
+        { name: "Reflex Plus", slug: "reflex-plus", color: "#FF9800" },
+        { name: "Acana", slug: "acana", color: "#4CAF50" },
+        { name: "Orijen", slug: "orijen", color: "#3F51B5" },
+        { name: "GimDog", slug: "gimdog", color: "#FF5722" },
+        { name: "Pedigree", slug: "pedigree", color: "#E91E63" },
+        { name: "Goody", slug: "goody", color: "#9C27B0" },
+        { name: "Bonus", slug: "bonus", color: "#607D8B" },
+        { name: "Uygun Çuval Mamalar", slug: "uygun-cuval", color: "#455A64" },
       ],
+    },
+    "acik-mama": {
+      title: "Köpek Açık Mama",
+      subtitle: "Buradan markanızı seçebilirsiniz.",
+      brands: [],
+    },
+    "yas-mama": {
+      title: "Köpek Yaş Mama",
+      subtitle: "Buradan markanızı seçebilirsiniz.",
+      brands: [],
     },
   },
   kedi: {
@@ -187,32 +183,15 @@ export default function BrandsPage() {
               className="w-full max-w-[280px]"
             >
               <Link href={brand.slug === "uygun-cuval" ? `/siparis?kategori=${animalSlug}&alt=uygun-cuval` : `/siparis/${animalSlug}/${subSlug}/${brand.slug}`}>
-                {brand.logo ? (
-                  <div
-                    className="rounded-md border overflow-visible hover-elevate active-elevate-2"
-                    data-testid={`card-brand-${brand.slug}`}
-                  >
-                    <div className="flex items-center justify-center bg-white rounded-md py-2 px-3">
-                      <img
-                        src={brand.logo}
-                        alt={brand.name}
-                        className="w-full max-h-10 object-contain"
-                        data-testid={`img-brand-${brand.slug}`}
-                      />
-                      <span className="sr-only" data-testid={`text-brand-name-${brand.slug}`}>{brand.name}</span>
-                    </div>
-                  </div>
-                ) : (
-                  <div
-                    className="rounded-md overflow-visible hover-elevate active-elevate-2 flex items-center justify-center py-3 px-4"
-                    style={{ backgroundColor: brand.color || "#607D8B" }}
-                    data-testid={`card-brand-${brand.slug}`}
-                  >
-                    <span className="text-white font-bold text-base tracking-wide" data-testid={`text-brand-name-${brand.slug}`}>
-                      {brand.name}
-                    </span>
-                  </div>
-                )}
+                <div
+                  className="rounded-md overflow-visible hover-elevate active-elevate-2 flex items-center justify-center py-3 px-4"
+                  style={{ backgroundColor: brand.color || "#607D8B" }}
+                  data-testid={`card-brand-${brand.slug}`}
+                >
+                  <span className="text-white font-bold text-base tracking-wide" data-testid={`text-brand-name-${brand.slug}`}>
+                    {brand.name}
+                  </span>
+                </div>
               </Link>
             </motion.div>
           ))}
