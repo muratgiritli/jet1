@@ -11,7 +11,6 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import {
-  MAIN_PRODUCTS,
   CATEGORIES,
   type Product,
 } from "@/lib/data";
@@ -111,32 +110,6 @@ function ProductCard({
   );
 }
 
-function MainProductRow({
-  product,
-  quantity,
-  onUpdate,
-}: {
-  product: Product;
-  quantity: number;
-  onUpdate: (id: string, delta: number) => void;
-}) {
-  return (
-    <Card data-testid={`card-main-${product.id}`}>
-      <CardContent className="p-4 flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex flex-col gap-1">
-          <span className="font-bold text-base" data-testid={`text-main-name-${product.id}`}>{product.name}</span>
-          <span className="text-primary font-bold text-lg" data-testid={`text-main-price-${product.id}`}>{product.price} TL</span>
-        </div>
-        <QuantityControl
-          productId={product.id}
-          quantity={quantity}
-          onUpdate={onUpdate}
-        />
-      </CardContent>
-    </Card>
-  );
-}
-
 export default function Home() {
   const {
     basket,
@@ -182,22 +155,6 @@ export default function Home() {
 
       <main className="max-w-2xl mx-auto px-4 pb-24">
         <section className="mt-6">
-          <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-main">
-            Ana Ürün
-          </h2>
-          <div className="space-y-3">
-            {MAIN_PRODUCTS.map((p) => (
-              <MainProductRow
-                key={p.id}
-                product={p}
-                quantity={basket[p.id] || 0}
-                onUpdate={updateQty}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="mt-8">
           <Tabs defaultValue={defaultTab} key={defaultTab}>
             <TabsList className="w-full flex-wrap h-auto gap-1 p-1" data-testid="tabs-categories">
               {CATEGORIES.map((cat) => (
