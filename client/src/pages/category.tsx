@@ -48,6 +48,7 @@ const ANIMAL_CATEGORIES: Record<string, AnimalCategory> = {
       { name: "Kedi\nTaşıma", slug: "kedi-tasima", color: "#37474F" },
       { name: "Kedi\nTuvaleti", slug: "kedi-tuvaleti", color: "#795548" },
       { name: "Kedi Konserve\nMamaları", slug: "kedi-konserve", color: "#FF5722", hasBrands: true },
+      { name: "Uygun Çuval\nMamalar", slug: "uygun-cuval", color: "#1A237E" },
     ],
   },
   kus: {
