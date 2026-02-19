@@ -70,7 +70,6 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
         { name: "Pronature", slug: "pronature", color: "#4CAF50" },
         { name: "Brit Care", slug: "brit-care", color: "#0277BD" },
         { name: "Felicia", slug: "felicia", color: "#9C27B0" },
-        { name: "Friskies", slug: "friskies", color: "#FF9800" },
         { name: "N&D", slug: "nd", color: "#3F51B5" },
         { name: "Uygun Çuval Mamalar", slug: "uygun-cuval", color: "#607D8B" },
       ],
