@@ -1,9 +1,9 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
+import { Truck, Phone, CreditCard, MapPin } from "lucide-react";
 import FloatingCartBar from "@/components/FloatingCartBar";
 
-import bannerScooter from "@/assets/images/banner-scooter.png";
-import bannerCity from "@/assets/images/banner-city.png";
+import heroBanner from "@/assets/images/hero-banner.png";
 import catDog from "@/assets/images/cat-dog.png";
 import catCat from "@/assets/images/cat-cat.png";
 import catBird from "@/assets/images/cat-bird.png";
@@ -23,9 +23,16 @@ const NAV_ITEMS = [
   { name: "Kemirgen", href: "/kategori/kemirgen" },
 ];
 
+const FEATURES = [
+  { icon: Truck, text: "Samsun İçi Teslimat" },
+  { icon: MapPin, text: "Kapınıza Kadar" },
+  { icon: CreditCard, text: "Kapıda Ödeme" },
+  { icon: Phone, text: "0850 840 3959" },
+];
+
 export default function Landing() {
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f5f5f5" }}>
+    <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-center">
           <h1 className="text-3xl font-extrabold tracking-tight" data-testid="text-brand-logo">
@@ -52,64 +59,79 @@ export default function Landing() {
         </div>
       </nav>
 
-      <main className="flex-1 max-w-lg mx-auto px-3 w-full">
-        <section className="mt-3 grid grid-cols-2 gap-2.5" data-testid="section-banners">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4 }}
-          >
-            <Link href="/siparis">
-              <div className="relative rounded-xl overflow-hidden aspect-square cursor-pointer" data-testid="banner-delivery">
-                <img
-                  src={bannerScooter}
-                  alt="Sen İste Jet İle Gelsin"
-                  className="w-full h-full object-cover"
-                  data-testid="img-banner-delivery"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent flex items-end p-3">
-                  <p className="text-white font-extrabold text-base leading-tight drop-shadow-lg" data-testid="text-banner-slogan">
-                    Sen İste<br />Jet İle Gelsin
+      <main className="flex-1 max-w-lg mx-auto w-full">
+        <motion.section
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5 }}
+          data-testid="section-hero-banner"
+        >
+          <Link href="/siparis">
+            <div className="relative w-full aspect-[16/9] cursor-pointer overflow-hidden" data-testid="banner-hero">
+              <img
+                src={heroBanner}
+                alt="JetGo - Samsun İçi Pet Shop Teslimat"
+                className="w-full h-full object-cover"
+                data-testid="img-hero-banner"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
+              <div className="absolute inset-0 flex flex-col items-center justify-end pb-5 px-4">
+                <motion.div
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: 0.2 }}
+                  className="text-center"
+                >
+                  <p className="text-white font-extrabold text-2xl leading-tight drop-shadow-lg" data-testid="text-hero-slogan">
+                    Samsun'da Kapınıza Teslim
                   </p>
-                </div>
+                  <p className="text-white/90 text-sm font-medium mt-1 drop-shadow-md" data-testid="text-hero-subslogan">
+                    Pet shop ürünleri artık bir tık uzağınızda
+                  </p>
+                </motion.div>
               </div>
-            </Link>
-          </motion.div>
+            </div>
+          </Link>
+        </motion.section>
 
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-          >
-            <Link href="/siparis">
-              <div className="relative rounded-xl overflow-hidden aspect-square cursor-pointer" data-testid="banner-promo">
-                <img
-                  src={bannerCity}
-                  alt="JetGo Şimdi Samsun'da"
-                  className="w-full h-full object-cover"
-                  data-testid="img-banner-promo"
-                />
-                <div className="absolute inset-0 flex flex-col items-center justify-center p-3">
-                  <p className="font-extrabold text-2xl leading-none drop-shadow-lg" style={{ color: "#2ecc40" }} data-testid="text-banner-brand">
-                    JETGO
-                  </p>
-                  <p className="font-bold text-sm mt-1 drop-shadow-lg" style={{ color: "#d32f2f" }} data-testid="text-banner-city">
-                    Şimdi SAMSUN'DA
-                  </p>
-                </div>
-              </div>
-            </Link>
-          </motion.div>
-        </section>
+        <motion.section
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.15 }}
+          className="px-3 py-3"
+          data-testid="section-features"
+        >
+          <div className="grid grid-cols-4 gap-2">
+            {FEATURES.map((f, i) => (
+              <motion.div
+                key={f.text}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.2 + 0.05 * i }}
+                className="flex flex-col items-center gap-1 py-2 px-1 rounded-lg"
+                style={{ backgroundColor: "#f0faf0" }}
+                data-testid={`feature-${i}`}
+              >
+                <f.icon className="w-5 h-5" style={{ color: "#2ecc40" }} />
+                <span className="text-[10px] font-semibold text-center leading-tight" style={{ color: "#333" }}>
+                  {f.text}
+                </span>
+              </motion.div>
+            ))}
+          </div>
+        </motion.section>
 
-        <section className="mt-4 mb-4">
+        <section className="px-3 pb-4">
+          <h2 className="text-base font-bold mb-2.5 text-center" style={{ color: "#333" }} data-testid="text-categories-heading">
+            Kategoriler
+          </h2>
           <div className="grid grid-cols-2 gap-3" data-testid="grid-categories">
             {CATEGORIES.map((cat, i) => (
               <motion.div
                 key={cat.name}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: 0.1 * i }}
+                transition={{ duration: 0.35, delay: 0.25 + 0.08 * i }}
               >
                 <Link href={cat.href}>
                   <div className="cursor-pointer" data-testid={`card-category-${cat.name}`}>
@@ -135,7 +157,7 @@ export default function Landing() {
 
       <footer style={{ backgroundColor: "#2ecc40" }} className="py-5 px-4 text-center">
         <p className="text-white font-semibold text-sm leading-relaxed" data-testid="text-delivery-info">
-          Samsun içinde kapınıza getiriyoruz..
+          Samsun içinde kapınıza getiriyoruz
         </p>
         <p className="text-white/90 text-sm mt-1" data-testid="text-payment-methods">
           Havale / Kapıda nakit / Kapıda kredi kartı / QR ödeme
