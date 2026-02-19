@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Link } from "wouter";
+import { Link, useSearch } from "wouter";
 import {
   ShoppingCart,
   Plus,
@@ -17,6 +17,18 @@ import {
 } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
 import BackNavigation from "@/components/BackNavigation";
+
+const SLUG_TO_CATEGORY: Record<string, string> = {
+  "kedi-malti": "KEDİ MALT",
+  "kedi-bakim-saglik": "BAKIM VE AKSESUAR",
+  "uygun-cuval": "KEDİ UYGUN ÇUVAL",
+  "kedi-tuvaleti": "KEDİ KUMU",
+  "acik-mama": "KEDİ KUMU",
+  "tuvalet-malzemeleri": "KEDİ KUMU",
+  "yas-mama": "KEDİ YAŞ MAMASI",
+  "odul-kemik": "KEDİ ÖDÜLLERİ",
+  "bakim-saglik": "BAKIM VE AKSESUAR",
+};
 
 function QuantityControl({
   productId,
@@ -132,7 +144,11 @@ export default function Home() {
     itemCount,
   } = useCart();
 
-  const defaultTab = CATEGORIES[0]?.title || "";
+  const searchString = useSearch();
+  const params = new URLSearchParams(searchString);
+  const altSlug = params.get("alt") || "";
+  const mappedCategory = SLUG_TO_CATEGORY[altSlug] || "";
+  const defaultTab = (mappedCategory && CATEGORIES.find(c => c.title === mappedCategory)) ? mappedCategory : (CATEGORIES[0]?.title || "");
 
   return (
     <div className="min-h-screen bg-background">
@@ -181,7 +197,7 @@ export default function Home() {
         </section>
 
         <section className="mt-8">
-          <Tabs defaultValue={defaultTab}>
+          <Tabs defaultValue={defaultTab} key={defaultTab}>
             <TabsList className="w-full flex-wrap h-auto gap-1 p-1" data-testid="tabs-categories">
               {CATEGORIES.map((cat) => (
                 <TabsTrigger
