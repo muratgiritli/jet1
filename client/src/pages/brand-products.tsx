@@ -10,6 +10,42 @@ import { useCart } from "@/contexts/CartContext";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
 
+const ANIMAL_SUBCATEGORIES: Record<string, { name: string; slug: string }[]> = {
+  kopek: [
+    { name: "Mama Markalari", slug: "mama-markalari" },
+    { name: "Acik Mama", slug: "acik-mama" },
+    { name: "Tuvalet Malzemeleri", slug: "tuvalet-malzemeleri" },
+    { name: "Yas Mama", slug: "yas-mama" },
+    { name: "Odul Kemik", slug: "odul-kemik" },
+    { name: "Tasima ve Kulubeler", slug: "tasima-kulube" },
+    { name: "Bakim ve Saglik", slug: "bakim-saglik" },
+    { name: "Uygun Cuval Mamalar", slug: "uygun-cuval" },
+  ],
+  kedi: [
+    { name: "Kedi Mamasi", slug: "kedi-mamasi" },
+    { name: "Kedi Kumu", slug: "kedi-kumu" },
+    { name: "Kedi Malti", slug: "kedi-malti" },
+    { name: "Kedi Odulleri", slug: "kedi-odulu" },
+    { name: "Bakim ve Aksesuar", slug: "kedi-bakim-saglik" },
+    { name: "Kedi Tasima", slug: "kedi-tasima" },
+    { name: "Kedi Tuvaleti", slug: "kedi-tuvaleti" },
+    { name: "Kedi Yas Mamasi", slug: "kedi-konserve" },
+    { name: "Uygun Cuval Mamalar", slug: "uygun-cuval" },
+  ],
+  kus: [
+    { name: "Kus Yemi", slug: "kus-yemi" },
+    { name: "Kus Kafesi", slug: "kus-kafesi" },
+    { name: "Kus Vitaminleri", slug: "kus-vitamin" },
+    { name: "Bakim ve Aksesuar", slug: "bakim-aksesuar" },
+  ],
+  kemirgen: [
+    { name: "Kemirgen Yemleri", slug: "kemirgen-yemi" },
+    { name: "Kemirgen Kafesleri", slug: "kemirgen-kafesi" },
+    { name: "Bakim ve Aksesuar", slug: "bakim-aksesuar" },
+    { name: "Vitamin ve Takviye", slug: "vitamin-takviye" },
+  ],
+};
+
 function QuantityControl({
   productId,
   quantity,
@@ -243,6 +279,30 @@ export default function BrandProductsPage() {
             </motion.div>
           ))}
         </div>
+
+        {ANIMAL_SUBCATEGORIES[animal] && (
+          <section className="mt-8" data-testid="section-other-categories">
+            <h3 className="text-sm font-bold text-center text-muted-foreground mb-3 uppercase tracking-wide" data-testid="text-other-categories-title">
+              Diger Kategoriler
+            </h3>
+            <div className="flex flex-wrap justify-center gap-2">
+              {ANIMAL_SUBCATEGORIES[animal]
+                .filter((sc) => sc.slug !== subcategory)
+                .map((sc) => (
+                  <Link key={sc.slug} href={`/kategori/${animal}/${sc.slug}`}>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="text-xs font-semibold whitespace-nowrap"
+                      data-testid={`btn-subcategory-${sc.slug}`}
+                    >
+                      {sc.name}
+                    </Button>
+                  </Link>
+                ))}
+            </div>
+          </section>
+        )}
       </main>
 
       <AnimatePresence>
