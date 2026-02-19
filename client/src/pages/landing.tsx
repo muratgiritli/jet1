@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { Truck, Phone, CreditCard, MapPin } from "lucide-react";
 import FloatingCartBar from "@/components/FloatingCartBar";
 
-import heroBanner from "@/assets/images/hero-banner.png";
+import heroBanner from "@assets/banner_1771529180706.png";
 import catDog from "@/assets/images/cat-dog.png";
 import catCat from "@/assets/images/cat-cat.png";
 import catBird from "@/assets/images/cat-bird.png";
@@ -67,29 +67,13 @@ export default function Landing() {
           data-testid="section-hero-banner"
         >
           <Link href="/siparis">
-            <div className="relative w-full aspect-[16/9] cursor-pointer overflow-hidden" data-testid="banner-hero">
+            <div className="relative w-full cursor-pointer overflow-hidden" data-testid="banner-hero">
               <img
                 src={heroBanner}
-                alt="JetGo - Samsun İçi Pet Shop Teslimat"
-                className="w-full h-full object-cover"
+                alt="JetGo - Sen İste Jet İle Gelsin"
+                className="w-full h-auto object-contain"
                 data-testid="img-hero-banner"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent" />
-              <div className="absolute inset-0 flex flex-col items-center justify-end pb-5 px-4">
-                <motion.div
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.2 }}
-                  className="text-center"
-                >
-                  <p className="text-white font-extrabold text-2xl leading-tight drop-shadow-lg" data-testid="text-hero-slogan">
-                    Samsun'da Kapınıza Teslim
-                  </p>
-                  <p className="text-white/90 text-sm font-medium mt-1 drop-shadow-md" data-testid="text-hero-subslogan">
-                    Pet shop ürünleri artık bir tık uzağınızda
-                  </p>
-                </motion.div>
-              </div>
             </div>
           </Link>
         </motion.section>
@@ -155,7 +139,7 @@ export default function Landing() {
         </section>
       </main>
 
-      <footer style={{ backgroundColor: "#2ecc40" }} className="py-5 px-4 text-center">
+      <footer style={{ backgroundColor: "#7c4dff" }} className="py-5 px-4 text-center">
         <p className="text-white font-semibold text-sm leading-relaxed" data-testid="text-delivery-info">
           Samsun içinde kapınıza getiriyoruz
         </p>
@@ -164,7 +148,7 @@ export default function Landing() {
         </p>
       </footer>
 
-      <div style={{ backgroundColor: "#333" }} className="py-4 px-4 text-center">
+      <div style={{ backgroundColor: "#5c35c9" }} className="py-4 px-4 text-center">
         <p className="text-white font-bold text-sm" data-testid="text-footer-brand">
           Tüm Petshop Ürünleri
         </p>
