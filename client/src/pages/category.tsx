@@ -43,7 +43,7 @@ const ANIMAL_CATEGORIES: Record<string, AnimalCategory> = {
       { name: "Kedi\nMaması", slug: "kedi-mamasi", color: "#E91E63", hasBrands: true },
       { name: "Kedi\nKumu", slug: "kedi-kumu", color: "#00BCD4", hasBrands: true },
       { name: "Kedi\nMaltı", slug: "kedi-malti", color: "#3F51B5" },
-      { name: "Kedi\nÖdülü", slug: "kedi-odulu", color: "#9C27B0", hasBrands: true },
+      { name: "Kedi\nÖdülü", slug: "kedi-odulu", color: "#9C27B0" },
       { name: "Kedi Bakım\nSağlık", slug: "kedi-bakim-saglik", color: "#4CAF50" },
       { name: "Kedi\nTaşıma", slug: "kedi-tasima", color: "#37474F" },
       { name: "Kedi\nTuvaleti", slug: "kedi-tuvaleti", color: "#795548" },

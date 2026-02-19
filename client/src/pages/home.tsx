@@ -27,6 +27,7 @@ const SLUG_TO_CATEGORY: Record<string, string> = {
   "tuvalet-malzemeleri": "KEDİ KUMU",
   "yas-mama": "KEDİ YAŞ MAMASI",
   "odul-kemik": "KEDİ ÖDÜLLERİ",
+  "kedi-odulu": "KEDİ ÖDÜLLERİ",
   "bakim-saglik": "BAKIM VE AKSESUAR",
 };
 
