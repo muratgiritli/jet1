@@ -79,7 +79,7 @@ function ProductCard({
   const isActive = quantity > 0;
   return (
     <Card
-      className={`overflow-visible transition-all duration-200 ${isActive ? "ring-2 ring-primary ring-offset-1" : ""}`}
+      className={`transition-all duration-200 ${isActive ? "ring-2 ring-inset ring-primary" : ""}`}
       data-testid={`card-product-${product.id}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">

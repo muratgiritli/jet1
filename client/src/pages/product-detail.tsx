@@ -172,7 +172,7 @@ function InlineSubcategoryProductCard({
 
   return (
     <Card
-      className={`overflow-visible transition-all duration-200 ${isActive ? "ring-2 ring-primary ring-offset-1" : ""}`}
+      className={`transition-all duration-200 ${isActive ? "ring-2 ring-inset ring-primary" : ""}`}
       data-testid={`card-inline-product-${product.id}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
@@ -238,6 +238,7 @@ function InlineSubcategories({
 }) {
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
+  const productsRef = useRef<HTMLDivElement>(null);
 
   const subcategories = (ANIMAL_SUBCATEGORIES[animal] || []).filter(
     (sc) => sc.slug !== currentSubcategory
@@ -295,7 +296,15 @@ function InlineSubcategories({
             variant={selectedSlug === sc.slug ? "default" : "outline"}
             size="sm"
             className="text-xs font-semibold whitespace-nowrap"
-            onClick={() => setSelectedSlug(selectedSlug === sc.slug ? null : sc.slug)}
+            onClick={() => {
+              const newSlug = selectedSlug === sc.slug ? null : sc.slug;
+              setSelectedSlug(newSlug);
+              if (newSlug) {
+                setTimeout(() => {
+                  productsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+                }, 350);
+              }
+            }}
             data-testid={`btn-subcategory-${sc.slug}`}
           >
             {sc.name}
@@ -307,6 +316,7 @@ function InlineSubcategories({
       <AnimatePresence mode="wait">
         {selectedSlug && inlineProducts.length > 0 && (
           <motion.div
+            ref={productsRef}
             key={selectedSlug}
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
