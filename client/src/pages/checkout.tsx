@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import {
   Plus,
   Minus,
   Trash2,
+  Loader2,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import {
@@ -25,6 +27,8 @@ import {
   PAYMENT_OPTIONS,
 } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
+import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import BackNavigation from "@/components/BackNavigation";
 
 const paymentIcons: Record<string, typeof CreditCard> = {
@@ -35,6 +39,8 @@ const paymentIcons: Record<string, typeof CreditCard> = {
 };
 
 export default function Checkout() {
+  const [orderLoading, setOrderLoading] = useState(false);
+  const { toast } = useToast();
   const {
     paymentId,
     setPaymentId,
@@ -50,22 +56,49 @@ export default function Checkout() {
     shipPerc,
   } = useCart();
 
-  const handleOrder = () => {
-    if (!minReached || selectedProducts.length === 0) return;
+  const handleOrder = async () => {
+    if (!minReached || selectedProducts.length === 0 || orderLoading) return;
     const pay = PAYMENT_OPTIONS.find((p) => p.id === paymentId)!;
-    let msg = `*JetGo Sipariş*\n\n`;
-    selectedProducts.forEach(({ product, qty }) => {
-      msg += `${qty}x ${product.name} — ${qty * product.price} TL\n`;
-    });
-    msg += `\n*Ara Toplam:* ${subtotal} TL`;
-    if (discount > 0) msg += `\n*İndirim (${pay.tag}):* -${discount.toFixed(0)} TL`;
-    msg += `\n*Teslimat:* ${shipping === 0 ? "Ücretsiz" : shipping + " TL"}`;
-    msg += `\n*Genel Toplam:* ${grandTotal.toFixed(0)} TL`;
-    msg += `\n*Ödeme:* ${pay.name}`;
-    if (pay.id === "eft") msg += CONFIG.bankInfo;
 
-    const url = `https://wa.me/${CONFIG.phone.replace("+", "")}?text=${encodeURIComponent(msg)}`;
-    window.open(url, "_blank");
+    setOrderLoading(true);
+    try {
+      const orderItems = selectedProducts.map(({ product, qty }) => ({
+        productId: typeof product.id === "string" ? parseInt(product.id) : product.id,
+        name: product.name,
+        price: product.price,
+        quantity: qty,
+        img: product.img || undefined,
+      }));
+
+      await apiRequest("POST", "/api/orders", {
+        items: orderItems,
+        subtotal,
+        shipping,
+        discount,
+        grandTotal,
+        paymentMethod: pay.name,
+      });
+
+      let msg = `*JetGo Sipariş*\n\n`;
+      selectedProducts.forEach(({ product, qty }) => {
+        msg += `${qty}x ${product.name} — ${qty * product.price} TL\n`;
+      });
+      msg += `\n*Ara Toplam:* ${subtotal} TL`;
+      if (discount > 0) msg += `\n*İndirim (${pay.tag}):* -${discount.toFixed(0)} TL`;
+      msg += `\n*Teslimat:* ${shipping === 0 ? "Ücretsiz" : shipping + " TL"}`;
+      msg += `\n*Genel Toplam:* ${grandTotal.toFixed(0)} TL`;
+      msg += `\n*Ödeme:* ${pay.name}`;
+      if (pay.id === "eft") msg += CONFIG.bankInfo;
+
+      const url = `https://wa.me/${CONFIG.phone.replace("+", "")}?text=${encodeURIComponent(msg)}`;
+      window.open(url, "_blank");
+
+      toast({ title: "Siparis kaydedildi", description: "WhatsApp uzerinden siparisiz iletiliyor." });
+    } catch {
+      toast({ title: "Hata", description: "Siparis kaydedilemedi, lutfen tekrar deneyin.", variant: "destructive" });
+    } finally {
+      setOrderLoading(false);
+    }
   };
 
   return (
@@ -301,12 +334,12 @@ export default function Checkout() {
                     className="w-full mt-5"
                     variant="default"
                     size="lg"
-                    disabled={!minReached || selectedProducts.length === 0}
+                    disabled={!minReached || selectedProducts.length === 0 || orderLoading}
                     onClick={handleOrder}
                     data-testid="btn-order-whatsapp"
                   >
-                    <SiWhatsapp className="w-5 h-5" />
-                    Siparişi Ver
+                    {orderLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <SiWhatsapp className="w-5 h-5" />}
+                    {orderLoading ? "Kaydediliyor..." : "Siparisi Ver"}
                   </Button>
 
                   {!minReached && selectedProducts.length > 0 && (

@@ -6,13 +6,13 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 ## Architecture
 - **Frontend**: React + TypeScript with shadcn/ui components, Tailwind CSS, framer-motion
 - **Backend**: Express with session-based auth (bcryptjs + express-session + connect-pg-simple)
-- **Database**: PostgreSQL (Drizzle ORM) - brand_categories, products, cross_sell_sections, cross_sell_items tables
+- **Database**: PostgreSQL (Drizzle ORM) - brand_categories, products, cross_sell_sections, cross_sell_items, orders tables
 - **Static data**: CATEGORIES in client/src/lib/data.ts (non-brand products remain static)
 - **Dynamic data**: Brand products (Brit Care, Hill's, etc.) served from database via API
 - **Cross-sell**: Reusable recommendation sections linked to products via junction table, displayed on product detail pages
 
 ## Key Files
-- `shared/schema.ts` - Drizzle schema: users, brandCategories, products, crossSellSections, crossSellItems tables
+- `shared/schema.ts` - Drizzle schema: users, brandCategories, products, crossSellSections, crossSellItems, orders tables
 - `server/storage.ts` - DatabaseStorage class with CRUD operations
 - `server/routes.ts` - API routes (public + admin with session auth)
 - `server/seed.ts` - Seeds database with initial brand product data
@@ -47,6 +47,9 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `DELETE /api/admin/cross-sell-sections/:id` - Delete cross-sell section (auth required)
 - `POST /api/admin/cross-sell-items` - Add product to cross-sell section (auth required)
 - `DELETE /api/admin/cross-sell-items/:id` - Remove product from cross-sell section (auth required)
+- `POST /api/orders` - Create new order (public, saves to DB)
+- `GET /api/admin/orders` - List all orders (auth required)
+- `PATCH /api/admin/orders/:id/status` - Update order status (auth required)
 
 ## Frontend Routes
 - `/` - Landing page (vitrin)
@@ -63,6 +66,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - Manage brand categories (add/delete)
 - Manage products (add/edit/delete with stock management) with category filter
 - Manage cross-sell sections (create/delete sections, add/remove products)
+- View incoming orders with status management (yeni/hazirlaniyor/tamamlandi/iptal)
 - Session-based authentication with PostgreSQL session store
 
 ## Config

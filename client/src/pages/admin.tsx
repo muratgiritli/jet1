@@ -32,7 +32,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Product, BrandCategory, CrossSellSection, CrossSellItem } from "@shared/schema";
+import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order } from "@shared/schema";
 
 function LoginForm({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState("");
@@ -250,6 +250,19 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [selectedCategoryFilter, setSelectedCategoryFilter] = useState<string>("all");
 
+  const { data: allOrders = [], isLoading: ordersLoading } = useQuery<Order[]>({
+    queryKey: ["/api/admin/orders"],
+  });
+
+  const updateOrderStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      await apiRequest("PATCH", `/api/admin/orders/${id}/status`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+    },
+  });
+
   const { data: categories = [] } = useQuery<BrandCategory[]>({
     queryKey: ["/api/brand-categories"],
   });
@@ -415,6 +428,122 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       <BackNavigation />
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+        <section>
+          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-lg font-bold" data-testid="text-section-orders">Gelen Siparisler</h2>
+              <Badge className="no-default-hover-elevate no-default-active-elevate" data-testid="badge-order-count">
+                {allOrders.length}
+              </Badge>
+            </div>
+          </div>
+
+          {ordersLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : allOrders.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center">
+                <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                <p className="text-muted-foreground" data-testid="text-no-orders">Henuz siparis yok</p>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-3" data-testid="list-orders">
+              {allOrders.map((order) => {
+                const statusColors: Record<string, string> = {
+                  yeni: "#2196F3",
+                  hazirlaniyor: "#FF9800",
+                  tamamlandi: "#4CAF50",
+                  iptal: "#F44336",
+                };
+                const statusBg = statusColors[order.status] || "#9E9E9E";
+
+                return (
+                  <Card key={order.id} data-testid={`card-order-${order.id}`}>
+                    <CardContent className="p-4 space-y-3">
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold" data-testid={`text-order-id-${order.id}`}>
+                            Siparis #{order.id}
+                          </span>
+                          <span className="text-sm text-muted-foreground" data-testid={`text-order-date-${order.id}`}>
+                            {new Date(order.createdAt).toLocaleDateString("tr-TR")} {new Date(order.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                          </span>
+                        </div>
+                        <Badge
+                          className="no-default-hover-elevate no-default-active-elevate"
+                          style={{ backgroundColor: statusBg, color: "#fff" }}
+                          data-testid={`badge-order-status-${order.id}`}
+                        >
+                          {order.status}
+                        </Badge>
+                      </div>
+
+                      <div className="space-y-1" data-testid={`list-order-items-${order.id}`}>
+                        {order.items.map((item, idx) => (
+                          <div key={idx} className="flex items-center justify-between gap-2 text-sm">
+                            <span data-testid={`text-order-item-${order.id}-${idx}`}>
+                              {item.quantity} x {item.name}
+                            </span>
+                            <span className="text-muted-foreground" data-testid={`text-order-item-total-${order.id}-${idx}`}>
+                              {(item.price * item.quantity).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div className="border-t pt-2 space-y-1 text-sm">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-muted-foreground">Odeme:</span>
+                          <span data-testid={`text-order-payment-${order.id}`}>{order.paymentMethod}</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-muted-foreground">Ara Toplam:</span>
+                          <span data-testid={`text-order-subtotal-${order.id}`}>{order.subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-muted-foreground">Kargo:</span>
+                          <span data-testid={`text-order-shipping-${order.id}`}>{order.shipping.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                        </div>
+                        {order.discount > 0 && (
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="text-muted-foreground">Indirim:</span>
+                            <span data-testid={`text-order-discount-${order.id}`}>-{order.discount.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                          </div>
+                        )}
+                        <div className="flex items-center justify-between gap-2 font-bold">
+                          <span>Toplam:</span>
+                          <span data-testid={`text-order-grand-total-${order.id}`}>{order.grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                        </div>
+                      </div>
+
+                      <div className="border-t pt-2 flex items-center justify-between gap-3 flex-wrap">
+                        <span className="text-sm text-muted-foreground">Durum Degistir:</span>
+                        <Select
+                          value={order.status}
+                          onValueChange={(value) => updateOrderStatusMutation.mutate({ id: order.id, status: value })}
+                        >
+                          <SelectTrigger className="w-[180px]" data-testid={`select-order-status-${order.id}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="yeni" data-testid={`option-status-yeni-${order.id}`}>yeni</SelectItem>
+                            <SelectItem value="hazirlaniyor" data-testid={`option-status-hazirlaniyor-${order.id}`}>hazirlaniyor</SelectItem>
+                            <SelectItem value="tamamlandi" data-testid={`option-status-tamamlandi-${order.id}`}>tamamlandi</SelectItem>
+                            <SelectItem value="iptal" data-testid={`option-status-iptal-${order.id}`}>iptal</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </section>
+
         <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
             <h2 className="text-lg font-bold" data-testid="text-section-categories">Marka Kategorileri</h2>

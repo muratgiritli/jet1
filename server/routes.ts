@@ -2,7 +2,8 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
 import { seedDatabase } from "./seed";
-import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema } from "@shared/schema";
+import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema } from "@shared/schema";
+import { z } from "zod";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
@@ -198,6 +199,38 @@ export async function registerRoutes(
     const id = parseInt(req.params.id);
     await storage.removeCrossSellItem(id);
     res.json({ message: "Deleted" });
+  });
+
+  // Order routes
+  const createOrderSchema = z.object({
+    items: z.array(orderItemSchema).min(1),
+    subtotal: z.number(),
+    shipping: z.number(),
+    discount: z.number(),
+    grandTotal: z.number(),
+    paymentMethod: z.string(),
+    customerNote: z.string().optional(),
+  });
+
+  app.post("/api/orders", async (req, res) => {
+    const parsed = createOrderSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
+    const order = await storage.createOrder(parsed.data);
+    res.status(201).json(order);
+  });
+
+  app.get("/api/admin/orders", requireAdmin, async (_req, res) => {
+    const allOrders = await storage.getAllOrders();
+    res.json(allOrders);
+  });
+
+  app.patch("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const { status } = req.body;
+    if (!status) return res.status(400).json({ message: "Status required" });
+    const order = await storage.updateOrderStatus(id, status);
+    if (!order) return res.status(404).json({ message: "Order not found" });
+    res.json(order);
   });
 
   return httpServer;

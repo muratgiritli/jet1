@@ -1,13 +1,14 @@
-import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
+import { eq, desc } from "drizzle-orm";
 import {
   type User, type InsertUser,
   type BrandCategory, type InsertBrandCategory,
   type Product, type InsertProduct,
   type CrossSellSection, type InsertCrossSellSection,
   type CrossSellItem, type InsertCrossSellItem,
-  users, brandCategories, products, crossSellSections, crossSellItems,
+  type Order, type InsertOrder,
+  users, brandCategories, products, crossSellSections, crossSellItems, orders,
 } from "@shared/schema";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -40,6 +41,11 @@ export interface IStorage {
   getCrossSellItemsBySection(sectionId: number): Promise<CrossSellItem[]>;
   addCrossSellItem(data: InsertCrossSellItem): Promise<CrossSellItem>;
   removeCrossSellItem(id: number): Promise<void>;
+
+  getAllOrders(): Promise<Order[]>;
+  getOrder(id: number): Promise<Order | undefined>;
+  createOrder(data: InsertOrder): Promise<Order>;
+  updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -145,6 +151,25 @@ export class DatabaseStorage implements IStorage {
 
   async removeCrossSellItem(id: number): Promise<void> {
     await db.delete(crossSellItems).where(eq(crossSellItems.id, id));
+  }
+
+  async getAllOrders(): Promise<Order[]> {
+    return db.select().from(orders).orderBy(desc(orders.createdAt));
+  }
+
+  async getOrder(id: number): Promise<Order | undefined> {
+    const [order] = await db.select().from(orders).where(eq(orders.id, id));
+    return order;
+  }
+
+  async createOrder(data: InsertOrder): Promise<Order> {
+    const [order] = await db.insert(orders).values(data).returning();
+    return order;
+  }
+
+  async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
+    const [order] = await db.update(orders).set({ status }).where(eq(orders.id, id)).returning();
+    return order;
   }
 }
 

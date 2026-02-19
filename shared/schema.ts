@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, real, serial, boolean } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, real, serial, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -66,3 +66,30 @@ export const crossSellItems = pgTable("cross_sell_items", {
 export const insertCrossSellItemSchema = createInsertSchema(crossSellItems).omit({ id: true });
 export type InsertCrossSellItem = z.infer<typeof insertCrossSellItemSchema>;
 export type CrossSellItem = typeof crossSellItems.$inferSelect;
+
+export const orderItemSchema = z.object({
+  productId: z.number(),
+  name: z.string(),
+  price: z.number(),
+  quantity: z.number(),
+  img: z.string().optional(),
+});
+
+export type OrderItem = z.infer<typeof orderItemSchema>;
+
+export const orders = pgTable("orders", {
+  id: serial("id").primaryKey(),
+  items: jsonb("items").notNull().$type<OrderItem[]>(),
+  subtotal: real("subtotal").notNull(),
+  shipping: real("shipping").notNull(),
+  discount: real("discount").notNull().default(0),
+  grandTotal: real("grand_total").notNull(),
+  paymentMethod: text("payment_method").notNull(),
+  status: text("status").notNull().default("yeni"),
+  customerNote: text("customer_note"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, status: true });
+export type InsertOrder = z.infer<typeof insertOrderSchema>;
+export type Order = typeof orders.$inferSelect;
