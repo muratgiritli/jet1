@@ -25,10 +25,10 @@ const ANIMAL_CATEGORIES: Record<string, AnimalCategory> = {
     titleHighlight: "Kategorileri",
     subtitle: "LÜTFEN KATEGORİ SEÇİNİZ",
     subcategories: [
-      { name: "Mama\nMarkaları", slug: "mama-markalari", color: "#2196F3", hasBrands: true },
-      { name: "Açık Mama\nÇeşitleri", slug: "acik-mama", color: "#00BFA5" },
+      { name: "Köpek\nMaması", slug: "mama-markalari", color: "#2196F3", hasBrands: true },
+      { name: "Açık Mama\nÇeşitleri", slug: "acik-mama", color: "#00BFA5", hasBrands: true },
       { name: "Tuvalet\nMalzemeleri", slug: "tuvalet-malzemeleri", color: "#7B1FA2" },
-      { name: "Yaş Mama\nÇeşitleri", slug: "yas-mama", color: "#FF9800" },
+      { name: "Yaş Mama\nÇeşitleri", slug: "yas-mama", color: "#FF9800", hasBrands: true },
       { name: "Ödül Kemik\nÇeşitleri", slug: "odul-kemik", color: "#F44336" },
       { name: "Taşıma ve\nKulübeler", slug: "tasima-kulube", color: "#37474F" },
       { name: "Bakım ve\nSağlık", slug: "bakim-saglik", color: "#4CAF50" },

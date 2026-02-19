@@ -21,10 +21,10 @@ interface SubcategoryInfo {
 
 const ANIMAL_SUBCATEGORIES: Record<string, SubcategoryInfo[]> = {
   kopek: [
-    { name: "Mama Markalari", slug: "mama-markalari", hasBrands: true },
-    { name: "Acik Mama", slug: "acik-mama" },
+    { name: "Kopek Mamasi", slug: "mama-markalari", hasBrands: true },
+    { name: "Acik Mama", slug: "acik-mama", hasBrands: true },
     { name: "Tuvalet Malzemeleri", slug: "tuvalet-malzemeleri" },
-    { name: "Yas Mama", slug: "yas-mama" },
+    { name: "Yas Mama", slug: "yas-mama", hasBrands: true },
     { name: "Odul Kemik", slug: "odul-kemik" },
     { name: "Tasima ve Kulubeler", slug: "tasima-kulube" },
     { name: "Bakim ve Saglik", slug: "bakim-saglik" },
