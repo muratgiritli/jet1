@@ -1,5 +1,5 @@
 import { db } from "./storage";
-import { brandCategories, products, breedStats } from "@shared/schema";
+import { brandCategories, products, breedStats, crossSellSections, crossSellItems } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import brandDataJson from "./brand_data.json";
 
@@ -505,6 +505,102 @@ const KOPEK_ACIK_MAMA_REFLEX: BrandProductData = {
 
 const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, BRIT_CARE_KOPEK, ECONATURE_KOPEK, FELICIA_KOPEK, ENJOY_KOPEK, LAVITAL_KOPEK, PROCHOICE_KOPEK, PRONATURE_KOPEK, PROPERFORMANCE_KOPEK, REFLEX_KOPEK, REFLEX_PLUS_KOPEK, WANPY_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
 
+const KOPEK_CROSS_SELL_SECTIONS = [
+  {
+    title: "TUVALET MALZEMESİ",
+    forAnimal: "kopek",
+    sortOrder: 1,
+    productNames: [
+      "Gimdog Lavanta Kokulu Köpek Çiş Pedi 60x60 cm 50'li",
+      "Gimdog Köpek Çiş Pedi 60x60 cm 50'li",
+      "Prochoice Yavru Köpek Çiş Eğitim Pedi 60x90 cm 30'lu",
+      "Prochoice Yavru Köpek Tuvalet Eğitim Spreyi 100 ml",
+      "Supravet Köpek Çiş Eğitim Pedi 60x90 cm 30'lu",
+      "Gimdog Köpek Çiş Pedi 60x60 cm 10'lu",
+    ],
+  },
+  {
+    title: "YAŞ MAMA",
+    forAnimal: "kopek",
+    sortOrder: 2,
+    productNames: [
+      "Reflex Plus Sos İçinde Somonlu Yetişkin Köpek Konservesi 400 Gr",
+      "Reflex Plus Sos İçinde Kuzu Etli Yetişkin Köpek Konservesi 400 Gr",
+      "Wanpy Biftekli Tahılsız Yetişkin Köpek Konservesi 375 gr",
+      "Challenge Pate Kuzu Etli Yavru Köpek Konservesi 400 gr",
+      "Bestpet Jöle İçinde Parça Kuzu Etli Yavru Köpek Konservesi 400 gr",
+      "Floki Kuzulu Yetişkin Köpek Konservesi 400 gr",
+    ],
+  },
+  {
+    title: "ÖDÜL VE KEMİK",
+    forAnimal: "kopek",
+    sortOrder: 3,
+    productNames: [
+      "Gnawlers Defense Dental Köpek Ödül Maması 15gr 7.5cm",
+      "M-Pets Trusty Extra Biftekli Düğüm Köpek Ödül Kemiği 105 gr 7'li",
+      "Dentalight Beefy Stick Sığır Etli Köpek Ödül Çubuğu 70 Gr",
+      "Wanpy Kurutulmuş Dana Ciğeri Köpek Ödülü 40 Gr",
+      "Pedigree Markies Köpek Ödül Bisküvisi 150 gr",
+      "Baffs Naturals Kurutulmuş Dana Et Çubukları Köpek Ödülü 100 gr",
+    ],
+  },
+  {
+    title: "BAKIM VE SAĞLIK",
+    forAnimal: "kopek",
+    sortOrder: 4,
+    productNames: [
+      "Nunbell Kıtık Açıcı Tarak",
+      "M-Pets Uzun Tüylü Köpekler İçin Şampuan 250 Ml",
+      "Supravet Dış Parazit Karşıtı Köpek Şampuanı 200 ml",
+      "Nunbell Dental Köpek Diş Temizleme Seti 3'lü",
+      "Wahlen Kedi ve Köpekler İçin Nano Silver Temizleme Mendili 50'li",
+      "Bioline Köpek Parazit Taması 60 cm",
+    ],
+  },
+];
+
+async function seedCrossSellSections() {
+  const existingSections = await db.select().from(crossSellSections).where(eq(crossSellSections.forAnimal, "kopek"));
+  if (existingSections.length >= 4) {
+    console.log("Köpek cross-sell sections already exist, skipping...");
+    return;
+  }
+
+  console.log("Seeding köpek cross-sell sections...");
+  const allProducts = await db.select().from(products);
+  const productMap = new Map(allProducts.map(p => [p.name, p.id]));
+
+  for (const sectionData of KOPEK_CROSS_SELL_SECTIONS) {
+    const existingSection = await db.select().from(crossSellSections).where(
+      and(eq(crossSellSections.title, sectionData.title), eq(crossSellSections.forAnimal, "kopek"))
+    );
+    if (existingSection.length > 0) continue;
+
+    const [section] = await db.insert(crossSellSections).values({
+      title: sectionData.title,
+      forAnimal: sectionData.forAnimal,
+      sortOrder: sectionData.sortOrder,
+      isActive: true,
+    }).returning();
+
+    let sortOrder = 1;
+    for (const productName of sectionData.productNames) {
+      const productId = productMap.get(productName);
+      if (productId) {
+        await db.insert(crossSellItems).values({
+          sectionId: section.id,
+          productId,
+          sortOrder: sortOrder++,
+        });
+      } else {
+        console.log(`Cross-sell product not found: ${productName}`);
+      }
+    }
+    console.log(`Created cross-sell section "${sectionData.title}" with ${sortOrder - 1} products`);
+  }
+}
+
 export async function seedDatabase() {
   console.log("Checking database for missing brand data...");
 
@@ -545,6 +641,7 @@ export async function seedDatabase() {
   }
 
   await seedBreedStats();
+  await seedCrossSellSections();
   console.log("Database seeding complete!");
 }
 
