@@ -371,9 +371,12 @@ export default function ProductDetailPage() {
           >
             <Card>
               <CardContent className="p-5">
-                <h3 className="text-base font-bold text-center mb-4" data-testid="text-breed-stats-title">
-                  Bu Mamayı Kullanan Kedi Türleri
+                <h3 className="text-base font-bold text-center mb-1" data-testid="text-breed-stats-title">
+                  Bu ürünü hangi ırk (cins) {category?.animal === "kopek" ? "köpekler" : "kediler"} tüketiyor?
                 </h3>
+                <p className="text-xs text-muted-foreground text-center mb-4" data-testid="text-breed-stats-subtitle">
+                  {product.name}
+                </p>
                 <div className="space-y-3">
                   {breedStats.map((stat, i) => (
                     <div key={stat.id} className="flex items-center gap-3" data-testid={`row-breed-stat-${stat.id}`}>
