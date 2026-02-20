@@ -292,6 +292,16 @@ const ECONATURE_KOPEK: BrandProductData = {
   ],
 };
 
+const ENJOY_KOPEK: BrandProductData = {
+  brandName: "Enjoy",
+  brandSlug: "enjoy",
+  animal: "kopek",
+  subcategory: "mama-markalari",
+  products: [
+    { name: "Enjoy Biftekli Yetişkin Köpek Maması 15 kg", price: 606, originalPrice: 999, skt: "02.2027", img: "https://www.mamatoptancisi.com/enjoy-biftekli-yetiskin-kopek-mamasi-15-kg-1044535-92-O.jpg", stock: 0 },
+  ],
+};
+
 const KOPEK_ACIK_MAMA_PROPLAN: BrandProductData = {
   brandName: "Pro Plan",
   brandSlug: "pro-plan",
@@ -340,7 +350,7 @@ const KOPEK_ACIK_MAMA_REFLEX: BrandProductData = {
   ],
 };
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, BRIT_CARE_KOPEK, ECONATURE_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, BRIT_CARE_KOPEK, ECONATURE_KOPEK, ENJOY_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
 
 export async function seedDatabase() {
   console.log("Checking database for missing brand data...");
