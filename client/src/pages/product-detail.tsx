@@ -512,31 +512,42 @@ export default function ProductDetailPage() {
         )}
 
         {crossSellSections.length > 0 && (
-          <div className="mt-10 space-y-8">
-            {crossSellSections.map((section) => (
-              <section key={section.id} data-testid={`section-cross-sell-${section.id}`}>
-                <h3 className="text-base font-bold mb-3 border-b pb-2" data-testid={`text-section-title-${section.id}`}>
-                  {section.title}
-                </h3>
-                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                  {section.products.map((p, i) => (
-                    <motion.div
-                      key={p.id}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.2, delay: 0.03 * i }}
-                    >
-                      <CrossSellProductCard
-                        product={p}
-                        quantity={basket[String(p.id)] || 0}
-                        onUpdate={updateQty}
-                      />
-                    </motion.div>
-                  ))}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="mt-8"
+            data-testid="section-cross-sell-all"
+          >
+            <h3 className="text-lg font-extrabold mb-4" data-testid="text-cross-sell-title">
+              Bu ürünü alanlar bunları da aldı
+            </h3>
+            <div className="space-y-6">
+              {crossSellSections.map((section) => (
+                <div key={section.id} data-testid={`section-cross-sell-${section.id}`}>
+                  <h4 className="text-sm font-bold text-white px-3 py-1.5 rounded-t-lg" style={{ backgroundColor: "#2ecc40" }} data-testid={`text-section-title-${section.id}`}>
+                    {section.title}
+                  </h4>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
+                    {section.products.map((p, i) => (
+                      <motion.div
+                        key={p.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, delay: 0.03 * i }}
+                      >
+                        <CrossSellProductCard
+                          product={p}
+                          quantity={basket[String(p.id)] || 0}
+                          onUpdate={updateQty}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
                 </div>
-              </section>
-            ))}
-          </div>
+              ))}
+            </div>
+          </motion.div>
         )}
 
       </main>
