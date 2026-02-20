@@ -279,6 +279,19 @@ const BRIT_CARE_KOPEK: BrandProductData = {
   ],
 };
 
+const ECONATURE_KOPEK: BrandProductData = {
+  brandName: "Econature",
+  brandSlug: "econature",
+  animal: "kopek",
+  subcategory: "mama-markalari",
+  products: [
+    { name: "Econature Plus Kuzu Etli Yetişkin Köpek Maması 13+2 Kg", price: 981, originalPrice: 1499, skt: "08.2026", img: "https://www.mamatoptancisi.com/econature-plus-kuzu-etli-yetiskin-kopek-mamasi-13-kg-2-kg-bonus-paket-1066089-67-O.jpg", stock: 10 },
+    { name: "Econature Kuzu Etli Yavru Köpek Maması 13+2 Kg", price: 1193, originalPrice: 1540, skt: "08.2026", img: "https://www.mamatoptancisi.com/econature-fish-formula-gurme-yavru-kopek-mamasi-15-kg-1073071-59-O.jpg", stock: 10 },
+    { name: "Econature Plus Somonlu Yetişkin Köpek Maması 15 kg", price: 1184, originalPrice: 1671, skt: "05.2027", img: "https://www.mamatoptancisi.com/econature-somonlu-yetiskin-kopek-mamasi-15-kg-1044399-59-O.jpg", stock: 10 },
+    { name: "Econature Lamb Formula Kuzu Etli Yetişkin Köpek Maması 15 kg", price: 565, originalPrice: 1650, skt: "04.2027", img: "https://www.mamatoptancisi.com/econature-lamb-formula-kuzu-etli-yetiskin-kopek-mamasi-15-kg-1077756-59-O.jpg", stock: 10 },
+  ],
+};
+
 const KOPEK_ACIK_MAMA_PROPLAN: BrandProductData = {
   brandName: "Pro Plan",
   brandSlug: "pro-plan",
@@ -327,7 +340,7 @@ const KOPEK_ACIK_MAMA_REFLEX: BrandProductData = {
   ],
 };
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, BRIT_CARE_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, BRIT_CARE_KOPEK, ECONATURE_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
 
 export async function seedDatabase() {
   console.log("Checking database for missing brand data...");
