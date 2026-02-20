@@ -29,7 +29,7 @@ const ANIMAL_CATEGORIES: Record<string, AnimalCategory> = {
       { name: "Köpek\nMaması", slug: "mama-markalari", color: "#2196F3", hasBrands: true },
       { name: "Açık Mama\nÇeşitleri", slug: "acik-mama", color: "#00BFA5", hasBrands: true },
       { name: "Tuvalet\nMalzemeleri", slug: "tuvalet-malzemeleri", color: "#7B1FA2", directLink: "/siparis/kopek/tuvalet-malzemeleri/tuvalet-malzemeleri" },
-      { name: "Yaş Mama\nÇeşitleri", slug: "yas-mama", color: "#FF9800", hasBrands: true },
+      { name: "Yaş Mama\nÇeşitleri", slug: "yas-mama", color: "#FF9800", directLink: "/siparis/kopek/yas-mama/yas-mama" },
       { name: "Ödül Kemik\nÇeşitleri", slug: "odul-kemik", color: "#F44336", directLink: "/siparis/kopek/odul-kemik/odul-kemik" },
       { name: "Taşıma ve\nKulübeler", slug: "tasima-kulube", color: "#37474F", directLink: "/siparis/kopek/tasima-kulube/tasima-kulube" },
       { name: "Bakım ve\nSağlık", slug: "bakim-saglik", color: "#4CAF50", directLink: "/siparis/kopek/bakim-saglik/bakim-saglik" },
