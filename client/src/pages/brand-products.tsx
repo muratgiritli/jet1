@@ -10,7 +10,7 @@ import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
-import { CATEGORIES } from "@/lib/data";
+import { CATEGORIES, productUrl } from "@/lib/data";
 
 interface SubcategoryInfo {
   name: string;
@@ -113,7 +113,7 @@ function BrandProductCard({
       data-testid={`card-product-${pid}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
-        <Link href={`/urun/${product.id}`} className="w-full flex flex-col items-center gap-2">
+        <Link href={productUrl(product.id, product.name)} className="w-full flex flex-col items-center gap-2">
           {product.img && (
             <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative" data-testid={`img-container-${pid}`}>
               <img
@@ -163,7 +163,7 @@ function BrandProductCard({
             Gelince Haber Ver
           </div>
         ) : (
-          <Link href={`/urun/${product.id}`} className="w-full">
+          <Link href={productUrl(product.id, product.name)} className="w-full">
             <Button variant="default" size="sm" className="w-full" data-testid={`btn-incele-${pid}`}>
               <Eye className="w-3.5 h-3.5" />
               İncele
@@ -237,7 +237,7 @@ function InlineSubcategoryProductCard({
           </span>
         </div>
         {isBrand ? (
-          <Link href={`/urun/${product.id}`} className="w-full">
+          <Link href={productUrl(product.id, product.name)} className="w-full">
             <Button variant="default" size="sm" className="w-full" data-testid={`btn-incele-inline-${product.id}`}>
               <Eye className="w-3.5 h-3.5" />
               İncele

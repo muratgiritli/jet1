@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -10,7 +10,7 @@ import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@share
 import { useCart } from "@/contexts/CartContext";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
-import { CATEGORIES } from "@/lib/data";
+import { CATEGORIES, productUrl } from "@/lib/data";
 
 type ProductDetailData = {
   product: Product;
@@ -137,7 +137,7 @@ function CrossSellProductCard({
 }
 
 export default function ProductDetailPage() {
-  const [, params] = useRoute("/urun/:id");
+  const [, params] = useRoute("/urun/:id/:slug?");
   const productId = params?.id || "";
   const isNumericId = /^\d+$/.test(productId);
 
@@ -215,6 +215,36 @@ export default function ProductDetailPage() {
   }, [isKediMama, kumData, odulData, maltData, yasMamaData, bakimData]);
 
   const resolvedData = isNumericId ? data : staticData;
+
+  useEffect(() => {
+    if (!resolvedData) return;
+    const p = resolvedData.product;
+    const catName = resolvedData.category?.brandName || "";
+    const title = `${p.name} - ${catName ? catName + " | " : ""}JetGo Pet Shop`;
+    document.title = title;
+
+    const desc = `${p.name} en uygun fiyatla JetGo Pet Shop'ta. ${Math.round(p.price)} TL${p.originalPrice ? ` (eski fiyat ${Math.round(p.originalPrice)} TL)` : ""}. Hızlı sipariş ve kapıda ödeme.`;
+
+    let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
+    if (!meta) { meta = document.createElement("meta"); meta.name = "description"; document.head.appendChild(meta); }
+    meta.content = desc;
+
+    let ogTitle = document.querySelector('meta[property="og:title"]') as HTMLMetaElement | null;
+    if (!ogTitle) { ogTitle = document.createElement("meta"); ogTitle.setAttribute("property", "og:title"); document.head.appendChild(ogTitle); }
+    ogTitle.content = title;
+
+    let ogDesc = document.querySelector('meta[property="og:description"]') as HTMLMetaElement | null;
+    if (!ogDesc) { ogDesc = document.createElement("meta"); ogDesc.setAttribute("property", "og:description"); document.head.appendChild(ogDesc); }
+    ogDesc.content = desc;
+
+    if (p.img) {
+      let ogImg = document.querySelector('meta[property="og:image"]') as HTMLMetaElement | null;
+      if (!ogImg) { ogImg = document.createElement("meta"); ogImg.setAttribute("property", "og:image"); document.head.appendChild(ogImg); }
+      ogImg.content = p.img;
+    }
+
+    return () => { document.title = "JetGo Pet Shop"; };
+  }, [resolvedData]);
 
   if (isLoading && isNumericId) {
     return (

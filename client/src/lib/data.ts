@@ -1,3 +1,16 @@
+export function toSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/ç/g, "c").replace(/ğ/g, "g").replace(/ı/g, "i")
+    .replace(/ö/g, "o").replace(/ş/g, "s").replace(/ü/g, "u")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function productUrl(id: string | number, name: string): string {
+  return `/urun/${id}/${toSlug(name)}`;
+}
+
 export interface Product {
   id: string;
   name: string;
