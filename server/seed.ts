@@ -228,7 +228,32 @@ const KEDI_TASIMA_DATA: BrandProductData = {
   ],
 };
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA];
+const KEDI_KONSERVE_DATA: BrandProductData = {
+  brandName: "Kedi Konserve",
+  brandSlug: "kedi-konserve",
+  animal: "kedi",
+  subcategory: "kedi-konserve",
+  products: [
+    { name: "Royal Canin Sensory Smell Gravy Balıklı Yetişkin Kedi Konservesi 85 gr", price: 58, originalPrice: 80, img: "https://www.mamatoptancisi.com/royal-canin-sensory-smell-gravy-balikli-yetiskin-kedi-konservesi-85-gr-1024698-10-O.jpg" },
+    { name: "Supreme Cat Purrfect Tiftiklenmiş Ton Balıklı Kedi Konservesi 70 gr", price: 61, originalPrice: 79, img: "https://www.mamatoptancisi.com/supreme-cat-purrfect-tiftiklenmis-ton-balikli-yetiskin-kedi-konservesi-70-gr-1050272-10-O.jpg" },
+    { name: "Supreme Cat Purrfect Tiftiklenmiş Ton Balıklı ve Kalamarlı Kedi Konservesi 70 gr", price: 61, originalPrice: 79, img: "https://www.mamatoptancisi.com/supreme-cat-purrfect-tiftiklenmis-ton-balikli-ve-kalamarli-yetiskin-kedi-konservesi-70-gr-1050269-10-O.jpg" },
+    { name: "Supreme Cat Purrfect Tiftiklenmiş Ton Balıklı ve Somonlu Kedi Konservesi 70 gr", price: 61, originalPrice: 79, img: "https://www.mamatoptancisi.com/supreme-cat-purrfect-tiftiklenmis-ton-balikli-ve-somonlu-yetiskin-kedi-konservesi-70-gr-1050270-10-O.jpg" },
+    { name: "Supreme Cat Purrfect Tiftiklenmiş Ton Balıklı ve Midyeli Kedi Konservesi 70 gr", price: 61, originalPrice: 79, img: "https://www.mamatoptancisi.com/supreme-cat-purrfect-tiftiklenmis-ton-balikli-ve-midyeli-yetiskin-kedi-konservesi-70-gr-1050271-10-O.jpg" },
+    { name: "Supreme Cat Purrfect Tiftiklenmiş Tavuk Göğüslü Kedi Konservesi 70 gr", price: 61, originalPrice: 79, img: "https://www.mamatoptancisi.com/supreme-cat-purrfect-tiftiklenmis-tavuk-goguslu-yetiskin-kedi-konservesi-70-gr-1050268-10-O.jpg" },
+    { name: "Supreme Cat Purrfect Tiftiklenmiş Tavuk Göğsü ve Karidesli Kedi Konservesi 70 gr", price: 61, originalPrice: 79, img: "https://www.mamatoptancisi.com/supreme-cat-purrfect-tiftiklenmis-tavuk-gogsu-ve-karidesli-yetiskin-kedi-konservesi-70-gr-1050267-10-O.jpg" },
+    { name: "Supreme Cat Purrfect Tiftiklenmiş Tavuk Göğsü ve Somonlu Kedi Konservesi 70 gr", price: 61, originalPrice: 79, img: "https://www.mamatoptancisi.com/supreme-cat-purrfect-tiftiklenmis-tavuk-gogsu-ve-somonlu-yetiskin-kedi-konservesi-70-gr-1058831-10-O.jpg" },
+    { name: "Schesir Pouch Jöle İçinde Tavuk Filetolu Kedi Konservesi 85 gr", price: 109, originalPrice: 159, img: "https://www.mamatoptancisi.com/schesir-pouch-jole-icinde-tavuk-filetolu-yetiskin-kedi-konservesi-85-gr-1065641-99-O.jpg" },
+    { name: "Schesir Jöle İçinde Ton Balığı ile Çipuralı Kedi Konservesi 6x50 gr", price: 518, originalPrice: 999, img: "https://www.mamatoptancisi.com/schesir-jole-icinde-ton-baligi-ve-cipurali-yetiskin-kedi-konservesi-6-x-50-gr-1035653-99-O.jpg" },
+    { name: "Schesir Jöle İçinde Ton Balığı ile Levrekli Kedi Konservesi 6x50 gr", price: 518, originalPrice: 999, img: "https://www.mamatoptancisi.com/schesir-jole-icinde-ton-baligi-ve-levrekli-yetiskin-kedi-konservesi-6-x-50-gr-1035654-99-O.jpg" },
+    { name: "Schesir Jöle İçinde Ton Balığı ve Tavuklu Kedi Konservesi 6x50 gr", price: 518, originalPrice: 999, img: "https://www.mamatoptancisi.com/schesir-jole-icinde-ton-baligi-ve-tavuklu-yetiskin-kedi-konservesi-6-x-50-gr-1035655-99-O.jpg" },
+    { name: "Schesir Pişirme Suyunda Ton Balıklı Kedi Konservesi 6x50 gr", price: 557, originalPrice: 999, img: "https://www.mamatoptancisi.com/schesir-pisirme-suyunda-ton-balikli-yetiskin-kedi-konservesi-6-x-50-gr-1035656-99-O.jpg" },
+    { name: "Felix Jöle İçinde Sığır Etli Kedi Konservesi 85 gr X 26 Adet", price: 552, originalPrice: 1000, img: "https://www.mamatoptancisi.com/felix-jole-icinde-sigir-etli-yetiskin-kedi-konservesi-85-gr-x-26-adet-1069678-99-O.jpg" },
+    { name: "Gourmet Gold Parça Etli ve Soslu Somon Tavuk Kedi Konservesi 85 gr 24 Adet", price: 777, originalPrice: 1800, img: "https://www.mamatoptancisi.com/gourmet-gold-parca-etli-ve-soslu-somon-tavuk-kedi-konservesi-85-gr-24-adet-1059374-10-O.jpg" },
+    { name: "Gourmet Gold Parça Sığır Etli Soslu Kedi Konservesi 85 gr 24 Adet", price: 999, originalPrice: 1500, img: "https://www.mamatoptancisi.com/gourmet-gold-parca-sigir-etli-soslu-yetiskin-kedi-konservesi-85-gr-x-24-adet-1059375-10-O.jpg" },
+  ],
+};
+
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA];
 
 export async function seedDatabase() {
   console.log("Checking database for missing brand data...");
