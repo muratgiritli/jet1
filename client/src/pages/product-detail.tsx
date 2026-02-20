@@ -179,7 +179,7 @@ export default function ProductDetailPage() {
   const isKediMama = data?.category?.animal === "kedi" && data?.category?.subcategory === "kedi-mamasi";
 
   const { data: kumData } = useQuery<{ category: BrandCategory; products: Product[] }>({
-    queryKey: ["/api/brand-categories", 24, "products"],
+    queryKey: ["/api/brand-products", "kedi", "kedi-kumu", "kedi-kumu"],
     enabled: isKediMama,
   });
 
