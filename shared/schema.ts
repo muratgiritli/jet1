@@ -93,3 +93,16 @@ export const orders = pgTable("orders", {
 export const insertOrderSchema = createInsertSchema(orders).omit({ id: true, createdAt: true, status: true });
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
+
+export const breedStats = pgTable("breed_stats", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  breedName: text("breed_name").notNull(),
+  percentage: integer("percentage").notNull(),
+  color: text("color").notNull().default("#e65100"),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const insertBreedStatSchema = createInsertSchema(breedStats).omit({ id: true });
+export type InsertBreedStat = z.infer<typeof insertBreedStatSchema>;
+export type BreedStat = typeof breedStats.$inferSelect;
