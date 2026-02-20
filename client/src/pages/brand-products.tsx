@@ -96,10 +96,12 @@ function BrandProductCard({
   product,
   quantity,
   onUpdate,
+  showDetailLink,
 }: {
   product: Product;
   quantity: number;
   onUpdate: (id: string, delta: number) => void;
+  showDetailLink?: boolean;
 }) {
   const isActive = quantity > 0;
   const discount = product.originalPrice
@@ -113,40 +115,77 @@ function BrandProductCard({
       data-testid={`card-product-${pid}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
-        <Link href={productUrl(product.id, product.name)} className="w-full flex flex-col items-center gap-2">
-          {product.img && (
-            <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative" data-testid={`img-container-${pid}`}>
-              <img
-                src={product.img}
-                alt={product.name}
-                className="w-full h-full object-contain"
-                loading="lazy"
-                data-testid={`img-product-${pid}`}
-              />
-              {product.skt && (
-                <Badge
-                  variant="secondary"
-                  className="absolute top-1 left-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
-                  data-testid={`badge-skt-${pid}`}
-                >
-                  SKT: {product.skt}
-                </Badge>
-              )}
-              {discount > 0 && (
-                <Badge
-                  className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
-                  style={{ backgroundColor: "#e53935", color: "#fff" }}
-                  data-testid={`badge-discount-${pid}`}
-                >
-                  %{discount}
-                </Badge>
-              )}
-            </div>
-          )}
-          <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${pid}`}>
-            {product.name}
-          </p>
-        </Link>
+        {showDetailLink ? (
+          <Link href={productUrl(product.id, product.name)} className="w-full flex flex-col items-center gap-2">
+            {product.img && (
+              <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative" data-testid={`img-container-${pid}`}>
+                <img
+                  src={product.img}
+                  alt={product.name}
+                  className="w-full h-full object-contain"
+                  loading="lazy"
+                  data-testid={`img-product-${pid}`}
+                />
+                {product.skt && (
+                  <Badge
+                    variant="secondary"
+                    className="absolute top-1 left-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
+                    data-testid={`badge-skt-${pid}`}
+                  >
+                    SKT: {product.skt}
+                  </Badge>
+                )}
+                {discount > 0 && (
+                  <Badge
+                    className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
+                    style={{ backgroundColor: "#e53935", color: "#fff" }}
+                    data-testid={`badge-discount-${pid}`}
+                  >
+                    %{discount}
+                  </Badge>
+                )}
+              </div>
+            )}
+            <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${pid}`}>
+              {product.name}
+            </p>
+          </Link>
+        ) : (
+          <>
+            {product.img && (
+              <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative" data-testid={`img-container-${pid}`}>
+                <img
+                  src={product.img}
+                  alt={product.name}
+                  className="w-full h-full object-contain"
+                  loading="lazy"
+                  data-testid={`img-product-${pid}`}
+                />
+                {product.skt && (
+                  <Badge
+                    variant="secondary"
+                    className="absolute top-1 left-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
+                    data-testid={`badge-skt-${pid}`}
+                  >
+                    SKT: {product.skt}
+                  </Badge>
+                )}
+                {discount > 0 && (
+                  <Badge
+                    className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
+                    style={{ backgroundColor: "#e53935", color: "#fff" }}
+                    data-testid={`badge-discount-${pid}`}
+                  >
+                    %{discount}
+                  </Badge>
+                )}
+              </div>
+            )}
+            <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${pid}`}>
+              {product.name}
+            </p>
+          </>
+        )}
         <div className="flex flex-col items-center gap-0.5">
           {product.originalPrice && product.originalPrice > product.price && (
             <span className="text-[11px] text-muted-foreground line-through" data-testid={`text-original-price-${pid}`}>
@@ -162,13 +201,19 @@ function BrandProductCard({
             <Bell className="w-3.5 h-3.5" />
             Gelince Haber Ver
           </div>
-        ) : (
+        ) : showDetailLink ? (
           <Link href={productUrl(product.id, product.name)} className="w-full">
             <Button variant="default" size="sm" className="w-full" data-testid={`btn-incele-${pid}`}>
               <Eye className="w-3.5 h-3.5" />
               İncele
             </Button>
           </Link>
+        ) : (
+          <QuantityControl
+            productId={pid}
+            quantity={quantity}
+            onUpdate={onUpdate}
+          />
         )}
       </CardContent>
     </Card>
@@ -179,12 +224,12 @@ function InlineSubcategoryProductCard({
   product,
   quantity,
   onUpdate,
-  isBrand,
+  showDetailLink,
 }: {
   product: { id: string; name: string; price: number; originalPrice?: number; img?: string; skt?: string };
   quantity: number;
   onUpdate: (id: string, delta: number) => void;
-  isBrand?: boolean;
+  showDetailLink?: boolean;
 }) {
   const isActive = quantity > 0;
   const discount = product.originalPrice && product.originalPrice > product.price
@@ -236,7 +281,7 @@ function InlineSubcategoryProductCard({
             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
         </div>
-        {isBrand ? (
+        {showDetailLink ? (
           <Link href={productUrl(product.id, product.name)} className="w-full">
             <Button variant="default" size="sm" className="w-full" data-testid={`btn-incele-inline-${product.id}`}>
               <Eye className="w-3.5 h-3.5" />
@@ -369,7 +414,7 @@ function InlineSubcategories({
                     product={product}
                     quantity={basket[product.id] || 0}
                     onUpdate={updateQty}
-                    isBrand={!!selectedSc?.hasBrands}
+                    showDetailLink={animal === "kopek" && selectedSc?.slug === "mama-markalari"}
                   />
                 </motion.div>
               ))}
@@ -504,6 +549,7 @@ export default function BrandProductsPage() {
                 product={product}
                 quantity={basket[String(product.id)] || 0}
                 onUpdate={updateQty}
+                showDetailLink={animal === "kopek" && subcategory === "mama-markalari"}
               />
             </motion.div>
           ))}
