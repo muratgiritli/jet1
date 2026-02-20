@@ -2322,5 +2322,103 @@
         "img": "https://www.mamatoptancisi.com/nd-quinoa-skin-coat-ringa-balikli-orta-ve-buyuk-irk-yetiskin-kopek-mamasi-12-kg-98-K.jpg"
       }
     ]
+  },
+  {
+    "brandName": "Pro Plan",
+    "brandSlug": "pro-plan",
+    "animal": "kedi",
+    "subcategory": "acik-mama",
+    "products": [
+      { "name": "Pro Plan Kısırlaştırılmış Somonlu Açık Kedi Maması 1 Kg", "price": 249, "img": "https://www.mamatoptancisi.com/pro-plan-kisirlastirilmis-somonlu-yetiskin-kedi-mamasi-10-kg-1045416-10-O.jpg" },
+      { "name": "Pro Plan Kısırlaştırılmış Tavuklu Açık Kedi Maması 1 Kg", "price": 249, "img": "https://www.mamatoptancisi.com/pro-plan-kisirlastirilmis-tavuklu-yetiskin-kedi-mamasi-10-kg-1057269-97-O.jpg" },
+      { "name": "Pro Plan Yavru Tavuklu Açık Kedi Maması 1 Kg", "price": 269, "img": "https://www.mamatoptancisi.com/pro-plan-tavuklu-yavru-kedi-mamasi-10-kg-1050628-97-O.jpg" },
+      { "name": "Pro Plan Hassas Sindirim Hindili Açık Kedi Maması 1 Kg", "price": 259, "img": "https://www.mamatoptancisi.com/pro-plan-hassas-sindirimi-olan-hindili-yetiskin-kedi-mamasi-10-kg-5888-1068413-97-O.jpg" },
+      { "name": "Pro Plan Hairball Tavuklu Açık Kedi Maması 1 Kg", "price": 259, "img": "https://www.mamatoptancisi.com/pro-plan-hairball-tavuklu-kedi-mamasi-10-kg-1067698-97-O.jpg" },
+      { "name": "Pro Plan Somonlu Yetişkin Açık Kedi Maması 1 Kg", "price": 249, "img": "https://www.mamatoptancisi.com/pro-plan-somonlu-yetiskin-kedi-mamasi-3-kg-1067416-97-O.jpg" }
+    ]
+  },
+  {
+    "brandName": "Hill's",
+    "brandSlug": "hills",
+    "animal": "kedi",
+    "subcategory": "acik-mama",
+    "products": [
+      { "name": "Hill's Kısırlaştırılmış Tavuklu Açık Kedi Maması 1 Kg", "price": 319, "img": "https://www.mamatoptancisi.com/hills-tavuklu-kisirlastirilmis-kedi-mamasi-15-kg-1067650-53-O.jpg" },
+      { "name": "Hill's Kısırlaştırılmış Somonlu Açık Kedi Maması 1 Kg", "price": 329, "img": "https://www.mamatoptancisi.com/hills-science-plan-kisirlastirilmis-yetiskin-somonlu-kedi-mamasi-3-kg-1067992-97-O.jpg" },
+      { "name": "Hill's Yavru Tavuklu Açık Kedi Maması 1 Kg", "price": 309, "img": "https://www.mamatoptancisi.com/hills-science-plan-tavuklu-yavru-kedi-mamasi-15kg-1067151-53-O.jpg" },
+      { "name": "Hill's Yetişkin Tavuklu Açık Kedi Maması 1 Kg", "price": 299, "img": "https://www.mamatoptancisi.com/hills-science-plan-yetiskin-tavuklu-kedi-mamasi-5367-1057246-53-O.jpg" },
+      { "name": "Hill's Yetişkin Kuzulu Açık Kedi Maması 1 Kg", "price": 299, "img": "https://www.mamatoptancisi.com/hills-science-plan-yetiskin-kuzulu-kedi-mamasi-1-1037656-22-O.jpg" },
+      { "name": "Hill's +7 Yaşlı Tavuklu Açık Kedi Maması 1 Kg", "price": 319, "img": "https://www.mamatoptancisi.com/hills-science-plan-7-yasli-tavuklu-kedi-mamasi-1-1067143-53-O.jpg" }
+    ]
+  },
+  {
+    "brandName": "Royal Canin",
+    "brandSlug": "royal-canin",
+    "animal": "kedi",
+    "subcategory": "acik-mama",
+    "products": [
+      { "name": "Royal Canin Kısırlaştırılmış Açık Kedi Maması 1 Kg", "price": 289, "img": "https://www.mamatoptancisi.com/royal-canin-sterilised-37-kisirlastirilmis-kedi-mamasi-15-kg-1066990-95-O.jpg" },
+      { "name": "Royal Canin Indoor Açık Kedi Maması 1 Kg", "price": 289, "img": "https://www.mamatoptancisi.com/royal-canin-indoor-27-ev-kedisi-mamasi-10-kg-1067206-93-O.jpg" },
+      { "name": "Royal Canin Yavru Açık Kedi Maması 1 Kg", "price": 299, "img": "https://www.mamatoptancisi.com/royal-canin-kitten-yavru-kedi-mamasi-10-kg-1038006-92-O.jpg" },
+      { "name": "Royal Canin Fit 32 Açık Kedi Maması 1 Kg", "price": 279, "img": "https://www.mamatoptancisi.com/royal-canin-fit-32-yetiskin-kedi-mamasi-15-kg-1038007-91-O.jpg" },
+      { "name": "Royal Canin Sensible 33 Açık Kedi Maması 1 Kg", "price": 289, "img": "https://www.mamatoptancisi.com/royal-canin-sensible-33-hassas-sindirimli-kedi-mamasi-15-kg-1066978-90-O.jpg" },
+      { "name": "Royal Canin Hair & Skin Açık Kedi Maması 1 Kg", "price": 299, "img": "https://www.mamatoptancisi.com/royal-canin-hair-skin-deri-ve-tuy-sagligi-icin-yetiskin-kedi-mamasi-10-kg-1067204-90-O.jpg" }
+    ]
+  },
+  {
+    "brandName": "ProChoice",
+    "brandSlug": "prochoice",
+    "animal": "kedi",
+    "subcategory": "acik-mama",
+    "products": [
+      { "name": "ProChoice Kısırlaştırılmış Somonlu Açık Kedi Maması 1 Kg", "price": 149, "img": "https://www.mamatoptancisi.com/prochoice-pro-33-somonlu-kisirlastirilmis-kedi-mamasi-15-kg-1068016-88-O.jpg" },
+      { "name": "ProChoice Kısırlaştırılmış Tavuklu Açık Kedi Maması 1 Kg", "price": 149, "img": "https://www.mamatoptancisi.com/prochoice-pro-33-tavuklu-kisirlastirilmis-kedi-mamasi-15-kg-1064977-10-O.jpg" },
+      { "name": "ProChoice Yavru Tavuklu Açık Kedi Maması 1 Kg", "price": 159, "img": "https://www.mamatoptancisi.com/prochoice-pro-kitten-tavuklu-yavru-kedi-mamasi-15-kg-1063915-10-O.jpg" },
+      { "name": "ProChoice Yetişkin Somonlu Açık Kedi Maması 1 Kg", "price": 139, "img": "https://www.mamatoptancisi.com/prochoice-pro-34-somonlu-yetiskin-kedi-mamasi-15-kg-1063614-10-O.jpg" },
+      { "name": "ProChoice Hairball Tavuklu Açık Kedi Maması 1 Kg", "price": 149, "img": "https://www.mamatoptancisi.com/prochoice-pro-34-hairball-tavuklu-yetiskin-kedi-mamasi-15-kg-1063612-85-O.jpg" },
+      { "name": "ProChoice Yetişkin Kuzu Etli Açık Kedi Maması 1 Kg", "price": 139, "img": "https://www.mamatoptancisi.com/prochoice-pro-34-kuzu-etli-yetiskin-kedi-mamasi-15-kg-1063615-10-O.jpg" }
+    ]
+  },
+  {
+    "brandName": "N&D",
+    "brandSlug": "nd",
+    "animal": "kedi",
+    "subcategory": "acik-mama",
+    "products": [
+      { "name": "N&D Tahılsız Tavuk ve Narlı Açık Kedi Maması 1 Kg", "price": 339, "img": "https://www.mamatoptancisi.com/nd-tahilsiz-tavuk-ve-narli-kisirlastirilmis-yetiskin-kedi-mamasi-10-kg-1068355-84-O.jpg" },
+      { "name": "N&D Tahılsız Kuzu ve Yaban Mersinli Açık Kedi Maması 1 Kg", "price": 339, "img": "https://www.mamatoptancisi.com/nd-tahilsiz-kuzu-ve-yaban-mersinli-kisirlastirilmis-yetiskin-kedi-mamasi-10-kg-1068357-84-O.jpg" },
+      { "name": "N&D Düşük Tahıllı Tavuk ve Narlı Açık Kedi Maması 1 Kg", "price": 299, "img": "https://www.mamatoptancisi.com/nd-dusuk-tahilli-tavuk-ve-narli-kisirlastirilmis-yetiskin-kedi-mamasi-10-kg-1068339-82-O.jpg" },
+      { "name": "N&D Düşük Tahıllı Kuzu ve Yaban Mersinli Açık Kedi Maması 1 Kg", "price": 299, "img": "https://www.mamatoptancisi.com/nd-dusuk-tahilli-kuzu-ve-yaban-mersinli-kisirlastirilmis-yetiskin-kedi-mamasi-10-kg-1068337-82-O.jpg" },
+      { "name": "N&D Quinoa Sindirim Kuzulu Açık Kedi Maması 1 Kg", "price": 359, "img": "https://www.mamatoptancisi.com/nd-quinoa-digestion-kuzulu-kedi-mamasi-5-kg-1038086-80-O.jpg" },
+      { "name": "N&D Tahılsız Balık ve Portakallı Açık Kedi Maması 1 Kg", "price": 339, "img": "https://www.mamatoptancisi.com/nd-tahilsiz-balik-ve-portakalli-yetiskin-kedi-mamasi-10-kg-1068353-84-O.jpg" }
+    ]
+  },
+  {
+    "brandName": "Reflex",
+    "brandSlug": "reflex",
+    "animal": "kedi",
+    "subcategory": "acik-mama",
+    "products": [
+      { "name": "Reflex Kısırlaştırılmış Somonlu Açık Kedi Maması 1 Kg", "price": 109, "img": "https://www.mamatoptancisi.com/reflex-somonlu-kisirlastirilmis-yetiskin-kedi-mamasi-15-kg-1064541-10-O.jpg" },
+      { "name": "Reflex Kısırlaştırılmış Tavuklu Açık Kedi Maması 1 Kg", "price": 109, "img": "https://www.mamatoptancisi.com/reflex-tavuklu-kisirlastirilmis-yetiskin-kedi-mamasi-15-kg-1064539-78-O.jpg" },
+      { "name": "Reflex Yavru Tavuklu Açık Kedi Maması 1 Kg", "price": 119, "img": "https://www.mamatoptancisi.com/reflex-tavuklu-yavru-kedi-mamasi-15-kg-1064543-10-O.jpg" },
+      { "name": "Reflex Yetişkin Tavuklu Açık Kedi Maması 1 Kg", "price": 99, "img": "https://www.mamatoptancisi.com/reflex-tavuklu-renkli-taneli-yetiskin-kedi-mamasi-15-kg-1064545-10-O.jpg" },
+      { "name": "Reflex Plus Kısırlaştırılmış Somonlu Açık Kedi Maması 1 Kg", "price": 139, "img": "https://www.mamatoptancisi.com/reflex-plus-somonlu-kisirlastirilmis-yetiskin-kedi-mamasi-15-kg-1064556-10-O.jpg" },
+      { "name": "Reflex Plus Yavru Tavuklu Açık Kedi Maması 1 Kg", "price": 149, "img": "https://www.mamatoptancisi.com/reflex-plus-tavuklu-yavru-kedi-mamasi-15-kg-1064550-10-O.jpg" }
+    ]
+  },
+  {
+    "brandName": "Enjoy",
+    "brandSlug": "enjoy",
+    "animal": "kedi",
+    "subcategory": "acik-mama",
+    "products": [
+      { "name": "Enjoy Kısırlaştırılmış Somonlu Açık Kedi Maması 1 Kg", "price": 99, "img": "https://www.mamatoptancisi.com/enjoy-somonlu-kisirlastirilmis-yetiskin-kedi-mamasi-15-kg-1064529-10-O.jpg" },
+      { "name": "Enjoy Kısırlaştırılmış Tavuklu Açık Kedi Maması 1 Kg", "price": 99, "img": "https://www.mamatoptancisi.com/enjoy-tavuklu-kisirlastirilmis-yetiskin-kedi-mamasi-15-kg-1064527-75-O.jpg" },
+      { "name": "Enjoy Yavru Tavuklu Açık Kedi Maması 1 Kg", "price": 109, "img": "https://www.mamatoptancisi.com/enjoy-tavuklu-yavru-kedi-mamasi-15-kg-1064531-10-O.jpg" },
+      { "name": "Enjoy Yetişkin Tavuklu Açık Kedi Maması 1 Kg", "price": 89, "img": "https://www.mamatoptancisi.com/enjoy-tavuklu-yetiskin-kedi-mamasi-15-kg-1064535-10-O.jpg" },
+      { "name": "Enjoy Yetişkin Somonlu Açık Kedi Maması 1 Kg", "price": 89, "img": "https://www.mamatoptancisi.com/enjoy-somonlu-yetiskin-kedi-mamasi-15-kg-1064533-10-O.jpg" },
+      { "name": "Enjoy Hairball Tavuklu Açık Kedi Maması 1 Kg", "price": 99, "img": "https://www.mamatoptancisi.com/enjoy-hairball-tavuklu-yetiskin-kedi-mamasi-15-kg-1064537-10-O.jpg" }
+    ]
   }
 ]

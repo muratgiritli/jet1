@@ -40,7 +40,15 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
     "acik-mama": {
       title: "Köpek Açık Mama",
       subtitle: "Buradan markanızı seçebilirsiniz.",
-      brands: [],
+      brands: [
+        { name: "Pro Plan", slug: "pro-plan", color: "#1565C0" },
+        { name: "Hill's", slug: "hills", color: "#2E7D32" },
+        { name: "Royal Canin", slug: "royal-canin", color: "#C62828" },
+        { name: "ProChoice", slug: "prochoice", color: "#00838F" },
+        { name: "N&D", slug: "nd", color: "#4CAF50" },
+        { name: "Reflex", slug: "reflex", color: "#F57F17" },
+        { name: "Enjoy", slug: "enjoy", color: "#E91E63" },
+      ],
     },
     "yas-mama": {
       title: "Köpek Yaş Mama",
@@ -66,6 +74,19 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
         { name: "Felicia", slug: "felicia", color: "#9C27B0" },
         { name: "N&D", slug: "nd", color: "#3F51B5" },
         { name: "Uygun Çuval Mamalar", slug: "uygun-cuval", color: "#607D8B" },
+      ],
+    },
+    "acik-mama": {
+      title: "Kedi Açık Mama",
+      subtitle: "Buradan markanızı seçebilirsiniz.",
+      brands: [
+        { name: "Pro Plan", slug: "pro-plan", color: "#1565C0" },
+        { name: "Hill's", slug: "hills", color: "#2E7D32" },
+        { name: "Royal Canin", slug: "royal-canin", color: "#C62828" },
+        { name: "ProChoice", slug: "prochoice", color: "#00838F" },
+        { name: "N&D", slug: "nd", color: "#4CAF50" },
+        { name: "Reflex", slug: "reflex", color: "#F57F17" },
+        { name: "Enjoy", slug: "enjoy", color: "#E91E63" },
       ],
     },
     "kedi-kumu": {

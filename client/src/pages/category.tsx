@@ -41,6 +41,7 @@ const ANIMAL_CATEGORIES: Record<string, AnimalCategory> = {
     subtitle: "LÜTFEN KATEGORİ SEÇİNİZ",
     subcategories: [
       { name: "Kedi\nMaması", slug: "kedi-mamasi", color: "#E91E63", hasBrands: true },
+      { name: "Açık\nMamalar", slug: "acik-mama", color: "#00BFA5", hasBrands: true },
       { name: "Kedi\nKumu", slug: "kedi-kumu", color: "#00BCD4", hasBrands: true },
       { name: "Kedi\nMaltı", slug: "kedi-malti", color: "#3F51B5" },
       { name: "Kedi\nÖdülü", slug: "kedi-odulu", color: "#9C27B0" },
@@ -125,7 +126,7 @@ export default function CategoryPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3, delay: 0.05 * i }}
             >
-              <Link href={sub.hasBrands ? `/kategori/${animalSlug}/${sub.slug}` : `/siparis?kategori=${animalSlug}&alt=${sub.slug}`}>
+              <Link href={sub.slug === "acik-mama" ? `/acik-mama/${animalSlug}` : sub.hasBrands ? `/kategori/${animalSlug}/${sub.slug}` : `/siparis?kategori=${animalSlug}&alt=${sub.slug}`}>
                 <div
                   className="rounded-xl p-5 cursor-pointer flex items-center justify-center min-h-[90px]"
                   style={{ backgroundColor: sub.color }}
