@@ -289,6 +289,19 @@ export default function Checkout() {
                         `Ücretsiz teslimat için ${Math.round(CONFIG.shipLimit - subtotal)} TL daha ekleyin`
                       )}
                     </p>
+                    {subtotal < CONFIG.shipLimit && (
+                      <Link href="/">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="w-full mt-3 font-bold border-primary text-primary hover:bg-primary hover:text-white"
+                          data-testid="btn-continue-shopping"
+                        >
+                          <ShoppingCart className="w-4 h-4" />
+                          ALIŞVERİŞE DEVAM ET
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </CardContent>
               </Card>
