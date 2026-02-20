@@ -38,7 +38,7 @@ import {
   Rabbit,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order } from "@shared/schema";
+import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order, BreedStat } from "@shared/schema";
 
 const ANIMALS = [
   { id: "kedi", name: "Kedi", icon: Cat },
@@ -500,6 +500,13 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [newSectionSortOrder, setNewSectionSortOrder] = useState("0");
   const [selectedProductId, setSelectedProductId] = useState("");
 
+  const [breedStatsDialogOpen, setBreedStatsDialogOpen] = useState(false);
+  const [breedStatsProductId, setBreedStatsProductId] = useState<number | null>(null);
+  const [newBreedName, setNewBreedName] = useState("");
+  const [newBreedPercentage, setNewBreedPercentage] = useState("");
+  const [newBreedColor, setNewBreedColor] = useState("#e65100");
+  const [newBreedSortOrder, setNewBreedSortOrder] = useState("0");
+
   const { data: crossSellSections = [] } = useQuery<(CrossSellSection & { items: CrossSellItem[] })[]>({
     queryKey: ["/api/cross-sell-sections"],
   });
@@ -543,6 +550,33 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cross-sell-sections"] });
+    },
+  });
+
+  const { data: breedStatsForProduct = [] } = useQuery<BreedStat[]>({
+    queryKey: ["/api/breed-stats", breedStatsProductId],
+    enabled: !!breedStatsProductId,
+  });
+
+  const addBreedStatMutation = useMutation({
+    mutationFn: async (data: { productId: number; breedName: string; percentage: number; color: string; sortOrder: number }) => {
+      await apiRequest("POST", "/api/admin/breed-stats", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/breed-stats", breedStatsProductId] });
+      setNewBreedName("");
+      setNewBreedPercentage("");
+      setNewBreedColor("#e65100");
+      setNewBreedSortOrder("0");
+    },
+  });
+
+  const deleteBreedStatMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/breed-stats/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/breed-stats", breedStatsProductId] });
     },
   });
 
@@ -1190,6 +1224,136 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           </DialogContent>
         </Dialog>
+
+        <section>
+          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+            <h2 className="text-lg font-bold" data-testid="text-section-breed-stats">Kedi Türü İstatistikleri</h2>
+          </div>
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <div className="space-y-2">
+                <Label>Ürün Seçin</Label>
+                <Select
+                  value={breedStatsProductId ? String(breedStatsProductId) : ""}
+                  onValueChange={(val) => setBreedStatsProductId(parseInt(val))}
+                >
+                  <SelectTrigger data-testid="select-breed-stats-product">
+                    <SelectValue placeholder="İstatistik eklemek istediğiniz ürünü seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allProducts.map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)} data-testid={`option-breed-product-${p.id}`}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {breedStatsProductId && (
+                <>
+                  {breedStatsForProduct.length > 0 && (
+                    <div className="space-y-2" data-testid="list-breed-stats">
+                      <Label className="text-sm font-semibold">Mevcut İstatistikler</Label>
+                      {breedStatsForProduct
+                        .sort((a, b) => a.sortOrder - b.sortOrder)
+                        .map((stat) => (
+                        <div key={stat.id} className="flex items-center gap-3 py-2 px-3 rounded-md bg-muted/30" data-testid={`row-admin-breed-stat-${stat.id}`}>
+                          <div className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: stat.color }} />
+                          <span className="text-sm font-medium flex-1">{stat.breedName}</span>
+                          <span className="text-sm font-bold">{stat.percentage}%</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => deleteBreedStatMutation.mutate(stat.id)}
+                            data-testid={`btn-delete-breed-stat-${stat.id}`}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="border-t pt-4 space-y-3">
+                    <Label className="text-sm font-semibold">Yeni İstatistik Ekle</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Kedi Türü</Label>
+                        <Input
+                          value={newBreedName}
+                          onChange={(e) => setNewBreedName(e.target.value)}
+                          placeholder="Tekir Yavru"
+                          data-testid="input-breed-name"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Yüzde (%)</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={newBreedPercentage}
+                          onChange={(e) => setNewBreedPercentage(e.target.value)}
+                          placeholder="34"
+                          data-testid="input-breed-percentage"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Renk</Label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={newBreedColor}
+                            onChange={(e) => setNewBreedColor(e.target.value)}
+                            className="w-8 h-8 rounded cursor-pointer border"
+                            data-testid="input-breed-color"
+                          />
+                          <Input
+                            value={newBreedColor}
+                            onChange={(e) => setNewBreedColor(e.target.value)}
+                            placeholder="#e65100"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Sıralama</Label>
+                        <Input
+                          type="number"
+                          value={newBreedSortOrder}
+                          onChange={(e) => setNewBreedSortOrder(e.target.value)}
+                          data-testid="input-breed-sort-order"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      className="w-full"
+                      disabled={!newBreedName || !newBreedPercentage || addBreedStatMutation.isPending}
+                      onClick={() => {
+                        if (breedStatsProductId && newBreedName && newBreedPercentage) {
+                          addBreedStatMutation.mutate({
+                            productId: breedStatsProductId,
+                            breedName: newBreedName,
+                            percentage: parseInt(newBreedPercentage),
+                            color: newBreedColor,
+                            sortOrder: parseInt(newBreedSortOrder) || 0,
+                          });
+                        }
+                      }}
+                      data-testid="btn-add-breed-stat"
+                    >
+                      {addBreedStatMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "İstatistik Ekle"}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </section>
       </main>
     </div>
   );

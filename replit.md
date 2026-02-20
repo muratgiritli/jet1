@@ -6,13 +6,13 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 ## Architecture
 - **Frontend**: React + TypeScript with shadcn/ui components, Tailwind CSS, framer-motion
 - **Backend**: Express with session-based auth (bcryptjs + express-session + connect-pg-simple)
-- **Database**: PostgreSQL (Drizzle ORM) - brand_categories, products, cross_sell_sections, cross_sell_items, orders tables
+- **Database**: PostgreSQL (Drizzle ORM) - brand_categories, products, cross_sell_sections, cross_sell_items, orders, breed_stats tables
 - **Static data**: CATEGORIES in client/src/lib/data.ts (non-brand products remain static)
 - **Dynamic data**: Brand products (Brit Care, Hill's, etc.) served from database via API
 - **Cross-sell**: Reusable recommendation sections linked to products via junction table, displayed on product detail pages
 
 ## Key Files
-- `shared/schema.ts` - Drizzle schema: users, brandCategories, products, crossSellSections, crossSellItems, orders tables
+- `shared/schema.ts` - Drizzle schema: users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats tables
 - `server/storage.ts` - DatabaseStorage class with CRUD operations
 - `server/routes.ts` - API routes (public + admin with session auth)
 - `server/seed.ts` - Seeds database with initial brand product data
@@ -50,6 +50,9 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `POST /api/orders` - Create new order (public, saves to DB)
 - `GET /api/admin/orders` - List all orders (auth required)
 - `PATCH /api/admin/orders/:id/status` - Update order status (auth required)
+- `GET /api/breed-stats/:productId` - Get breed stats for a product
+- `POST /api/admin/breed-stats` - Create breed stat (auth required)
+- `DELETE /api/admin/breed-stats/:id` - Delete breed stat (auth required)
 
 ## Frontend Routes
 - `/` - Landing page (vitrin)

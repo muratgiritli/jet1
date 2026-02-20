@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
 import { seedDatabase } from "./seed";
-import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema } from "@shared/schema";
+import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import session from "express-session";
@@ -154,7 +154,9 @@ export async function registerRoutes(
         return { ...section, products: sectionProducts };
       })
     );
-    res.json({ product, category, crossSellSections: sectionsWithProducts.filter(s => s.products.length > 0) });
+    const breedStatsList = await storage.getBreedStatsByProduct(id);
+    const sortedBreedStats = breedStatsList.sort((a, b) => a.sortOrder - b.sortOrder);
+    res.json({ product, category, crossSellSections: sectionsWithProducts.filter(s => s.products.length > 0), breedStats: sortedBreedStats });
   });
 
   app.get("/api/cross-sell-sections", async (_req, res) => {
@@ -231,6 +233,25 @@ export async function registerRoutes(
     const order = await storage.updateOrderStatus(id, status);
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.json(order);
+  });
+
+  app.get("/api/breed-stats/:productId", async (req, res) => {
+    const productId = parseInt(req.params.productId);
+    const stats = await storage.getBreedStatsByProduct(productId);
+    res.json(stats.sort((a, b) => a.sortOrder - b.sortOrder));
+  });
+
+  app.post("/api/admin/breed-stats", requireAdmin, async (req, res) => {
+    const parsed = insertBreedStatSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
+    const stat = await storage.createBreedStat(parsed.data);
+    res.status(201).json(stat);
+  });
+
+  app.delete("/api/admin/breed-stats/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteBreedStat(id);
+    res.json({ message: "Deleted" });
   });
 
   return httpServer;

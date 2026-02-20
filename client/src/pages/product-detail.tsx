@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useRoute } from "wouter";
 import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, Eye } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import type { Product, BrandCategory, CrossSellSection } from "@shared/schema";
+import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
@@ -59,6 +59,7 @@ type ProductDetailData = {
   product: Product;
   category: BrandCategory | null;
   crossSellSections: (CrossSellSection & { products: Product[] })[];
+  breedStats?: BreedStat[];
 };
 
 function QuantityControl({
@@ -449,7 +450,7 @@ export default function ProductDetailPage() {
     );
   }
 
-  const { product, category, crossSellSections } = resolvedData;
+  const { product, category, crossSellSections, breedStats } = resolvedData;
   const pid = String(product.id);
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
@@ -589,6 +590,46 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </motion.div>
+
+        {breedStats && breedStats.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className="mt-8"
+            data-testid="section-breed-stats"
+          >
+            <Card>
+              <CardContent className="p-5">
+                <h3 className="text-base font-bold text-center mb-4" data-testid="text-breed-stats-title">
+                  Bu Mamayı Kullanan Kedi Türleri
+                </h3>
+                <div className="space-y-3">
+                  {breedStats.map((stat, i) => (
+                    <div key={stat.id} className="flex items-center gap-3" data-testid={`row-breed-stat-${stat.id}`}>
+                      <span className="text-sm font-medium w-28 text-right shrink-0" data-testid={`text-breed-name-${stat.id}`}>
+                        {stat.breedName}
+                      </span>
+                      <div className="flex-1 h-5 bg-muted/40 rounded-full overflow-hidden relative">
+                        <motion.div
+                          className="h-full rounded-full"
+                          style={{ backgroundColor: stat.color }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${stat.percentage}%` }}
+                          transition={{ duration: 0.6, delay: 0.1 * i, ease: "easeOut" }}
+                          data-testid={`bar-breed-stat-${stat.id}`}
+                        />
+                      </div>
+                      <span className="text-sm font-bold w-10 text-right shrink-0" data-testid={`text-breed-pct-${stat.id}`}>
+                        {stat.percentage}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
 
         {crossSellSections.length > 0 && (
           <div className="mt-10 space-y-8">

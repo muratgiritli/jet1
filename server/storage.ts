@@ -8,7 +8,8 @@ import {
   type CrossSellSection, type InsertCrossSellSection,
   type CrossSellItem, type InsertCrossSellItem,
   type Order, type InsertOrder,
-  users, brandCategories, products, crossSellSections, crossSellItems, orders,
+  type BreedStat, type InsertBreedStat,
+  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats,
 } from "@shared/schema";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -46,6 +47,10 @@ export interface IStorage {
   getOrder(id: number): Promise<Order | undefined>;
   createOrder(data: InsertOrder): Promise<Order>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
+
+  getBreedStatsByProduct(productId: number): Promise<BreedStat[]>;
+  createBreedStat(data: InsertBreedStat): Promise<BreedStat>;
+  deleteBreedStat(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -170,6 +175,19 @@ export class DatabaseStorage implements IStorage {
   async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
     const [order] = await db.update(orders).set({ status }).where(eq(orders.id, id)).returning();
     return order;
+  }
+
+  async getBreedStatsByProduct(productId: number): Promise<BreedStat[]> {
+    return db.select().from(breedStats).where(eq(breedStats.productId, productId));
+  }
+
+  async createBreedStat(data: InsertBreedStat): Promise<BreedStat> {
+    const [stat] = await db.insert(breedStats).values(data).returning();
+    return stat;
+  }
+
+  async deleteBreedStat(id: number): Promise<void> {
+    await db.delete(breedStats).where(eq(breedStats.id, id));
   }
 }
 
