@@ -253,7 +253,55 @@ const KEDI_KONSERVE_DATA: BrandProductData = {
   ],
 };
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA];
+const KOPEK_ACIK_MAMA_PROPLAN: BrandProductData = {
+  brandName: "Pro Plan",
+  brandSlug: "pro-plan",
+  animal: "kopek",
+  subcategory: "acik-mama",
+  products: [
+    { name: "Pro Plan Yetişkin Köpek Tavuklu Açık Mama 1 KG", price: 189, originalPrice: 250, img: "https://www.mamatoptancisi.com/pro-plan-yetiskin-kopek-tavuklu-acik-mama-1-kg-1060001-10-O.jpg", stock: 10 },
+    { name: "Pro Plan Yavru Köpek Tavuklu Açık Mama 1 KG", price: 199, originalPrice: 265, img: "https://www.mamatoptancisi.com/pro-plan-yavru-kopek-tavuklu-acik-mama-1-kg-1060002-10-O.jpg", stock: 10 },
+    { name: "Pro Plan Hassas Sindirimli Köpek Kuzulu Açık Mama 1 KG", price: 209, originalPrice: 280, img: "https://www.mamatoptancisi.com/pro-plan-hassas-sindirimli-kopek-kuzulu-acik-mama-1-kg-1060003-10-O.jpg", stock: 10 },
+  ],
+};
+
+const KOPEK_ACIK_MAMA_HILLS: BrandProductData = {
+  brandName: "Hill's",
+  brandSlug: "hills",
+  animal: "kopek",
+  subcategory: "acik-mama",
+  products: [
+    { name: "Hill's Science Plan Yetişkin Köpek Tavuklu Açık Mama 1 KG", price: 219, originalPrice: 300, img: "https://www.mamatoptancisi.com/hills-yetiskin-kopek-tavuklu-acik-mama-1-kg-1060004-10-O.jpg", stock: 10 },
+    { name: "Hill's Science Plan Yavru Köpek Tavuklu Açık Mama 1 KG", price: 229, originalPrice: 310, img: "https://www.mamatoptancisi.com/hills-yavru-kopek-tavuklu-acik-mama-1-kg-1060005-10-O.jpg", stock: 10 },
+    { name: "Hill's Science Plan Küçük Irk Köpek Tavuklu Açık Mama 1 KG", price: 239, originalPrice: 320, img: "https://www.mamatoptancisi.com/hills-kucuk-irk-kopek-tavuklu-acik-mama-1-kg-1060006-10-O.jpg", stock: 10 },
+  ],
+};
+
+const KOPEK_ACIK_MAMA_ROYALCANIN: BrandProductData = {
+  brandName: "Royal Canin",
+  brandSlug: "royal-canin",
+  animal: "kopek",
+  subcategory: "acik-mama",
+  products: [
+    { name: "Royal Canin Maxi Adult Yetişkin Köpek Açık Mama 1 KG", price: 199, originalPrice: 270, img: "https://www.mamatoptancisi.com/royal-canin-maxi-adult-kopek-acik-mama-1-kg-1060007-10-O.jpg", stock: 10 },
+    { name: "Royal Canin Mini Adult Yetişkin Köpek Açık Mama 1 KG", price: 209, originalPrice: 285, img: "https://www.mamatoptancisi.com/royal-canin-mini-adult-kopek-acik-mama-1-kg-1060008-10-O.jpg", stock: 10 },
+    { name: "Royal Canin Medium Puppy Yavru Köpek Açık Mama 1 KG", price: 219, originalPrice: 295, img: "https://www.mamatoptancisi.com/royal-canin-medium-puppy-kopek-acik-mama-1-kg-1060009-10-O.jpg", stock: 10 },
+  ],
+};
+
+const KOPEK_ACIK_MAMA_REFLEX: BrandProductData = {
+  brandName: "Reflex",
+  brandSlug: "reflex",
+  animal: "kopek",
+  subcategory: "acik-mama",
+  products: [
+    { name: "Reflex Yetişkin Köpek Kuzulu Açık Mama 1 KG", price: 99, originalPrice: 140, img: "https://www.mamatoptancisi.com/reflex-yetiskin-kopek-kuzulu-acik-mama-1-kg-1060010-10-O.jpg", stock: 10 },
+    { name: "Reflex Yavru Köpek Tavuklu Açık Mama 1 KG", price: 109, originalPrice: 150, img: "https://www.mamatoptancisi.com/reflex-yavru-kopek-tavuklu-acik-mama-1-kg-1060011-10-O.jpg", stock: 10 },
+    { name: "Reflex Yetişkin Köpek Somonlu Açık Mama 1 KG", price: 109, originalPrice: 145, img: "https://www.mamatoptancisi.com/reflex-yetiskin-kopek-somonlu-acik-mama-1-kg-1060012-10-O.jpg", stock: 10 },
+  ],
+};
+
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
 
 export async function seedDatabase() {
   console.log("Checking database for missing brand data...");
