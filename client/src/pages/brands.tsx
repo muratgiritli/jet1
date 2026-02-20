@@ -1,4 +1,5 @@
-import { Link, useRoute } from "wouter";
+import { Link, useRoute, useLocation } from "wouter";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +16,7 @@ interface SubcategoryBrands {
   title: string;
   subtitle: string;
   brands: Brand[];
+  redirect?: string;
 }
 
 const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
@@ -91,14 +93,9 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
     },
     "kedi-kumu": {
       title: "Kedi Kumu",
-      subtitle: "Buradan markanızı seçebilirsiniz.",
-      brands: [
-        { name: "Proline", slug: "proline", color: "#2196F3" },
-        { name: "Vancat", slug: "vancat", color: "#00BCD4" },
-        { name: "Biokats", slug: "biokats", color: "#795548" },
-        { name: "Sanicat", slug: "sanicat", color: "#FF9800" },
-        { name: "Diğer Markalar", slug: "diger", color: "#607D8B" },
-      ],
+      subtitle: "",
+      brands: [],
+      redirect: "/siparis/kedi/kedi-kumu/kedi-kumu",
     },
     "kedi-odulu": {
       title: "Kedi Ödülü",
@@ -136,10 +133,21 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
 
 export default function BrandsPage() {
   const [, params] = useRoute("/kategori/:animal/:subcategory");
+  const [, setLocation] = useLocation();
   const animalSlug = params?.animal || "";
   const subSlug = params?.subcategory || "";
 
   const brandData = BRAND_DATA[animalSlug]?.[subSlug];
+
+  useEffect(() => {
+    if (brandData?.redirect) {
+      setLocation(brandData.redirect);
+    }
+  }, [brandData, setLocation]);
+
+  if (brandData?.redirect) {
+    return null;
+  }
 
   if (!brandData) {
     return (
