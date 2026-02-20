@@ -4,12 +4,13 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRoute } from "wouter";
-import { ArrowLeft, ShoppingCart, Loader2, Plus, Minus } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Loader2, Eye } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
+import { productUrl } from "@/lib/data";
 
 const BRAND_COLORS: Record<string, string> = {
   "pro-plan": "#1565C0",
@@ -21,49 +22,50 @@ const BRAND_COLORS: Record<string, string> = {
   "enjoy": "#E91E63",
 };
 
-function ProductCard({ product, quantity, onUpdate }: { product: Product; quantity: number; onUpdate: (id: string, delta: number) => void }) {
+function ProductCard({ product }: { product: Product }) {
   const pid = String(product.id);
   const discount = product.originalPrice && product.originalPrice > product.price
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
-  const isActive = quantity > 0;
 
   return (
     <Card
-      className={`transition-all duration-200 ${isActive ? "ring-2 ring-primary shadow-md" : ""}`}
+      className="transition-all duration-200"
       data-testid={`card-acik-product-${pid}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
-        {product.img && (
-          <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
-            <img
-              src={product.img}
-              alt={product.name}
-              className="w-full h-full object-contain"
-              loading="lazy"
-              data-testid={`img-acik-product-${pid}`}
-            />
-            {product.skt && (
-              <Badge
-                variant="secondary"
-                className="absolute top-1 left-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
-              >
-                SKT: {product.skt}
-              </Badge>
-            )}
-            {discount > 0 && (
-              <Badge
-                className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
-                style={{ backgroundColor: "#e53935", color: "#fff" }}
-              >
-                %{discount}
-              </Badge>
-            )}
-          </div>
-        )}
-        <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-acik-name-${pid}`}>
-          {product.name}
-        </p>
+        <Link href={productUrl(product.id, product.name)} className="w-full flex flex-col items-center gap-2">
+          {product.img && (
+            <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
+              <img
+                src={product.img}
+                alt={product.name}
+                className="w-full h-full object-contain"
+                loading="lazy"
+                data-testid={`img-acik-product-${pid}`}
+              />
+              {product.skt && (
+                <Badge
+                  variant="secondary"
+                  className="absolute top-1 left-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
+                >
+                  SKT: {product.skt}
+                </Badge>
+              )}
+              {discount > 0 && (
+                <Badge
+                  className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
+                  style={{ backgroundColor: "#e53935", color: "#fff" }}
+                >
+                  %{discount}
+                </Badge>
+              )}
+            </div>
+          )}
+          <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-acik-name-${pid}`}>
+            {product.name}
+          </p>
+        </Link>
         <div className="flex flex-col items-center gap-0.5">
           {product.originalPrice && product.originalPrice > product.price && (
             <span className="text-[11px] text-muted-foreground line-through">
@@ -74,30 +76,12 @@ function ProductCard({ product, quantity, onUpdate }: { product: Product; quanti
             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
         </div>
-        <div className="flex items-center gap-0" data-testid={`qty-control-${pid}`}>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onUpdate(pid, -1)}
-            data-testid={`btn-minus-${pid}`}
-          >
-            <Minus />
+        <Link href={productUrl(product.id, product.name)} className="w-full">
+          <Button variant="default" size="sm" className="w-full" data-testid={`btn-satin-al-${pid}`}>
+            <Eye className="w-3.5 h-3.5" />
+            Satın Al
           </Button>
-          <div
-            className="flex items-center justify-center font-bold text-primary w-8 text-sm"
-            data-testid={`text-qty-${pid}`}
-          >
-            {quantity}
-          </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onUpdate(pid, 1)}
-            data-testid={`btn-plus-${pid}`}
-          >
-            <Plus />
-          </Button>
-        </div>
+        </Link>
       </CardContent>
     </Card>
   );
@@ -208,7 +192,7 @@ export default function AcikMamaPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.25, delay: 0.03 * Math.min(pi, 10) }}
                     >
-                      <ProductCard product={product} quantity={basket[String(product.id)] || 0} onUpdate={updateQty} />
+                      <ProductCard product={product} />
                     </motion.div>
                   ))}
                 </div>
