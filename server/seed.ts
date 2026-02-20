@@ -292,6 +292,26 @@ const ECONATURE_KOPEK: BrandProductData = {
   ],
 };
 
+const FELICIA_KOPEK: BrandProductData = {
+  brandName: "Felicia",
+  brandSlug: "felicia",
+  animal: "kopek",
+  subcategory: "mama-markalari",
+  products: [
+    { name: "Felicia Kuzu Etli Küçük Irk Yavru ve Hamile Köpek Maması 2X3 Kg", price: 1015, originalPrice: 1650, skt: "01.2027", img: "https://www.mamatoptancisi.com/felicia-kuzu-etli-kucuk-irk-yavru-ve-hamile-kopek-mamasi-6-kg-1044683-12-O.jpg", stock: 10 },
+    { name: "Felicia Mini Somonlu Düşük Tahıllı Hipoalerjenik Köpek Maması 3 kg", price: 586, originalPrice: 715, skt: "02.2027", img: "https://www.mamatoptancisi.com/felicia-mini-somonlu-dusuk-tahilli-hipoalerjenik-kopek-mamasi-3-kg-1044676-12-O.jpg", stock: 10 },
+    { name: "Felicia Kuzulu Pirinçli Düşük Tahıllı Hipoalerjenik Köpek Maması 15 kg", price: 2715, originalPrice: 3500, skt: "11.2027", img: "https://www.mamatoptancisi.com/felicia-kuzulu-pirincli-dusuk-tahilli-hipoalerjenik-kopek-mamasi-15-kg-1044639-10-O.jpg", stock: 10 },
+    { name: "Felicia Somon Balıklı Düşük Tahıllı Hipoalerjenik Yetişkin Köpek Maması 15 kg", price: 2715, originalPrice: 3190, skt: "01.2027", img: "https://www.mamatoptancisi.com/felicia-somon-balikli-dusuk-tahilli-hipoalerjenik-yetiskin-kopek-mamasi-15-kg-1044627-98-O.jpg", stock: 10 },
+    { name: "Felicia Kuzulu Küçük Irk Düşük Tahıllı Köpek Maması 6 kg (2X3 Kg)", price: 1072, originalPrice: 1750, skt: "03.2027", img: "https://www.mamatoptancisi.com/felicia-kuzulu-kucuk-irk-dusuk-tahilli-kopek-mamasi-6-kg-1056887-95-O.jpg", stock: 10 },
+    { name: "Felicia Mini Somonlu Düşük Tahıllı Hipoalerjenik Köpek Maması 6 kg (3X2 Kg)", price: 1072, originalPrice: 1750, skt: "03.2027", img: "https://www.mamatoptancisi.com/felicia-mini-somonlu-dusuk-tahilli-hipoalerjenik-kopek-mamasi-6-kg-1057405-95-O.jpg", stock: 10 },
+    { name: "Felicia Kuzu Etli Küçük Irk Yavru ve Hamile Köpek Maması 3 kg", price: 650, originalPrice: 825, skt: "03.2027", img: "https://www.mamatoptancisi.com/felicia-kuzu-etli-kucuk-irk-yavru-ve-hamile-kopek-mamasi-3-kg-1044623-95-O.jpg", stock: 10 },
+    { name: "Felicia Kuzulu Pirinçli Yetişkin Düşük Tahıllı Hipoalerjenik Köpek Maması 3 kg", price: 591, originalPrice: 950, skt: "01.2027", img: "https://www.mamatoptancisi.com/felicia-kuzulu-pirincli-yetiskin-dusuk-tahilli-hipoalerjenik-kopek-mamasi-3-kg-1024987-95-O.jpg", stock: 10 },
+    { name: "Felicia Kuzulu Küçük ve Orta Irk Düşük Tahıllı Köpek Maması 3 kg", price: 588, originalPrice: 935, skt: "03.2027", img: "https://www.mamatoptancisi.com/felicia-kuzulu-kucuk-ve-orta-irk-dusuk-tahilli-kopek-mamasi-3-kg-1070343-12-O.jpg", stock: 0 },
+    { name: "Felicia Kuzulu Yavru Köpek Maması Orta ve Büyük Irk İçin 3 kg", price: 474, originalPrice: 825, skt: "09.2026", img: "https://www.mamatoptancisi.com/felicia-kuzulu-yavru-kopek-mamasi-orta-ve-buyuk-irk-icin-3-kg-1058119-95-O.jpg", stock: 0 },
+    { name: "Felicia Somon Balıklı Düşük Tahıllı Hipoalerjenik Köpek Maması 3 kg", price: 469, originalPrice: 715, skt: "06.2026", img: "https://www.mamatoptancisi.com/felicia-somon-balikli-dusuk-tahilli-hipoalerjenik-kopek-mamasi-3-kg-1054620-95-O.jpg", stock: 0 },
+  ],
+};
+
 const ENJOY_KOPEK: BrandProductData = {
   brandName: "Enjoy",
   brandSlug: "enjoy",
@@ -350,7 +370,7 @@ const KOPEK_ACIK_MAMA_REFLEX: BrandProductData = {
   ],
 };
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, BRIT_CARE_KOPEK, ECONATURE_KOPEK, ENJOY_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, BRIT_CARE_KOPEK, ECONATURE_KOPEK, FELICIA_KOPEK, ENJOY_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
 
 export async function seedDatabase() {
   console.log("Checking database for missing brand data...");
