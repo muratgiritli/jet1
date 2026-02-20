@@ -1,59 +1,16 @@
-import { useState, useMemo, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useMemo } from "react";
+import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRoute } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, Eye } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
 import { CATEGORIES } from "@/lib/data";
-
-interface SubcategoryInfo {
-  name: string;
-  slug: string;
-  hasBrands?: boolean;
-  staticCategory?: string;
-}
-
-const ANIMAL_SUBCATEGORIES: Record<string, SubcategoryInfo[]> = {
-  kopek: [
-    { name: "Mama Markalari", slug: "mama-markalari", hasBrands: true },
-    { name: "Acik Mama", slug: "acik-mama" },
-    { name: "Tuvalet Malzemeleri", slug: "tuvalet-malzemeleri" },
-    { name: "Yas Mama", slug: "yas-mama" },
-    { name: "Odul Kemik", slug: "odul-kemik" },
-    { name: "Tasima ve Kulubeler", slug: "tasima-kulube" },
-    { name: "Bakim ve Saglik", slug: "bakim-saglik" },
-    { name: "Uygun Cuval Mamalar", slug: "uygun-cuval" },
-  ],
-  kedi: [
-    { name: "Kedi Mamasi", slug: "kedi-mamasi", hasBrands: true },
-    { name: "Açık Mama", slug: "acik-mama", hasBrands: true },
-    { name: "Kum", slug: "kedi-kumu", staticCategory: "KUM" },
-    { name: "Malt", slug: "kedi-malti", staticCategory: "MALT" },
-    { name: "Ödül", slug: "kedi-odulu", staticCategory: "ÖDÜL" },
-    { name: "Bakım ve Sağlık", slug: "kedi-bakim-saglik", staticCategory: "BAKIM VE SAĞLIK" },
-    { name: "Taşıma", slug: "kedi-tasima" },
-    { name: "Tuvalet", slug: "kedi-tuvaleti" },
-    { name: "Yaş Mama", slug: "kedi-konserve", hasBrands: true },
-  ],
-  kus: [
-    { name: "Kus Yemi", slug: "kus-yemi" },
-    { name: "Kus Kafesi", slug: "kus-kafesi" },
-    { name: "Kus Vitaminleri", slug: "kus-vitamin" },
-    { name: "Bakim ve Aksesuar", slug: "bakim-aksesuar" },
-  ],
-  kemirgen: [
-    { name: "Kemirgen Yemleri", slug: "kemirgen-yemi" },
-    { name: "Kemirgen Kafesleri", slug: "kemirgen-kafesi" },
-    { name: "Bakim ve Aksesuar", slug: "bakim-aksesuar" },
-    { name: "Vitamin ve Takviye", slug: "vitamin-takviye" },
-  ],
-};
 
 type ProductDetailData = {
   product: Product;
@@ -109,75 +66,14 @@ function CrossSellProductCard({
   onUpdate: (id: string, delta: number) => void;
 }) {
   const pid = String(product.id);
+  const isActive = quantity > 0;
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
   return (
-    <Link href={`/urun/${product.id}`}>
-      <Card className="overflow-visible hover-elevate cursor-pointer" data-testid={`card-cross-sell-${pid}`}>
-        <CardContent className="p-2 flex flex-col items-center gap-1.5">
-          {product.img && (
-            <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
-              <img
-                src={product.img}
-                alt={product.name}
-                className="w-full h-full object-contain"
-                loading="lazy"
-              />
-              {discount > 0 && (
-                <Badge
-                  className="absolute top-1 right-1 text-[9px] no-default-hover-elevate no-default-active-elevate"
-                  style={{ backgroundColor: "#e53935", color: "#fff" }}
-                >
-                  %{discount}
-                </Badge>
-              )}
-            </div>
-          )}
-          <p className="text-[11px] font-semibold text-center leading-tight line-clamp-2 min-h-[1.5rem]">
-            {product.name}
-          </p>
-          <span className="text-xs font-bold text-foreground">
-            {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-          </span>
-          {product.stock === 0 ? (
-            <div className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>
-              <Bell className="w-3 h-3" />
-              Tukendi
-            </div>
-          ) : (
-            <Button variant="default" size="sm" className="w-full text-[11px]" data-testid={`btn-incele-cross-${pid}`}>
-              <Eye className="w-3 h-3" />
-              İncele
-            </Button>
-          )}
-        </CardContent>
-      </Card>
-    </Link>
-  );
-}
-
-function InlineSubcategoryProductCard({
-  product,
-  quantity,
-  onUpdate,
-}: {
-  product: { id: string; name: string; price: number; originalPrice?: number; img?: string; skt?: string };
-  quantity: number;
-  onUpdate: (id: string, delta: number) => void;
-}) {
-  const isActive = quantity > 0;
-  const discount = product.originalPrice && product.originalPrice > product.price
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-    : 0;
-
-  return (
-    <Card
-      className={`transition-all duration-200 ${isActive ? "ring-2 ring-inset ring-primary" : ""}`}
-      data-testid={`card-inline-product-${product.id}`}
-    >
-      <CardContent className="p-3 flex flex-col items-center gap-2">
+    <Card className={`overflow-visible transition-all duration-200 ${isActive ? "ring-2 ring-primary shadow-md" : ""}`} data-testid={`card-cross-sell-${pid}`}>
+      <CardContent className="p-2 flex flex-col items-center gap-1.5">
         {product.img && (
           <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
             <img
@@ -186,17 +82,9 @@ function InlineSubcategoryProductCard({
               className="w-full h-full object-contain"
               loading="lazy"
             />
-            {product.skt && (
-              <Badge
-                variant="secondary"
-                className="absolute top-1 left-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
-              >
-                SKT: {product.skt}
-              </Badge>
-            )}
             {discount > 0 && (
               <Badge
-                className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
+                className="absolute top-1 right-1 text-[9px] no-default-hover-elevate no-default-active-elevate"
                 style={{ backgroundColor: "#e53935", color: "#fff" }}
               >
                 %{discount}
@@ -204,165 +92,47 @@ function InlineSubcategoryProductCard({
             )}
           </div>
         )}
-        <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]">
+        <p className="text-[11px] font-semibold text-center leading-tight line-clamp-2 min-h-[1.5rem]">
           {product.name}
         </p>
-        <div className="flex flex-col items-center gap-0.5">
-          {product.originalPrice && product.originalPrice > product.price && (
-            <span className="text-[11px] text-muted-foreground line-through">
-              {product.originalPrice.toLocaleString("tr-TR")} TL
-            </span>
-          )}
-          <span className="text-sm font-bold text-foreground">
-            {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-          </span>
-        </div>
-        <QuantityControl
-          productId={product.id}
-          quantity={quantity}
-          onUpdate={onUpdate}
-        />
+        <span className="text-xs font-bold text-foreground">
+          {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+        </span>
+        {product.stock === 0 ? (
+          <div className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>
+            <Bell className="w-3 h-3" />
+            Tukendi
+          </div>
+        ) : (
+          <div className="flex items-center gap-0" data-testid={`qty-control-cross-${pid}`}>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={() => onUpdate(pid, -1)}
+              data-testid={`btn-minus-cross-${pid}`}
+            >
+              <Minus className="w-3 h-3" />
+            </Button>
+            <div
+              className="flex items-center justify-center font-bold text-primary w-7 text-sm"
+              data-testid={`text-qty-cross-${pid}`}
+            >
+              {quantity}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={() => onUpdate(pid, 1)}
+              data-testid={`btn-plus-cross-${pid}`}
+            >
+              <Plus className="w-3 h-3" />
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
-  );
-}
-
-function InlineSubcategories({
-  animal,
-  currentSubcategory,
-  basket,
-  updateQty,
-}: {
-  animal: string;
-  currentSubcategory: string;
-  basket: Record<string, number>;
-  updateQty: (id: string, delta: number) => void;
-}) {
-  const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const productsRef = useRef<HTMLDivElement>(null);
-
-  const subcategories = (ANIMAL_SUBCATEGORIES[animal] || []).filter(
-    (sc) => sc.slug !== currentSubcategory
-  );
-
-  const selectedSc = subcategories.find((sc) => sc.slug === selectedSlug);
-
-  const { data: allBrandCategories } = useQuery<BrandCategory[]>({
-    queryKey: ["/api/brand-categories"],
-    enabled: !!selectedSc?.hasBrands,
-  });
-
-  const { data: allDbProducts } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
-    enabled: !!selectedSc?.hasBrands,
-  });
-
-  const inlineProducts = useMemo(() => {
-    if (!selectedSc) return [];
-
-    if (selectedSc.hasBrands && allBrandCategories && allDbProducts) {
-      const matchingCatIds = allBrandCategories
-        .filter((bc) => bc.animal === animal && bc.subcategory === selectedSc.slug)
-        .map((bc) => bc.id);
-      return allDbProducts
-        .filter((p) => p.isActive && p.brandCategoryId && matchingCatIds.includes(p.brandCategoryId))
-        .map((p) => ({
-          id: String(p.id),
-          name: p.name,
-          price: p.price,
-          originalPrice: p.originalPrice ?? undefined,
-          img: p.img ?? undefined,
-          skt: p.skt ?? undefined,
-        }));
-    }
-
-    if (selectedSc.staticCategory) {
-      const cat = CATEGORIES.find((c) => c.title === selectedSc.staticCategory);
-      if (cat) return cat.items;
-    }
-
-    return [];
-  }, [selectedSc, allBrandCategories, allDbProducts, animal]);
-
-
-  return (
-    <section className="mt-8" data-testid="section-other-categories" ref={sectionRef}>
-      <h3 className="text-sm font-bold text-center text-muted-foreground mb-3 uppercase tracking-wide" data-testid="text-other-categories-title">
-        Diger Kategoriler
-      </h3>
-      <div className="flex flex-wrap justify-center gap-2">
-        {subcategories.map((sc) => (
-          <Button
-            key={sc.slug}
-            variant={selectedSlug === sc.slug ? "default" : "outline"}
-            size="sm"
-            className="text-xs font-semibold whitespace-nowrap"
-            onClick={() => {
-              const newSlug = selectedSlug === sc.slug ? null : sc.slug;
-              setSelectedSlug(newSlug);
-              if (newSlug) {
-                setTimeout(() => {
-                  productsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-                }, 350);
-              }
-            }}
-            data-testid={`btn-subcategory-${sc.slug}`}
-          >
-            {sc.name}
-            {selectedSlug === sc.slug && <ChevronDown className="w-3 h-3 ml-1" />}
-          </Button>
-        ))}
-      </div>
-
-      <AnimatePresence mode="wait">
-        {selectedSlug && inlineProducts.length > 0 && (
-          <motion.div
-            ref={productsRef}
-            key={selectedSlug}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="mt-4 overflow-hidden"
-            data-testid="section-inline-products"
-          >
-            <p className="text-xs text-muted-foreground text-center mb-3" data-testid="text-inline-count">
-              {inlineProducts.length} ürün
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              {inlineProducts.map((product, i) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: 0.03 * Math.min(i, 10) }}
-                >
-                  <InlineSubcategoryProductCard
-                    product={product}
-                    quantity={basket[product.id] || 0}
-                    onUpdate={updateQty}
-                  />
-                </motion.div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-        {selectedSlug && inlineProducts.length === 0 && !selectedSc?.hasBrands && !selectedSc?.staticCategory && (
-          <motion.div
-            key="empty"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="mt-4 text-center"
-          >
-            <p className="text-sm text-muted-foreground" data-testid="text-no-inline-products">
-              Bu kategoride henüz ürün bulunmuyor
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </section>
   );
 }
 
@@ -659,14 +429,6 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        {category && ANIMAL_SUBCATEGORIES[category.animal] && (
-          <InlineSubcategories
-            animal={category.animal}
-            currentSubcategory={category.subcategory}
-            basket={basket}
-            updateQty={updateQty}
-          />
-        )}
       </main>
 
       <FloatingCartBar />

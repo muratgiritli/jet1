@@ -496,8 +496,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [crossSellDialogOpen, setCrossSellDialogOpen] = useState(false);
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
   const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null);
-  const [newSectionTitle, setNewSectionTitle] = useState("");
+  const [newSectionTitle, setNewSectionTitle] = useState("Sıklıkla Birlikte Alınan Ürünler");
   const [newSectionSortOrder, setNewSectionSortOrder] = useState("0");
+  const [newSectionForProductId, setNewSectionForProductId] = useState("");
   const [selectedProductId, setSelectedProductId] = useState("");
 
   const [breedStatsDialogOpen, setBreedStatsDialogOpen] = useState(false);
@@ -512,14 +513,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   });
 
   const createSectionMutation = useMutation({
-    mutationFn: async (data: { title: string; sortOrder: number; isActive: boolean }) => {
+    mutationFn: async (data: { title: string; sortOrder: number; isActive: boolean; forProductId?: number | null }) => {
       await apiRequest("POST", "/api/admin/cross-sell-sections", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cross-sell-sections"] });
       setCrossSellDialogOpen(false);
-      setNewSectionTitle("");
+      setNewSectionTitle("Sıklıkla Birlikte Alınan Ürünler");
       setNewSectionSortOrder("0");
+      setNewSectionForProductId("");
     },
   });
 
@@ -1055,7 +1057,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
         <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-            <h2 className="text-lg font-bold" data-testid="text-section-cross-sell">Ürün Sayfası Öneri Bölümleri</h2>
+            <h2 className="text-lg font-bold" data-testid="text-section-cross-sell">Sıklıkla Birlikte Alınan Ürünler</h2>
             <Dialog open={crossSellDialogOpen} onOpenChange={setCrossSellDialogOpen}>
               <DialogTrigger asChild>
                 <Button data-testid="btn-add-cross-sell-section">
@@ -1074,10 +1076,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       title: newSectionTitle,
                       sortOrder: parseInt(newSectionSortOrder) || 0,
                       isActive: true,
+                      forProductId: newSectionForProductId ? parseInt(newSectionForProductId) : null,
                     });
                   }}
                   className="space-y-4"
                 >
+                  <div className="space-y-2">
+                    <Label>Hangi Ürünün Sayfasında Gösterilsin?</Label>
+                    <Select value={newSectionForProductId} onValueChange={setNewSectionForProductId}>
+                      <SelectTrigger data-testid="select-cross-sell-for-product">
+                        <SelectValue placeholder="Ürün seçin..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {allProducts.map((p: Product) => (
+                          <SelectItem key={p.id} value={String(p.id)} data-testid={`option-for-product-${p.id}`}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-2">
                     <Label>Bölüm Başlığı</Label>
                     <Input
@@ -1117,11 +1135,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <Card key={section.id} data-testid={`card-cross-sell-section-${section.id}`}>
                   <CardContent className="p-4 space-y-3">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-semibold" data-testid={`text-cross-sell-section-title-${section.id}`}>{section.title}</span>
-                        <Badge variant="secondary" className="text-xs no-default-hover-elevate no-default-active-elevate" data-testid={`badge-cross-sell-item-count-${section.id}`}>
-                          {section.items.length} ürün
-                        </Badge>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="font-semibold" data-testid={`text-cross-sell-section-title-${section.id}`}>{section.title}</span>
+                          <Badge variant="secondary" className="text-xs no-default-hover-elevate no-default-active-elevate" data-testid={`badge-cross-sell-item-count-${section.id}`}>
+                            {section.items.length} ürün
+                          </Badge>
+                        </div>
+                        {section.forProductId && (
+                          <span className="text-xs text-muted-foreground" data-testid={`text-cross-sell-for-product-${section.id}`}>
+                            Ürün: {allProducts.find((p: Product) => p.id === section.forProductId)?.name || `#${section.forProductId}`}
+                          </span>
+                        )}
                       </div>
                       <div className="flex items-center gap-1">
                         <Button
