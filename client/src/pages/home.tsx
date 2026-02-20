@@ -124,7 +124,13 @@ export default function Home() {
   const mappedCategory = SLUG_TO_CATEGORY[altSlug] || "";
   const defaultTab = (mappedCategory && CATEGORIES.find(c => c.title === mappedCategory)) ? mappedCategory : (CATEGORIES[0]?.title || "");
 
-  const directCategory = altSlug === "uygun-cuval" ? CATEGORIES.find(c => c.title === "ÇUVAL MAMA") : null;
+  const directSlugs: Record<string, { title: string; heading: string; subtitle: string }> = {
+    "uygun-cuval": { title: "ÇUVAL MAMA", heading: "Uygun Çuval Mamalar", subtitle: "Ekonomik Seçenekler" },
+    "kedi-odulu": { title: "ÖDÜL", heading: "Kedi Ödülü", subtitle: "Ödül & Atıştırmalık" },
+    "kedi-malti": { title: "MALT", heading: "Kedi Maltı", subtitle: "Malt & Macun" },
+  };
+  const directInfo = directSlugs[altSlug] || null;
+  const directCategory = directInfo ? CATEGORIES.find(c => c.title === directInfo.title) : null;
 
   return (
     <div className="min-h-screen bg-background">
@@ -137,8 +143,8 @@ export default function Home() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-lg font-bold leading-tight" data-testid="text-brand">{directCategory ? "Uygun Çuval Mamalar" : "JetGo"}</h1>
-              <p className="text-xs text-muted-foreground" data-testid="text-brand-subtitle">{directCategory ? "Ekonomik Seçenekler" : "Hızlı Sipariş"}</p>
+              <h1 className="text-lg font-bold leading-tight" data-testid="text-brand">{directInfo ? directInfo.heading : "JetGo"}</h1>
+              <p className="text-xs text-muted-foreground" data-testid="text-brand-subtitle">{directInfo ? directInfo.subtitle : "Hızlı Sipariş"}</p>
             </div>
           </div>
           {itemCount > 0 && (
