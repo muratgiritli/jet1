@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRoute } from "wouter";
-import { ArrowLeft, ShoppingCart, Loader2, Eye } from "lucide-react";
+import { ArrowLeft, ShoppingCart, Loader2, Plus, Minus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -21,66 +21,85 @@ const BRAND_COLORS: Record<string, string> = {
   "enjoy": "#E91E63",
 };
 
-function ProductCard({ product }: { product: Product }) {
+function ProductCard({ product, quantity, onUpdate }: { product: Product; quantity: number; onUpdate: (id: string, delta: number) => void }) {
   const pid = String(product.id);
   const discount = product.originalPrice && product.originalPrice > product.price
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
+  const isActive = quantity > 0;
 
   return (
-    <Link href={`/urun/${product.id}`}>
-      <Card
-        className="transition-all duration-200 cursor-pointer hover-elevate"
-        data-testid={`card-acik-product-${pid}`}
-      >
-        <CardContent className="p-3 flex flex-col items-center gap-2">
-          {product.img && (
-            <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
-              <img
-                src={product.img}
-                alt={product.name}
-                className="w-full h-full object-contain"
-                loading="lazy"
-                data-testid={`img-acik-product-${pid}`}
-              />
-              {product.skt && (
-                <Badge
-                  variant="secondary"
-                  className="absolute top-1 left-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
-                >
-                  SKT: {product.skt}
-                </Badge>
-              )}
-              {discount > 0 && (
-                <Badge
-                  className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
-                  style={{ backgroundColor: "#e53935", color: "#fff" }}
-                >
-                  %{discount}
-                </Badge>
-              )}
-            </div>
-          )}
-          <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-acik-name-${pid}`}>
-            {product.name}
-          </p>
-          <div className="flex flex-col items-center gap-0.5">
-            {product.originalPrice && product.originalPrice > product.price && (
-              <span className="text-[11px] text-muted-foreground line-through">
-                {product.originalPrice.toLocaleString("tr-TR")} TL
-              </span>
+    <Card
+      className={`transition-all duration-200 ${isActive ? "ring-2 ring-primary shadow-md" : ""}`}
+      data-testid={`card-acik-product-${pid}`}
+    >
+      <CardContent className="p-3 flex flex-col items-center gap-2">
+        {product.img && (
+          <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
+            <img
+              src={product.img}
+              alt={product.name}
+              className="w-full h-full object-contain"
+              loading="lazy"
+              data-testid={`img-acik-product-${pid}`}
+            />
+            {product.skt && (
+              <Badge
+                variant="secondary"
+                className="absolute top-1 left-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
+              >
+                SKT: {product.skt}
+              </Badge>
             )}
-            <span className="text-sm font-bold text-foreground" data-testid={`text-acik-price-${pid}`}>
-              {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-            </span>
+            {discount > 0 && (
+              <Badge
+                className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
+                style={{ backgroundColor: "#e53935", color: "#fff" }}
+              >
+                %{discount}
+              </Badge>
+            )}
           </div>
-          <Button variant="default" size="sm" className="w-full" data-testid={`btn-incele-acik-${pid}`}>
-            <Eye className="w-3.5 h-3.5" />
-            İncele
+        )}
+        <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-acik-name-${pid}`}>
+          {product.name}
+        </p>
+        <div className="flex flex-col items-center gap-0.5">
+          {product.originalPrice && product.originalPrice > product.price && (
+            <span className="text-[11px] text-muted-foreground line-through">
+              {product.originalPrice.toLocaleString("tr-TR")} TL
+            </span>
+          )}
+          <span className="text-sm font-bold text-foreground" data-testid={`text-acik-price-${pid}`}>
+            {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+          </span>
+        </div>
+        <div className="flex items-center gap-0" data-testid={`qty-control-${pid}`}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onUpdate(pid, -1)}
+            data-testid={`btn-minus-${pid}`}
+          >
+            <Minus />
           </Button>
-        </CardContent>
-      </Card>
-    </Link>
+          <div
+            className="flex items-center justify-center font-bold text-primary w-8 text-sm"
+            data-testid={`text-qty-${pid}`}
+          >
+            {quantity}
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => onUpdate(pid, 1)}
+            data-testid={`btn-plus-${pid}`}
+          >
+            <Plus />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -88,7 +107,7 @@ export default function AcikMamaPage() {
   const [, params] = useRoute("/acik-mama/:animal");
   const animal = params?.animal || "kedi";
 
-  const { itemCount, grandTotal } = useCart();
+  const { basket, updateQty, itemCount, grandTotal } = useCart();
 
   const { data: allCategories, isLoading: catLoading } = useQuery<BrandCategory[]>({
     queryKey: ["/api/brand-categories"],
@@ -189,7 +208,7 @@ export default function AcikMamaPage() {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.25, delay: 0.03 * Math.min(pi, 10) }}
                     >
-                      <ProductCard product={product} />
+                      <ProductCard product={product} quantity={basket[String(product.id)] || 0} onUpdate={updateQty} />
                     </motion.div>
                   ))}
                 </div>
