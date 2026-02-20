@@ -86,7 +86,60 @@ const SEED_BRAND_DATA: BrandProductData[] = [
   },
 ];
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA];
+const KEDI_KUMU_DATA: BrandProductData = {
+  brandName: "Kedi Kumu",
+  brandSlug: "kedi-kumu",
+  animal: "kedi",
+  subcategory: "kedi-kumu",
+  products: [
+    { name: "Van Cat Naturel Kokusuz İnce Taneli Kedi Kumu 10 Lt", price: 218, img: "https://www.mamatoptancisi.com/van-cat-naturel-kokusuz-ince-taneli-topaklanan-bentonit-kedi-kumu-10-lt-1065633-10-O.jpg" },
+    { name: "Lindocat Super Premium Bikarbonatlı 10 lt", price: 268, img: "https://www.mamatoptancisi.com/lindocat-super-premium-bikarbonatli-koku-onleyici-ve-extra-guclu-topaklanan-kedi-kumu-10-lt-9952-1062266-99-O.jpg" },
+    { name: "Toi Moi Aktif Karbonlu İnce Taneli 10 kg", price: 201, img: "https://www.mamatoptancisi.com/toi-moi-aktif-karbonlu-ince-taneli-topaklanan-bentonit-kedi-kumu-10-lt-1065845-93-O.jpg" },
+    { name: "Proline Bebek Pudralı İnce Taneli 10 lt", price: 170 },
+    { name: "Lindocat Prestige Bebek Pudra Kokulu İnce Taneli 10 Lt", price: 195 },
+    { name: "Feles Aktif Karbonlu Tozsuz Topaklanan 10 lt", price: 269 },
+  ],
+};
+
+const YAS_MAMA_DATA: BrandProductData = {
+  brandName: "Yaş Mama",
+  brandSlug: "yas-mama",
+  animal: "kedi",
+  subcategory: "yas-mama",
+  products: [
+    { name: "Proplan Yavru Yaş Mama", price: 35, img: "https://static.wixstatic.com/media/63853e_26b590fe701c4ca3a2dfa8e636d0d0a0~mv2.webp" },
+    { name: "Proplan Adult Tavuklu Yaş Mama", price: 35, img: "https://static.wixstatic.com/media/63853e_3e1f871338284c54adc3c4f8e5c2a6e7~mv2.png" },
+    { name: "Proplan Kısır Yaş Mama", price: 35, img: "https://static.wixstatic.com/media/63853e_516bafdef93c4d3b8cb8d05675278d8c~mv2.webp" },
+    { name: "Proplan Delicate Yaş Mama", price: 35, img: "https://static.wixstatic.com/media/63853e_fba74f727181409e89f53da0ed0d82d0~mv2.webp" },
+    { name: "Gourmet Ton Balıklı Püre Yaş Mama", price: 35, img: "https://static.wixstatic.com/media/63853e_0daffe01618148baa58f15e27e7bb5e9~mv2.webp" },
+    { name: "Gourmet Sığır Etli Püre Yaş Mama", price: 35, img: "https://static.wixstatic.com/media/63853e_7f12a63f285743bca4ae6029fc29a1c3~mv2.webp" },
+    { name: "Gourmet Tavuklu Püre Yaş Mama", price: 35, img: "https://static.wixstatic.com/media/63853e_5b6aaa07a5054d25a28d4b3b6e7a36ee~mv2.webp" },
+    { name: "Gourmet Somonlu Püre Yaş Mama", price: 35, img: "https://static.wixstatic.com/media/63853e_c6b29e2f8e4648e8a4f366a5424a1e3a~mv2.webp" },
+    { name: "Reflex Plus Tavuklu Yetişkin Kedi Pouch 85 gr", price: 32 },
+    { name: "Reflex Plus Somonlu Kısır Kedi Pouch 85 gr", price: 32 },
+  ],
+};
+
+const MALT_MACUN_DATA: BrandProductData = {
+  brandName: "Malt & Macun",
+  brandSlug: "malt-macun",
+  animal: "kedi",
+  subcategory: "malt-macun",
+  products: [
+    { name: "Gimcat Multi Vitamin Paste Kedi Macunu 20 gr", price: 61.62, originalPrice: 105.09, img: "https://www.mamatoptancisi.com/gimcat-multi-vitamin-paste-kedi-macunu-20-gr-1068817-73-O.jpg" },
+    { name: "Gimcat Malt Soft Extra 100 gr", price: 300.17, originalPrice: 535.05, img: "https://www.mamatoptancisi.com/gimcat-malt-soft-extra-100-gr-1071695-63-O.jpg" },
+    { name: "Gimcat Multivitamin Paste Kedi Macunu 100 gr", price: 317.15, originalPrice: 605, img: "https://www.mamatoptancisi.com/gimcat-kedi-multivitamin-100-gr-1070292-25-O.jpg" },
+    { name: "Gimcat Anti-Hairball Duo Paste Peynirli Malt 50 gr", price: 172.43, img: "https://www.mamatoptancisi.com/gimcat-anti-hairball-duo-paste-peynirli-malt-50-gr-1070261-97-O.jpg" },
+    { name: "Gimcat Derma Paste Deri ve Tüy Sağlığı 50 gr", price: 153.23, originalPrice: 194.21, img: "https://www.mamatoptancisi.com/gimcat-kedi-macunu-derma-paste-50-gr-1068943-25-O.jpg" },
+    { name: "Gimcat Kitten Yavru Kedi Vitamin Paste 50 gr", price: 169.64, originalPrice: 251.87, img: "https://www.mamatoptancisi.com/gimcat-kedi-macunu-kitten-paste-50-gr-1066887-26-O.jpg" },
+    { name: "Garden Mix Anti Hairball Kedi Malt Macunu 100 gr", price: 85, originalPrice: 120, img: "https://www.mamatoptancisi.com/garden-mix-anti-hairball-kedi-malt-macunu-100-gram-1069744-51-O.jpg" },
+    { name: "Garden Mix Kedi Multivitamin Macun 100 gr", price: 87.53, originalPrice: 150, img: "https://www.mamatoptancisi.com/garden-mix-kedi-multivitamin-macun-100-gram-1057836-51-O.jpg" },
+    { name: "Garden Mix Kedi Steril Multivitamin Macun 100 gr", price: 75.05, originalPrice: 102.63, img: "https://www.mamatoptancisi.com/garden-mix-kedi-steril-multivitamin-macun-100-gram-1045262-51-O.jpg" },
+    { name: "Gimcat Paste Extra Taurin Kedi Malt Macunu 50 gr", price: 160.79, originalPrice: 194.21, img: "https://www.mamatoptancisi.com/gimcat-paste-extra-taurin-kedi-malt-macunu-50-gr-1051680-41-O.jpg" },
+  ],
+};
+
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA];
 
 export async function seedDatabase() {
   console.log("Checking database for missing brand data...");
