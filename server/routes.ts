@@ -141,8 +141,14 @@ export async function registerRoutes(
     if (!product) return res.status(404).json({ message: "Product not found" });
     const category = await storage.getBrandCategory(product.brandCategoryId);
     const allSections = await storage.getAllCrossSellSections();
+    const productAnimal = category?.animal || null;
     const activeSections = allSections
-      .filter(s => s.isActive && (s.forProductId === null || s.forProductId === id))
+      .filter(s => {
+        if (!s.isActive) return false;
+        if (s.forProductId !== null) return s.forProductId === id;
+        if (s.forAnimal !== null) return s.forAnimal === productAnimal;
+        return true;
+      })
       .sort((a, b) => a.sortOrder - b.sortOrder);
     const sectionsWithProducts = await Promise.all(
       activeSections.map(async (section) => {
