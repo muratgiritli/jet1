@@ -216,12 +216,11 @@ function InlineSubcategoryProductCard({
             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
         </div>
-        <Link href={`/urun/${product.id}`} className="w-full">
-          <Button variant="default" size="sm" className="w-full" data-testid={`btn-incele-inline-${product.id}`}>
-            <Eye className="w-3.5 h-3.5" />
-            İncele
-          </Button>
-        </Link>
+        <QuantityControl
+          productId={product.id}
+          quantity={quantity}
+          onUpdate={onUpdate}
+        />
       </CardContent>
     </Card>
   );
