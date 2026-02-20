@@ -121,10 +121,10 @@ const YAS_MAMA_DATA: BrandProductData = {
 };
 
 const MALT_MACUN_DATA: BrandProductData = {
-  brandName: "Malt & Macun",
-  brandSlug: "malt-macun",
+  brandName: "Malt & Vitamin",
+  brandSlug: "malt-vitamin",
   animal: "kedi",
-  subcategory: "malt-macun",
+  subcategory: "malt-vitamin",
   products: [
     { name: "Gimcat Multi Vitamin Paste Kedi Macunu 20 gr", price: 61.62, originalPrice: 105.09, img: "https://www.mamatoptancisi.com/gimcat-multi-vitamin-paste-kedi-macunu-20-gr-1068817-73-O.jpg" },
     { name: "Gimcat Malt Soft Extra 100 gr", price: 300.17, originalPrice: 535.05, img: "https://www.mamatoptancisi.com/gimcat-malt-soft-extra-100-gr-1071695-63-O.jpg" },
@@ -139,7 +139,37 @@ const MALT_MACUN_DATA: BrandProductData = {
   ],
 };
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA];
+const ODUL_DATA: BrandProductData = {
+  brandName: "Ödül",
+  brandSlug: "odul",
+  animal: "kedi",
+  subcategory: "odul",
+  products: [
+    { name: "Dreamies Tavuklu Kedi Ödül Maması 60 gr", price: 42, img: "https://www.mamatoptancisi.com/dreamies-tavuklu-kedi-odul-mamasi-60-gr-1064369-10-O.jpg" },
+    { name: "Dreamies Somonlu Kedi Ödül Maması 60 gr", price: 42, img: "https://www.mamatoptancisi.com/dreamies-somonlu-kedi-odul-mamasi-60-gr-1064371-97-O.jpg" },
+    { name: "Dreamies Peynirli Kedi Ödül Maması 60 gr", price: 42, img: "https://www.mamatoptancisi.com/dreamies-peynirli-kedi-odul-mamasi-60-gr-1064373-10-O.jpg" },
+    { name: "Reflex Plus Somonlu Kedi Ödül Çubuğu 3x5 gr", price: 25, img: "https://www.mamatoptancisi.com/reflex-plus-somonlu-kedi-odul-cubugu-3x5-gr-1064570-10-O.jpg" },
+    { name: "Reflex Plus Tavuklu Kedi Ödül Çubuğu 3x5 gr", price: 25, img: "https://www.mamatoptancisi.com/reflex-plus-tavuklu-kedi-odul-cubugu-3x5-gr-1064568-10-O.jpg" },
+    { name: "GimCat Sticks Somonlu Alabalıklı Kedi Ödül 4x20 gr", price: 89, img: "https://www.mamatoptancisi.com/gimcat-sticks-somonlu-ve-alabalikli-kedi-odul-4lu-1044099-53-O.jpg" },
+  ],
+};
+
+const BAKIM_SAGLIK_DATA: BrandProductData = {
+  brandName: "Bakım ve Sağlık",
+  brandSlug: "bakim-saglik",
+  animal: "kedi",
+  subcategory: "bakim-saglik",
+  products: [
+    { name: "Garden Mix Kedi Tüy Sağlığı Damlası 50 ml", price: 75, img: "https://www.mamatoptancisi.com/garden-mix-kedi-tuy-sagligi-damlasi-50-ml-1066124-51-O.jpg" },
+    { name: "Garden Mix Kedi ve Köpek Somon Yağı 200 ml", price: 115, img: "https://www.mamatoptancisi.com/garden-mix-kedi-ve-kopek-somon-yagi-200-ml-1053454-51-O.jpg" },
+    { name: "Bioline Kedi Tüy Yumağı Önleyici Malt 100 gr", price: 79, img: "https://www.mamatoptancisi.com/bioline-kedi-tuy-yumagi-onleyici-malt-100-gr-1068823-10-O.jpg" },
+    { name: "Prochoice Dermal Biotinli Kedi Macunu 100 ml", price: 175, img: "https://www.mamatoptancisi.com/prochoice-dermal-biotinli-kedi-macunu-100-ml-1064962-86-O.jpg" },
+    { name: "Beaphar Kedi Vitamin Tableti 180 Adet", price: 289, img: "https://www.mamatoptancisi.com/beaphar-kedi-vitamin-tableti-180-adet-1040032-10-O.jpg" },
+    { name: "Trixie Kedi Pire Tarağı Metal", price: 65, img: "https://www.mamatoptancisi.com/trixie-kedi-pire-taragi-metal-1051098-10-O.jpg" },
+  ],
+};
+
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA];
 
 export async function seedDatabase() {
   console.log("Checking database for missing brand data...");

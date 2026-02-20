@@ -183,6 +183,37 @@ export default function ProductDetailPage() {
     enabled: isKediMama,
   });
 
+  const { data: odulData } = useQuery<{ category: BrandCategory; products: Product[] }>({
+    queryKey: ["/api/brand-products", "kedi", "odul", "odul"],
+    enabled: isKediMama,
+  });
+
+  const { data: maltData } = useQuery<{ category: BrandCategory; products: Product[] }>({
+    queryKey: ["/api/brand-products", "kedi", "malt-vitamin", "malt-vitamin"],
+    enabled: isKediMama,
+  });
+
+  const { data: yasMamaData } = useQuery<{ category: BrandCategory; products: Product[] }>({
+    queryKey: ["/api/brand-products", "kedi", "yas-mama", "yas-mama"],
+    enabled: isKediMama,
+  });
+
+  const { data: bakimData } = useQuery<{ category: BrandCategory; products: Product[] }>({
+    queryKey: ["/api/brand-products", "kedi", "bakim-saglik", "bakim-saglik"],
+    enabled: isKediMama,
+  });
+
+  const alsoBoughtCategories = useMemo(() => {
+    if (!isKediMama) return [];
+    const cats: { title: string; products: Product[] }[] = [];
+    if (kumData?.products?.length) cats.push({ title: "KUM", products: kumData.products });
+    if (odulData?.products?.length) cats.push({ title: "ÖDÜL", products: odulData.products });
+    if (maltData?.products?.length) cats.push({ title: "MALT", products: maltData.products });
+    if (yasMamaData?.products?.length) cats.push({ title: "YAŞ MAMA", products: yasMamaData.products });
+    if (bakimData?.products?.length) cats.push({ title: "BAKIM VE SAĞLIK", products: bakimData.products });
+    return cats;
+  }, [isKediMama, kumData, odulData, maltData, yasMamaData, bakimData]);
+
   const resolvedData = isNumericId ? data : staticData;
 
   if (isLoading && isNumericId) {
@@ -411,7 +442,7 @@ export default function ProductDetailPage() {
           </motion.div>
         )}
 
-        {isKediMama && kumData?.products && kumData.products.length > 0 && (
+        {isKediMama && alsoBoughtCategories.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -419,23 +450,32 @@ export default function ProductDetailPage() {
             className="mt-8"
             data-testid="section-also-bought"
           >
-            <h3 className="text-base font-bold mb-3 border-b pb-2" data-testid="text-also-bought-title">
+            <h3 className="text-lg font-extrabold mb-4" data-testid="text-also-bought-title">
               Bu ürünü alanlar bunları da aldı
             </h3>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {kumData.products.map((p, i) => (
-                <motion.div
-                  key={p.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.2, delay: 0.03 * i }}
-                >
-                  <CrossSellProductCard
-                    product={p}
-                    quantity={basket[String(p.id)] || 0}
-                    onUpdate={updateQty}
-                  />
-                </motion.div>
+            <div className="space-y-6">
+              {alsoBoughtCategories.map((cat, catIdx) => (
+                <div key={cat.title} data-testid={`section-also-bought-${cat.title}`}>
+                  <h4 className="text-sm font-bold text-white px-3 py-1.5 rounded-t-lg" style={{ backgroundColor: "#2ecc40" }} data-testid={`text-cat-title-${cat.title}`}>
+                    {cat.title}
+                  </h4>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
+                    {cat.products.map((p, i) => (
+                      <motion.div
+                        key={p.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.2, delay: 0.03 * i }}
+                      >
+                        <CrossSellProductCard
+                          product={p}
+                          quantity={basket[String(p.id)] || 0}
+                          onUpdate={updateQty}
+                        />
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           </motion.div>
