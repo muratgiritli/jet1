@@ -1,6 +1,6 @@
 import { db } from "./storage";
-import { brandCategories, products } from "@shared/schema";
-import { eq, and } from "drizzle-orm";
+import { brandCategories, products, breedStats } from "@shared/schema";
+import { eq, and, sql } from "drizzle-orm";
 import brandDataJson from "./brand_data.json";
 
 interface BrandProductData {
@@ -126,5 +126,117 @@ export async function seedDatabase() {
     console.log(`Seeded ${brand.products.length} products for ${brand.brandName} (${brand.animal}/${brand.subcategory})`);
   }
 
+  await seedBreedStats();
   console.log("Database seeding complete!");
+}
+
+const KEDI_BREEDS = [
+  { name: "Tekir Kedi", color: "#FF6B35" },
+  { name: "British Shorthair", color: "#4A90D9" },
+  { name: "Scottish Fold", color: "#7B68EE" },
+  { name: "Sarman", color: "#FFA726" },
+  { name: "İran (Persian)", color: "#E91E63" },
+  { name: "Ankara Kedisi", color: "#26A69A" },
+  { name: "Ragdoll", color: "#AB47BC" },
+  { name: "Maine Coon", color: "#8D6E63" },
+  { name: "Siyam", color: "#42A5F5" },
+  { name: "Van Kedisi", color: "#EF5350" },
+  { name: "Tuxedo (Smokin) Kedi", color: "#78909C" },
+  { name: "Bombay", color: "#333333" },
+  { name: "Diğer", color: "#9E9E9E" },
+];
+
+const KOPEK_BREEDS = [
+  { name: "Golden Retriever", color: "#FFB300" },
+  { name: "Labrador", color: "#795548" },
+  { name: "Alman Çoban", color: "#424242" },
+  { name: "French Bulldog", color: "#E91E63" },
+  { name: "Poodle", color: "#7B68EE" },
+  { name: "Beagle", color: "#4CAF50" },
+  { name: "Husky", color: "#90A4AE" },
+  { name: "Border Collie", color: "#FF7043" },
+  { name: "Yorkshire Terrier", color: "#AB47BC" },
+  { name: "Cocker Spaniel", color: "#26A69A" },
+  { name: "Kangal", color: "#D84315" },
+  { name: "Diğer", color: "#9E9E9E" },
+];
+
+function getBreedDistribution(productName: string, isKopek: boolean): { breedIndex: number; pct: number }[] {
+  const name = productName.toLowerCase();
+  const breeds = isKopek ? KOPEK_BREEDS : KEDI_BREEDS;
+  const total = breeds.length;
+  let topIndices: number[];
+
+  if (name.includes("yavru") || name.includes("kitten") || name.includes("puppy")) {
+    topIndices = isKopek ? [0, 1, 2, 3, 4, 5, 6] : [0, 1, 3, 2, 6, 7, 4];
+  } else if (name.includes("kısır") || name.includes("sterilised") || name.includes("kisirlast")) {
+    topIndices = isKopek ? [3, 4, 1, 0, 2, 5, 6] : [0, 2, 1, 3, 4, 6, 5];
+  } else if (name.includes("hassas") || name.includes("sensitive") || name.includes("delicate")) {
+    topIndices = isKopek ? [4, 8, 9, 0, 1, 5, 6] : [4, 8, 6, 0, 1, 2, 3];
+  } else if (name.includes("yaşlı") || name.includes("senior") || name.includes("ageing") || name.includes("mature")) {
+    topIndices = isKopek ? [0, 1, 2, 4, 9, 5, 3] : [4, 1, 7, 0, 2, 3, 5];
+  } else {
+    topIndices = isKopek ? [0, 1, 2, 3, 4, 5, 6] : [0, 1, 2, 3, 4, 6, 5];
+  }
+
+  const hash = productName.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  const numBreeds = 6 + (hash % 3);
+  const selected = topIndices.slice(0, Math.min(numBreeds, topIndices.length));
+
+  const basePcts = [28, 23, 18, 12, 8, 6, 5];
+  let result: { breedIndex: number; pct: number }[] = [];
+  let sum = 0;
+
+  for (let i = 0; i < selected.length; i++) {
+    const variation = ((hash + i * 7) % 5) - 2;
+    const pct = Math.max(3, (basePcts[i] || 4) + variation);
+    result.push({ breedIndex: selected[i], pct });
+    sum += pct;
+  }
+
+  const diff = 100 - sum;
+  result[0].pct += diff;
+
+  return result;
+}
+
+async function seedBreedStats() {
+  const existingCount = await db.select({ count: sql<number>`count(*)` }).from(breedStats);
+  if (Number(existingCount[0].count) > 0) {
+    console.log("Breed stats already exist, skipping...");
+    return;
+  }
+
+  console.log("Seeding breed stats for all mama products...");
+
+  const allProducts = await db.select().from(products);
+  const allCategories = await db.select().from(brandCategories);
+  const catMap = new Map(allCategories.map(c => [c.id, c]));
+
+  let count = 0;
+  for (const product of allProducts) {
+    const cat = catMap.get(product.brandCategoryId);
+    if (!cat) continue;
+
+    const isKedi = cat.animal === "kedi" && cat.subcategory === "kedi-mamasi";
+    const isKopek = cat.animal === "kopek" && (cat.subcategory === "mama-markalari" || cat.subcategory === "kopek-mamasi");
+    if (!isKedi && !isKopek) continue;
+
+    const breeds = isKopek ? KOPEK_BREEDS : KEDI_BREEDS;
+    const distribution = getBreedDistribution(product.name, isKopek);
+
+    for (let i = 0; i < distribution.length; i++) {
+      const d = distribution[i];
+      await db.insert(breedStats).values({
+        productId: product.id,
+        breedName: breeds[d.breedIndex].name,
+        percentage: d.pct,
+        color: breeds[d.breedIndex].color,
+        sortOrder: i + 1,
+      });
+      count++;
+    }
+  }
+
+  console.log(`Seeded ${count} breed stats across mama products.`);
 }
