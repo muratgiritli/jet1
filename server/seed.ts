@@ -253,32 +253,6 @@ const KEDI_KONSERVE_DATA: BrandProductData = {
   ],
 };
 
-const BRIT_CARE_KOPEK: BrandProductData = {
-  brandName: "Brit Care",
-  brandSlug: "brit-care",
-  animal: "kopek",
-  subcategory: "mama-markalari",
-  products: [
-    { name: "Brit Care Hipoalerjenik Kuzulu Küçük Irk Yetişkin Köpek Maması 3 kg", price: 1127, originalPrice: 1385, skt: "04.2027", img: "https://www.mamatoptancisi.com/brit-care-hipoalerjenik-kuzulu-kucuk-irk-yetiskin-kopek-mamasi-3-kg-1077084-98-O.jpg", stock: 10 },
-    { name: "Brit Care Hipoalerjenik Weight Loss Tavşan Etli Diyet Köpek Maması 3 kg", price: 1088, originalPrice: 1430, skt: "11.2026", img: "https://www.mamatoptancisi.com/brit-care-hipoalerjenik-weight-loss-tavsan-etli-kilo-dengeleyici-diyet-yetiskin-kopek-mamasi-3-kg-1066455-98-O.jpg", stock: 10 },
-    { name: "Brit Care Hipoallerjenik Kuzu Etli Yetişkin Köpek Maması 12 kg", price: 3612, originalPrice: 4015, skt: "02.2027", img: "https://www.mamatoptancisi.com/brit-care-hipoallerjenik-kuzu-etli-yetiskin-kopek-mamasi-12-kg-1066470-98-O.jpg", stock: 10 },
-    { name: "Brit Premium Sensitive Kuzu Etli Yetişkin Köpek Maması 15+3 Kg", price: 3347, originalPrice: 3999, skt: "04.2027", img: "https://www.mamatoptancisi.com/brit-premium-by-nature-sensitive-kuzu-etli-ve-pirincli-yetiskin-kopek-mamasi-15-kg-3-kg-hediyeli-1062917-95-O.jpg", stock: 10 },
-    { name: "Brit Care Mini Light Kısırlaştırılmış Tahılsız Köpek Maması 2 kg", price: 1084, originalPrice: 1650, skt: "03.2027", img: "https://www.mamatoptancisi.com/brit-care-mini-light-sterilised-kilolu-kisirlastirilmis-kopekler-icin-tahilsiz-hipoalerjenik-kopek-mamasi-2-kg-1066449-98-O.jpg", stock: 10 },
-    { name: "Brit Care Mini Sensitive Geyik Etli Yetişkin Köpek Maması 2 kg", price: 1074, originalPrice: 1155, skt: "03.2027", img: "https://www.mamatoptancisi.com/brit-care-mini-sensitive-geyik-etli-yetiskin-kopek-mamasi-2-kg-1066451-98-O.jpg", stock: 10 },
-    { name: "Brit Premium Sensitive Kuzu Etli Pirinçli Yetişkin Köpek Maması 15 kg", price: 3441, originalPrice: 3575, skt: "01.2027", img: "https://www.mamatoptancisi.com/brit-premium-by-nature-sensitive-kuzu-etli-pirincli-yetiskin-kopek-mamasi-15-kg-1033085-98-O.jpg", stock: 10 },
-    { name: "Brit Premium Nature Tavuklu Orta Irk Yetişkin Köpek Maması 15 kg", price: 2151, originalPrice: 2530, skt: "03.2027", img: "https://www.mamatoptancisi.com/brit-by-nature-adult-m-tavuklu-orta-irk-yetiskin-kopek-mamasi-15-kg-1033083-98-O.jpg", stock: 10 },
-    { name: "Brit Care Hipoalerjenik Kuzu Etli Yaşlı Köpek Maması 12 kg", price: 3488, originalPrice: 4180, skt: "03.2027", img: "https://www.mamatoptancisi.com/brit-care-hipoalerjenik-kuzu-etli-yasli-kopek-mamasi-12kg-1066473-98-O.jpg", stock: 10 },
-    { name: "Brit Care Hipoalerjenik Kuzu Etli Yaşlı Köpek Maması 3 kg", price: 1162, originalPrice: 1348, skt: "02.2027", img: "https://www.mamatoptancisi.com/brit-care-hipoalerjenik-kuzu-etli-yasli-kopek-mamasi-3kg-1066472-98-O.jpg", stock: 10 },
-    { name: "Brit Care Sensitive Geyikli Patatesli Tahılsız Köpek Maması 3 kg", price: 1320, originalPrice: 1650, skt: "04.2027", img: "https://www.mamatoptancisi.com/brit-care-sensitive-geyikli-ve-patatesli-tahilsiz-kopek-mamasi-3kg-1066461-98-O.jpg", stock: 10 },
-    { name: "Brit Care Skin & Coat Tahılsız Somonlu Yavru Köpek Maması 12 kg", price: 3786, originalPrice: 4510, skt: "03.2027", img: "https://www.mamatoptancisi.com/brit-care-skin-coat-tahilisz-somonlu-yavru-kopek-mamasi-12-kg-1074221-89-O.jpg", stock: 10 },
-    { name: "Brit Care Skin & Coat Tahılsız Somonlu Orta Irk Yetişkin Köpek Maması 12 kg", price: 3544, originalPrice: 4235, skt: "03.2027", img: "https://www.mamatoptancisi.com/brit-care-skin-coat-tahilsiz-somonlu-orta-irk-yetiskin-kopek-mamasi-12-kg-1066465-98-O.jpg", stock: 10 },
-    { name: "Brit Care Skin & Coat Tahılsız Büyük Irk Yavru Köpek Maması 12 kg", price: 3436, originalPrice: 4400, skt: "02.2027", img: "https://www.mamatoptancisi.com/brit-care-skin-coat-tahilsiz-buyuk-irk-yavru-kopek-mamasi-12-kg-1066459-98-O.jpg", stock: 10 },
-    { name: "Brit Care Champion Somonlu Ringa Balıklı Yetişkin Köpek Maması 3 kg", price: 1070, originalPrice: 1375, skt: "10.2026", img: "https://www.mamatoptancisi.com/brit-care-champion-hipoallerjenic-calisan-kopek-mamasi-3-kg-1066453-98-O.jpg", stock: 10 },
-    { name: "Brit Care Tahılsız Somonlu Yaşlı Köpek Maması 3 kg", price: 1163, originalPrice: 1293, skt: "03.2027", img: "https://www.mamatoptancisi.com/brit-care-tahilsiz-somonlu-hassas-deri-yapisina-sahip-yasli-kopek-mamasi-3-kg-1066476-98-O.jpg", stock: 10 },
-    { name: "Brit Care Skin & Coat Tahılsız Somonlu Orta Irk Yetişkin Köpek Maması 3 kg", price: 1131, originalPrice: 1293, skt: "10.2026", img: "https://www.mamatoptancisi.com/brit-care-skin-coat-adult-tahilsiz-somonlu-orta-irk-yetiskin-kopek-mamasi-3-kg-1066464-98-O.jpg", stock: 10 },
-  ],
-};
-
 const ECONATURE_KOPEK: BrandProductData = {
   brandName: "Econature",
   brandSlug: "econature",
@@ -503,7 +477,7 @@ const KOPEK_ACIK_MAMA_REFLEX: BrandProductData = {
   ],
 };
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, BRIT_CARE_KOPEK, ECONATURE_KOPEK, FELICIA_KOPEK, ENJOY_KOPEK, LAVITAL_KOPEK, PROCHOICE_KOPEK, PRONATURE_KOPEK, PROPERFORMANCE_KOPEK, REFLEX_KOPEK, REFLEX_PLUS_KOPEK, WANPY_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, ECONATURE_KOPEK, FELICIA_KOPEK, ENJOY_KOPEK, LAVITAL_KOPEK, PROCHOICE_KOPEK, PRONATURE_KOPEK, PROPERFORMANCE_KOPEK, REFLEX_KOPEK, REFLEX_PLUS_KOPEK, WANPY_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
 
 const KOPEK_CROSS_SELL_SECTIONS = [
   {
@@ -716,25 +690,24 @@ function getBreedDistribution(productName: string, isKopek: boolean): { breedInd
 }
 
 async function seedBreedStats() {
-  const existingCount = await db.select({ count: sql<number>`count(*)` }).from(breedStats);
-  if (Number(existingCount[0].count) > 0) {
-    console.log("Breed stats already exist, skipping...");
-    return;
-  }
-
-  console.log("Seeding breed stats for all mama products...");
+  console.log("Checking breed stats for mama products...");
 
   const allProducts = await db.select().from(products);
   const allCategories = await db.select().from(brandCategories);
   const catMap = new Map(allCategories.map(c => [c.id, c]));
 
+  const existingStats = await db.select({ productId: breedStats.productId }).from(breedStats);
+  const productsWithStats = new Set(existingStats.map(s => s.productId));
+
   let count = 0;
   for (const product of allProducts) {
+    if (productsWithStats.has(product.id)) continue;
+
     const cat = catMap.get(product.brandCategoryId);
     if (!cat) continue;
 
     const isKedi = cat.animal === "kedi" && (cat.subcategory === "kedi-mamasi" || cat.subcategory === "acik-mama");
-    const isKopek = cat.animal === "kopek" && (cat.subcategory === "mama-markalari" || cat.subcategory === "kopek-mamasi" || cat.subcategory === "acik-mama");
+    const isKopek = cat.animal === "kopek" && (cat.subcategory === "mama-markalari" || cat.subcategory === "kopek-mamasi" || cat.subcategory === "acik-mama" || cat.subcategory === "uygun-cuval");
     if (!isKedi && !isKopek) continue;
 
     const breeds = isKopek ? KOPEK_BREEDS : KEDI_BREEDS;
@@ -753,5 +726,9 @@ async function seedBreedStats() {
     }
   }
 
-  console.log(`Seeded ${count} breed stats across mama products.`);
+  if (count > 0) {
+    console.log(`Seeded ${count} new breed stats for mama products.`);
+  } else {
+    console.log("All mama products already have breed stats.");
+  }
 }
