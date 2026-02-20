@@ -176,7 +176,7 @@ export default function ProductDetailPage() {
     } as ProductDetailData;
   }, [staticProduct]);
 
-  const isKediMama = data?.category?.animal === "kedi" && data?.category?.subcategory === "kedi-mamasi";
+  const isKediMama = data?.category?.animal === "kedi" && (data?.category?.subcategory === "kedi-mamasi" || data?.category?.subcategory === "acik-mama");
 
   const { data: kumData } = useQuery<{ category: BrandCategory; products: Product[] }>({
     queryKey: ["/api/brand-products", "kedi", "kedi-kumu", "kedi-kumu"],

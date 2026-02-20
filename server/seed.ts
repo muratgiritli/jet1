@@ -301,8 +301,8 @@ async function seedBreedStats() {
     const cat = catMap.get(product.brandCategoryId);
     if (!cat) continue;
 
-    const isKedi = cat.animal === "kedi" && cat.subcategory === "kedi-mamasi";
-    const isKopek = cat.animal === "kopek" && (cat.subcategory === "mama-markalari" || cat.subcategory === "kopek-mamasi");
+    const isKedi = cat.animal === "kedi" && (cat.subcategory === "kedi-mamasi" || cat.subcategory === "acik-mama");
+    const isKopek = cat.animal === "kopek" && (cat.subcategory === "mama-markalari" || cat.subcategory === "kopek-mamasi" || cat.subcategory === "acik-mama");
     if (!isKedi && !isKopek) continue;
 
     const breeds = isKopek ? KOPEK_BREEDS : KEDI_BREEDS;
