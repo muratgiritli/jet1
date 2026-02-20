@@ -14,6 +14,7 @@ interface BrandProductData {
     originalPrice?: number;
     skt?: string;
     img?: string;
+    stock?: number;
   }[];
 }
 
@@ -168,7 +169,38 @@ const BAKIM_SAGLIK_DATA: BrandProductData = {
   ],
 };
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA];
+const KEDI_TUVALETI_DATA: BrandProductData = {
+  brandName: "Kedi Tuvaleti",
+  brandSlug: "kedi-tuvaleti",
+  animal: "kedi",
+  subcategory: "kedi-tuvaleti",
+  products: [
+    { name: "Şenyayla Küçük Lüx Kapalı Kedi Tuvaleti Karışık Renk 37x40x49 cm", price: 303, originalPrice: 2059, img: "https://www.mamatoptancisi.com/senyayla-kucuk-lux-kapali-kedi-tuvaleti-karisik-renk-37x40x49-cm-1051337-94-O.jpg" },
+    { name: "Şenyayla Orta Lüx Çekmeceli Kapalı Kedi Tuvaleti Karışık Renk 55x47x35 cm", price: 612, originalPrice: 1328, img: "https://www.mamatoptancisi.com/senyayla-orta-lux-cekmeceli-kapali-kedi-tuvaleti-karisik-renk-55x47x35-cm-1055735-94-O.jpg" },
+    { name: "Stefanplast Cathy Filter Kapalı Kedi Tuvaleti Mavi", price: 662, img: "https://www.mamatoptancisi.com/stefanplast-cathy-filter-kapali-kedi-tuvaleti-mavi-1071936-10-O.jpg" },
+    { name: "Stefanplast Cathy Easy Clean Kapalı Kedi Tuvaleti Mavi", price: 856, img: "https://www.mamatoptancisi.com/stefanplast-cathy-easy-clean-kapali-kedi-tuvaleti-mavi-1071935-10-O.jpg" },
+    { name: "Stefanplast Griffe Baskılı Kapalı Kedi Tuvaleti Mavi/Beyaz", price: 863, img: "https://www.mamatoptancisi.com/stefanplast-griffe-baskili-kapali-kedi-tuvaleti-mavi-beyaz-1071934-10-O.jpg" },
+    { name: "Stefanplast Cathy Comfort Kapalı Kedi Tuvaleti Gri", price: 1078, img: "https://www.mamatoptancisi.com/stefanplast-cathy-comfort-kapali-kedi-tuvaleti-gri-1071937-10-O.jpg" },
+    { name: "Beeztees Kapalı Kedi Tuvaleti Koku Filtreli Açık Mavi Antrasit 57x39x41 cm", price: 1146, originalPrice: 1993, img: "https://www.mamatoptancisi.com/beeztees-kapali-kedi-tuvaleti-koku-filtreli-acik-mavi-antrasit-57x39x41cm-1060688-73-O.jpg" },
+    { name: "Moderna Smart Kapalı Kedi Tuvaleti Gri 53 cm", price: 1304, originalPrice: 1999, img: "https://www.mamatoptancisi.com/moderna-smart-kapali-kedi-tuvaleti-gri-53-cm-1045803-99-O.jpg" },
+    { name: "M-Pets Eco Tıma Kapalı Kedi Tuvaleti M 52,3x39,7x38 cm Yeşil", price: 1051, originalPrice: 1951, img: "https://www.mamatoptancisi.com/m-pets-eco-tima-kapali-kedi-tuvaleti-m-523x397x38-cm-yesil-1052142-87-O.jpg", stock: 0 },
+    { name: "M-Pets Eco Tanta Üstten Girişli Kedi Tuvaleti 63x49x42 cm Yeşil", price: 1154, originalPrice: 2098, img: "https://www.mamatoptancisi.com/m-pets-eco-tanta-ustten-girisli-kedi-tuvaleti-63x49x42-cm-yesil-1052140-87-O.jpg", stock: 0 },
+    { name: "M-Pets Eco Tıma Kapalı Kedi Tuvaleti L 60,2x45,1x42,4 cm Yeşil", price: 1363, originalPrice: 2394, img: "https://www.mamatoptancisi.com/m-pets-eco-tima-kapali-kedi-tuvaleti-l-602x451x424-cm-yesil-1052143-87-O.jpg", stock: 0 },
+    { name: "Beeztees Kapalı Kedi Tuvaleti Koku Filtreli Bej Gri 56x39x39 cm", price: 1584, originalPrice: 2755, img: "https://www.mamatoptancisi.com/beeztees-kapali-kedi-tuvaleti-koku-filtreli-bej-gri-56x39x39cm-1060696-73-O.jpg", stock: 0 },
+    { name: "Beeztees Kapalı Köşe Kedi Tuvaleti Koku Filtreli Gri Beyaz 58x45x40 cm", price: 1804, originalPrice: 3137, img: "https://www.mamatoptancisi.com/beeztees-kapali-kose-kedi-tuvaleti-koku-filtreli-gri-beyaz-58x45x40cm-1060700-73-O.jpg", stock: 0 },
+    { name: "M-Pets Suez Sailor Kapalı Kedi Tuvaleti 69x42x41 cm", price: 1927, originalPrice: 3362, img: "https://www.mamatoptancisi.com/m-pets-suez-sailor-kapali-kedi-tuvaleti-69x42x41-cm-1052146-87-O.jpg", stock: 0 },
+    { name: "Beeztees Kapalı Kedi Tuvaleti Koku Filtreli Siyah Mermer Antrasit 56x39x39 cm", price: 2007, originalPrice: 3491, img: "https://www.mamatoptancisi.com/beeztees-kapali-kedi-tuvaleti-koku-filtreli-siyah-mermer-antrasit-56x39x39cm-1060703-73-O.jpg", stock: 0 },
+    { name: "Imac Zuma Antrasit Çekmeceli Kapalı Kedi Tuvaleti 40x42,5x56 cm", price: 2622, img: "https://www.mamatoptancisi.com/imac-zuma-antrasit-cekmeceli-kapali-kedi-tuvaleti-40-x-425-x-56-cm-8937-1051511-89-O.jpg", stock: 0 },
+    { name: "Imac Frida Üstten Girişli Çekmeceli Kedi Tuvaleti Bej 56x40x43,5 cm", price: 2550, originalPrice: 2999, img: "https://www.mamatoptancisi.com/imac-frida-ustten-girisli-cekmeceli-kedi-tuvaleti-bej-56x40x435-cm-1051499-89-O.jpg", stock: 0 },
+    { name: "Dr. Sacchi Plastik Kedi Kumu Küreği 19 cm", price: 25, originalPrice: 65, stock: 0 },
+    { name: "Natura Deliksiz Kedi Kum ve Mama Küreği 23 cm", price: 30, originalPrice: 75, stock: 0 },
+    { name: "Dream Cat Aktif Karbonlu Kedi Kumu Koku Giderici 200 gr", price: 103, originalPrice: 169, stock: 0 },
+    { name: "Reflex Care Vanilya Kokulu Kedi Kumu Torbası 82x50 cm 7 Adet", price: 110, originalPrice: 129, stock: 0 },
+    { name: "Simple Solution Kedi Kumu Koku Giderici 600 gr", price: 350, originalPrice: 499, stock: 0 },
+  ],
+};
+
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA];
 
 export async function seedDatabase() {
   console.log("Checking database for missing brand data...");
@@ -201,6 +233,7 @@ export async function seedDatabase() {
         originalPrice: product.originalPrice,
         skt: product.skt,
         img: product.img,
+        stock: product.stock !== undefined ? product.stock : 10,
         brandCategoryId: category.id,
       });
     }
