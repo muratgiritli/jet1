@@ -22,7 +22,7 @@ export default function FloatingCartBar() {
               <div className="flex flex-col">
                 <span className="text-xs text-muted-foreground" data-testid="text-float-count">{itemCount} ürün</span>
                 <span className="text-lg font-extrabold text-primary" data-testid="text-float-total">
-                  {grandTotal.toFixed(0)} TL
+                  {Math.round(grandTotal)} TL
                 </span>
               </div>
             </div>

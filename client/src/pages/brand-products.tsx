@@ -472,7 +472,7 @@ export default function BrandProductsPage() {
               <Button variant="outline" className="bg-white/90" data-testid="btn-go-to-cart">
                 <ShoppingCart className="w-4 h-4" />
                 <span data-testid="text-cart-count">{itemCount}</span>
-                <Badge variant="secondary" className="no-default-hover-elevate" data-testid="text-cart-total">{grandTotal.toFixed(0)} TL</Badge>
+                <Badge variant="secondary" className="no-default-hover-elevate" data-testid="text-cart-total">{Math.round(grandTotal)} TL</Badge>
               </Button>
             </Link>
           )}
@@ -530,7 +530,7 @@ export default function BrandProductsPage() {
               <div className="flex flex-col">
                 <span className="text-xs text-muted-foreground" data-testid="text-sticky-count">{itemCount} ürün</span>
                 <span className="text-lg font-extrabold text-primary" data-testid="text-sticky-total">
-                  {grandTotal.toFixed(0)} TL
+                  {Math.round(grandTotal)} TL
                 </span>
               </div>
               <Link href="/odeme">

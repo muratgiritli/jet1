@@ -81,12 +81,12 @@ export default function Checkout() {
 
       let msg = `*JetGo Sipariş*\n\n`;
       selectedProducts.forEach(({ product, qty }) => {
-        msg += `${qty}x ${product.name} — ${qty * product.price} TL\n`;
+        msg += `${qty}x ${product.name} — ${Math.round(qty * product.price)} TL\n`;
       });
-      msg += `\n*Ara Toplam:* ${subtotal} TL`;
-      if (discount > 0) msg += `\n*İndirim (${pay.tag}):* -${discount.toFixed(0)} TL`;
+      msg += `\n*Ara Toplam:* ${Math.round(subtotal)} TL`;
+      if (discount > 0) msg += `\n*İndirim (${pay.tag}):* -${Math.round(discount)} TL`;
       msg += `\n*Teslimat:* ${shipping === 0 ? "Ücretsiz" : shipping + " TL"}`;
-      msg += `\n*Genel Toplam:* ${grandTotal.toFixed(0)} TL`;
+      msg += `\n*Genel Toplam:* ${Math.round(grandTotal)} TL`;
       msg += `\n*Ödeme:* ${pay.name}`;
       if (pay.id === "eft") msg += CONFIG.bankInfo;
 
@@ -120,7 +120,7 @@ export default function Checkout() {
           </div>
           {itemCount > 0 && (
             <Badge variant="secondary" className="no-default-hover-elevate" data-testid="text-checkout-total-badge">
-              {grandTotal.toFixed(0)} TL
+              {Math.round(grandTotal)} TL
             </Badge>
           )}
         </div>
@@ -190,7 +190,7 @@ export default function Checkout() {
                             </Button>
                           </div>
                           <span className="text-sm font-bold shrink-0 min-w-[70px] text-right" data-testid={`text-checkout-linetotal-${product.id}`}>
-                            {qty * product.price} TL
+                            {Math.round(qty * product.price)} TL
                           </span>
                         </motion.div>
                       ))}
@@ -246,7 +246,7 @@ export default function Checkout() {
                         <span className="text-sm font-medium" data-testid="text-min-label">Minimum Sipariş</span>
                       </div>
                       <span className="text-xs font-bold text-muted-foreground" data-testid="text-min-progress">
-                        {subtotal}/{CONFIG.minLimit} TL
+                        {Math.round(subtotal)}/{CONFIG.minLimit} TL
                       </span>
                     </div>
                     <Progress
@@ -260,7 +260,7 @@ export default function Checkout() {
                           <Check className="w-3 h-3" /> Minimum tutar aşıldı
                         </span>
                       ) : (
-                        `Minimum sipariş için ${CONFIG.minLimit - subtotal} TL daha ekleyin`
+                        `Minimum sipariş için ${Math.round(CONFIG.minLimit - subtotal)} TL daha ekleyin`
                       )}
                     </p>
                   </div>
@@ -272,7 +272,7 @@ export default function Checkout() {
                         <span className="text-sm font-medium" data-testid="text-ship-label">Ücretsiz Teslimat</span>
                       </div>
                       <span className="text-xs font-bold text-muted-foreground" data-testid="text-ship-progress">
-                        {subtotal}/{CONFIG.shipLimit} TL
+                        {Math.round(subtotal)}/{CONFIG.shipLimit} TL
                       </span>
                     </div>
                     <Progress
@@ -286,7 +286,7 @@ export default function Checkout() {
                           <Check className="w-3 h-3" /> Ücretsiz teslimat kazandınız!
                         </span>
                       ) : (
-                        `Ücretsiz teslimat için ${CONFIG.shipLimit - subtotal} TL daha ekleyin`
+                        `Ücretsiz teslimat için ${Math.round(CONFIG.shipLimit - subtotal)} TL daha ekleyin`
                       )}
                     </p>
                   </div>
@@ -303,12 +303,12 @@ export default function Checkout() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between gap-3 flex-wrap">
                       <span className="text-muted-foreground">Ara Toplam</span>
-                      <span className="font-medium" data-testid="text-subtotal">{subtotal} TL</span>
+                      <span className="font-medium" data-testid="text-subtotal">{Math.round(subtotal)} TL</span>
                     </div>
                     {discount > 0 && (
                       <div className="flex justify-between gap-3 text-chart-2 flex-wrap">
                         <span data-testid="text-discount-label">İndirim ({PAYMENT_OPTIONS.find((p) => p.id === paymentId)?.tag})</span>
-                        <span className="font-medium" data-testid="text-discount">-{discount.toFixed(0)} TL</span>
+                        <span className="font-medium" data-testid="text-discount">-{Math.round(discount)} TL</span>
                       </div>
                     )}
                     <div className="flex justify-between gap-3 flex-wrap">
@@ -326,7 +326,7 @@ export default function Checkout() {
                   <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t flex-wrap">
                     <span className="text-lg font-bold">Genel Toplam</span>
                     <span className="text-2xl font-extrabold text-primary" data-testid="text-total">
-                      {grandTotal.toFixed(0)} TL
+                      {Math.round(grandTotal)} TL
                     </span>
                   </div>
 

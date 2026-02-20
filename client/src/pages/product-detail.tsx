@@ -473,7 +473,7 @@ export default function ProductDetailPage() {
               <Button variant="outline" className="bg-white/90" data-testid="btn-go-to-cart">
                 <ShoppingCart className="w-4 h-4" />
                 <span data-testid="text-cart-count">{itemCount}</span>
-                <Badge variant="secondary" className="no-default-hover-elevate" data-testid="text-cart-total">{grandTotal.toFixed(0)} TL</Badge>
+                <Badge variant="secondary" className="no-default-hover-elevate" data-testid="text-cart-total">{Math.round(grandTotal)} TL</Badge>
               </Button>
             </Link>
           )}
