@@ -322,6 +322,139 @@ const ENJOY_KOPEK: BrandProductData = {
   ],
 };
 
+const LAVITAL_KOPEK: BrandProductData = {
+  brandName: "LaVital",
+  brandSlug: "lavital",
+  animal: "kopek",
+  subcategory: "mama-markalari",
+  products: [
+    { name: "LaVital Mini Puppy Kuzulu Küçük Irk Yavru Köpek Maması 6+1 Kg", price: 894.83, originalPrice: 1299, skt: "02.2027", img: "https://www.mamatoptancisi.com/lavital-mini-puppy-kuzulu-kucuk-irk-yavru-kopek-mamasi-61-kg-1068247-91-O.jpg", stock: 10 },
+    { name: "LaVital Kuzu Etli Küçük Irk Yetişkin Köpek Maması 2 kg", price: 298.14, originalPrice: 408, skt: "06.2027", img: "https://www.mamatoptancisi.com/lavital-kuzu-etli-kucuk-irk-yetiskin-kopek-mamasi-2-kg-1052000-60-O.jpg", stock: 10 },
+    { name: "LaVital Somonlu Küçük Irk Yetişkin Köpek Maması 2 kg", price: 349.35, originalPrice: 425, skt: "06.2027", img: "https://www.mamatoptancisi.com/lavital-somonlu-kucuk-irk-yetiskin-kopek-mamasi-2-kg-1073795-60-O.jpg", stock: 10 },
+    { name: "LaVital Kuzu Etli Küçük Irk Yetişkin Köpek Maması 7 kg", price: 839.55, originalPrice: 1143, skt: "06.2027", img: "https://www.mamatoptancisi.com/lavital-kuzu-etli-kucuk-irk-yetiskin-kopek-mamasi-7-kg-1072610-60-O.jpg", stock: 10 },
+    { name: "LaVital Somonlu Küçük Irk Yetişkin Köpek Maması 7 kg", price: 923.53, originalPrice: 1210, skt: "05.2027", img: "https://www.mamatoptancisi.com/lavital-somonlu-kucuk-irk-yetiskin-kopek-mamasi-7-kg-1072613-60-O.jpg", stock: 10 },
+    { name: "LaVital Kuzu Etli Orta Irk Yetişkin Köpek Maması 3 kg", price: 475.19, originalPrice: 605, skt: "06.2027", img: "https://www.mamatoptancisi.com/lavital-kuzu-etli-orta-irk-yetiskin-kopek-mamasi-3-kg-1052007-60-O.jpg", stock: 10 },
+    { name: "LaVital Kuzu Etli Orta Irk Yetişkin Köpek Maması 12 kg", price: 1356.64, originalPrice: 1760, skt: "06.2027", img: "https://www.mamatoptancisi.com/lavital-kuzu-etli-orta-irk-yetiskin-kopek-mamasi-12-kg-1072619-60-O.jpg", stock: 10 },
+    { name: "LaVital Somonlu Orta Irk Yetişkin Köpek Maması 12 kg", price: 1396.48, originalPrice: 1815, skt: "06.2027", img: "https://www.mamatoptancisi.com/lavital-somonlu-orta-irk-yetiskin-kopek-mamasi-12-kg-1072622-60-O.jpg", stock: 10 },
+    { name: "LaVital Kuzu Etli Büyük Irk Yetişkin Köpek Maması 15 kg", price: 1474.19, originalPrice: 1859, skt: "06.2027", img: "https://www.mamatoptancisi.com/lavital-kuzu-etli-buyuk-irk-yetiskin-kopek-mamasi-15-kg-1072627-60-O.jpg", stock: 10 },
+    { name: "LaVital Somonlu Büyük Irk Yetişkin Köpek Maması 15 kg", price: 1570.33, originalPrice: 2126, skt: "06.2027", img: "https://www.mamatoptancisi.com/lavital-somonlu-buyuk-irk-yetiskin-kopek-mamasi-15-kg-1072628-60-O.jpg", stock: 10 },
+  ],
+};
+
+const PROCHOICE_KOPEK: BrandProductData = {
+  brandName: "ProChoice",
+  brandSlug: "prochoice",
+  animal: "kopek",
+  subcategory: "mama-markalari",
+  products: [
+    { name: "Prochoice Proderma Kuzu Etli Yetişkin Köpek Maması 18 kg", price: 1965.01, originalPrice: 2200, skt: "06.2027", img: "https://www.mamatoptancisi.com/prochoice-proderma-kuzu-etli-yetiskin-kopek-mamasi-18-kg-1065597-23-O.jpg", stock: 10 },
+    { name: "Prochoice Sardalyalı ve Hamsili Yetişkin Köpek Konservesi 400 gr X 6 Adet", price: 330, originalPrice: 450, skt: "09.2026", stock: 10 },
+    { name: "Prochoice Sensitive Skin Hassas Balıklı Yetişkin Köpek Maması 12 kg", price: 1770.88, originalPrice: 2750, skt: "05.2026", stock: 0 },
+    { name: "Prochoice Kuzu Etli Yetişkin Köpek Maması 12 kg", price: 1630.42, originalPrice: 2530, skt: "06.2026", stock: 0 },
+    { name: "Prochoice Sensitive Balık Etli Yetişkin Köpek Maması 3 kg", price: 603.71, originalPrice: 999.90, skt: "02.2026", stock: 0 },
+    { name: "Prochoice Fit & Healthy Kuzulu Yetişkin Köpek Maması 3 kg", price: 570.66, originalPrice: 836, skt: "02.2026", stock: 0 },
+    { name: "Prochoice Kuzu Etli Yavru Köpek Maması 3 kg", price: 611.97, originalPrice: 880, skt: "02.2026", stock: 0 },
+    { name: "Prochoice Kuzu Etli Yavru Köpek Maması 12 kg", price: 1812.19, originalPrice: 2805, skt: "02.2026", stock: 0 },
+  ],
+};
+
+const PRONATURE_KOPEK: BrandProductData = {
+  brandName: "Pronature",
+  brandSlug: "pronature",
+  animal: "kopek",
+  subcategory: "mama-markalari",
+  products: [
+    { name: "Pronature Mother & Baby Kuzu Etli Mini Irk Anne ve Bebek Köpek Maması 3 Kg", price: 505.84, originalPrice: 799, skt: "06.2026", stock: 10 },
+    { name: "Pronature Mother&Baby Kuzu Etli Mini Irk Anne ve Yavru Köpek Maması 10+2 kg", price: 1473.84, originalPrice: 1760, skt: "09.2026", img: "https://www.mamatoptancisi.com/pronature-daily-puppy-kuzu-etli-ve-pirincli-yavru-kopek-mamasi-12-kg-1047397-40-O.jpg", stock: 10 },
+    { name: "Pronature Kuzu Etli ve Pirinçli Orta ve Büyük Irk Yavru Köpek Maması 10+2 Kg", price: 1066.42, originalPrice: 1595, skt: "05.2027", stock: 10 },
+    { name: "Pronature Kuzu Etli Pirinçli Yetişkin Köpek Maması 10+2 Kg", price: 966.20, originalPrice: 1870, skt: "04.2027", stock: 10 },
+    { name: "Pronature Hypo-Allergenic Kuzu Etli Enginarlı Patatesli Tahılsız 10+2 kg", price: 1473.84, originalPrice: 2200, skt: "03.2027", stock: 10 },
+    { name: "Pronature Daily Kuzu Etli Küçük Irk Yetişkin Köpek Maması 3 kg", price: 353.90, originalPrice: 483.25, skt: "11.2026", stock: 10 },
+    { name: "Pronature Daily Kuzu Etli Küçük Irk Yavru Köpek Maması 3 kg", price: 374.85, originalPrice: 509.34, skt: "01.2027", stock: 10 },
+    { name: "Pronature Derma Shine Somonlu Pirinçli Yetişkin 10+2 Kg", price: 1051.07, originalPrice: 1650, skt: "05.2027", stock: 0 },
+  ],
+};
+
+const PROPERFORMANCE_KOPEK: BrandProductData = {
+  brandName: "ProPerformance",
+  brandSlug: "properformance",
+  animal: "kopek",
+  subcategory: "mama-markalari",
+  products: [
+    { name: "Pro Performance Kuzu Etli Yavru Köpek Maması 18 kg", price: 2895.84, originalPrice: 2500, skt: "12.2026", img: "https://www.mamatoptancisi.com/pro-performance-kuzu-etli-yavru-kopek-mamasi-18-kg-1047466-60-O.jpg", stock: 10 },
+    { name: "Pro Performance Premium Kuzulu ve Pirinçli Yetişkin 18 kg", price: 2537.26, originalPrice: 2999, skt: "12.2027", stock: 10 },
+    { name: "Pro Performance Mini Irk Kuzulu ve Yaban Mersinli Yetişkin 2 Kg", price: 546.40, originalPrice: 699, skt: "05.2027", stock: 10 },
+    { name: "Pro Performance Mini Irk Somonlu ve Yaban Mersinli Yetişkin 2 Kg", price: 592.20, originalPrice: 699, skt: "11.2026", stock: 10 },
+    { name: "Pro Performance Light Mini Irk Kuzulu Diyet Kısırlaştırılmış 2 Kg", price: 556.64, originalPrice: 699, skt: "07.2026", stock: 10 },
+    { name: "Pro Performance Mini Irk Kuzulu ve Yaban Mersinli Yavru 2 Kg", price: 534.51, originalPrice: 699, skt: "11.2026", stock: 10 },
+    { name: "Pro Performance Mini Irk Kuzulu ve Yaban Mersinli Yavru 7 Kg", price: 1356.27, originalPrice: 1699, skt: "11.2026", stock: 10 },
+    { name: "Pro Performance Mini Irk Somonlu ve Yaban Mersinli Yetişkin 7 Kg", price: 1538.47, originalPrice: 1699, skt: "11.2026", stock: 10 },
+    { name: "Pro Performance Light Mini Irk Kuzulu Diyet Kısırlaştırılmış 7 Kg", price: 1553.37, originalPrice: 1699, skt: "01.2027", stock: 10 },
+    { name: "Pro Performance Kuzulu ve Yaban Mersinli Küçük Irk Yetişkin 2 Kg", price: 515.68, originalPrice: 899, skt: "07.2026", stock: 10 },
+    { name: "Pro Performance Ultra Premium Orta Büyük Somonlu Yetişkin 12 Kg", price: 1765.76, originalPrice: 2500, skt: "11.2027", stock: 10 },
+    { name: "Pro Performance Ultra Premium Orta Büyük Somonlu Yavru 12 Kg", price: 2370.15, originalPrice: 2500, skt: "06.2026", stock: 0 },
+    { name: "Pro Performance Ultra Premium Orta Büyük Kuzulu Yavru 12 Kg", price: 2120.21, originalPrice: 2500, skt: "12.2026", stock: 0 },
+    { name: "Pro Performance Ultra Premium Kuzulu Küçük Irk Yavru 12 Kg", price: 2933.18, originalPrice: 2700, skt: "10.2027", stock: 0 },
+  ],
+};
+
+const REFLEX_KOPEK: BrandProductData = {
+  brandName: "Reflex",
+  brandSlug: "reflex-mama",
+  animal: "kopek",
+  subcategory: "mama-markalari",
+  products: [
+    { name: "Reflex Kuzu Etli Pirinçli ve Sebzeli Yetişkin Köpek Maması 15 Kg", price: 2020.18, originalPrice: 2499, skt: "03.2027", img: "https://www.mamatoptancisi.com/reflex-kuzu-etli-pirincli-ve-sebzeli-yetiskin-kopek-mamasi-15-kg-1052761-92-O.jpg", stock: 10 },
+    { name: "Reflex Balıklı ve Pirinçli Yetişkin Köpek Maması 15 kg", price: 1872.74, originalPrice: 2090, skt: "02.2027", img: "https://www.mamatoptancisi.com/reflex-balikli-ve-pirincli-yetiskin-kopek-mamasi-15-kg-1047672-90-O.jpg", stock: 10 },
+    { name: "Reflex Duo Protein Somonlu ve Kuzulu Orta ve Büyük Irk Yetişkin Köpek Maması 10 kg", price: 1194.21, originalPrice: 1699, skt: "05.2027", img: "https://www.mamatoptancisi.com/reflex-duo-protein-somonlu-ve-kuzulu-orta-ve-buyuk-irk-yetiskin-kopek-mamasi-10-kg-1060494-94-O.jpg", stock: 0 },
+    { name: "Reflex Kuzu Etli ve Pirinçli Yetişkin Köpek Maması 15 kg", price: 1850.25, originalPrice: 2750, skt: "01.2027", img: "https://www.mamatoptancisi.com/reflex-kuzu-etli-ve-pirincli-yetiskin-kopek-mamasi-15-kg-1047675-49-O.jpg", stock: 0 },
+    { name: "Reflex High Quality Biftekli ve Pirinçli Yavru Köpek Maması 15 kg", price: 1143, originalPrice: 1870, skt: "08.2025", img: "https://www.mamatoptancisi.com/reflex-high-quality-biftekli-ve-pirincli-yavru-kopek-mamasi-15-kg-1047678-11-O.jpg", stock: 0 },
+    { name: "Reflex High Energy Biftekli Yetişkin Köpek Maması 15 kg", price: 1704.57, originalPrice: 1320, skt: "02.2027", img: "https://www.mamatoptancisi.com/reflex-high-energy-biftekli-yetiskin-kopek-mamasi-15-kg-1058170-11-O.jpg", stock: 0 },
+    { name: "Reflex Kuzu Etli ve Pirinçli Yavru Köpek Maması 15 kg", price: 1207, originalPrice: 1870, skt: "03.2026", img: "https://www.mamatoptancisi.com/reflex-kuzu-etli-ve-pirincli-yavru-kopek-mamasi-15-kg-1076580-11-O.jpg", stock: 0 },
+  ],
+};
+
+const REFLEX_PLUS_KOPEK: BrandProductData = {
+  brandName: "Reflex Plus",
+  brandSlug: "reflex-plus",
+  animal: "kopek",
+  subcategory: "mama-markalari",
+  products: [
+    { name: "Reflex Plus Somonlu Hipoallerjenik Orta ve Büyük Irk Yetişkin Köpek Maması 12 Kg", price: 1529.38, originalPrice: 2500, skt: "02.2027", img: "https://www.mamatoptancisi.com/reflex-plus-somonlu-orta-ve-buyuk-irk-yetiskin-kopek-mamasi-12-kg-1073778-87-O.jpg", stock: 10 },
+    { name: "Reflex Plus Somonlu Mini ve Küçük Irk Yetişkin Köpek Maması 8 kg", price: 1267.12, originalPrice: 1540, skt: "04.2027", img: "https://www.mamatoptancisi.com/reflex-plus-somonlu-mini-ve-kucuk-irk-yetiskin-kopek-mamasi-8-kg-1047727-16-O.jpg", stock: 10 },
+    { name: "Reflex Plus Hipoalerjenik Labrador Retriever Özel Irk Yetişkin Köpek Maması 8 kg", price: 1990.29, originalPrice: 2499, skt: "04.2027", img: "https://www.mamatoptancisi.com/reflex-plus-hipoalerjenik-labrador-retriever-ozel-irk-yetiskin-kopek-mamasi-8-kg-1047879-97-O.jpg", stock: 10 },
+    { name: "Reflex Plus Hipoalerjenik German Shepherd Özel Irk Yavru Köpek Maması 8 kg", price: 1990.29, originalPrice: 2499, skt: "03.2027", stock: 10 },
+    { name: "Reflex Plus Hipoalerjenik Labrador Retriever Özel Irk Yavru Köpek Maması 8 kg", price: 1990.29, originalPrice: 2499, skt: "02.2027", stock: 10 },
+    { name: "Reflex Plus Hipoalerjenik Golden Retriever Özel Irk Yavru Köpek Maması 8 kg", price: 1990.29, originalPrice: 2499, skt: "03.2027", stock: 10 },
+    { name: "Reflex Plus German Shepherd Alman Kurdu Özel Irk Yetişkin Köpek Maması 8 Kg", price: 2045.57, originalPrice: 2599, skt: "04.2027", stock: 10 },
+    { name: "Reflex Plus Golden Retriever Özel Irk Yetişkin Köpek Maması 8 kg", price: 2085.40, originalPrice: 2599, skt: "04.2027", stock: 10 },
+    { name: "Reflex Plus High Energy Biftekli Yetişkin Köpek Maması 12 kg", price: 1806.43, originalPrice: 2500, skt: "02.2027", stock: 10 },
+    { name: "Reflex Plus Hypoallergenic Kuzu Orta ve Büyük Irk Köpek Maması 12 Kg", price: 1467.62, originalPrice: 2500, skt: "11.2026", stock: 10 },
+    { name: "Reflex Plus Kuzu & Pirinç Küçük Irk Yetişkin Köpek Maması 8 kg", price: 1267.12, originalPrice: 1649.89, skt: "05.2027", img: "https://www.mamatoptancisi.com/reflex-plus-kuzu-pirinc-kucuk-irk-yetiskin-kopek-mamasi-8-kg-1070345-16-O.jpg", stock: 0 },
+    { name: "Reflex Plus Hypoallergenic Pomeranian Özel Irk Yetişkin Köpek Maması 2 kg", price: 452, originalPrice: 699, skt: "04.2026", stock: 0 },
+    { name: "Reflex Plus Yorkshire Terrier Yavru Köpek Maması 1,5 kg", price: 407, originalPrice: 407, skt: "04.2026", stock: 0 },
+    { name: "Reflex Plus Pomeranian Yavru Köpek Maması 1,5 kg", price: 407, originalPrice: 989.89, skt: "04.2026", stock: 0 },
+    { name: "Reflex Plus Light Kuzulu Kısırlaştırılmış Yetişkin Köpek Maması 15 kg", price: 1633.35, originalPrice: 2300, skt: "11.2026", stock: 0 },
+    { name: "Reflex Plus Kuzu Etli ve Pirinçli Büyük Irk Yetişkin Köpek Maması 18 kg", price: 2099.54, originalPrice: 2420, skt: "01.2027", stock: 0 },
+    { name: "Reflex Plus High Energy Biftekli Yetişkin Köpek Maması 15 kg", price: 1276.90, originalPrice: 1869.89, skt: "05.2026", stock: 0 },
+  ],
+};
+
+const WANPY_KOPEK: BrandProductData = {
+  brandName: "Wanpy",
+  brandSlug: "wanpy",
+  animal: "kopek",
+  subcategory: "mama-markalari",
+  products: [
+    { name: "Wanpy Sığır Etli Tahılsız Yetişkin Köpek Maması 12 kg", price: 3180, originalPrice: 3800, skt: "02.2027", stock: 10 },
+    { name: "Wanpy Ördekli Tahılsız Yetişkin Köpek Maması 12 kg", price: 3180, originalPrice: 3900, skt: "02.2027", stock: 10 },
+    { name: "Wanpy Sığır Etli Tahılsız Yetişkin Köpek Maması 1,5 kg", price: 649, originalPrice: 950, skt: "06.2026", stock: 10 },
+    { name: "Wanpy Ördekli Tahılsız Yetişkin Köpek Maması 1,5 kg", price: 649, originalPrice: 950, skt: "06.2026", stock: 10 },
+    { name: "Wanpy Tavuklu Tahılsız Yetişkin Köpek Maması 1,5 kg", price: 649, originalPrice: 950, skt: "06.2026", stock: 10 },
+    { name: "Wanpy Tavuklu Tahılsız Yavru Köpek Maması 1,5 kg", price: 649, originalPrice: 950, skt: "08.2026", stock: 10 },
+  ],
+};
+
 const KOPEK_ACIK_MAMA_PROPLAN: BrandProductData = {
   brandName: "Pro Plan",
   brandSlug: "pro-plan",
@@ -370,7 +503,7 @@ const KOPEK_ACIK_MAMA_REFLEX: BrandProductData = {
   ],
 };
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, BRIT_CARE_KOPEK, ECONATURE_KOPEK, FELICIA_KOPEK, ENJOY_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, BRIT_CARE_KOPEK, ECONATURE_KOPEK, FELICIA_KOPEK, ENJOY_KOPEK, LAVITAL_KOPEK, PROCHOICE_KOPEK, PRONATURE_KOPEK, PROPERFORMANCE_KOPEK, REFLEX_KOPEK, REFLEX_PLUS_KOPEK, WANPY_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
 
 export async function seedDatabase() {
   console.log("Checking database for missing brand data...");
