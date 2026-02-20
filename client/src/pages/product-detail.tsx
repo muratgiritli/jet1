@@ -39,7 +39,6 @@ const ANIMAL_SUBCATEGORIES: Record<string, SubcategoryInfo[]> = {
     { name: "Taşıma", slug: "kedi-tasima" },
     { name: "Tuvalet", slug: "kedi-tuvaleti" },
     { name: "Yaş Mama", slug: "kedi-konserve", hasBrands: true },
-    { name: "Çuval Mama", slug: "uygun-cuval", staticCategory: "ÇUVAL MAMA" },
   ],
   kus: [
     { name: "Kus Yemi", slug: "kus-yemi" },
