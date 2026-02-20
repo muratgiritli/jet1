@@ -92,12 +92,11 @@ const KEDI_KUMU_DATA: BrandProductData = {
   animal: "kedi",
   subcategory: "kedi-kumu",
   products: [
-    { name: "Van Cat Naturel Kokusuz İnce Taneli Kedi Kumu 10 Lt", price: 218, img: "https://www.mamatoptancisi.com/van-cat-naturel-kokusuz-ince-taneli-topaklanan-bentonit-kedi-kumu-10-lt-1065633-10-O.jpg" },
-    { name: "Lindocat Super Premium Bikarbonatlı 10 lt", price: 268, img: "https://www.mamatoptancisi.com/lindocat-super-premium-bikarbonatli-koku-onleyici-ve-extra-guclu-topaklanan-kedi-kumu-10-lt-9952-1062266-99-O.jpg" },
-    { name: "Toi Moi Aktif Karbonlu İnce Taneli 10 kg", price: 201, img: "https://www.mamatoptancisi.com/toi-moi-aktif-karbonlu-ince-taneli-topaklanan-bentonit-kedi-kumu-10-lt-1065845-93-O.jpg" },
-    { name: "Proline Bebek Pudralı İnce Taneli 10 lt", price: 170 },
-    { name: "Lindocat Prestige Bebek Pudra Kokulu İnce Taneli 10 Lt", price: 195 },
-    { name: "Feles Aktif Karbonlu Tozsuz Topaklanan 10 lt", price: 269 },
+    { name: "Van Cat Naturel Kokusuz İnce Taneli Topaklanan Bentonit Kedi Kumu 10 Lt", price: 218, originalPrice: 472, img: "https://www.mamatoptancisi.com/van-cat-naturel-kokusuz-ince-taneli-topaklanan-bentonit-kedi-kumu-10-lt-1063756-22-O.jpg" },
+    { name: "Proline Marsilya Sabun Kokulu İnce Taneli Topaklanan Bentonit Kedi Kumu 10 lt", price: 175, originalPrice: 275, img: "https://www.mamatoptancisi.com/proline-marsilya-sabun-kokulu-bentonit-kedi-kumu-10-lt-1045282-30-O.jpg" },
+    { name: "Biokats Micro Bianco Fresh Topaklaşan Kedi Kumu 6 lt", price: 150, originalPrice: 333, img: "https://www.mamatoptancisi.com/biokats-micro-bianco-fresh-topaklasan-kedi-kumu-6lt-1053519-12-O.jpg" },
+    { name: "Proline Bebek Pudralı İnce Taneli Topaklanan Bentonit Kedi Kumu 10 lt", price: 170, originalPrice: 275, img: "https://www.mamatoptancisi.com/proline-dogal-topaklanan-baby-powder-kokulu-kedi-kumu-kalin-taneli-10-lt-1038710-91-O.jpg" },
+    { name: "Proline Kokusuz İnce Taneli Topaklanan Bentonit Kedi Kumu 10 lt", price: 170, originalPrice: 275, img: "https://www.mamatoptancisi.com/proline-parfumsuz-ince-taneli-topaklasan-bentonit-kedi-kumu-10-l-1038711-71-O.jpg" },
   ],
 };
 
