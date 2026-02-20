@@ -124,6 +124,8 @@ export default function Home() {
   const mappedCategory = SLUG_TO_CATEGORY[altSlug] || "";
   const defaultTab = (mappedCategory && CATEGORIES.find(c => c.title === mappedCategory)) ? mappedCategory : (CATEGORIES[0]?.title || "");
 
+  const directCategory = altSlug === "uygun-cuval" ? CATEGORIES.find(c => c.title === "ÇUVAL MAMA") : null;
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b">
@@ -135,8 +137,8 @@ export default function Home() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-lg font-bold leading-tight" data-testid="text-brand">JetGo</h1>
-              <p className="text-xs text-muted-foreground" data-testid="text-brand-subtitle">Hızlı Sipariş</p>
+              <h1 className="text-lg font-bold leading-tight" data-testid="text-brand">{directCategory ? "Uygun Çuval Mamalar" : "JetGo"}</h1>
+              <p className="text-xs text-muted-foreground" data-testid="text-brand-subtitle">{directCategory ? "Ekonomik Seçenekler" : "Hızlı Sipariş"}</p>
             </div>
           </div>
           {itemCount > 0 && (
@@ -155,6 +157,18 @@ export default function Home() {
 
       <main className="max-w-2xl mx-auto px-4 pb-24">
         <section className="mt-6">
+          {directCategory ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {directCategory.items.map((item) => (
+                <ProductCard
+                  key={item.id}
+                  product={item}
+                  quantity={basket[item.id] || 0}
+                  onUpdate={updateQty}
+                />
+              ))}
+            </div>
+          ) : (
           <Tabs defaultValue={defaultTab} key={defaultTab}>
             <TabsList className="w-full flex-wrap h-auto gap-1 p-1" data-testid="tabs-categories">
               {CATEGORIES.map((cat) => (
@@ -183,6 +197,7 @@ export default function Home() {
               </TabsContent>
             ))}
           </Tabs>
+          )}
         </section>
       </main>
 
