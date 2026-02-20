@@ -48,6 +48,7 @@ export type Product = typeof products.$inferSelect;
 export const crossSellSections = pgTable("cross_sell_sections", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
+  forProductId: integer("for_product_id"),
   sortOrder: integer("sort_order").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
 });
