@@ -200,7 +200,35 @@ const KEDI_TUVALETI_DATA: BrandProductData = {
   ],
 };
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA];
+const KEDI_TASIMA_DATA: BrandProductData = {
+  brandName: "Kedi Taşıma",
+  brandSlug: "kedi-tasima",
+  animal: "kedi",
+  subcategory: "kedi-tasima",
+  products: [
+    { name: "Beeztees Kedi Taşıma Kabı Gri/Pembe 51x34,5x33 cm", price: 1289, originalPrice: 2242, img: "https://www.mamatoptancisi.com/beeztees-kopek-veya-kedi-tasima-kabi-gripembe-51x345x33cm-1024436-78-O.jpg" },
+    { name: "Skudo Iata 2 Kedi ve Köpek Plastik Taşıma Çantası 55 cm", price: 1264, originalPrice: 2000, img: "https://www.mamatoptancisi.com/skudo-iata-no2-kedi-ve-kopek-plastik-tasima-cantasi-55-cm-1075551-10-O.jpg" },
+    { name: "Moderna Roadrunner Kedi ve Küçük Irk Köpek Taşıma Çantası Gri 56x37x35 cm", price: 1335, originalPrice: 1699, img: "https://www.mamatoptancisi.com/moderna-roadrunner-kedi-ve-kucuk-irk-kopek-tasima-cantasi-gri-56x37x35-cm-1045788-87-O.jpg" },
+    { name: "Ferplast Atlas 20 Kedi ve Köpekler İçin Taşıma Çantası Mavi 37x58x32 cm", price: 1390, originalPrice: 2250, img: "https://www.mamatoptancisi.com/ferplast-atlas-20-kedi-ve-kopekler-icin-tasima-cantasi-mavi-37x58x32-cm-1044968-10-O.jpg" },
+    { name: "Skudo Iata 3 Kedi Köpek Taşıma Kafesi 60 cm", price: 1614, originalPrice: 2000, img: "https://www.mamatoptancisi.com/skudo-iata-3-kedi-kopek-tasima-kafesi-60-cm-1075555-10-O.jpg", stock: 0 },
+    { name: "Skudo Iata 5 Kedi Köpek Taşıma Kafesinin Uçuş Seti", price: 1716, originalPrice: 2200, img: "https://www.mamatoptancisi.com/skudo-iata-5-kedi-kopek-tasima-kafesinin-ucus-seti-1075565-10-O.jpg", stock: 0 },
+    { name: "Skudo Iata 4 Kedi Köpek Taşıma Kafesinin Uçuş Seti", price: 1747, originalPrice: 2200, img: "https://www.mamatoptancisi.com/skudo-iata-4-kedi-kopek-tasima-kafesinin-ucus-seti-1075562-10-O.jpg", stock: 0 },
+    { name: "Beeztees Kedi Taşıma Kabı 8Kg Koyu Gri/Gri 55x36x35 cm", price: 2278, originalPrice: 3961, img: "https://www.mamatoptancisi.com/beeztees-kopek-veya-kedi-tasima-kabi-8kgye-kadar-koyu-grigri-55x36x35cm-935794-78-O.jpg", stock: 0 },
+    { name: "Beeztees Kedi Taşıma Kabı Çift Girişli Gri/Beyaz 55x35x34 cm", price: 2337, originalPrice: 4065, img: "https://www.mamatoptancisi.com/beeztees-kopek-veya-kedi-tasima-kabi-cift-girisli-gribeyaz-55x35x34cm-935793-78-O.jpg", stock: 0 },
+    { name: "Skudo Iata 3 Tuvaletli Kedi Köpek Seyahat Kafesi 60 cm", price: 2497, originalPrice: 3800, img: "https://www.mamatoptancisi.com/skudo-iata-3-kedi-kopek-seyahat-kafesi-60-cm-tuvaletli-1075559-10-O.jpg", stock: 0 },
+    { name: "Beeztees Kedi Taşıma Çantası 5Kg Antrasit 40x20x29 cm", price: 2722, originalPrice: 4734, img: "https://www.mamatoptancisi.com/beeztees-kopek-veya-kedi-tasima-cantasi-5kgye-kadar-antrasit-40x20x29cm-1060708-73-O.jpg", stock: 0 },
+    { name: "Beeztees Kedi Taşıma Kabı 12Kg Koyu Gri/Gri 61x40x38 cm", price: 2725, originalPrice: 4739, img: "https://www.mamatoptancisi.com/beeztees-kopek-veya-kedi-tasima-kabi-12kgye-kadar-koyu-grigri-61x40x38cm-994724-78-O.jpg", stock: 0 },
+    { name: "Ferplast Voyager 400 Kedi ve Köpek Kumaş Taşıma Çantası Gri 33x23x41 cm", price: 2777, originalPrice: 3999, stock: 0 },
+    { name: "Ferplast Voyager 350 Kedi ve Köpek Kumaş Taşıma Çantası Gri 45x30x33 cm", price: 2936, originalPrice: 4299, stock: 0 },
+    { name: "Ferplast Voyager 450 Kedi ve Köpek Kumaş Taşıma Çantası Siyah 55x33x37 cm", price: 3092, originalPrice: 4499, stock: 0 },
+    { name: "Skudo Iata 4 Kedi Köpek Taşıma Kafesi 68 cm", price: 3410, originalPrice: 4900, img: "https://www.mamatoptancisi.com/skudo-iata-4-kedi-kopek-tasima-kafesi-68-cm-1075557-10-O.jpg", stock: 0 },
+    { name: "Ferplast Trolley Tekerlekli Sırt Taşıma Çantası 32x28x51 cm", price: 4120, originalPrice: 5499, stock: 0 },
+    { name: "Skudo Iata 5 Kedi Köpek Taşıma Kafesi 79 cm", price: 4864, originalPrice: 8000, img: "https://www.mamatoptancisi.com/skudo-iata-5-kedi-kopek-tasima-kafesi-79-cm-1075560-10-O.jpg", stock: 0 },
+    { name: "Ferplast Voyager 450 Kedi ve Köpek Tekerlekli Taşıma Çantası Siyah 46x26x48 cm", price: 5655, originalPrice: 7599, stock: 0 },
+  ],
+};
+
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA];
 
 export async function seedDatabase() {
   console.log("Checking database for missing brand data...");
