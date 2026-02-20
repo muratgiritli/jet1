@@ -176,6 +176,13 @@ export default function ProductDetailPage() {
     } as ProductDetailData;
   }, [staticProduct]);
 
+  const isKediMama = data?.category?.animal === "kedi" && data?.category?.subcategory === "kedi-mamasi";
+
+  const { data: kumData } = useQuery<{ category: BrandCategory; products: Product[] }>({
+    queryKey: ["/api/brand-categories", 24, "products"],
+    enabled: isKediMama,
+  });
+
   const resolvedData = isNumericId ? data : staticData;
 
   if (isLoading && isNumericId) {
@@ -401,6 +408,36 @@ export default function ProductDetailPage() {
                 </div>
               </CardContent>
             </Card>
+          </motion.div>
+        )}
+
+        {isKediMama && kumData?.products && kumData.products.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="mt-8"
+            data-testid="section-also-bought"
+          >
+            <h3 className="text-base font-bold mb-3 border-b pb-2" data-testid="text-also-bought-title">
+              Bu ürünü alanlar bunları da aldı
+            </h3>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {kumData.products.map((p, i) => (
+                <motion.div
+                  key={p.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, delay: 0.03 * i }}
+                >
+                  <CrossSellProductCard
+                    product={p}
+                    quantity={basket[String(p.id)] || 0}
+                    onUpdate={updateQty}
+                  />
+                </motion.div>
+              ))}
+            </div>
           </motion.div>
         )}
 
