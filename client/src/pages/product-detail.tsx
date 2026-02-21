@@ -348,12 +348,10 @@ export default function ProductDetailPage() {
         body: JSON.stringify({ productId: product.id, authorName: reviewName, rating: reviewRating, comment: reviewComment }),
       });
       if (!res.ok) throw new Error("Failed");
-      const newReview = await res.json();
-      setLocalReviews(prev => [newReview, ...prev]);
       setReviewName("");
       setReviewComment("");
       setReviewRating(5);
-      toast({ title: "Tesekkurler!", description: "Yorumunuz eklendi." });
+      toast({ title: "Tesekkurler!", description: "Yorumunuz admin onayından sonra yayınlanacaktır." });
     } catch {
       toast({ title: "Hata", description: "Yorum gonderilemedi.", variant: "destructive" });
     } finally {

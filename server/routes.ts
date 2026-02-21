@@ -171,7 +171,7 @@ export async function registerRoutes(
     );
     const breedStatsList = await storage.getBreedStatsByProduct(id);
     const sortedBreedStats = breedStatsList.sort((a, b) => a.sortOrder - b.sortOrder);
-    const productReviews = await storage.getReviewsByProduct(id);
+    const productReviews = await storage.getApprovedReviewsByProduct(id);
     res.json({ product, category, crossSellSections: sectionsWithProducts.filter(s => s.products.length > 0), breedStats: sortedBreedStats, reviews: productReviews });
   });
 
@@ -301,8 +301,20 @@ export async function registerRoutes(
 
   app.get("/api/reviews/:productId", async (req, res) => {
     const productId = parseInt(req.params.productId);
-    const productReviews = await storage.getReviewsByProduct(productId);
+    const productReviews = await storage.getApprovedReviewsByProduct(productId);
     res.json(productReviews);
+  });
+
+  app.get("/api/admin/reviews", requireAdmin, async (_req, res) => {
+    const allReviews = await storage.getAllReviews();
+    res.json(allReviews);
+  });
+
+  app.patch("/api/admin/reviews/:id/approve", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const review = await storage.approveReview(id);
+    if (!review) return res.status(404).json({ message: "Review not found" });
+    res.json(review);
   });
 
   app.post("/api/reviews", async (req, res) => {

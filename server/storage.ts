@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { eq, desc, ilike, or } from "drizzle-orm";
+import { eq, desc, ilike, or, and } from "drizzle-orm";
 import {
   type User, type InsertUser,
   type BrandCategory, type InsertBrandCategory,
@@ -57,7 +57,10 @@ export interface IStorage {
   deleteBreedStat(id: number): Promise<void>;
 
   getReviewsByProduct(productId: number): Promise<Review[]>;
+  getApprovedReviewsByProduct(productId: number): Promise<Review[]>;
+  getAllReviews(): Promise<Review[]>;
   createReview(data: InsertReview): Promise<Review>;
+  approveReview(id: number): Promise<Review | undefined>;
   deleteReview(id: number): Promise<void>;
 
   createStockAlert(data: InsertStockAlert): Promise<StockAlert>;
@@ -218,8 +221,21 @@ export class DatabaseStorage implements IStorage {
     return db.select().from(reviews).where(eq(reviews.productId, productId)).orderBy(desc(reviews.createdAt));
   }
 
+  async getApprovedReviewsByProduct(productId: number): Promise<Review[]> {
+    return db.select().from(reviews).where(and(eq(reviews.productId, productId), eq(reviews.isApproved, true))).orderBy(desc(reviews.createdAt));
+  }
+
+  async getAllReviews(): Promise<Review[]> {
+    return db.select().from(reviews).orderBy(desc(reviews.createdAt));
+  }
+
   async createReview(data: InsertReview): Promise<Review> {
     const [review] = await db.insert(reviews).values(data).returning();
+    return review;
+  }
+
+  async approveReview(id: number): Promise<Review | undefined> {
+    const [review] = await db.update(reviews).set({ isApproved: true }).where(eq(reviews.id, id)).returning();
     return review;
   }
 
