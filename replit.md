@@ -12,14 +12,14 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - **Cross-sell**: Reusable recommendation sections linked to products via junction table, displayed on product detail pages
 
 ## Key Files
-- `shared/schema.ts` - Drizzle schema: users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts tables
+- `shared/schema.ts` - Drizzle schema: users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts tables
 - `server/storage.ts` - DatabaseStorage class with CRUD operations
 - `server/routes.ts` - API routes (public + admin with session auth)
 - `server/seed.ts` - Seeds database with initial brand product data
 - `client/src/pages/landing.tsx` - Landing/home page with category cards, banners, search bar, footer
 - `client/src/pages/category.tsx` - Animal category pages (Köpek, Kedi, Kuş, Kemirgen)
 - `client/src/pages/brand-products.tsx` - Brand product listing (fetches from API)
-- `client/src/pages/product-detail.tsx` - Individual product detail page with cross-sell sections, reviews, stock alerts
+- `client/src/pages/product-detail.tsx` - Individual product detail page with cross-sell sections, stock alerts
 - `client/src/pages/home.tsx` - Product browsing page with catalog (static products)
 - `client/src/pages/checkout.tsx` - Cart/checkout page with payment options, customer info, and WhatsApp order
 - `client/src/pages/order-tracking.tsx` - Order tracking by phone number
@@ -56,8 +56,6 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `POST /api/admin/breed-stats` - Create breed stat (auth required)
 - `DELETE /api/admin/breed-stats/:id` - Delete breed stat (auth required)
 - `GET /api/products/search?q=` - Search products by name
-- `GET /api/reviews/:productId` - Get reviews for a product
-- `POST /api/reviews` - Create a review (public)
 - `POST /api/stock-alerts` - Register stock notification (public)
 - `GET /api/orders/track?phone=` - Track orders by phone number
 

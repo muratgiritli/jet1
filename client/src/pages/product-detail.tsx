@@ -5,9 +5,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Link, useRoute } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, Star, Send } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import type { Product, BrandCategory, CrossSellSection, BreedStat, Review } from "@shared/schema";
+import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import FloatingCartBar from "@/components/FloatingCartBar";
@@ -19,7 +19,6 @@ type ProductDetailData = {
   category: BrandCategory | null;
   crossSellSections: (CrossSellSection & { products: Product[] })[];
   breedStats?: BreedStat[];
-  reviews?: Review[];
 };
 
 function QuantityControl({
@@ -223,22 +222,7 @@ export default function ProductDetailPage() {
   const [stockAlertSent, setStockAlertSent] = useState(false);
   const [stockAlertLoading, setStockAlertLoading] = useState(false);
 
-  const [reviewName, setReviewName] = useState("");
-  const [reviewComment, setReviewComment] = useState("");
-  const [reviewRating, setReviewRating] = useState(5);
-  const [reviewLoading, setReviewLoading] = useState(false);
-  const [localReviews, setLocalReviews] = useState<Review[]>([]);
   const { toast } = useToast();
-
-  const productReviews = resolvedData?.reviews;
-
-  useEffect(() => {
-    if (productReviews) setLocalReviews(productReviews);
-  }, [productReviews]);
-
-  const avgRating = localReviews.length > 0
-    ? (localReviews.reduce((s, r) => s + r.rating, 0) / localReviews.length).toFixed(1)
-    : null;
 
   useEffect(() => {
     if (!resolvedData) return;
@@ -335,27 +319,6 @@ export default function ProductDetailPage() {
       toast({ title: "Hata", description: "Lutfen tekrar deneyin.", variant: "destructive" });
     } finally {
       setStockAlertLoading(false);
-    }
-  };
-
-  const handleReviewSubmit = async () => {
-    if (!reviewName || !reviewComment || reviewLoading) return;
-    setReviewLoading(true);
-    try {
-      const res = await fetch("/api/reviews", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id, authorName: reviewName, rating: reviewRating, comment: reviewComment }),
-      });
-      if (!res.ok) throw new Error("Failed");
-      setReviewName("");
-      setReviewComment("");
-      setReviewRating(5);
-      toast({ title: "Tesekkurler!", description: "Yorumunuz admin onayından sonra yayınlanacaktır." });
-    } catch {
-      toast({ title: "Hata", description: "Yorum gonderilemedi.", variant: "destructive" });
-    } finally {
-      setReviewLoading(false);
     }
   };
 
@@ -635,91 +598,6 @@ export default function ProductDetailPage() {
                 </div>
               ))}
             </div>
-          </motion.div>
-        )}
-
-        {isNumericId && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.25 }}
-            className="mt-8"
-            data-testid="section-reviews"
-          >
-            <Card>
-              <CardContent className="p-5">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-base font-bold" data-testid="text-reviews-title">
-                    Musteri Yorumlari
-                  </h3>
-                  {avgRating && (
-                    <div className="flex items-center gap-1" data-testid="text-avg-rating">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-bold text-sm">{avgRating}</span>
-                      <span className="text-xs text-muted-foreground">({localReviews.length})</span>
-                    </div>
-                  )}
-                </div>
-
-                {localReviews.length > 0 && (
-                  <div className="space-y-3 mb-5">
-                    {localReviews.map((review) => (
-                      <div key={review.id} className="border-b pb-3 last:border-b-0" data-testid={`review-item-${review.id}`}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-semibold" data-testid={`review-author-${review.id}`}>{review.authorName}</span>
-                          <div className="flex gap-0.5">
-                            {[1, 2, 3, 4, 5].map(s => (
-                              <Star key={s} className={`w-3 h-3 ${s <= review.rating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`} />
-                            ))}
-                          </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground" data-testid={`review-comment-${review.id}`}>{review.comment}</p>
-                        <p className="text-[10px] text-muted-foreground/60 mt-1">
-                          {new Date(review.createdAt).toLocaleDateString("tr-TR")}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="border-t pt-4">
-                  <h4 className="text-sm font-bold mb-3">Yorum Yaz</h4>
-                  <div className="space-y-2">
-                    <Input
-                      placeholder="Adiniz"
-                      value={reviewName}
-                      onChange={e => setReviewName(e.target.value)}
-                      data-testid="input-review-name"
-                    />
-                    <div className="flex gap-1 items-center">
-                      <span className="text-sm text-muted-foreground mr-1">Puan:</span>
-                      {[1, 2, 3, 4, 5].map(s => (
-                        <button key={s} onClick={() => setReviewRating(s)} data-testid={`btn-star-${s}`}>
-                          <Star className={`w-5 h-5 cursor-pointer ${s <= reviewRating ? "fill-yellow-400 text-yellow-400" : "text-muted-foreground/30"}`} />
-                        </button>
-                      ))}
-                    </div>
-                    <textarea
-                      placeholder="Yorumunuz..."
-                      value={reviewComment}
-                      onChange={e => setReviewComment(e.target.value)}
-                      className="w-full border rounded-md p-2 text-sm min-h-[60px] resize-none"
-                      data-testid="input-review-comment"
-                    />
-                    <Button
-                      onClick={handleReviewSubmit}
-                      disabled={reviewLoading || !reviewName || !reviewComment}
-                      className="w-full"
-                      style={{ backgroundColor: "#2ecc40" }}
-                      data-testid="btn-submit-review"
-                    >
-                      {reviewLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                      Gonder
-                    </Button>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </motion.div>
         )}
 

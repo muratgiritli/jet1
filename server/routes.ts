@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
 import { seedDatabase } from "./seed";
-import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertReviewSchema, insertStockAlertSchema } from "@shared/schema";
+import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import session from "express-session";
@@ -171,8 +171,7 @@ export async function registerRoutes(
     );
     const breedStatsList = await storage.getBreedStatsByProduct(id);
     const sortedBreedStats = breedStatsList.sort((a, b) => a.sortOrder - b.sortOrder);
-    const productReviews = await storage.getApprovedReviewsByProduct(id);
-    res.json({ product, category, crossSellSections: sectionsWithProducts.filter(s => s.products.length > 0), breedStats: sortedBreedStats, reviews: productReviews });
+    res.json({ product, category, crossSellSections: sectionsWithProducts.filter(s => s.products.length > 0), breedStats: sortedBreedStats });
   });
 
   app.get("/api/cross-sell-sections", async (_req, res) => {
@@ -296,43 +295,6 @@ export async function registerRoutes(
   app.delete("/api/admin/breed-stats/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     await storage.deleteBreedStat(id);
-    res.json({ message: "Deleted" });
-  });
-
-  app.get("/api/reviews/:productId", async (req, res) => {
-    const productId = parseInt(req.params.productId);
-    const productReviews = await storage.getApprovedReviewsByProduct(productId);
-    res.json(productReviews);
-  });
-
-  app.get("/api/admin/reviews", requireAdmin, async (_req, res) => {
-    const allReviews = await storage.getAllReviews();
-    res.json(allReviews);
-  });
-
-  app.patch("/api/admin/reviews/:id/approve", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
-    const review = await storage.approveReview(id);
-    if (!review) return res.status(404).json({ message: "Review not found" });
-    res.json(review);
-  });
-
-  app.post("/api/reviews", async (req, res) => {
-    const schema = z.object({
-      productId: z.number(),
-      authorName: z.string().min(1),
-      rating: z.number().min(1).max(5),
-      comment: z.string().min(1),
-    });
-    const parsed = schema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
-    const review = await storage.createReview(parsed.data);
-    res.status(201).json(review);
-  });
-
-  app.delete("/api/admin/reviews/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
-    await storage.deleteReview(id);
     res.json({ message: "Deleted" });
   });
 

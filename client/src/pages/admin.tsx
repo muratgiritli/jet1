@@ -38,10 +38,9 @@ import {
   Rabbit,
   AlertTriangle,
   Star,
-  MessageSquare,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order, BreedStat, Review } from "@shared/schema";
+import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order, BreedStat } from "@shared/schema";
 
 const ANIMALS = [
   { id: "kedi", name: "Kedi", icon: Cat },
@@ -609,31 +608,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
   });
 
-  const { data: allReviews = [], isLoading: reviewsLoading } = useQuery<Review[]>({
-    queryKey: ["/api/admin/reviews"],
-  });
-
-  const approveReviewMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("PATCH", `/api/admin/reviews/${id}/approve`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
-    },
-  });
-
-  const deleteReviewMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/admin/reviews/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
-    },
-  });
-
-  const pendingReviews = useMemo(() => allReviews.filter((r) => !r.isApproved), [allReviews]);
-  const approvedReviews = useMemo(() => allReviews.filter((r) => r.isApproved), [allReviews]);
-
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/admin/logout");
@@ -900,168 +874,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               );
             })}
           </div>
-        </section>
-
-        <section className="mb-6" data-testid="section-admin-reviews">
-          <h2 className="text-lg font-bold mb-4" data-testid="text-section-reviews">
-            <MessageSquare className="w-5 h-5 inline-block mr-2" />
-            Yorumlar
-            <span className="text-sm font-normal text-muted-foreground ml-2">
-              ({allReviews.length})
-            </span>
-          </h2>
-
-          {reviewsLoading ? (
-            <div className="flex justify-center py-8">
-              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : allReviews.length === 0 ? (
-            <Card>
-              <CardContent className="p-6 text-center text-muted-foreground">
-                Henüz yorum yok
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-4">
-              {pendingReviews.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">
-                    Onay Bekleyen ({pendingReviews.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {pendingReviews.map((review) => (
-                      <Card
-                        key={review.id}
-                        className="border"
-                        style={{ backgroundColor: "rgba(251, 191, 36, 0.08)", borderColor: "rgba(251, 191, 36, 0.3)" }}
-                        data-testid={`review-admin-item-${review.id}`}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between gap-3 flex-wrap">
-                            <div className="space-y-1 min-w-0 flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-semibold text-sm">{review.authorName}</span>
-                                <Badge
-                                  className="text-[10px] no-default-hover-elevate"
-                                  style={{ backgroundColor: "#f59e0b", color: "#fff" }}
-                                >
-                                  Beklemede
-                                </Badge>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                {Array.from({ length: 5 }).map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className="w-3.5 h-3.5"
-                                    style={{
-                                      fill: i < review.rating ? "#f59e0b" : "transparent",
-                                      color: i < review.rating ? "#f59e0b" : "hsl(var(--muted-foreground))",
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                              <p className="text-sm">{review.comment}</p>
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                                <span>Ürün ID: {review.productId}</span>
-                                <span>{new Date(review.createdAt).toLocaleDateString("tr-TR")}</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <Button
-                                size="sm"
-                                onClick={() => approveReviewMutation.mutate(review.id)}
-                                disabled={approveReviewMutation.isPending}
-                                data-testid={`btn-approve-review-${review.id}`}
-                              >
-                                Onayla
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => {
-                                  if (confirm("Bu yorumu silmek istediğinize emin misiniz?")) {
-                                    deleteReviewMutation.mutate(review.id);
-                                  }
-                                }}
-                                disabled={deleteReviewMutation.isPending}
-                                data-testid={`btn-delete-review-${review.id}`}
-                              >
-                                Sil
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {approvedReviews.length > 0 && (
-                <div>
-                  <h3 className="text-sm font-semibold text-muted-foreground mb-2">
-                    Onaylanan ({approvedReviews.length})
-                  </h3>
-                  <div className="space-y-2">
-                    {approvedReviews.map((review) => (
-                      <Card
-                        key={review.id}
-                        data-testid={`review-admin-item-${review.id}`}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between gap-3 flex-wrap">
-                            <div className="space-y-1 min-w-0 flex-1">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <span className="font-semibold text-sm">{review.authorName}</span>
-                                <Badge
-                                  className="text-[10px] no-default-hover-elevate"
-                                  style={{ backgroundColor: "#4CAF50", color: "#fff" }}
-                                >
-                                  Onaylandi
-                                </Badge>
-                              </div>
-                              <div className="flex items-center gap-1">
-                                {Array.from({ length: 5 }).map((_, i) => (
-                                  <Star
-                                    key={i}
-                                    className="w-3.5 h-3.5"
-                                    style={{
-                                      fill: i < review.rating ? "#f59e0b" : "transparent",
-                                      color: i < review.rating ? "#f59e0b" : "hsl(var(--muted-foreground))",
-                                    }}
-                                  />
-                                ))}
-                              </div>
-                              <p className="text-sm">{review.comment}</p>
-                              <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
-                                <span>Ürün ID: {review.productId}</span>
-                                <span>{new Date(review.createdAt).toLocaleDateString("tr-TR")}</span>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 shrink-0">
-                              <Button
-                                size="sm"
-                                variant="destructive"
-                                onClick={() => {
-                                  if (confirm("Bu yorumu silmek istediğinize emin misiniz?")) {
-                                    deleteReviewMutation.mutate(review.id);
-                                  }
-                                }}
-                                disabled={deleteReviewMutation.isPending}
-                                data-testid={`btn-delete-review-${review.id}`}
-                              >
-                                Sil
-                              </Button>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
         </section>
 
         {sktWarningProducts.length > 0 && (
