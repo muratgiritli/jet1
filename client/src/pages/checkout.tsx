@@ -28,8 +28,6 @@ import {
   Search,
   MapPin,
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import {
@@ -47,6 +45,7 @@ const paymentIcons: Record<string, typeof CreditCard> = {
   eft: Wallet,
   qr: QrCode,
   pos: CreditCard,
+  taksit: CreditCard,
 };
 
 export default function Checkout() {
@@ -57,7 +56,6 @@ export default function Checkout() {
   const [isReturningCustomer, setIsReturningCustomer] = useState(false);
   const [lookupDone, setLookupDone] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
-  const [showInstallments, setShowInstallments] = useState(false);
   const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
   const { toast } = useToast();
 
@@ -155,7 +153,7 @@ export default function Checkout() {
       msg += `\n*Teslimat:* ${shipping === 0 ? "Ücretsiz" : shipping + " TL"}`;
       msg += `\n*Genel Toplam:* ${Math.round(grandTotal)} TL`;
       msg += `\n*Ödeme:* ${pay.name}`;
-      if (pay.id === "pos" && selectedInstallment) {
+      if (pay.id === "taksit" && selectedInstallment) {
         const instRate = installmentRates.find((r) => r.months === selectedInstallment);
         if (instRate) {
           const instTotal = grandTotal * (1 + instRate.rate / 100);
@@ -350,7 +348,7 @@ export default function Checkout() {
               </h2>
               <Card>
                 <CardContent className="p-4">
-                  <RadioGroup value={paymentId} onValueChange={(val) => { setPaymentId(val); if (val !== "pos") { setSelectedInstallment(null); setShowInstallments(false); } }} data-testid="radio-payment">
+                  <RadioGroup value={paymentId} onValueChange={(val) => { setPaymentId(val); if (val !== "taksit") { setSelectedInstallment(null); } }} data-testid="radio-payment">
                     {PAYMENT_OPTIONS.map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
                       return (
@@ -374,34 +372,16 @@ export default function Checkout() {
                     })}
                   </RadioGroup>
 
-                  {paymentId === "pos" && installmentRates.length > 0 && (
-                    <div className="mt-4 pt-4 border-t" data-testid="section-installments">
-                      <Button
-                        variant="outline"
-                        className="w-full justify-between"
-                        onClick={() => setShowInstallments(!showInstallments)}
-                        data-testid="btn-toggle-installments"
-                      >
-                        <span className="flex items-center gap-2">
-                          <CreditCard className="w-4 h-4" />
-                          Kredi Kartına Taksit Seçenekleri
-                        </span>
-                        {showInstallments ? (
-                          <ChevronUp className="w-4 h-4" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4" />
-                        )}
-                      </Button>
-
-                      <AnimatePresence>
-                        {showInstallments && (
-                          <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="overflow-hidden"
-                          >
-                            <div className="mt-3 rounded-lg border" data-testid="table-installments">
+                  {paymentId === "taksit" && installmentRates.length > 0 && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mt-4 pt-4 border-t overflow-hidden"
+                      data-testid="section-installments"
+                    >
+                      <p className="text-sm font-medium text-muted-foreground mb-3">Taksit seçeneğinizi belirleyin:</p>
+                            <div className="rounded-lg border" data-testid="table-installments">
                               <div className="grid grid-cols-3 gap-0 text-xs font-bold text-muted-foreground uppercase tracking-wider bg-muted/50 p-3 rounded-t-lg">
                                 <span>Taksit</span>
                                 <span className="text-center">Aylık Ödeme</span>
@@ -472,10 +452,7 @@ export default function Checkout() {
                                 </p>
                               </div>
                             )}
-                          </motion.div>
-                        )}
-                      </AnimatePresence>
-                    </div>
+                    </motion.div>
                   )}
                 </CardContent>
               </Card>
