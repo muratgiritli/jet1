@@ -390,6 +390,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
   const [selectedAnimalFilter, setSelectedAnimalFilter] = useState<string>("all");
   const [selectedSubcategoryFilter, setSelectedSubcategoryFilter] = useState<string>("all");
+  const [selectedBrandFilter, setSelectedBrandFilter] = useState<string>("all");
   const [expandedAnimals, setExpandedAnimals] = useState<Record<string, boolean>>({});
 
   const { data: allOrders = [], isLoading: ordersLoading } = useQuery<Order[]>({
@@ -417,6 +418,23 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
   });
 
+  const filteredBrands = useMemo(() => {
+    let filtered = categories;
+    if (selectedAnimalFilter !== "all") {
+      filtered = filtered.filter((c) => c.animal === selectedAnimalFilter);
+    }
+    if (selectedSubcategoryFilter !== "all") {
+      filtered = filtered.filter((c) => c.subcategory === selectedSubcategoryFilter);
+    }
+    const uniqueBrands = new Map<string, string>();
+    filtered.forEach((c) => {
+      if (!uniqueBrands.has(c.brandSlug)) {
+        uniqueBrands.set(c.brandSlug, c.brandName);
+      }
+    });
+    return Array.from(uniqueBrands.entries()).map(([slug, name]) => ({ slug, name })).sort((a, b) => a.name.localeCompare(b.name, "tr"));
+  }, [categories, selectedAnimalFilter, selectedSubcategoryFilter]);
+
   const filteredProducts = useMemo(() => {
     let products = allProducts;
     if (selectedAnimalFilter !== "all") {
@@ -431,8 +449,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         .map((c) => c.id);
       products = products.filter((p) => catIds.includes(p.brandCategoryId));
     }
+    if (selectedBrandFilter !== "all") {
+      const catIds = categories
+        .filter((c) => c.brandSlug === selectedBrandFilter)
+        .map((c) => c.id);
+      products = products.filter((p) => catIds.includes(p.brandCategoryId));
+    }
     return products;
-  }, [allProducts, selectedAnimalFilter, selectedSubcategoryFilter, categories]);
+  }, [allProducts, selectedAnimalFilter, selectedSubcategoryFilter, selectedBrandFilter, categories]);
 
   const sktWarningProducts = useMemo(() => {
     const now = new Date();
@@ -994,7 +1018,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   ({filteredProducts.length})
                 </span>
               </h2>
-              <Select value={selectedAnimalFilter} onValueChange={(val) => { setSelectedAnimalFilter(val); setSelectedSubcategoryFilter("all"); }}>
+              <Select value={selectedAnimalFilter} onValueChange={(val) => { setSelectedAnimalFilter(val); setSelectedSubcategoryFilter("all"); setSelectedBrandFilter("all"); }}>
                 <SelectTrigger className="w-[140px]" data-testid="select-filter-animal">
                   <SelectValue />
                 </SelectTrigger>
@@ -1006,7 +1030,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </SelectContent>
               </Select>
               {selectedAnimalFilter !== "all" && (
-                <Select value={selectedSubcategoryFilter} onValueChange={setSelectedSubcategoryFilter}>
+                <Select value={selectedSubcategoryFilter} onValueChange={(val) => { setSelectedSubcategoryFilter(val); setSelectedBrandFilter("all"); }}>
                   <SelectTrigger className="w-[180px]" data-testid="select-filter-subcategory">
                     <SelectValue />
                   </SelectTrigger>
@@ -1014,6 +1038,19 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <SelectItem value="all">Tüm Alt Kategoriler</SelectItem>
                     {(SUBCATEGORIES[selectedAnimalFilter] || []).map((sc) => (
                       <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+              {filteredBrands.length > 0 && (
+                <Select value={selectedBrandFilter} onValueChange={setSelectedBrandFilter}>
+                  <SelectTrigger className="w-[180px]" data-testid="select-filter-brand">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Tüm Markalar</SelectItem>
+                    {filteredBrands.map((b) => (
+                      <SelectItem key={b.slug} value={b.slug}>{b.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
