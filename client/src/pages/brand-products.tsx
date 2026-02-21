@@ -10,6 +10,7 @@ import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
+import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
 import { CATEGORIES, productUrl } from "@/lib/data";
 
 interface SubcategoryInfo {
@@ -544,6 +545,12 @@ export default function BrandProductsPage() {
             {data.products.length} ürün
           </p>
         </div>
+
+        {shouldShowFastDelivery(animal, subcategory) && (
+          <div className="mb-4">
+            <FastDeliveryBanner />
+          </div>
+        )}
 
         <div className="grid grid-cols-2 gap-3" data-testid="grid-products">
           {data.products.map((product, i) => (

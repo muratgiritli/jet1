@@ -13,6 +13,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
+import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
 import { CATEGORIES, productUrl } from "@/lib/data";
 
 type ProductDetailData = {
@@ -397,6 +398,10 @@ export default function ProductDetailPage() {
                 <p className="text-sm text-muted-foreground" data-testid="text-brand-name">
                   {category.brandName}
                 </p>
+              )}
+
+              {category && shouldShowFastDelivery(category.animal, category.subcategory) && (
+                <FastDeliveryBanner />
               )}
 
               {product.skt && (
