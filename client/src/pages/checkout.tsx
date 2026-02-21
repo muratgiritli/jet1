@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Link } from "wouter";
@@ -20,6 +21,9 @@ import {
   Minus,
   Trash2,
   Loader2,
+  User,
+  Phone,
+  Search,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import {
@@ -40,6 +44,8 @@ const paymentIcons: Record<string, typeof CreditCard> = {
 
 export default function Checkout() {
   const [orderLoading, setOrderLoading] = useState(false);
+  const [customerName, setCustomerName] = useState("");
+  const [customerPhone, setCustomerPhone] = useState("");
   const { toast } = useToast();
   const {
     paymentId,
@@ -77,9 +83,14 @@ export default function Checkout() {
         discount,
         grandTotal,
         paymentMethod: pay.name,
+        customerName: customerName.trim() || undefined,
+        customerPhone: customerPhone.trim() || undefined,
       });
 
       let msg = `*JetGo Sipariş*\n\n`;
+      if (customerName.trim()) msg += `*Ad Soyad:* ${customerName.trim()}\n`;
+      if (customerPhone.trim()) msg += `*Telefon:* ${customerPhone.trim()}\n`;
+      if (customerName.trim() || customerPhone.trim()) msg += `\n`;
       selectedProducts.forEach(({ product, qty }) => {
         msg += `${qty}x ${product.name} — ${Math.round(qty * product.price)} TL\n`;
       });
@@ -195,6 +206,42 @@ export default function Checkout() {
                         </motion.div>
                       ))}
                     </AnimatePresence>
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
+
+            <section className="mt-6">
+              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-customer-info">
+                Müşteri Bilgileri
+              </h2>
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      Ad Soyad
+                    </label>
+                    <Input
+                      type="text"
+                      placeholder="Ad Soyad"
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      data-testid="input-customer-name"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      Telefon Numarası
+                    </label>
+                    <Input
+                      type="tel"
+                      placeholder="05XX XXX XX XX"
+                      value={customerPhone}
+                      onChange={(e) => setCustomerPhone(e.target.value)}
+                      data-testid="input-customer-phone"
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -375,6 +422,15 @@ export default function Checkout() {
                 </CardContent>
               </Card>
             </section>
+
+            <div className="mt-6 text-center">
+              <Link href="/siparis-takip">
+                <Button variant="ghost" size="sm" data-testid="link-order-tracking">
+                  <Search className="w-4 h-4" />
+                  Sipariş Takip
+                </Button>
+              </Link>
+            </div>
           </>
         )}
       </main>

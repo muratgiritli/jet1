@@ -12,17 +12,19 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - **Cross-sell**: Reusable recommendation sections linked to products via junction table, displayed on product detail pages
 
 ## Key Files
-- `shared/schema.ts` - Drizzle schema: users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats tables
+- `shared/schema.ts` - Drizzle schema: users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts tables
 - `server/storage.ts` - DatabaseStorage class with CRUD operations
 - `server/routes.ts` - API routes (public + admin with session auth)
 - `server/seed.ts` - Seeds database with initial brand product data
-- `client/src/pages/landing.tsx` - Landing/home page with category cards, banners, footer
+- `client/src/pages/landing.tsx` - Landing/home page with category cards, banners, search bar, footer
 - `client/src/pages/category.tsx` - Animal category pages (Köpek, Kedi, Kuş, Kemirgen)
 - `client/src/pages/brand-products.tsx` - Brand product listing (fetches from API)
-- `client/src/pages/product-detail.tsx` - Individual product detail page with cross-sell sections
+- `client/src/pages/product-detail.tsx` - Individual product detail page with cross-sell sections, reviews, stock alerts
 - `client/src/pages/home.tsx` - Product browsing page with catalog (static products)
-- `client/src/pages/checkout.tsx` - Cart/checkout page with payment options and WhatsApp order
-- `client/src/pages/admin.tsx` - Admin panel with login, product/category CRUD
+- `client/src/pages/checkout.tsx` - Cart/checkout page with payment options, customer info, and WhatsApp order
+- `client/src/pages/order-tracking.tsx` - Order tracking by phone number
+- `client/src/pages/admin.tsx` - Admin panel with login, product/category CRUD, SKT warnings
+- `client/src/components/SearchBar.tsx` - Debounced product search with dropdown results
 - `client/src/contexts/CartContext.tsx` - Global cart state provider (fetches from API)
 - `client/src/components/FloatingCartBar.tsx` - Floating cart indicator shown on all pages
 - `client/src/lib/data.ts` - Static product data, categories, payment options, config
@@ -53,6 +55,11 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `GET /api/breed-stats/:productId` - Get breed stats for a product
 - `POST /api/admin/breed-stats` - Create breed stat (auth required)
 - `DELETE /api/admin/breed-stats/:id` - Delete breed stat (auth required)
+- `GET /api/products/search?q=` - Search products by name
+- `GET /api/reviews/:productId` - Get reviews for a product
+- `POST /api/reviews` - Create a review (public)
+- `POST /api/stock-alerts` - Register stock notification (public)
+- `GET /api/orders/track?phone=` - Track orders by phone number
 
 ## Frontend Routes
 - `/` - Landing page (vitrin)
@@ -62,6 +69,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `/urun/:id` - Product detail page with cross-sell recommendations
 - `/siparis` - Product browsing page with static catalog
 - `/odeme` - Cart/checkout page with payment, summary, WhatsApp order
+- `/siparis-takip` - Order tracking by phone number
 - `/admin` - Admin panel (login required)
 
 ## Admin Panel
@@ -70,6 +78,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - Manage products (add/edit/delete with stock management) with category filter
 - Manage cross-sell sections (create/delete sections, add/remove products)
 - View incoming orders with status management (yeni/hazirlaniyor/tamamlandi/iptal)
+- SKT expiration warnings (products expiring within 3 months shown at top)
 - Session-based authentication with PostgreSQL session store
 
 ## Config

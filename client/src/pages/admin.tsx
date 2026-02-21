@@ -36,6 +36,7 @@ import {
   Cat,
   Bird,
   Rabbit,
+  AlertTriangle,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order, BreedStat } from "@shared/schema";
@@ -430,6 +431,30 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     }
     return products;
   }, [allProducts, selectedAnimalFilter, selectedSubcategoryFilter, categories]);
+
+  const sktWarningProducts = useMemo(() => {
+    const now = new Date();
+    const threeMonthsFromNow = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
+    return allProducts.filter((p) => {
+      if (!p.skt || p.stock === 0) return false;
+      const parts = p.skt.split(".");
+      if (parts.length < 2) return false;
+      const month = parseInt(parts[0]);
+      const year = parseInt(parts[1]);
+      if (isNaN(month) || isNaN(year)) return false;
+      const fullYear = year < 100 ? 2000 + year : year;
+      const sktDate = new Date(fullYear, month - 1, 1);
+      return sktDate <= threeMonthsFromNow;
+    }).sort((a, b) => {
+      const parseDate = (skt: string) => {
+        const parts = skt.split(".");
+        const m = parseInt(parts[0]);
+        const y = parseInt(parts[1]);
+        return new Date(y < 100 ? 2000 + y : y, m - 1, 1);
+      };
+      return parseDate(a.skt!).getTime() - parseDate(b.skt!).getTime();
+    });
+  }, [allProducts]);
 
   const createProductMutation = useMutation({
     mutationFn: async (data: any) => {
@@ -849,6 +874,62 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             })}
           </div>
         </section>
+
+        {sktWarningProducts.length > 0 && (
+          <section className="mb-6" data-testid="section-skt-warnings">
+            <Card className="border-2" style={{ borderColor: "#ff9800" }}>
+              <CardContent className="p-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="w-5 h-5" style={{ color: "#e65100" }} />
+                  <h3 className="text-base font-bold" style={{ color: "#e65100" }} data-testid="text-skt-warning-title">
+                    SKT Uyarisi ({sktWarningProducts.length} urun)
+                  </h3>
+                </div>
+                <div className="space-y-2">
+                  {sktWarningProducts.map((p) => {
+                    const parts = p.skt!.split(".");
+                    const month = parseInt(parts[0]);
+                    const year = parseInt(parts[1]);
+                    const fullYear = year < 100 ? 2000 + year : year;
+                    const sktDate = new Date(fullYear, month - 1, 1);
+                    const now = new Date();
+                    const isExpired = sktDate <= now;
+                    return (
+                      <div
+                        key={p.id}
+                        className="flex items-center justify-between gap-2 p-2 rounded-md"
+                        style={{ backgroundColor: isExpired ? "#ffebee" : "#fff3e0" }}
+                        data-testid={`skt-warning-item-${p.id}`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          {p.img && <img src={p.img} alt="" className="w-8 h-8 rounded object-contain" />}
+                          <span className="text-sm font-medium truncate">{p.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <Badge
+                            className="text-[10px] no-default-hover-elevate"
+                            style={{
+                              backgroundColor: isExpired ? "#d32f2f" : "#ff9800",
+                              color: "#fff",
+                            }}
+                          >
+                            SKT: {p.skt} {isExpired ? "(GECMIS)" : "(YAKIN)"}
+                          </Badge>
+                          <Badge
+                            className="text-[10px] no-default-hover-elevate"
+                            style={{ backgroundColor: "#1976d2", color: "#fff" }}
+                          >
+                            Stok: {p.stock}
+                          </Badge>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+        )}
 
         <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">

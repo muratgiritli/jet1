@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Truck, Phone, CreditCard, MapPin } from "lucide-react";
 import FloatingCartBar from "@/components/FloatingCartBar";
+import SearchBar from "@/components/SearchBar";
 
 import heroBanner from "@assets/banner_1771529180706.png";
 import catDog from "@/assets/images/cat-dog.png";
@@ -60,6 +61,10 @@ export default function Landing() {
       </nav>
 
       <main className="flex-1 max-w-lg mx-auto w-full">
+        <div className="px-3 pt-3 max-w-lg mx-auto w-full">
+          <SearchBar />
+        </div>
+
         <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}

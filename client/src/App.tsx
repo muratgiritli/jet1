@@ -13,6 +13,7 @@ import BrandProductsPage from "@/pages/brand-products";
 import AdminPage from "@/pages/admin";
 import ProductDetailPage from "@/pages/product-detail";
 import AcikMamaPage from "@/pages/acik-mama";
+import OrderTrackingPage from "@/pages/order-tracking";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
       <Route path="/siparis" component={Home} />
       <Route path="/odeme" component={Checkout} />
       <Route path="/admin" component={AdminPage} />
+      <Route path="/siparis-takip" component={OrderTrackingPage} />
       <Route component={NotFound} />
     </Switch>
   );

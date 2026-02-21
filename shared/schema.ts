@@ -89,6 +89,8 @@ export const orders = pgTable("orders", {
   paymentMethod: text("payment_method").notNull(),
   status: text("status").notNull().default("yeni"),
   customerNote: text("customer_note"),
+  customerPhone: text("customer_phone"),
+  customerName: text("customer_name"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -108,3 +110,29 @@ export const breedStats = pgTable("breed_stats", {
 export const insertBreedStatSchema = createInsertSchema(breedStats).omit({ id: true });
 export type InsertBreedStat = z.infer<typeof insertBreedStatSchema>;
 export type BreedStat = typeof breedStats.$inferSelect;
+
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  authorName: text("author_name").notNull(),
+  rating: integer("rating").notNull(),
+  comment: text("comment").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, createdAt: true });
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type Review = typeof reviews.$inferSelect;
+
+export const stockAlerts = pgTable("stock_alerts", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  phone: text("phone").notNull(),
+  productName: text("product_name").notNull(),
+  isNotified: boolean("is_notified").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertStockAlertSchema = createInsertSchema(stockAlerts).omit({ id: true, createdAt: true, isNotified: true });
+export type InsertStockAlert = z.infer<typeof insertStockAlertSchema>;
+export type StockAlert = typeof stockAlerts.$inferSelect;

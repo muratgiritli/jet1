@@ -2,7 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { storage } from "./storage";
 import { seedDatabase } from "./seed";
-import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema } from "@shared/schema";
+import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertReviewSchema, insertStockAlertSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import session from "express-session";
@@ -73,6 +73,13 @@ export async function registerRoutes(
     const allProducts = await storage.getAllProducts();
     const activeOnly = req.query.all !== "true";
     res.json(activeOnly ? allProducts.filter(p => p.isActive) : allProducts);
+  });
+
+  app.get("/api/products/search", async (req, res) => {
+    const query = (req.query.q as string || "").trim();
+    if (!query || query.length < 2) return res.json([]);
+    const results = await storage.searchProducts(query);
+    res.json(results.filter(p => p.isActive).slice(0, 20));
   });
 
   app.post("/api/admin/login", async (req, res) => {
@@ -164,7 +171,8 @@ export async function registerRoutes(
     );
     const breedStatsList = await storage.getBreedStatsByProduct(id);
     const sortedBreedStats = breedStatsList.sort((a, b) => a.sortOrder - b.sortOrder);
-    res.json({ product, category, crossSellSections: sectionsWithProducts.filter(s => s.products.length > 0), breedStats: sortedBreedStats });
+    const productReviews = await storage.getReviewsByProduct(id);
+    res.json({ product, category, crossSellSections: sectionsWithProducts.filter(s => s.products.length > 0), breedStats: sortedBreedStats, reviews: productReviews });
   });
 
   app.get("/api/cross-sell-sections", async (_req, res) => {
@@ -211,7 +219,6 @@ export async function registerRoutes(
     res.json({ message: "Deleted" });
   });
 
-  // Order routes
   const createOrderSchema = z.object({
     items: z.array(orderItemSchema).min(1),
     subtotal: z.number(),
@@ -220,6 +227,8 @@ export async function registerRoutes(
     grandTotal: z.number(),
     paymentMethod: z.string(),
     customerNote: z.string().optional(),
+    customerPhone: z.string().optional(),
+    customerName: z.string().optional(),
   });
 
   app.post("/api/orders", async (req, res) => {
@@ -243,6 +252,21 @@ export async function registerRoutes(
     res.json(order);
   });
 
+  app.get("/api/orders/track", async (req, res) => {
+    const phone = (req.query.phone as string || "").trim();
+    if (!phone || phone.length < 7) return res.json([]);
+    const matched = await storage.getOrdersByPhone(phone);
+    const safeOrders = matched.map(o => ({
+      id: o.id,
+      items: o.items,
+      grandTotal: o.grandTotal,
+      status: o.status,
+      paymentMethod: o.paymentMethod,
+      createdAt: o.createdAt,
+    }));
+    res.json(safeOrders);
+  });
+
   app.get("/api/breed-stats/:productId", async (req, res) => {
     const productId = parseInt(req.params.productId);
     const stats = await storage.getBreedStatsByProduct(productId);
@@ -260,6 +284,48 @@ export async function registerRoutes(
     const id = parseInt(req.params.id);
     await storage.deleteBreedStat(id);
     res.json({ message: "Deleted" });
+  });
+
+  app.get("/api/reviews/:productId", async (req, res) => {
+    const productId = parseInt(req.params.productId);
+    const productReviews = await storage.getReviewsByProduct(productId);
+    res.json(productReviews);
+  });
+
+  app.post("/api/reviews", async (req, res) => {
+    const schema = z.object({
+      productId: z.number(),
+      authorName: z.string().min(1),
+      rating: z.number().min(1).max(5),
+      comment: z.string().min(1),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
+    const review = await storage.createReview(parsed.data);
+    res.status(201).json(review);
+  });
+
+  app.delete("/api/admin/reviews/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteReview(id);
+    res.json({ message: "Deleted" });
+  });
+
+  app.post("/api/stock-alerts", async (req, res) => {
+    const schema = z.object({
+      productId: z.number(),
+      phone: z.string().min(7),
+      productName: z.string(),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
+    const alert = await storage.createStockAlert(parsed.data);
+    res.status(201).json(alert);
+  });
+
+  app.get("/api/admin/stock-alerts", requireAdmin, async (_req, res) => {
+    const alerts = await storage.getAllStockAlerts();
+    res.json(alerts);
   });
 
   return httpServer;

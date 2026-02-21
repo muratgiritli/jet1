@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, ilike, or } from "drizzle-orm";
 import {
   type User, type InsertUser,
   type BrandCategory, type InsertBrandCategory,
@@ -9,7 +9,9 @@ import {
   type CrossSellItem, type InsertCrossSellItem,
   type Order, type InsertOrder,
   type BreedStat, type InsertBreedStat,
-  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats,
+  type Review, type InsertReview,
+  type StockAlert, type InsertStockAlert,
+  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts,
 } from "@shared/schema";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -32,6 +34,7 @@ export interface IStorage {
   createProduct(data: InsertProduct): Promise<Product>;
   updateProduct(id: number, data: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<void>;
+  searchProducts(query: string): Promise<Product[]>;
 
   getAllCrossSellSections(): Promise<CrossSellSection[]>;
   getCrossSellSection(id: number): Promise<CrossSellSection | undefined>;
@@ -47,10 +50,19 @@ export interface IStorage {
   getOrder(id: number): Promise<Order | undefined>;
   createOrder(data: InsertOrder): Promise<Order>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
+  getOrdersByPhone(phone: string): Promise<Order[]>;
 
   getBreedStatsByProduct(productId: number): Promise<BreedStat[]>;
   createBreedStat(data: InsertBreedStat): Promise<BreedStat>;
   deleteBreedStat(id: number): Promise<void>;
+
+  getReviewsByProduct(productId: number): Promise<Review[]>;
+  createReview(data: InsertReview): Promise<Review>;
+  deleteReview(id: number): Promise<void>;
+
+  createStockAlert(data: InsertStockAlert): Promise<StockAlert>;
+  getStockAlertsByProduct(productId: number): Promise<StockAlert[]>;
+  getAllStockAlerts(): Promise<StockAlert[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -121,6 +133,12 @@ export class DatabaseStorage implements IStorage {
     await db.delete(products).where(eq(products.id, id));
   }
 
+  async searchProducts(query: string): Promise<Product[]> {
+    return db.select().from(products).where(
+      ilike(products.name, `%${query}%`)
+    );
+  }
+
   async getAllCrossSellSections(): Promise<CrossSellSection[]> {
     return db.select().from(crossSellSections);
   }
@@ -177,6 +195,12 @@ export class DatabaseStorage implements IStorage {
     return order;
   }
 
+  async getOrdersByPhone(phone: string): Promise<Order[]> {
+    const normalized = phone.replace(/\D/g, "");
+    const allOrders = await db.select().from(orders).orderBy(desc(orders.createdAt));
+    return allOrders.filter(o => o.customerPhone && o.customerPhone.replace(/\D/g, "").includes(normalized));
+  }
+
   async getBreedStatsByProduct(productId: number): Promise<BreedStat[]> {
     return db.select().from(breedStats).where(eq(breedStats.productId, productId));
   }
@@ -188,6 +212,32 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBreedStat(id: number): Promise<void> {
     await db.delete(breedStats).where(eq(breedStats.id, id));
+  }
+
+  async getReviewsByProduct(productId: number): Promise<Review[]> {
+    return db.select().from(reviews).where(eq(reviews.productId, productId)).orderBy(desc(reviews.createdAt));
+  }
+
+  async createReview(data: InsertReview): Promise<Review> {
+    const [review] = await db.insert(reviews).values(data).returning();
+    return review;
+  }
+
+  async deleteReview(id: number): Promise<void> {
+    await db.delete(reviews).where(eq(reviews.id, id));
+  }
+
+  async createStockAlert(data: InsertStockAlert): Promise<StockAlert> {
+    const [alert] = await db.insert(stockAlerts).values(data).returning();
+    return alert;
+  }
+
+  async getStockAlertsByProduct(productId: number): Promise<StockAlert[]> {
+    return db.select().from(stockAlerts).where(eq(stockAlerts.productId, productId));
+  }
+
+  async getAllStockAlerts(): Promise<StockAlert[]> {
+    return db.select().from(stockAlerts).orderBy(desc(stockAlerts.createdAt));
   }
 }
 
