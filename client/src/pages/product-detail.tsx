@@ -6,9 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link, useRoute } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
+import type { Product, BrandCategory, CrossSellSection, BreedStat, InstallmentRate } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import FloatingCartBar from "@/components/FloatingCartBar";
@@ -225,6 +225,11 @@ export default function ProductDetailPage() {
   const [stockAlertSent, setStockAlertSent] = useState(false);
   const [stockAlertLoading, setStockAlertLoading] = useState(false);
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
+  const [taksitDialogOpen, setTaksitDialogOpen] = useState(false);
+
+  const { data: installmentRates = [] } = useQuery<InstallmentRate[]>({
+    queryKey: ["/api/installment-rates"],
+  });
 
   const { toast } = useToast();
 
@@ -420,6 +425,66 @@ export default function ProductDetailPage() {
                   {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                 </span>
               </div>
+
+              {installmentRates.length > 0 && (
+                <div className="flex items-center gap-1.5 flex-wrap" data-testid="section-taksit-info">
+                  <CreditCard className="w-4 h-4 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {Math.max(...installmentRates.map(r => r.months))} aya varan taksit seçenekleri
+                  </span>
+                  <button
+                    onClick={() => setTaksitDialogOpen(true)}
+                    className="text-sm font-semibold text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
+                    data-testid="btn-show-taksit"
+                  >
+                    Taksitler
+                    <ChevronDown className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
+
+              <Dialog open={taksitDialogOpen} onOpenChange={setTaksitDialogOpen}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <CreditCard className="w-5 h-5" />
+                      Taksit Seçenekleri
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="rounded-lg border overflow-hidden">
+                    <div className="grid grid-cols-4 gap-0 text-xs font-bold text-muted-foreground uppercase tracking-wider bg-muted/50 p-3">
+                      <span>Dönem</span>
+                      <span className="text-center">Aylık Tutar</span>
+                      <span className="text-center">Vade Farkı</span>
+                      <span className="text-right">Toplam Tutar</span>
+                    </div>
+                    <div className="p-3 grid grid-cols-4 gap-0 border-b text-sm" data-testid="row-taksit-tek">
+                      <span className="font-medium">Tek Çekim</span>
+                      <span className="text-center">{product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                      <span className="text-center text-green-600 font-medium">ÜCRETSİZ</span>
+                      <span className="text-right font-bold">{product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                    </div>
+                    {installmentRates
+                      .sort((a, b) => a.months - b.months)
+                      .map((rate) => {
+                        const totalWithRate = product.price * (1 + rate.rate / 100);
+                        const monthly = totalWithRate / rate.months;
+                        const vadeFarki = totalWithRate - product.price;
+                        return (
+                          <div key={rate.id} className="p-3 grid grid-cols-4 gap-0 border-b last:border-0 text-sm" data-testid={`row-taksit-${rate.months}`}>
+                            <span className="font-medium">{rate.months}x ay</span>
+                            <span className="text-center">{monthly.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                            <span className="text-center">{vadeFarki > 0 ? `${vadeFarki.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL` : <span className="text-green-600 font-medium">ÜCRETSİZ</span>}</span>
+                            <span className="text-right font-bold">{totalWithRate.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                          </div>
+                        );
+                      })}
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    Taksit seçenekleri bilgi amaçlıdır. Ödeme sırasında taksit seçimi yapılacaktır.
+                  </p>
+                </DialogContent>
+              </Dialog>
 
               {product.stock === 0 ? (
                 <div className="mt-2 space-y-2">
