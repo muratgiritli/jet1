@@ -181,6 +181,8 @@ export default function ProductDetailPage() {
   }, [staticProduct]);
 
   const isKediMama = data?.category?.animal === "kedi" && (data?.category?.subcategory === "kedi-mamasi" || data?.category?.subcategory === "acik-mama");
+  const isKediKumu = data?.category?.animal === "kedi" && data?.category?.subcategory === "kedi-kumu";
+  const needsCrossSell = isKediMama || isKediKumu;
 
   const { data: kumData } = useQuery<{ category: BrandCategory; products: Product[] }>({
     queryKey: ["/api/brand-products", "kedi", "kedi-kumu", "kedi-kumu"],
@@ -189,34 +191,34 @@ export default function ProductDetailPage() {
 
   const { data: odulData } = useQuery<{ category: BrandCategory; products: Product[] }>({
     queryKey: ["/api/brand-products", "kedi", "odul", "odul"],
-    enabled: isKediMama,
+    enabled: needsCrossSell,
   });
 
   const { data: maltData } = useQuery<{ category: BrandCategory; products: Product[] }>({
     queryKey: ["/api/brand-products", "kedi", "malt-vitamin", "malt-vitamin"],
-    enabled: isKediMama,
+    enabled: needsCrossSell,
   });
 
   const { data: yasMamaData } = useQuery<{ category: BrandCategory; products: Product[] }>({
     queryKey: ["/api/brand-products", "kedi", "yas-mama", "yas-mama"],
-    enabled: isKediMama,
+    enabled: needsCrossSell,
   });
 
   const { data: bakimData } = useQuery<{ category: BrandCategory; products: Product[] }>({
     queryKey: ["/api/brand-products", "kedi", "bakim-saglik", "bakim-saglik"],
-    enabled: isKediMama,
+    enabled: needsCrossSell,
   });
 
   const alsoBoughtCategories = useMemo(() => {
-    if (!isKediMama) return [];
+    if (!needsCrossSell) return [];
     const cats: { title: string; products: Product[] }[] = [];
-    if (kumData?.products?.length) cats.push({ title: "KUM", products: kumData.products });
+    if (isKediMama && kumData?.products?.length) cats.push({ title: "KUM", products: kumData.products });
     if (odulData?.products?.length) cats.push({ title: "ÖDÜL", products: odulData.products });
     if (maltData?.products?.length) cats.push({ title: "MALT", products: maltData.products });
     if (yasMamaData?.products?.length) cats.push({ title: "YAŞ MAMA", products: yasMamaData.products });
     if (bakimData?.products?.length) cats.push({ title: "BAKIM VE SAĞLIK", products: bakimData.products });
     return cats;
-  }, [isKediMama, kumData, odulData, maltData, yasMamaData, bakimData]);
+  }, [needsCrossSell, isKediMama, kumData, odulData, maltData, yasMamaData, bakimData]);
 
   const resolvedData = isNumericId ? data : staticData;
 
@@ -596,7 +598,7 @@ export default function ProductDetailPage() {
           </motion.div>
         )}
 
-        {isKediMama && alsoBoughtCategories.length > 0 && (
+        {needsCrossSell && alsoBoughtCategories.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
