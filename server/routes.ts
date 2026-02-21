@@ -142,6 +142,28 @@ export async function registerRoutes(
     res.json({ message: "Deleted" });
   });
 
+  app.post("/api/admin/products/bulk-price-update", requireAdmin, async (req, res) => {
+    const { productIds, percentage } = req.body;
+    if (!Array.isArray(productIds) || productIds.length === 0 || typeof percentage !== "number" || percentage === 0) {
+      return res.status(400).json({ message: "Invalid data" });
+    }
+    const multiplier = 1 + percentage / 100;
+    let updated = 0;
+    for (const id of productIds) {
+      const product = await storage.getProduct(id);
+      if (product) {
+        const newPrice = Math.round(product.price * multiplier * 100) / 100;
+        const updateData: any = { price: newPrice };
+        if (product.originalPrice) {
+          updateData.originalPrice = Math.round(product.originalPrice * multiplier * 100) / 100;
+        }
+        await storage.updateProduct(id, updateData);
+        updated++;
+      }
+    }
+    res.json({ message: `${updated} ürün fiyatı güncellendi`, updated });
+  });
+
   app.get("/api/product-detail/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     const product = await storage.getProduct(id);
