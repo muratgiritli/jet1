@@ -53,14 +53,16 @@ const ANIMALS = [
 const SUBCATEGORIES: Record<string, { slug: string; name: string }[]> = {
   kedi: [
     { slug: "kedi-mamasi", name: "Kedi Maması" },
+    { slug: "acik-mama", name: "Açık Mama" },
     { slug: "kedi-kumu", name: "Kedi Kumu" },
-    { slug: "kedi-malti", name: "Kedi Maltı" },
-    { slug: "kedi-odulu", name: "Kedi Ödülleri" },
-    { slug: "kedi-bakim-saglik", name: "Bakım ve Aksesuar" },
+    { slug: "malt-macun", name: "Malt & Macun" },
+    { slug: "malt-vitamin", name: "Malt & Vitamin" },
+    { slug: "odul", name: "Kedi Ödülleri" },
+    { slug: "bakim-saglik", name: "Bakım ve Sağlık" },
     { slug: "kedi-tasima", name: "Kedi Taşıma" },
     { slug: "kedi-tuvaleti", name: "Kedi Tuvaleti" },
-    { slug: "kedi-konserve", name: "Kedi Yaş Maması" },
-    { slug: "uygun-cuval", name: "Uygun Çuval Mamalar" },
+    { slug: "kedi-konserve", name: "Kedi Konserve" },
+    { slug: "yas-mama", name: "Yaş Mama" },
   ],
   kopek: [
     { slug: "mama-markalari", name: "Mama Markaları" },
