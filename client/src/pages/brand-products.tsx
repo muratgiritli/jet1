@@ -561,14 +561,6 @@ export default function BrandProductsPage() {
           ))}
         </div>
 
-        {ANIMAL_SUBCATEGORIES[animal] && (
-          <InlineSubcategories
-            animal={animal}
-            currentSubcategory={subcategory}
-            basket={basket}
-            updateQty={updateQty}
-          />
-        )}
       </main>
 
       <AnimatePresence>
