@@ -91,6 +91,7 @@ export const orders = pgTable("orders", {
   customerNote: text("customer_note"),
   customerPhone: text("customer_phone"),
   customerName: text("customer_name"),
+  customerAddress: text("customer_address"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

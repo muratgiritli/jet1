@@ -229,6 +229,7 @@ export async function registerRoutes(
     customerNote: z.string().optional(),
     customerPhone: z.string().optional(),
     customerName: z.string().optional(),
+    customerAddress: z.string().optional(),
   });
 
   app.post("/api/orders", async (req, res) => {
@@ -250,6 +251,18 @@ export async function registerRoutes(
     const order = await storage.updateOrderStatus(id, status);
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.json(order);
+  });
+
+  app.get("/api/customer-lookup", async (req, res) => {
+    const phone = (req.query.phone as string || "").trim();
+    if (!phone || phone.length < 7) return res.json(null);
+    const matched = await storage.getOrdersByPhone(phone);
+    if (matched.length === 0) return res.json(null);
+    const latest = matched[0];
+    res.json({
+      customerName: latest.customerName || "",
+      customerAddress: latest.customerAddress || "",
+    });
   });
 
   app.get("/api/orders/track", async (req, res) => {

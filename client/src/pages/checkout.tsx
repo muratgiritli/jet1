@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Link } from "wouter";
@@ -24,6 +25,8 @@ import {
   User,
   Phone,
   Search,
+  MapPin,
+  CheckCircle2,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import {
@@ -44,9 +47,50 @@ const paymentIcons: Record<string, typeof CreditCard> = {
 
 export default function Checkout() {
   const [orderLoading, setOrderLoading] = useState(false);
-  const [customerName, setCustomerName] = useState("");
   const [customerPhone, setCustomerPhone] = useState("");
+  const [customerName, setCustomerName] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
+  const [isReturningCustomer, setIsReturningCustomer] = useState(false);
+  const [lookupDone, setLookupDone] = useState(false);
+  const [lookupLoading, setLookupLoading] = useState(false);
   const { toast } = useToast();
+
+  const lookupCustomer = useCallback(async (phone: string) => {
+    const normalized = phone.replace(/\D/g, "");
+    if (normalized.length < 10) {
+      setLookupDone(false);
+      setIsReturningCustomer(false);
+      return;
+    }
+    setLookupLoading(true);
+    try {
+      const res = await fetch(`/api/customer-lookup?phone=${encodeURIComponent(phone)}`);
+      const data = await res.json();
+      if (data && (data.customerName || data.customerAddress)) {
+        setCustomerName(data.customerName || "");
+        setCustomerAddress(data.customerAddress || "");
+        setIsReturningCustomer(true);
+      } else {
+        setIsReturningCustomer(false);
+      }
+    } catch {
+      setIsReturningCustomer(false);
+    } finally {
+      setLookupDone(true);
+      setLookupLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const normalized = customerPhone.replace(/\D/g, "");
+    if (normalized.length < 10) {
+      setLookupDone(false);
+      setIsReturningCustomer(false);
+      return;
+    }
+    const timer = setTimeout(() => lookupCustomer(customerPhone), 500);
+    return () => clearTimeout(timer);
+  }, [customerPhone, lookupCustomer]);
   const {
     paymentId,
     setPaymentId,
@@ -85,11 +129,13 @@ export default function Checkout() {
         paymentMethod: pay.name,
         customerName: customerName.trim() || undefined,
         customerPhone: customerPhone.trim() || undefined,
+        customerAddress: customerAddress.trim() || undefined,
       });
 
       let msg = `*JetGo Sipariş*\n\n`;
       if (customerName.trim()) msg += `*Ad Soyad:* ${customerName.trim()}\n`;
       if (customerPhone.trim()) msg += `*Telefon:* ${customerPhone.trim()}\n`;
+      if (customerAddress.trim()) msg += `*Adres:* ${customerAddress.trim()}\n`;
       if (customerName.trim() || customerPhone.trim()) msg += `\n`;
       selectedProducts.forEach(({ product, qty }) => {
         msg += `${qty}x ${product.name} — ${Math.round(qty * product.price)} TL\n`;
@@ -219,6 +265,34 @@ export default function Checkout() {
                 <CardContent className="p-4 space-y-3">
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium flex items-center gap-1.5">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      Telefon Numarası
+                    </label>
+                    <div className="relative">
+                      <Input
+                        type="tel"
+                        placeholder="05XX XXX XX XX"
+                        value={customerPhone}
+                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        data-testid="input-customer-phone"
+                      />
+                      {lookupLoading && (
+                        <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      )}
+                      {isReturningCustomer && !lookupLoading && (
+                        <CheckCircle2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
+                      )}
+                    </div>
+                    {isReturningCustomer && (
+                      <p className="text-xs text-green-600 flex items-center gap-1" data-testid="text-returning-customer">
+                        <CheckCircle2 className="w-3 h-3" />
+                        Kayıtlı müşteri - bilgileriniz otomatik dolduruldu
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
                       <User className="w-4 h-4 text-muted-foreground" />
                       Ad Soyad
                     </label>
@@ -230,19 +304,22 @@ export default function Checkout() {
                       data-testid="input-customer-name"
                     />
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium flex items-center gap-1.5">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      Telefon Numarası
-                    </label>
-                    <Input
-                      type="tel"
-                      placeholder="05XX XXX XX XX"
-                      value={customerPhone}
-                      onChange={(e) => setCustomerPhone(e.target.value)}
-                      data-testid="input-customer-phone"
-                    />
-                  </div>
+
+                  {!(isReturningCustomer && customerAddress) && (
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-medium flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        Teslimat Adresi
+                      </label>
+                      <Textarea
+                        placeholder="Teslimat adresinizi yazın..."
+                        value={customerAddress}
+                        onChange={(e) => setCustomerAddress(e.target.value)}
+                        rows={2}
+                        data-testid="input-customer-address"
+                      />
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </section>
