@@ -381,77 +381,82 @@ export default function Checkout() {
                       data-testid="section-installments"
                     >
                       <p className="text-sm font-medium text-muted-foreground mb-3">Taksit seçeneğinizi belirleyin:</p>
-                            <div className="rounded-lg border" data-testid="table-installments">
-                              <div className="grid grid-cols-3 gap-0 text-xs font-bold text-muted-foreground uppercase tracking-wider bg-muted/50 p-3 rounded-t-lg">
-                                <span>Taksit</span>
-                                <span className="text-center">Aylık Ödeme</span>
-                                <span className="text-right">Toplam</span>
-                              </div>
+                      <RadioGroup
+                        value={selectedInstallment ? `taksit-${selectedInstallment}` : "tek-cekim"}
+                        onValueChange={(val) => {
+                          if (val === "tek-cekim") {
+                            setSelectedInstallment(null);
+                          } else {
+                            const months = parseInt(val.replace("taksit-", ""));
+                            setSelectedInstallment(months);
+                          }
+                        }}
+                        data-testid="radio-installments"
+                      >
+                        <div className="rounded-lg border" data-testid="table-installments">
+                          <div className="grid grid-cols-3 gap-0 text-xs font-bold text-muted-foreground uppercase tracking-wider bg-muted/50 p-3 rounded-t-lg">
+                            <span>Taksit</span>
+                            <span className="text-center">Aylık Ödeme</span>
+                            <span className="text-right">Toplam</span>
+                          </div>
 
-                              <label
-                                className={`grid grid-cols-3 gap-0 p-3 cursor-pointer transition-colors border-b ${selectedInstallment === null ? "bg-primary/5" : "hover:bg-muted/30"}`}
-                                data-testid="row-installment-tek"
-                              >
-                                <span className="flex items-center gap-2">
-                                  <RadioGroupItem
-                                    value="tek-cekim"
-                                    checked={selectedInstallment === null}
-                                    onClick={() => setSelectedInstallment(null)}
-                                  />
-                                  <span className="text-sm font-medium">Tek Çekim</span>
-                                </span>
-                                <span className="text-sm text-center font-medium">
-                                  {grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                                </span>
-                                <span className="text-sm text-right font-bold">
-                                  {grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                                </span>
-                              </label>
+                          <label
+                            className={`grid grid-cols-3 gap-0 p-3 cursor-pointer transition-colors border-b ${selectedInstallment === null ? "bg-primary/5" : "hover:bg-muted/30"}`}
+                            data-testid="row-installment-tek"
+                          >
+                            <span className="flex items-center gap-2">
+                              <RadioGroupItem value="tek-cekim" />
+                              <span className="text-sm font-medium">Tek Çekim</span>
+                            </span>
+                            <span className="text-sm text-center font-medium">
+                              {grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                            </span>
+                            <span className="text-sm text-right font-bold">
+                              {grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                            </span>
+                          </label>
 
-                              {installmentRates
-                                .sort((a, b) => a.months - b.months)
-                                .map((rate) => {
-                                  const totalWithRate = grandTotal * (1 + rate.rate / 100);
-                                  const monthly = totalWithRate / rate.months;
-                                  return (
-                                    <label
-                                      key={rate.id}
-                                      className={`grid grid-cols-3 gap-0 p-3 cursor-pointer transition-colors border-b last:border-0 ${selectedInstallment === rate.months ? "bg-primary/5" : "hover:bg-muted/30"}`}
-                                      data-testid={`row-installment-${rate.months}`}
-                                    >
-                                      <span className="flex items-center gap-2">
-                                        <RadioGroupItem
-                                          value={`taksit-${rate.months}`}
-                                          checked={selectedInstallment === rate.months}
-                                          onClick={() => setSelectedInstallment(rate.months)}
-                                        />
-                                        <span className="text-sm font-medium">{rate.months} Taksit</span>
-                                      </span>
-                                      <span className="text-sm text-center font-medium">
-                                        {monthly.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                                      </span>
-                                      <span className="text-sm text-right font-bold">
-                                        {totalWithRate.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                                      </span>
-                                    </label>
-                                  );
-                                })}
-                            </div>
+                          {installmentRates
+                            .sort((a, b) => a.months - b.months)
+                            .map((rate) => {
+                              const totalWithRate = grandTotal * (1 + rate.rate / 100);
+                              const monthly = totalWithRate / rate.months;
+                              return (
+                                <label
+                                  key={rate.id}
+                                  className={`grid grid-cols-3 gap-0 p-3 cursor-pointer transition-colors border-b last:border-0 ${selectedInstallment === rate.months ? "bg-primary/5" : "hover:bg-muted/30"}`}
+                                  data-testid={`row-installment-${rate.months}`}
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <RadioGroupItem value={`taksit-${rate.months}`} />
+                                    <span className="text-sm font-medium">{rate.months} Taksit</span>
+                                  </span>
+                                  <span className="text-sm text-center font-medium">
+                                    {monthly.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                                  </span>
+                                  <span className="text-sm text-right font-bold">
+                                    {totalWithRate.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                                  </span>
+                                </label>
+                              );
+                            })}
+                        </div>
+                      </RadioGroup>
 
-                            {selectedInstallment && (
-                              <div className="mt-2 p-2 rounded-md bg-primary/5 text-center" data-testid="text-selected-installment">
-                                <p className="text-sm font-medium text-primary">
-                                  {selectedInstallment} taksit seçildi — Aylık{" "}
-                                  {(() => {
-                                    const rate = installmentRates.find((r) => r.months === selectedInstallment);
-                                    if (!rate) return "";
-                                    const total = grandTotal * (1 + rate.rate / 100);
-                                    return (total / rate.months).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                                  })()}{" "}
-                                  TL
-                                </p>
-                              </div>
-                            )}
+                      {selectedInstallment && (
+                        <div className="mt-2 p-2 rounded-md bg-primary/5 text-center" data-testid="text-selected-installment">
+                          <p className="text-sm font-medium text-primary">
+                            {selectedInstallment} taksit seçildi — Aylık{" "}
+                            {(() => {
+                              const rate = installmentRates.find((r) => r.months === selectedInstallment);
+                              if (!rate) return "";
+                              const total = grandTotal * (1 + rate.rate / 100);
+                              return (total / rate.months).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                            })()}{" "}
+                            TL
+                          </p>
+                        </div>
+                      )}
                     </motion.div>
                   )}
                 </CardContent>
