@@ -153,7 +153,7 @@ export default function Checkout() {
       msg += `\n*Teslimat:* ${shipping === 0 ? "Ücretsiz" : shipping + " TL"}`;
       msg += `\n*Genel Toplam:* ${Math.round(grandTotal)} TL`;
       msg += `\n*Ödeme:* ${pay.name}`;
-      if (pay.id === "taksit" && selectedInstallment) {
+      if ((pay.id === "taksit" || pay.id === "pos") && selectedInstallment) {
         const instRate = installmentRates.find((r) => r.months === selectedInstallment);
         if (instRate) {
           const instTotal = grandTotal * (1 + instRate.rate / 100);
@@ -348,7 +348,7 @@ export default function Checkout() {
               </h2>
               <Card>
                 <CardContent className="p-4">
-                  <RadioGroup value={paymentId} onValueChange={(val) => { setPaymentId(val); if (val !== "taksit") { setSelectedInstallment(null); } }} data-testid="radio-payment">
+                  <RadioGroup value={paymentId} onValueChange={(val) => { setPaymentId(val); if (val !== "taksit" && val !== "pos") { setSelectedInstallment(null); } }} data-testid="radio-payment">
                     {PAYMENT_OPTIONS.map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
                       return (
@@ -372,7 +372,7 @@ export default function Checkout() {
                     })}
                   </RadioGroup>
 
-                  {paymentId === "taksit" && installmentRates.length > 0 && (
+                  {(paymentId === "taksit" || paymentId === "pos") && installmentRates.length > 0 && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
