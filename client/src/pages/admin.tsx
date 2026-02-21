@@ -935,7 +935,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           {p.img && <img src={p.img} alt="" className="w-8 h-8 rounded object-contain" />}
                           <span className="text-sm font-medium truncate">{p.name}</span>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
+                        <div className="flex items-center gap-2 shrink-0 flex-wrap">
                           <Badge
                             className="text-[10px] no-default-hover-elevate"
                             style={{
@@ -951,6 +951,40 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           >
                             Stok: {p.stock}
                           </Badge>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => { setEditingProduct(p); setEditDialogOpen(true); }}
+                            data-testid={`btn-skt-edit-${p.id}`}
+                          >
+                            <Pencil className="w-3 h-3" />
+                            Düzenle
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => toggleActiveMutation.mutate({ id: p.id, isActive: !p.isActive })}
+                            data-testid={`btn-skt-toggle-${p.id}`}
+                          >
+                            {p.isActive ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
+                            {p.isActive ? "Durdur" : "Yayınla"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => {
+                              if (confirm(`"${p.name}" ürününü silmek istediğinize emin misiniz?`)) {
+                                deleteProductMutation.mutate(p.id);
+                              }
+                            }}
+                            data-testid={`btn-skt-delete-${p.id}`}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                            Sil
+                          </Button>
                         </div>
                       </div>
                     );
