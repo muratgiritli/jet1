@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link, useRoute } from "wouter";
 import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -222,6 +223,7 @@ export default function ProductDetailPage() {
   const [stockPhone, setStockPhone] = useState("");
   const [stockAlertSent, setStockAlertSent] = useState(false);
   const [stockAlertLoading, setStockAlertLoading] = useState(false);
+  const [stockDialogOpen, setStockDialogOpen] = useState(false);
 
   const { toast } = useToast();
 
@@ -416,39 +418,21 @@ export default function ProductDetailPage() {
 
               {product.stock === 0 ? (
                 <div className="mt-2 space-y-2">
-                  <div className="flex items-center gap-2 px-4 py-3 rounded-md text-sm font-semibold" style={{ backgroundColor: "#fff3e0", color: "#e65100" }} data-testid="badge-out-of-stock">
-                    <Bell className="w-4 h-4" />
-                    Stokta Yok
-                  </div>
                   {stockAlertSent ? (
-                    <p className="text-sm font-medium" style={{ color: "#2ecc40" }} data-testid="text-stock-alert-success">Kaydedildi! Ürün stoğa girince size haber vereceğiz.</p>
-                  ) : (
-                    <div className="space-y-2">
-                      <Input
-                        placeholder="Ad Soyad"
-                        value={stockName}
-                        onChange={e => setStockName(e.target.value)}
-                        data-testid="input-stock-name"
-                      />
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Telefon numaranız"
-                          value={stockPhone}
-                          onChange={e => setStockPhone(e.target.value)}
-                          className="flex-1"
-                          data-testid="input-stock-phone"
-                        />
-                        <Button
-                          onClick={handleStockAlert}
-                          disabled={stockAlertLoading || !stockName || stockPhone.length < 7}
-                          style={{ backgroundColor: "#e65100" }}
-                          data-testid="btn-stock-alert"
-                        >
-                          {stockAlertLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
-                          Haber Ver
-                        </Button>
-                      </div>
+                    <div className="flex items-center gap-2 px-4 py-3 rounded-md text-sm font-semibold" style={{ backgroundColor: "#e8f5e9", color: "#2e7d32" }} data-testid="text-stock-alert-success">
+                      <Bell className="w-4 h-4" />
+                      Kaydedildi! Ürün stoğa girince size haber vereceğiz.
                     </div>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      style={{ backgroundColor: "#e65100" }}
+                      onClick={() => setStockDialogOpen(true)}
+                      data-testid="btn-open-stock-dialog"
+                    >
+                      <Bell className="w-4 h-4" />
+                      Gelince Haber Ver
+                    </Button>
                   )}
                 </div>
               ) : (
@@ -613,6 +597,49 @@ export default function ProductDetailPage() {
       </main>
 
       <FloatingCartBar />
+
+      <Dialog open={stockDialogOpen} onOpenChange={setStockDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Bell className="w-5 h-5" style={{ color: "#e65100" }} />
+              Gelince Haber Ver
+            </DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground mb-2">
+            <span className="font-semibold">{product.name}</span> stoğa girdiğinde sizi haberdar edelim.
+          </p>
+          <div className="space-y-3">
+            <Input
+              placeholder="Ad Soyad"
+              value={stockName}
+              onChange={e => setStockName(e.target.value)}
+              data-testid="input-stock-name"
+            />
+            <Input
+              placeholder="Telefon numaranız"
+              value={stockPhone}
+              onChange={e => setStockPhone(e.target.value)}
+              data-testid="input-stock-phone"
+            />
+            <Button
+              onClick={async () => {
+                await handleStockAlert();
+                if (stockName && stockPhone.length >= 7) {
+                  setStockDialogOpen(false);
+                }
+              }}
+              disabled={stockAlertLoading || !stockName || stockPhone.length < 7}
+              className="w-full"
+              style={{ backgroundColor: "#e65100" }}
+              data-testid="btn-stock-alert"
+            >
+              {stockAlertLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
+              Gönder
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
