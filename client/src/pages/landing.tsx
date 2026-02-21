@@ -36,10 +36,12 @@ export default function Landing() {
     <div className="min-h-screen flex flex-col bg-background">
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-center">
-          <h1 className="text-3xl font-extrabold tracking-tight" data-testid="text-brand-logo">
-            <span style={{ color: "#ffffff" }}>JET</span>
-            <span style={{ color: "#1a7a1a" }}>GO</span>
-          </h1>
+          <Link href="/">
+            <h1 className="text-3xl font-extrabold tracking-tight cursor-pointer" data-testid="text-brand-logo">
+              <span style={{ color: "#ffffff" }}>JET</span>
+              <span style={{ color: "#1a7a1a" }}>GO</span>
+            </h1>
+          </Link>
         </div>
       </header>
 
@@ -61,7 +63,7 @@ export default function Landing() {
       </nav>
 
       <main className="flex-1 max-w-lg mx-auto w-full">
-        <div className="px-3 pt-3 max-w-lg mx-auto w-full">
+        <div className="px-3 pt-3 pb-3 max-w-lg mx-auto w-full">
           <SearchBar />
         </div>
 
