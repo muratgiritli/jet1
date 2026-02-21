@@ -365,7 +365,7 @@ export default function Checkout() {
                             className="no-default-hover-elevate"
                             data-testid={`badge-payment-tag-${opt.id}`}
                           >
-                            {opt.tag}
+                            {opt.disc > 0 ? opt.tag : opt.id === "taksit" ? opt.tag : `${Math.round(grandTotal)} TL`}
                           </Badge>
                         </label>
                       );
