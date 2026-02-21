@@ -414,7 +414,7 @@ function InlineSubcategories({
                     product={product}
                     quantity={basket[product.id] || 0}
                     onUpdate={updateQty}
-                    showDetailLink={animal === "kopek" && selectedSc?.slug === "mama-markalari"}
+                    showDetailLink={!!selectedSc?.hasBrands}
                   />
                 </motion.div>
               ))}
@@ -555,7 +555,7 @@ export default function BrandProductsPage() {
                 product={product}
                 quantity={basket[String(product.id)] || 0}
                 onUpdate={updateQty}
-                showDetailLink={animal === "kopek" && subcategory === "mama-markalari"}
+                showDetailLink={true}
               />
             </motion.div>
           ))}
