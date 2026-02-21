@@ -531,6 +531,16 @@ export default function ProductDetailPage() {
                       </Button>
                     </Link>
                   </div>
+                  {installmentRates.length > 0 && (
+                    <button
+                      onClick={() => setTaksitDialogOpen(true)}
+                      className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer"
+                      data-testid="btn-taksit-below-buttons"
+                    >
+                      <CreditCard className="w-3.5 h-3.5" />
+                      {Math.max(...installmentRates.map(r => r.months))} aya varan taksit seçenekleri
+                    </button>
+                  )}
                 </div>
               )}
 
