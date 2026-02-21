@@ -139,3 +139,15 @@ export const stockAlerts = pgTable("stock_alerts", {
 export const insertStockAlertSchema = createInsertSchema(stockAlerts).omit({ id: true, createdAt: true, isNotified: true });
 export type InsertStockAlert = z.infer<typeof insertStockAlertSchema>;
 export type StockAlert = typeof stockAlerts.$inferSelect;
+
+export const installmentRates = pgTable("installment_rates", {
+  id: serial("id").primaryKey(),
+  months: integer("months").notNull(),
+  rate: real("rate").notNull(),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const insertInstallmentRateSchema = createInsertSchema(installmentRates).omit({ id: true });
+export type InsertInstallmentRate = z.infer<typeof insertInstallmentRateSchema>;
+export type InstallmentRate = typeof installmentRates.$inferSelect;

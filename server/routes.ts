@@ -316,5 +316,49 @@ export async function registerRoutes(
     res.json(alerts);
   });
 
+  app.get("/api/installment-rates", async (_req, res) => {
+    const rates = await storage.getActiveInstallmentRates();
+    res.json(rates);
+  });
+
+  app.get("/api/admin/installment-rates", requireAdmin, async (_req, res) => {
+    const rates = await storage.getAllInstallmentRates();
+    res.json(rates);
+  });
+
+  app.post("/api/admin/installment-rates", requireAdmin, async (req, res) => {
+    const schema = z.object({
+      months: z.number().min(1).max(36),
+      rate: z.number().min(0).max(100),
+      isActive: z.boolean().optional(),
+      sortOrder: z.number().optional(),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
+    const rate = await storage.createInstallmentRate(parsed.data as any);
+    res.status(201).json(rate);
+  });
+
+  app.patch("/api/admin/installment-rates/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id as string);
+    const schema = z.object({
+      months: z.number().min(1).max(36).optional(),
+      rate: z.number().min(0).max(100).optional(),
+      isActive: z.boolean().optional(),
+      sortOrder: z.number().optional(),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
+    const rate = await storage.updateInstallmentRate(id, parsed.data as any);
+    if (!rate) return res.status(404).json({ message: "Not found" });
+    res.json(rate);
+  });
+
+  app.delete("/api/admin/installment-rates/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id as string);
+    await storage.deleteInstallmentRate(id);
+    res.json({ message: "Deleted" });
+  });
+
   return httpServer;
 }

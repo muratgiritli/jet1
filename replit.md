@@ -6,7 +6,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 ## Architecture
 - **Frontend**: React + TypeScript with shadcn/ui components, Tailwind CSS, framer-motion
 - **Backend**: Express with session-based auth (bcryptjs + express-session + connect-pg-simple)
-- **Database**: PostgreSQL (Drizzle ORM) - brand_categories, products, cross_sell_sections, cross_sell_items, orders, breed_stats tables
+- **Database**: PostgreSQL (Drizzle ORM) - brand_categories, products, cross_sell_sections, cross_sell_items, orders, breed_stats, installment_rates tables
 - **Static data**: CATEGORIES in client/src/lib/data.ts (non-brand products remain static)
 - **Dynamic data**: Brand products (Brit Care, Hill's, etc.) served from database via API
 - **Cross-sell**: Reusable recommendation sections linked to products via junction table, displayed on product detail pages
@@ -58,6 +58,11 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `GET /api/products/search?q=` - Search products by name
 - `POST /api/stock-alerts` - Register stock notification (public)
 - `GET /api/orders/track?phone=` - Track orders by phone number
+- `GET /api/installment-rates` - Get active installment rates (public)
+- `GET /api/admin/installment-rates` - All installment rates (auth required)
+- `POST /api/admin/installment-rates` - Create installment rate (auth required)
+- `PATCH /api/admin/installment-rates/:id` - Update installment rate (auth required)
+- `DELETE /api/admin/installment-rates/:id` - Delete installment rate (auth required)
 
 ## Frontend Routes
 - `/` - Landing page (vitrin)

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,6 +28,8 @@ import {
   Search,
   MapPin,
   CheckCircle2,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import {
@@ -37,6 +40,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import BackNavigation from "@/components/BackNavigation";
+import type { InstallmentRate } from "@shared/schema";
 
 const paymentIcons: Record<string, typeof CreditCard> = {
   nakit: Banknote,
@@ -53,7 +57,13 @@ export default function Checkout() {
   const [isReturningCustomer, setIsReturningCustomer] = useState(false);
   const [lookupDone, setLookupDone] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
+  const [showInstallments, setShowInstallments] = useState(false);
+  const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
   const { toast } = useToast();
+
+  const { data: installmentRates = [] } = useQuery<InstallmentRate[]>({
+    queryKey: ["/api/installment-rates"],
+  });
 
   const lookupCustomer = useCallback(async (phone: string) => {
     const normalized = phone.replace(/\D/g, "");
@@ -145,6 +155,16 @@ export default function Checkout() {
       msg += `\n*Teslimat:* ${shipping === 0 ? "Ücretsiz" : shipping + " TL"}`;
       msg += `\n*Genel Toplam:* ${Math.round(grandTotal)} TL`;
       msg += `\n*Ödeme:* ${pay.name}`;
+      if (pay.id === "pos" && selectedInstallment) {
+        const instRate = installmentRates.find((r) => r.months === selectedInstallment);
+        if (instRate) {
+          const instTotal = grandTotal * (1 + instRate.rate / 100);
+          const monthly = instTotal / instRate.months;
+          msg += `\n*Taksit:* ${selectedInstallment} Taksit`;
+          msg += `\n*Aylık Ödeme:* ${monthly.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`;
+          msg += `\n*Taksitli Toplam:* ${instTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`;
+        }
+      }
       if (pay.id === "eft") msg += CONFIG.bankInfo;
 
       const url = `https://wa.me/${CONFIG.phone.replace("+", "")}?text=${encodeURIComponent(msg)}`;
@@ -330,7 +350,7 @@ export default function Checkout() {
               </h2>
               <Card>
                 <CardContent className="p-4">
-                  <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
+                  <RadioGroup value={paymentId} onValueChange={(val) => { setPaymentId(val); if (val !== "pos") { setSelectedInstallment(null); setShowInstallments(false); } }} data-testid="radio-payment">
                     {PAYMENT_OPTIONS.map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
                       return (
@@ -353,6 +373,110 @@ export default function Checkout() {
                       );
                     })}
                   </RadioGroup>
+
+                  {paymentId === "pos" && installmentRates.length > 0 && (
+                    <div className="mt-4 pt-4 border-t" data-testid="section-installments">
+                      <Button
+                        variant="outline"
+                        className="w-full justify-between"
+                        onClick={() => setShowInstallments(!showInstallments)}
+                        data-testid="btn-toggle-installments"
+                      >
+                        <span className="flex items-center gap-2">
+                          <CreditCard className="w-4 h-4" />
+                          Kredi Kartına Taksit Seçenekleri
+                        </span>
+                        {showInstallments ? (
+                          <ChevronUp className="w-4 h-4" />
+                        ) : (
+                          <ChevronDown className="w-4 h-4" />
+                        )}
+                      </Button>
+
+                      <AnimatePresence>
+                        {showInstallments && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="overflow-hidden"
+                          >
+                            <div className="mt-3 rounded-lg border" data-testid="table-installments">
+                              <div className="grid grid-cols-3 gap-0 text-xs font-bold text-muted-foreground uppercase tracking-wider bg-muted/50 p-3 rounded-t-lg">
+                                <span>Taksit</span>
+                                <span className="text-center">Aylık Ödeme</span>
+                                <span className="text-right">Toplam</span>
+                              </div>
+
+                              <label
+                                className={`grid grid-cols-3 gap-0 p-3 cursor-pointer transition-colors border-b ${selectedInstallment === null ? "bg-primary/5" : "hover:bg-muted/30"}`}
+                                data-testid="row-installment-tek"
+                              >
+                                <span className="flex items-center gap-2">
+                                  <RadioGroupItem
+                                    value="tek-cekim"
+                                    checked={selectedInstallment === null}
+                                    onClick={() => setSelectedInstallment(null)}
+                                  />
+                                  <span className="text-sm font-medium">Tek Çekim</span>
+                                </span>
+                                <span className="text-sm text-center font-medium">
+                                  {grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                                </span>
+                                <span className="text-sm text-right font-bold">
+                                  {grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                                </span>
+                              </label>
+
+                              {installmentRates
+                                .sort((a, b) => a.months - b.months)
+                                .map((rate) => {
+                                  const totalWithRate = grandTotal * (1 + rate.rate / 100);
+                                  const monthly = totalWithRate / rate.months;
+                                  return (
+                                    <label
+                                      key={rate.id}
+                                      className={`grid grid-cols-3 gap-0 p-3 cursor-pointer transition-colors border-b last:border-0 ${selectedInstallment === rate.months ? "bg-primary/5" : "hover:bg-muted/30"}`}
+                                      data-testid={`row-installment-${rate.months}`}
+                                    >
+                                      <span className="flex items-center gap-2">
+                                        <RadioGroupItem
+                                          value={`taksit-${rate.months}`}
+                                          checked={selectedInstallment === rate.months}
+                                          onClick={() => setSelectedInstallment(rate.months)}
+                                        />
+                                        <span className="text-sm font-medium">{rate.months} Taksit</span>
+                                      </span>
+                                      <span className="text-sm text-center font-medium">
+                                        {monthly.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                                      </span>
+                                      <span className="text-sm text-right font-bold">
+                                        {totalWithRate.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                                      </span>
+                                    </label>
+                                  );
+                                })}
+                            </div>
+
+                            {selectedInstallment && (
+                              <div className="mt-2 p-2 rounded-md bg-primary/5 text-center" data-testid="text-selected-installment">
+                                <p className="text-sm font-medium text-primary">
+                                  {selectedInstallment} taksit seçildi — Aylık{" "}
+                                  {(() => {
+                                    const rate = installmentRates.find((r) => r.months === selectedInstallment);
+                                    if (!rate) return "";
+                                    const total = grandTotal * (1 + rate.rate / 100);
+                                    return (total / rate.months).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                                  })()}{" "}
+                                  TL
+                                </p>
+                              </div>
+                            )}
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </section>

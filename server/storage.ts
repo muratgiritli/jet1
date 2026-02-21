@@ -11,7 +11,8 @@ import {
   type BreedStat, type InsertBreedStat,
   type Review, type InsertReview,
   type StockAlert, type InsertStockAlert,
-  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts,
+  type InstallmentRate, type InsertInstallmentRate,
+  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts, installmentRates,
 } from "@shared/schema";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -66,6 +67,12 @@ export interface IStorage {
   createStockAlert(data: InsertStockAlert): Promise<StockAlert>;
   getStockAlertsByProduct(productId: number): Promise<StockAlert[]>;
   getAllStockAlerts(): Promise<StockAlert[]>;
+
+  getAllInstallmentRates(): Promise<InstallmentRate[]>;
+  getActiveInstallmentRates(): Promise<InstallmentRate[]>;
+  createInstallmentRate(data: InsertInstallmentRate): Promise<InstallmentRate>;
+  updateInstallmentRate(id: number, data: Partial<InsertInstallmentRate>): Promise<InstallmentRate | undefined>;
+  deleteInstallmentRate(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -254,6 +261,28 @@ export class DatabaseStorage implements IStorage {
 
   async getAllStockAlerts(): Promise<StockAlert[]> {
     return db.select().from(stockAlerts).orderBy(desc(stockAlerts.createdAt));
+  }
+
+  async getAllInstallmentRates(): Promise<InstallmentRate[]> {
+    return db.select().from(installmentRates);
+  }
+
+  async getActiveInstallmentRates(): Promise<InstallmentRate[]> {
+    return db.select().from(installmentRates).where(eq(installmentRates.isActive, true));
+  }
+
+  async createInstallmentRate(data: InsertInstallmentRate): Promise<InstallmentRate> {
+    const [rate] = await db.insert(installmentRates).values(data).returning();
+    return rate;
+  }
+
+  async updateInstallmentRate(id: number, data: Partial<InsertInstallmentRate>): Promise<InstallmentRate | undefined> {
+    const [rate] = await db.update(installmentRates).set(data).where(eq(installmentRates.id, id)).returning();
+    return rate;
+  }
+
+  async deleteInstallmentRate(id: number): Promise<void> {
+    await db.delete(installmentRates).where(eq(installmentRates.id, id));
   }
 }
 
