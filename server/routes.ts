@@ -301,6 +301,7 @@ export async function registerRoutes(
   app.post("/api/stock-alerts", async (req, res) => {
     const schema = z.object({
       productId: z.number(),
+      customerName: z.string().min(1),
       phone: z.string().min(7),
       productName: z.string(),
     });

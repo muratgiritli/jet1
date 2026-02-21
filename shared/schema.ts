@@ -129,6 +129,7 @@ export type Review = typeof reviews.$inferSelect;
 export const stockAlerts = pgTable("stock_alerts", {
   id: serial("id").primaryKey(),
   productId: integer("product_id").notNull(),
+  customerName: text("customer_name").notNull(),
   phone: text("phone").notNull(),
   productName: text("product_name").notNull(),
   isNotified: boolean("is_notified").notNull().default(false),

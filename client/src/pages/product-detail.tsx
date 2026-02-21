@@ -218,6 +218,7 @@ export default function ProductDetailPage() {
 
   const resolvedData = isNumericId ? data : staticData;
 
+  const [stockName, setStockName] = useState("");
   const [stockPhone, setStockPhone] = useState("");
   const [stockAlertSent, setStockAlertSent] = useState(false);
   const [stockAlertLoading, setStockAlertLoading] = useState(false);
@@ -304,19 +305,19 @@ export default function ProductDetailPage() {
   const quantity = basket[pid] || 0;
 
   const handleStockAlert = async () => {
-    if (!stockPhone || stockPhone.length < 7 || stockAlertLoading) return;
+    if (!stockName || !stockPhone || stockPhone.length < 7 || stockAlertLoading) return;
     setStockAlertLoading(true);
     try {
       const res = await fetch("/api/stock-alerts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productId: product.id, phone: stockPhone, productName: product.name }),
+        body: JSON.stringify({ productId: product.id, customerName: stockName, phone: stockPhone, productName: product.name }),
       });
       if (!res.ok) throw new Error("Failed");
       setStockAlertSent(true);
-      toast({ title: "Kaydedildi", description: "Urun stoga girdiginde size bildirim gonderecegiz." });
+      toast({ title: "Kaydedildi", description: "Ürün stoğa girdiğinde size haber vereceğiz." });
     } catch {
-      toast({ title: "Hata", description: "Lutfen tekrar deneyin.", variant: "destructive" });
+      toast({ title: "Hata", description: "Lütfen tekrar deneyin.", variant: "destructive" });
     } finally {
       setStockAlertLoading(false);
     }
@@ -420,25 +421,33 @@ export default function ProductDetailPage() {
                     Stokta Yok
                   </div>
                   {stockAlertSent ? (
-                    <p className="text-sm font-medium" style={{ color: "#2ecc40" }} data-testid="text-stock-alert-success">Kaydedildi! Stoga girince haber verecegiz.</p>
+                    <p className="text-sm font-medium" style={{ color: "#2ecc40" }} data-testid="text-stock-alert-success">Kaydedildi! Ürün stoğa girince size haber vereceğiz.</p>
                   ) : (
-                    <div className="flex gap-2">
+                    <div className="space-y-2">
                       <Input
-                        placeholder="Telefon numaraniz"
-                        value={stockPhone}
-                        onChange={e => setStockPhone(e.target.value)}
-                        className="flex-1"
-                        data-testid="input-stock-phone"
+                        placeholder="Ad Soyad"
+                        value={stockName}
+                        onChange={e => setStockName(e.target.value)}
+                        data-testid="input-stock-name"
                       />
-                      <Button
-                        onClick={handleStockAlert}
-                        disabled={stockAlertLoading || stockPhone.length < 7}
-                        style={{ backgroundColor: "#e65100" }}
-                        data-testid="btn-stock-alert"
-                      >
-                        {stockAlertLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
-                        Haber Ver
-                      </Button>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Telefon numaranız"
+                          value={stockPhone}
+                          onChange={e => setStockPhone(e.target.value)}
+                          className="flex-1"
+                          data-testid="input-stock-phone"
+                        />
+                        <Button
+                          onClick={handleStockAlert}
+                          disabled={stockAlertLoading || !stockName || stockPhone.length < 7}
+                          style={{ backgroundColor: "#e65100" }}
+                          data-testid="btn-stock-alert"
+                        >
+                          {stockAlertLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
+                          Haber Ver
+                        </Button>
+                      </div>
                     </div>
                   )}
                 </div>

@@ -38,9 +38,10 @@ import {
   Rabbit,
   AlertTriangle,
   Star,
+  Bell,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order, BreedStat } from "@shared/schema";
+import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order, BreedStat, StockAlert } from "@shared/schema";
 
 const ANIMALS = [
   { id: "kedi", name: "Kedi", icon: Cat },
@@ -608,6 +609,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
   });
 
+  const { data: stockAlerts = [], isLoading: stockAlertsLoading } = useQuery<StockAlert[]>({
+    queryKey: ["/api/admin/stock-alerts"],
+  });
+
   const logoutMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("POST", "/api/admin/logout");
@@ -931,6 +936,54 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </Card>
           </section>
         )}
+
+        <section className="mb-6" data-testid="section-stock-alerts">
+          <h2 className="text-lg font-bold mb-4" data-testid="text-section-stock-alerts">
+            <Bell className="w-5 h-5 inline-block mr-2" />
+            Stok Bildirimleri
+            <span className="text-sm font-normal text-muted-foreground ml-2">
+              ({stockAlerts.length})
+            </span>
+          </h2>
+          {stockAlertsLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : stockAlerts.length === 0 ? (
+            <Card>
+              <CardContent className="p-6 text-center text-muted-foreground">
+                Henüz stok bildirimi yok
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="space-y-2">
+              {stockAlerts.map((alert) => (
+                <Card key={alert.id} data-testid={`stock-alert-item-${alert.id}`}>
+                  <CardContent className="p-3">
+                    <div className="flex items-start justify-between gap-3 flex-wrap">
+                      <div className="space-y-1 min-w-0 flex-1">
+                        <p className="text-sm font-semibold" data-testid={`text-alert-product-${alert.id}`}>
+                          {alert.productName}
+                        </p>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                          <span data-testid={`text-alert-name-${alert.id}`}>{alert.customerName}</span>
+                          <span data-testid={`text-alert-phone-${alert.id}`}>{alert.phone}</span>
+                          <span>{new Date(alert.createdAt).toLocaleDateString("tr-TR")}</span>
+                        </div>
+                      </div>
+                      <Badge
+                        className="text-[10px] no-default-hover-elevate shrink-0"
+                        style={{ backgroundColor: alert.isNotified ? "#4CAF50" : "#ff9800", color: "#fff" }}
+                      >
+                        {alert.isNotified ? "Bildirildi" : "Bekliyor"}
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </section>
 
         <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">

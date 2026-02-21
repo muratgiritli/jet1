@@ -197,10 +197,12 @@ function BrandProductCard({
           </span>
         </div>
         {product.stock === 0 ? (
-          <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold" style={{ backgroundColor: "#fff3e0", color: "#e65100" }} data-testid={`badge-out-of-stock-${pid}`}>
-            <Bell className="w-3.5 h-3.5" />
-            Gelince Haber Ver
-          </div>
+          <Link href={productUrl(product.id, product.name)} className="w-full">
+            <Button variant="default" size="sm" className="w-full" style={{ backgroundColor: "#e65100" }} data-testid={`btn-stock-alert-${pid}`}>
+              <Bell className="w-3.5 h-3.5" />
+              Gelince Haber Ver
+            </Button>
+          </Link>
         ) : showDetailLink ? (
           <Link href={productUrl(product.id, product.name)} className="w-full">
             <Button variant="default" size="sm" className="w-full" data-testid={`btn-incele-${pid}`}>
