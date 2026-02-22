@@ -92,6 +92,10 @@ export const orders = pgTable("orders", {
   customerPhone: text("customer_phone"),
   customerName: text("customer_name"),
   customerAddress: text("customer_address"),
+  installmentMonths: integer("installment_months"),
+  installmentRate: real("installment_rate"),
+  installmentMonthly: real("installment_monthly"),
+  installmentTotal: real("installment_total"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

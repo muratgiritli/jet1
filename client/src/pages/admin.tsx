@@ -40,6 +40,15 @@ import {
   Star,
   Bell,
   TrendingUp,
+  Phone,
+  MapPin,
+  CreditCard,
+  Calendar,
+  Clock,
+  User,
+  ShoppingBag,
+  X,
+  Search,
 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -399,6 +408,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [expandedAnimals, setExpandedAnimals] = useState<Record<string, boolean>>({});
   const [bulkPriceDialogOpen, setBulkPriceDialogOpen] = useState(false);
   const [bulkPricePercent, setBulkPricePercent] = useState("");
+  const [orderTab, setOrderTab] = useState<"gelen" | "giden" | "bekleyen">("gelen");
+  const [orderDateFilter, setOrderDateFilter] = useState("");
+  const [phoneHistoryDialog, setPhoneHistoryDialog] = useState<string | null>(null);
+  const [orderSearchPhone, setOrderSearchPhone] = useState("");
 
   const bulkPriceUpdateMutation = useMutation({
     mutationFn: async ({ productIds, percentage }: { productIds: number[]; percentage: number }) => {
@@ -752,55 +765,177 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
             <div className="flex items-center gap-2 flex-wrap">
-              <h2 className="text-lg font-bold" data-testid="text-section-orders">Gelen Siparisler</h2>
+              <ShoppingBag className="w-5 h-5" />
+              <h2 className="text-lg font-bold" data-testid="text-section-orders">Sipariş Yönetimi</h2>
               <Badge className="no-default-hover-elevate no-default-active-elevate" data-testid="badge-order-count">
                 {allOrders.length}
               </Badge>
             </div>
           </div>
 
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
+            <div className="flex gap-1 bg-muted/50 rounded-lg p-1" data-testid="tabs-order-filter">
+              {([
+                { key: "gelen" as const, label: "Gelen Siparişler", statuses: ["yeni"] },
+                { key: "bekleyen" as const, label: "Bekleyen", statuses: ["hazirlaniyor"] },
+                { key: "giden" as const, label: "Giden Siparişler", statuses: ["tamamlandi", "iptal"] },
+              ]).map((tab) => {
+                const count = allOrders.filter((o) => tab.statuses.includes(o.status)).length;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setOrderTab(tab.key)}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${orderTab === tab.key ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                    data-testid={`tab-order-${tab.key}`}
+                  >
+                    {tab.label} ({count})
+                  </button>
+                );
+              })}
+            </div>
+            <div className="flex items-center gap-2 ml-auto">
+              <Calendar className="w-4 h-4 text-muted-foreground" />
+              <Input
+                type="date"
+                value={orderDateFilter}
+                onChange={(e) => setOrderDateFilter(e.target.value)}
+                className="w-auto"
+                data-testid="input-order-date-filter"
+              />
+              {orderDateFilter && (
+                <button onClick={() => setOrderDateFilter("")} className="text-muted-foreground hover:text-foreground" data-testid="btn-clear-date-filter">
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 mb-4">
+            <Search className="w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Telefon ile ara..."
+              value={orderSearchPhone}
+              onChange={(e) => setOrderSearchPhone(e.target.value)}
+              className="max-w-xs"
+              data-testid="input-order-search-phone"
+            />
+            {orderSearchPhone && (
+              <button onClick={() => setOrderSearchPhone("")} className="text-muted-foreground hover:text-foreground" data-testid="btn-clear-phone-search">
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
+
           {ordersLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
             </div>
-          ) : allOrders.length === 0 ? (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                <p className="text-muted-foreground" data-testid="text-no-orders">Henuz siparis yok</p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-3" data-testid="list-orders">
-              {allOrders.map((order) => {
-                const statusColors: Record<string, string> = {
-                  yeni: "#2196F3",
-                  hazirlaniyor: "#FF9800",
-                  tamamlandi: "#4CAF50",
-                  iptal: "#F44336",
-                };
-                const statusBg = statusColors[order.status] || "#9E9E9E";
+          ) : (() => {
+            const tabStatuses: Record<string, string[]> = {
+              gelen: ["yeni"],
+              bekleyen: ["hazirlaniyor"],
+              giden: ["tamamlandi", "iptal"],
+            };
+            const filteredOrders = allOrders
+              .filter((o) => tabStatuses[orderTab]?.includes(o.status))
+              .filter((o) => {
+                if (!orderDateFilter) return true;
+                const d = new Date(o.createdAt);
+                const turkeyDate = d.toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" });
+                return turkeyDate === orderDateFilter;
+              })
+              .filter((o) => {
+                if (!orderSearchPhone) return true;
+                const searchDigits = orderSearchPhone.replace(/\D/g, "");
+                const phoneDigits = (o.customerPhone || "").replace(/\D/g, "");
+                return phoneDigits.includes(searchDigits);
+              })
+              .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
-                return (
+            if (filteredOrders.length === 0) {
+              return (
+                <Card>
+                  <CardContent className="p-8 text-center">
+                    <Package className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
+                    <p className="text-muted-foreground" data-testid="text-no-orders">
+                      {orderTab === "gelen" ? "Yeni sipariş yok" : orderTab === "bekleyen" ? "Bekleyen sipariş yok" : "Tamamlanan sipariş yok"}
+                    </p>
+                  </CardContent>
+                </Card>
+              );
+            }
+
+            const statusColors: Record<string, string> = {
+              yeni: "#2196F3",
+              hazirlaniyor: "#FF9800",
+              tamamlandi: "#4CAF50",
+              iptal: "#F44336",
+            };
+            const statusLabels: Record<string, string> = {
+              yeni: "Yeni",
+              hazirlaniyor: "Hazırlanıyor",
+              tamamlandi: "Tamamlandı",
+              iptal: "İptal",
+            };
+
+            return (
+              <div className="space-y-3" data-testid="list-orders">
+                <div className="text-sm text-muted-foreground mb-2" data-testid="text-order-result-count">
+                  {filteredOrders.length} sipariş gösteriliyor
+                  {orderDateFilter && ` — ${new Date(orderDateFilter).toLocaleDateString("tr-TR")}`}
+                </div>
+                {filteredOrders.map((order) => (
                   <Card key={order.id} data-testid={`card-order-${order.id}`}>
                     <CardContent className="p-4 space-y-3">
                       <div className="flex items-center justify-between gap-3 flex-wrap">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold" data-testid={`text-order-id-${order.id}`}>
-                            Siparis #{order.id}
+                          <span className="font-bold text-base" data-testid={`text-order-id-${order.id}`}>
+                            #{order.id}
                           </span>
-                          <span className="text-sm text-muted-foreground" data-testid={`text-order-date-${order.id}`}>
-                            {new Date(order.createdAt).toLocaleDateString("tr-TR")} {new Date(order.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
-                          </span>
+                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span data-testid={`text-order-date-${order.id}`}>
+                              {new Date(order.createdAt).toLocaleDateString("tr-TR")} {new Date(order.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                            </span>
+                          </div>
                         </div>
                         <Badge
                           className="no-default-hover-elevate no-default-active-elevate"
-                          style={{ backgroundColor: statusBg, color: "#fff" }}
+                          style={{ backgroundColor: statusColors[order.status] || "#9E9E9E", color: "#fff" }}
                           data-testid={`badge-order-status-${order.id}`}
                         >
-                          {order.status}
+                          {statusLabels[order.status] || order.status}
                         </Badge>
                       </div>
+
+                      {(order.customerName || order.customerPhone || order.customerAddress) && (
+                        <div className="bg-muted/30 rounded-lg p-3 space-y-1.5" data-testid={`section-customer-info-${order.id}`}>
+                          {order.customerName && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                              <span className="font-medium" data-testid={`text-order-customer-name-${order.id}`}>{order.customerName}</span>
+                            </div>
+                          )}
+                          {order.customerPhone && (
+                            <div className="flex items-center gap-2 text-sm">
+                              <Phone className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                              <button
+                                onClick={() => setPhoneHistoryDialog(order.customerPhone)}
+                                className="font-medium text-primary hover:underline cursor-pointer"
+                                data-testid={`btn-phone-history-${order.id}`}
+                              >
+                                {order.customerPhone}
+                              </button>
+                            </div>
+                          )}
+                          {order.customerAddress && (
+                            <div className="flex items-start gap-2 text-sm">
+                              <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                              <span data-testid={`text-order-address-${order.id}`}>{order.customerAddress}</span>
+                            </div>
+                          )}
+                        </div>
+                      )}
 
                       <div className="space-y-1" data-testid={`list-order-items-${order.id}`}>
                         {order.items.map((item, idx) => (
@@ -808,7 +943,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             <span data-testid={`text-order-item-${order.id}-${idx}`}>
                               {item.quantity} x {item.name}
                             </span>
-                            <span className="text-muted-foreground" data-testid={`text-order-item-total-${order.id}-${idx}`}>
+                            <span className="text-muted-foreground font-medium" data-testid={`text-order-item-total-${order.id}-${idx}`}>
                               {(item.price * item.quantity).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                             </span>
                           </div>
@@ -817,8 +952,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                       <div className="border-t pt-2 space-y-1 text-sm">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-muted-foreground">Odeme:</span>
-                          <span data-testid={`text-order-payment-${order.id}`}>{order.paymentMethod}</span>
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
+                            <CreditCard className="w-3.5 h-3.5" />
+                            Ödeme:
+                          </span>
+                          <span className="font-medium" data-testid={`text-order-payment-${order.id}`}>{order.paymentMethod}</span>
                         </div>
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-muted-foreground">Ara Toplam:</span>
@@ -826,22 +964,47 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </div>
                         <div className="flex items-center justify-between gap-2">
                           <span className="text-muted-foreground">Kargo:</span>
-                          <span data-testid={`text-order-shipping-${order.id}`}>{order.shipping.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                          <span data-testid={`text-order-shipping-${order.id}`}>{order.shipping === 0 ? "Ücretsiz" : `${order.shipping.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`}</span>
                         </div>
                         {order.discount > 0 && (
-                          <div className="flex items-center justify-between gap-2">
-                            <span className="text-muted-foreground">Indirim:</span>
+                          <div className="flex items-center justify-between gap-2 text-green-600">
+                            <span>İndirim:</span>
                             <span data-testid={`text-order-discount-${order.id}`}>-{order.discount.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
                           </div>
                         )}
-                        <div className="flex items-center justify-between gap-2 font-bold">
+                        <div className="flex items-center justify-between gap-2 font-bold text-base border-t pt-1 mt-1">
                           <span>Toplam:</span>
                           <span data-testid={`text-order-grand-total-${order.id}`}>{order.grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
                         </div>
                       </div>
 
+                      {order.installmentMonths && order.installmentMonths > 0 && (
+                        <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 space-y-1" data-testid={`section-installment-${order.id}`}>
+                          <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-700 dark:text-blue-400 mb-1">
+                            <CreditCard className="w-4 h-4" />
+                            Taksit Bilgisi
+                          </div>
+                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
+                            <span className="text-muted-foreground">Vade:</span>
+                            <span className="font-medium" data-testid={`text-order-inst-months-${order.id}`}>{order.installmentMonths} Taksit</span>
+                            <span className="text-muted-foreground">Vade Farkı:</span>
+                            <span className="font-medium" data-testid={`text-order-inst-rate-${order.id}`}>%{order.installmentRate?.toFixed(2)}</span>
+                            <span className="text-muted-foreground">Aylık Ödeme:</span>
+                            <span className="font-medium" data-testid={`text-order-inst-monthly-${order.id}`}>{order.installmentMonthly?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                            <span className="text-muted-foreground">Taksitli Toplam:</span>
+                            <span className="font-bold" data-testid={`text-order-inst-total-${order.id}`}>{order.installmentTotal?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                          </div>
+                        </div>
+                      )}
+
+                      {order.customerNote && (
+                        <div className="text-sm bg-yellow-50 dark:bg-yellow-950/30 rounded-lg p-3" data-testid={`text-order-note-${order.id}`}>
+                          <span className="font-medium">Not: </span>{order.customerNote}
+                        </div>
+                      )}
+
                       <div className="border-t pt-2 flex items-center justify-between gap-3 flex-wrap">
-                        <span className="text-sm text-muted-foreground">Durum Degistir:</span>
+                        <span className="text-sm text-muted-foreground">Durum Değiştir:</span>
                         <Select
                           value={order.status}
                           onValueChange={(value) => updateOrderStatusMutation.mutate({ id: order.id, status: value })}
@@ -850,20 +1013,108 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="yeni" data-testid={`option-status-yeni-${order.id}`}>yeni</SelectItem>
-                            <SelectItem value="hazirlaniyor" data-testid={`option-status-hazirlaniyor-${order.id}`}>hazirlaniyor</SelectItem>
-                            <SelectItem value="tamamlandi" data-testid={`option-status-tamamlandi-${order.id}`}>tamamlandi</SelectItem>
-                            <SelectItem value="iptal" data-testid={`option-status-iptal-${order.id}`}>iptal</SelectItem>
+                            <SelectItem value="yeni" data-testid={`option-status-yeni-${order.id}`}>Yeni</SelectItem>
+                            <SelectItem value="hazirlaniyor" data-testid={`option-status-hazirlaniyor-${order.id}`}>Hazırlanıyor</SelectItem>
+                            <SelectItem value="tamamlandi" data-testid={`option-status-tamamlandi-${order.id}`}>Tamamlandı</SelectItem>
+                            <SelectItem value="iptal" data-testid={`option-status-iptal-${order.id}`}>İptal</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
                     </CardContent>
                   </Card>
-                );
-              })}
-            </div>
-          )}
+                ))}
+              </div>
+            );
+          })()}
         </section>
+
+        <Dialog open={!!phoneHistoryDialog} onOpenChange={(open) => { if (!open) setPhoneHistoryDialog(null); }}>
+          <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Phone className="w-5 h-5" />
+                Müşteri Sipariş Geçmişi
+              </DialogTitle>
+            </DialogHeader>
+            {phoneHistoryDialog && (() => {
+              const customerOrders = allOrders
+                .filter((o) => o.customerPhone === phoneHistoryDialog)
+                .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+              const totalSpent = customerOrders.reduce((sum, o) => sum + o.grandTotal, 0);
+              const customerName = customerOrders.find((o) => o.customerName)?.customerName;
+
+              return (
+                <div className="space-y-4">
+                  <div className="bg-muted/30 rounded-lg p-3 space-y-1">
+                    {customerName && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <User className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-semibold">{customerName}</span>
+                      </div>
+                    )}
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="w-4 h-4 text-muted-foreground" />
+                      <span>{phoneHistoryDialog}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm mt-2 pt-2 border-t">
+                      <span className="text-muted-foreground">Toplam Sipariş:</span>
+                      <span className="font-bold">{customerOrders.length}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-muted-foreground">Toplam Harcama:</span>
+                      <span className="font-bold">{totalSpent.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                    </div>
+                  </div>
+
+                  {customerOrders.map((order) => {
+                    const statusColors: Record<string, string> = {
+                      yeni: "#2196F3", hazirlaniyor: "#FF9800", tamamlandi: "#4CAF50", iptal: "#F44336",
+                    };
+                    const statusLabels: Record<string, string> = {
+                      yeni: "Yeni", hazirlaniyor: "Hazırlanıyor", tamamlandi: "Tamamlandı", iptal: "İptal",
+                    };
+                    return (
+                      <Card key={order.id} data-testid={`card-history-order-${order.id}`}>
+                        <CardContent className="p-3 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="font-semibold text-sm">#{order.id}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-muted-foreground">
+                                {new Date(order.createdAt).toLocaleDateString("tr-TR")} {new Date(order.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                              </span>
+                              <Badge
+                                className="no-default-hover-elevate no-default-active-elevate text-xs"
+                                style={{ backgroundColor: statusColors[order.status] || "#9E9E9E", color: "#fff" }}
+                              >
+                                {statusLabels[order.status] || order.status}
+                              </Badge>
+                            </div>
+                          </div>
+                          <div className="space-y-0.5">
+                            {order.items.map((item, idx) => (
+                              <div key={idx} className="flex items-center justify-between text-xs">
+                                <span>{item.quantity}x {item.name}</span>
+                                <span className="text-muted-foreground">{(item.price * item.quantity).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="flex items-center justify-between text-sm font-bold border-t pt-1">
+                            <span>Toplam:</span>
+                            <span>{order.grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            Ödeme: {order.paymentMethod}
+                            {order.installmentMonths && order.installmentMonths > 0 && ` — ${order.installmentMonths} Taksit`}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </DialogContent>
+        </Dialog>
 
         <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">

@@ -128,7 +128,7 @@ export default function Checkout() {
         img: product.img || undefined,
       }));
 
-      await apiRequest("POST", "/api/orders", {
+      const orderPayload: Record<string, unknown> = {
         items: orderItems,
         subtotal,
         shipping,
@@ -138,7 +138,21 @@ export default function Checkout() {
         customerName: customerName.trim() || undefined,
         customerPhone: customerPhone.trim() || undefined,
         customerAddress: customerAddress.trim() || undefined,
-      });
+      };
+
+      if ((pay.id === "taksit" || pay.id === "pos") && selectedInstallment) {
+        const instRate = installmentRates.find((r) => r.months === selectedInstallment);
+        if (instRate) {
+          const instTotal = grandTotal * (1 + instRate.rate / 100);
+          const instMonthly = instTotal / instRate.months;
+          orderPayload.installmentMonths = instRate.months;
+          orderPayload.installmentRate = instRate.rate;
+          orderPayload.installmentMonthly = Math.round(instMonthly * 100) / 100;
+          orderPayload.installmentTotal = Math.round(instTotal * 100) / 100;
+        }
+      }
+
+      await apiRequest("POST", "/api/orders", orderPayload);
 
       let msg = `*JetGo Sipariş*\n\n`;
       if (customerName.trim()) msg += `*Ad Soyad:* ${customerName.trim()}\n`;
