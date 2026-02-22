@@ -457,20 +457,30 @@ export default function Checkout() {
                         </div>
                       </RadioGroup>
 
-                      {selectedInstallment && (
-                        <div className="mt-2 p-2 rounded-md bg-primary/5 text-center" data-testid="text-selected-installment">
-                          <p className="text-sm font-medium text-primary">
-                            {selectedInstallment} taksit seçildi — Aylık{" "}
-                            {(() => {
-                              const rate = installmentRates.find((r) => r.months === selectedInstallment);
-                              if (!rate) return "";
-                              const total = grandTotal * (1 + rate.rate / 100);
-                              return (total / rate.months).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-                            })()}{" "}
-                            TL
-                          </p>
-                        </div>
-                      )}
+                      {selectedInstallment && (() => {
+                        const rate = installmentRates.find((r) => r.months === selectedInstallment);
+                        if (!rate) return null;
+                        const totalCharged = grandTotal * (1 + rate.rate / 100);
+                        const monthlyPayment = totalCharged / rate.months;
+                        return (
+                          <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20" data-testid="text-selected-installment">
+                            <div className="grid grid-cols-3 gap-2 text-center">
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-0.5">Taksit Sayısı</p>
+                                <p className="text-base font-bold text-primary">{selectedInstallment}</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-0.5">Aylık Taksit</p>
+                                <p className="text-base font-bold text-primary">{monthlyPayment.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-muted-foreground mb-0.5">Karttan Çekilecek</p>
+                                <p className="text-base font-bold text-primary">{totalCharged.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </motion.div>
                   )}
                 </CardContent>
