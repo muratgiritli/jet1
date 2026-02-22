@@ -959,7 +959,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       </div>
                       <div className="mt-2 text-sm text-muted-foreground">
                         {order.items.length} ürün · {order.paymentMethod}
-                        {order.installmentMonths && order.installmentMonths > 0 && ` · ${order.installmentMonths} Taksit`}
+                        {order.installmentMonths && order.installmentMonths > 0 && (
+                          <span> · <span className="font-medium text-blue-600 dark:text-blue-400">{order.installmentMonths} Taksit — Aylık {order.installmentMonthly?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL — Karttan {order.installmentTotal?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span></span>
+                        )}
                       </div>
                     </CardContent>
                   </Card>
@@ -1159,20 +1161,24 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </div>
 
                   {order.installmentMonths && order.installmentMonths > 0 && (
-                    <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 space-y-1" data-testid="section-detail-installment">
-                      <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2">
+                    <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4" data-testid="section-detail-installment">
+                      <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-700 dark:text-blue-400 mb-3">
                         <CreditCard className="w-4 h-4" />
-                        Taksit Bilgisi
+                        Taksit Detayları
                       </div>
-                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
-                        <span className="text-muted-foreground">Taksit Sayısı:</span>
-                        <span className="font-medium">{order.installmentMonths} Taksit</span>
-                        <span className="text-muted-foreground">Vade Farkı Oranı:</span>
-                        <span className="font-medium">%{order.installmentRate?.toFixed(2)}</span>
-                        <span className="text-muted-foreground">Aylık Ödeme:</span>
-                        <span className="font-medium">{order.installmentMonthly?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
-                        <span className="text-muted-foreground">Taksitli Toplam:</span>
-                        <span className="font-bold">{order.installmentTotal?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                      <div className="grid grid-cols-3 gap-3 text-center">
+                        <div className="bg-white dark:bg-background rounded-lg p-2.5 border">
+                          <p className="text-xs text-muted-foreground mb-0.5">Taksit Sayısı</p>
+                          <p className="text-lg font-bold text-blue-700 dark:text-blue-400">{order.installmentMonths}</p>
+                        </div>
+                        <div className="bg-white dark:bg-background rounded-lg p-2.5 border">
+                          <p className="text-xs text-muted-foreground mb-0.5">Aylık Taksit</p>
+                          <p className="text-lg font-bold text-blue-700 dark:text-blue-400">{order.installmentMonthly?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</p>
+                        </div>
+                        <div className="bg-white dark:bg-background rounded-lg p-2.5 border">
+                          <p className="text-xs text-muted-foreground mb-0.5">Karttan Çekilecek</p>
+                          <p className="text-lg font-bold text-blue-700 dark:text-blue-400">{order.installmentTotal?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</p>
+                        </div>
                       </div>
                     </div>
                   )}
