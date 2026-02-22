@@ -409,9 +409,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [bulkPriceDialogOpen, setBulkPriceDialogOpen] = useState(false);
   const [bulkPricePercent, setBulkPricePercent] = useState("");
   const [orderTab, setOrderTab] = useState<"gelen" | "giden" | "bekleyen">("gelen");
-  const [orderDateFilter, setOrderDateFilter] = useState("");
+  const [orderDateFrom, setOrderDateFrom] = useState("");
+  const [orderDateTo, setOrderDateTo] = useState("");
   const [phoneHistoryDialog, setPhoneHistoryDialog] = useState<string | null>(null);
   const [orderSearchPhone, setOrderSearchPhone] = useState("");
+  const [orderDetailDialog, setOrderDetailDialog] = useState<Order | null>(null);
 
   const bulkPriceUpdateMutation = useMutation({
     mutationFn: async ({ productIds, percentage }: { productIds: number[]; percentage: number }) => {
@@ -793,17 +795,27 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 );
               })}
             </div>
-            <div className="flex items-center gap-2 ml-auto">
+            <div className="flex items-center gap-2 ml-auto flex-wrap">
               <Calendar className="w-4 h-4 text-muted-foreground" />
               <Input
                 type="date"
-                value={orderDateFilter}
-                onChange={(e) => setOrderDateFilter(e.target.value)}
+                value={orderDateFrom}
+                onChange={(e) => setOrderDateFrom(e.target.value)}
                 className="w-auto"
-                data-testid="input-order-date-filter"
+                placeholder="Başlangıç"
+                data-testid="input-order-date-from"
               />
-              {orderDateFilter && (
-                <button onClick={() => setOrderDateFilter("")} className="text-muted-foreground hover:text-foreground" data-testid="btn-clear-date-filter">
+              <span className="text-muted-foreground text-sm">—</span>
+              <Input
+                type="date"
+                value={orderDateTo}
+                onChange={(e) => setOrderDateTo(e.target.value)}
+                className="w-auto"
+                placeholder="Bitiş"
+                data-testid="input-order-date-to"
+              />
+              {(orderDateFrom || orderDateTo) && (
+                <button onClick={() => { setOrderDateFrom(""); setOrderDateTo(""); }} className="text-muted-foreground hover:text-foreground" data-testid="btn-clear-date-filter">
                   <X className="w-4 h-4" />
                 </button>
               )}
@@ -839,10 +851,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             const filteredOrders = allOrders
               .filter((o) => tabStatuses[orderTab]?.includes(o.status))
               .filter((o) => {
-                if (!orderDateFilter) return true;
+                if (!orderDateFrom && !orderDateTo) return true;
                 const d = new Date(o.createdAt);
                 const turkeyDate = d.toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" });
-                return turkeyDate === orderDateFilter;
+                if (orderDateFrom && turkeyDate < orderDateFrom) return false;
+                if (orderDateTo && turkeyDate > orderDateTo) return false;
+                return true;
               })
               .filter((o) => {
                 if (!orderSearchPhone) return true;
@@ -882,143 +896,70 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <div className="space-y-3" data-testid="list-orders">
                 <div className="text-sm text-muted-foreground mb-2" data-testid="text-order-result-count">
                   {filteredOrders.length} sipariş gösteriliyor
-                  {orderDateFilter && ` — ${new Date(orderDateFilter).toLocaleDateString("tr-TR")}`}
+                  {orderDateFrom && ` — ${new Date(orderDateFrom + "T00:00:00").toLocaleDateString("tr-TR")}'den`}
+                  {orderDateTo && ` ${new Date(orderDateTo + "T00:00:00").toLocaleDateString("tr-TR")}'e kadar`}
                 </div>
                 {filteredOrders.map((order) => (
                   <Card key={order.id} data-testid={`card-order-${order.id}`}>
-                    <CardContent className="p-4 space-y-3">
+                    <CardContent className="p-4">
                       <div className="flex items-center justify-between gap-3 flex-wrap">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-bold text-base" data-testid={`text-order-id-${order.id}`}>
+                        <div className="flex items-center gap-3 flex-wrap">
+                          <button
+                            onClick={() => setOrderDetailDialog(order)}
+                            className="font-bold text-base text-primary hover:underline cursor-pointer"
+                            data-testid={`btn-order-detail-${order.id}`}
+                          >
                             #{order.id}
-                          </span>
+                          </button>
                           <div className="flex items-center gap-1 text-sm text-muted-foreground">
                             <Clock className="w-3.5 h-3.5" />
                             <span data-testid={`text-order-date-${order.id}`}>
                               {new Date(order.createdAt).toLocaleDateString("tr-TR")} {new Date(order.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
                             </span>
                           </div>
-                        </div>
-                        <Badge
-                          className="no-default-hover-elevate no-default-active-elevate"
-                          style={{ backgroundColor: statusColors[order.status] || "#9E9E9E", color: "#fff" }}
-                          data-testid={`badge-order-status-${order.id}`}
-                        >
-                          {statusLabels[order.status] || order.status}
-                        </Badge>
-                      </div>
-
-                      {(order.customerName || order.customerPhone || order.customerAddress) && (
-                        <div className="bg-muted/30 rounded-lg p-3 space-y-1.5" data-testid={`section-customer-info-${order.id}`}>
                           {order.customerName && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                              <span className="font-medium" data-testid={`text-order-customer-name-${order.id}`}>{order.customerName}</span>
-                            </div>
+                            <span className="text-sm font-medium" data-testid={`text-order-customer-name-${order.id}`}>{order.customerName}</span>
                           )}
                           {order.customerPhone && (
-                            <div className="flex items-center gap-2 text-sm">
-                              <Phone className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                              <button
-                                onClick={() => setPhoneHistoryDialog(order.customerPhone)}
-                                className="font-medium text-primary hover:underline cursor-pointer"
-                                data-testid={`btn-phone-history-${order.id}`}
-                              >
-                                {order.customerPhone}
-                              </button>
-                            </div>
-                          )}
-                          {order.customerAddress && (
-                            <div className="flex items-start gap-2 text-sm">
-                              <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
-                              <span data-testid={`text-order-address-${order.id}`}>{order.customerAddress}</span>
-                            </div>
+                            <button
+                              onClick={() => setPhoneHistoryDialog(order.customerPhone)}
+                              className="text-sm text-primary hover:underline cursor-pointer"
+                              data-testid={`btn-phone-history-${order.id}`}
+                            >
+                              {order.customerPhone}
+                            </button>
                           )}
                         </div>
-                      )}
-
-                      <div className="space-y-1" data-testid={`list-order-items-${order.id}`}>
-                        {order.items.map((item, idx) => (
-                          <div key={idx} className="flex items-center justify-between gap-2 text-sm">
-                            <span data-testid={`text-order-item-${order.id}-${idx}`}>
-                              {item.quantity} x {item.name}
-                            </span>
-                            <span className="text-muted-foreground font-medium" data-testid={`text-order-item-total-${order.id}-${idx}`}>
-                              {(item.price * item.quantity).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-
-                      <div className="border-t pt-2 space-y-1 text-sm">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="flex items-center gap-1.5 text-muted-foreground">
-                            <CreditCard className="w-3.5 h-3.5" />
-                            Ödeme:
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold" data-testid={`text-order-grand-total-${order.id}`}>
+                            {order.grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                           </span>
-                          <span className="font-medium" data-testid={`text-order-payment-${order.id}`}>{order.paymentMethod}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-muted-foreground">Ara Toplam:</span>
-                          <span data-testid={`text-order-subtotal-${order.id}`}>{order.subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-2">
-                          <span className="text-muted-foreground">Kargo:</span>
-                          <span data-testid={`text-order-shipping-${order.id}`}>{order.shipping === 0 ? "Ücretsiz" : `${order.shipping.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`}</span>
-                        </div>
-                        {order.discount > 0 && (
-                          <div className="flex items-center justify-between gap-2 text-green-600">
-                            <span>İndirim:</span>
-                            <span data-testid={`text-order-discount-${order.id}`}>-{order.discount.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
-                          </div>
-                        )}
-                        <div className="flex items-center justify-between gap-2 font-bold text-base border-t pt-1 mt-1">
-                          <span>Toplam:</span>
-                          <span data-testid={`text-order-grand-total-${order.id}`}>{order.grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                          <Badge
+                            className="no-default-hover-elevate no-default-active-elevate"
+                            style={{ backgroundColor: statusColors[order.status] || "#9E9E9E", color: "#fff" }}
+                            data-testid={`badge-order-status-${order.id}`}
+                          >
+                            {statusLabels[order.status] || order.status}
+                          </Badge>
+                          <Select
+                            value={order.status}
+                            onValueChange={(value) => updateOrderStatusMutation.mutate({ id: order.id, status: value })}
+                          >
+                            <SelectTrigger className="w-[150px] h-8 text-sm" data-testid={`select-order-status-${order.id}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="yeni">Yeni</SelectItem>
+                              <SelectItem value="hazirlaniyor">Hazırlanıyor</SelectItem>
+                              <SelectItem value="tamamlandi">Tamamlandı</SelectItem>
+                              <SelectItem value="iptal">İptal</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </div>
                       </div>
-
-                      {order.installmentMonths && order.installmentMonths > 0 && (
-                        <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 space-y-1" data-testid={`section-installment-${order.id}`}>
-                          <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-700 dark:text-blue-400 mb-1">
-                            <CreditCard className="w-4 h-4" />
-                            Taksit Bilgisi
-                          </div>
-                          <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-sm">
-                            <span className="text-muted-foreground">Vade:</span>
-                            <span className="font-medium" data-testid={`text-order-inst-months-${order.id}`}>{order.installmentMonths} Taksit</span>
-                            <span className="text-muted-foreground">Vade Farkı:</span>
-                            <span className="font-medium" data-testid={`text-order-inst-rate-${order.id}`}>%{order.installmentRate?.toFixed(2)}</span>
-                            <span className="text-muted-foreground">Aylık Ödeme:</span>
-                            <span className="font-medium" data-testid={`text-order-inst-monthly-${order.id}`}>{order.installmentMonthly?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
-                            <span className="text-muted-foreground">Taksitli Toplam:</span>
-                            <span className="font-bold" data-testid={`text-order-inst-total-${order.id}`}>{order.installmentTotal?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
-                          </div>
-                        </div>
-                      )}
-
-                      {order.customerNote && (
-                        <div className="text-sm bg-yellow-50 dark:bg-yellow-950/30 rounded-lg p-3" data-testid={`text-order-note-${order.id}`}>
-                          <span className="font-medium">Not: </span>{order.customerNote}
-                        </div>
-                      )}
-
-                      <div className="border-t pt-2 flex items-center justify-between gap-3 flex-wrap">
-                        <span className="text-sm text-muted-foreground">Durum Değiştir:</span>
-                        <Select
-                          value={order.status}
-                          onValueChange={(value) => updateOrderStatusMutation.mutate({ id: order.id, status: value })}
-                        >
-                          <SelectTrigger className="w-[180px]" data-testid={`select-order-status-${order.id}`}>
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="yeni" data-testid={`option-status-yeni-${order.id}`}>Yeni</SelectItem>
-                            <SelectItem value="hazirlaniyor" data-testid={`option-status-hazirlaniyor-${order.id}`}>Hazırlanıyor</SelectItem>
-                            <SelectItem value="tamamlandi" data-testid={`option-status-tamamlandi-${order.id}`}>Tamamlandı</SelectItem>
-                            <SelectItem value="iptal" data-testid={`option-status-iptal-${order.id}`}>İptal</SelectItem>
-                          </SelectContent>
-                        </Select>
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        {order.items.length} ürün · {order.paymentMethod}
+                        {order.installmentMonths && order.installmentMonths > 0 && ` · ${order.installmentMonths} Taksit`}
                       </div>
                     </CardContent>
                   </Card>
@@ -1110,6 +1051,158 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       </Card>
                     );
                   })}
+                </div>
+              );
+            })()}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!orderDetailDialog} onOpenChange={(open) => { if (!open) setOrderDetailDialog(null); }}>
+          <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <ShoppingBag className="w-5 h-5" />
+                Sipariş Detayı #{orderDetailDialog?.id}
+              </DialogTitle>
+            </DialogHeader>
+            {orderDetailDialog && (() => {
+              const order = orderDetailDialog;
+              const statusColors: Record<string, string> = {
+                yeni: "#2196F3", hazirlaniyor: "#FF9800", tamamlandi: "#4CAF50", iptal: "#F44336",
+              };
+              const statusLabels: Record<string, string> = {
+                yeni: "Yeni", hazirlaniyor: "Hazırlanıyor", tamamlandi: "Tamamlandı", iptal: "İptal",
+              };
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                      <Clock className="w-4 h-4" />
+                      {new Date(order.createdAt).toLocaleDateString("tr-TR")} {new Date(order.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                    </div>
+                    <Badge
+                      className="no-default-hover-elevate no-default-active-elevate"
+                      style={{ backgroundColor: statusColors[order.status] || "#9E9E9E", color: "#fff" }}
+                    >
+                      {statusLabels[order.status] || order.status}
+                    </Badge>
+                  </div>
+
+                  {(order.customerName || order.customerPhone || order.customerAddress) && (
+                    <div className="bg-muted/30 rounded-lg p-3 space-y-1.5" data-testid="section-detail-customer">
+                      <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Müşteri Bilgileri</div>
+                      {order.customerName && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <span className="font-medium">{order.customerName}</span>
+                        </div>
+                      )}
+                      {order.customerPhone && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                          <button
+                            onClick={() => { setOrderDetailDialog(null); setTimeout(() => setPhoneHistoryDialog(order.customerPhone), 200); }}
+                            className="font-medium text-primary hover:underline cursor-pointer"
+                          >
+                            {order.customerPhone}
+                          </button>
+                        </div>
+                      )}
+                      {order.customerAddress && (
+                        <div className="flex items-start gap-2 text-sm">
+                          <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                          <span>{order.customerAddress}</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  <div data-testid="section-detail-items">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Ürünler</div>
+                    <div className="space-y-1.5">
+                      {order.items.map((item, idx) => (
+                        <div key={idx} className="flex items-center justify-between gap-2 text-sm">
+                          <span>{item.quantity} x {item.name}</span>
+                          <span className="font-medium">{(item.price * item.quantity).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-3 space-y-1.5" data-testid="section-detail-payment">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Ödeme Detayları</div>
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="flex items-center gap-1.5 text-muted-foreground">
+                        <CreditCard className="w-3.5 h-3.5" />
+                        Ödeme Yöntemi:
+                      </span>
+                      <span className="font-medium">{order.paymentMethod}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="text-muted-foreground">Ara Toplam:</span>
+                      <span>{order.subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-sm">
+                      <span className="text-muted-foreground">Kargo:</span>
+                      <span>{order.shipping === 0 ? "Ücretsiz" : `${order.shipping.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`}</span>
+                    </div>
+                    {order.discount > 0 && (
+                      <div className="flex items-center justify-between gap-2 text-sm text-green-600">
+                        <span>İndirim:</span>
+                        <span>-{order.discount.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between gap-2 font-bold text-base border-t pt-2 mt-2">
+                      <span>Genel Toplam:</span>
+                      <span>{order.grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                    </div>
+                  </div>
+
+                  {order.installmentMonths && order.installmentMonths > 0 && (
+                    <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3 space-y-1" data-testid="section-detail-installment">
+                      <div className="flex items-center gap-1.5 text-sm font-semibold text-blue-700 dark:text-blue-400 mb-2">
+                        <CreditCard className="w-4 h-4" />
+                        Taksit Bilgisi
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+                        <span className="text-muted-foreground">Taksit Sayısı:</span>
+                        <span className="font-medium">{order.installmentMonths} Taksit</span>
+                        <span className="text-muted-foreground">Vade Farkı Oranı:</span>
+                        <span className="font-medium">%{order.installmentRate?.toFixed(2)}</span>
+                        <span className="text-muted-foreground">Aylık Ödeme:</span>
+                        <span className="font-medium">{order.installmentMonthly?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                        <span className="text-muted-foreground">Taksitli Toplam:</span>
+                        <span className="font-bold">{order.installmentTotal?.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {order.customerNote && (
+                    <div className="text-sm bg-yellow-50 dark:bg-yellow-950/30 rounded-lg p-3">
+                      <span className="font-medium">Müşteri Notu: </span>{order.customerNote}
+                    </div>
+                  )}
+
+                  <div className="border-t pt-3 flex items-center justify-between gap-3">
+                    <span className="text-sm text-muted-foreground">Durum Değiştir:</span>
+                    <Select
+                      value={order.status}
+                      onValueChange={(value) => {
+                        updateOrderStatusMutation.mutate({ id: order.id, status: value });
+                        setOrderDetailDialog({ ...order, status: value });
+                      }}
+                    >
+                      <SelectTrigger className="w-[180px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="yeni">Yeni</SelectItem>
+                        <SelectItem value="hazirlaniyor">Hazırlanıyor</SelectItem>
+                        <SelectItem value="tamamlandi">Tamamlandı</SelectItem>
+                        <SelectItem value="iptal">İptal</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               );
             })()}
