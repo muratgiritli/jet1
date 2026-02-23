@@ -15,6 +15,7 @@ import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
 import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
 import { CATEGORIES, productUrl } from "@/lib/data";
+import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 
 type ProductDetailData = {
   product: Product;
@@ -268,15 +269,12 @@ export default function ProductDetailPage() {
   if (isLoading && isNumericId) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
-        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
+        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
               <ArrowLeft />
             </Button>
-            <h1 className="text-xl font-extrabold tracking-tight" data-testid="text-logo">
-              <span style={{ color: "#ffffff" }}>JET</span>
-              <span style={{ color: "#1a7a1a" }}>55</span>
-            </h1>
+            <img src={jet55Logo} alt="JET55" className="h-8 object-contain" data-testid="img-brand-logo" />
           </div>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -289,15 +287,12 @@ export default function ProductDetailPage() {
   if (!resolvedData) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
-        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
+        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
               <ArrowLeft />
             </Button>
-            <h1 className="text-xl font-extrabold tracking-tight" data-testid="text-logo">
-              <span style={{ color: "#ffffff" }}>JET</span>
-              <span style={{ color: "#1a7a1a" }}>55</span>
-            </h1>
+            <img src={jet55Logo} alt="JET55" className="h-8 object-contain" data-testid="img-brand-logo" />
           </div>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -335,16 +330,13 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
+      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
             <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
               <ArrowLeft />
             </Button>
-            <h1 className="text-xl font-extrabold tracking-tight" data-testid="text-logo">
-              <span style={{ color: "#ffffff" }}>JET</span>
-              <span style={{ color: "#1a7a1a" }}>55</span>
-            </h1>
+            <img src={jet55Logo} alt="JET55" className="h-8 object-contain" data-testid="img-brand-logo" />
           </div>
           {itemCount > 0 && (
             <Link href="/odeme">
@@ -612,7 +604,7 @@ export default function ProductDetailPage() {
             <div className="space-y-6">
               {alsoBoughtCategories.map((cat, catIdx) => (
                 <div key={cat.title} data-testid={`section-also-bought-${cat.title}`}>
-                  <h4 className="text-sm font-bold text-white px-3 py-1.5 rounded-t-lg" style={{ backgroundColor: "#2ecc40" }} data-testid={`text-cat-title-${cat.title}`}>
+                  <h4 className="text-sm font-bold text-white px-3 py-1.5 rounded-t-lg" style={{ backgroundColor: "#6B3480" }} data-testid={`text-cat-title-${cat.title}`}>
                     {cat.title}
                   </h4>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
@@ -651,7 +643,7 @@ export default function ProductDetailPage() {
             <div className="space-y-6">
               {crossSellSections.map((section) => (
                 <div key={section.id} data-testid={`section-cross-sell-${section.id}`}>
-                  <h4 className="text-sm font-bold text-white px-3 py-1.5 rounded-t-lg" style={{ backgroundColor: "#2ecc40" }} data-testid={`text-section-title-${section.id}`}>
+                  <h4 className="text-sm font-bold text-white px-3 py-1.5 rounded-t-lg" style={{ backgroundColor: "#6B3480" }} data-testid={`text-section-title-${section.id}`}>
                     {section.title}
                   </h4>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">

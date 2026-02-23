@@ -12,6 +12,7 @@ import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
 import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
 import { CATEGORIES, productUrl } from "@/lib/data";
+import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 
 interface SubcategoryInfo {
   name: string;
@@ -458,7 +459,7 @@ export default function BrandProductsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
-        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
+        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
             <Link href={`/kategori/${animal}/${subcategory}`}>
               <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
@@ -466,10 +467,7 @@ export default function BrandProductsPage() {
               </Button>
             </Link>
             <Link href="/">
-              <h1 className="text-xl font-extrabold tracking-tight cursor-pointer" data-testid="text-brand-logo">
-                <span style={{ color: "#ffffff" }}>JET</span>
-                <span style={{ color: "#1a7a1a" }}>55</span>
-              </h1>
+              <img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" />
             </Link>
           </div>
         </header>
@@ -483,7 +481,7 @@ export default function BrandProductsPage() {
   if (!data) {
     return (
       <div className="min-h-screen flex flex-col bg-white">
-        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
+        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
             <Link href={`/kategori/${animal}/${subcategory}`}>
               <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
@@ -491,10 +489,7 @@ export default function BrandProductsPage() {
               </Button>
             </Link>
             <Link href="/">
-              <h1 className="text-xl font-extrabold tracking-tight cursor-pointer" data-testid="text-brand-logo">
-                <span style={{ color: "#ffffff" }}>JET</span>
-                <span style={{ color: "#1a7a1a" }}>55</span>
-              </h1>
+              <img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" />
             </Link>
           </div>
         </header>
@@ -507,7 +502,7 @@ export default function BrandProductsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
+      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
             <Link href={`/kategori/${animal}/${subcategory}`}>
@@ -516,10 +511,7 @@ export default function BrandProductsPage() {
               </Button>
             </Link>
             <Link href="/">
-              <h1 className="text-xl font-extrabold tracking-tight cursor-pointer" data-testid="text-brand-logo">
-                <span style={{ color: "#ffffff" }}>JET</span>
-                <span style={{ color: "#1a7a1a" }}>55</span>
-              </h1>
+              <img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" />
             </Link>
           </div>
           {itemCount > 0 && (

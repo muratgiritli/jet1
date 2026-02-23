@@ -5,6 +5,7 @@ import FloatingCartBar from "@/components/FloatingCartBar";
 import SearchBar from "@/components/SearchBar";
 
 import heroBanner from "@assets/jet55logo_1771887434795.png";
+import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 import catDog from "@/assets/images/cat-dog.png";
 import catCat from "@/assets/images/cat-cat.png";
 import catBird from "@/assets/images/cat-bird.png";
@@ -34,13 +35,10 @@ const FEATURES = [
 export default function Landing() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#2ecc40" }}>
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-center">
+      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
+        <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center">
           <Link href="/">
-            <h1 className="text-3xl font-extrabold tracking-tight cursor-pointer" data-testid="text-brand-logo">
-              <span style={{ color: "#ffffff" }}>JET</span>
-              <span style={{ color: "#1a7a1a" }}>55</span>
-            </h1>
+            <img src={jet55Logo} alt="JET55" className="h-10 object-contain cursor-pointer" data-testid="img-brand-logo" />
           </Link>
         </div>
       </header>
