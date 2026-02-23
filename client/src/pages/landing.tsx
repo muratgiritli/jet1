@@ -4,7 +4,7 @@ import { Truck, Phone, CreditCard, MapPin } from "lucide-react";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import SearchBar from "@/components/SearchBar";
 
-import heroBanner from "@assets/jet55logo_1771887434795.png";
+import heroBanner from "@assets/Ekran_görüntüsü_2026-02-24_020708_1771888229478.png";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 import catDog from "@/assets/images/cat-dog.png";
 import catCat from "@/assets/images/cat-cat.png";
