@@ -39,7 +39,7 @@ export default function Landing() {
           <Link href="/">
             <h1 className="text-3xl font-extrabold tracking-tight cursor-pointer" data-testid="text-brand-logo">
               <span style={{ color: "#ffffff" }}>JET</span>
-              <span style={{ color: "#1a7a1a" }}>GO</span>
+              <span style={{ color: "#1a7a1a" }}>55</span>
             </h1>
           </Link>
         </div>
@@ -77,7 +77,7 @@ export default function Landing() {
             <div className="relative w-full cursor-pointer overflow-hidden" data-testid="banner-hero">
               <img
                 src={heroBanner}
-                alt="JetGo - Sen İste Jet İle Gelsin"
+                alt="JET55 - Sen İste Jet İle Gelsin"
                 className="w-full h-auto object-contain"
                 data-testid="img-hero-banner"
               />

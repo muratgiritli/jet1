@@ -154,7 +154,7 @@ export default function Checkout() {
 
       await apiRequest("POST", "/api/orders", orderPayload);
 
-      let msg = `*JetGo Sipariş*\n\n`;
+      let msg = `*JET55 Sipariş*\n\n`;
       if (customerName.trim()) msg += `*Ad Soyad:* ${customerName.trim()}\n`;
       if (customerPhone.trim()) msg += `*Telefon:* ${customerPhone.trim()}\n`;
       if (customerAddress.trim()) msg += `*Adres:* ${customerAddress.trim()}\n`;

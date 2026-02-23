@@ -750,7 +750,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           <div className="flex items-center gap-3">
             <h1 className="text-xl font-extrabold tracking-tight" data-testid="text-admin-header">
               <span style={{ color: "#2ecc40" }}>JET</span>
-              <span className="text-foreground">GO</span>
+              <span className="text-foreground">55</span>
               <span className="text-sm font-normal text-muted-foreground ml-2">Admin</span>
             </h1>
           </div>

@@ -239,10 +239,10 @@ export default function ProductDetailPage() {
     if (!resolvedData) return;
     const p = resolvedData.product;
     const catName = resolvedData.category?.brandName || "";
-    const title = `${p.name} - ${catName ? catName + " | " : ""}JetGo Pet Shop`;
+    const title = `${p.name} - ${catName ? catName + " | " : ""}JET55 Pet Shop`;
     document.title = title;
 
-    const desc = `${p.name} en uygun fiyatla JetGo Pet Shop'ta. ${Math.round(p.price)} TL${p.originalPrice ? ` (eski fiyat ${Math.round(p.originalPrice)} TL)` : ""}. Hızlı sipariş ve kapıda ödeme.`;
+    const desc = `${p.name} en uygun fiyatla JET55 Pet Shop'ta. ${Math.round(p.price)} TL${p.originalPrice ? ` (eski fiyat ${Math.round(p.originalPrice)} TL)` : ""}. Hızlı sipariş ve kapıda ödeme.`;
 
     let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
     if (!meta) { meta = document.createElement("meta"); meta.name = "description"; document.head.appendChild(meta); }
@@ -262,7 +262,7 @@ export default function ProductDetailPage() {
       ogImg.content = p.img;
     }
 
-    return () => { document.title = "JetGo Pet Shop"; };
+    return () => { document.title = "JET55 Pet Shop"; };
   }, [resolvedData]);
 
   if (isLoading && isNumericId) {
@@ -275,7 +275,7 @@ export default function ProductDetailPage() {
             </Button>
             <h1 className="text-xl font-extrabold tracking-tight" data-testid="text-logo">
               <span style={{ color: "#ffffff" }}>JET</span>
-              <span style={{ color: "#1a7a1a" }}>GO</span>
+              <span style={{ color: "#1a7a1a" }}>55</span>
             </h1>
           </div>
         </header>
@@ -296,7 +296,7 @@ export default function ProductDetailPage() {
             </Button>
             <h1 className="text-xl font-extrabold tracking-tight" data-testid="text-logo">
               <span style={{ color: "#ffffff" }}>JET</span>
-              <span style={{ color: "#1a7a1a" }}>GO</span>
+              <span style={{ color: "#1a7a1a" }}>55</span>
             </h1>
           </div>
         </header>
@@ -343,7 +343,7 @@ export default function ProductDetailPage() {
             </Button>
             <h1 className="text-xl font-extrabold tracking-tight" data-testid="text-logo">
               <span style={{ color: "#ffffff" }}>JET</span>
-              <span style={{ color: "#1a7a1a" }}>GO</span>
+              <span style={{ color: "#1a7a1a" }}>55</span>
             </h1>
           </div>
           {itemCount > 0 && (

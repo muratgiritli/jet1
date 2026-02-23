@@ -132,7 +132,7 @@ export default function AcikMamaPage() {
             <Link href="/">
               <h1 className="text-xl font-extrabold tracking-tight cursor-pointer" data-testid="text-brand-logo">
                 <span style={{ color: "#ffffff" }}>JET</span>
-                <span style={{ color: "#1a7a1a" }}>GO</span>
+                <span style={{ color: "#1a7a1a" }}>55</span>
               </h1>
             </Link>
           </div>

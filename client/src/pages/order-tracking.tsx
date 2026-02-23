@@ -56,7 +56,7 @@ export default function OrderTrackingPage() {
         <div className="max-w-2xl mx-auto px-4 py-4 flex items-center justify-between gap-3 flex-wrap">
           <Link href="/">
             <span className="text-xl font-extrabold text-white tracking-wider cursor-pointer" data-testid="link-logo">
-              JETGO
+              JET55
             </span>
           </Link>
           <h1 className="text-sm font-bold text-white/90" data-testid="text-page-title">
