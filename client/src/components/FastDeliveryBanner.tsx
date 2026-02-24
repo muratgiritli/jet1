@@ -5,7 +5,6 @@ const MAMA_SUBCATEGORIES = [
   "mama-markalari",
   "acik-mama",
   "yas-mama",
-  "uygun-cuval",
   "kedi-mamasi",
   "kedi-konserve",
 ];

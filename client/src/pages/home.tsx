@@ -20,7 +20,6 @@ import BackNavigation from "@/components/BackNavigation";
 
 const SLUG_TO_CATEGORY: Record<string, string> = {
   "kedi-bakim-saglik": "BAKIM VE SAĞLIK",
-  "uygun-cuval": "ÇUVAL MAMA",
   "kedi-tuvaleti": "KUM",
   "acik-mama": "KUM",
   "tuvalet-malzemeleri": "KUM",
@@ -132,7 +131,6 @@ export default function Home() {
   const defaultTab = (mappedCategory && CATEGORIES.find(c => c.title === mappedCategory)) ? mappedCategory : (CATEGORIES[0]?.title || "");
 
   const directSlugs: Record<string, { title: string; heading: string; subtitle: string; dbSlug?: string }> = {
-    "uygun-cuval": { title: "ÇUVAL MAMA", heading: "Uygun Çuval Mamalar", subtitle: "Ekonomik Seçenekler" },
     "kedi-odulu": { title: "ÖDÜL", heading: "Kedi Ödülü", subtitle: "Ödül & Atıştırmalık" },
     "kedi-bakim-saglik": { title: "BAKIM VE SAĞLIK", heading: "Kedi Bakım & Sağlık", subtitle: "Bakım ve Sağlık Ürünleri", dbSlug: "bakim-saglik" },
   };

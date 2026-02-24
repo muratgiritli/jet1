@@ -228,7 +228,6 @@ export const CATEGORIES: Category[] = [
       { id: "ac27", name: "Koltuk Tüy toplayıcı", price: 150, img: "https://static.wixstatic.com/media/63853e_0d1124e5986d46ab80c8a10de5f27ec8~mv2.webp" },
     ],
   },
-  },
 ];
 
 export const PAYMENT_OPTIONS: PaymentOption[] = [

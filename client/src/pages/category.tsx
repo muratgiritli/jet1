@@ -33,7 +33,6 @@ const ANIMAL_CATEGORIES: Record<string, AnimalCategory> = {
       { name: "Ödül Kemik\nÇeşitleri", slug: "odul-kemik", color: "#F44336", directLink: "/siparis/kopek/odul-kemik/odul-kemik" },
       { name: "Taşıma ve\nKulübeler", slug: "tasima-kulube", color: "#37474F", directLink: "/siparis/kopek/tasima-kulube/tasima-kulube" },
       { name: "Bakım ve\nSağlık", slug: "bakim-saglik", color: "#4CAF50", directLink: "/siparis/kopek/bakim-saglik/bakim-saglik" },
-      { name: "Uygun Çuval\nMamalar", slug: "uygun-cuval", color: "#1A237E", directLink: "/siparis/kopek/uygun-cuval/uygun-cuval" },
     ],
   },
   kedi: {
@@ -50,7 +49,6 @@ const ANIMAL_CATEGORIES: Record<string, AnimalCategory> = {
       { name: "Kedi\nTaşıma", slug: "kedi-tasima", color: "#37474F", directLink: "/siparis/kedi/kedi-tasima/kedi-tasima" },
       { name: "Kedi\nTuvaleti", slug: "kedi-tuvaleti", color: "#795548", directLink: "/siparis/kedi/kedi-tuvaleti/kedi-tuvaleti" },
       { name: "Kedi Konserve\nMamaları", slug: "kedi-konserve", color: "#FF5722", directLink: "/siparis/kedi/kedi-konserve/kedi-konserve" },
-      { name: "Uygun Çuval\nMamalar", slug: "uygun-cuval", color: "#1A237E" },
     ],
   },
   kus: {

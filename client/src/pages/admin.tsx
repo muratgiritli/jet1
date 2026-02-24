@@ -82,7 +82,6 @@ const SUBCATEGORIES: Record<string, { slug: string; name: string }[]> = {
     { slug: "odul-kemik", name: "Ödül Kemik" },
     { slug: "tasima-kulube", name: "Taşıma ve Kulübeler" },
     { slug: "bakim-saglik", name: "Bakım ve Sağlık" },
-    { slug: "uygun-cuval", name: "Uygun Çuval Mamalar" },
   ],
   kus: [
     { slug: "kus-yemi", name: "Kuş Yemi" },

@@ -43,7 +43,6 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
         { name: "Enjoy", slug: "enjoy", color: "#E91E63" },
         { name: "Happy Dog", slug: "happy-dog", color: "#D84315" },
         { name: "Dog's Favorite", slug: "dogs-favorite", color: "#795548" },
-        { name: "Uygun Çuval Mamalar", slug: "uygun-cuval", color: "#455A64" },
       ],
     },
     "acik-mama": {
@@ -82,7 +81,6 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
         { name: "Brit Care", slug: "brit-care", color: "#0277BD" },
         { name: "Felicia", slug: "felicia", color: "#9C27B0" },
         { name: "N&D", slug: "nd", color: "#3F51B5" },
-        { name: "Uygun Çuval Mamalar", slug: "uygun-cuval", color: "#607D8B" },
       ],
     },
     "acik-mama": {
@@ -214,7 +212,7 @@ export default function BrandsPage() {
               transition={{ duration: 0.25, delay: 0.05 * i }}
               className="w-full max-w-[280px]"
             >
-              <Link href={brand.slug === "uygun-cuval" ? `/siparis?kategori=${animalSlug}&alt=uygun-cuval` : `/siparis/${animalSlug}/${subSlug}/${brand.slug}`}>
+              <Link href={`/siparis/${animalSlug}/${subSlug}/${brand.slug}`}>
                 <div
                   className="rounded-md overflow-visible hover-elevate active-elevate-2 flex items-center justify-center py-3 px-4"
                   style={{ backgroundColor: brand.color || "#607D8B" }}
