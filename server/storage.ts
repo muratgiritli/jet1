@@ -12,7 +12,8 @@ import {
   type Review, type InsertReview,
   type StockAlert, type InsertStockAlert,
   type InstallmentRate, type InsertInstallmentRate,
-  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts, installmentRates,
+  type Customer, type InsertCustomer,
+  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts, installmentRates, customers,
 } from "@shared/schema";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -73,6 +74,11 @@ export interface IStorage {
   createInstallmentRate(data: InsertInstallmentRate): Promise<InstallmentRate>;
   updateInstallmentRate(id: number, data: Partial<InsertInstallmentRate>): Promise<InstallmentRate | undefined>;
   deleteInstallmentRate(id: number): Promise<void>;
+
+  getCustomerByPhone(phone: string): Promise<Customer | undefined>;
+  getCustomer(id: number): Promise<Customer | undefined>;
+  createCustomer(data: InsertCustomer): Promise<Customer>;
+  updateCustomer(id: number, data: Partial<InsertCustomer>): Promise<Customer | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -283,6 +289,27 @@ export class DatabaseStorage implements IStorage {
 
   async deleteInstallmentRate(id: number): Promise<void> {
     await db.delete(installmentRates).where(eq(installmentRates.id, id));
+  }
+
+  async getCustomerByPhone(phone: string): Promise<Customer | undefined> {
+    const normalized = phone.replace(/\D/g, "");
+    const all = await db.select().from(customers);
+    return all.find(c => c.phone.replace(/\D/g, "") === normalized);
+  }
+
+  async getCustomer(id: number): Promise<Customer | undefined> {
+    const [customer] = await db.select().from(customers).where(eq(customers.id, id));
+    return customer;
+  }
+
+  async createCustomer(data: InsertCustomer): Promise<Customer> {
+    const [customer] = await db.insert(customers).values(data).returning();
+    return customer;
+  }
+
+  async updateCustomer(id: number, data: Partial<InsertCustomer>): Promise<Customer | undefined> {
+    const [customer] = await db.update(customers).set(data).where(eq(customers.id, id)).returning();
+    return customer;
   }
 }
 

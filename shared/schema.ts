@@ -144,6 +144,19 @@ export const insertStockAlertSchema = createInsertSchema(stockAlerts).omit({ id:
 export type InsertStockAlert = z.infer<typeof insertStockAlertSchema>;
 export type StockAlert = typeof stockAlerts.$inferSelect;
 
+export const customers = pgTable("customers", {
+  id: serial("id").primaryKey(),
+  phone: text("phone").notNull().unique(),
+  password: text("password").notNull(),
+  name: text("name").notNull(),
+  address: text("address"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true, createdAt: true });
+export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
+export type Customer = typeof customers.$inferSelect;
+
 export const installmentRates = pgTable("installment_rates", {
   id: serial("id").primaryKey(),
   months: integer("months").notNull(),
