@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Link, useSearch } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import {
   ShoppingCart,
   Plus,
@@ -96,9 +97,16 @@ function ProductCard({
         <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${product.id}`}>
           {product.name}
         </p>
-        <span className="text-sm font-bold text-foreground" data-testid={`text-price-${product.id}`}>
-          {product.price} TL
-        </span>
+        <div className="flex items-center gap-1 flex-wrap justify-center">
+          <span className="text-sm font-bold text-foreground" data-testid={`text-price-${product.id}`}>
+            {product.price} TL
+          </span>
+          {product.originalPrice && product.originalPrice > product.price && (
+            <span className="text-[10px] text-muted-foreground line-through" data-testid={`text-original-price-${product.id}`}>
+              {product.originalPrice} TL
+            </span>
+          )}
+        </div>
         <QuantityControl
           productId={product.id}
           quantity={quantity}
@@ -123,13 +131,35 @@ export default function Home() {
   const mappedCategory = SLUG_TO_CATEGORY[altSlug] || "";
   const defaultTab = (mappedCategory && CATEGORIES.find(c => c.title === mappedCategory)) ? mappedCategory : (CATEGORIES[0]?.title || "");
 
-  const directSlugs: Record<string, { title: string; heading: string; subtitle: string }> = {
+  const directSlugs: Record<string, { title: string; heading: string; subtitle: string; dbSlug?: string }> = {
     "uygun-cuval": { title: "ÇUVAL MAMA", heading: "Uygun Çuval Mamalar", subtitle: "Ekonomik Seçenekler" },
     "kedi-odulu": { title: "ÖDÜL", heading: "Kedi Ödülü", subtitle: "Ödül & Atıştırmalık" },
-    "kedi-bakim-saglik": { title: "BAKIM VE SAĞLIK", heading: "Kedi Bakım & Sağlık", subtitle: "Bakım ve Sağlık Ürünleri" },
+    "kedi-bakim-saglik": { title: "BAKIM VE SAĞLIK", heading: "Kedi Bakım & Sağlık", subtitle: "Bakım ve Sağlık Ürünleri", dbSlug: "bakim-saglik" },
   };
   const directInfo = directSlugs[altSlug] || null;
   const directCategory = directInfo ? CATEGORIES.find(c => c.title === directInfo.title) : null;
+
+  const dbSlug = directInfo?.dbSlug || null;
+  const { data: dbProducts } = useQuery<{ category: any; products: any[] }>({
+    queryKey: ["/api/brand-products", "kedi", dbSlug, dbSlug],
+    enabled: !!dbSlug,
+  });
+
+  const mergedDirectItems = (() => {
+    const staticItems = directCategory?.items || [];
+    if (!dbProducts?.products?.length) return staticItems;
+    const dbMapped: Product[] = dbProducts.products.map((p: any) => ({
+      id: String(p.id),
+      name: p.name,
+      price: Number(p.price),
+      originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
+      skt: p.skt || undefined,
+      img: p.img || "",
+    }));
+    const staticIds = new Set(staticItems.map(i => i.name.toLowerCase()));
+    const uniqueDb = dbMapped.filter(p => !staticIds.has(p.name.toLowerCase()));
+    return [...uniqueDb, ...staticItems];
+  })();
 
   return (
     <div className="min-h-screen bg-background pb-16">
@@ -164,7 +194,7 @@ export default function Home() {
         <section className="mt-6">
           {directCategory ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-              {directCategory.items.map((item) => (
+              {mergedDirectItems.map((item) => (
                 <ProductCard
                   key={item.id}
                   product={item}
