@@ -117,23 +117,6 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
         { name: "Wanpy", slug: "wanpy", color: "#FF9800" },
       ],
     },
-    "kedi-konserve": {
-      title: "Kedi Konserve Mamaları",
-      subtitle: "Buradan markanızı seçebilirsiniz.",
-      brands: [
-        { name: "Felix", slug: "felix", color: "#F44336" },
-        { name: "GimCat", slug: "gimcat", color: "#FF5722" },
-        { name: "Gourmet Gold", slug: "gourmet-gold", color: "#FFC107" },
-        { name: "Hill's", slug: "hills", color: "#2E7D32" },
-        { name: "Me-O", slug: "me-o", color: "#2196F3" },
-        { name: "Molly", slug: "molly", color: "#E91E63" },
-        { name: "Nutri Feline", slug: "nutri-feline", color: "#4CAF50" },
-        { name: "Pro Plan", slug: "pro-plan", color: "#1565C0" },
-        { name: "Royal Canin", slug: "royal-canin", color: "#C62828" },
-        { name: "Wanpy", slug: "wanpy", color: "#FF9800" },
-        { name: "Whiskas", slug: "whiskas", color: "#7B1FA2" },
-      ],
-    },
   },
 };
 
