@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -18,6 +18,12 @@ export default function ProfilePage() {
   const [editAddress, setEditAddress] = useState("");
   const [saving, setSaving] = useState(false);
 
+  useEffect(() => {
+    if (!isLoading && !isLoggedIn) {
+      setLocation("/giris");
+    }
+  }, [isLoading, isLoggedIn, setLocation]);
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center pb-20">
@@ -27,7 +33,6 @@ export default function ProfilePage() {
   }
 
   if (!isLoggedIn) {
-    setLocation("/giris");
     return null;
   }
 

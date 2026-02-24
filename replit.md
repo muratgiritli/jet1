@@ -63,6 +63,11 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `POST /api/admin/breed-stats` - Create breed stat (auth required)
 - `DELETE /api/admin/breed-stats/:id` - Delete breed stat (auth required)
 - `GET /api/products/search?q=` - Search products by name
+- `POST /api/customer/register` - Customer registration (phone+password+name)
+- `POST /api/customer/login` - Customer login (phone+password)
+- `POST /api/customer/logout` - Customer logout
+- `GET /api/customer/me` - Get current customer (session-based)
+- `PATCH /api/customer/profile` - Update customer name/address (auth required)
 - `POST /api/stock-alerts` - Register stock notification (public)
 - `GET /api/orders/track?phone=` - Track orders by phone number
 - `GET /api/installment-rates` - Get active installment rates (public)
@@ -82,6 +87,8 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `/siparis-takip` - Order tracking by phone number
 - `/favoriler` - Favorites page (localStorage)
 - `/kategori` - Categories overview page
+- `/giris` - Customer login/register page (phone+password)
+- `/hesabim` - Customer profile page (edit name, address)
 - `/admin` - Admin panel (login required)
 
 ## Admin Panel
