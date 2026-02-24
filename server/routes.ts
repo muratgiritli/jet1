@@ -317,24 +317,181 @@ export async function registerRoutes(
     });
   });
 
+  function requireCustomer(req: Request, res: Response, next: NextFunction) {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapılmamış" });
+    (req as any).customerId = customerId;
+    next();
+  }
+
   app.get("/api/customer/me", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapılmamış" });
     const customer = await storage.getCustomer(customerId);
     if (!customer) return res.status(401).json({ message: "Giriş yapılmamış" });
-    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
   });
 
-  app.patch("/api/customer/profile", async (req, res) => {
-    const customerId = (req.session as any)?.customerId;
-    if (!customerId) return res.status(401).json({ message: "Giriş yapılmamış" });
+  app.patch("/api/customer/profile", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
     const { name, address } = req.body;
     const updateData: Record<string, string> = {};
     if (name) updateData.name = name.trim();
     if (address !== undefined) updateData.address = address.trim();
     const customer = await storage.updateCustomer(customerId, updateData);
     if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
-    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
+  });
+
+  app.patch("/api/customer/password", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const { currentPassword, newPassword } = req.body;
+    if (!currentPassword || !newPassword) return res.status(400).json({ message: "Mevcut ve yeni şifre gerekli" });
+    if (newPassword.length < 4) return res.status(400).json({ message: "Yeni şifre en az 4 karakter olmalı" });
+    const customer = await storage.getCustomer(customerId);
+    if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
+    const valid = await bcrypt.compare(currentPassword, customer.password);
+    if (!valid) return res.status(400).json({ message: "Mevcut şifre hatalı" });
+    const hashed = await bcrypt.hash(newPassword, 10);
+    await storage.updateCustomer(customerId, { password: hashed });
+    res.json({ message: "Şifre başarıyla değiştirildi" });
+  });
+
+  app.patch("/api/customer/preferences", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const { notifyStock, notifyCampaign } = req.body;
+    const updateData: Record<string, boolean> = {};
+    if (typeof notifyStock === "boolean") updateData.notifyStock = notifyStock;
+    if (typeof notifyCampaign === "boolean") updateData.notifyCampaign = notifyCampaign;
+    const customer = await storage.updateCustomer(customerId, updateData as any);
+    if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
+    res.json({ notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
+  });
+
+  app.get("/api/customer/orders", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const customer = await storage.getCustomer(customerId);
+    if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
+    const customerOrders = await storage.getOrdersByPhone(customer.phone);
+    res.json(customerOrders.map(o => ({
+      id: o.id, items: o.items, subtotal: o.subtotal, shipping: o.shipping, discount: o.discount,
+      grandTotal: o.grandTotal, status: o.status, paymentMethod: o.paymentMethod, createdAt: o.createdAt,
+      customerNote: o.customerNote,
+    })));
+  });
+
+  app.get("/api/customer/favorites", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const favoriteIds = await storage.getCustomerFavoriteIds(customerId);
+    res.json(favoriteIds);
+  });
+
+  app.post("/api/customer/favorites", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const { productId } = req.body;
+    if (!productId) return res.status(400).json({ message: "productId gerekli" });
+    await storage.addCustomerFavorite({ customerId, productId: Number(productId) });
+    const favoriteIds = await storage.getCustomerFavoriteIds(customerId);
+    res.json(favoriteIds);
+  });
+
+  app.delete("/api/customer/favorites/:productId", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const productId = parseInt(req.params.productId);
+    await storage.removeCustomerFavorite(customerId, productId);
+    const favoriteIds = await storage.getCustomerFavoriteIds(customerId);
+    res.json(favoriteIds);
+  });
+
+  app.post("/api/customer/favorites/sync", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const { productIds } = req.body;
+    if (Array.isArray(productIds)) {
+      for (const pid of productIds) {
+        await storage.addCustomerFavorite({ customerId, productId: Number(pid) });
+      }
+    }
+    const favoriteIds = await storage.getCustomerFavoriteIds(customerId);
+    res.json(favoriteIds);
+  });
+
+  app.get("/api/customer/addresses", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const addresses = await storage.getCustomerAddresses(customerId);
+    res.json(addresses);
+  });
+
+  app.post("/api/customer/addresses", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const schema = z.object({ label: z.string().min(1), address: z.string().min(1), isDefault: z.boolean().optional() });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri" });
+    if (parsed.data.isDefault) {
+      await storage.setDefaultAddress(-1, customerId);
+    }
+    const addr = await storage.createCustomerAddress({ customerId, label: parsed.data.label, address: parsed.data.address, isDefault: parsed.data.isDefault || false });
+    if (parsed.data.isDefault) {
+      await storage.setDefaultAddress(addr.id, customerId);
+    }
+    const addresses = await storage.getCustomerAddresses(customerId);
+    res.json(addresses);
+  });
+
+  app.patch("/api/customer/addresses/:id", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const id = parseInt(req.params.id);
+    const schema = z.object({ label: z.string().min(1).optional(), address: z.string().min(1).optional(), isDefault: z.boolean().optional() });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri" });
+    if (parsed.data.isDefault) {
+      await storage.setDefaultAddress(id, customerId);
+    }
+    await storage.updateCustomerAddress(id, customerId, parsed.data);
+    const addresses = await storage.getCustomerAddresses(customerId);
+    res.json(addresses);
+  });
+
+  app.delete("/api/customer/addresses/:id", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const id = parseInt(req.params.id);
+    await storage.deleteCustomerAddress(id, customerId);
+    const addresses = await storage.getCustomerAddresses(customerId);
+    res.json(addresses);
+  });
+
+  app.get("/api/customer/pets", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const pets = await storage.getPetProfiles(customerId);
+    res.json(pets);
+  });
+
+  app.post("/api/customer/pets", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const schema = z.object({ name: z.string().min(1), type: z.string().min(1), breed: z.string().optional(), age: z.number().optional(), weight: z.number().optional() });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri" });
+    await storage.createPetProfile({ customerId, ...parsed.data });
+    const pets = await storage.getPetProfiles(customerId);
+    res.json(pets);
+  });
+
+  app.patch("/api/customer/pets/:id", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const id = parseInt(req.params.id);
+    const schema = z.object({ name: z.string().min(1).optional(), type: z.string().min(1).optional(), breed: z.string().optional(), age: z.number().optional(), weight: z.number().optional() });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri" });
+    await storage.updatePetProfile(id, customerId, parsed.data);
+    const pets = await storage.getPetProfiles(customerId);
+    res.json(pets);
+  });
+
+  app.delete("/api/customer/pets/:id", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const id = parseInt(req.params.id);
+    await storage.deletePetProfile(id, customerId);
+    const pets = await storage.getPetProfiles(customerId);
+    res.json(pets);
   });
 
   app.get("/api/customer-lookup", async (req, res) => {
