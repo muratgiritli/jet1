@@ -24,6 +24,7 @@ interface CartContextType {
   paymentId: string;
   setPaymentId: (id: string) => void;
   updateQty: (id: string, delta: number) => void;
+  clearCart: () => void;
   subtotal: number;
   selectedProducts: { product: CartProduct; qty: number }[];
   shipping: number;
@@ -79,6 +80,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  const clearCart = useCallback(() => {
+    setBasket({});
+  }, []);
+
   const { subtotal, selectedProducts, shipping, discount, grandTotal, minReached } = useMemo(() => {
     let sub = 0;
     const selected: { product: CartProduct; qty: number }[] = [];
@@ -118,6 +123,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       paymentId,
       setPaymentId,
       updateQty,
+      clearCart,
       subtotal,
       selectedProducts,
       shipping,
@@ -128,7 +134,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       minPerc,
       shipPerc,
     }),
-    [basket, paymentId, updateQty, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc]
+    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

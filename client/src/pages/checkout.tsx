@@ -145,6 +145,7 @@ export default function Checkout() {
     itemCount,
     minPerc,
     shipPerc,
+    clearCart,
   } = useCart();
 
   const handleOrder = async () => {
@@ -221,6 +222,7 @@ export default function Checkout() {
       const url = `https://wa.me/${CONFIG.phone.replace("+", "")}?text=${encodeURIComponent(msg)}`;
       window.open(url, "_blank");
 
+      clearCart();
       toast({ title: "Siparis kaydedildi", description: "WhatsApp uzerinden siparisiz iletiliyor." });
     } catch {
       toast({ title: "Hata", description: "Siparis kaydedilemedi, lutfen tekrar deneyin.", variant: "destructive" });
