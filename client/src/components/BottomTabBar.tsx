@@ -1,25 +1,28 @@
-import { Home, Grid3X3, ShoppingCart, Package, Heart } from "lucide-react";
+import { Home, Grid3X3, ShoppingCart, Package, User } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
+import { useCustomer } from "@/contexts/CustomerContext";
 import { motion, AnimatePresence } from "framer-motion";
-
-const TABS = [
-  { name: "Ana Sayfa", href: "/", icon: Home, testId: "tab-home" },
-  { name: "Kategoriler", href: "/kategori", icon: Grid3X3, testId: "tab-categories" },
-  { name: "Favoriler", href: "/favoriler", icon: Heart, testId: "tab-favorites" },
-  { name: "Sepet", href: "/odeme", icon: ShoppingCart, testId: "tab-cart" },
-  { name: "Takip", href: "/siparis-takip", icon: Package, testId: "tab-tracking" },
-];
 
 export default function BottomTabBar() {
   const [location] = useLocation();
   const { itemCount } = useCart();
+  const { isLoggedIn } = useCustomer();
 
   if (location.startsWith("/admin")) return null;
+
+  const TABS = [
+    { name: "Ana Sayfa", href: "/", icon: Home, testId: "tab-home" },
+    { name: "Kategoriler", href: "/kategori", icon: Grid3X3, testId: "tab-categories" },
+    { name: "Sepet", href: "/odeme", icon: ShoppingCart, testId: "tab-cart" },
+    { name: "Takip", href: "/siparis-takip", icon: Package, testId: "tab-tracking" },
+    { name: isLoggedIn ? "Hesabim" : "Giris", href: isLoggedIn ? "/hesabim" : "/giris", icon: User, testId: "tab-account" },
+  ];
 
   const isActive = (href: string) => {
     if (href === "/") return location === "/";
     if (href === "/kategori") return location.startsWith("/kategori");
+    if (href === "/hesabim" || href === "/giris") return location === "/hesabim" || location === "/giris";
     return location.startsWith(href);
   };
 
@@ -32,7 +35,7 @@ export default function BottomTabBar() {
         {TABS.map((tab) => {
           const active = isActive(tab.href);
           return (
-            <Link key={tab.href} href={tab.href}>
+            <Link key={tab.testId} href={tab.href}>
               <button
                 className={`flex flex-col items-center justify-center py-2 px-3 min-w-[56px] relative transition-colors ${
                   active ? "text-[#6B3480]" : "text-muted-foreground"

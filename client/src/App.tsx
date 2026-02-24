@@ -4,6 +4,7 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
+import { CustomerProvider } from "@/contexts/CustomerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import BottomTabBar from "@/components/BottomTabBar";
 import FloatingCartBar from "@/components/FloatingCartBar";
@@ -19,6 +20,8 @@ import ProductDetailPage from "@/pages/product-detail";
 import AcikMamaPage from "@/pages/acik-mama";
 import OrderTrackingPage from "@/pages/order-tracking";
 import FavoritesPage from "@/pages/favorites";
+import AuthPage from "@/pages/auth";
+import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -46,6 +49,8 @@ function Router() {
           <Route path="/admin" component={AdminPage} />
           <Route path="/siparis-takip" component={OrderTrackingPage} />
           <Route path="/favoriler" component={FavoritesPage} />
+          <Route path="/giris" component={AuthPage} />
+          <Route path="/hesabim" component={ProfilePage} />
           <Route component={NotFound} />
         </Switch>
       </motion.div>
@@ -70,10 +75,12 @@ function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <CartProvider>
-          <Toaster />
-          <AppShell />
-        </CartProvider>
+        <CustomerProvider>
+          <CartProvider>
+            <Toaster />
+            <AppShell />
+          </CartProvider>
+        </CustomerProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );

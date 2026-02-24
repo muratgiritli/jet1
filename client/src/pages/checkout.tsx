@@ -38,6 +38,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import BackNavigation from "@/components/BackNavigation";
+import { useCustomer } from "@/contexts/CustomerContext";
 import type { InstallmentRate } from "@shared/schema";
 
 const paymentIcons: Record<string, typeof CreditCard> = {
@@ -58,12 +59,24 @@ export default function Checkout() {
   const [lookupLoading, setLookupLoading] = useState(false);
   const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
   const { toast } = useToast();
+  const { customer, isLoggedIn, updateProfile } = useCustomer();
 
   const { data: installmentRates = [] } = useQuery<InstallmentRate[]>({
     queryKey: ["/api/installment-rates"],
   });
 
+  useEffect(() => {
+    if (isLoggedIn && customer) {
+      setCustomerPhone(customer.phone);
+      setCustomerName(customer.name);
+      setCustomerAddress(customer.address || "");
+      setIsReturningCustomer(true);
+      setLookupDone(true);
+    }
+  }, [isLoggedIn, customer]);
+
   const lookupCustomer = useCallback(async (phone: string) => {
+    if (isLoggedIn) return;
     const normalized = phone.replace(/\D/g, "");
     if (normalized.length < 10) {
       setLookupDone(false);
@@ -87,9 +100,10 @@ export default function Checkout() {
       setLookupDone(true);
       setLookupLoading(false);
     }
-  }, []);
+  }, [isLoggedIn]);
 
   useEffect(() => {
+    if (isLoggedIn) return;
     const normalized = customerPhone.replace(/\D/g, "");
     if (normalized.length < 10) {
       setLookupDone(false);
@@ -98,7 +112,7 @@ export default function Checkout() {
     }
     const timer = setTimeout(() => lookupCustomer(customerPhone), 500);
     return () => clearTimeout(timer);
-  }, [customerPhone, lookupCustomer]);
+  }, [customerPhone, lookupCustomer, isLoggedIn]);
   const {
     paymentId,
     setPaymentId,
@@ -153,6 +167,12 @@ export default function Checkout() {
       }
 
       await apiRequest("POST", "/api/orders", orderPayload);
+
+      if (isLoggedIn && customerAddress.trim() && (!customer?.address || customer.address !== customerAddress.trim())) {
+        try {
+          await updateProfile({ address: customerAddress.trim() });
+        } catch {}
+      }
 
       let msg = `*JET55 Sipariş*\n\n`;
       if (customerName.trim()) msg += `*Ad Soyad:* ${customerName.trim()}\n`;
@@ -291,21 +311,29 @@ export default function Checkout() {
 
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-customer-info">
-                Müşteri Bilgileri
+                Musteri Bilgileri
               </h2>
+              {isLoggedIn && (
+                <div className="mb-2 flex items-center gap-1.5 text-xs text-green-600" data-testid="text-logged-in-info">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  <span>Uye olarak giris yapildi - bilgileriniz otomatik dolduruldu</span>
+                </div>
+              )}
               <Card>
                 <CardContent className="p-4 space-y-3">
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium flex items-center gap-1.5">
                       <Phone className="w-4 h-4 text-muted-foreground" />
-                      Telefon Numarası
+                      Telefon Numarasi
                     </label>
                     <div className="relative">
                       <Input
                         type="tel"
                         placeholder="05XX XXX XX XX"
                         value={customerPhone}
-                        onChange={(e) => setCustomerPhone(e.target.value)}
+                        onChange={(e) => !isLoggedIn && setCustomerPhone(e.target.value)}
+                        readOnly={isLoggedIn}
+                        className={isLoggedIn ? "bg-muted" : ""}
                         data-testid="input-customer-phone"
                       />
                       {lookupLoading && (
@@ -315,10 +343,10 @@ export default function Checkout() {
                         <CheckCircle2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
                       )}
                     </div>
-                    {isReturningCustomer && (
+                    {!isLoggedIn && isReturningCustomer && (
                       <p className="text-xs text-green-600 flex items-center gap-1" data-testid="text-returning-customer">
                         <CheckCircle2 className="w-3 h-3" />
-                        Kayıtlı müşteri - bilgileriniz otomatik dolduruldu
+                        Kayitli musteri - bilgileriniz otomatik dolduruldu
                       </p>
                     )}
                   </div>
@@ -333,25 +361,25 @@ export default function Checkout() {
                       placeholder="Ad Soyad"
                       value={customerName}
                       onChange={(e) => setCustomerName(e.target.value)}
+                      readOnly={isLoggedIn}
+                      className={isLoggedIn ? "bg-muted" : ""}
                       data-testid="input-customer-name"
                     />
                   </div>
 
-                  {!(isReturningCustomer && customerAddress) && (
-                    <div className="space-y-1.5">
-                      <label className="text-sm font-medium flex items-center gap-1.5">
-                        <MapPin className="w-4 h-4 text-muted-foreground" />
-                        Teslimat Adresi
-                      </label>
-                      <Textarea
-                        placeholder="Teslimat adresinizi yazın..."
-                        value={customerAddress}
-                        onChange={(e) => setCustomerAddress(e.target.value)}
-                        rows={2}
-                        data-testid="input-customer-address"
-                      />
-                    </div>
-                  )}
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      Teslimat Adresi
+                    </label>
+                    <Textarea
+                      placeholder="Teslimat adresinizi yazin..."
+                      value={customerAddress}
+                      onChange={(e) => setCustomerAddress(e.target.value)}
+                      rows={2}
+                      data-testid="input-customer-address"
+                    />
+                  </div>
                 </CardContent>
               </Card>
             </section>

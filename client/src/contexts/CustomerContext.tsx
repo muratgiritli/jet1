@@ -1,0 +1,93 @@
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { apiRequest } from "@/lib/queryClient";
+
+interface CustomerData {
+  id: number;
+  phone: string;
+  name: string;
+  address: string | null;
+}
+
+interface CustomerContextType {
+  customer: CustomerData | null;
+  isLoading: boolean;
+  isLoggedIn: boolean;
+  login: (phone: string, password: string) => Promise<void>;
+  register: (phone: string, password: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
+  updateProfile: (data: { name?: string; address?: string }) => Promise<void>;
+  refetch: () => Promise<void>;
+}
+
+const CustomerContext = createContext<CustomerContextType | undefined>(undefined);
+
+export function CustomerProvider({ children }: { children: ReactNode }) {
+  const [customer, setCustomer] = useState<CustomerData | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  const fetchMe = useCallback(async () => {
+    try {
+      const res = await fetch("/api/customer/me", { credentials: "include" });
+      if (res.ok) {
+        const data = await res.json();
+        setCustomer(data);
+      } else {
+        setCustomer(null);
+      }
+    } catch {
+      setCustomer(null);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchMe();
+  }, [fetchMe]);
+
+  const login = useCallback(async (phone: string, password: string) => {
+    const res = await apiRequest("POST", "/api/customer/login", { phone, password });
+    const data = await res.json();
+    setCustomer(data);
+  }, []);
+
+  const register = useCallback(async (phone: string, password: string, name: string) => {
+    const res = await apiRequest("POST", "/api/customer/register", { phone, password, name });
+    const data = await res.json();
+    setCustomer(data);
+  }, []);
+
+  const logout = useCallback(async () => {
+    await apiRequest("POST", "/api/customer/logout");
+    setCustomer(null);
+  }, []);
+
+  const updateProfile = useCallback(async (data: { name?: string; address?: string }) => {
+    const res = await apiRequest("PATCH", "/api/customer/profile", data);
+    const updated = await res.json();
+    setCustomer(updated);
+  }, []);
+
+  return (
+    <CustomerContext.Provider
+      value={{
+        customer,
+        isLoading,
+        isLoggedIn: !!customer,
+        login,
+        register,
+        logout,
+        updateProfile,
+        refetch: fetchMe,
+      }}
+    >
+      {children}
+    </CustomerContext.Provider>
+  );
+}
+
+export function useCustomer() {
+  const ctx = useContext(CustomerContext);
+  if (!ctx) throw new Error("useCustomer must be used within CustomerProvider");
+  return ctx;
+}
