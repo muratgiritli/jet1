@@ -13,7 +13,10 @@ import {
   type StockAlert, type InsertStockAlert,
   type InstallmentRate, type InsertInstallmentRate,
   type Customer, type InsertCustomer,
-  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts, installmentRates, customers,
+  type CustomerFavorite, type InsertCustomerFavorite,
+  type CustomerAddress, type InsertCustomerAddress,
+  type PetProfile, type InsertPetProfile,
+  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles,
 } from "@shared/schema";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -79,6 +82,24 @@ export interface IStorage {
   getCustomer(id: number): Promise<Customer | undefined>;
   createCustomer(data: InsertCustomer): Promise<Customer>;
   updateCustomer(id: number, data: Partial<InsertCustomer>): Promise<Customer | undefined>;
+
+  getCustomerFavorites(customerId: number): Promise<CustomerFavorite[]>;
+  addCustomerFavorite(data: InsertCustomerFavorite): Promise<CustomerFavorite>;
+  removeCustomerFavorite(customerId: number, productId: number): Promise<void>;
+  getCustomerFavoriteIds(customerId: number): Promise<number[]>;
+
+  getCustomerAddresses(customerId: number): Promise<CustomerAddress[]>;
+  createCustomerAddress(data: InsertCustomerAddress): Promise<CustomerAddress>;
+  updateCustomerAddress(id: number, customerId: number, data: Partial<InsertCustomerAddress>): Promise<CustomerAddress | undefined>;
+  deleteCustomerAddress(id: number, customerId: number): Promise<void>;
+  setDefaultAddress(id: number, customerId: number): Promise<void>;
+
+  getPetProfiles(customerId: number): Promise<PetProfile[]>;
+  createPetProfile(data: InsertPetProfile): Promise<PetProfile>;
+  updatePetProfile(id: number, customerId: number, data: Partial<InsertPetProfile>): Promise<PetProfile | undefined>;
+  deletePetProfile(id: number, customerId: number): Promise<void>;
+
+  getOrdersByCustomerPhone(phone: string): Promise<Order[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -310,6 +331,72 @@ export class DatabaseStorage implements IStorage {
   async updateCustomer(id: number, data: Partial<InsertCustomer>): Promise<Customer | undefined> {
     const [customer] = await db.update(customers).set(data).where(eq(customers.id, id)).returning();
     return customer;
+  }
+
+  async getCustomerFavorites(customerId: number): Promise<CustomerFavorite[]> {
+    return db.select().from(customerFavorites).where(eq(customerFavorites.customerId, customerId)).orderBy(desc(customerFavorites.createdAt));
+  }
+
+  async addCustomerFavorite(data: InsertCustomerFavorite): Promise<CustomerFavorite> {
+    const existing = await db.select().from(customerFavorites).where(and(eq(customerFavorites.customerId, data.customerId), eq(customerFavorites.productId, data.productId)));
+    if (existing.length > 0) return existing[0];
+    const [fav] = await db.insert(customerFavorites).values(data).returning();
+    return fav;
+  }
+
+  async removeCustomerFavorite(customerId: number, productId: number): Promise<void> {
+    await db.delete(customerFavorites).where(and(eq(customerFavorites.customerId, customerId), eq(customerFavorites.productId, productId)));
+  }
+
+  async getCustomerFavoriteIds(customerId: number): Promise<number[]> {
+    const favs = await db.select({ productId: customerFavorites.productId }).from(customerFavorites).where(eq(customerFavorites.customerId, customerId));
+    return favs.map(f => f.productId);
+  }
+
+  async getCustomerAddresses(customerId: number): Promise<CustomerAddress[]> {
+    return db.select().from(customerAddresses).where(eq(customerAddresses.customerId, customerId));
+  }
+
+  async createCustomerAddress(data: InsertCustomerAddress): Promise<CustomerAddress> {
+    const [addr] = await db.insert(customerAddresses).values(data).returning();
+    return addr;
+  }
+
+  async updateCustomerAddress(id: number, customerId: number, data: Partial<InsertCustomerAddress>): Promise<CustomerAddress | undefined> {
+    const [addr] = await db.update(customerAddresses).set(data).where(and(eq(customerAddresses.id, id), eq(customerAddresses.customerId, customerId))).returning();
+    return addr;
+  }
+
+  async deleteCustomerAddress(id: number, customerId: number): Promise<void> {
+    await db.delete(customerAddresses).where(and(eq(customerAddresses.id, id), eq(customerAddresses.customerId, customerId)));
+  }
+
+  async setDefaultAddress(id: number, customerId: number): Promise<void> {
+    await db.update(customerAddresses).set({ isDefault: false }).where(eq(customerAddresses.customerId, customerId));
+    await db.update(customerAddresses).set({ isDefault: true }).where(and(eq(customerAddresses.id, id), eq(customerAddresses.customerId, customerId)));
+  }
+
+  async getPetProfiles(customerId: number): Promise<PetProfile[]> {
+    return db.select().from(petProfiles).where(eq(petProfiles.customerId, customerId));
+  }
+
+  async createPetProfile(data: InsertPetProfile): Promise<PetProfile> {
+    const [pet] = await db.insert(petProfiles).values(data).returning();
+    return pet;
+  }
+
+  async updatePetProfile(id: number, customerId: number, data: Partial<InsertPetProfile>): Promise<PetProfile | undefined> {
+    const [pet] = await db.update(petProfiles).set(data).where(and(eq(petProfiles.id, id), eq(petProfiles.customerId, customerId))).returning();
+    return pet;
+  }
+
+  async deletePetProfile(id: number, customerId: number): Promise<void> {
+    await db.delete(petProfiles).where(and(eq(petProfiles.id, id), eq(petProfiles.customerId, customerId)));
+  }
+
+  async getOrdersByCustomerPhone(phone: string): Promise<Order[]> {
+    const normalized = phone.replace(/\D/g, "");
+    return db.select().from(orders).where(eq(orders.customerPhone, normalized)).orderBy(desc(orders.createdAt));
   }
 }
 

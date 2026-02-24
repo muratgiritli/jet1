@@ -150,12 +150,51 @@ export const customers = pgTable("customers", {
   password: text("password").notNull(),
   name: text("name").notNull(),
   address: text("address"),
+  notifyStock: boolean("notify_stock").notNull().default(true),
+  notifyCampaign: boolean("notify_campaign").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
 export const insertCustomerSchema = createInsertSchema(customers).omit({ id: true, createdAt: true });
 export type InsertCustomer = z.infer<typeof insertCustomerSchema>;
 export type Customer = typeof customers.$inferSelect;
+
+export const customerFavorites = pgTable("customer_favorites", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  productId: integer("product_id").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertCustomerFavoriteSchema = createInsertSchema(customerFavorites).omit({ id: true, createdAt: true });
+export type InsertCustomerFavorite = z.infer<typeof insertCustomerFavoriteSchema>;
+export type CustomerFavorite = typeof customerFavorites.$inferSelect;
+
+export const customerAddresses = pgTable("customer_addresses", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  label: text("label").notNull(),
+  address: text("address").notNull(),
+  isDefault: boolean("is_default").notNull().default(false),
+});
+
+export const insertCustomerAddressSchema = createInsertSchema(customerAddresses).omit({ id: true });
+export type InsertCustomerAddress = z.infer<typeof insertCustomerAddressSchema>;
+export type CustomerAddress = typeof customerAddresses.$inferSelect;
+
+export const petProfiles = pgTable("pet_profiles", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  name: text("name").notNull(),
+  type: text("type").notNull(),
+  breed: text("breed"),
+  age: integer("age"),
+  weight: real("weight"),
+});
+
+export const insertPetProfileSchema = createInsertSchema(petProfiles).omit({ id: true });
+export type InsertPetProfile = z.infer<typeof insertPetProfileSchema>;
+export type PetProfile = typeof petProfiles.$inferSelect;
 
 export const installmentRates = pgTable("installment_rates", {
   id: serial("id").primaryKey(),
