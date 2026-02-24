@@ -28,6 +28,8 @@ import {
   Search,
   MapPin,
   CheckCircle2,
+  Home,
+  ChevronDown,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import {
@@ -65,15 +67,32 @@ export default function Checkout() {
     queryKey: ["/api/installment-rates"],
   });
 
+  const { data: savedAddresses = [] } = useQuery<any[]>({
+    queryKey: ["/api/customer/addresses"],
+    enabled: isLoggedIn,
+  });
+
+  const [showAddressPicker, setShowAddressPicker] = useState(false);
+  const [addressInitialized, setAddressInitialized] = useState(false);
+
   useEffect(() => {
-    if (isLoggedIn && customer) {
+    if (isLoggedIn && customer && !addressInitialized) {
       setCustomerPhone(customer.phone);
       setCustomerName(customer.name);
-      setCustomerAddress(customer.address || "");
+      const defaultAddr = savedAddresses.find((a: any) => a.isDefault);
+      if (defaultAddr) {
+        setCustomerAddress(defaultAddr.address);
+        setAddressInitialized(true);
+      } else if (customer.address) {
+        setCustomerAddress(customer.address);
+        setAddressInitialized(true);
+      } else if (savedAddresses.length > 0) {
+        setAddressInitialized(true);
+      }
       setIsReturningCustomer(true);
       setLookupDone(true);
     }
-  }, [isLoggedIn, customer]);
+  }, [isLoggedIn, customer, savedAddresses, addressInitialized]);
 
   const lookupCustomer = useCallback(async (phone: string) => {
     if (isLoggedIn) return;
@@ -372,6 +391,39 @@ export default function Checkout() {
                       <MapPin className="w-4 h-4 text-muted-foreground" />
                       Teslimat Adresi
                     </label>
+                    {isLoggedIn && savedAddresses.length > 0 && (
+                      <div className="mb-2">
+                        <button
+                          type="button"
+                          onClick={() => setShowAddressPicker(!showAddressPicker)}
+                          className="w-full flex items-center justify-between text-xs px-3 py-2 rounded-md border bg-muted/50 hover:bg-muted transition-colors"
+                          data-testid="btn-address-picker"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <Home className="w-3.5 h-3.5" />
+                            Kayıtlı adreslerden seç
+                          </span>
+                          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAddressPicker ? "rotate-180" : ""}`} />
+                        </button>
+                        {showAddressPicker && (
+                          <div className="mt-1.5 space-y-1">
+                            {savedAddresses.map((addr: any) => (
+                              <button
+                                key={addr.id}
+                                type="button"
+                                onClick={() => { setCustomerAddress(addr.address); setShowAddressPicker(false); }}
+                                className={`w-full text-left p-2 rounded-md border text-xs transition-colors hover:bg-accent ${customerAddress === addr.address ? "border-primary bg-primary/5" : ""}`}
+                                data-testid={`btn-select-address-${addr.id}`}
+                              >
+                                <span className="font-medium">{addr.label}</span>
+                                {addr.isDefault && <Badge variant="secondary" className="ml-1.5 text-[10px] py-0">Varsayılan</Badge>}
+                                <p className="text-muted-foreground mt-0.5 line-clamp-2">{addr.address}</p>
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
                     <Textarea
                       placeholder="Teslimat adresinizi yazin..."
                       value={customerAddress}

@@ -6,6 +6,8 @@ interface CustomerData {
   phone: string;
   name: string;
   address: string | null;
+  notifyStock: boolean;
+  notifyCampaign: boolean;
 }
 
 interface CustomerContextType {
@@ -45,17 +47,33 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     fetchMe();
   }, [fetchMe]);
 
+  const syncLocalFavorites = useCallback(async () => {
+    try {
+      const localFavs = JSON.parse(localStorage.getItem("jet55_favorites") || "[]");
+      if (localFavs.length > 0) {
+        const productIds = localFavs.map((f: any) => Number(f.id)).filter((id: number) => !isNaN(id));
+        if (productIds.length > 0) {
+          await apiRequest("POST", "/api/customer/favorites/sync", { productIds });
+          localStorage.removeItem("jet55_favorites");
+          window.dispatchEvent(new Event("favorites-changed"));
+        }
+      }
+    } catch {}
+  }, []);
+
   const login = useCallback(async (phone: string, password: string) => {
     const res = await apiRequest("POST", "/api/customer/login", { phone, password });
     const data = await res.json();
     setCustomer(data);
-  }, []);
+    setTimeout(syncLocalFavorites, 500);
+  }, [syncLocalFavorites]);
 
   const register = useCallback(async (phone: string, password: string, name: string) => {
     const res = await apiRequest("POST", "/api/customer/register", { phone, password, name });
     const data = await res.json();
     setCustomer(data);
-  }, []);
+    setTimeout(syncLocalFavorites, 500);
+  }, [syncLocalFavorites]);
 
   const logout = useCallback(async () => {
     await apiRequest("POST", "/api/customer/logout");

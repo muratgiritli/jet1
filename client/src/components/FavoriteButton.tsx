@@ -1,7 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Heart } from "lucide-react";
 import { motion } from "framer-motion";
 import { toggleFavorite, isFavorite } from "@/pages/favorites";
+import { useCustomer } from "@/contexts/CustomerContext";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
 interface FavoriteButtonProps {
@@ -16,25 +19,57 @@ interface FavoriteButtonProps {
 }
 
 export default function FavoriteButton({ product, size = "sm", className = "" }: FavoriteButtonProps) {
-  const [fav, setFav] = useState(false);
+  const [localFav, setLocalFav] = useState(false);
   const { toast } = useToast();
+  const { isLoggedIn } = useCustomer();
+
+  const { data: serverFavIds = [] } = useQuery<number[]>({
+    queryKey: ["/api/customer/favorites"],
+    enabled: isLoggedIn,
+    staleTime: 30000,
+  });
+
+  const isServerFav = isLoggedIn && serverFavIds.includes(Number(product.id));
 
   useEffect(() => {
-    setFav(isFavorite(product.id));
-    const handler = () => setFav(isFavorite(product.id));
+    if (!isLoggedIn) {
+      setLocalFav(isFavorite(product.id));
+    }
+    const handler = () => {
+      if (!isLoggedIn) setLocalFav(isFavorite(product.id));
+    };
     window.addEventListener("favorites-changed", handler);
     return () => window.removeEventListener("favorites-changed", handler);
-  }, [product.id]);
+  }, [product.id, isLoggedIn]);
 
-  const handleToggle = (e: React.MouseEvent) => {
+  const fav = isLoggedIn ? isServerFav : localFav;
+
+  const handleToggle = async (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    const added = toggleFavorite(product);
-    setFav(added);
-    toast({
-      description: added ? "Favorilere eklendi" : "Favorilerden çıkarıldı",
-      duration: 1500,
-    });
+
+    if (isLoggedIn) {
+      const newState = !fav;
+      try {
+        if (newState) {
+          await apiRequest("POST", "/api/customer/favorites", { productId: Number(product.id) });
+        } else {
+          await apiRequest("DELETE", `/api/customer/favorites/${product.id}`);
+        }
+        queryClient.invalidateQueries({ queryKey: ["/api/customer/favorites"] });
+      } catch {}
+      toast({
+        description: newState ? "Favorilere eklendi" : "Favorilerden cikarildi",
+        duration: 1500,
+      });
+    } else {
+      const added = toggleFavorite(product);
+      setLocalFav(added);
+      toast({
+        description: added ? "Favorilere eklendi" : "Favorilerden cikarildi",
+        duration: 1500,
+      });
+    }
   };
 
   const iconSize = size === "sm" ? "w-4 h-4" : "w-5 h-5";

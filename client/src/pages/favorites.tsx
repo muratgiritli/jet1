@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
+import { useCustomer } from "@/contexts/CustomerContext";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 import { productUrl } from "@/lib/data";
 
@@ -44,11 +47,31 @@ export function isFavorite(id: string): boolean {
 }
 
 export default function FavoritesPage() {
-  const [favorites, setFavorites] = useState<FavoriteProduct[]>(getFavorites());
+  const [localFavorites, setLocalFavorites] = useState<FavoriteProduct[]>(getFavorites());
   const { basket, updateQty } = useCart();
+  const { isLoggedIn } = useCustomer();
+
+  const { data: serverFavIds } = useQuery<number[]>({
+    queryKey: ["/api/customer/favorites"],
+    enabled: isLoggedIn,
+  });
+
+  const { data: allProducts } = useQuery<any[]>({
+    queryKey: ["/api/products"],
+    enabled: isLoggedIn,
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: async (productId: number) => {
+      await apiRequest("DELETE", `/api/customer/favorites/${productId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/customer/favorites"] });
+    },
+  });
 
   useEffect(() => {
-    const handler = () => setFavorites(getFavorites());
+    const handler = () => setLocalFavorites(getFavorites());
     window.addEventListener("favorites-changed", handler);
     window.addEventListener("storage", handler);
     return () => {
@@ -57,10 +80,21 @@ export default function FavoritesPage() {
     };
   }, []);
 
-  const removeFavorite = (id: string) => {
-    const product = favorites.find((f) => f.id === id);
+  const removeLocalFavorite = (id: string) => {
+    const product = localFavorites.find((f) => f.id === id);
     if (product) toggleFavorite(product);
   };
+
+  const serverFavorites: FavoriteProduct[] = isLoggedIn && serverFavIds && allProducts
+    ? allProducts.filter(p => serverFavIds.includes(p.id)).map(p => ({
+        id: String(p.id),
+        name: p.name,
+        price: p.price,
+        img: p.img,
+      }))
+    : [];
+
+  const favorites = isLoggedIn ? serverFavorites : localFavorites;
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -156,7 +190,13 @@ export default function FavoritesPage() {
                           variant="ghost"
                           size="sm"
                           className="text-red-500 h-8 w-8 p-0 flex-shrink-0"
-                          onClick={() => removeFavorite(product.id)}
+                          onClick={() => {
+                            if (isLoggedIn) {
+                              removeMutation.mutate(Number(product.id));
+                            } else {
+                              removeLocalFavorite(product.id);
+                            }
+                          }}
                           data-testid={`btn-remove-fav-${product.id}`}
                         >
                           <Trash2 className="w-4 h-4" />
