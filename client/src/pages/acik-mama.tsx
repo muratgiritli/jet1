@@ -9,7 +9,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
-import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
 import { productUrl } from "@/lib/data";
 
@@ -121,7 +120,7 @@ export default function AcikMamaPage() {
   const title = animal === "kedi" ? "Kedi Açık Mama" : "Köpek Açık Mama";
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f0f2f5" }}>
+    <div className="min-h-screen flex flex-col pb-16" style={{ backgroundColor: "#f0f2f5" }}>
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
@@ -210,7 +209,6 @@ export default function AcikMamaPage() {
           Havale / Kapıda nakit / Kapıda kredi kartı / QR ödeme
         </p>
       </footer>
-      <FloatingCartBar />
     </div>
   );
 }

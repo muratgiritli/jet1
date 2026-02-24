@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+.safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 0px); }
+
 /* LIGHT MODE */
 :root {
   --button-outline: rgba(0,0,0, .10);

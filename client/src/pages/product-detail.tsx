@@ -11,10 +11,13 @@ import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory, CrossSellSection, BreedStat, InstallmentRate } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
-import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
 import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
 import { CATEGORIES, productUrl } from "@/lib/data";
+import FavoriteButton from "@/components/FavoriteButton";
+import ImageZoom from "@/components/ImageZoom";
+import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
+import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 
 type ProductDetailData = {
@@ -266,9 +269,18 @@ export default function ProductDetailPage() {
     return () => { document.title = "JET55 Pet Shop"; };
   }, [resolvedData]);
 
+  useEffect(() => {
+    if (resolvedData?.product) {
+      const p = resolvedData.product;
+      addRecentlyViewed({ id: p.id, name: p.name, price: p.price, img: p.img });
+    }
+  }, [resolvedData]);
+
+  const recentlyViewed = useRecentlyViewed(resolvedData?.product?.id);
+
   if (isLoading && isNumericId) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-background pb-16">
         <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
@@ -277,16 +289,14 @@ export default function ProductDetailPage() {
             <img src={jet55Logo} alt="JET55" className="h-8 object-contain" data-testid="img-brand-logo" />
           </div>
         </header>
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-        </div>
+        <ProductDetailSkeleton />
       </div>
     );
   }
 
   if (!resolvedData) {
     return (
-      <div className="min-h-screen flex flex-col bg-background">
+      <div className="min-h-screen flex flex-col bg-background pb-16">
         <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
           <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
             <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
@@ -329,7 +339,7 @@ export default function ProductDetailPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background pb-16">
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
@@ -360,32 +370,39 @@ export default function ProductDetailPage() {
         >
           <div className="flex flex-col md:flex-row gap-6">
             {product.img && (
-              <div className="md:w-1/2 w-full aspect-square flex items-center justify-center rounded-lg overflow-hidden bg-muted/30 relative" data-testid="img-product-detail">
-                <img
-                  src={product.img}
-                  alt={product.name}
-                  className="w-full h-full object-contain"
-                  data-testid="img-product"
-                />
-                {product.skt && (
-                  <Badge
-                    variant="secondary"
-                    className="absolute top-2 left-2 no-default-hover-elevate no-default-active-elevate"
-                    data-testid="badge-skt"
-                  >
-                    SKT: {product.skt}
-                  </Badge>
-                )}
-                {discount > 0 && (
-                  <Badge
-                    className="absolute top-2 right-2 no-default-hover-elevate no-default-active-elevate"
-                    style={{ backgroundColor: "#e53935", color: "#fff" }}
-                    data-testid="badge-discount"
-                  >
-                    %{discount}
-                  </Badge>
-                )}
-              </div>
+              <ImageZoom src={product.img} alt={product.name} className="md:w-1/2 w-full">
+                <div className="aspect-square flex items-center justify-center rounded-lg overflow-hidden bg-muted/30 relative" data-testid="img-product-detail">
+                  <img
+                    src={product.img}
+                    alt={product.name}
+                    className="w-full h-full object-contain"
+                    data-testid="img-product"
+                  />
+                  {product.skt && (
+                    <Badge
+                      variant="secondary"
+                      className="absolute top-2 left-2 no-default-hover-elevate no-default-active-elevate"
+                      data-testid="badge-skt"
+                    >
+                      SKT: {product.skt}
+                    </Badge>
+                  )}
+                  {discount > 0 && (
+                    <Badge
+                      className="absolute top-2 right-2 no-default-hover-elevate no-default-active-elevate"
+                      style={{ backgroundColor: "#e53935", color: "#fff" }}
+                      data-testid="badge-discount"
+                    >
+                      %{discount}
+                    </Badge>
+                  )}
+                  <FavoriteButton
+                    product={{ id: String(product.id), name: product.name, price: product.price, img: product.img }}
+                    size="md"
+                    className="absolute bottom-2 right-2 shadow-md"
+                  />
+                </div>
+              </ImageZoom>
             )}
 
             <div className="md:w-1/2 w-full flex flex-col gap-3">
@@ -668,9 +685,35 @@ export default function ProductDetailPage() {
           </motion.div>
         )}
 
-      </main>
+        {recentlyViewed.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="mt-6"
+          >
+            <h3 className="text-sm font-bold text-muted-foreground mb-3" data-testid="text-recently-viewed-title">
+              Son Görüntülenenler
+            </h3>
+            <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+              {recentlyViewed.slice(0, 6).map((rp) => (
+                <Link key={rp.id} href={productUrl(rp.id, rp.name)}>
+                  <div className="flex-shrink-0 w-24 cursor-pointer" data-testid={`recent-product-${rp.id}`}>
+                    {rp.img && (
+                      <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted/30">
+                        <img src={rp.img} alt={rp.name} className="w-full h-full object-contain" loading="lazy" />
+                      </div>
+                    )}
+                    <p className="text-[10px] font-medium text-center mt-1 line-clamp-2 leading-tight">{rp.name}</p>
+                    <p className="text-[10px] font-bold text-primary text-center">{rp.price} TL</p>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
-      <FloatingCartBar />
+      </main>
 
       <Dialog open={stockDialogOpen} onOpenChange={setStockDialogOpen}>
         <DialogContent className="max-w-sm">

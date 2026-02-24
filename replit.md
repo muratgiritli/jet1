@@ -26,9 +26,16 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `client/src/pages/admin.tsx` - Admin panel with login, product/category CRUD, SKT warnings
 - `client/src/components/SearchBar.tsx` - Debounced product search with dropdown results
 - `client/src/contexts/CartContext.tsx` - Global cart state provider (fetches from API)
-- `client/src/components/FloatingCartBar.tsx` - Floating cart indicator shown on all pages
+- `client/src/components/FloatingCartBar.tsx` - Floating cart indicator (above bottom tab bar)
+- `client/src/components/BottomTabBar.tsx` - Fixed bottom navigation (Ana Sayfa, Kategoriler, Favoriler, Sepet, Takip)
+- `client/src/components/FavoriteButton.tsx` - Heart toggle button for products
+- `client/src/components/ImageZoom.tsx` - Pinch-to-zoom image viewer for product photos
+- `client/src/components/ProductSkeleton.tsx` - Skeleton loading components
+- `client/src/pages/favorites.tsx` - Favorites page (localStorage-based)
+- `client/src/pages/categories-overview.tsx` - Categories overview page
+- `client/src/hooks/useRecentlyViewed.ts` - Recently viewed products tracking (localStorage)
 - `client/src/lib/data.ts` - Static product data, categories, payment options, config
-- `client/src/App.tsx` - Root component with routing
+- `client/src/App.tsx` - Root component with routing, page transitions (framer-motion)
 
 ## API Routes
 - `GET /api/products` - All products from database
@@ -73,6 +80,8 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `/siparis` - Product browsing page with static catalog
 - `/odeme` - Cart/checkout page with payment, summary, WhatsApp order
 - `/siparis-takip` - Order tracking by phone number
+- `/favoriler` - Favorites page (localStorage)
+- `/kategori` - Categories overview page
 - `/admin` - Admin panel (login required)
 
 ## Admin Panel

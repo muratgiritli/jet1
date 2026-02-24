@@ -52,7 +52,7 @@ export default function OrderTrackingPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-16">
       <header className="sticky top-0 z-50" style={{ background: "#6B3480" }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <Link href="/">

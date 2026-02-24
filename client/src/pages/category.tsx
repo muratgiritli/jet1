@@ -2,7 +2,6 @@ import { Link, useRoute } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 
@@ -92,7 +91,7 @@ export default function CategoryPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#f0f2f5" }}>
+    <div className="min-h-screen flex flex-col pb-16" style={{ backgroundColor: "#f0f2f5" }}>
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-2 flex items-center gap-3">
           <Link href="/">
@@ -151,7 +150,6 @@ export default function CategoryPage() {
           Havale / Kapıda nakit / Kapıda kredi kartı / QR ödeme
         </p>
       </footer>
-      <FloatingCartBar />
     </div>
   );
 }

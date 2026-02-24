@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Truck, Phone, CreditCard, MapPin } from "lucide-react";
-import FloatingCartBar from "@/components/FloatingCartBar";
 import SearchBar from "@/components/SearchBar";
 
 import heroBanner from "@assets/Ekran_görüntüsü_2026-02-24_020708_1771888229478.png";
@@ -34,7 +33,7 @@ const FEATURES = [
 
 export default function Landing() {
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col bg-background pb-16">
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center">
           <Link href="/">
@@ -161,7 +160,6 @@ export default function Landing() {
           </p>
         </Link>
       </div>
-      <FloatingCartBar />
     </div>
   );
 }

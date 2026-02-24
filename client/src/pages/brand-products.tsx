@@ -8,10 +8,11 @@ import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, Eye }
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
-import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
 import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
 import { CATEGORIES, productUrl } from "@/lib/data";
+import FavoriteButton from "@/components/FavoriteButton";
+import { ProductGridSkeleton } from "@/components/ProductSkeleton";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 
 interface SubcategoryInfo {
@@ -146,6 +147,10 @@ function BrandProductCard({
                     %{discount}
                   </Badge>
                 )}
+                <FavoriteButton
+                  product={{ id: pid, name: product.name, price: product.price, img: product.img || null }}
+                  className="absolute bottom-1 right-1 shadow-sm"
+                />
               </div>
             )}
             <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${pid}`}>
@@ -458,7 +463,7 @@ export default function BrandProductsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-white">
+      <div className="min-h-screen flex flex-col bg-white pb-16">
         <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
             <Link href={`/kategori/${animal}/${subcategory}`}>
@@ -471,8 +476,8 @@ export default function BrandProductsPage() {
             </Link>
           </div>
         </header>
-        <div className="flex-1 flex items-center justify-center">
-          <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+        <div className="px-3 pt-4">
+          <ProductGridSkeleton count={6} />
         </div>
       </div>
     );
@@ -480,7 +485,7 @@ export default function BrandProductsPage() {
 
   if (!data) {
     return (
-      <div className="min-h-screen flex flex-col bg-white">
+      <div className="min-h-screen flex flex-col bg-white pb-16">
         <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
             <Link href={`/kategori/${animal}/${subcategory}`}>
@@ -501,7 +506,7 @@ export default function BrandProductsPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-white pb-16">
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
@@ -589,7 +594,6 @@ export default function BrandProductsPage() {
           </motion.div>
         )}
       </AnimatePresence>
-      <FloatingCartBar />
     </div>
   );
 }

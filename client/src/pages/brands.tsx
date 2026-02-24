@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import FloatingCartBar from "@/components/FloatingCartBar";
 import BackNavigation from "@/components/BackNavigation";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 
@@ -159,7 +158,7 @@ export default function BrandsPage() {
 
   if (!brandData) {
     return (
-      <div className="min-h-screen flex flex-col bg-white">
+      <div className="min-h-screen flex flex-col bg-white pb-16">
         <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
           <div className="max-w-lg mx-auto px-4 py-2 flex items-center gap-3">
             <Link href={`/kategori/${animalSlug}`}>
@@ -180,7 +179,7 @@ export default function BrandsPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white">
+    <div className="min-h-screen flex flex-col bg-white pb-16">
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-2 flex items-center gap-3">
           <Link href={`/kategori/${animalSlug}`}>
@@ -239,7 +238,6 @@ export default function BrandsPage() {
           Havale / Kapıda nakit / Kapıda kredi kartı / QR ödeme
         </p>
       </footer>
-      <FloatingCartBar />
     </div>
   );
 }
