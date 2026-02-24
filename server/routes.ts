@@ -40,7 +40,7 @@ export async function registerRoutes(
       secret: process.env.SESSION_SECRET || "jetgo-fallback-secret",
       resave: false,
       saveUninitialized: false,
-      cookie: { secure: false, maxAge: 24 * 60 * 60 * 1000 },
+      cookie: { secure: false, maxAge: 30 * 24 * 60 * 60 * 1000 },
     })
   );
 
@@ -272,6 +272,69 @@ export async function registerRoutes(
     const order = await storage.updateOrderStatus(id, status);
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.json(order);
+  });
+
+  app.post("/api/customer/register", async (req, res) => {
+    const { phone, password, name } = req.body;
+    if (!phone || !password || !name) {
+      return res.status(400).json({ message: "Telefon, şifre ve ad soyad gerekli" });
+    }
+    const normalized = phone.replace(/\D/g, "");
+    if (normalized.length < 10) {
+      return res.status(400).json({ message: "Geçerli bir telefon numarası girin" });
+    }
+    if (password.length < 4) {
+      return res.status(400).json({ message: "Şifre en az 4 karakter olmalı" });
+    }
+    const existing = await storage.getCustomerByPhone(normalized);
+    if (existing) {
+      return res.status(409).json({ message: "Bu telefon numarası zaten kayıtlı" });
+    }
+    const hashed = await bcrypt.hash(password, 10);
+    const customer = await storage.createCustomer({ phone: normalized, password: hashed, name: name.trim() });
+    (req.session as any).customerId = customer.id;
+    res.status(201).json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
+  });
+
+  app.post("/api/customer/login", async (req, res) => {
+    const { phone, password } = req.body;
+    if (!phone || !password) {
+      return res.status(400).json({ message: "Telefon ve şifre gerekli" });
+    }
+    const normalized = phone.replace(/\D/g, "");
+    const customer = await storage.getCustomerByPhone(normalized);
+    if (!customer) return res.status(401).json({ message: "Telefon numarası veya şifre hatalı" });
+    const valid = await bcrypt.compare(password, customer.password);
+    if (!valid) return res.status(401).json({ message: "Telefon numarası veya şifre hatalı" });
+    (req.session as any).customerId = customer.id;
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
+  });
+
+  app.post("/api/customer/logout", (req, res) => {
+    delete (req.session as any).customerId;
+    req.session.save(() => {
+      res.json({ message: "Çıkış yapıldı" });
+    });
+  });
+
+  app.get("/api/customer/me", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapılmamış" });
+    const customer = await storage.getCustomer(customerId);
+    if (!customer) return res.status(401).json({ message: "Giriş yapılmamış" });
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
+  });
+
+  app.patch("/api/customer/profile", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapılmamış" });
+    const { name, address } = req.body;
+    const updateData: Record<string, string> = {};
+    if (name) updateData.name = name.trim();
+    if (address !== undefined) updateData.address = address.trim();
+    const customer = await storage.updateCustomer(customerId, updateData);
+    if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
   });
 
   app.get("/api/customer-lookup", async (req, res) => {
