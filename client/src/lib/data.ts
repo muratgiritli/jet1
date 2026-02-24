@@ -205,9 +205,6 @@ export const CATEGORIES: Category[] = [
   {
     title: "BAKIM VE SAĞLIK",
     items: [
-      { id: "ac1", name: "Kedi Kum Paspası", price: 150, img: "https://static.wixstatic.com/media/63853e_e361ac120a1741f8819d190f9848e966~mv2.webp" },
-      { id: "ac2", name: "Tuvalet Elekli Torba", price: 140, img: "https://static.wixstatic.com/media/63853e_4374ed6a587b45c3a6b1a1e5ecc68b8e~mv2.webp" },
-      { id: "ac3", name: "Kedi Kumu Paspası Büyük", price: 320, img: "https://static.wixstatic.com/media/63853e_362139b8f1594ad486829e546007e5ff~mv2.webp" },
       { id: "ac4", name: "Kedi Çimi", price: 120, img: "https://static.wixstatic.com/media/63853e_a50200ac42b24d359c2bee76f7429afa~mv2.webp" },
       { id: "ac5", name: "Parmak Diş Fırçası", price: 75, img: "https://static.wixstatic.com/media/63853e_20754be9f2e34752ae9492daef23c426~mv2.webp" },
       { id: "ac6", name: "Diş Macunu", price: 165, img: "https://static.wixstatic.com/media/63853e_5fa753fe4ff542a2b73a272c699cbe80~mv2.webp" },
@@ -219,9 +216,6 @@ export const CATEGORIES: Category[] = [
       { id: "ac12", name: "Tırnak Makası", price: 125, img: "https://static.wixstatic.com/media/63853e_00712ac4e8b04bb4bf5218cad74e342a~mv2.webp" },
       { id: "ac13", name: "Crystal Göz Kulak Damlası", price: 420, img: "https://static.wixstatic.com/media/63853e_21104844a4c94febbd79721e33d8945e~mv2.webp" },
       { id: "ac14", name: "Dış Parazit Damlası", price: 180, img: "https://static.wixstatic.com/media/63853e_586e0943c2db4f4ebbb3c29665e0b94c~mv2.webp" },
-      { id: "ac15", name: "Lazer", price: 125, img: "https://static.wixstatic.com/media/63853e_8f8cddbfb7ea4bbd9780377fd581cd2c~mv2.webp" },
-      { id: "ac16", name: "Kedi Kumu Torbası", price: 420, img: "https://static.wixstatic.com/media/63853e_424a308beb89493cabbfcfbd867e39a1~mv2.webp" },
-      { id: "ac17", name: "Kaşıma Aparatı", price: 180, img: "https://static.wixstatic.com/media/63853e_af771fe95149426dae46307a4ad35ed2~mv2.webp" },
       { id: "ac18", name: "Basmalı Tarak", price: 150, img: "https://static.wixstatic.com/media/63853e_f3c3fee937eb4e438b19cbe73dc4c834~mv2.webp" },
       { id: "ac19", name: "Buharlı Tarak", price: 140, img: "https://static.wixstatic.com/media/63853e_529c3ea3a7294684909b1264e7549151~mv2.webp" },
       { id: "ac20", name: "Somon Yağı", price: 320, img: "https://static.wixstatic.com/media/63853e_21504bc42ebb4f148798384c370564ba~mv2.webp" },
