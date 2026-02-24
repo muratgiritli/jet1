@@ -453,6 +453,7 @@ export default function BrandProductsPage() {
   const brandSlug = params?.brand || "";
 
   const { basket, updateQty, grandTotal, itemCount } = useCart();
+  const backUrl = subcategory === brandSlug ? `/kategori/${animal}` : `/kategori/${animal}/${subcategory}`;
 
   const { data, isLoading } = useQuery<{ category: BrandCategory; products: Product[] }>({
     queryKey: ["/api/brand-products", animal, subcategory, brandSlug],
@@ -464,7 +465,7 @@ export default function BrandProductsPage() {
       <div className="min-h-screen flex flex-col bg-white pb-16">
         <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
-            <Link href={`/kategori/${animal}/${subcategory}`}>
+            <Link href={backUrl}>
               <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
                 <ArrowLeft />
               </Button>
@@ -486,7 +487,7 @@ export default function BrandProductsPage() {
       <div className="min-h-screen flex flex-col bg-white pb-16">
         <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
           <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
-            <Link href={`/kategori/${animal}/${subcategory}`}>
+            <Link href={backUrl}>
               <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
                 <ArrowLeft />
               </Button>
@@ -508,7 +509,7 @@ export default function BrandProductsPage() {
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
-            <Link href={`/kategori/${animal}/${subcategory}`}>
+            <Link href={backUrl}>
               <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
                 <ArrowLeft />
               </Button>
