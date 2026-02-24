@@ -30,6 +30,8 @@ import {
   CheckCircle2,
   Home,
   ChevronDown,
+  X,
+  LogIn,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import {
@@ -60,6 +62,7 @@ export default function Checkout() {
   const [lookupDone, setLookupDone] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
+  const [showAuthBanner, setShowAuthBanner] = useState(true);
   const { toast } = useToast();
   const { customer, isLoggedIn, updateProfile } = useCustomer();
 
@@ -259,6 +262,21 @@ export default function Checkout() {
       <BackNavigation />
 
       <main className="max-w-2xl mx-auto px-4 pb-8">
+        {!isLoggedIn && showAuthBanner && selectedProducts.length > 0 && (
+          <div className="mt-4 rounded-xl border p-3 flex items-center gap-3" style={{ backgroundColor: "#f3eef6", borderColor: "#d4c4de" }} data-testid="banner-auth-prompt">
+            <LogIn className="w-5 h-5 shrink-0" style={{ color: "#6B3480" }} />
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium leading-tight">Uye olun, siparislerinizi takip edin</p>
+              <Link href="/giris">
+                <span className="text-xs font-semibold underline" style={{ color: "#6B3480" }} data-testid="link-auth-banner">Giris Yap / Uye Ol</span>
+              </Link>
+            </div>
+            <button onClick={() => setShowAuthBanner(false)} className="shrink-0 p-1 rounded-full hover:bg-white/60" data-testid="btn-dismiss-auth-banner">
+              <X className="w-4 h-4 text-muted-foreground" />
+            </button>
+          </div>
+        )}
+
         {selectedProducts.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
             <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-20" />
