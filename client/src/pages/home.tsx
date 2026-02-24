@@ -131,7 +131,7 @@ export default function Home() {
   const defaultTab = (mappedCategory && CATEGORIES.find(c => c.title === mappedCategory)) ? mappedCategory : (CATEGORIES[0]?.title || "");
 
   const directSlugs: Record<string, { title: string; heading: string; subtitle: string; dbSlug?: string }> = {
-    "kedi-odulu": { title: "ÖDÜL", heading: "Kedi Ödülü", subtitle: "Ödül & Atıştırmalık" },
+    "kedi-odulu": { title: "ÖDÜL", heading: "Kedi Ödülü", subtitle: "Ödül & Atıştırmalık", dbSlug: "odul" },
     "kedi-bakim-saglik": { title: "BAKIM VE SAĞLIK", heading: "Kedi Bakım & Sağlık", subtitle: "Bakım ve Sağlık Ürünleri", dbSlug: "bakim-saglik" },
   };
   const directInfo = directSlugs[altSlug] || null;
