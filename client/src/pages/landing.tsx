@@ -71,16 +71,14 @@ export default function Landing() {
           transition={{ duration: 0.5 }}
           data-testid="section-hero-banner"
         >
-          <Link href="/siparis">
-            <div className="relative w-full cursor-pointer overflow-hidden" data-testid="banner-hero">
-              <img
-                src={heroBanner}
-                alt="JET55 - Sen İste Jet İle Gelsin"
-                className="w-full h-auto object-contain"
-                data-testid="img-hero-banner"
-              />
-            </div>
-          </Link>
+          <div className="relative w-full overflow-hidden" data-testid="banner-hero">
+            <img
+              src={heroBanner}
+              alt="JET55 - Sen İste Jet İle Gelsin"
+              className="w-full h-auto object-contain"
+              data-testid="img-hero-banner"
+            />
+          </div>
         </motion.section>
 
         <motion.section
