@@ -44,7 +44,7 @@ export default function FastDeliveryBanner() {
       data-testid="banner-fast-delivery"
     >
       <Truck className="w-5 h-5 shrink-0" />
-      <span>Şimdi sipariş verin, 90 dakika içinde kapınızda!</span>
+      <span>Şimdi Sipariş Ver Gün İçinde Kapında</span>
     </div>
   );
 }
