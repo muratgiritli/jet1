@@ -126,6 +126,7 @@ export default function Home() {
   const directSlugs: Record<string, { title: string; heading: string; subtitle: string }> = {
     "uygun-cuval": { title: "ÇUVAL MAMA", heading: "Uygun Çuval Mamalar", subtitle: "Ekonomik Seçenekler" },
     "kedi-odulu": { title: "ÖDÜL", heading: "Kedi Ödülü", subtitle: "Ödül & Atıştırmalık" },
+    "kedi-bakim-saglik": { title: "BAKIM VE SAĞLIK", heading: "Kedi Bakım & Sağlık", subtitle: "Bakım ve Sağlık Ürünleri" },
   };
   const directInfo = directSlugs[altSlug] || null;
   const directCategory = directInfo ? CATEGORIES.find(c => c.title === directInfo.title) : null;
