@@ -81,6 +81,7 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
         { name: "Brit Care", slug: "brit-care", color: "#0277BD" },
         { name: "Felicia", slug: "felicia", color: "#9C27B0" },
         { name: "N&D", slug: "nd", color: "#3F51B5" },
+        { name: "Wanpy", slug: "wanpy", color: "#FF6F00" },
       ],
     },
     "acik-mama": {
