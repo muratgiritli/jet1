@@ -198,11 +198,6 @@ export default function ProductDetailPage() {
     enabled: needsCrossSell,
   });
 
-  const { data: maltData } = useQuery<{ category: BrandCategory; products: Product[] }>({
-    queryKey: ["/api/brand-products", "kedi", "malt-vitamin", "malt-vitamin"],
-    enabled: needsCrossSell,
-  });
-
   const { data: yasMamaData } = useQuery<{ category: BrandCategory; products: Product[] }>({
     queryKey: ["/api/brand-products", "kedi", "yas-mama", "yas-mama"],
     enabled: needsCrossSell,
@@ -218,11 +213,10 @@ export default function ProductDetailPage() {
     const cats: { title: string; products: Product[] }[] = [];
     if (isKediMama && kumData?.products?.length) cats.push({ title: "KUM", products: kumData.products });
     if (odulData?.products?.length) cats.push({ title: "ÖDÜL", products: odulData.products });
-    if (maltData?.products?.length) cats.push({ title: "MALT", products: maltData.products });
     if (yasMamaData?.products?.length) cats.push({ title: "YAŞ MAMA", products: yasMamaData.products });
     if (bakimData?.products?.length) cats.push({ title: "BAKIM VE SAĞLIK", products: bakimData.products });
     return cats;
-  }, [needsCrossSell, isKediMama, kumData, odulData, maltData, yasMamaData, bakimData]);
+  }, [needsCrossSell, isKediMama, kumData, odulData, yasMamaData, bakimData]);
 
   const resolvedData = isNumericId ? data : staticData;
 

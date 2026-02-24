@@ -37,7 +37,6 @@ const ANIMAL_SUBCATEGORIES: Record<string, SubcategoryInfo[]> = {
     { name: "Kedi Mamasi", slug: "kedi-mamasi", hasBrands: true },
     { name: "Açık Mama", slug: "acik-mama", hasBrands: true },
     { name: "Kum", slug: "kedi-kumu", staticCategory: "KUM" },
-    { name: "Malt", slug: "kedi-malti", staticCategory: "MALT" },
     { name: "Ödül", slug: "kedi-odulu", staticCategory: "ÖDÜL" },
     { name: "Bakım ve Sağlık", slug: "kedi-bakim-saglik", staticCategory: "BAKIM VE SAĞLIK" },
     { name: "Taşıma", slug: "kedi-tasima" },

@@ -18,7 +18,6 @@ import { useCart } from "@/contexts/CartContext";
 import BackNavigation from "@/components/BackNavigation";
 
 const SLUG_TO_CATEGORY: Record<string, string> = {
-  "kedi-malti": "MALT",
   "kedi-bakim-saglik": "BAKIM VE SAĞLIK",
   "uygun-cuval": "ÇUVAL MAMA",
   "kedi-tuvaleti": "KUM",
@@ -127,7 +126,6 @@ export default function Home() {
   const directSlugs: Record<string, { title: string; heading: string; subtitle: string }> = {
     "uygun-cuval": { title: "ÇUVAL MAMA", heading: "Uygun Çuval Mamalar", subtitle: "Ekonomik Seçenekler" },
     "kedi-odulu": { title: "ÖDÜL", heading: "Kedi Ödülü", subtitle: "Ödül & Atıştırmalık" },
-    "kedi-malti": { title: "MALT", heading: "Kedi Maltı", subtitle: "Malt & Macun" },
   };
   const directInfo = directSlugs[altSlug] || null;
   const directCategory = directInfo ? CATEGORIES.find(c => c.title === directInfo.title) : null;

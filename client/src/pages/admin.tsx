@@ -67,7 +67,6 @@ const SUBCATEGORIES: Record<string, { slug: string; name: string }[]> = {
     { slug: "acik-mama", name: "Açık Mama" },
     { slug: "kedi-kumu", name: "Kedi Kumu" },
     { slug: "malt-macun", name: "Malt & Macun" },
-    { slug: "malt-vitamin", name: "Malt & Vitamin" },
     { slug: "odul", name: "Kedi Ödülleri" },
     { slug: "bakim-saglik", name: "Bakım ve Sağlık" },
     { slug: "kedi-tasima", name: "Kedi Taşıma" },
