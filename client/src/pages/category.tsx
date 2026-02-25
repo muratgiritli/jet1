@@ -86,6 +86,11 @@ export default function CategoryPage() {
     return null;
   }
 
+  if (animalSlug === "kemirgen") {
+    setLocation("/siparis/kemirgen/kemirgen-urunleri/kemirgen-urunleri", { replace: true });
+    return null;
+  }
+
   if (!category) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
