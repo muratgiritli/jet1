@@ -560,7 +560,7 @@ export default function BrandProductsPage() {
                 product={product}
                 quantity={basket[String(product.id)] || 0}
                 onUpdate={updateQty}
-                showDetailLink={false}
+                showDetailLink={subcategory !== brandSlug}
               />
             </motion.div>
           ))}
