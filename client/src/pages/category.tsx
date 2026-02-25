@@ -1,4 +1,4 @@
-import { Link, useRoute } from "wouter";
+import { Link, useRoute, useLocation } from "wouter";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -78,6 +78,13 @@ export default function CategoryPage() {
   const [, params] = useRoute("/kategori/:animal");
   const animalSlug = params?.animal || "kopek";
   const category = ANIMAL_CATEGORIES[animalSlug];
+
+  const [, setLocation] = useLocation();
+
+  if (animalSlug === "kus") {
+    setLocation("/siparis/kus/kus-yemi/kus-yemi", { replace: true });
+    return null;
+  }
 
   if (!category) {
     return (
