@@ -55,7 +55,7 @@ const ANIMAL_CATEGORIES: Record<string, AnimalCategory> = {
     titleHighlight: "Kategorileri",
     subtitle: "LÜTFEN KATEGORİ SEÇİNİZ",
     subcategories: [
-      { name: "Kuş Yemi\nÇeşitleri", slug: "kus-yemi", color: "#2196F3" },
+      { name: "Kuş Yemi\nÇeşitleri", slug: "kus-yemi", color: "#2196F3", directLink: "/siparis/kus/kus-yemi/kus-yemi" },
       { name: "Kuş Kafesi\nÇeşitleri", slug: "kus-kafesi", color: "#FF9800" },
       { name: "Kuş\nVitaminleri", slug: "kus-vitamin", color: "#4CAF50" },
       { name: "Bakım ve\nAksesuar", slug: "bakim-aksesuar", color: "#9C27B0" },
