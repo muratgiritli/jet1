@@ -431,22 +431,6 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
-              {installmentRates.length > 0 && (
-                <div className="flex items-center gap-1.5 flex-wrap" data-testid="section-taksit-info">
-                  <CreditCard className="w-4 h-4 text-muted-foreground" />
-                  <span className="text-sm text-muted-foreground">
-                    {Math.max(...installmentRates.map(r => r.months))} aya varan taksit seçenekleri
-                  </span>
-                  <button
-                    onClick={() => setTaksitDialogOpen(true)}
-                    className="text-sm font-semibold text-primary hover:underline flex items-center gap-0.5 cursor-pointer"
-                    data-testid="btn-show-taksit"
-                  >
-                    Taksitler
-                    <ChevronDown className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              )}
 
               <Dialog open={taksitDialogOpen} onOpenChange={setTaksitDialogOpen}>
                 <DialogContent className="max-w-md">
@@ -536,24 +520,9 @@ export default function ProductDetailPage() {
                       </Button>
                     </Link>
                   </div>
-                  {installmentRates.length > 0 && (
-                    <button
-                      onClick={() => setTaksitDialogOpen(true)}
-                      className="flex items-center justify-center gap-1.5 text-sm text-muted-foreground hover:text-primary transition-colors cursor-pointer"
-                      data-testid="btn-taksit-below-buttons"
-                    >
-                      <CreditCard className="w-3.5 h-3.5" />
-                      {Math.max(...installmentRates.map(r => r.months))} aya varan taksit seçenekleri
-                    </button>
-                  )}
                 </div>
               )}
 
-              {product.stock > 0 && product.stock <= 3 && (
-                <p className="text-xs font-semibold" style={{ color: "#d32f2f" }} data-testid="text-low-stock">
-                  Son {product.stock} adet!
-                </p>
-              )}
             </div>
           </div>
         </motion.div>
