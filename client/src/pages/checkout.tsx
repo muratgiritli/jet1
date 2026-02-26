@@ -625,7 +625,7 @@ export default function Checkout() {
                           <span className="text-sm font-medium" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
                           {opt.disc > 0 && (
                             <span className="flex-1 text-sm font-bold text-center" data-testid={`text-payment-discounted-${opt.id}`}>
-                              {Math.round(displayTotal * (1 - opt.disc))} TL
+                              {opt.tag}
                             </span>
                           )}
                           {!opt.disc && <span className="flex-1" />}
@@ -634,7 +634,7 @@ export default function Checkout() {
                             className="no-default-hover-elevate shrink-0"
                             data-testid={`badge-payment-tag-${opt.id}`}
                           >
-                            {opt.disc > 0 ? opt.tag : opt.id === "taksit" ? opt.tag : `${Math.round(displayTotal)} TL`}
+                            {opt.disc > 0 ? `${Math.round(displayTotal * (1 - opt.disc))} TL` : opt.id === "taksit" ? opt.tag : `${Math.round(displayTotal)} TL`}
                           </Badge>
                         </label>
                       );
