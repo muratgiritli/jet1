@@ -410,9 +410,6 @@ export default function ProductDetailPage() {
                 </p>
               )}
 
-              {category && shouldShowFastDelivery(category.animal, category.subcategory) && (
-                <FastDeliveryBanner />
-              )}
 
               {product.skt && (
                 <p className="text-sm font-semibold" style={{ color: "#e65100" }} data-testid="text-skt-detail">
