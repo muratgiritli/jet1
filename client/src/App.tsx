@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import BottomTabBar from "@/components/BottomTabBar";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import Landing from "@/pages/landing";
-import Home from "@/pages/home";
 import Checkout from "@/pages/checkout";
 import CategoryPage from "@/pages/category";
 import CategoriesOverview from "@/pages/categories-overview";
@@ -44,7 +43,6 @@ function Router() {
           <Route path="/siparis/:animal/:subcategory/:brand" component={BrandProductsPage} />
           <Route path="/kategori/:animal/:subcategory" component={BrandsPage} />
           <Route path="/kategori/:animal" component={CategoryPage} />
-          <Route path="/siparis" component={Home} />
           <Route path="/odeme" component={Checkout} />
           <Route path="/admin" component={AdminPage} />
           <Route path="/siparis-takip" component={OrderTrackingPage} />

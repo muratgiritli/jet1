@@ -411,7 +411,7 @@ export default function Checkout() {
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2 flex-wrap">
-            <Link href="/siparis">
+            <Link href="/">
               <Button variant="ghost" size="icon" data-testid="btn-back-to-products">
                 <ArrowLeft />
               </Button>
@@ -619,7 +619,7 @@ export default function Checkout() {
             <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-20" />
             <p className="text-lg font-medium mb-2" data-testid="text-empty-checkout">Sepetiniz boş</p>
             <p className="text-sm mb-6">Ürün eklemek için mağazaya gidin</p>
-            <Link href="/siparis">
+            <Link href="/">
               <Button variant="default" size="lg" data-testid="btn-go-shopping">
                 <ShoppingCart className="w-4 h-4" />
                 Alışverişe Başla
@@ -1137,7 +1137,7 @@ export default function Checkout() {
                     </p>
                   )}
 
-                  <Link href="/siparis">
+                  <Link href="/">
                     <Button
                       className="w-full mt-3"
                       variant="outline"
