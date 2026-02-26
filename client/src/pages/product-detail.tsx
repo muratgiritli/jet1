@@ -428,7 +428,7 @@ export default function ProductDetailPage() {
                     {product.originalPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                   </span>
                 )}
-                <span className="text-2xl font-extrabold" style={{ color: "#e65100" }} data-testid="text-price">
+                <span className="text-2xl font-extrabold text-black dark:text-white" data-testid="text-price">
                   {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                 </span>
               </div>
