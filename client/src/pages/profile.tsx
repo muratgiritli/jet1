@@ -54,7 +54,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {
-      setLocation("/giris");
+      setLocation("/giris?redirect=/hesabim");
     }
   }, [isLoading, isLoggedIn, setLocation]);
 

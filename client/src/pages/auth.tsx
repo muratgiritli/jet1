@@ -59,7 +59,9 @@ export default function AuthPage() {
         await register(normalized, password, name.trim());
         toast({ title: "Kayıt başarılı!", description: "Hoş geldiniz!" });
       }
-      setLocation("/");
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect") || "/";
+      setLocation(redirect);
     } catch (err: any) {
       const msg = err.message || "Bir hata oluştu";
       const cleaned = msg.replace(/^\d+:\s*/, "");

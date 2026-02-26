@@ -341,7 +341,7 @@ export default function Checkout() {
             <LogIn className="w-5 h-5 shrink-0" style={{ color: "#6B3480" }} />
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium leading-tight">Uye olun, siparislerinizi takip edin</p>
-              <Link href="/giris">
+              <Link href="/giris?redirect=/odeme">
                 <span className="text-xs font-semibold underline" style={{ color: "#6B3480" }} data-testid="link-auth-banner">Giris Yap / Uye Ol</span>
               </Link>
             </div>

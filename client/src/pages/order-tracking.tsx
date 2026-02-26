@@ -81,7 +81,7 @@ export default function OrderTrackingPage() {
             <p className="text-sm font-medium text-muted-foreground mb-4" data-testid="text-login-required">
               Siparişlerinizi görmek için giriş yapmalısınız
             </p>
-            <Link href="/giris">
+            <Link href="/giris?redirect=/siparis-takip">
               <Button data-testid="button-go-login">
                 <LogIn className="w-4 h-4 mr-2" />
                 Giriş Yap
