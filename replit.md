@@ -60,7 +60,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `DELETE /api/admin/cross-sell-sections/:id` - Delete cross-sell section (auth required)
 - `POST /api/admin/cross-sell-items` - Add product to cross-sell section (auth required)
 - `DELETE /api/admin/cross-sell-items/:id` - Remove product from cross-sell section (auth required)
-- `POST /api/orders` - Create new order (public, saves to DB)
+- `POST /api/orders` - Create new order (requires phone+name, decrements stock, saves installment info)
 - `GET /api/admin/orders` - List all orders (auth required)
 - `PATCH /api/admin/orders/:id/status` - Update order status (auth required)
 - `GET /api/breed-stats/:productId` - Get breed stats for a product
@@ -73,7 +73,9 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `GET /api/customer/me` - Get current customer (session-based)
 - `PATCH /api/customer/profile` - Update customer name/address (auth required)
 - `POST /api/stock-alerts` - Register stock notification (public)
-- `GET /api/orders/track?phone=` - Track orders by phone number
+- `GET /api/orders/track` - Track orders (customer auth required, uses session phone)
+- `POST /api/admin/stock-alerts/:productId/notify` - Notify stock alert subscribers (admin auth)
+- `GET /api/customer/orders` - Customer order history (customer auth required)
 - `GET /api/installment-rates` - Get active installment rates (public)
 - `GET /api/admin/installment-rates` - All installment rates (auth required)
 - `POST /api/admin/installment-rates` - Create installment rate (auth required)
@@ -88,7 +90,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `/urun/:id` - Product detail page with cross-sell recommendations
 - `/siparis` - Product browsing page with static catalog
 - `/odeme` - Cart/checkout page with payment, summary, WhatsApp order
-- `/siparis-takip` - Order tracking by phone number
+- `/siparis-takip` - Order tracking (requires login)
 - `/favoriler` - Favorites page (localStorage)
 - `/kategori` - Categories overview page
 - `/giris` - Customer login/register page (phone+password)
@@ -102,6 +104,8 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - Manage cross-sell sections (create/delete sections, add/remove products)
 - View incoming orders with status management (yeni/hazirlaniyor/tamamlandi/iptal)
 - SKT expiration warnings (products expiring within 3 months shown at top)
+- Para Puan (loyalty points) management - view balances, add/deduct points manually
+- Stock alert notifications - WhatsApp notify customers when product is back in stock
 - Session-based authentication with PostgreSQL session store
 
 ## Config

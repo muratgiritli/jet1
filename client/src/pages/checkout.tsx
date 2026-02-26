@@ -148,15 +148,7 @@ export default function Checkout() {
     }
     setLookupLoading(true);
     try {
-      const res = await fetch(`/api/customer-lookup?phone=${encodeURIComponent(phone)}`);
-      const data = await res.json();
-      if (data && (data.customerName || data.customerAddress)) {
-        setCustomerName(data.customerName || "");
-        setCustomerAddress(data.customerAddress || "");
-        setIsReturningCustomer(true);
-      } else {
-        setIsReturningCustomer(false);
-      }
+      setIsReturningCustomer(false);
     } catch {
       setIsReturningCustomer(false);
     } finally {
@@ -216,9 +208,15 @@ export default function Checkout() {
   };
 
   const handleOrder = async () => {
-    if (!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle) {
+    if (!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle || !customerName.trim() || !customerPhone.trim()) {
       if (!selectedMahalle) {
         toast({ title: "Lütfen teslimat mahallenizi seçin", variant: "destructive" });
+      }
+      if (!customerName.trim()) {
+        toast({ title: "Lütfen ad soyad girin", variant: "destructive" });
+      }
+      if (!customerPhone.trim()) {
+        toast({ title: "Lütfen telefon numarası girin", variant: "destructive" });
       }
       return;
     }
@@ -244,8 +242,8 @@ export default function Checkout() {
         discount,
         grandTotal: finalTotal,
         paymentMethod: pay.name,
-        customerName: customerName.trim() || undefined,
-        customerPhone: customerPhone.trim() || undefined,
+        customerName: customerName.trim(),
+        customerPhone: customerPhone.trim(),
         customerAddress: selectedMahalle + (customerAddress.trim() ? ", " + customerAddress.trim() : ""),
         usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
       };

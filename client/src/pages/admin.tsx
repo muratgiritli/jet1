@@ -685,6 +685,27 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     queryKey: ["/api/admin/stock-alerts"],
   });
 
+  const { data: loyaltyCustomers = [], isLoading: loyaltyLoading } = useQuery<{ id: number; phone: string; name: string; balance: number }[]>({
+    queryKey: ["/api/admin/loyalty-points"],
+  });
+
+  const [lpCustomerId, setLpCustomerId] = useState("");
+  const [lpAmount, setLpAmount] = useState("");
+  const [lpDescription, setLpDescription] = useState("");
+
+  const addPointsMutation = useMutation({
+    mutationFn: async (data: { customerId: number; amount: number; description: string }) => {
+      await apiRequest("POST", "/api/admin/loyalty-points", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/loyalty-points"] });
+      setLpCustomerId("");
+      setLpAmount("");
+      setLpDescription("");
+      toast({ title: "Puan güncellendi" });
+    },
+  });
+
   const { data: installmentRates = [] } = useQuery<InstallmentRate[]>({
     queryKey: ["/api/admin/installment-rates"],
   });
@@ -1452,18 +1473,119 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           <span>{new Date(alert.createdAt).toLocaleDateString("tr-TR")}</span>
                         </div>
                       </div>
-                      <Badge
-                        className="text-[10px] no-default-hover-elevate shrink-0"
-                        style={{ backgroundColor: alert.isNotified ? "#4CAF50" : "#ff9800", color: "#fff" }}
-                      >
-                        {alert.isNotified ? "Bildirildi" : "Bekliyor"}
-                      </Badge>
+                      <div className="flex items-center gap-2 shrink-0">
+                        {!alert.isNotified && (
+                          <a
+                            href={`https://wa.me/90${alert.phone.replace(/\D/g, "").replace(/^0/, "")}?text=${encodeURIComponent(`Merhaba ${alert.customerName}, ilgilendiginiz "${alert.productName}" urunu tekrar stoklarimizda! Siparis vermek icin JET55'i ziyaret edin.`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium text-white"
+                            style={{ backgroundColor: "#25D366" }}
+                            onClick={async () => {
+                              try {
+                                await apiRequest("POST", `/api/admin/stock-alerts/${alert.productId}/notify`, {});
+                                queryClient.invalidateQueries({ queryKey: ["/api/admin/stock-alerts"] });
+                              } catch {}
+                            }}
+                            data-testid={`btn-notify-stock-${alert.id}`}
+                          >
+                            <SiWhatsapp className="w-3 h-3" />
+                            Bildir
+                          </a>
+                        )}
+                        <Badge
+                          className="text-[10px] no-default-hover-elevate"
+                          style={{ backgroundColor: alert.isNotified ? "#4CAF50" : "#ff9800", color: "#fff" }}
+                        >
+                          {alert.isNotified ? "Bildirildi" : "Bekliyor"}
+                        </Badge>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
           )}
+        </section>
+
+        <section className="mb-6" data-testid="section-loyalty-points">
+          <h2 className="text-lg font-bold mb-4" data-testid="text-section-loyalty">
+            <Star className="w-5 h-5 inline-block mr-2" />
+            Para Puan Yönetimi
+            <span className="text-sm font-normal text-muted-foreground ml-2">
+              ({loyaltyCustomers.length} müşteri)
+            </span>
+          </h2>
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <Select value={lpCustomerId} onValueChange={setLpCustomerId}>
+                  <SelectTrigger data-testid="select-lp-customer">
+                    <SelectValue placeholder="Müşteri seçin" />
+                  </SelectTrigger>
+                  <SelectContent position="popper" className="max-h-60">
+                    {loyaltyCustomers.map((c) => (
+                      <SelectItem key={c.id} value={String(c.id)}>
+                        {c.name} ({c.phone}) - {Math.round(c.balance)} P
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Input
+                  type="number"
+                  placeholder="Puan (+/-)"
+                  value={lpAmount}
+                  onChange={(e) => setLpAmount(e.target.value)}
+                  data-testid="input-lp-amount"
+                />
+                <Input
+                  placeholder="Açıklama"
+                  value={lpDescription}
+                  onChange={(e) => setLpDescription(e.target.value)}
+                  data-testid="input-lp-description"
+                />
+              </div>
+              <Button
+                size="sm"
+                disabled={!lpCustomerId || !lpAmount || isNaN(parseFloat(lpAmount)) || parseFloat(lpAmount) === 0 || addPointsMutation.isPending}
+                onClick={() => {
+                  addPointsMutation.mutate({
+                    customerId: parseInt(lpCustomerId),
+                    amount: parseFloat(lpAmount),
+                    description: lpDescription || (parseFloat(lpAmount) >= 0 ? "Admin tarafından eklendi" : "Admin tarafından düşüldü"),
+                  });
+                }}
+                data-testid="btn-add-points"
+              >
+                {addPointsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
+                Puan Ekle/Düş
+              </Button>
+
+              {loyaltyLoading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+                </div>
+              ) : loyaltyCustomers.length > 0 && (
+                <div className="space-y-1 mt-2 max-h-60 overflow-y-auto">
+                  {loyaltyCustomers.map((c) => (
+                    <div key={c.id} className="flex items-center justify-between text-sm py-1.5 px-2 rounded bg-muted/30" data-testid={`row-loyalty-${c.id}`}>
+                      <div className="flex items-center gap-2 min-w-0">
+                        <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+                        <span className="truncate">{c.name}</span>
+                        <span className="text-xs text-muted-foreground">{c.phone}</span>
+                      </div>
+                      <Badge
+                        className="text-xs no-default-hover-elevate shrink-0"
+                        style={{ backgroundColor: c.balance > 0 ? "#4CAF50" : c.balance < 0 ? "#f44336" : "#9e9e9e", color: "#fff" }}
+                      >
+                        {Math.round(c.balance * 100) / 100} P
+                      </Badge>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </section>
 
         <section>

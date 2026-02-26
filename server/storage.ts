@@ -64,9 +64,12 @@ export interface IStorage {
   deleteBreedStat(id: number): Promise<void>;
 
 
+  decrementStock(productId: number, quantity: number): Promise<boolean>;
   createStockAlert(data: InsertStockAlert): Promise<StockAlert>;
   getStockAlertsByProduct(productId: number): Promise<StockAlert[]>;
   getAllStockAlerts(): Promise<StockAlert[]>;
+  getUnnotifiedStockAlerts(productId: number): Promise<StockAlert[]>;
+  markStockAlertsNotified(productId: number): Promise<void>;
 
   getAllInstallmentRates(): Promise<InstallmentRate[]>;
   getActiveInstallmentRates(): Promise<InstallmentRate[]>;
@@ -262,6 +265,14 @@ export class DatabaseStorage implements IStorage {
   }
 
 
+  async decrementStock(productId: number, quantity: number): Promise<boolean> {
+    const [product] = await db.select().from(products).where(eq(products.id, productId));
+    if (!product || product.stock < quantity) return false;
+    const newStock = product.stock - quantity;
+    await db.update(products).set({ stock: newStock }).where(eq(products.id, productId));
+    return true;
+  }
+
   async createStockAlert(data: InsertStockAlert): Promise<StockAlert> {
     const [alert] = await db.insert(stockAlerts).values(data).returning();
     return alert;
@@ -273,6 +284,14 @@ export class DatabaseStorage implements IStorage {
 
   async getAllStockAlerts(): Promise<StockAlert[]> {
     return db.select().from(stockAlerts).orderBy(desc(stockAlerts.createdAt));
+  }
+
+  async getUnnotifiedStockAlerts(productId: number): Promise<StockAlert[]> {
+    return db.select().from(stockAlerts).where(and(eq(stockAlerts.productId, productId), eq(stockAlerts.isNotified, false)));
+  }
+
+  async markStockAlertsNotified(productId: number): Promise<void> {
+    await db.update(stockAlerts).set({ isNotified: true }).where(and(eq(stockAlerts.productId, productId), eq(stockAlerts.isNotified, false)));
   }
 
   async getAllInstallmentRates(): Promise<InstallmentRate[]> {

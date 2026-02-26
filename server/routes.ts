@@ -270,10 +270,14 @@ export async function registerRoutes(
     grandTotal: z.number(),
     paymentMethod: z.string(),
     customerNote: z.string().optional(),
-    customerPhone: z.string().optional(),
-    customerName: z.string().optional(),
+    customerPhone: z.string().min(7, "Telefon numarası gerekli"),
+    customerName: z.string().min(1, "Ad soyad gerekli"),
     customerAddress: z.string().optional(),
     usedPoints: z.number().optional(),
+    installmentMonths: z.number().optional(),
+    installmentRate: z.number().optional(),
+    installmentMonthly: z.number().optional(),
+    installmentTotal: z.number().optional(),
   });
 
   app.post("/api/orders", async (req, res) => {
@@ -289,6 +293,16 @@ export async function registerRoutes(
       pointsToUse = Math.min(usedPoints, balance);
       const serverTotal = Math.max(0, orderData.subtotal - orderData.discount + orderData.shipping - pointsToUse);
       orderData.grandTotal = Math.round(serverTotal * 100) / 100;
+    }
+
+    for (const item of orderData.items) {
+      const productId = parseInt(String(item.productId));
+      if (!isNaN(productId)) {
+        const ok = await storage.decrementStock(productId, item.quantity);
+        if (!ok) {
+          return res.status(400).json({ message: `Stok yetersiz: ${item.name}` });
+        }
+      }
     }
 
     const order = await storage.createOrder(orderData);
@@ -619,10 +633,11 @@ export async function registerRoutes(
     res.json(pets);
   });
 
-  app.get("/api/customer-lookup", async (req, res) => {
-    const phone = (req.query.phone as string || "").trim();
-    if (!phone || phone.length < 7) return res.json(null);
-    const matched = await storage.getOrdersByPhone(phone);
+  app.get("/api/customer-lookup", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const customer = await storage.getCustomer(customerId);
+    if (!customer) return res.json(null);
+    const matched = await storage.getOrdersByPhone(customer.phone);
     if (matched.length === 0) return res.json(null);
     const latest = matched[0];
     res.json({
@@ -631,10 +646,11 @@ export async function registerRoutes(
     });
   });
 
-  app.get("/api/orders/track", async (req, res) => {
-    const phone = (req.query.phone as string || "").trim();
-    if (!phone || phone.length < 7) return res.json([]);
-    const matched = await storage.getOrdersByPhone(phone);
+  app.get("/api/orders/track", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const customer = await storage.getCustomer(customerId);
+    if (!customer) return res.json([]);
+    const matched = await storage.getOrdersByPhone(customer.phone);
     const safeOrders = matched.map(o => ({
       id: o.id,
       items: o.items,
@@ -681,6 +697,15 @@ export async function registerRoutes(
   app.get("/api/admin/stock-alerts", requireAdmin, async (_req, res) => {
     const alerts = await storage.getAllStockAlerts();
     res.json(alerts);
+  });
+
+  app.post("/api/admin/stock-alerts/:productId/notify", requireAdmin, async (req, res) => {
+    const productId = parseInt(req.params.productId);
+    const pending = await storage.getUnnotifiedStockAlerts(productId);
+    if (pending.length === 0) return res.json({ message: "Bildirilecek kişi yok", notified: 0, contacts: [] });
+    await storage.markStockAlertsNotified(productId);
+    const contacts = pending.map(a => ({ name: a.customerName, phone: a.phone, productName: a.productName }));
+    res.json({ message: `${contacts.length} kişi bildirildi`, notified: contacts.length, contacts });
   });
 
   app.get("/api/installment-rates", async (_req, res) => {

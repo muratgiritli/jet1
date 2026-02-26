@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Package, Loader2, Phone } from "lucide-react";
-import { Link } from "wouter";
+import { Package, Loader2, LogIn } from "lucide-react";
+import { Link, useLocation } from "wouter";
 import BackNavigation from "@/components/BackNavigation";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 import type { OrderItem } from "@shared/schema";
@@ -26,30 +26,32 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 };
 
 export default function OrderTrackingPage() {
-  const [phone, setPhone] = useState("");
-  const [orders, setOrders] = useState<TrackedOrder[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [searched, setSearched] = useState(false);
+  const [, navigate] = useLocation();
 
-  const handleSearch = async () => {
-    const trimmed = phone.trim();
-    if (!trimmed || trimmed.length < 7) return;
-    setLoading(true);
-    setSearched(true);
-    try {
-      const res = await fetch(`/api/orders/track?phone=${encodeURIComponent(trimmed)}`);
-      if (res.ok) {
-        const data = await res.json();
-        setOrders(data);
-      } else {
-        setOrders([]);
+  const { data: customer, isLoading: customerLoading } = useQuery<{ id: number; phone: string; name: string } | null>({
+    queryKey: ["/api/customer/me"],
+    queryFn: async () => {
+      try {
+        const res = await fetch("/api/customer/me", { credentials: "include" });
+        if (res.status === 401) return null;
+        return await res.json();
+      } catch {
+        return null;
       }
-    } catch {
-      setOrders([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    },
+  });
+
+  const { data: orders = [], isLoading: ordersLoading } = useQuery<TrackedOrder[]>({
+    queryKey: ["/api/orders/track"],
+    queryFn: async () => {
+      const res = await fetch("/api/orders/track", { credentials: "include" });
+      if (!res.ok) return [];
+      return res.json();
+    },
+    enabled: !!customer,
+  });
+
+  const loading = customerLoading || (!!customer && ordersLoading);
 
   return (
     <div className="min-h-screen bg-background pb-16">
@@ -67,51 +69,37 @@ export default function OrderTrackingPage() {
       <BackNavigation />
 
       <main className="max-w-2xl mx-auto px-4 pb-8">
-        <section className="mt-6">
-          <Card>
-            <CardContent className="p-5 space-y-4">
-              <div className="flex items-center gap-2 flex-wrap">
-                <Phone className="w-5 h-5 text-muted-foreground shrink-0" />
-                <h2 className="text-base font-bold">Telefon Numaranızı Girin</h2>
-              </div>
-              <div className="flex gap-2">
-                <Input
-                  type="tel"
-                  placeholder="05XX XXX XX XX"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                  data-testid="input-phone"
-                />
-                <Button
-                  onClick={handleSearch}
-                  disabled={loading || phone.trim().length < 7}
-                  data-testid="button-search"
-                >
-                  {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-                  Sorgula
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </section>
-
         {loading && (
           <div className="flex justify-center py-12">
             <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
           </div>
         )}
 
-        {!loading && searched && orders.length === 0 && (
+        {!loading && !customer && (
+          <div className="text-center py-12">
+            <LogIn className="w-12 h-12 mx-auto mb-3 text-muted-foreground opacity-30" />
+            <p className="text-sm font-medium text-muted-foreground mb-4" data-testid="text-login-required">
+              Siparişlerinizi görmek için giriş yapmalısınız
+            </p>
+            <Link href="/giris">
+              <Button data-testid="button-go-login">
+                <LogIn className="w-4 h-4 mr-2" />
+                Giriş Yap
+              </Button>
+            </Link>
+          </div>
+        )}
+
+        {!loading && customer && orders.length === 0 && (
           <div className="text-center py-12 text-muted-foreground">
             <Package className="w-12 h-12 mx-auto mb-3 opacity-20" />
             <p className="text-sm font-medium" data-testid="text-no-results">
-              Bu telefon numarasına ait sipariş bulunamadı
+              Henüz siparişiniz bulunmuyor
             </p>
           </div>
         )}
 
-        {!loading && orders.length > 0 && (
+        {!loading && customer && orders.length > 0 && (
           <section className="mt-6 space-y-4" data-testid="list-orders">
             {orders.map((order) => {
               const cfg = statusConfig[order.status] || statusConfig.yeni;
