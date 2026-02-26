@@ -417,6 +417,10 @@ export default function ProductDetailPage() {
                 </p>
               )}
 
+              {category && shouldShowFastDelivery(category.animal, category.subcategory) && (
+                <FastDeliveryBanner />
+              )}
+
               <div className="flex items-baseline gap-3 mt-1 flex-wrap">
                 {product.originalPrice && product.originalPrice > product.price && (
                   <span className="text-base text-muted-foreground line-through" data-testid="text-original-price">
