@@ -221,3 +221,23 @@ export const loyaltyPoints = pgTable("loyalty_points", {
 export const insertLoyaltyPointSchema = createInsertSchema(loyaltyPoints).omit({ id: true, createdAt: true });
 export type InsertLoyaltyPoint = z.infer<typeof insertLoyaltyPointSchema>;
 export type LoyaltyPoint = typeof loyaltyPoints.$inferSelect;
+
+export const reorderReminders = pgTable("reorder_reminders", {
+  id: serial("id").primaryKey(),
+  customerPhone: text("customer_phone").notNull(),
+  customerName: text("customer_name"),
+  productId: integer("product_id").notNull(),
+  productName: text("product_name").notNull(),
+  animalType: text("animal_type").notNull(),
+  dailyGrams: real("daily_grams").notNull(),
+  packageGrams: real("package_grams").notNull(),
+  estimatedDays: integer("estimated_days").notNull(),
+  reorderDate: timestamp("reorder_date").notNull(),
+  status: text("status").notNull().default("pending"),
+  notifiedAt: timestamp("notified_at"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertReorderReminderSchema = createInsertSchema(reorderReminders).omit({ id: true, createdAt: true, notifiedAt: true });
+export type InsertReorderReminder = z.infer<typeof insertReorderReminderSchema>;
+export type ReorderReminder = typeof reorderReminders.$inferSelect;

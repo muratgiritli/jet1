@@ -456,6 +456,43 @@ export async function registerRoutes(
     res.status(201).json(point);
   });
 
+  const createReminderSchema = z.object({
+    customerPhone: z.string().min(7),
+    customerName: z.string().optional(),
+    productId: z.number().int().positive(),
+    productName: z.string().min(1),
+    animalType: z.enum(["kedi", "kopek"]),
+    dailyGrams: z.number().positive(),
+    packageGrams: z.number().positive(),
+    estimatedDays: z.number().int().min(1),
+  });
+
+  app.post("/api/reorder-reminders", async (req, res) => {
+    const parsed = createReminderSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Eksik veya hatalı bilgi", errors: parsed.error.errors });
+    const { estimatedDays, ...rest } = parsed.data;
+    const reorderDate = new Date();
+    reorderDate.setDate(reorderDate.getDate() + estimatedDays);
+    const reminder = await storage.createReorderReminder({
+      ...rest, estimatedDays, reorderDate, status: "pending",
+    });
+    res.status(201).json(reminder);
+  });
+
+  app.get("/api/admin/reorder-reminders", requireAdmin, async (_req, res) => {
+    const reminders = await storage.getReorderReminders();
+    res.json(reminders);
+  });
+
+  app.patch("/api/admin/reorder-reminders/:id/status", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const { status } = req.body;
+    if (!status) return res.status(400).json({ message: "Status gerekli" });
+    const updated = await storage.updateReorderReminderStatus(id, status);
+    if (!updated) return res.status(404).json({ message: "Hatırlatma bulunamadı" });
+    res.json(updated);
+  });
+
   app.get("/api/customer/orders", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
     const customer = await storage.getCustomer(customerId);

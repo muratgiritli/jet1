@@ -19,6 +19,7 @@ import ImageZoom from "@/components/ImageZoom";
 import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
 import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
+import FoodCalculator from "@/components/FoodCalculator";
 
 type ProductDetailData = {
   product: Product;
@@ -564,6 +565,21 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </motion.div>
+
+        {category && ["kedi-mamasi", "acik-mama", "mama-markalari", "yas-mama"].includes(category.subcategory) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className="mt-6"
+          >
+            <FoodCalculator
+              productId={product.id}
+              productName={product.name}
+              defaultAnimal={category.animal === "kopek" ? "kopek" : "kedi"}
+            />
+          </motion.div>
+        )}
 
         {breedStats && breedStats.length > 0 && (
           <motion.div

@@ -49,7 +49,9 @@ import {
   ShoppingBag,
   X,
   Search,
+  Check,
 } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order, BreedStat, StockAlert, InstallmentRate } from "@shared/schema";
@@ -2312,8 +2314,170 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </CardContent>
           </Card>
         </section>
+
+        <ReorderRemindersSection />
       </main>
     </div>
+  );
+}
+
+function ReorderRemindersSection() {
+  const { data: reminders = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin/reorder-reminders"],
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      await apiRequest("PATCH", `/api/admin/reorder-reminders/${id}/status`, { status });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reorder-reminders"] });
+    },
+  });
+
+  const now = new Date();
+  const pending = reminders.filter((r: any) => r.status === "pending");
+  const upcoming = pending.filter((r: any) => new Date(r.reorderDate) <= new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000));
+  const overdue = pending.filter((r: any) => new Date(r.reorderDate) <= now);
+
+  const buildWhatsAppLink = (r: any) => {
+    const msg = `Merhaba ${r.customerName || ""}!\n\nDaha önce aldığınız *${r.productName}* mamayı yakında bitirmiş olabilirsiniz.\n\nYeni sipariş vermek ister misiniz?\n\nJET55 - Hızlı Sipariş`;
+    return `https://wa.me/${r.customerPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(msg)}`;
+  };
+
+  return (
+    <section>
+      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+        <h2 className="text-lg font-bold" data-testid="text-section-reorder-reminders">
+          Tekrar Sipariş Hatırlatmaları
+          {overdue.length > 0 && (
+            <Badge variant="destructive" className="ml-2 no-default-hover-elevate" data-testid="badge-overdue-count">
+              {overdue.length} acil
+            </Badge>
+          )}
+          {upcoming.length > 0 && upcoming.length !== overdue.length && (
+            <Badge variant="secondary" className="ml-2 no-default-hover-elevate" data-testid="badge-upcoming-count">
+              {upcoming.length} yaklaşan
+            </Badge>
+          )}
+        </h2>
+      </div>
+
+      <Card>
+        <CardContent className="p-4">
+          {isLoading && <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin" /></div>}
+
+          {!isLoading && pending.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4" data-testid="text-no-reminders">
+              Bekleyen hatırlatma yok
+            </p>
+          )}
+
+          {!isLoading && pending.length > 0 && (
+            <div className="space-y-3" data-testid="list-reorder-reminders">
+              {pending
+                .sort((a: any, b: any) => new Date(a.reorderDate).getTime() - new Date(b.reorderDate).getTime())
+                .map((r: any) => {
+                  const reorderDate = new Date(r.reorderDate);
+                  const isOverdue = reorderDate <= now;
+                  const daysLeft = Math.ceil((reorderDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                  return (
+                    <div
+                      key={r.id}
+                      className={`p-3 rounded-lg border ${isOverdue ? "border-red-300 bg-red-50" : daysLeft <= 3 ? "border-yellow-300 bg-yellow-50" : "border-gray-200 bg-white"}`}
+                      data-testid={`row-reminder-${r.id}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-bold truncate">{r.productName}</span>
+                            <Badge variant="outline" className="text-xs shrink-0 no-default-hover-elevate">
+                              {r.animalType === "kedi" ? "Kedi" : "Köpek"}
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+                            <span><Phone className="w-3 h-3 inline mr-0.5" />{r.customerPhone}</span>
+                            {r.customerName && <span><User className="w-3 h-3 inline mr-0.5" />{r.customerName}</span>}
+                          </div>
+                          <div className="flex items-center gap-3 mt-1 text-xs flex-wrap">
+                            <span className="text-muted-foreground">
+                              <Calendar className="w-3 h-3 inline mr-0.5" />
+                              {reorderDate.toLocaleDateString("tr-TR", { day: "2-digit", month: "short", year: "numeric" })}
+                            </span>
+                            <span className="text-muted-foreground">
+                              Günlük {r.dailyGrams}gr · {r.packageGrams >= 1000 ? `${r.packageGrams / 1000}kg` : `${r.packageGrams}gr`} paket · {r.estimatedDays} gün
+                            </span>
+                          </div>
+                          <div className="mt-1">
+                            {isOverdue ? (
+                              <span className="text-xs font-bold text-red-600" data-testid={`text-reminder-status-${r.id}`}>
+                                <AlertTriangle className="w-3 h-3 inline mr-0.5" /> Mama bitmiş olabilir!
+                              </span>
+                            ) : daysLeft <= 3 ? (
+                              <span className="text-xs font-bold text-yellow-700" data-testid={`text-reminder-status-${r.id}`}>
+                                <Clock className="w-3 h-3 inline mr-0.5" /> {daysLeft} gün kaldı
+                              </span>
+                            ) : (
+                              <span className="text-xs text-muted-foreground" data-testid={`text-reminder-status-${r.id}`}>
+                                {daysLeft} gün kaldı
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1.5 shrink-0">
+                          <a
+                            href={buildWhatsAppLink(r)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-md text-xs font-medium text-white"
+                            style={{ backgroundColor: "#25D366" }}
+                            onClick={() => updateStatusMutation.mutate({ id: r.id, status: "notified" })}
+                            data-testid={`btn-whatsapp-reminder-${r.id}`}
+                          >
+                            <SiWhatsapp className="w-3.5 h-3.5" />
+                            WhatsApp
+                          </a>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={() => updateStatusMutation.mutate({ id: r.id, status: "completed" })}
+                            data-testid={`btn-complete-reminder-${r.id}`}
+                          >
+                            <Check className="w-3 h-3 mr-0.5" />
+                            Tamamla
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          )}
+
+          {reminders.filter((r: any) => r.status !== "pending").length > 0 && (
+            <details className="mt-4 pt-3 border-t">
+              <summary className="text-xs text-muted-foreground cursor-pointer">
+                Tamamlanan hatırlatmalar ({reminders.filter((r: any) => r.status !== "pending").length})
+              </summary>
+              <div className="space-y-2 mt-2">
+                {reminders
+                  .filter((r: any) => r.status !== "pending")
+                  .sort((a: any, b: any) => new Date(b.notifiedAt || b.createdAt).getTime() - new Date(a.notifiedAt || a.createdAt).getTime())
+                  .slice(0, 10)
+                  .map((r: any) => (
+                    <div key={r.id} className="flex items-center gap-2 text-xs text-muted-foreground py-1 px-2 rounded bg-muted/30" data-testid={`row-completed-reminder-${r.id}`}>
+                      <Check className="w-3 h-3 text-green-500" />
+                      <span className="truncate flex-1">{r.customerPhone} - {r.productName}</span>
+                      <span>{r.status === "notified" ? "Bildirildi" : "Tamamlandı"}</span>
+                    </div>
+                  ))}
+              </div>
+            </details>
+          )}
+        </CardContent>
+      </Card>
+    </section>
   );
 }
 

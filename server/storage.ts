@@ -17,7 +17,8 @@ import {
   type CustomerAddress, type InsertCustomerAddress,
   type PetProfile, type InsertPetProfile,
   type LoyaltyPoint, type InsertLoyaltyPoint,
-  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints,
+  type ReorderReminder, type InsertReorderReminder,
+  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders,
 } from "@shared/schema";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -107,6 +108,10 @@ export interface IStorage {
   getCustomerPointsBalance(customerId: number): Promise<number>;
   addLoyaltyPoints(data: InsertLoyaltyPoint): Promise<LoyaltyPoint>;
   getAllCustomersWithPoints(): Promise<{ id: number; phone: string; name: string; balance: number }[]>;
+
+  createReorderReminder(data: InsertReorderReminder): Promise<ReorderReminder>;
+  getReorderReminders(): Promise<ReorderReminder[]>;
+  updateReorderReminderStatus(id: number, status: string): Promise<ReorderReminder | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -436,6 +441,20 @@ export class DatabaseStorage implements IStorage {
       .map(c => ({ id: c.id, phone: c.phone, name: c.name, balance: balanceMap.get(c.id) || 0 }))
       .filter(c => c.balance !== 0)
       .sort((a, b) => b.balance - a.balance);
+  }
+
+  async createReorderReminder(data: InsertReorderReminder): Promise<ReorderReminder> {
+    const [reminder] = await db.insert(reorderReminders).values(data).returning();
+    return reminder;
+  }
+
+  async getReorderReminders(): Promise<ReorderReminder[]> {
+    return db.select().from(reorderReminders).orderBy(reorderReminders.reorderDate);
+  }
+
+  async updateReorderReminderStatus(id: number, status: string): Promise<ReorderReminder | undefined> {
+    const [updated] = await db.update(reorderReminders).set({ status, notifiedAt: status === "notified" ? new Date() : undefined }).where(eq(reorderReminders.id, id)).returning();
+    return updated;
   }
 }
 

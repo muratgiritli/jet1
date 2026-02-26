@@ -6,8 +6,10 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 ## Architecture
 - **Frontend**: React + TypeScript with shadcn/ui components, Tailwind CSS, framer-motion
 - **Backend**: Express with session-based auth (bcryptjs + express-session + connect-pg-simple)
-- **Database**: PostgreSQL (Drizzle ORM) - brand_categories, products, cross_sell_sections, cross_sell_items, orders, breed_stats, installment_rates, customers, customer_favorites, customer_addresses, pet_profiles, loyalty_points tables
+- **Database**: PostgreSQL (Drizzle ORM) - brand_categories, products, cross_sell_sections, cross_sell_items, orders, breed_stats, installment_rates, customers, customer_favorites, customer_addresses, pet_profiles, loyalty_points, reorder_reminders tables
 - **Loyalty Points**: Para Puan system - customers earn 5% of subtotal on each order, can spend points on future orders (auto-applied at checkout)
+- **Food Calculator**: Akıllı Mama Hesaplama - calculates daily food needs based on pet weight/age, shows how many days a package lasts, allows setting reorder reminders
+- **Reorder Reminders**: Customers set reminders via food calculator, admin sees upcoming/overdue reminders with one-click WhatsApp messaging
 - **Static data**: CATEGORIES in client/src/lib/data.ts (non-brand products remain static)
 - **Dynamic data**: Brand products (Brit Care, Hill's, etc.) served from database via API
 - **Cross-sell**: Reusable recommendation sections linked to products via junction table, displayed on product detail pages
@@ -20,7 +22,8 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `client/src/pages/landing.tsx` - Landing/home page with category cards, banners, search bar, footer
 - `client/src/pages/category.tsx` - Animal category pages (Köpek, Kedi, Kuş, Kemirgen)
 - `client/src/pages/brand-products.tsx` - Brand product listing (fetches from API)
-- `client/src/pages/product-detail.tsx` - Individual product detail page with cross-sell sections, stock alerts
+- `client/src/pages/product-detail.tsx` - Individual product detail page with cross-sell sections, stock alerts, food calculator
+- `client/src/components/FoodCalculator.tsx` - Smart food calculator with reorder reminder
 - `client/src/pages/home.tsx` - Product browsing page with catalog (static products)
 - `client/src/pages/checkout.tsx` - Cart/checkout page with payment options, customer info, and WhatsApp order
 - `client/src/pages/order-tracking.tsx` - Order tracking by phone number
