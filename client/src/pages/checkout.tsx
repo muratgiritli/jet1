@@ -299,7 +299,7 @@ export default function Checkout() {
       if (pay.id === "eft") msg += CONFIG.bankInfo;
 
       const url = `https://wa.me/${CONFIG.phone.replace("+", "")}?text=${encodeURIComponent(msg)}`;
-      window.open(url, "_blank");
+      window.location.href = url;
 
       clearCart();
       toast({ title: "Siparis kaydedildi", description: "WhatsApp uzerinden siparisiz iletiliyor." });
@@ -491,7 +491,7 @@ export default function Checkout() {
                       <SelectTrigger data-testid="select-mahalle" className={!selectedMahalle ? "text-muted-foreground" : ""}>
                         <SelectValue placeholder="Mahalle seçiniz..." />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
                         {TESLIMAT_MAHALLELERI.map((m) => (
                           <SelectItem key={m} value={m} data-testid={`option-mahalle-${m}`}>
                             {m}
