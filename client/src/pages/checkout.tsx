@@ -23,8 +23,6 @@ import {
   Minus,
   Trash2,
   Loader2,
-  User,
-  Phone,
   Search,
   MapPin,
   CheckCircle2,
@@ -92,7 +90,7 @@ export default function Checkout() {
   const [lookupDone, setLookupDone] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
-  const [showAuthBanner, setShowAuthBanner] = useState(true);
+  const [editingInfo, setEditingInfo] = useState(false);
   const [usePoints, setUsePoints] = useState(true);
   const [selectedMahalle, setSelectedMahalle] = useState("");
   const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -336,21 +334,6 @@ export default function Checkout() {
       <BackNavigation />
 
       <main className="max-w-2xl mx-auto px-4 pb-8">
-        {!isLoggedIn && showAuthBanner && selectedProducts.length > 0 && (
-          <div className="mt-4 rounded-xl border p-3 flex items-center gap-3" style={{ backgroundColor: "#f3eef6", borderColor: "#d4c4de" }} data-testid="banner-auth-prompt">
-            <LogIn className="w-5 h-5 shrink-0" style={{ color: "#6B3480" }} />
-            <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium leading-tight">Uye olun, siparislerinizi takip edin</p>
-              <Link href="/giris?redirect=/odeme">
-                <span className="text-xs font-semibold underline" style={{ color: "#6B3480" }} data-testid="link-auth-banner">Giris Yap / Uye Ol</span>
-              </Link>
-            </div>
-            <button onClick={() => setShowAuthBanner(false)} className="shrink-0 p-1 rounded-full hover:bg-white/60" data-testid="btn-dismiss-auth-banner">
-              <X className="w-4 h-4 text-muted-foreground" />
-            </button>
-          </div>
-        )}
-
         {selectedProducts.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
             <ShoppingCart className="w-16 h-16 mx-auto mb-4 opacity-20" />
@@ -426,179 +409,217 @@ export default function Checkout() {
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-customer-info">
                 Musteri Bilgileri
               </h2>
-              {isLoggedIn && (
-                <div className="mb-2 flex items-center gap-1.5 text-xs text-green-600" data-testid="text-logged-in-info">
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Uye olarak giris yapildi - bilgileriniz otomatik dolduruldu</span>
-                </div>
-              )}
               <Card>
                 <CardContent className="p-4 space-y-3">
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium flex items-center gap-1.5">
-                      <Phone className="w-4 h-4 text-muted-foreground" />
-                      Telefon Numarasi
-                    </label>
-                    <div className="relative">
-                      <Input
-                        type="tel"
-                        placeholder="05XX XXX XX XX"
-                        value={customerPhone}
-                        onChange={(e) => !isLoggedIn && setCustomerPhone(e.target.value)}
-                        readOnly={isLoggedIn}
-                        className={isLoggedIn ? "bg-muted" : ""}
-                        data-testid="input-customer-phone"
-                      />
-                      {lookupLoading && (
-                        <Loader2 className="w-4 h-4 animate-spin absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  {isLoggedIn && !editingInfo ? (
+                    <div data-testid="customer-info-summary">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium truncate" data-testid="text-summary-name">{customerName}</p>
+                            <p className="text-xs text-muted-foreground truncate" data-testid="text-summary-phone">{customerPhone}</p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setEditingInfo(true)}
+                          className="text-xs font-medium underline shrink-0 ml-2"
+                          style={{ color: "#6B3480" }}
+                          data-testid="btn-edit-info"
+                        >
+                          Duzenle
+                        </button>
+                      </div>
+                      {selectedMahalle && (
+                        <p className="text-xs text-muted-foreground mt-1 truncate" data-testid="text-summary-address">
+                          <MapPin className="w-3 h-3 inline mr-1" />
+                          {selectedMahalle}{customerAddress ? `, ${customerAddress}` : ""}
+                        </p>
                       )}
-                      {isReturningCustomer && !lookupLoading && (
-                        <CheckCircle2 className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-green-500" />
+                      {customerLocation && (
+                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1" data-testid="text-summary-location">
+                          <Navigation className="w-3 h-3" />
+                          Konum paylasıldı
+                        </p>
+                      )}
+                      {!selectedMahalle && (
+                        <div className="mt-2">
+                          <Select value={selectedMahalle} onValueChange={setSelectedMahalle}>
+                            <SelectTrigger data-testid="select-mahalle" className="text-muted-foreground h-9 text-xs">
+                              <SelectValue placeholder="Mahalle seciniz..." />
+                            </SelectTrigger>
+                            <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
+                              {TESLIMAT_MAHALLELERI.map((m) => (
+                                <SelectItem key={m} value={m} data-testid={`option-mahalle-${m}`}>
+                                  {m}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       )}
                     </div>
-                    {!isLoggedIn && isReturningCustomer && (
-                      <p className="text-xs text-green-600 flex items-center gap-1" data-testid="text-returning-customer">
-                        <CheckCircle2 className="w-3 h-3" />
-                        Kayitli musteri - bilgileriniz otomatik dolduruldu
-                      </p>
-                    )}
-                  </div>
+                  ) : (
+                    <>
+                      {!isLoggedIn && (
+                        <Link href="/giris?redirect=/odeme">
+                          <button
+                            type="button"
+                            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold text-white transition-colors"
+                            style={{ backgroundColor: "#6B3480" }}
+                            data-testid="btn-inline-auth"
+                          >
+                            <LogIn className="w-3.5 h-3.5" />
+                            Hizli doldurmak icin giris yap
+                          </button>
+                        </Link>
+                      )}
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium flex items-center gap-1.5">
-                      <User className="w-4 h-4 text-muted-foreground" />
-                      Ad Soyad
-                    </label>
-                    <Input
-                      type="text"
-                      placeholder="Ad Soyad"
-                      value={customerName}
-                      onChange={(e) => setCustomerName(e.target.value)}
-                      readOnly={isLoggedIn}
-                      className={isLoggedIn ? "bg-muted" : ""}
-                      data-testid="input-customer-name"
-                    />
-                  </div>
+                      {isLoggedIn && editingInfo && (
+                        <div className="flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => setEditingInfo(false)}
+                            className="text-xs font-medium underline"
+                            style={{ color: "#6B3480" }}
+                            data-testid="btn-done-editing"
+                          >
+                            Tamam
+                          </button>
+                        </div>
+                      )}
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium flex items-center gap-1.5">
-                      <MapPin className="w-4 h-4 text-muted-foreground" />
-                      Teslimat Mahallesi <span className="text-red-500">*</span>
-                    </label>
-                    <Select value={selectedMahalle} onValueChange={setSelectedMahalle}>
-                      <SelectTrigger data-testid="select-mahalle" className={!selectedMahalle ? "text-muted-foreground" : ""}>
-                        <SelectValue placeholder="Mahalle seçiniz..." />
-                      </SelectTrigger>
-                      <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
-                        {TESLIMAT_MAHALLELERI.map((m) => (
-                          <SelectItem key={m} value={m} data-testid={`option-mahalle-${m}`}>
-                            {m}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    {!selectedMahalle && (
-                      <p className="text-xs text-muted-foreground">
-                        Sadece listelenen mahallelere teslimat yapılmaktadır.
-                      </p>
-                    )}
-                  </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="relative">
+                          <Input
+                            type="tel"
+                            placeholder="05XX XXX XX XX"
+                            value={customerPhone}
+                            onChange={(e) => !isLoggedIn && setCustomerPhone(e.target.value)}
+                            readOnly={isLoggedIn}
+                            className={`text-sm h-9 ${isLoggedIn ? "bg-muted" : ""}`}
+                            data-testid="input-customer-phone"
+                          />
+                          {lookupLoading && (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                          )}
+                        </div>
+                        <Input
+                          type="text"
+                          placeholder="Ad Soyad"
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          readOnly={isLoggedIn}
+                          className={`text-sm h-9 ${isLoggedIn ? "bg-muted" : ""}`}
+                          data-testid="input-customer-name"
+                        />
+                      </div>
 
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium flex items-center gap-1.5">
-                      <Home className="w-4 h-4 text-muted-foreground" />
-                      Adres Detayı
-                    </label>
-                    {isLoggedIn && savedAddresses.length > 0 && (
-                      <div className="mb-2">
-                        <button
-                          type="button"
-                          onClick={() => setShowAddressPicker(!showAddressPicker)}
-                          className="w-full flex items-center justify-between text-xs px-3 py-2 rounded-md border bg-muted/50 hover:bg-muted transition-colors"
-                          data-testid="btn-address-picker"
+                      <Select value={selectedMahalle} onValueChange={setSelectedMahalle}>
+                        <SelectTrigger data-testid="select-mahalle" className={`h-9 text-sm ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
+                          <SelectValue placeholder="Teslimat mahallesi seciniz..." />
+                        </SelectTrigger>
+                        <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
+                          {TESLIMAT_MAHALLELERI.map((m) => (
+                            <SelectItem key={m} value={m} data-testid={`option-mahalle-${m}`}>
+                              {m}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      {selectedMahalle && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: "auto" }}
+                          className="space-y-2"
                         >
-                          <span className="flex items-center gap-1.5">
-                            <Home className="w-3.5 h-3.5" />
-                            Kayıtlı adreslerden seç
-                          </span>
-                          <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAddressPicker ? "rotate-180" : ""}`} />
-                        </button>
-                        {showAddressPicker && (
-                          <div className="mt-1.5 space-y-1">
-                            {savedAddresses.map((addr: any) => (
+                          {isLoggedIn && savedAddresses.length > 0 && (
+                            <div>
                               <button
-                                key={addr.id}
                                 type="button"
-                                onClick={() => { setCustomerAddress(addr.address); setShowAddressPicker(false); }}
-                                className={`w-full text-left p-2 rounded-md border text-xs transition-colors hover:bg-accent ${customerAddress === addr.address ? "border-primary bg-primary/5" : ""}`}
-                                data-testid={`btn-select-address-${addr.id}`}
+                                onClick={() => setShowAddressPicker(!showAddressPicker)}
+                                className="w-full flex items-center justify-between text-xs px-3 py-1.5 rounded-md border bg-muted/50 hover:bg-muted transition-colors"
+                                data-testid="btn-address-picker"
                               >
-                                <span className="font-medium">{addr.label}</span>
-                                {addr.isDefault && <Badge variant="secondary" className="ml-1.5 text-[10px] py-0">Varsayılan</Badge>}
-                                <p className="text-muted-foreground mt-0.5 line-clamp-2">{addr.address}</p>
+                                <span className="flex items-center gap-1.5">
+                                  <Home className="w-3 h-3" />
+                                  Kayitli adreslerden sec
+                                </span>
+                                <ChevronDown className={`w-3 h-3 transition-transform ${showAddressPicker ? "rotate-180" : ""}`} />
                               </button>
-                            ))}
+                              {showAddressPicker && (
+                                <div className="mt-1 space-y-1">
+                                  {savedAddresses.map((addr: any) => (
+                                    <button
+                                      key={addr.id}
+                                      type="button"
+                                      onClick={() => { setCustomerAddress(addr.address); setShowAddressPicker(false); }}
+                                      className={`w-full text-left p-2 rounded-md border text-xs transition-colors hover:bg-accent ${customerAddress === addr.address ? "border-primary bg-primary/5" : ""}`}
+                                      data-testid={`btn-select-address-${addr.id}`}
+                                    >
+                                      <span className="font-medium">{addr.label}</span>
+                                      {addr.isDefault && <Badge variant="secondary" className="ml-1.5 text-[10px] py-0">Varsayilan</Badge>}
+                                      <p className="text-muted-foreground mt-0.5 line-clamp-2">{addr.address}</p>
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          <div className="relative">
+                            <Textarea
+                              placeholder="Sokak, bina no, daire no..."
+                              value={customerAddress}
+                              onChange={(e) => setCustomerAddress(e.target.value)}
+                              rows={2}
+                              className="text-sm pr-10"
+                              data-testid="input-customer-address"
+                            />
+                            {customerLocation ? (
+                              <button
+                                type="button"
+                                onClick={() => setCustomerLocation(null)}
+                                className="absolute right-2 top-2 p-1 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
+                                title="Konum paylasıldı - kaldırmak icin tıklayın"
+                                data-testid="btn-remove-location"
+                              >
+                                <Navigation className="w-3.5 h-3.5" />
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={handleShareLocation}
+                                disabled={locationLoading}
+                                className="absolute right-2 top-2 p-1 rounded-full text-muted-foreground hover:bg-accent transition-colors"
+                                title="Konumumu paylas"
+                                data-testid="btn-share-location"
+                              >
+                                {locationLoading ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Navigation className="w-3.5 h-3.5" />
+                                )}
+                              </button>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    )}
-                    <Textarea
-                      placeholder="Sokak, bina no, daire no..."
-                      value={customerAddress}
-                      onChange={(e) => setCustomerAddress(e.target.value)}
-                      rows={2}
-                      data-testid="input-customer-address"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <label className="text-sm font-medium flex items-center gap-1.5">
-                      <Navigation className="w-4 h-4 text-muted-foreground" />
-                      Canlı Konum
-                    </label>
-                    {customerLocation ? (
-                      <div className="flex items-center gap-2 p-2.5 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
-                        <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                        <a
-                          href={`https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-green-700 dark:text-green-400 underline truncate"
-                          data-testid="link-location-map"
-                        >
-                          Konum alındı - Haritada gör
-                        </a>
-                        <button
-                          type="button"
-                          onClick={() => setCustomerLocation(null)}
-                          className="ml-auto text-muted-foreground hover:text-foreground"
-                          data-testid="btn-remove-location"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        className="w-full"
-                        onClick={handleShareLocation}
-                        disabled={locationLoading}
-                        data-testid="btn-share-location"
-                      >
-                        {locationLoading ? (
-                          <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                        ) : (
-                          <Navigation className="w-4 h-4 mr-1.5" />
-                        )}
-                        {locationLoading ? "Konum alınıyor..." : "Konumumu Paylaş"}
-                      </Button>
-                    )}
-                    <p className="text-xs text-muted-foreground">
-                      Teslimat adresinizi kolayca bulmamız için konumunuzu paylaşabilirsiniz.
-                    </p>
-                  </div>
+                          {customerLocation && (
+                            <a
+                              href={`https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-green-600 underline flex items-center gap-1"
+                              data-testid="link-location-map"
+                            >
+                              <CheckCircle2 className="w-3 h-3" />
+                              Konum alındı - Haritada gor
+                            </a>
+                          )}
+                        </motion.div>
+                      )}
+                    </>
+                  )}
                 </CardContent>
               </Card>
             </section>
