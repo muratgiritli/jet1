@@ -542,15 +542,17 @@ export default function BrandProductsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800 mb-4" data-testid="banner-orijinal-urun">
-          <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-400 bg-white dark:bg-green-950 shrink-0 no-default-hover-elevate">
-            <ShieldCheck className="w-3.5 h-3.5 mr-1" />
-            Orijinal Urun
-          </Badge>
-          <span className="text-xs text-muted-foreground">
-            JET55, {data.category.brandName} yetkili satıcısıdır.
-          </span>
-        </div>
+        {animal !== "kus" && animal !== "kemirgen" && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800 mb-4" data-testid="banner-orijinal-urun">
+            <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-400 bg-white dark:bg-green-950 shrink-0 no-default-hover-elevate">
+              <ShieldCheck className="w-3.5 h-3.5 mr-1" />
+              Orijinal Urun
+            </Badge>
+            <span className="text-xs text-muted-foreground">
+              JET55, {data.category.brandName} yetkili satıcısıdır.
+            </span>
+          </div>
+        )}
 
         {shouldShowFastDelivery(animal, subcategory) && (
           <div className="mb-4">
