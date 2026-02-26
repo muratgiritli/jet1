@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Truck, Phone, CreditCard, MapPin } from "lucide-react";
+import { Truck, CreditCard, MapPin } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import SearchBar from "@/components/SearchBar";
 
 import heroBanner from "@assets/banner_2_1771940597464.png";
@@ -28,7 +29,7 @@ const FEATURES = [
   { icon: Truck, text: "Samsun İçi Teslimat" },
   { icon: MapPin, text: "Kapınıza Kadar" },
   { icon: CreditCard, text: "Kapıda Ödeme" },
-  { icon: Phone, text: "0850 840 3959" },
+  { icon: SiWhatsapp, text: "0850 840 3959" },
 ];
 
 export default function Landing() {
