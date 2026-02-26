@@ -116,6 +116,13 @@ export async function registerRoutes(
     res.status(201).json(category);
   });
 
+  app.patch("/api/admin/brand-categories/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const category = await storage.updateBrandCategory(id, req.body);
+    if (!category) return res.status(404).json({ message: "Category not found" });
+    res.json(category);
+  });
+
   app.delete("/api/admin/brand-categories/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     await storage.deleteBrandCategory(id);

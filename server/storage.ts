@@ -31,6 +31,7 @@ export interface IStorage {
   getBrandCategory(id: number): Promise<BrandCategory | undefined>;
   getBrandCategoryBySlug(animal: string, subcategory: string, brandSlug: string): Promise<BrandCategory | undefined>;
   createBrandCategory(data: InsertBrandCategory): Promise<BrandCategory>;
+  updateBrandCategory(id: number, data: Partial<InsertBrandCategory>): Promise<BrandCategory | undefined>;
   deleteBrandCategory(id: number): Promise<void>;
 
   getProductsByBrandCategory(brandCategoryId: number): Promise<Product[]>;
@@ -134,6 +135,11 @@ export class DatabaseStorage implements IStorage {
 
   async createBrandCategory(data: InsertBrandCategory): Promise<BrandCategory> {
     const [cat] = await db.insert(brandCategories).values(data).returning();
+    return cat;
+  }
+
+  async updateBrandCategory(id: number, data: Partial<InsertBrandCategory>): Promise<BrandCategory | undefined> {
+    const [cat] = await db.update(brandCategories).set(data).where(eq(brandCategories.id, id)).returning();
     return cat;
   }
 
