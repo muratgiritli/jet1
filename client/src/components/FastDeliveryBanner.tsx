@@ -81,7 +81,7 @@ export default function FastDeliveryBanner() {
       <div className="flex items-center gap-2 min-w-0">
         <Clock className="w-5 h-5 shrink-0" style={{ color: "#e65100" }} />
         <span className="text-sm font-semibold" style={{ color: "#bf360c" }}>
-          {hourText}{minText} içinde sipariş ver, aynı gün kargoda!
+          {hourText}{minText} içinde sipariş ver, aynı gün kapında!
         </span>
       </div>
       <div className="flex items-center gap-1.5 shrink-0">
