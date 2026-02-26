@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<"login" | "register">("login");
+  const [mode, setMode] = useState<"login" | "register">("register");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -144,9 +144,14 @@ export default function AuthPage() {
                 <div className="relative">
                   <Input
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "").slice(0, 4);
+                      setPassword(val);
+                    }}
                     type={showPassword ? "text" : "password"}
-                    placeholder="Dogum yiliniz (orn: 1990)"
+                    placeholder="ornegin: 1990"
+                    inputMode="numeric"
+                    maxLength={4}
                     data-testid="input-auth-password"
                   />
                   <button
