@@ -19,10 +19,11 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { productUrl } from "@/lib/data";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 
-type TabKey = "profile" | "orders" | "favorites" | "addresses" | "pets" | "notifications" | "password";
+type TabKey = "profile" | "points" | "orders" | "favorites" | "addresses" | "pets" | "notifications" | "password";
 
 const TABS: { key: TabKey; label: string; icon: any }[] = [
   { key: "profile", label: "Profilim", icon: User },
+  { key: "points", label: "Para Puanlarım", icon: Star },
   { key: "orders", label: "Siparişlerim", icon: Package },
   { key: "favorites", label: "Favorilerim", icon: Heart },
   { key: "addresses", label: "Adreslerim", icon: Home },
@@ -122,6 +123,7 @@ export default function ProfilePage() {
         </div>
 
         {activeTab === "profile" && <ProfileSection customer={customer!} updateProfile={updateProfile} toast={toast} />}
+        {activeTab === "points" && <LoyaltyPointsSection />}
         {activeTab === "orders" && <OrdersSection />}
         {activeTab === "favorites" && <FavoritesSection />}
         {activeTab === "addresses" && <AddressesSection />}
@@ -865,5 +867,75 @@ function PasswordSection({ toast }: { toast: any }) {
         </Button>
       </CardContent>
     </Card>
+  );
+}
+
+function LoyaltyPointsSection() {
+  const { data, isLoading } = useQuery<{ balance: number; history: any[] }>({
+    queryKey: ["/api/customer/loyalty-points"],
+  });
+
+  if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+
+  const balance = data?.balance || 0;
+  const history = data?.history || [];
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardContent className="pt-6">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-12 h-12 rounded-full flex items-center justify-center" style={{ backgroundColor: "#fef3e2" }}>
+              <Star className="w-6 h-6" style={{ color: "#e65100" }} />
+            </div>
+            <div>
+              <p className="text-sm text-muted-foreground">Toplam Para Puanınız</p>
+              <p className="text-2xl font-bold" style={{ color: "#e65100" }} data-testid="text-points-balance">
+                {balance.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+              </p>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Her siparişinizde %5 Para Puan kazanırsınız. Biriken puanlarınız sonraki siparişlerinizde otomatik indirim olarak uygulanır.
+          </p>
+        </CardContent>
+      </Card>
+
+      {history.length > 0 && (
+        <Card>
+          <CardContent className="pt-6">
+            <h3 className="font-semibold mb-3">Puan Geçmişi</h3>
+            <div className="space-y-3">
+              {history.map((item: any) => (
+                <div key={item.id} className="flex items-center justify-between py-2 border-b last:border-b-0" data-testid={`points-history-${item.id}`}>
+                  <div>
+                    <p className="text-sm font-medium">{item.description}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(item.createdAt).toLocaleDateString("tr-TR", { day: "2-digit", month: "long", year: "numeric" })}
+                    </p>
+                  </div>
+                  <span
+                    className="text-sm font-bold"
+                    style={{ color: item.amount >= 0 ? "#2e7d32" : "#d32f2f" }}
+                  >
+                    {item.amount >= 0 ? "+" : ""}{item.amount.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                  </span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {history.length === 0 && (
+        <Card>
+          <CardContent className="pt-6 text-center py-8">
+            <Star className="w-10 h-10 mx-auto mb-2 text-muted-foreground" />
+            <p className="text-muted-foreground">Henüz puan kazanımınız yok.</p>
+            <p className="text-xs text-muted-foreground mt-1">İlk siparişinizde %5 Para Puan kazanmaya başlayın!</p>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }

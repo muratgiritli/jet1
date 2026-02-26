@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link, useRoute } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory, CrossSellSection, BreedStat, InstallmentRate } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -432,6 +432,18 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
+              <div
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}
+                data-testid="text-loyalty-points-earn"
+              >
+                <Gift className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
+                <span style={{ color: "#bf360c" }}>
+                  Bu ürünü satın aldığınızda{" "}
+                  <strong>{(product.price * 0.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
+                  değerinde Para Puan kazanacaksınız.
+                </span>
+              </div>
 
               <Dialog open={taksitDialogOpen} onOpenChange={setTaksitDialogOpen}>
                 <DialogContent className="max-w-md">

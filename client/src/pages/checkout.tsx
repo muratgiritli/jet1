@@ -32,6 +32,7 @@ import {
   ChevronDown,
   X,
   LogIn,
+  Star,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import {
@@ -63,12 +64,20 @@ export default function Checkout() {
   const [lookupLoading, setLookupLoading] = useState(false);
   const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
   const [showAuthBanner, setShowAuthBanner] = useState(true);
+  const [usePoints, setUsePoints] = useState(true);
   const { toast } = useToast();
   const { customer, isLoggedIn, updateProfile } = useCustomer();
 
   const { data: installmentRates = [] } = useQuery<InstallmentRate[]>({
     queryKey: ["/api/installment-rates"],
   });
+
+  const { data: loyaltyData } = useQuery<{ balance: number }>({
+    queryKey: ["/api/customer/loyalty-points"],
+    enabled: isLoggedIn,
+  });
+
+  const pointsBalance = loyaltyData?.balance || 0;
 
   const { data: savedAddresses = [] } = useQuery<any[]>({
     queryKey: ["/api/customer/addresses"],
@@ -151,6 +160,9 @@ export default function Checkout() {
     clearCart,
   } = useCart();
 
+  const pointsDiscount = isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, grandTotal) : 0;
+  const displayTotal = pointsDiscount > 0 ? Math.max(0, grandTotal - pointsDiscount) : grandTotal;
+
   const handleOrder = async () => {
     if (!minReached || selectedProducts.length === 0 || orderLoading) return;
     const pay = PAYMENT_OPTIONS.find((p) => p.id === paymentId)!;
@@ -165,22 +177,26 @@ export default function Checkout() {
         img: product.img || undefined,
       }));
 
+      const pointsUsed = isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, grandTotal) : 0;
+      const finalTotal = pointsUsed > 0 ? Math.max(0, grandTotal - pointsUsed) : grandTotal;
+
       const orderPayload: Record<string, unknown> = {
         items: orderItems,
         subtotal,
         shipping,
         discount,
-        grandTotal,
+        grandTotal: finalTotal,
         paymentMethod: pay.name,
         customerName: customerName.trim() || undefined,
         customerPhone: customerPhone.trim() || undefined,
         customerAddress: customerAddress.trim() || undefined,
+        usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
       };
 
       if ((pay.id === "taksit" || pay.id === "pos") && selectedInstallment) {
         const instRate = installmentRates.find((r) => r.months === selectedInstallment);
         if (instRate) {
-          const instTotal = grandTotal * (1 + instRate.rate / 100);
+          const instTotal = finalTotal * (1 + instRate.rate / 100);
           const instMonthly = instTotal / instRate.months;
           orderPayload.installmentMonths = instRate.months;
           orderPayload.installmentRate = instRate.rate;
@@ -207,13 +223,14 @@ export default function Checkout() {
       });
       msg += `\n*Ara Toplam:* ${Math.round(subtotal)} TL`;
       if (discount > 0) msg += `\n*İndirim (${pay.tag}):* -${Math.round(discount)} TL`;
+      if (pointsUsed > 0) msg += `\n*Para Puan İndirimi:* -${pointsUsed.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`;
       msg += `\n*Teslimat:* ${shipping === 0 ? "Ücretsiz" : shipping + " TL"}`;
-      msg += `\n*Genel Toplam:* ${Math.round(grandTotal)} TL`;
+      msg += `\n*Genel Toplam:* ${Math.round(finalTotal)} TL`;
       msg += `\n*Ödeme:* ${pay.name}`;
       if ((pay.id === "taksit" || pay.id === "pos") && selectedInstallment) {
         const instRate = installmentRates.find((r) => r.months === selectedInstallment);
         if (instRate) {
-          const instTotal = grandTotal * (1 + instRate.rate / 100);
+          const instTotal = finalTotal * (1 + instRate.rate / 100);
           const monthly = instTotal / instRate.months;
           msg += `\n*Taksit:* ${selectedInstallment} Taksit`;
           msg += `\n*Aylık Ödeme:* ${monthly.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`;
@@ -253,7 +270,7 @@ export default function Checkout() {
           </div>
           {itemCount > 0 && (
             <Badge variant="secondary" className="no-default-hover-elevate" data-testid="text-checkout-total-badge">
-              {Math.round(grandTotal)} TL
+              {Math.round(displayTotal)} TL
             </Badge>
           )}
         </div>
@@ -479,7 +496,7 @@ export default function Checkout() {
                             className="no-default-hover-elevate"
                             data-testid={`badge-payment-tag-${opt.id}`}
                           >
-                            {opt.disc > 0 ? opt.tag : opt.id === "taksit" ? opt.tag : `${Math.round(grandTotal)} TL`}
+                            {opt.disc > 0 ? opt.tag : opt.id === "taksit" ? opt.tag : `${Math.round(displayTotal)} TL`}
                           </Badge>
                         </label>
                       );
@@ -523,17 +540,17 @@ export default function Checkout() {
                               <span className="text-sm font-medium">Tek Çekim</span>
                             </span>
                             <span className="text-sm text-center font-medium">
-                              {grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                              {displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                             </span>
                             <span className="text-sm text-right font-bold">
-                              {grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                              {displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                             </span>
                           </label>
 
                           {installmentRates
                             .sort((a, b) => a.months - b.months)
                             .map((rate) => {
-                              const totalWithRate = grandTotal * (1 + rate.rate / 100);
+                              const totalWithRate = displayTotal * (1 + rate.rate / 100);
                               const monthly = totalWithRate / rate.months;
                               return (
                                 <label
@@ -560,7 +577,7 @@ export default function Checkout() {
                       {selectedInstallment && (() => {
                         const rate = installmentRates.find((r) => r.months === selectedInstallment);
                         if (!rate) return null;
-                        const totalCharged = grandTotal * (1 + rate.rate / 100);
+                        const totalCharged = displayTotal * (1 + rate.rate / 100);
                         const monthlyPayment = totalCharged / rate.months;
                         return (
                           <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20" data-testid="text-selected-installment">
@@ -678,6 +695,27 @@ export default function Checkout() {
                         <span className="font-medium" data-testid="text-discount">-{Math.round(discount)} TL</span>
                       </div>
                     )}
+                    {isLoggedIn && pointsBalance > 0 && (
+                      <div className="flex justify-between items-center gap-3 flex-wrap">
+                        <button
+                          type="button"
+                          className="flex items-center gap-1.5 text-sm"
+                          onClick={() => setUsePoints(!usePoints)}
+                          data-testid="btn-toggle-points"
+                        >
+                          <div className={`w-4 h-4 rounded border flex items-center justify-center ${usePoints ? "border-orange-500 bg-orange-500" : "border-gray-300"}`}>
+                            {usePoints && <Check className="w-3 h-3 text-white" />}
+                          </div>
+                          <Star className="w-3.5 h-3.5" style={{ color: "#e65100" }} />
+                          <span style={{ color: "#e65100" }}>Para Puan ({pointsBalance.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL)</span>
+                        </button>
+                        {usePoints && pointsDiscount > 0 && (
+                          <span className="font-medium" style={{ color: "#2e7d32" }} data-testid="text-points-discount">
+                            -{pointsDiscount.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                          </span>
+                        )}
+                      </div>
+                    )}
                     <div className="flex justify-between gap-3 flex-wrap">
                       <span className="text-muted-foreground">Teslimat Ücreti</span>
                       <span className="font-medium" data-testid="text-shipping">
@@ -693,7 +731,7 @@ export default function Checkout() {
                   <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t flex-wrap">
                     <span className="text-lg font-bold">Genel Toplam</span>
                     <span className="text-2xl font-extrabold text-primary" data-testid="text-total">
-                      {Math.round(grandTotal)} TL
+                      {Math.round(displayTotal)} TL
                     </span>
                   </div>
 

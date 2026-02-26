@@ -207,3 +207,17 @@ export const installmentRates = pgTable("installment_rates", {
 export const insertInstallmentRateSchema = createInsertSchema(installmentRates).omit({ id: true });
 export type InsertInstallmentRate = z.infer<typeof insertInstallmentRateSchema>;
 export type InstallmentRate = typeof installmentRates.$inferSelect;
+
+export const loyaltyPoints = pgTable("loyalty_points", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  orderId: integer("order_id"),
+  amount: real("amount").notNull(),
+  type: text("type").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertLoyaltyPointSchema = createInsertSchema(loyaltyPoints).omit({ id: true, createdAt: true });
+export type InsertLoyaltyPoint = z.infer<typeof insertLoyaltyPointSchema>;
+export type LoyaltyPoint = typeof loyaltyPoints.$inferSelect;

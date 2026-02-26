@@ -6,7 +6,8 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 ## Architecture
 - **Frontend**: React + TypeScript with shadcn/ui components, Tailwind CSS, framer-motion
 - **Backend**: Express with session-based auth (bcryptjs + express-session + connect-pg-simple)
-- **Database**: PostgreSQL (Drizzle ORM) - brand_categories, products, cross_sell_sections, cross_sell_items, orders, breed_stats, installment_rates, customers, customer_favorites, customer_addresses, pet_profiles tables
+- **Database**: PostgreSQL (Drizzle ORM) - brand_categories, products, cross_sell_sections, cross_sell_items, orders, breed_stats, installment_rates, customers, customer_favorites, customer_addresses, pet_profiles, loyalty_points tables
+- **Loyalty Points**: Para Puan system - customers earn 5% of subtotal on each order, can spend points on future orders (auto-applied at checkout)
 - **Static data**: CATEGORIES in client/src/lib/data.ts (non-brand products remain static)
 - **Dynamic data**: Brand products (Brit Care, Hill's, etc.) served from database via API
 - **Cross-sell**: Reusable recommendation sections linked to products via junction table, displayed on product detail pages

@@ -16,7 +16,8 @@ import {
   type CustomerFavorite, type InsertCustomerFavorite,
   type CustomerAddress, type InsertCustomerAddress,
   type PetProfile, type InsertPetProfile,
-  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles,
+  type LoyaltyPoint, type InsertLoyaltyPoint,
+  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints,
 } from "@shared/schema";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -101,6 +102,11 @@ export interface IStorage {
   deletePetProfile(id: number, customerId: number): Promise<void>;
 
   getOrdersByCustomerPhone(phone: string): Promise<Order[]>;
+
+  getLoyaltyPointsByCustomer(customerId: number): Promise<LoyaltyPoint[]>;
+  getCustomerPointsBalance(customerId: number): Promise<number>;
+  addLoyaltyPoints(data: InsertLoyaltyPoint): Promise<LoyaltyPoint>;
+  getAllCustomersWithPoints(): Promise<{ id: number; phone: string; name: string; balance: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -403,6 +409,33 @@ export class DatabaseStorage implements IStorage {
   async getOrdersByCustomerPhone(phone: string): Promise<Order[]> {
     const normalized = phone.replace(/\D/g, "");
     return db.select().from(orders).where(eq(orders.customerPhone, normalized)).orderBy(desc(orders.createdAt));
+  }
+
+  async getLoyaltyPointsByCustomer(customerId: number): Promise<LoyaltyPoint[]> {
+    return db.select().from(loyaltyPoints).where(eq(loyaltyPoints.customerId, customerId)).orderBy(desc(loyaltyPoints.createdAt));
+  }
+
+  async getCustomerPointsBalance(customerId: number): Promise<number> {
+    const points = await db.select().from(loyaltyPoints).where(eq(loyaltyPoints.customerId, customerId));
+    return points.reduce((sum, p) => sum + p.amount, 0);
+  }
+
+  async addLoyaltyPoints(data: InsertLoyaltyPoint): Promise<LoyaltyPoint> {
+    const [point] = await db.insert(loyaltyPoints).values(data).returning();
+    return point;
+  }
+
+  async getAllCustomersWithPoints(): Promise<{ id: number; phone: string; name: string; balance: number }[]> {
+    const allCustomers = await db.select().from(customers);
+    const allPoints = await db.select().from(loyaltyPoints);
+    const balanceMap = new Map<number, number>();
+    for (const p of allPoints) {
+      balanceMap.set(p.customerId, (balanceMap.get(p.customerId) || 0) + p.amount);
+    }
+    return allCustomers
+      .map(c => ({ id: c.id, phone: c.phone, name: c.name, balance: balanceMap.get(c.id) || 0 }))
+      .filter(c => c.balance !== 0)
+      .sort((a, b) => b.balance - a.balance);
   }
 }
 

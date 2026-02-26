@@ -273,12 +273,47 @@ export async function registerRoutes(
     customerPhone: z.string().optional(),
     customerName: z.string().optional(),
     customerAddress: z.string().optional(),
+    usedPoints: z.number().optional(),
   });
 
   app.post("/api/orders", async (req, res) => {
     const parsed = createOrderSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
-    const order = await storage.createOrder(parsed.data);
+    const { usedPoints, ...orderData } = parsed.data;
+
+    const customerId = (req.session as any)?.customerId;
+    let pointsToUse = 0;
+
+    if (customerId && usedPoints && usedPoints > 0) {
+      const balance = await storage.getCustomerPointsBalance(customerId);
+      pointsToUse = Math.min(usedPoints, balance);
+      const serverTotal = Math.max(0, orderData.subtotal - orderData.discount + orderData.shipping - pointsToUse);
+      orderData.grandTotal = Math.round(serverTotal * 100) / 100;
+    }
+
+    const order = await storage.createOrder(orderData);
+
+    if (customerId) {
+      if (pointsToUse > 0) {
+        await storage.addLoyaltyPoints({
+          customerId,
+          orderId: order.id,
+          amount: -pointsToUse,
+          type: "spent",
+          description: `Sipariş #${order.id} - Para Puan kullanımı`,
+        });
+      }
+      const earnedPoints = Math.round(parsed.data.subtotal * 0.05 * 100) / 100;
+      if (earnedPoints > 0) {
+        await storage.addLoyaltyPoints({
+          customerId,
+          orderId: order.id,
+          amount: earnedPoints,
+          type: "earned",
+          description: `Sipariş #${order.id} - %5 Para Puan kazanımı`,
+        });
+      }
+    }
     res.status(201).json(order);
   });
 
@@ -388,6 +423,37 @@ export async function registerRoutes(
     const customer = await storage.updateCustomer(customerId, updateData as any);
     if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
     res.json({ notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
+  });
+
+  app.get("/api/customer/loyalty-points", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const balance = await storage.getCustomerPointsBalance(customerId);
+    const history = await storage.getLoyaltyPointsByCustomer(customerId);
+    res.json({ balance: Math.round(balance * 100) / 100, history });
+  });
+
+  app.get("/api/admin/loyalty-points", requireAdmin, async (_req, res) => {
+    const customersWithPoints = await storage.getAllCustomersWithPoints();
+    res.json(customersWithPoints);
+  });
+
+  app.get("/api/admin/loyalty-points/:customerId", requireAdmin, async (req, res) => {
+    const customerId = parseInt(req.params.customerId);
+    const balance = await storage.getCustomerPointsBalance(customerId);
+    const history = await storage.getLoyaltyPointsByCustomer(customerId);
+    res.json({ balance: Math.round(balance * 100) / 100, history });
+  });
+
+  app.post("/api/admin/loyalty-points", requireAdmin, async (req, res) => {
+    const { customerId, amount, description } = req.body;
+    if (!customerId || amount === undefined) return res.status(400).json({ message: "customerId ve amount gerekli" });
+    const point = await storage.addLoyaltyPoints({
+      customerId,
+      amount: parseFloat(amount),
+      type: parseFloat(amount) >= 0 ? "manual_add" : "manual_deduct",
+      description: description || "Admin tarafından eklendi",
+    });
+    res.status(201).json(point);
   });
 
   app.get("/api/customer/orders", requireCustomer, async (req, res) => {
