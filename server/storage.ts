@@ -9,7 +9,6 @@ import {
   type CrossSellItem, type InsertCrossSellItem,
   type Order, type InsertOrder,
   type BreedStat, type InsertBreedStat,
-  type Review, type InsertReview,
   type StockAlert, type InsertStockAlert,
   type InstallmentRate, type InsertInstallmentRate,
   type Customer, type InsertCustomer,
@@ -18,7 +17,7 @@ import {
   type PetProfile, type InsertPetProfile,
   type LoyaltyPoint, type InsertLoyaltyPoint,
   type ReorderReminder, type InsertReorderReminder,
-  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, reviews, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders,
+  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders,
 } from "@shared/schema";
 
 const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
@@ -64,12 +63,6 @@ export interface IStorage {
   createBreedStat(data: InsertBreedStat): Promise<BreedStat>;
   deleteBreedStat(id: number): Promise<void>;
 
-  getReviewsByProduct(productId: number): Promise<Review[]>;
-  getApprovedReviewsByProduct(productId: number): Promise<Review[]>;
-  getAllReviews(): Promise<Review[]>;
-  createReview(data: InsertReview): Promise<Review>;
-  approveReview(id: number): Promise<Review | undefined>;
-  deleteReview(id: number): Promise<void>;
 
   createStockAlert(data: InsertStockAlert): Promise<StockAlert>;
   getStockAlertsByProduct(productId: number): Promise<StockAlert[]>;
@@ -268,31 +261,6 @@ export class DatabaseStorage implements IStorage {
     await db.delete(breedStats).where(eq(breedStats.id, id));
   }
 
-  async getReviewsByProduct(productId: number): Promise<Review[]> {
-    return db.select().from(reviews).where(eq(reviews.productId, productId)).orderBy(desc(reviews.createdAt));
-  }
-
-  async getApprovedReviewsByProduct(productId: number): Promise<Review[]> {
-    return db.select().from(reviews).where(and(eq(reviews.productId, productId), eq(reviews.isApproved, true))).orderBy(desc(reviews.createdAt));
-  }
-
-  async getAllReviews(): Promise<Review[]> {
-    return db.select().from(reviews).orderBy(desc(reviews.createdAt));
-  }
-
-  async createReview(data: InsertReview): Promise<Review> {
-    const [review] = await db.insert(reviews).values(data).returning();
-    return review;
-  }
-
-  async approveReview(id: number): Promise<Review | undefined> {
-    const [review] = await db.update(reviews).set({ isApproved: true }).where(eq(reviews.id, id)).returning();
-    return review;
-  }
-
-  async deleteReview(id: number): Promise<void> {
-    await db.delete(reviews).where(eq(reviews.id, id));
-  }
 
   async createStockAlert(data: InsertStockAlert): Promise<StockAlert> {
     const [alert] = await db.insert(stockAlerts).values(data).returning();

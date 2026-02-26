@@ -3,8 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   CONFIG,
   PAYMENT_OPTIONS,
-  MAIN_PRODUCTS,
-  CATEGORIES,
 } from "@/lib/data";
 import type { Product as DbProduct } from "@shared/schema";
 
@@ -53,11 +51,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
 
   const allProducts: CartProduct[] = useMemo(() => {
-    const staticProducts: CartProduct[] = [
-      ...MAIN_PRODUCTS,
-      ...CATEGORIES.flatMap((c) => c.items),
-    ];
-    const apiProducts: CartProduct[] = dbProducts.map((p) => ({
+    return dbProducts.map((p) => ({
       id: String(p.id),
       name: p.name,
       price: p.price,
@@ -65,7 +59,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
       skt: p.skt,
       originalPrice: p.originalPrice,
     }));
-    return [...staticProducts, ...apiProducts];
   }, [dbProducts]);
 
   const updateQty = useCallback((id: string, delta: number) => {

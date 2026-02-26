@@ -10,8 +10,8 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - **Loyalty Points**: Para Puan system - customers earn 5% of subtotal on each order, can spend points on future orders (auto-applied at checkout)
 - **Food Calculator**: Akıllı Mama Hesaplama - calculates daily food needs based on pet weight/age, shows how many days a package lasts, allows setting reorder reminders
 - **Reorder Reminders**: Customers set reminders via food calculator, admin sees upcoming/overdue reminders with one-click WhatsApp messaging
-- **Static data**: CATEGORIES in client/src/lib/data.ts (non-brand products remain static)
-- **Dynamic data**: Brand products (Brit Care, Hill's, etc.) served from database via API
+- **Static data**: CATEGORIES in client/src/lib/data.ts (category tab names only, no products), CONFIG, PAYMENT_OPTIONS
+- **Dynamic data**: All products served from database via API (no static product lists)
 - **Cross-sell**: Reusable recommendation sections linked to products via junction table, displayed on product detail pages
 
 ## Key Files

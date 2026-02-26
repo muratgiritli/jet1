@@ -116,19 +116,6 @@ export const insertBreedStatSchema = createInsertSchema(breedStats).omit({ id: t
 export type InsertBreedStat = z.infer<typeof insertBreedStatSchema>;
 export type BreedStat = typeof breedStats.$inferSelect;
 
-export const reviews = pgTable("reviews", {
-  id: serial("id").primaryKey(),
-  productId: integer("product_id").notNull(),
-  authorName: text("author_name").notNull(),
-  rating: integer("rating").notNull(),
-  comment: text("comment").notNull(),
-  isApproved: boolean("is_approved").notNull().default(false),
-  createdAt: timestamp("created_at").notNull().defaultNow(),
-});
-
-export const insertReviewSchema = createInsertSchema(reviews).omit({ id: true, createdAt: true, isApproved: true });
-export type InsertReview = z.infer<typeof insertReviewSchema>;
-export type Review = typeof reviews.$inferSelect;
 
 export const stockAlerts = pgTable("stock_alerts", {
   id: serial("id").primaryKey(),
