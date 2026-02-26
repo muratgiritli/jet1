@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 
 export default function AuthPage() {
-  const [mode, setMode] = useState<"login" | "register">("register");
+  const [mode, setMode] = useState<"login" | "register">("login");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
@@ -191,7 +191,7 @@ export default function AuthPage() {
                 data-testid="btn-auth-toggle"
               >
                 {mode === "login"
-                  ? "Hesabınız yok mu? Üye olun"
+                  ? "Hesabınız yok mu? Hemen üye olun"
                   : "Zaten üye misiniz? Giriş yapın"}
               </button>
             </div>
