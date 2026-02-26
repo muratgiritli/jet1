@@ -2,7 +2,6 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Truck, CreditCard, MapPin } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
-import SearchBar from "@/components/SearchBar";
 
 import heroBanner from "@assets/banner_2_1771940597464.png";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
@@ -61,9 +60,6 @@ export default function Landing() {
       </nav>
 
       <main className="flex-1 max-w-lg mx-auto w-full">
-        <div className="px-3 pt-3 pb-3 max-w-lg mx-auto w-full">
-          <SearchBar />
-        </div>
 
         <motion.section
           initial={{ opacity: 0 }}
