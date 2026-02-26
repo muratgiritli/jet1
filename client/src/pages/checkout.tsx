@@ -32,6 +32,9 @@ import {
   LogIn,
   Star,
   Navigation,
+  Eye,
+  EyeOff,
+  Lock,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SiWhatsapp } from "react-icons/si";
@@ -95,8 +98,18 @@ export default function Checkout() {
   const [selectedMahalle, setSelectedMahalle] = useState("");
   const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authPhone, setAuthPhone] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [authAddress, setAuthAddress] = useState("");
+  const [authLocation, setAuthLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [authLocationLoading, setAuthLocationLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [showAuthPassword, setShowAuthPassword] = useState(false);
   const { toast } = useToast();
-  const { customer, isLoggedIn, updateProfile } = useCustomer();
+  const { customer, isLoggedIn, login, register, updateProfile } = useCustomer();
 
   const { data: installmentRates = [] } = useQuery<InstallmentRate[]>({
     queryKey: ["/api/installment-rates"],
@@ -135,6 +148,90 @@ export default function Checkout() {
       setLookupDone(true);
     }
   }, [isLoggedIn, customer, savedAddresses, addressInitialized]);
+
+  useEffect(() => {
+    if (!isLoggedIn && selectedProducts.length > 0) {
+      setShowAuthModal(true);
+    }
+  }, []);
+
+  const formatAuthPhone = (val: string) => {
+    const digits = val.replace(/\D/g, "");
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 6) return `${digits.slice(0, 3)} ${digits.slice(3)}`;
+    if (digits.length <= 8) return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6)}`;
+    return `${digits.slice(0, 3)} ${digits.slice(3, 6)} ${digits.slice(6, 8)} ${digits.slice(8, 10)}`;
+  };
+
+  const handleAuthPhoneChange = (val: string) => {
+    const digits = val.replace(/\D/g, "");
+    if (digits.length <= 11) setAuthPhone(formatAuthPhone(digits));
+  };
+
+  const handleAuthLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: "Tarayiciniz konum paylasimini desteklemiyor", variant: "destructive" });
+      return;
+    }
+    setAuthLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setAuthLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setAuthLocationLoading(false);
+        toast({ title: "Konum alindi" });
+      },
+      () => {
+        setAuthLocationLoading(false);
+        toast({ title: "Konum alinamadi", variant: "destructive" });
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
+  const handleAuthSubmit = async () => {
+    const normalized = authPhone.replace(/\D/g, "");
+    if (normalized.length < 10) {
+      toast({ title: "Gecerli bir telefon numarasi girin", variant: "destructive" });
+      return;
+    }
+    if (authPassword.length < 4) {
+      toast({ title: "Sifre en az 4 karakter olmali", variant: "destructive" });
+      return;
+    }
+    if (authMode === "register" && !authName.trim()) {
+      toast({ title: "Ad soyad girin", variant: "destructive" });
+      return;
+    }
+
+    setAuthLoading(true);
+    try {
+      if (authMode === "login") {
+        await login(normalized, authPassword);
+        toast({ title: "Hos geldiniz!" });
+      } else {
+        await register(normalized, authPassword, authName.trim());
+        if (authAddress.trim()) {
+          try { await updateProfile({ address: authAddress.trim() }); } catch {}
+        }
+        if (authLocation) {
+          setCustomerLocation(authLocation);
+        }
+        toast({ title: "Kayit basarili!" });
+      }
+      setShowAuthModal(false);
+    } catch (err: any) {
+      const msg = err.message || "Bir hata olustu";
+      const cleaned = msg.replace(/^\d+:\s*/, "");
+      try {
+        const parsed = JSON.parse(cleaned);
+        toast({ title: "Hata", description: parsed.message || cleaned, variant: "destructive" });
+      } catch {
+        toast({ title: "Hata", description: cleaned, variant: "destructive" });
+      }
+    } finally {
+      setAuthLoading(false);
+    }
+  };
 
   const lookupCustomer = useCallback(async (phone: string) => {
     if (isLoggedIn) return;
@@ -333,6 +430,186 @@ export default function Checkout() {
 
       <BackNavigation />
 
+      <AnimatePresence>
+        {showAuthModal && !isLoggedIn && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center"
+          >
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+            <motion.div
+              initial={{ y: 100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: 100, opacity: 0 }}
+              className="relative w-full max-w-md bg-background rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto"
+              data-testid="modal-auth"
+            >
+              <div className="sticky top-0 z-10 bg-background rounded-t-2xl border-b px-4 pt-4 pb-3">
+                <div className="flex items-center justify-between mb-3">
+                  <h2 className="text-base font-bold" data-testid="text-auth-modal-title">Devam etmek icin</h2>
+                  <button
+                    type="button"
+                    onClick={() => setShowAuthModal(false)}
+                    className="p-1 rounded-full hover:bg-accent"
+                    data-testid="btn-close-auth-modal"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="flex rounded-lg bg-muted p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode("login")}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-md transition-colors ${authMode === "login" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+                    data-testid="btn-auth-tab-login"
+                  >
+                    Uye Girisi
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setAuthMode("register")}
+                    className={`flex-1 py-2 text-xs font-semibold rounded-md transition-colors ${authMode === "register" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
+                    data-testid="btn-auth-tab-register"
+                  >
+                    Uye Ol
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-4 space-y-3">
+                {authMode === "register" && (
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Ad Soyad</label>
+                    <Input
+                      type="text"
+                      placeholder="Ad Soyad"
+                      value={authName}
+                      onChange={(e) => setAuthName(e.target.value)}
+                      className="h-10"
+                      data-testid="input-auth-name"
+                    />
+                  </div>
+                )}
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Telefon</label>
+                  <Input
+                    type="tel"
+                    placeholder="05XX XXX XX XX"
+                    value={authPhone}
+                    onChange={(e) => handleAuthPhoneChange(e.target.value)}
+                    className="h-10"
+                    data-testid="input-auth-phone"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Sifre (dogum yili)</label>
+                  <div className="relative">
+                    <Input
+                      type={showAuthPassword ? "text" : "password"}
+                      placeholder="ornek: 1990"
+                      value={authPassword}
+                      onChange={(e) => setAuthPassword(e.target.value)}
+                      maxLength={4}
+                      inputMode="numeric"
+                      className="h-10 pr-10"
+                      data-testid="input-auth-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAuthPassword(!showAuthPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    >
+                      {showAuthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+
+                {authMode === "register" && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Adres (opsiyonel)</label>
+                      <Textarea
+                        placeholder="Sokak, bina no, daire no..."
+                        value={authAddress}
+                        onChange={(e) => setAuthAddress(e.target.value)}
+                        rows={2}
+                        className="text-sm"
+                        data-testid="input-auth-address"
+                      />
+                    </div>
+
+                    <div>
+                      {authLocation ? (
+                        <div className="flex items-center gap-2 p-2 rounded-lg border border-green-200 bg-green-50">
+                          <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                          <span className="text-xs text-green-700">Konum alindi</span>
+                          <button type="button" onClick={() => setAuthLocation(null)} className="ml-auto text-muted-foreground">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          className="w-full"
+                          onClick={handleAuthLocation}
+                          disabled={authLocationLoading}
+                          data-testid="btn-auth-location"
+                        >
+                          {authLocationLoading ? (
+                            <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                          ) : (
+                            <Navigation className="w-4 h-4 mr-1.5" />
+                          )}
+                          {authLocationLoading ? "Konum aliniyor..." : "Konum Ekle"}
+                        </Button>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                <Button
+                  className="w-full h-11 font-semibold"
+                  style={{ backgroundColor: "#6B3480" }}
+                  onClick={handleAuthSubmit}
+                  disabled={authLoading}
+                  data-testid="btn-auth-submit"
+                >
+                  {authLoading ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <LogIn className="w-4 h-4 mr-2" />
+                  )}
+                  {authMode === "login" ? "Giris Yap" : "Uye Ol ve Devam Et"}
+                </Button>
+
+                {authMode === "login" && (
+                  <p className="text-center text-xs text-muted-foreground">
+                    Henuz uyeliginiz yok mu?{" "}
+                    <button type="button" onClick={() => setAuthMode("register")} className="font-semibold underline" style={{ color: "#6B3480" }}>
+                      Uye Ol
+                    </button>
+                  </p>
+                )}
+                {authMode === "register" && (
+                  <p className="text-center text-xs text-muted-foreground">
+                    Zaten uyeniz var mi?{" "}
+                    <button type="button" onClick={() => setAuthMode("login")} className="font-semibold underline" style={{ color: "#6B3480" }}>
+                      Giris Yap
+                    </button>
+                  </p>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <main className="max-w-2xl mx-auto px-4 pb-8">
         {selectedProducts.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground">
@@ -411,7 +688,7 @@ export default function Checkout() {
               </h2>
               <Card>
                 <CardContent className="p-4 space-y-3">
-                  {isLoggedIn && !editingInfo ? (
+                  {isLoggedIn ? (
                     <div data-testid="customer-info-summary">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2 min-w-0">
@@ -421,20 +698,11 @@ export default function Checkout() {
                             <p className="text-xs text-muted-foreground truncate" data-testid="text-summary-phone">{customerPhone}</p>
                           </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => setEditingInfo(true)}
-                          className="text-xs font-medium underline shrink-0 ml-2"
-                          style={{ color: "#6B3480" }}
-                          data-testid="btn-edit-info"
-                        >
-                          Duzenle
-                        </button>
                       </div>
-                      {selectedMahalle && (
+                      {customerAddress && (
                         <p className="text-xs text-muted-foreground mt-1 truncate" data-testid="text-summary-address">
-                          <MapPin className="w-3 h-3 inline mr-1" />
-                          {selectedMahalle}{customerAddress ? `, ${customerAddress}` : ""}
+                          <Home className="w-3 h-3 inline mr-1" />
+                          {customerAddress}
                         </p>
                       )}
                       {customerLocation && (
@@ -443,81 +711,9 @@ export default function Checkout() {
                           Konum paylasıldı
                         </p>
                       )}
-                      {!selectedMahalle && (
-                        <div className="mt-2">
-                          <Select value={selectedMahalle} onValueChange={setSelectedMahalle}>
-                            <SelectTrigger data-testid="select-mahalle" className="text-muted-foreground h-9 text-xs">
-                              <SelectValue placeholder="Mahalle seciniz..." />
-                            </SelectTrigger>
-                            <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
-                              {TESLIMAT_MAHALLELERI.map((m) => (
-                                <SelectItem key={m} value={m} data-testid={`option-mahalle-${m}`}>
-                                  {m}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <>
-                      {!isLoggedIn && (
-                        <Link href="/giris?redirect=/odeme">
-                          <button
-                            type="button"
-                            className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold text-white transition-colors"
-                            style={{ backgroundColor: "#6B3480" }}
-                            data-testid="btn-inline-auth"
-                          >
-                            <LogIn className="w-3.5 h-3.5" />
-                            Hizli doldurmak icin giris yap
-                          </button>
-                        </Link>
-                      )}
-
-                      {isLoggedIn && editingInfo && (
-                        <div className="flex justify-end">
-                          <button
-                            type="button"
-                            onClick={() => setEditingInfo(false)}
-                            className="text-xs font-medium underline"
-                            style={{ color: "#6B3480" }}
-                            data-testid="btn-done-editing"
-                          >
-                            Tamam
-                          </button>
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div className="relative">
-                          <Input
-                            type="tel"
-                            placeholder="05XX XXX XX XX"
-                            value={customerPhone}
-                            onChange={(e) => !isLoggedIn && setCustomerPhone(e.target.value)}
-                            readOnly={isLoggedIn}
-                            className={`text-sm h-9 ${isLoggedIn ? "bg-muted" : ""}`}
-                            data-testid="input-customer-phone"
-                          />
-                          {lookupLoading && (
-                            <Loader2 className="w-3.5 h-3.5 animate-spin absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                          )}
-                        </div>
-                        <Input
-                          type="text"
-                          placeholder="Ad Soyad"
-                          value={customerName}
-                          onChange={(e) => setCustomerName(e.target.value)}
-                          readOnly={isLoggedIn}
-                          className={`text-sm h-9 ${isLoggedIn ? "bg-muted" : ""}`}
-                          data-testid="input-customer-name"
-                        />
-                      </div>
 
                       <Select value={selectedMahalle} onValueChange={setSelectedMahalle}>
-                        <SelectTrigger data-testid="select-mahalle" className={`h-9 text-sm ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
+                        <SelectTrigger data-testid="select-mahalle" className={`h-9 text-sm mt-2 ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
                           <SelectValue placeholder="Teslimat mahallesi seciniz..." />
                         </SelectTrigger>
                         <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
@@ -533,9 +729,9 @@ export default function Checkout() {
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
                           animate={{ opacity: 1, height: "auto" }}
-                          className="space-y-2"
+                          className="space-y-2 mt-2"
                         >
-                          {isLoggedIn && savedAddresses.length > 0 && (
+                          {savedAddresses.length > 0 && (
                             <div>
                               <button
                                 type="button"
@@ -618,7 +814,20 @@ export default function Checkout() {
                           )}
                         </motion.div>
                       )}
-                    </>
+                    </div>
+                  ) : (
+                    <div className="text-center py-2" data-testid="guest-auth-prompt">
+                      <p className="text-sm text-muted-foreground mb-3">Siparis vermek icin giris yapin veya uye olun</p>
+                      <Button
+                        className="w-full font-semibold"
+                        style={{ backgroundColor: "#6B3480" }}
+                        onClick={() => setShowAuthModal(true)}
+                        data-testid="btn-open-auth-modal"
+                      >
+                        <LogIn className="w-4 h-4 mr-2" />
+                        Giris Yap / Uye Ol
+                      </Button>
+                    </div>
                   )}
                 </CardContent>
               </Card>
