@@ -33,6 +33,7 @@ const ANIMAL_CATEGORIES: Record<string, AnimalCategory> = {
       { name: "Ödül Kemik\nÇeşitleri", slug: "odul-kemik", color: "#F44336", directLink: "/siparis/kopek/odul-kemik/odul-kemik" },
       { name: "Taşıma ve\nKulübeler", slug: "tasima-kulube", color: "#37474F", directLink: "/siparis/kopek/tasima-kulube/tasima-kulube" },
       { name: "Bakım ve\nSağlık", slug: "bakim-saglik", color: "#4CAF50", directLink: "/siparis/kopek/bakim-saglik/bakim-saglik" },
+      { name: "Köpek\nÖdülleri", slug: "kopek-odulleri", color: "#E91E63", directLink: "/siparis/kopek/kopek-odulleri/kopek-odulleri" },
     ],
   },
   kedi: {
