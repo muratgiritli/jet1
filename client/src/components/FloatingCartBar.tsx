@@ -1,15 +1,16 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
 
 export default function FloatingCartBar() {
   const { itemCount, grandTotal } = useCart();
+  const [location] = useLocation();
 
   return (
     <AnimatePresence>
-      {itemCount > 0 && (
+      {itemCount > 0 && location !== "/odeme" && (
         <motion.div
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
