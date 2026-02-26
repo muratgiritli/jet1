@@ -622,10 +622,16 @@ export default function Checkout() {
                         >
                           <RadioGroupItem value={opt.id} data-testid={`input-radio-${opt.id}`} />
                           <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <span className="flex-1 text-sm font-medium" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
+                          <span className="text-sm font-medium" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
+                          {opt.disc > 0 && (
+                            <span className="flex-1 text-sm font-bold text-center" data-testid={`text-payment-discounted-${opt.id}`}>
+                              {Math.round(displayTotal * (1 - opt.disc))} TL
+                            </span>
+                          )}
+                          {!opt.disc && <span className="flex-1" />}
                           <Badge
                             variant={opt.disc > 0 ? "default" : "secondary"}
-                            className="no-default-hover-elevate"
+                            className="no-default-hover-elevate shrink-0"
                             data-testid={`badge-payment-tag-${opt.id}`}
                           >
                             {opt.disc > 0 ? opt.tag : opt.id === "taksit" ? opt.tag : `${Math.round(displayTotal)} TL`}
