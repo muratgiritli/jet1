@@ -95,7 +95,10 @@ export default function Checkout() {
   const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
   const [editingInfo, setEditingInfo] = useState(false);
   const [usePoints, setUsePoints] = useState(true);
-  const [selectedMahalle, setSelectedMahalle] = useState("");
+  const [selectedMahalle, setSelectedMahalle] = useState(() => {
+    return localStorage.getItem("jet55_mahalle") || "";
+  });
+  const [mahalleSaved, setMahalleSaved] = useState(() => !!localStorage.getItem("jet55_mahalle"));
   const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -712,18 +715,33 @@ export default function Checkout() {
                         </p>
                       )}
 
-                      <Select value={selectedMahalle} onValueChange={setSelectedMahalle}>
-                        <SelectTrigger data-testid="select-mahalle" className={`h-9 text-sm mt-2 ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
-                          <SelectValue placeholder="Teslimat mahallesi seciniz..." />
-                        </SelectTrigger>
-                        <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
-                          {TESLIMAT_MAHALLELERI.map((m) => (
-                            <SelectItem key={m} value={m} data-testid={`option-mahalle-${m}`}>
-                              {m}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {mahalleSaved ? (
+                        <div className="flex items-center gap-2 mt-2 p-2 rounded-lg border border-green-200 bg-green-50" data-testid="mahalle-saved">
+                          <MapPin className="w-4 h-4 text-green-600 shrink-0" />
+                          <span className="text-sm font-medium text-green-700">{selectedMahalle}</span>
+                          <button
+                            type="button"
+                            onClick={() => { localStorage.removeItem("jet55_mahalle"); setSelectedMahalle(""); setMahalleSaved(false); }}
+                            className="ml-auto text-xs text-muted-foreground underline hover:text-foreground"
+                            data-testid="btn-change-mahalle"
+                          >
+                            Degistir
+                          </button>
+                        </div>
+                      ) : (
+                        <Select value={selectedMahalle} onValueChange={(val) => { setSelectedMahalle(val); localStorage.setItem("jet55_mahalle", val); setMahalleSaved(true); }}>
+                          <SelectTrigger data-testid="select-mahalle" className={`h-9 text-sm mt-2 ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
+                            <SelectValue placeholder="Teslimat mahallesi seciniz..." />
+                          </SelectTrigger>
+                          <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
+                            {TESLIMAT_MAHALLELERI.map((m) => (
+                              <SelectItem key={m} value={m} data-testid={`option-mahalle-${m}`}>
+                                {m}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
 
                       {selectedMahalle && (
                         <motion.div
