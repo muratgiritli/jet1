@@ -33,6 +33,7 @@ import {
   X,
   LogIn,
   Star,
+  Navigation,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SiWhatsapp } from "react-icons/si";
@@ -94,6 +95,8 @@ export default function Checkout() {
   const [showAuthBanner, setShowAuthBanner] = useState(true);
   const [usePoints, setUsePoints] = useState(true);
   const [selectedMahalle, setSelectedMahalle] = useState("");
+  const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
   const { toast } = useToast();
   const { customer, isLoggedIn, updateProfile } = useCustomer();
 
@@ -192,6 +195,26 @@ export default function Checkout() {
   const pointsDiscount = isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, grandTotal) : 0;
   const displayTotal = pointsDiscount > 0 ? Math.max(0, grandTotal - pointsDiscount) : grandTotal;
 
+  const handleShareLocation = () => {
+    if (!navigator.geolocation) {
+      toast({ title: "Tarayıcınız konum paylaşımını desteklemiyor", variant: "destructive" });
+      return;
+    }
+    setLocationLoading(true);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCustomerLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocationLoading(false);
+        toast({ title: "Konum alındı" });
+      },
+      () => {
+        setLocationLoading(false);
+        toast({ title: "Konum alınamadı. Lütfen konum iznini kontrol edin.", variant: "destructive" });
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const handleOrder = async () => {
     if (!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle) {
       if (!selectedMahalle) {
@@ -252,6 +275,7 @@ export default function Checkout() {
       if (customerPhone.trim()) msg += `*Telefon:* ${customerPhone.trim()}\n`;
       msg += `*Mahalle:* ${selectedMahalle}\n`;
       if (customerAddress.trim()) msg += `*Adres Detayı:* ${customerAddress.trim()}\n`;
+      if (customerLocation) msg += `*Konum:* https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}\n`;
       if (customerName.trim() || customerPhone.trim()) msg += `\n`;
       selectedProducts.forEach(({ product, qty }) => {
         msg += `${qty}x ${product.name} — ${Math.round(qty * product.price)} TL\n`;
@@ -527,6 +551,55 @@ export default function Checkout() {
                       rows={2}
                       data-testid="input-customer-address"
                     />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
+                      <Navigation className="w-4 h-4 text-muted-foreground" />
+                      Canlı Konum
+                    </label>
+                    {customerLocation ? (
+                      <div className="flex items-center gap-2 p-2.5 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800">
+                        <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
+                        <a
+                          href={`https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-green-700 dark:text-green-400 underline truncate"
+                          data-testid="link-location-map"
+                        >
+                          Konum alındı - Haritada gör
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => setCustomerLocation(null)}
+                          className="ml-auto text-muted-foreground hover:text-foreground"
+                          data-testid="btn-remove-location"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        onClick={handleShareLocation}
+                        disabled={locationLoading}
+                        data-testid="btn-share-location"
+                      >
+                        {locationLoading ? (
+                          <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
+                        ) : (
+                          <Navigation className="w-4 h-4 mr-1.5" />
+                        )}
+                        {locationLoading ? "Konum alınıyor..." : "Konumumu Paylaş"}
+                      </Button>
+                    )}
+                    <p className="text-xs text-muted-foreground">
+                      Teslimat adresinizi kolayca bulmamız için konumunuzu paylaşabilirsiniz.
+                    </p>
                   </div>
                 </CardContent>
               </Card>
