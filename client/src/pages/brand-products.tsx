@@ -548,7 +548,7 @@ export default function BrandProductsPage() {
             Orijinal Urun
           </Badge>
           <span className="text-xs text-muted-foreground">
-            Royal Bayisi, {data.category.brandName} yetkili satıcısıdır.
+            JET55, {data.category.brandName} yetkili satıcısıdır.
           </span>
         </div>
 
