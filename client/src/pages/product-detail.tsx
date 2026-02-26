@@ -566,21 +566,6 @@ export default function ProductDetailPage() {
           </div>
         </motion.div>
 
-        {category && ["kedi-mamasi", "acik-mama", "mama-markalari", "yas-mama"].includes(category.subcategory) && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="mt-6"
-          >
-            <FoodCalculator
-              productId={product.id}
-              productName={product.name}
-              defaultAnimal={category.animal === "kopek" ? "kopek" : "kedi"}
-            />
-          </motion.div>
-        )}
-
         {breedStats && breedStats.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -621,6 +606,21 @@ export default function ProductDetailPage() {
                 </div>
               </CardContent>
             </Card>
+          </motion.div>
+        )}
+
+        {category && ["kedi-mamasi", "acik-mama", "mama-markalari", "yas-mama"].includes(category.subcategory) && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.15 }}
+            className="mt-6"
+          >
+            <FoodCalculator
+              productId={product.id}
+              productName={product.name}
+              defaultAnimal={category.animal === "kopek" ? "kopek" : "kedi"}
+            />
           </motion.div>
         )}
 
