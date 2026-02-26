@@ -445,6 +445,31 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
+              {installmentRates.length > 0 && (() => {
+                const maxRate = installmentRates.reduce((a, b) => a.months > b.months ? a : b);
+                const totalWithRate = product.price * (1 + maxRate.rate / 100);
+                const monthly = Math.ceil(totalWithRate / maxRate.months);
+                return (
+                  <button
+                    type="button"
+                    onClick={() => setTaksitDialogOpen(true)}
+                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm"
+                    style={{ backgroundColor: "#eef2ff", border: "1px solid #c7d2fe" }}
+                    data-testid="btn-taksit-banner"
+                  >
+                    <div className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4 shrink-0" style={{ color: "#4f46e5" }} />
+                      <span className="font-medium" style={{ color: "#312e81" }}>
+                        {maxRate.months} Taksitle {monthly} TL/ay
+                      </span>
+                    </div>
+                    <span className="font-medium" style={{ color: "#4f46e5" }}>
+                      Taksit Seçenekleri
+                    </span>
+                  </button>
+                );
+              })()}
+
               <Dialog open={taksitDialogOpen} onOpenChange={setTaksitDialogOpen}>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
