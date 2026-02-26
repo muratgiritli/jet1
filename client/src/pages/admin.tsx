@@ -406,6 +406,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [expandedAnimals, setExpandedAnimals] = useState<Record<string, boolean>>({});
   const [bulkPriceDialogOpen, setBulkPriceDialogOpen] = useState(false);
   const [bulkPricePercent, setBulkPricePercent] = useState("");
+  const [bulkPriceMode, setBulkPriceMode] = useState<"percent" | "individual">("individual");
+  const [individualPrices, setIndividualPrices] = useState<Record<number, string>>({});
   const [orderTab, setOrderTab] = useState<"gelen" | "giden" | "bekleyen">("gelen");
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
@@ -422,6 +424,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setBulkPriceDialogOpen(false);
       setBulkPricePercent("");
       toast({ title: "Başarılı", description: `${variables.productIds.length} ürün fiyatı %${variables.percentage} güncellendi.` });
+    },
+  });
+
+  const bulkIndividualUpdateMutation = useMutation({
+    mutationFn: async ({ updates }: { updates: { id: number; price: number }[] }) => {
+      await apiRequest("POST", "/api/admin/products/bulk-individual-update", { updates });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setBulkPriceDialogOpen(false);
+      setIndividualPrices({});
+      toast({ title: "Başarılı", description: `${variables.updates.length} ürün fiyatı güncellendi.` });
     },
   });
 
@@ -1499,74 +1513,150 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
-              <Dialog open={bulkPriceDialogOpen} onOpenChange={(open) => { setBulkPriceDialogOpen(open); if (!open) setBulkPricePercent(""); }}>
+              <Dialog open={bulkPriceDialogOpen} onOpenChange={(open) => { setBulkPriceDialogOpen(open); if (!open) { setBulkPricePercent(""); setIndividualPrices({}); } }}>
                 <DialogTrigger asChild>
                   <Button variant="outline" disabled={filteredProducts.length === 0} data-testid="btn-bulk-price">
                     <TrendingUp className="w-4 h-4" />
                     Toplu Fiyat Güncelle
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
                   <DialogHeader>
                     <DialogTitle>Toplu Fiyat Güncelleme</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4">
                     <p className="text-sm text-muted-foreground">
-                      Seçili filtredeki <span className="font-bold text-foreground">{filteredProducts.length}</span> ürünün fiyatı güncellenecek.
+                      Seçili filtredeki <span className="font-bold text-foreground">{filteredProducts.length}</span> ürün
                     </p>
-                    <div className="space-y-2">
-                      <Label>Fiyat Değişim Oranı (%)</Label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg font-bold">%</span>
-                        <Input
-                          type="number"
-                          placeholder="Örn: 20"
-                          value={bulkPricePercent}
-                          onChange={(e) => setBulkPricePercent(e.target.value)}
-                          data-testid="input-bulk-price-percent"
-                        />
-                      </div>
-                      <p className="text-xs text-muted-foreground">
-                        Pozitif değer fiyatı artırır, negatif değer düşürür. Örn: 20 = %20 artış, -10 = %10 düşüş
-                      </p>
-                    </div>
-                    {bulkPricePercent && !isNaN(parseFloat(bulkPricePercent)) && parseFloat(bulkPricePercent) !== 0 && (
-                      <div className="p-3 rounded-lg bg-muted/50 space-y-1">
-                        <p className="text-sm font-medium">Önizleme:</p>
-                        <p className="text-xs text-muted-foreground">
-                          100 TL → {(100 * (1 + parseFloat(bulkPricePercent) / 100)).toFixed(2)} TL
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          500 TL → {(500 * (1 + parseFloat(bulkPricePercent) / 100)).toFixed(2)} TL
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          1000 TL → {(1000 * (1 + parseFloat(bulkPricePercent) / 100)).toFixed(2)} TL
-                        </p>
-                      </div>
-                    )}
+                  </DialogHeader>
+                  <div className="flex gap-2 mb-3">
                     <Button
-                      className="w-full"
-                      disabled={!bulkPricePercent || isNaN(parseFloat(bulkPricePercent)) || parseFloat(bulkPricePercent) === 0 || bulkPriceUpdateMutation.isPending}
-                      onClick={() => {
-                        const pct = parseFloat(bulkPricePercent);
-                        if (isNaN(pct) || pct === 0) return;
-                        bulkPriceUpdateMutation.mutate({
-                          productIds: filteredProducts.map((p) => p.id),
-                          percentage: pct,
-                        });
-                      }}
-                      data-testid="btn-confirm-bulk-price"
+                      variant={bulkPriceMode === "individual" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setBulkPriceMode("individual")}
+                      data-testid="btn-mode-individual"
                     >
-                      {bulkPriceUpdateMutation.isPending ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <>
-                          <TrendingUp className="w-4 h-4" />
-                          {filteredProducts.length} Ürünü Güncelle
-                        </>
-                      )}
+                      Tek Tek Güncelle
+                    </Button>
+                    <Button
+                      variant={bulkPriceMode === "percent" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setBulkPriceMode("percent")}
+                      data-testid="btn-mode-percent"
+                    >
+                      Yüzdesel Güncelle
                     </Button>
                   </div>
+
+                  {bulkPriceMode === "individual" ? (
+                    <div className="flex flex-col flex-1 min-h-0">
+                      <div className="overflow-y-auto flex-1 border rounded-lg" style={{ maxHeight: "50vh" }}>
+                        <table className="w-full text-sm">
+                          <thead className="sticky top-0 bg-background border-b">
+                            <tr>
+                              <th className="text-left p-2 font-medium">Ürün</th>
+                              <th className="text-right p-2 font-medium w-28">Mevcut</th>
+                              <th className="text-right p-2 font-medium w-32">Yeni Fiyat</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {filteredProducts.map((p) => (
+                              <tr key={p.id} className="border-b last:border-0 hover:bg-muted/30">
+                                <td className="p-2 text-xs leading-tight" data-testid={`text-product-name-${p.id}`}>{p.name}</td>
+                                <td className="p-2 text-right text-xs text-muted-foreground whitespace-nowrap">{p.price > 0 ? `${p.price} ₺` : "—"}</td>
+                                <td className="p-2">
+                                  <Input
+                                    type="number"
+                                    step="0.01"
+                                    min="0"
+                                    placeholder={p.price > 0 ? String(p.price) : "0"}
+                                    value={individualPrices[p.id] || ""}
+                                    onChange={(e) => setIndividualPrices(prev => ({ ...prev, [p.id]: e.target.value }))}
+                                    className="h-8 text-sm text-right w-28"
+                                    data-testid={`input-price-${p.id}`}
+                                  />
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                        <p className="text-xs text-muted-foreground">
+                          {Object.values(individualPrices).filter(v => v && !isNaN(parseFloat(v))).length} ürün değiştirildi
+                        </p>
+                        <Button
+                          disabled={Object.values(individualPrices).filter(v => v && !isNaN(parseFloat(v))).length === 0 || bulkIndividualUpdateMutation.isPending}
+                          onClick={() => {
+                            const updates = Object.entries(individualPrices)
+                              .filter(([_, v]) => v && !isNaN(parseFloat(v)))
+                              .map(([id, v]) => ({ id: parseInt(id), price: parseFloat(v) }));
+                            if (updates.length > 0) bulkIndividualUpdateMutation.mutate({ updates });
+                          }}
+                          data-testid="btn-save-individual-prices"
+                        >
+                          {bulkIndividualUpdateMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>Fiyatları Kaydet</>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Fiyat Değişim Oranı (%)</Label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg font-bold">%</span>
+                          <Input
+                            type="number"
+                            placeholder="Örn: 20"
+                            value={bulkPricePercent}
+                            onChange={(e) => setBulkPricePercent(e.target.value)}
+                            data-testid="input-bulk-price-percent"
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Pozitif değer fiyatı artırır, negatif değer düşürür. Örn: 20 = %20 artış, -10 = %10 düşüş
+                        </p>
+                      </div>
+                      {bulkPricePercent && !isNaN(parseFloat(bulkPricePercent)) && parseFloat(bulkPricePercent) !== 0 && (
+                        <div className="p-3 rounded-lg bg-muted/50 space-y-1">
+                          <p className="text-sm font-medium">Önizleme:</p>
+                          <p className="text-xs text-muted-foreground">
+                            100 TL → {(100 * (1 + parseFloat(bulkPricePercent) / 100)).toFixed(2)} TL
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            500 TL → {(500 * (1 + parseFloat(bulkPricePercent) / 100)).toFixed(2)} TL
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            1000 TL → {(1000 * (1 + parseFloat(bulkPricePercent) / 100)).toFixed(2)} TL
+                          </p>
+                        </div>
+                      )}
+                      <Button
+                        className="w-full"
+                        disabled={!bulkPricePercent || isNaN(parseFloat(bulkPricePercent)) || parseFloat(bulkPricePercent) === 0 || bulkPriceUpdateMutation.isPending}
+                        onClick={() => {
+                          const pct = parseFloat(bulkPricePercent);
+                          if (isNaN(pct) || pct === 0) return;
+                          bulkPriceUpdateMutation.mutate({
+                            productIds: filteredProducts.map((p) => p.id),
+                            percentage: pct,
+                          });
+                        }}
+                        data-testid="btn-confirm-bulk-price"
+                      >
+                        {bulkPriceUpdateMutation.isPending ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <>
+                            <TrendingUp className="w-4 h-4" />
+                            {filteredProducts.length} Ürünü Güncelle
+                          </>
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </DialogContent>
               </Dialog>
 
