@@ -65,7 +65,7 @@ export const CATEGORIES: Category[] = [
 ];
 
 export const PAYMENT_OPTIONS: PaymentOption[] = [
-  { id: "nakit", name: "Kapıda Nakit", disc: 0.1, tag: "%10 İndirim" },
+  { id: "nakit", name: "Kapıda Nakit", disc: 0.05, tag: "%5 İndirim" },
   { id: "eft", name: "Banka Havalesi", disc: 0, tag: "Net" },
   { id: "qr", name: "Kapıda QR Ödeme", disc: 0, tag: "Net" },
   { id: "pos", name: "Kapıda Kredi Kartı", disc: 0, tag: "Net" },

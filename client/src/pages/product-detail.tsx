@@ -281,7 +281,7 @@ export default function ProductDetailPage() {
             <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
               <ArrowLeft />
             </Button>
-            <img src={jet55Logo} alt="JET55" className="h-8 object-contain" data-testid="img-brand-logo" />
+            <Link href="/"><img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" /></Link>
           </div>
         </header>
         <ProductDetailSkeleton />
@@ -297,7 +297,7 @@ export default function ProductDetailPage() {
             <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
               <ArrowLeft />
             </Button>
-            <img src={jet55Logo} alt="JET55" className="h-8 object-contain" data-testid="img-brand-logo" />
+            <Link href="/"><img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" /></Link>
           </div>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -341,7 +341,7 @@ export default function ProductDetailPage() {
             <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
               <ArrowLeft />
             </Button>
-            <img src={jet55Logo} alt="JET55" className="h-8 object-contain" data-testid="img-brand-logo" />
+            <Link href="/"><img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" /></Link>
           </div>
           {itemCount > 0 && (
             <Link href="/odeme">
