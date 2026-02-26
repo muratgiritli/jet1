@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRoute } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, Eye } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, Eye, ShieldCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -540,6 +540,16 @@ export default function BrandProductsPage() {
           <p className="text-sm text-muted-foreground mt-1" data-testid="text-product-count">
             {data.products.length} ürün
           </p>
+        </div>
+
+        <div className="flex items-center gap-2 px-3 py-2 rounded-lg border border-green-200 bg-green-50 dark:bg-green-950/30 dark:border-green-800 mb-4" data-testid="banner-orijinal-urun">
+          <Badge variant="outline" className="border-green-500 text-green-700 dark:text-green-400 bg-white dark:bg-green-950 shrink-0 no-default-hover-elevate">
+            <ShieldCheck className="w-3.5 h-3.5 mr-1" />
+            Orijinal Urun
+          </Badge>
+          <span className="text-xs text-muted-foreground">
+            Royal Bayisi, {data.category.brandName} yetkili satıcısıdır.
+          </span>
         </div>
 
         {shouldShowFastDelivery(animal, subcategory) && (
