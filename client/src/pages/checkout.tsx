@@ -34,6 +34,7 @@ import {
   LogIn,
   Star,
 } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SiWhatsapp } from "react-icons/si";
 import {
   CONFIG,
@@ -45,6 +46,33 @@ import { apiRequest } from "@/lib/queryClient";
 import BackNavigation from "@/components/BackNavigation";
 import { useCustomer } from "@/contexts/CustomerContext";
 import type { InstallmentRate } from "@shared/schema";
+
+const TESLIMAT_MAHALLELERI = [
+  "Atakent Mahallesi",
+  "Balaç Mahallesi",
+  "Beypınar Mahallesi",
+  "Büyükkolpınar Mahallesi",
+  "Büyükoyumca Mahallesi",
+  "Camii Mahallesi",
+  "Cumhuriyet Mahallesi",
+  "Çakırlar Yalı Mahallesi",
+  "Çobanlı Mahallesi",
+  "Çobanözü Mahallesi",
+  "Denizevleri Mahallesi",
+  "Esenevler Mahallesi",
+  "Güzelyalı Mahallesi",
+  "İncesu Yalı Mahallesi",
+  "İstiklal Mahallesi",
+  "Körfez Mahallesi",
+  "Küçükkolpınar Mahallesi",
+  "Mevlana Mahallesi",
+  "Mimarsinan Mahallesi",
+  "Taflan Mahallesi",
+  "Yalı Mahallesi",
+  "Yenimahalle Mahallesi",
+  "Yeşildere Mahallesi",
+  "Yeşilyurt Mahallesi",
+];
 
 const paymentIcons: Record<string, typeof CreditCard> = {
   nakit: Banknote,
@@ -65,6 +93,7 @@ export default function Checkout() {
   const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
   const [showAuthBanner, setShowAuthBanner] = useState(true);
   const [usePoints, setUsePoints] = useState(true);
+  const [selectedMahalle, setSelectedMahalle] = useState("");
   const { toast } = useToast();
   const { customer, isLoggedIn, updateProfile } = useCustomer();
 
@@ -164,7 +193,12 @@ export default function Checkout() {
   const displayTotal = pointsDiscount > 0 ? Math.max(0, grandTotal - pointsDiscount) : grandTotal;
 
   const handleOrder = async () => {
-    if (!minReached || selectedProducts.length === 0 || orderLoading) return;
+    if (!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle) {
+      if (!selectedMahalle) {
+        toast({ title: "Lütfen teslimat mahallenizi seçin", variant: "destructive" });
+      }
+      return;
+    }
     const pay = PAYMENT_OPTIONS.find((p) => p.id === paymentId)!;
 
     setOrderLoading(true);
@@ -189,7 +223,7 @@ export default function Checkout() {
         paymentMethod: pay.name,
         customerName: customerName.trim() || undefined,
         customerPhone: customerPhone.trim() || undefined,
-        customerAddress: customerAddress.trim() || undefined,
+        customerAddress: selectedMahalle + (customerAddress.trim() ? ", " + customerAddress.trim() : ""),
         usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
       };
 
@@ -216,7 +250,8 @@ export default function Checkout() {
       let msg = `*JET55 Sipariş*\n\n`;
       if (customerName.trim()) msg += `*Ad Soyad:* ${customerName.trim()}\n`;
       if (customerPhone.trim()) msg += `*Telefon:* ${customerPhone.trim()}\n`;
-      if (customerAddress.trim()) msg += `*Adres:* ${customerAddress.trim()}\n`;
+      msg += `*Mahalle:* ${selectedMahalle}\n`;
+      if (customerAddress.trim()) msg += `*Adres Detayı:* ${customerAddress.trim()}\n`;
       if (customerName.trim() || customerPhone.trim()) msg += `\n`;
       selectedProducts.forEach(({ product, qty }) => {
         msg += `${qty}x ${product.name} — ${Math.round(qty * product.price)} TL\n`;
@@ -426,7 +461,31 @@ export default function Checkout() {
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium flex items-center gap-1.5">
                       <MapPin className="w-4 h-4 text-muted-foreground" />
-                      Teslimat Adresi
+                      Teslimat Mahallesi <span className="text-red-500">*</span>
+                    </label>
+                    <Select value={selectedMahalle} onValueChange={setSelectedMahalle}>
+                      <SelectTrigger data-testid="select-mahalle" className={!selectedMahalle ? "text-muted-foreground" : ""}>
+                        <SelectValue placeholder="Mahalle seçiniz..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TESLIMAT_MAHALLELERI.map((m) => (
+                          <SelectItem key={m} value={m} data-testid={`option-mahalle-${m}`}>
+                            {m}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {!selectedMahalle && (
+                      <p className="text-xs text-muted-foreground">
+                        Sadece listelenen mahallelere teslimat yapılmaktadır.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
+                      <Home className="w-4 h-4 text-muted-foreground" />
+                      Adres Detayı
                     </label>
                     {isLoggedIn && savedAddresses.length > 0 && (
                       <div className="mb-2">
@@ -462,7 +521,7 @@ export default function Checkout() {
                       </div>
                     )}
                     <Textarea
-                      placeholder="Teslimat adresinizi yazin..."
+                      placeholder="Sokak, bina no, daire no..."
                       value={customerAddress}
                       onChange={(e) => setCustomerAddress(e.target.value)}
                       rows={2}
@@ -739,7 +798,7 @@ export default function Checkout() {
                     className="w-full mt-5"
                     variant="default"
                     size="lg"
-                    disabled={!minReached || selectedProducts.length === 0 || orderLoading}
+                    disabled={!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle}
                     onClick={handleOrder}
                     data-testid="btn-order-whatsapp"
                   >
