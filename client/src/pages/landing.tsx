@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Truck, CreditCard, MapPin } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
+import SEO, { LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 
 import heroBanner from "@assets/banner_2_1771940597464.png";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
@@ -34,6 +35,12 @@ const FEATURES = [
 export default function Landing() {
   return (
     <div className="min-h-screen flex flex-col bg-background pb-16">
+      <SEO
+        title="JET55 Pet Shop - Kedi ve Köpek Maması | Samsun Hızlı Sipariş"
+        description="Samsun'da kedi ve köpek maması, kum, ödül maması, malt ve bakım ürünlerini en uygun fiyatlarla sipariş edin. Kapıda ödeme, hızlı teslimat."
+        canonical="https://jet55.app/"
+        jsonLd={LOCAL_BUSINESS_JSONLD}
+      />
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center">
           <Link href="/">
@@ -151,7 +158,7 @@ export default function Landing() {
         <p className="text-white font-bold text-sm" data-testid="text-footer-brand">
           Tüm Petshop Ürünleri
         </p>
-        <Link href="/siparis">
+        <Link href="/kategori">
           <p className="text-white/80 text-sm mt-0.5 cursor-pointer" data-testid="text-footer-cta">
             Sipariş Ver - Hemen Kapına Gelsin
           </p>

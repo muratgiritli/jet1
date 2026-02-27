@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BackNavigation from "@/components/BackNavigation";
+import SEO from "@/components/SEO";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 
 interface SubCategory {
@@ -102,6 +103,11 @@ export default function CategoryPage() {
 
   return (
     <div className="min-h-screen flex flex-col pb-16" style={{ backgroundColor: "#f0f2f5" }}>
+      <SEO
+        title={`${category.title} Ürünleri - JET55 Pet Shop | Samsun`}
+        description={`${category.title} maması, bakım ürünleri ve aksesuar çeşitleri. Samsun içi hızlı teslimat, kapıda ödeme. JET55 Pet Shop.`}
+        canonical={`https://jet55.app/kategori/${animalSlug}`}
+      />
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-2 flex items-center gap-3">
           <Link href="/">

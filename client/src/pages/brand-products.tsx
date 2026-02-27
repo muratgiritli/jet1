@@ -14,6 +14,7 @@ import { CATEGORIES, productUrl } from "@/lib/data";
 import FavoriteButton from "@/components/FavoriteButton";
 import { ProductGridSkeleton } from "@/components/ProductSkeleton";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
+import SEO from "@/components/SEO";
 
 interface SubcategoryInfo {
   name: string;
@@ -506,6 +507,11 @@ export default function BrandProductsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16">
+      <SEO
+        title={`${data.category.brandName} - ${animal === "kedi" ? "Kedi" : animal === "kopek" ? "Köpek" : animal === "kus" ? "Kuş" : "Kemirgen"} | JET55 Pet Shop`}
+        description={`${data.category.brandName} ürünlerini JET55 Pet Shop'tan sipariş edin. Samsun içi hızlı teslimat, kapıda ödeme.`}
+        canonical={`https://jet55.app/siparis/${animal}/${subcategory}/${brandSlug}`}
+      />
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">

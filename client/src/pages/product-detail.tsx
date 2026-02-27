@@ -20,6 +20,7 @@ import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
 import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
 import FoodCalculator from "@/components/FoodCalculator";
+import SEO from "@/components/SEO";
 
 type ProductDetailData = {
   product: Product;
@@ -234,34 +235,32 @@ export default function ProductDetailPage() {
 
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (!resolvedData) return;
+  const seoData = useMemo(() => {
+    if (!resolvedData) return null;
     const p = resolvedData.product;
     const catName = resolvedData.category?.brandName || "";
     const title = `${p.name} - ${catName ? catName + " | " : ""}JET55 Pet Shop`;
-    document.title = title;
-
-    const desc = `${p.name} en uygun fiyatla JET55 Pet Shop'ta. ${Math.round(p.price)} TL${p.originalPrice ? ` (eski fiyat ${Math.round(p.originalPrice)} TL)` : ""}. Hızlı sipariş ve kapıda ödeme.`;
-
-    let meta = document.querySelector('meta[name="description"]') as HTMLMetaElement | null;
-    if (!meta) { meta = document.createElement("meta"); meta.name = "description"; document.head.appendChild(meta); }
-    meta.content = desc;
-
-    let ogTitle = document.querySelector('meta[property="og:title"]') as HTMLMetaElement | null;
-    if (!ogTitle) { ogTitle = document.createElement("meta"); ogTitle.setAttribute("property", "og:title"); document.head.appendChild(ogTitle); }
-    ogTitle.content = title;
-
-    let ogDesc = document.querySelector('meta[property="og:description"]') as HTMLMetaElement | null;
-    if (!ogDesc) { ogDesc = document.createElement("meta"); ogDesc.setAttribute("property", "og:description"); document.head.appendChild(ogDesc); }
-    ogDesc.content = desc;
-
-    if (p.img) {
-      let ogImg = document.querySelector('meta[property="og:image"]') as HTMLMetaElement | null;
-      if (!ogImg) { ogImg = document.createElement("meta"); ogImg.setAttribute("property", "og:image"); document.head.appendChild(ogImg); }
-      ogImg.content = p.img;
-    }
-
-    return () => { document.title = "JET55 Pet Shop"; };
+    const description = `${p.name} en uygun fiyatla JET55 Pet Shop'ta. ${Math.round(p.price)} TL${p.originalPrice ? ` (eski fiyat ${Math.round(p.originalPrice)} TL)` : ""}. Hızlı sipariş ve kapıda ödeme.`;
+    const slug = p.name.toLowerCase().replace(/[^a-z0-9ğüşıöç]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+    const canonical = `https://jet55.app/urun/${p.id}/${slug}`;
+    const jsonLd = {
+      "@context": "https://schema.org",
+      "@type": "Product",
+      "name": p.name,
+      "image": p.img || undefined,
+      "description": description,
+      "sku": String(p.id),
+      "brand": { "@type": "Brand", "name": catName || "JET55" },
+      "offers": {
+        "@type": "Offer",
+        "url": canonical,
+        "priceCurrency": "TRY",
+        "price": p.price,
+        "availability": p.stock && p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+        "seller": { "@type": "Organization", "name": "JET55 Pet Shop" },
+      },
+    };
+    return { title, description, canonical, ogImage: p.img || undefined, jsonLd };
   }, [resolvedData]);
 
   useEffect(() => {
@@ -335,6 +334,15 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background pb-16">
+      {seoData && (
+        <SEO
+          title={seoData.title}
+          description={seoData.description}
+          canonical={seoData.canonical}
+          ogImage={seoData.ogImage}
+          jsonLd={seoData.jsonLd}
+        />
+      )}
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3">
