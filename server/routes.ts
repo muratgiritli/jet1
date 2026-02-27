@@ -8,6 +8,7 @@ import bcrypt from "bcryptjs";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
 import pg from "pg";
+import { downloadAndConvertImage, migrateAllImages } from "./image-service";
 
 const PgSession = pgSession(session);
 
@@ -183,11 +184,24 @@ export async function registerRoutes(
     const parsed = insertProductSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
     const product = await storage.createProduct(parsed.data);
+    if (product.img && !product.img.startsWith("/product-images/")) {
+      const localPath = await downloadAndConvertImage(product.img, product.id);
+      if (localPath) {
+        const updated = await storage.updateProduct(product.id, { img: localPath });
+        return res.status(201).json(updated);
+      }
+    }
     res.status(201).json(product);
   });
 
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
+    if (req.body.img && !req.body.img.startsWith("/product-images/")) {
+      const localPath = await downloadAndConvertImage(req.body.img, id);
+      if (localPath) {
+        req.body.img = localPath;
+      }
+    }
     const product = await storage.updateProduct(id, req.body);
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);
@@ -800,6 +814,15 @@ export async function registerRoutes(
     const id = parseInt(req.params.id as string);
     await storage.deleteInstallmentRate(id);
     res.json({ message: "Deleted" });
+  });
+
+  app.post("/api/admin/migrate-images", requireAdmin, async (req, res) => {
+    res.json({ message: "Image migration started in background" });
+    migrateAllImages().then(result => {
+      console.log(`[image] Migration finished:`, result);
+    }).catch(err => {
+      console.error(`[image] Migration error:`, err);
+    });
   });
 
   return httpServer;

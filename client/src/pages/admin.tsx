@@ -50,6 +50,7 @@ import {
   X,
   Search,
   Check,
+  ImageIcon,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1637,6 +1638,21 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
+              <Button
+                variant="outline"
+                data-testid="btn-migrate-images"
+                onClick={async () => {
+                  try {
+                    await apiRequest("POST", "/api/admin/migrate-images");
+                    toast({ title: "Resim aktarimi baslatildi", description: "Arka planda tum resimler WebP formatina donusturuluyor..." });
+                  } catch {
+                    toast({ title: "Hata", variant: "destructive" });
+                  }
+                }}
+              >
+                <ImageIcon className="w-4 h-4" />
+                Resimleri WebP Yap
+              </Button>
               <Dialog open={bulkPriceDialogOpen} onOpenChange={(open) => { setBulkPriceDialogOpen(open); if (!open) { setBulkPricePercent(""); setIndividualPrices({}); } }}>
                 <DialogTrigger asChild>
                   <Button variant="outline" disabled={filteredProducts.length === 0} data-testid="btn-bulk-price">
