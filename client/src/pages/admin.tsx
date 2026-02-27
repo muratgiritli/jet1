@@ -1638,6 +1638,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
+              {(() => {
+                const webpCount = filteredProducts.filter(p => p.img?.startsWith("/product-images/")).length;
+                const extCount = filteredProducts.filter(p => p.img && !p.img.startsWith("/product-images/")).length;
+                const noImgCount = filteredProducts.filter(p => !p.img).length;
+                return (
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />{webpCount} WebP</span>
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-orange-400 inline-block" />{extCount} Dış</span>
+                    {noImgCount > 0 && <span className="flex items-center gap-1 text-muted-foreground">{noImgCount} Resim yok</span>}
+                  </div>
+                );
+              })()}
               <Button
                 variant="outline"
                 data-testid="btn-migrate-images"
@@ -1843,14 +1855,29 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 return (
                   <Card key={product.id} data-testid={`card-admin-product-${product.id}`}>
                     <CardContent className="p-3 flex items-center gap-3">
-                      {product.img && (
-                        <img
-                          src={product.img}
-                          alt={product.name}
-                          className="w-14 h-14 object-contain rounded-md bg-muted/30 shrink-0"
-                          loading="lazy"
-                        />
-                      )}
+                      <div className="relative shrink-0">
+                        {product.img ? (
+                          <img
+                            src={product.img}
+                            alt={product.name}
+                            className="w-14 h-14 object-contain rounded-md bg-muted/30"
+                            loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-14 h-14 rounded-md bg-muted/30 flex items-center justify-center">
+                            <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
+                          </div>
+                        )}
+                        {product.img?.startsWith("/product-images/") ? (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center" title="WebP">
+                            <Check className="w-3 h-3 text-white" />
+                          </span>
+                        ) : (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-orange-400 flex items-center justify-center" title="Dış URL">
+                            <AlertTriangle className="w-3 h-3 text-white" />
+                          </span>
+                        )}
+                      </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate" data-testid={`text-admin-product-name-${product.id}`}>
                           {product.name}
