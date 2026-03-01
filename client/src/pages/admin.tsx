@@ -553,12 +553,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const updateProductMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: any }) => {
-      const res = await apiRequest("PATCH", `/api/admin/products/${id}`, data);
-      return res.json();
+      await apiRequest("PATCH", `/api/admin/products/${id}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
       queryClient.invalidateQueries({ queryKey: ["/api/brand-products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/brand-categories"] });
       setEditDialogOpen(false);
       setEditingProduct(null);
       toast({ title: "Ürün güncellendi" });

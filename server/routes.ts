@@ -205,17 +205,19 @@ export async function registerRoutes(
 
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
-    const newImgUrl = req.body.img && !req.body.img.startsWith("/product-images/") ? req.body.img : null;
+    if (req.body.img && !req.body.img.startsWith("/product-images/")) {
+      try {
+        const localPath = await downloadAndConvertImage(req.body.img, id);
+        if (localPath) {
+          req.body.img = localPath;
+        }
+      } catch (err) {
+        console.log(`[image] Download failed for product ${id}, keeping external URL`);
+      }
+    }
     const product = await storage.updateProduct(id, req.body);
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);
-    if (newImgUrl) {
-      downloadAndConvertImage(newImgUrl, id).then(localPath => {
-        if (localPath) {
-          storage.updateProduct(id, { img: localPath });
-        }
-      });
-    }
   });
 
   app.delete("/api/admin/products/:id", requireAdmin, async (req, res) => {

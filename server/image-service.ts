@@ -35,7 +35,7 @@ export async function downloadAndConvertImage(imageUrl: string, productId: numbe
     const filepath = path.join(IMAGE_DIR, filename);
     fs.writeFileSync(filepath, webpBuffer);
 
-    const localPath = `/product-images/${filename}`;
+    const localPath = `/product-images/${filename}?v=${Date.now()}`;
     console.log(`[image] Converted product ${productId} -> ${filename} (${Math.round(webpBuffer.length / 1024)} KB)`);
     return localPath;
   } catch (err: any) {
