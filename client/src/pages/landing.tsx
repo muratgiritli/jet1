@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Truck, CreditCard, MapPin } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import SEO, { LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
+import SearchBar from "@/components/SearchBar";
 
 import heroBanner from "@assets/banner_2_1771940597464.png";
 import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
@@ -82,6 +83,16 @@ export default function Landing() {
               data-testid="img-hero-banner"
             />
           </div>
+        </motion.section>
+
+        <motion.section
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="px-3 pt-3 pb-1"
+          data-testid="section-search"
+        >
+          <SearchBar />
         </motion.section>
 
         <motion.section
