@@ -5,7 +5,6 @@ import { SiWhatsapp } from "react-icons/si";
 import SEO, { LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import SearchBar from "@/components/SearchBar";
 
-import heroBanner from "@assets/banner_2_1771940597464.png";
 import Logo from "@/components/Logo";
 import catDog from "@/assets/images/cat-dog.png";
 import catCat from "@/assets/images/cat-cat.png";
@@ -85,9 +84,9 @@ export default function Landing() {
         >
           <div className="relative w-full overflow-hidden" data-testid="banner-hero">
             <img
-              src={heroBanner}
-              alt="JETGO - Sen İste Jet İle Gelsin"
-              className="w-full h-auto object-contain"
+              src="/banner-jetgo.png"
+              alt="JETGO - Sen İste Jet İle Gelsin | Şimdi Samsun'da"
+              className="w-full h-auto object-contain rounded-lg"
               data-testid="img-hero-banner"
             />
           </div>
