@@ -62,8 +62,17 @@ export async function registerRoutes(
     res.json({ category, products: activeOnly ? prods.filter(p => p.isActive) : prods });
   });
 
+  const SUBCATEGORY_SLUG_MAP: Record<string, string> = {
+    "kedi-odulu": "odul",
+    "kedi-bakim-saglik": "bakim-saglik",
+    "kedi-konserve": "kedi-konserve",
+    "malt-macun": "malt-macun",
+    "malt-vitamin": "malt-vitamin",
+  };
+
   app.get("/api/brand-products/:animal/:subcategory/:brandSlug", async (req, res) => {
-    const { animal, subcategory, brandSlug } = req.params;
+    const { animal, brandSlug } = req.params;
+    const subcategory = SUBCATEGORY_SLUG_MAP[req.params.subcategory] || req.params.subcategory;
     const category = await storage.getBrandCategoryBySlug(animal, subcategory, brandSlug);
     if (!category) return res.status(404).json({ message: "Brand category not found" });
     const prods = await storage.getProductsByBrandCategory(category.id);

@@ -105,17 +105,9 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
     },
     "kedi-odulu": {
       title: "Kedi Ödülü",
-      subtitle: "Buradan markanızı seçebilirsiniz.",
-      brands: [
-        { name: "Crocus", slug: "crocus", color: "#9C27B0" },
-        { name: "Dreamies", slug: "dreamies", color: "#E91E63" },
-        { name: "GimCat", slug: "gimcat", color: "#FF5722" },
-        { name: "Me-O", slug: "me-o", color: "#2196F3" },
-        { name: "Miamor", slug: "miamor", color: "#00BCD4" },
-        { name: "Nutri Feline", slug: "nutri-feline", color: "#4CAF50" },
-        { name: "Reflex", slug: "reflex", color: "#F57F17" },
-        { name: "Wanpy", slug: "wanpy", color: "#FF9800" },
-      ],
+      subtitle: "",
+      brands: [],
+      redirect: "/siparis/kedi/kedi-odulu/odul",
     },
   },
 };
