@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BackNavigation from "@/components/BackNavigation";
-import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
+import Logo from "@/components/Logo";
 
 interface Brand {
   name: string;
@@ -140,9 +140,7 @@ export default function BrandsPage() {
                 <ArrowLeft />
               </Button>
             </Link>
-            <Link href="/">
-              <img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" />
-            </Link>
+            <Logo className="text-2xl" linkTo="/" />
           </div>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -162,7 +160,7 @@ export default function BrandsPage() {
             </Button>
           </Link>
           <Link href="/">
-            <img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" />
+            <Logo className="text-2xl" linkTo="/" />
           </Link>
         </div>
       </header>

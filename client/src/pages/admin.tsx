@@ -1477,7 +1477,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <div className="flex items-center gap-2 shrink-0">
                         {!alert.isNotified && (
                           <a
-                            href={`https://wa.me/90${alert.phone.replace(/\D/g, "").replace(/^0/, "")}?text=${encodeURIComponent(`Merhaba ${alert.customerName}, ilgilendiginiz "${alert.productName}" urunu tekrar stoklarimizda! Siparis vermek icin JET55'i ziyaret edin.`)}`}
+                            href={`https://wa.me/90${alert.phone.replace(/\D/g, "").replace(/^0/, "")}?text=${encodeURIComponent(`Merhaba ${alert.customerName}, ilgilendiginiz "${alert.productName}" urunu tekrar stoklarimizda! Siparis vermek icin JETGO'i ziyaret edin.`)}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium text-white"
@@ -2506,7 +2506,7 @@ function ReorderRemindersSection() {
   const overdue = pending.filter((r: any) => new Date(r.reorderDate) <= now);
 
   const buildWhatsAppLink = (r: any) => {
-    const msg = `Merhaba ${r.customerName || ""}!\n\nDaha önce aldığınız *${r.productName}* mamayı yakında bitirmiş olabilirsiniz.\n\nYeni sipariş vermek ister misiniz?\n\nJET55 - Hızlı Sipariş`;
+    const msg = `Merhaba ${r.customerName || ""}!\n\nDaha önce aldığınız *${r.productName}* mamayı yakında bitirmiş olabilirsiniz.\n\nYeni sipariş vermek ister misiniz?\n\nJETGO - Hızlı Sipariş`;
     return `https://wa.me/${r.customerPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(msg)}`;
   };
 

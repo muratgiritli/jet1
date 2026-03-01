@@ -17,7 +17,7 @@ import { useCustomer } from "@/contexts/CustomerContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { productUrl } from "@/lib/data";
-import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
+import Logo from "@/components/Logo";
 
 type TabKey = "profile" | "points" | "orders" | "favorites" | "addresses" | "pets" | "notifications" | "password";
 
@@ -78,9 +78,7 @@ export default function ProfilePage() {
     <div className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center">
-          <Link href="/">
-            <img src={jet55Logo} alt="JET55" className="h-10 object-contain cursor-pointer" data-testid="img-profile-logo" />
-          </Link>
+          <Logo className="text-3xl" linkTo="/" testId="img-profile-logo" />
         </div>
       </header>
 

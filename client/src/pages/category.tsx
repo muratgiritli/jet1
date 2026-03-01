@@ -4,7 +4,7 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BackNavigation from "@/components/BackNavigation";
 import SEO from "@/components/SEO";
-import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
+import Logo from "@/components/Logo";
 
 interface SubCategory {
   name: string;
@@ -104,8 +104,8 @@ export default function CategoryPage() {
   return (
     <div className="min-h-screen flex flex-col pb-16" style={{ backgroundColor: "#f0f2f5" }}>
       <SEO
-        title={`${category.title} Ürünleri - JET55 Pet Shop | Samsun`}
-        description={`${category.title} maması, bakım ürünleri ve aksesuar çeşitleri. Samsun içi hızlı teslimat, kapıda ödeme. JET55 Pet Shop.`}
+        title={`${category.title} Ürünleri - JETGO Pet Shop | Samsun`}
+        description={`${category.title} maması, bakım ürünleri ve aksesuar çeşitleri. Samsun içi hızlı teslimat, kapıda ödeme. JETGO Pet Shop.`}
         canonical={`https://jet55.app/kategori/${animalSlug}`}
       />
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
@@ -115,9 +115,7 @@ export default function CategoryPage() {
               <ArrowLeft />
             </Button>
           </Link>
-          <Link href="/">
-            <img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" />
-          </Link>
+          <Logo className="text-2xl" linkTo="/" />
         </div>
       </header>
 

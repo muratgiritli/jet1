@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Package, Loader2, LogIn } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import BackNavigation from "@/components/BackNavigation";
-import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
+import Logo from "@/components/Logo";
 import type { OrderItem } from "@shared/schema";
 
 interface TrackedOrder {
@@ -57,9 +57,7 @@ export default function OrderTrackingPage() {
     <div className="min-h-screen bg-background pb-16">
       <header className="sticky top-0 z-50" style={{ background: "#6B3480" }}>
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
-          <Link href="/">
-            <img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" />
-          </Link>
+          <Logo className="text-2xl" linkTo="/" />
           <h1 className="text-sm font-bold text-white/90" data-testid="text-page-title">
             Sipariş Takip
           </h1>

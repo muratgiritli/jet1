@@ -8,7 +8,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
+import Logo from "@/components/Logo";
 import { productUrl } from "@/lib/data";
 
 interface FavoriteProduct {
@@ -100,9 +100,7 @@ export default function FavoritesPage() {
     <div className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center">
-          <Link href="/">
-            <img src={jet55Logo} alt="JET55" className="h-10 object-contain cursor-pointer" data-testid="img-brand-logo" />
-          </Link>
+          <Logo className="text-3xl" linkTo="/" />
         </div>
       </header>
 

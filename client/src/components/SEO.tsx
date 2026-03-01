@@ -39,7 +39,7 @@ export default function SEO({ title, description, canonical, ogImage, jsonLd }: 
     }
 
     return () => {
-      document.title = "JET55 Pet Shop - Kedi ve Köpek Maması | Hızlı Sipariş";
+      document.title = "JETGO Pet Shop - Kedi ve Köpek Maması | Hızlı Sipariş";
       if (canonicalEl) canonicalEl.remove();
       if (ldScript) ldScript.remove();
     };
@@ -51,7 +51,7 @@ export default function SEO({ title, description, canonical, ogImage, jsonLd }: 
 export const LOCAL_BUSINESS_JSONLD = {
   "@context": "https://schema.org",
   "@type": "PetStore",
-  "name": "JET55 Pet Shop",
+  "name": "JETGO Pet Shop",
   "url": "https://jet55.app",
   "telephone": "+908508403959",
   "address": {

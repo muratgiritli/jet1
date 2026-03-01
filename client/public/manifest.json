@@ -1,7 +1,7 @@
 {
-  "name": "JET55 Pet Shop",
-  "short_name": "JET55",
-  "description": "JET55 Pet Shop - Hızlı Sipariş, Kapınıza Teslimat",
+  "name": "JETGO Pet Shop",
+  "short_name": "JETGO",
+  "description": "JETGO Pet Shop - Hızlı Sipariş, Kapınıza Teslimat",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#6B3480",

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Phone, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { useToast } from "@/hooks/use-toast";
-import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
+import Logo from "@/components/Logo";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -85,9 +85,7 @@ export default function AuthPage() {
               <ArrowLeft className="w-5 h-5" />
             </button>
           </Link>
-          <Link href="/">
-            <img src={jet55Logo} alt="JET55" className="h-10 object-contain cursor-pointer" data-testid="img-auth-logo" />
-          </Link>
+          <Logo className="text-3xl" linkTo="/" testId="img-auth-logo" />
         </div>
       </header>
 

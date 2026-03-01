@@ -6,7 +6,7 @@ import SEO, { LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import SearchBar from "@/components/SearchBar";
 
 import heroBanner from "@assets/banner_2_1771940597464.png";
-import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
+import Logo from "@/components/Logo";
 import catDog from "@/assets/images/cat-dog.png";
 import catCat from "@/assets/images/cat-cat.png";
 import catBird from "@/assets/images/cat-bird.png";
@@ -37,16 +37,14 @@ export default function Landing() {
   return (
     <div className="min-h-screen flex flex-col bg-background pb-16">
       <SEO
-        title="JET55 Pet Shop - Kedi ve Köpek Maması | Samsun Hızlı Sipariş"
+        title="JETGO Pet Shop - Kedi ve Köpek Maması | Samsun Hızlı Sipariş"
         description="Samsun'da kedi ve köpek maması, kum, ödül maması, malt ve bakım ürünlerini en uygun fiyatlarla sipariş edin. Kapıda ödeme, hızlı teslimat."
         canonical="https://jet55.app/"
         jsonLd={LOCAL_BUSINESS_JSONLD}
       />
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center">
-          <Link href="/">
-            <img src={jet55Logo} alt="JET55" className="h-10 object-contain cursor-pointer" data-testid="img-brand-logo" />
-          </Link>
+          <Logo className="text-3xl" />
         </div>
       </header>
 
@@ -88,7 +86,7 @@ export default function Landing() {
           <div className="relative w-full overflow-hidden" data-testid="banner-hero">
             <img
               src={heroBanner}
-              alt="JET55 - Sen İste Jet İle Gelsin"
+              alt="JETGO - Sen İste Jet İle Gelsin"
               className="w-full h-auto object-contain"
               data-testid="img-hero-banner"
             />

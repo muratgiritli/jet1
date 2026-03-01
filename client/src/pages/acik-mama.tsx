@@ -8,7 +8,7 @@ import { ArrowLeft, ShoppingCart, Loader2, Plus, Minus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
-import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
+import Logo from "@/components/Logo";
 import BackNavigation from "@/components/BackNavigation";
 import { productUrl } from "@/lib/data";
 
@@ -146,9 +146,7 @@ export default function AcikMamaPage() {
                 <ArrowLeft />
               </Button>
             </Link>
-            <Link href="/">
-              <img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" />
-            </Link>
+            <Logo className="text-2xl" linkTo="/" />
           </div>
           {itemCount > 0 && (
             <Link href="/odeme">

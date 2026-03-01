@@ -13,7 +13,7 @@ import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDel
 import { CATEGORIES, productUrl } from "@/lib/data";
 import FavoriteButton from "@/components/FavoriteButton";
 import { ProductGridSkeleton } from "@/components/ProductSkeleton";
-import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
+import Logo from "@/components/Logo";
 import SEO from "@/components/SEO";
 
 interface SubcategoryInfo {
@@ -471,9 +471,7 @@ export default function BrandProductsPage() {
                 <ArrowLeft />
               </Button>
             </Link>
-            <Link href="/">
-              <img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" />
-            </Link>
+            <Logo className="text-2xl" linkTo="/" />
           </div>
         </header>
         <div className="px-3 pt-4">
@@ -493,9 +491,7 @@ export default function BrandProductsPage() {
                 <ArrowLeft />
               </Button>
             </Link>
-            <Link href="/">
-              <img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" />
-            </Link>
+            <Logo className="text-2xl" linkTo="/" />
           </div>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -508,8 +504,8 @@ export default function BrandProductsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16">
       <SEO
-        title={`${data.category.brandName} - ${animal === "kedi" ? "Kedi" : animal === "kopek" ? "Köpek" : animal === "kus" ? "Kuş" : "Kemirgen"} | JET55 Pet Shop`}
-        description={`${data.category.brandName} ürünlerini JET55 Pet Shop'tan sipariş edin. Samsun içi hızlı teslimat, kapıda ödeme.`}
+        title={`${data.category.brandName} - ${animal === "kedi" ? "Kedi" : animal === "kopek" ? "Köpek" : animal === "kus" ? "Kuş" : "Kemirgen"} | JETGO Pet Shop`}
+        description={`${data.category.brandName} ürünlerini JETGO Pet Shop'tan sipariş edin. Samsun içi hızlı teslimat, kapıda ödeme.`}
         canonical={`https://jet55.app/siparis/${animal}/${subcategory}/${brandSlug}`}
       />
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
@@ -520,9 +516,7 @@ export default function BrandProductsPage() {
                 <ArrowLeft />
               </Button>
             </Link>
-            <Link href="/">
-              <img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" />
-            </Link>
+            <Logo className="text-2xl" linkTo="/" />
           </div>
           {itemCount > 0 && (
             <Link href="/odeme">
@@ -555,7 +549,7 @@ export default function BrandProductsPage() {
               Orijinal Urun
             </Badge>
             <span className="text-xs text-muted-foreground">
-              JET55, {data.category.brandName} yetkili satıcısıdır.
+              JETGO, {data.category.brandName} yetkili satıcısıdır.
             </span>
           </div>
         )}

@@ -1,4 +1,4 @@
-# JET55 - Hızlı Sipariş
+# JETGO - Hızlı Sipariş
 
 ## Overview
 Pet shop quick ordering application built with React/TypeScript. Customers browse pet products, add items to cart, and submit orders via WhatsApp. Admin panel allows dynamic product management.

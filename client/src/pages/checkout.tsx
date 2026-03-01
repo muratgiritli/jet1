@@ -366,7 +366,7 @@ export default function Checkout() {
         } catch {}
       }
 
-      let msg = `*JET55 Sipariş*\n\n`;
+      let msg = `*JETGO Sipariş*\n\n`;
       if (customerName.trim()) msg += `*Ad Soyad:* ${customerName.trim()}\n`;
       if (customerPhone.trim()) msg += `*Telefon:* ${customerPhone.trim()}\n`;
       msg += `*Mahalle:* ${selectedMahalle}\n`;

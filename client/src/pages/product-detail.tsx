@@ -18,7 +18,7 @@ import FavoriteButton from "@/components/FavoriteButton";
 import ImageZoom from "@/components/ImageZoom";
 import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
 import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
-import jet55Logo from "@assets/Ekran_görüntüsü_2026-02-24_020948_1771888203864.png";
+import Logo from "@/components/Logo";
 import FoodCalculator from "@/components/FoodCalculator";
 import SEO from "@/components/SEO";
 
@@ -239,8 +239,8 @@ export default function ProductDetailPage() {
     if (!resolvedData) return null;
     const p = resolvedData.product;
     const catName = resolvedData.category?.brandName || "";
-    const title = `${p.name} - ${catName ? catName + " | " : ""}JET55 Pet Shop`;
-    const description = `${p.name} en uygun fiyatla JET55 Pet Shop'ta. ${Math.round(p.price)} TL${p.originalPrice ? ` (eski fiyat ${Math.round(p.originalPrice)} TL)` : ""}. Hızlı sipariş ve kapıda ödeme.`;
+    const title = `${p.name} - ${catName ? catName + " | " : ""}JETGO Pet Shop`;
+    const description = `${p.name} en uygun fiyatla JETGO Pet Shop'ta. ${Math.round(p.price)} TL${p.originalPrice ? ` (eski fiyat ${Math.round(p.originalPrice)} TL)` : ""}. Hızlı sipariş ve kapıda ödeme.`;
     const slug = p.name.toLowerCase().replace(/[^a-z0-9ğüşıöç]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
     const canonical = `https://jet55.app/urun/${p.id}/${slug}`;
     const jsonLd = {
@@ -250,14 +250,14 @@ export default function ProductDetailPage() {
       "image": p.img || undefined,
       "description": description,
       "sku": String(p.id),
-      "brand": { "@type": "Brand", "name": catName || "JET55" },
+      "brand": { "@type": "Brand", "name": catName || "JETGO" },
       "offers": {
         "@type": "Offer",
         "url": canonical,
         "priceCurrency": "TRY",
         "price": p.price,
         "availability": p.stock && p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-        "seller": { "@type": "Organization", "name": "JET55 Pet Shop" },
+        "seller": { "@type": "Organization", "name": "JETGO Pet Shop" },
       },
     };
     return { title, description, canonical, ogImage: p.img || undefined, jsonLd };
@@ -280,7 +280,7 @@ export default function ProductDetailPage() {
             <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
               <ArrowLeft />
             </Button>
-            <Link href="/"><img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" /></Link>
+            <Logo className="text-2xl" linkTo="/" />
           </div>
         </header>
         <ProductDetailSkeleton />
@@ -296,7 +296,7 @@ export default function ProductDetailPage() {
             <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
               <ArrowLeft />
             </Button>
-            <Link href="/"><img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" /></Link>
+            <Logo className="text-2xl" linkTo="/" />
           </div>
         </header>
         <div className="flex-1 flex items-center justify-center">
@@ -349,7 +349,7 @@ export default function ProductDetailPage() {
             <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
               <ArrowLeft />
             </Button>
-            <Link href="/"><img src={jet55Logo} alt="JET55" className="h-8 object-contain cursor-pointer" data-testid="img-brand-logo" /></Link>
+            <Logo className="text-2xl" linkTo="/" />
           </div>
           {itemCount > 0 && (
             <Link href="/odeme">
