@@ -70,6 +70,16 @@ export default function Landing() {
       <main className="flex-1 max-w-lg mx-auto w-full">
 
         <motion.section
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4, delay: 0.1 }}
+          className="px-3 pt-3 pb-2"
+          data-testid="section-search"
+        >
+          <SearchBar />
+        </motion.section>
+
+        <motion.section
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5 }}
@@ -83,16 +93,6 @@ export default function Landing() {
               data-testid="img-hero-banner"
             />
           </div>
-        </motion.section>
-
-        <motion.section
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="px-3 pt-3 pb-1"
-          data-testid="section-search"
-        >
-          <SearchBar />
         </motion.section>
 
         <motion.section
