@@ -18,6 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { productUrl } from "@/lib/data";
 import Logo from "@/components/Logo";
+import ProductImage from "@/components/ProductImage";
 
 type TabKey = "profile" | "points" | "orders" | "favorites" | "addresses" | "pets" | "notifications" | "password";
 
@@ -324,7 +325,7 @@ function FavoritesSection() {
           <CardContent className="p-3 flex items-center gap-3">
             <Link href={productUrl(product.id, product.name)}>
               {product.img ? (
-                <img src={product.img} alt={product.name} className="w-14 h-14 object-cover rounded-lg flex-shrink-0" />
+                <ProductImage src={product.img} alt={product.name} className="w-14 h-14 object-cover rounded-lg flex-shrink-0" />
               ) : (
                 <div className="w-14 h-14 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                   <ShoppingCart className="w-5 h-5 text-muted-foreground" />

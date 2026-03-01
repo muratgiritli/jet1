@@ -16,6 +16,7 @@ import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDel
 import { CATEGORIES, productUrl } from "@/lib/data";
 import FavoriteButton from "@/components/FavoriteButton";
 import ImageZoom from "@/components/ImageZoom";
+import ProductImage from "@/components/ProductImage";
 import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
 import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import Logo from "@/components/Logo";
@@ -84,9 +85,8 @@ function CrossSellProductCard({
   return (
     <Card className={`overflow-visible transition-all duration-200 ${isActive ? "ring-2 ring-primary shadow-md" : ""}`} data-testid={`card-cross-sell-${pid}`}>
       <CardContent className="p-2 flex flex-col items-center gap-1.5">
-        {product.img && (
           <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
-            <img
+            <ProductImage
               src={product.img}
               alt={product.name}
               className="w-full h-full object-contain"
@@ -101,7 +101,6 @@ function CrossSellProductCard({
               </Badge>
             )}
           </div>
-        )}
         <p className="text-[11px] font-semibold text-center leading-tight line-clamp-2 min-h-[1.5rem]">
           {product.name}
         </p>
@@ -372,10 +371,9 @@ export default function ProductDetailPage() {
           transition={{ duration: 0.3 }}
         >
           <div className="flex flex-col md:flex-row gap-6">
-            {product.img && (
-              <ImageZoom src={product.img} alt={product.name} className="md:w-1/2 w-full">
+              <ImageZoom src={product.img || ""} alt={product.name} className="md:w-1/2 w-full">
                 <div className="aspect-square flex items-center justify-center rounded-lg overflow-hidden bg-muted/30 relative" data-testid="img-product-detail">
-                  <img
+                  <ProductImage
                     src={product.img}
                     alt={product.name}
                     className="w-full h-full object-contain"
@@ -406,7 +404,6 @@ export default function ProductDetailPage() {
                   />
                 </div>
               </ImageZoom>
-            )}
 
             <div className="md:w-1/2 w-full flex flex-col gap-3">
               <h1 className="text-xl font-bold leading-tight" data-testid="text-product-name">
@@ -724,11 +721,9 @@ export default function ProductDetailPage() {
               {recentlyViewed.slice(0, 6).map((rp) => (
                 <Link key={rp.id} href={productUrl(rp.id, rp.name)}>
                   <div className="flex-shrink-0 w-24 cursor-pointer" data-testid={`recent-product-${rp.id}`}>
-                    {rp.img && (
                       <div className="w-24 h-24 rounded-lg overflow-hidden bg-muted/30">
-                        <img src={rp.img} alt={rp.name} className="w-full h-full object-contain" loading="lazy" />
+                        <ProductImage src={rp.img} alt={rp.name} className="w-full h-full object-contain" loading="lazy" />
                       </div>
-                    )}
                     <p className="text-[10px] font-medium text-center mt-1 line-clamp-2 leading-tight">{rp.name}</p>
                     <p className="text-[10px] font-bold text-primary text-center">{rp.price} TL</p>
                   </div>

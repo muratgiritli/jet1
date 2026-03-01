@@ -9,6 +9,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import Logo from "@/components/Logo";
+import ProductImage from "@/components/ProductImage";
 import { productUrl } from "@/lib/data";
 
 interface FavoriteProduct {
@@ -138,7 +139,7 @@ export default function FavoritesPage() {
                       <CardContent className="p-3 flex items-center gap-3">
                         <Link href={productUrl(Number(product.id), product.name)}>
                           {product.img ? (
-                            <img
+                            <ProductImage
                               src={product.img}
                               alt={product.name}
                               className="w-16 h-16 object-cover rounded-lg flex-shrink-0"

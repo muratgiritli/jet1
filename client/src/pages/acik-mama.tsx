@@ -10,6 +10,7 @@ import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import Logo from "@/components/Logo";
 import BackNavigation from "@/components/BackNavigation";
+import ProductImage from "@/components/ProductImage";
 import { productUrl } from "@/lib/data";
 
 const BRAND_COLORS: Record<string, string> = {
@@ -35,9 +36,8 @@ function ProductCard({ product, quantity, onUpdate }: { product: Product; quanti
       data-testid={`card-acik-product-${pid}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
-        {product.img && (
           <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
-            <img
+            <ProductImage
               src={product.img}
               alt={product.name}
               className="w-full h-full object-contain"
@@ -61,7 +61,6 @@ function ProductCard({ product, quantity, onUpdate }: { product: Product; quanti
               </Badge>
             )}
           </div>
-        )}
         <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-acik-name-${pid}`}>
           {product.name}
         </p>

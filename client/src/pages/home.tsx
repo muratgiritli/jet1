@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
+import ProductImage from "@/components/ProductImage";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -82,9 +83,8 @@ function ProductCard({
       data-testid={`card-product-${product.id}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
-        {product.img && (
           <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30" data-testid={`img-container-${product.id}`}>
-            <img
+            <ProductImage
               src={product.img}
               alt={product.name}
               className="w-full h-full object-contain"
@@ -92,7 +92,6 @@ function ProductCard({
               data-testid={`img-product-${product.id}`}
             />
           </div>
-        )}
         <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${product.id}`}>
           {product.name}
         </p>

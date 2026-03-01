@@ -15,6 +15,7 @@ import FavoriteButton from "@/components/FavoriteButton";
 import { ProductGridSkeleton } from "@/components/ProductSkeleton";
 import Logo from "@/components/Logo";
 import SEO from "@/components/SEO";
+import ProductImage from "@/components/ProductImage";
 
 interface SubcategoryInfo {
   name: string;
@@ -119,9 +120,8 @@ function BrandProductCard({
       <CardContent className="p-3 flex flex-col items-center gap-2">
         {showDetailLink ? (
           <Link href={productUrl(product.id, product.name)} className="w-full flex flex-col items-center gap-2">
-            {product.img && (
               <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative" data-testid={`img-container-${pid}`}>
-                <img
+                <ProductImage
                   src={product.img}
                   alt={product.name}
                   className="w-full h-full object-contain"
@@ -151,16 +151,14 @@ function BrandProductCard({
                   className="absolute bottom-1 right-1 shadow-sm"
                 />
               </div>
-            )}
             <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${pid}`}>
               {product.name}
             </p>
           </Link>
         ) : (
           <>
-            {product.img && (
               <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative" data-testid={`img-container-${pid}`}>
-                <img
+                <ProductImage
                   src={product.img}
                   alt={product.name}
                   className="w-full h-full object-contain"
@@ -186,7 +184,6 @@ function BrandProductCard({
                   </Badge>
                 )}
               </div>
-            )}
             <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${pid}`}>
               {product.name}
             </p>
@@ -250,9 +247,8 @@ function InlineSubcategoryProductCard({
       data-testid={`card-inline-product-${product.id}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
-        {product.img && (
           <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
-            <img
+            <ProductImage
               src={product.img}
               alt={product.name}
               className="w-full h-full object-contain"
@@ -275,7 +271,6 @@ function InlineSubcategoryProductCard({
               </Badge>
             )}
           </div>
-        )}
         <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]">
           {product.name}
         </p>

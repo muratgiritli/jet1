@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useLocation } from "wouter";
 import { Search, X } from "lucide-react";
 import type { Product } from "@shared/schema";
+import ProductImage from "@/components/ProductImage";
 import { productUrl } from "@/lib/data";
 
 export default function SearchBar() {
@@ -116,13 +117,11 @@ export default function SearchBar() {
                     data-testid={`search-result-item-${product.id}`}
                     className="w-full flex gap-3 items-start px-4 py-2 hover:bg-gray-50 text-left"
                   >
-                    {product.img && (
-                      <img
-                        src={product.img}
-                        alt={product.name}
-                        className="w-10 h-10 object-cover rounded flex-shrink-0"
-                      />
-                    )}
+                    <ProductImage
+                      src={product.img}
+                      alt={product.name}
+                      className="w-10 h-10 object-cover rounded flex-shrink-0"
+                    />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 line-clamp-2">
                         {product.name}
