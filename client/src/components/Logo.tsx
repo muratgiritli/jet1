@@ -1,5 +1,4 @@
 import { Link } from "wouter";
-import logoImg from "@assets/logo_jetgo_1772397318337.png";
 
 interface LogoProps {
   className?: string;
@@ -10,9 +9,10 @@ interface LogoProps {
 export default function Logo({ className = "h-8", linkTo = "/", testId = "img-brand-logo" }: LogoProps) {
   const logo = (
     <img
-      src={logoImg}
+      src="/logo-jetgo.png"
       alt="JETGO Pet Shop"
       className={`object-contain select-none cursor-pointer ${className}`}
+      style={{ maxWidth: "140px" }}
       data-testid={testId}
     />
   );
