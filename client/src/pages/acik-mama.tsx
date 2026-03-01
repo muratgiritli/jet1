@@ -167,7 +167,7 @@ export default function AcikMamaPage() {
             <span style={{ color: "#2196F3" }}>{title}</span>
           </h2>
           <p className="text-sm text-muted-foreground mt-1" data-testid="text-acik-subtitle">
-            Marka seçerek açık mama ürünlerini inceleyin.
+            Aşağıda belirtilen fiyatlar, 1 kg açık mama için geçerlidir.
           </p>
         </div>
 
