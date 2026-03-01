@@ -308,7 +308,7 @@ function ProductForm({
           <Input type="number" step="0.01" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} data-testid="input-product-original-price" />
         </div>
       </div>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <Label>SKT</Label>
           <Input value={skt} onChange={(e) => setSkt(e.target.value)} placeholder="03.2027" data-testid="input-product-skt" />
@@ -317,9 +317,19 @@ function ProductForm({
           <Label>Stok</Label>
           <Input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} data-testid="input-product-stock" />
         </div>
-        <div className="space-y-2">
-          <Label>Görsel URL</Label>
-          <Input value={img} onChange={(e) => setImg(e.target.value)} placeholder="https://..." data-testid="input-product-img" />
+      </div>
+      <div className="space-y-2">
+        <Label>Görsel URL</Label>
+        <div className="flex gap-2 items-center">
+          {img && (
+            <img
+              src={img}
+              alt="Önizleme"
+              className="w-10 h-10 object-cover rounded border flex-shrink-0"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
+          )}
+          <Input value={img} onChange={(e) => setImg(e.target.value)} placeholder="https://..." className="flex-1" data-testid="input-product-img" />
         </div>
       </div>
       <Button type="submit" className="w-full" disabled={isPending || !brandCategoryId} data-testid="btn-save-product">
@@ -1824,7 +1834,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     Yeni Ürün
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
                   <DialogHeader>
                     <DialogTitle>Yeni Ürün Ekle</DialogTitle>
                   </DialogHeader>
@@ -1986,7 +1996,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           setEditDialogOpen(open);
           if (!open) setEditingProduct(null);
         }}>
-          <DialogContent>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Ürün Düzenle</DialogTitle>
             </DialogHeader>
