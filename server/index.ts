@@ -2,9 +2,16 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
+import path from "path";
 
 const app = express();
 const httpServer = createServer(app);
+
+const productImagesPath = path.resolve(process.cwd(), "client", "public", "product-images");
+app.use("/product-images", express.static(productImagesPath, {
+  maxAge: "7d",
+  immutable: true,
+}));
 
 declare module "http" {
   interface IncomingMessage {
