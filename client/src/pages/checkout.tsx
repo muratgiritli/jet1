@@ -507,7 +507,7 @@ export default function Checkout() {
                         <SelectTrigger data-testid="select-auth-mahalle" className={`h-10 text-sm ${!authMahalle ? "text-muted-foreground" : ""}`}>
                           <SelectValue placeholder="Mahallenizi seçiniz" />
                         </SelectTrigger>
-                        <SelectContent className="max-h-[250px]">
+                        <SelectContent className="max-h-[250px] z-[10001]">
                           {TESLIMAT_MAHALLELERI.map((m) => (
                             <SelectItem key={m} value={m}>{m}</SelectItem>
                           ))}
