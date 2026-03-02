@@ -50,6 +50,8 @@ import BackNavigation from "@/components/BackNavigation";
 import { useCustomer } from "@/contexts/CustomerContext";
 import type { InstallmentRate } from "@shared/schema";
 
+const BIRTH_YEARS = Array.from({ length: 2011 - 1945 + 1 }, (_, i) => String(2011 - i));
+
 const paymentIcons: Record<string, typeof CreditCard> = {
   nakit: Banknote,
   eft: Wallet,
@@ -491,26 +493,41 @@ export default function Checkout() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Şifre (doğum yılı)</label>
-                  <div className="relative">
-                    <Input
-                      type={showAuthPassword ? "text" : "password"}
-                      placeholder="Örnek: 1990"
-                      value={authPassword}
-                      onChange={(e) => setAuthPassword(e.target.value)}
-                      maxLength={4}
-                      inputMode="numeric"
-                      className="h-10 pr-10"
-                      data-testid="input-auth-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowAuthPassword(!showAuthPassword)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    >
-                      {showAuthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
+                  <label className="text-xs font-medium text-muted-foreground">
+                    {authMode === "register" ? "Doğum Yılı (Şifreniz olacak)" : "Şifre (Doğum yılınız)"}
+                  </label>
+                  {authMode === "register" ? (
+                    <Select value={authPassword} onValueChange={setAuthPassword}>
+                      <SelectTrigger data-testid="select-auth-birthyear" className={`h-10 text-sm ${!authPassword ? "text-muted-foreground" : ""}`}>
+                        <SelectValue placeholder="Doğum yılınızı seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[250px]">
+                        {BIRTH_YEARS.map((y) => (
+                          <SelectItem key={y} value={y}>{y}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : (
+                    <div className="relative">
+                      <Input
+                        type={showAuthPassword ? "text" : "password"}
+                        placeholder="Doğum yılınız: 1990"
+                        value={authPassword}
+                        onChange={(e) => setAuthPassword(e.target.value)}
+                        maxLength={4}
+                        inputMode="numeric"
+                        className="h-10 pr-10"
+                        data-testid="input-auth-password"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowAuthPassword(!showAuthPassword)}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                      >
+                        {showAuthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {authMode === "register" && (

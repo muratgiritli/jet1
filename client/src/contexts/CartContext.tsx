@@ -42,8 +42,26 @@ export function useCart() {
   return ctx;
 }
 
+function loadBasket(): BasketItems {
+  try {
+    const saved = localStorage.getItem("jet55_cart");
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return {};
+}
+
+function saveBasket(b: BasketItems) {
+  try {
+    if (Object.keys(b).length === 0) {
+      localStorage.removeItem("jet55_cart");
+    } else {
+      localStorage.setItem("jet55_cart", JSON.stringify(b));
+    }
+  } catch {}
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
-  const [basket, setBasket] = useState<BasketItems>({});
+  const [basket, setBasket] = useState<BasketItems>(loadBasket);
   const [paymentId, setPaymentId] = useState("nakit");
 
   const { data: dbProducts = [] } = useQuery<DbProduct[]>({
@@ -64,17 +82,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const updateQty = useCallback((id: string, delta: number) => {
     setBasket((prev) => {
       const next = (prev[id] || 0) + delta;
+      let updated: BasketItems;
       if (next <= 0) {
         const copy = { ...prev };
         delete copy[id];
-        return copy;
+        updated = copy;
+      } else {
+        updated = { ...prev, [id]: next };
       }
-      return { ...prev, [id]: next };
+      saveBasket(updated);
+      return updated;
     });
   }, []);
 
   const clearCart = useCallback(() => {
     setBasket({});
+    saveBasket({});
   }, []);
 
   const { subtotal, selectedProducts, shipping, discount, grandTotal, minReached } = useMemo(() => {
