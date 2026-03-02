@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Truck, CreditCard, MapPin, User, LogIn } from "lucide-react";
+import { Truck, CreditCard, MapPin, User, UserPlus } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import SEO, { LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import SearchBar from "@/components/SearchBar";
@@ -45,29 +45,25 @@ export default function Landing() {
         jsonLd={LOCAL_BUSINESS_JSONLD}
       />
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-between">
-          <div className="w-[100px]" />
+        <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center relative">
           <Logo className="text-3xl" />
-          <div className="w-[100px] flex justify-end">
-            <Link href={isLoggedIn ? "/hesabim" : "/giris"}>
-              <button
-                className="flex items-center gap-1 text-white/90 hover:text-white text-[11px] font-medium px-2 py-1 rounded-full border border-white/30 hover:border-white/50 transition-colors"
-                data-testid="btn-header-auth"
-              >
+          <Link href={isLoggedIn ? "/hesabim" : "/giris"} className="absolute right-4">
+            <button
+              className="flex flex-col items-center justify-center text-white/80 hover:text-white transition-colors"
+              data-testid="btn-header-auth"
+            >
+              <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
                 {isLoggedIn ? (
-                  <>
-                    <User className="w-3.5 h-3.5" />
-                    <span className="truncate max-w-[60px]">{customer?.name?.split(" ")[0] || "Hesabım"}</span>
-                  </>
+                  <User className="w-4 h-4" />
                 ) : (
-                  <>
-                    <LogIn className="w-3.5 h-3.5" />
-                    <span>Üye Ol / Üye Girişi</span>
-                  </>
+                  <UserPlus className="w-4 h-4" />
                 )}
-              </button>
-            </Link>
-          </div>
+              </div>
+              <span className="text-[9px] font-medium mt-0.5 whitespace-nowrap">
+                {isLoggedIn ? (customer?.name?.split(" ")[0] || "Hesabım") : "Giriş"}
+              </span>
+            </button>
+          </Link>
         </div>
       </header>
 
