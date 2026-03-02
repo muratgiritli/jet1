@@ -3,15 +3,24 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirnameLocal = path.dirname(__filename);
 
 const app = express();
 const httpServer = createServer(app);
 
-const productImagesPath = path.resolve(process.cwd(), "client", "public", "product-images");
-app.use("/product-images", express.static(productImagesPath, {
-  maxAge: "7d",
-  immutable: true,
-}));
+const productImagesPaths = [
+  path.resolve(process.cwd(), "client", "public", "product-images"),
+  path.resolve(__dirnameLocal, "public", "product-images"),
+];
+for (const imgPath of productImagesPaths) {
+  app.use("/product-images", express.static(imgPath, {
+    maxAge: "7d",
+    immutable: true,
+  }));
+}
 
 declare module "http" {
   interface IncomingMessage {
