@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Phone, Lock, User, Loader2, ArrowLeft, Eye, EyeOff, MapPin } from "lucide-react";
+import { Phone, Lock, User, Loader2, ArrowLeft, Eye, EyeOff, MapPin, Navigation, Home } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { useToast } from "@/hooks/use-toast";
 import { TESLIMAT_MAHALLELERI } from "@/lib/data";
@@ -15,10 +15,13 @@ export default function AuthPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [address, setAddress] = useState("");
   const [mahalle, setMahalle] = useState("");
+  const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [locationLoading, setLocationLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const { login, register } = useCustomer();
+  const { login, register, updateProfile } = useCustomer();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
 
@@ -59,9 +62,13 @@ export default function AuthPage() {
         await login(normalized, password);
         toast({ title: "Hoş geldiniz!" });
       } else {
-        await register(normalized, password, name.trim(), mahalle || undefined);
+        const fullAddress = [mahalle, address.trim()].filter(Boolean).join(", ");
+        await register(normalized, password, name.trim(), fullAddress || undefined);
         if (mahalle) {
           localStorage.setItem("jet55_mahalle", mahalle);
+        }
+        if (address.trim()) {
+          try { await updateProfile({ address: fullAddress }); } catch {}
         }
         toast({ title: "Kayıt başarılı!", description: "Hoş geldiniz!" });
       }
@@ -126,6 +133,18 @@ export default function AuthPage() {
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium flex items-center gap-1.5">
+                      <Home className="w-4 h-4 text-muted-foreground" />
+                      Adres
+                    </label>
+                    <Input
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Sokak, bina no, daire no"
+                      data-testid="input-auth-address"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
                       <MapPin className="w-4 h-4 text-muted-foreground" />
                       Mahalle
                     </label>
@@ -139,6 +158,57 @@ export default function AuthPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
+                      <Navigation className="w-4 h-4 text-muted-foreground" />
+                      Konum
+                    </label>
+                    {customerLocation ? (
+                      <div className="flex items-center gap-2 p-2 rounded-lg border border-green-200 bg-green-50">
+                        <Navigation className="w-4 h-4 text-green-600 shrink-0" />
+                        <span className="text-xs text-green-700">Konum alındı</span>
+                        <button
+                          type="button"
+                          onClick={() => setCustomerLocation(null)}
+                          className="ml-auto text-xs text-muted-foreground underline"
+                          data-testid="btn-remove-location"
+                        >
+                          Kaldır
+                        </button>
+                      </div>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full"
+                        disabled={locationLoading}
+                        onClick={() => {
+                          if (!navigator.geolocation) {
+                            toast({ title: "Tarayıcınız konum paylaşımını desteklemiyor", variant: "destructive" });
+                            return;
+                          }
+                          setLocationLoading(true);
+                          navigator.geolocation.getCurrentPosition(
+                            (pos) => {
+                              setCustomerLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+                              setLocationLoading(false);
+                              toast({ title: "Konum alındı" });
+                            },
+                            () => {
+                              setLocationLoading(false);
+                              toast({ title: "Konum alınamadı", variant: "destructive" });
+                            },
+                            { enableHighAccuracy: true, timeout: 10000 }
+                          );
+                        }}
+                        data-testid="btn-get-location"
+                      >
+                        {locationLoading ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Navigation className="w-4 h-4 mr-1" />}
+                        Konumumu Paylaş
+                      </Button>
+                    )}
                   </div>
                 </>
               )}
@@ -209,7 +279,9 @@ export default function AuthPage() {
                   setMode(mode === "login" ? "register" : "login");
                   setName("");
                   setPassword("");
+                  setAddress("");
                   setMahalle("");
+                  setCustomerLocation(null);
                 }}
                 data-testid="btn-auth-toggle"
               >
