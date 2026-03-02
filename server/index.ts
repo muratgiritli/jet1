@@ -12,6 +12,9 @@ app.use("/product-images", express.static(productImagesPath, {
   maxAge: "7d",
   immutable: true,
 }));
+app.use("/product-images", (_req, res) => {
+  res.status(404).end();
+});
 
 declare module "http" {
   interface IncomingMessage {

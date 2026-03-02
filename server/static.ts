@@ -26,7 +26,7 @@ export function serveStatic(app: Express) {
     console.log(`[static] product-images count: ${count}`);
   }
 
-  app.use("/product-images", (req, res, next) => {
+  app.use("/product-images", (req, res) => {
     const filePath = path.join(productImagesPath, req.path);
     if (fs.existsSync(filePath)) {
       res.setHeader("Cache-Control", "public, max-age=604800, immutable");
@@ -35,8 +35,7 @@ export function serveStatic(app: Express) {
       }
       return res.sendFile(filePath);
     }
-    console.log(`[static] product image not found: ${filePath}`);
-    next();
+    res.status(404).end();
   });
 
   app.use(express.static(distPath));

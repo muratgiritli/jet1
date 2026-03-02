@@ -36,6 +36,7 @@ export const products = pgTable("products", {
   originalPrice: real("original_price"),
   skt: text("skt"),
   img: text("img"),
+  originalImg: text("original_img"),
   brandCategoryId: integer("brand_category_id").notNull(),
   isActive: boolean("is_active").notNull().default(true),
   stock: integer("stock").notNull().default(10),

@@ -3,11 +3,20 @@ import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
 
-const IMAGE_DIR = path.join(process.cwd(), "client", "public", "product-images");
-
-if (!fs.existsSync(IMAGE_DIR)) {
-  fs.mkdirSync(IMAGE_DIR, { recursive: true });
+function getImageDir(): string {
+  const candidates = [
+    path.join(process.cwd(), "client", "public", "product-images"),
+    path.join(process.cwd(), "dist", "public", "product-images"),
+  ];
+  for (const dir of candidates) {
+    if (fs.existsSync(dir)) return dir;
+  }
+  const fallback = candidates[0];
+  fs.mkdirSync(fallback, { recursive: true });
+  return fallback;
 }
+
+const IMAGE_DIR = getImageDir();
 
 export async function downloadAndConvertImage(imageUrl: string, productId: number): Promise<string | null> {
   try {
@@ -56,18 +65,38 @@ export async function migrateAllImages(): Promise<{ success: number; failed: num
       continue;
     }
 
+    const filename = `product-${product.id}.webp`;
+    const filepath = path.join(IMAGE_DIR, filename);
+    const fileExists = fs.existsSync(filepath);
+
     if (product.img.startsWith("/product-images/")) {
+      if (fileExists) {
+        skipped++;
+      } else if (product.originalImg) {
+        const localPath = await downloadAndConvertImage(product.originalImg, product.id);
+        if (localPath) {
+          await storage.updateProduct(product.id, { img: localPath });
+          success++;
+        } else {
+          failed++;
+        }
+        await new Promise(r => setTimeout(r, 200));
+      } else {
+        skipped++;
+      }
+      continue;
+    }
+
+    if (fileExists) {
+      await storage.updateProduct(product.id, {
+        img: `/product-images/${filename}`,
+        originalImg: product.img,
+      });
       skipped++;
       continue;
     }
 
-    const filename = `product-${product.id}.webp`;
-    const filepath = path.join(IMAGE_DIR, filename);
-    if (fs.existsSync(filepath)) {
-      await storage.updateProduct(product.id, { img: `/product-images/${filename}` });
-      skipped++;
-      continue;
-    }
+    await storage.updateProduct(product.id, { originalImg: product.img });
 
     const localPath = await downloadAndConvertImage(product.img, product.id);
     if (localPath) {
