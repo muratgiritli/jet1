@@ -153,19 +153,19 @@ export default function Checkout() {
 
   const handleAuthLocation = () => {
     if (!navigator.geolocation) {
-      toast({ title: "Tarayıcınız konum paylaşımını desteklemiyor", variant: "destructive" });
+      setAuthErrors((p) => ({ ...p, location: "Tarayıcınız konum paylaşımını desteklemiyor" }));
       return;
     }
     setAuthLocationLoading(true);
+    setAuthErrors((p) => ({ ...p, location: "" }));
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setAuthLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setAuthLocationLoading(false);
-        toast({ title: "Konum alındı" });
       },
       () => {
         setAuthLocationLoading(false);
-        toast({ title: "Konum alınamadı", variant: "destructive" });
+        setAuthErrors((p) => ({ ...p, location: "Konum alınamadı. Lütfen konum izni verin." }));
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -284,21 +284,23 @@ export default function Checkout() {
   const pointsDiscount = isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, grandTotal) : 0;
   const displayTotal = pointsDiscount > 0 ? Math.max(0, grandTotal - pointsDiscount) : grandTotal;
 
+  const [locationError, setLocationError] = useState("");
+
   const handleShareLocation = () => {
     if (!navigator.geolocation) {
-      toast({ title: "Tarayıcınız konum paylaşımını desteklemiyor", variant: "destructive" });
+      setLocationError("Tarayıcınız konum paylaşımını desteklemiyor");
       return;
     }
     setLocationLoading(true);
+    setLocationError("");
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         setCustomerLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setLocationLoading(false);
-        toast({ title: "Konum alındı" });
       },
       () => {
         setLocationLoading(false);
-        toast({ title: "Konum alınamadı. Lütfen konum iznini kontrol edin.", variant: "destructive" });
+        setLocationError("Konum alınamadı. Lütfen konum izni verin.");
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -555,6 +557,7 @@ export default function Checkout() {
                           {authLocationLoading ? "Konum alınıyor..." : "Konum Ekle"}
                         </Button>
                       )}
+                      {authErrors.location && <p className="text-[11px] text-red-500 mt-1">{authErrors.location}</p>}
                     </div>
                   </>
                 )}

@@ -200,19 +200,19 @@ export default function AuthPage() {
                         disabled={locationLoading}
                         onClick={() => {
                           if (!navigator.geolocation) {
-                            toast({ title: "Tarayıcınız konum paylaşımını desteklemiyor", variant: "destructive" });
+                            setFormErrors((p) => ({ ...p, location: "Tarayıcınız konum paylaşımını desteklemiyor" }));
                             return;
                           }
                           setLocationLoading(true);
+                          setFormErrors((p) => ({ ...p, location: "" }));
                           navigator.geolocation.getCurrentPosition(
                             (pos) => {
                               setCustomerLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
                               setLocationLoading(false);
-                              toast({ title: "Konum alındı" });
                             },
                             () => {
                               setLocationLoading(false);
-                              toast({ title: "Konum alınamadı", variant: "destructive" });
+                              setFormErrors((p) => ({ ...p, location: "Konum alınamadı. Lütfen konum izni verin." }));
                             },
                             { enableHighAccuracy: true, timeout: 10000 }
                           );
@@ -223,6 +223,7 @@ export default function AuthPage() {
                         Konumumu Paylaş
                       </Button>
                     )}
+                    {formErrors.location && <p className="text-[11px] text-red-500 mt-1">{formErrors.location}</p>}
                   </div>
                 </>
               )}
