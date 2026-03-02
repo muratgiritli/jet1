@@ -194,7 +194,6 @@ export default function Checkout() {
     try {
       if (authMode === "login") {
         await login(normalized, authPassword);
-        toast({ title: "Hoş geldiniz!" });
       } else {
         await register(normalized, authPassword, authName.trim());
         const fullAddress = authMahalle
@@ -211,7 +210,6 @@ export default function Checkout() {
         if (authLocation) {
           setCustomerLocation(authLocation);
         }
-        toast({ title: "Kayıt başarılı!" });
       }
       setShowAuthModal(false);
     } catch (err: any) {
@@ -222,10 +220,13 @@ export default function Checkout() {
         const parsed = JSON.parse(cleaned);
         errorMsg = parsed.message || cleaned;
       } catch {}
-      if (errorMsg.toLowerCase().includes("kayıtlı") || errorMsg.toLowerCase().includes("zaten") || errorMsg.toLowerCase().includes("already")) {
+      const lower = errorMsg.toLowerCase();
+      if (lower.includes("kayıtlı") || lower.includes("zaten") || lower.includes("already") || lower.includes("registered")) {
         setAuthErrors({ phone: "Bu numara zaten kayıtlı" });
-      } else if (errorMsg.toLowerCase().includes("şifre") || errorMsg.toLowerCase().includes("password") || errorMsg.toLowerCase().includes("hatalı")) {
+      } else if (lower.includes("şifre") || lower.includes("password") || lower.includes("hatalı") || lower.includes("incorrect") || lower.includes("wrong")) {
         setAuthErrors({ password: "Şifre hatalı" });
+      } else if (lower.includes("bulunamadı") || lower.includes("not found") || lower.includes("kullanıcı")) {
+        setAuthErrors({ phone: "Bu numara ile kayıt bulunamadı" });
       } else {
         setAuthErrors({ general: errorMsg });
       }
@@ -474,7 +475,7 @@ export default function Checkout() {
                   </button>
                   <button
                     type="button"
-                    onClick={() => setAuthMode("register")}
+                    onClick={() => { setAuthMode("register"); setAuthErrors({}); }}
                     className={`flex-1 py-2 text-xs font-semibold rounded-md transition-colors ${authMode === "register" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
                     data-testid="btn-auth-tab-register"
                   >
@@ -623,7 +624,7 @@ export default function Checkout() {
                 {authMode === "login" && (
                   <p className="text-center text-xs text-muted-foreground">
                     Henüz üyeliğiniz yok mu?{" "}
-                    <button type="button" onClick={() => setAuthMode("register")} className="font-semibold underline" style={{ color: "#6B3480" }}>
+                    <button type="button" onClick={() => { setAuthMode("register"); setAuthErrors({}); }} className="font-semibold underline" style={{ color: "#6B3480" }}>
                       Üye Ol
                     </button>
                   </p>
@@ -631,7 +632,7 @@ export default function Checkout() {
                 {authMode === "register" && (
                   <p className="text-center text-xs text-muted-foreground">
                     Zaten üyeniz var mı?{" "}
-                    <button type="button" onClick={() => setAuthMode("login")} className="font-semibold underline" style={{ color: "#6B3480" }}>
+                    <button type="button" onClick={() => { setAuthMode("login"); setAuthErrors({}); }} className="font-semibold underline" style={{ color: "#6B3480" }}>
                       Giriş Yap
                     </button>
                   </p>

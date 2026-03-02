@@ -21,6 +21,7 @@ export default function AuthPage() {
   const [locationLoading, setLocationLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const { login, register, updateProfile } = useCustomer();
   const { toast } = useToast();
   const [, setLocation] = useLocation();
@@ -42,25 +43,28 @@ export default function AuthPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const errors: Record<string, string> = {};
     const normalized = phone.replace(/\D/g, "");
+
+    if (mode === "register" && !name.trim()) {
+      errors.name = "Ad soyad girin";
+    }
     if (normalized.length < 10) {
-      toast({ title: "Hata", description: "Geçerli bir telefon numarası girin", variant: "destructive" });
-      return;
+      errors.phone = "Geçerli bir telefon numarası girin";
     }
     if (password.length < 4) {
-      toast({ title: "Hata", description: "Şifre en az 4 karakter olmalı", variant: "destructive" });
-      return;
-    }
-    if (mode === "register" && !name.trim()) {
-      toast({ title: "Hata", description: "Ad soyad girin", variant: "destructive" });
-      return;
+      errors.password = "4 haneli doğum yılınızı girin";
     }
 
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors({});
     setLoading(true);
     try {
       if (mode === "login") {
         await login(normalized, password);
-        toast({ title: "Hoş geldiniz!" });
       } else {
         const fullAddress = [mahalle, address.trim()].filter(Boolean).join(", ");
         await register(normalized, password, name.trim(), fullAddress || undefined);
@@ -70,7 +74,6 @@ export default function AuthPage() {
         if (address.trim()) {
           try { await updateProfile({ address: fullAddress }); } catch {}
         }
-        toast({ title: "Kayıt başarılı!", description: "Hoş geldiniz!" });
       }
       const params = new URLSearchParams(window.location.search);
       const redirect = params.get("redirect") || "/";
@@ -78,11 +81,20 @@ export default function AuthPage() {
     } catch (err: any) {
       const msg = err.message || "Bir hata oluştu";
       const cleaned = msg.replace(/^\d+:\s*/, "");
+      let errorMsg = cleaned;
       try {
         const parsed = JSON.parse(cleaned);
-        toast({ title: "Hata", description: parsed.message || cleaned, variant: "destructive" });
-      } catch {
-        toast({ title: "Hata", description: cleaned, variant: "destructive" });
+        errorMsg = parsed.message || cleaned;
+      } catch {}
+      const lower = errorMsg.toLowerCase();
+      if (lower.includes("kayıtlı") || lower.includes("zaten") || lower.includes("already") || lower.includes("registered")) {
+        setFormErrors({ phone: "Bu numara zaten kayıtlı" });
+      } else if (lower.includes("şifre") || lower.includes("password") || lower.includes("hatalı") || lower.includes("incorrect") || lower.includes("wrong")) {
+        setFormErrors({ password: "Şifre hatalı" });
+      } else if (lower.includes("bulunamadı") || lower.includes("not found") || lower.includes("kullanıcı")) {
+        setFormErrors({ phone: "Bu numara ile kayıt bulunamadı" });
+      } else {
+        setFormErrors({ general: errorMsg });
       }
     } finally {
       setLoading(false);
@@ -126,10 +138,12 @@ export default function AuthPage() {
                     </label>
                     <Input
                       value={name}
-                      onChange={(e) => setName(e.target.value)}
+                      onChange={(e) => { setName(e.target.value); setFormErrors((p) => ({ ...p, name: "" })); }}
                       placeholder="Adınız Soyadınız"
+                      className={formErrors.name ? "border-red-400" : ""}
                       data-testid="input-auth-name"
                     />
+                    {formErrors.name && <p className="text-[11px] text-red-500 mt-0.5">{formErrors.name}</p>}
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-sm font-medium flex items-center gap-1.5">
@@ -222,12 +236,14 @@ export default function AuthPage() {
                   <span className="text-sm text-muted-foreground font-medium shrink-0">+90</span>
                   <Input
                     value={phone}
-                    onChange={(e) => handlePhoneChange(e.target.value)}
+                    onChange={(e) => { handlePhoneChange(e.target.value); setFormErrors((p) => ({ ...p, phone: "" })); }}
                     placeholder="5XX XXX XX XX"
                     type="tel"
+                    className={formErrors.phone ? "border-red-400" : ""}
                     data-testid="input-auth-phone"
                   />
                 </div>
+                {formErrors.phone && <p className="text-[11px] text-red-500 mt-0.5">{formErrors.phone}</p>}
               </div>
 
               <div className="space-y-1.5">
@@ -241,11 +257,13 @@ export default function AuthPage() {
                     onChange={(e) => {
                       const val = e.target.value.replace(/\D/g, "").slice(0, 4);
                       setPassword(val);
+                      setFormErrors((p) => ({ ...p, password: "" }));
                     }}
                     type={showPassword ? "text" : "password"}
                     placeholder="Örn: 1990"
                     inputMode="numeric"
                     maxLength={4}
+                    className={formErrors.password ? "border-red-400" : ""}
                     data-testid="input-auth-password"
                   />
                   <button
@@ -257,7 +275,10 @@ export default function AuthPage() {
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
+                {formErrors.password && <p className="text-[11px] text-red-500 mt-0.5">{formErrors.password}</p>}
               </div>
+
+              {formErrors.general && <p className="text-[11px] text-red-500 text-center">{formErrors.general}</p>}
 
               <Button
                 type="submit"
@@ -282,6 +303,7 @@ export default function AuthPage() {
                   setAddress("");
                   setMahalle("");
                   setCustomerLocation(null);
+                  setFormErrors({});
                 }}
                 data-testid="btn-auth-toggle"
               >
