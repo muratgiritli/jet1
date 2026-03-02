@@ -3,9 +3,11 @@ import { useLocation, Link } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Phone, Lock, User, Loader2, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Phone, Lock, User, Loader2, ArrowLeft, Eye, EyeOff, MapPin } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { useToast } from "@/hooks/use-toast";
+import { TESLIMAT_MAHALLELERI } from "@/lib/data";
 import Logo from "@/components/Logo";
 
 export default function AuthPage() {
@@ -13,6 +15,7 @@ export default function AuthPage() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [mahalle, setMahalle] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login, register } = useCustomer();
@@ -56,7 +59,10 @@ export default function AuthPage() {
         await login(normalized, password);
         toast({ title: "Hoş geldiniz!" });
       } else {
-        await register(normalized, password, name.trim());
+        await register(normalized, password, name.trim(), mahalle || undefined);
+        if (mahalle) {
+          localStorage.setItem("jet55_mahalle", mahalle);
+        }
         toast({ title: "Kayıt başarılı!", description: "Hoş geldiniz!" });
       }
       const params = new URLSearchParams(window.location.search);
@@ -105,18 +111,36 @@ export default function AuthPage() {
           <CardContent className="p-5">
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "register" && (
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium flex items-center gap-1.5">
-                    <User className="w-4 h-4 text-muted-foreground" />
-                    Ad Soyad
-                  </label>
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Adınız Soyadınız"
-                    data-testid="input-auth-name"
-                  />
-                </div>
+                <>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
+                      <User className="w-4 h-4 text-muted-foreground" />
+                      Ad Soyad
+                    </label>
+                    <Input
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder="Adınız Soyadınız"
+                      data-testid="input-auth-name"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
+                      <MapPin className="w-4 h-4 text-muted-foreground" />
+                      Mahalle
+                    </label>
+                    <Select value={mahalle} onValueChange={setMahalle}>
+                      <SelectTrigger data-testid="select-auth-mahalle" className={`h-9 text-sm ${!mahalle ? "text-muted-foreground" : ""}`}>
+                        <SelectValue placeholder="Mahallenizi seçiniz" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {TESLIMAT_MAHALLELERI.map((m) => (
+                          <SelectItem key={m} value={m}>{m}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
               )}
 
               <div className="space-y-1.5">
@@ -185,6 +209,7 @@ export default function AuthPage() {
                   setMode(mode === "login" ? "register" : "login");
                   setName("");
                   setPassword("");
+                  setMahalle("");
                 }}
                 data-testid="btn-auth-toggle"
               >

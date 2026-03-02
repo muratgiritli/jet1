@@ -15,7 +15,7 @@ interface CustomerContextType {
   isLoading: boolean;
   isLoggedIn: boolean;
   login: (phone: string, password: string) => Promise<void>;
-  register: (phone: string, password: string, name: string) => Promise<void>;
+  register: (phone: string, password: string, name: string, address?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: { name?: string; address?: string }) => Promise<void>;
   refetch: () => Promise<void>;
@@ -68,8 +68,8 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     setTimeout(syncLocalFavorites, 500);
   }, [syncLocalFavorites]);
 
-  const register = useCallback(async (phone: string, password: string, name: string) => {
-    const res = await apiRequest("POST", "/api/customer/register", { phone, password, name });
+  const register = useCallback(async (phone: string, password: string, name: string, address?: string) => {
+    const res = await apiRequest("POST", "/api/customer/register", { phone, password, name, address });
     const data = await res.json();
     setCustomer(data);
     setTimeout(syncLocalFavorites, 500);

@@ -60,6 +60,33 @@ export const CATEGORIES: Category[] = [
   },
 ];
 
+export const TESLIMAT_MAHALLELERI = [
+  "Atakent Mahallesi",
+  "Balaç Mahallesi",
+  "Beypınar Mahallesi",
+  "Büyükkolpınar Mahallesi",
+  "Büyükoyumca Mahallesi",
+  "Camii Mahallesi",
+  "Cumhuriyet Mahallesi",
+  "Çakırlar Yalı Mahallesi",
+  "Çobanlı Mahallesi",
+  "Çobanözü Mahallesi",
+  "Denizevleri Mahallesi",
+  "Esenevler Mahallesi",
+  "Güzelyalı Mahallesi",
+  "İncesu Yalı Mahallesi",
+  "İstiklal Mahallesi",
+  "Körfez Mahallesi",
+  "Küçükkolpınar Mahallesi",
+  "Mevlana Mahallesi",
+  "Mimarsinan Mahallesi",
+  "Taflan Mahallesi",
+  "Yalı Mahallesi",
+  "Yenimahalle Mahallesi",
+  "Yeşildere Mahallesi",
+  "Yeşilyurt Mahallesi",
+];
+
 export const PAYMENT_OPTIONS: PaymentOption[] = [
   { id: "nakit", name: "Kapıda Nakit", disc: 0.05, tag: "%5 İndirim" },
   { id: "eft", name: "Banka Havalesi", disc: 0, tag: "Net" },

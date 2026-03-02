@@ -41,6 +41,7 @@ import { SiWhatsapp } from "react-icons/si";
 import {
   CONFIG,
   PAYMENT_OPTIONS,
+  TESLIMAT_MAHALLELERI,
 } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
@@ -48,33 +49,6 @@ import { apiRequest } from "@/lib/queryClient";
 import BackNavigation from "@/components/BackNavigation";
 import { useCustomer } from "@/contexts/CustomerContext";
 import type { InstallmentRate } from "@shared/schema";
-
-const TESLIMAT_MAHALLELERI = [
-  "Atakent Mahallesi",
-  "Balaç Mahallesi",
-  "Beypınar Mahallesi",
-  "Büyükkolpınar Mahallesi",
-  "Büyükoyumca Mahallesi",
-  "Camii Mahallesi",
-  "Cumhuriyet Mahallesi",
-  "Çakırlar Yalı Mahallesi",
-  "Çobanlı Mahallesi",
-  "Çobanözü Mahallesi",
-  "Denizevleri Mahallesi",
-  "Esenevler Mahallesi",
-  "Güzelyalı Mahallesi",
-  "İncesu Yalı Mahallesi",
-  "İstiklal Mahallesi",
-  "Körfez Mahallesi",
-  "Küçükkolpınar Mahallesi",
-  "Mevlana Mahallesi",
-  "Mimarsinan Mahallesi",
-  "Taflan Mahallesi",
-  "Yalı Mahallesi",
-  "Yenimahalle Mahallesi",
-  "Yeşildere Mahallesi",
-  "Yeşilyurt Mahallesi",
-];
 
 const paymentIcons: Record<string, typeof CreditCard> = {
   nakit: Banknote,
@@ -208,9 +182,9 @@ export default function Checkout() {
         await login(normalized, authPassword);
         toast({ title: "Hos geldiniz!" });
       } else {
-        await register(normalized, authPassword, authName.trim());
+        await register(normalized, authPassword, authName.trim(), selectedMahalle || undefined);
         if (authAddress.trim()) {
-          try { await updateProfile({ address: authAddress.trim() }); } catch {}
+          try { await updateProfile({ address: (selectedMahalle ? selectedMahalle + ", " : "") + authAddress.trim() }); } catch {}
         }
         if (authLocation) {
           setCustomerLocation(authLocation);
@@ -483,17 +457,32 @@ export default function Checkout() {
 
               <div className="p-4 space-y-3">
                 {authMode === "register" && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground">Ad Soyad</label>
-                    <Input
-                      type="text"
-                      placeholder="Ad Soyad"
-                      value={authName}
-                      onChange={(e) => setAuthName(e.target.value)}
-                      className="h-10"
-                      data-testid="input-auth-name"
-                    />
-                  </div>
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Ad Soyad</label>
+                      <Input
+                        type="text"
+                        placeholder="Ad Soyad"
+                        value={authName}
+                        onChange={(e) => setAuthName(e.target.value)}
+                        className="h-10"
+                        data-testid="input-auth-name"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Mahalle</label>
+                      <Select value={selectedMahalle} onValueChange={(val) => { setSelectedMahalle(val); localStorage.setItem("jet55_mahalle", val); }}>
+                        <SelectTrigger data-testid="select-auth-modal-mahalle" className={`h-10 text-sm ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
+                          <SelectValue placeholder="Mahallenizi seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {TESLIMAT_MAHALLELERI.map((m) => (
+                            <SelectItem key={m} value={m}>{m}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
                 )}
 
                 <div className="space-y-1">

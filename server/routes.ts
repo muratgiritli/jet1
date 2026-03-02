@@ -423,7 +423,7 @@ export async function registerRoutes(
   });
 
   app.post("/api/customer/register", async (req, res) => {
-    const { phone, password, name } = req.body;
+    const { phone, password, name, address } = req.body;
     if (!phone || !password || !name) {
       return res.status(400).json({ message: "Telefon, şifre ve ad soyad gerekli" });
     }
@@ -439,7 +439,7 @@ export async function registerRoutes(
       return res.status(409).json({ message: "Bu telefon numarası zaten kayıtlı" });
     }
     const hashed = await bcrypt.hash(password, 10);
-    const customer = await storage.createCustomer({ phone: normalized, password: hashed, name: name.trim() });
+    const customer = await storage.createCustomer({ phone: normalized, password: hashed, name: name.trim(), address: address?.trim() || null });
     (req.session as any).customerId = customer.id;
     res.status(201).json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
   });
