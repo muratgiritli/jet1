@@ -53,6 +53,21 @@ export async function downloadAndConvertImage(imageUrl: string, productId: numbe
   }
 }
 
+export async function saveUploadedImage(buffer: Buffer, productId: number): Promise<string> {
+  const webpBuffer = await sharp(buffer)
+    .resize(800, 800, { fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 80 })
+    .toBuffer();
+
+  const filename = `product-${productId}.webp`;
+  const filepath = path.join(IMAGE_DIR, filename);
+  fs.writeFileSync(filepath, webpBuffer);
+
+  const localPath = `/product-images/${filename}?v=${Date.now()}`;
+  console.log(`[image] Uploaded product ${productId} -> ${filename} (${Math.round(webpBuffer.length / 1024)} KB)`);
+  return localPath;
+}
+
 export async function migrateAllImages(): Promise<{ success: number; failed: number; skipped: number }> {
   const products = await storage.getAllProducts();
   let success = 0;

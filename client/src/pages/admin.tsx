@@ -51,6 +51,7 @@ import {
   Search,
   Check,
   ImageIcon,
+  Upload,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -198,6 +199,8 @@ function ProductForm({
   const [skt, setSkt] = useState(product?.skt || "");
   const [img, setImg] = useState(product?.img || "");
   const [stock, setStock] = useState(product?.stock?.toString() ?? "10");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
   const [brandCategoryId, setBrandCategoryId] = useState(
     product?.brandCategoryId?.toString() || ""
   );
@@ -319,18 +322,66 @@ function ProductForm({
         </div>
       </div>
       <div className="space-y-2">
-        <Label>Görsel URL</Label>
+        <Label>Ürün Görseli</Label>
         <div className="flex gap-2 items-center">
           {img && (
             <img
               src={img}
               alt="Önizleme"
-              className="w-10 h-10 object-cover rounded border flex-shrink-0"
+              className="w-12 h-12 object-cover rounded border flex-shrink-0"
               onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
             />
           )}
-          <Input value={img} onChange={(e) => setImg(e.target.value)} placeholder="https://..." className="flex-1" data-testid="input-product-img" />
+          <div className="flex-1 space-y-2">
+            {product && (
+              <div>
+                <label
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer transition-colors ${uploading ? "bg-muted text-muted-foreground" : "bg-primary text-primary-foreground hover:bg-primary/90"}`}
+                  data-testid="btn-upload-image"
+                >
+                  {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                  {uploading ? "Yükleniyor..." : "Resim Yükle"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    disabled={uploading}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0];
+                      if (!file || !product) return;
+                      setUploading(true);
+                      setUploadError("");
+                      try {
+                        const formData = new FormData();
+                        formData.append("image", file);
+                        const res = await fetch(`/api/admin/products/${product.id}/image`, {
+                          method: "POST",
+                          body: formData,
+                          credentials: "include",
+                        });
+                        if (!res.ok) {
+                          const err = await res.json();
+                          throw new Error(err.message || "Yükleme başarısız");
+                        }
+                        const updated = await res.json();
+                        setImg(updated.img);
+                        queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+                      } catch (err: any) {
+                        setUploadError(err.message || "Resim yüklenemedi");
+                      } finally {
+                        setUploading(false);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                </label>
+                {uploadError && <p className="text-xs text-red-500 mt-1">{uploadError}</p>}
+              </div>
+            )}
+            <Input value={img} onChange={(e) => setImg(e.target.value)} placeholder="https://... veya önce ürünü kaydedin" className="flex-1" data-testid="input-product-img" />
+          </div>
         </div>
+        {!product && <p className="text-xs text-muted-foreground">Resim yüklemek için önce ürünü kaydedin, sonra düzenleyin.</p>}
       </div>
       <Button type="submit" className="w-full" disabled={isPending || !brandCategoryId} data-testid="btn-save-product">
         {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : product ? "Güncelle" : "Ekle"}

@@ -8,7 +8,10 @@ import bcrypt from "bcryptjs";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
 import pg from "pg";
-import { downloadAndConvertImage, migrateAllImages } from "./image-service";
+import { downloadAndConvertImage, migrateAllImages, saveUploadedImage } from "./image-service";
+import multer from "multer";
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
 const PgSession = pgSession(session);
 
@@ -226,6 +229,21 @@ export async function registerRoutes(
     const product = await storage.updateProduct(id, req.body);
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);
+  });
+
+  app.post("/api/admin/products/:id/image", requireAdmin, upload.single("image"), async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (!req.file) return res.status(400).json({ message: "Resim dosyası gerekli" });
+    if (!req.file.mimetype.startsWith("image/")) return res.status(400).json({ message: "Sadece resim dosyaları yüklenebilir" });
+    try {
+      const localPath = await saveUploadedImage(req.file.buffer, id);
+      const product = await storage.updateProduct(id, { img: localPath });
+      if (!product) return res.status(404).json({ message: "Ürün bulunamadı" });
+      res.json(product);
+    } catch (err: any) {
+      console.log(`[image] Upload error for product ${id}: ${err.message}`);
+      res.status(500).json({ message: "Resim yüklenemedi" });
+    }
   });
 
   app.delete("/api/admin/products/:id", requireAdmin, async (req, res) => {

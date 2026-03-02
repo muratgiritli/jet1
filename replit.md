@@ -52,6 +52,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `GET /api/admin/me` - Check auth status
 - `POST /api/admin/products` - Create product (auth required)
 - `PATCH /api/admin/products/:id` - Update product (auth required)
+- `POST /api/admin/products/:id/image` - Upload product image (multipart/form-data, auth required, converts to WebP)
 - `DELETE /api/admin/products/:id` - Delete product (auth required)
 - `POST /api/admin/brand-categories` - Create category (auth required)
 - `DELETE /api/admin/brand-categories/:id` - Delete category (auth required)
