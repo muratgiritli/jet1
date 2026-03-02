@@ -112,6 +112,14 @@ export default function Checkout() {
     if (isLoggedIn && customer && !addressInitialized) {
       setCustomerPhone(customer.phone);
       setCustomerName(customer.name);
+      if (customer.address) {
+        const mahalleMatch = TESLIMAT_MAHALLELERI.find((m) => customer.address!.includes(m));
+        if (mahalleMatch && !selectedMahalle) {
+          setSelectedMahalle(mahalleMatch);
+          localStorage.setItem("jet55_mahalle", mahalleMatch);
+          setMahalleSaved(true);
+        }
+      }
       const defaultAddr = savedAddresses.find((a: any) => a.isDefault);
       if (defaultAddr) {
         setCustomerAddress(defaultAddr.address);
@@ -182,9 +190,9 @@ export default function Checkout() {
         await login(normalized, authPassword);
         toast({ title: "Hos geldiniz!" });
       } else {
-        await register(normalized, authPassword, authName.trim(), selectedMahalle || undefined);
+        await register(normalized, authPassword, authName.trim());
         if (authAddress.trim()) {
-          try { await updateProfile({ address: (selectedMahalle ? selectedMahalle + ", " : "") + authAddress.trim() }); } catch {}
+          try { await updateProfile({ address: authAddress.trim() }); } catch {}
         }
         if (authLocation) {
           setCustomerLocation(authLocation);
@@ -282,7 +290,7 @@ export default function Checkout() {
     }
     if (!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle) {
       if (!selectedMahalle) {
-        toast({ title: "Lütfen teslimat mahallenizi seçin", variant: "destructive" });
+        toast({ title: "Hesabınızda mahalle bilgisi yok. Lütfen profilinizden mahallenizi güncelleyin.", variant: "destructive" });
       }
       return;
     }
@@ -457,32 +465,17 @@ export default function Checkout() {
 
               <div className="p-4 space-y-3">
                 {authMode === "register" && (
-                  <>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Ad Soyad</label>
-                      <Input
-                        type="text"
-                        placeholder="Ad Soyad"
-                        value={authName}
-                        onChange={(e) => setAuthName(e.target.value)}
-                        className="h-10"
-                        data-testid="input-auth-name"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Mahalle</label>
-                      <Select value={selectedMahalle} onValueChange={(val) => { setSelectedMahalle(val); localStorage.setItem("jet55_mahalle", val); }}>
-                        <SelectTrigger data-testid="select-auth-modal-mahalle" className={`h-10 text-sm ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
-                          <SelectValue placeholder="Mahallenizi seçiniz" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {TESLIMAT_MAHALLELERI.map((m) => (
-                            <SelectItem key={m} value={m}>{m}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground">Ad Soyad</label>
+                    <Input
+                      type="text"
+                      placeholder="Ad Soyad"
+                      value={authName}
+                      onChange={(e) => setAuthName(e.target.value)}
+                      className="h-10"
+                      data-testid="input-auth-name"
+                    />
+                  </div>
                 )}
 
                 <div className="space-y-1">
@@ -674,42 +667,6 @@ export default function Checkout() {
               </Card>
             </section>
 
-            <section className="mt-6">
-              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-delivery">
-                Teslimat Mahallesi
-              </h2>
-              <Card>
-                <CardContent className="p-4">
-                  {mahalleSaved ? (
-                    <div className="flex items-center gap-2 p-2 rounded-lg border border-green-200 bg-green-50" data-testid="mahalle-saved">
-                      <MapPin className="w-4 h-4 text-green-600 shrink-0" />
-                      <span className="text-sm font-medium text-green-700">{selectedMahalle}</span>
-                      <button
-                        type="button"
-                        onClick={() => { localStorage.removeItem("jet55_mahalle"); setSelectedMahalle(""); setMahalleSaved(false); }}
-                        className="ml-auto text-xs text-muted-foreground underline hover:text-foreground"
-                        data-testid="btn-change-mahalle"
-                      >
-                        Değiştir
-                      </button>
-                    </div>
-                  ) : (
-                    <Select value={selectedMahalle} onValueChange={(val) => { setSelectedMahalle(val); localStorage.setItem("jet55_mahalle", val); setMahalleSaved(true); }}>
-                      <SelectTrigger data-testid="select-mahalle" className={`h-9 text-sm ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
-                        <SelectValue placeholder="Teslimat mahallesi seçiniz..." />
-                      </SelectTrigger>
-                      <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
-                        {TESLIMAT_MAHALLELERI.map((m) => (
-                          <SelectItem key={m} value={m} data-testid={`option-mahalle-${m}`}>
-                            {m}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
-                </CardContent>
-              </Card>
-            </section>
 
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-payment">
@@ -983,7 +940,7 @@ export default function Checkout() {
                     className="w-full mt-5"
                     variant="default"
                     size="lg"
-                    disabled={!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle}
+                    disabled={!minReached || selectedProducts.length === 0 || orderLoading}
                     onClick={handleOrder}
                     data-testid="btn-order-whatsapp"
                   >
