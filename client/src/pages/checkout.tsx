@@ -407,8 +407,17 @@ export default function Checkout() {
       } else {
         setLocation("/giris?redirect=" + encodeURIComponent("/hesabim?tab=orders"));
       }
-    } catch {
-      setOrderError("Sipariş kaydedilemedi, lütfen tekrar deneyin.");
+    } catch (err: any) {
+      let errorMsg = "Sipariş kaydedilemedi, lütfen tekrar deneyin.";
+      try {
+        const raw = err?.message || "";
+        const jsonPart = raw.replace(/^\d+:\s*/, "");
+        const parsed = JSON.parse(jsonPart);
+        if (parsed.message) errorMsg = parsed.message;
+      } catch {
+        // keep default
+      }
+      setOrderError(errorMsg);
     } finally {
       setOrderLoading(false);
     }
