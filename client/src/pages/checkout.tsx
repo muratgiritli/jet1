@@ -306,15 +306,9 @@ export default function Checkout() {
       setShowAuthModal(true);
       return;
     }
-    if (!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle || !customerName.trim() || !customerPhone.trim()) {
+    if (!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle) {
       if (!selectedMahalle) {
         toast({ title: "Lütfen teslimat mahallenizi seçin", variant: "destructive" });
-      }
-      if (!customerName.trim()) {
-        toast({ title: "Lütfen ad soyad girin", variant: "destructive" });
-      }
-      if (!customerPhone.trim()) {
-        toast({ title: "Lütfen telefon numarası girin", variant: "destructive" });
       }
       return;
     }
@@ -692,218 +686,37 @@ export default function Checkout() {
             </section>
 
             <section className="mt-6">
-              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-customer-info">
-                Müşteri Bilgileri
+              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-delivery">
+                Teslimat Mahallesi
               </h2>
               <Card>
-                <CardContent className="p-4 space-y-3">
-                  {isLoggedIn ? (
-                    <div data-testid="customer-info-summary">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium truncate" data-testid="text-summary-name">{customerName}</p>
-                            <p className="text-xs text-muted-foreground truncate" data-testid="text-summary-phone">{customerPhone}</p>
-                          </div>
-                        </div>
-                      </div>
-                      {customerAddress && (
-                        <p className="text-xs text-muted-foreground mt-1 truncate" data-testid="text-summary-address">
-                          <Home className="w-3 h-3 inline mr-1" />
-                          {customerAddress}
-                        </p>
-                      )}
-                      {customerLocation && (
-                        <p className="text-xs text-green-600 mt-1 flex items-center gap-1" data-testid="text-summary-location">
-                          <Navigation className="w-3 h-3" />
-                          Konum paylaşıldı
-                        </p>
-                      )}
-
-                      {mahalleSaved ? (
-                        <div className="flex items-center gap-2 mt-2 p-2 rounded-lg border border-green-200 bg-green-50" data-testid="mahalle-saved">
-                          <MapPin className="w-4 h-4 text-green-600 shrink-0" />
-                          <span className="text-sm font-medium text-green-700">{selectedMahalle}</span>
-                          <button
-                            type="button"
-                            onClick={() => { localStorage.removeItem("jet55_mahalle"); setSelectedMahalle(""); setMahalleSaved(false); }}
-                            className="ml-auto text-xs text-muted-foreground underline hover:text-foreground"
-                            data-testid="btn-change-mahalle"
-                          >
-                            Değiştir
-                          </button>
-                        </div>
-                      ) : (
-                        <Select value={selectedMahalle} onValueChange={(val) => { setSelectedMahalle(val); localStorage.setItem("jet55_mahalle", val); setMahalleSaved(true); }}>
-                          <SelectTrigger data-testid="select-mahalle" className={`h-9 text-sm mt-2 ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
-                            <SelectValue placeholder="Teslimat mahallesi seçiniz..." />
-                          </SelectTrigger>
-                          <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
-                            {TESLIMAT_MAHALLELERI.map((m) => (
-                              <SelectItem key={m} value={m} data-testid={`option-mahalle-${m}`}>
-                                {m}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-
-                      {selectedMahalle && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          className="space-y-2 mt-2"
-                        >
-                          {savedAddresses.length > 0 && (
-                            <div>
-                              <button
-                                type="button"
-                                onClick={() => setShowAddressPicker(!showAddressPicker)}
-                                className="w-full flex items-center justify-between text-xs px-3 py-1.5 rounded-md border bg-muted/50 hover:bg-muted transition-colors"
-                                data-testid="btn-address-picker"
-                              >
-                                <span className="flex items-center gap-1.5">
-                                  <Home className="w-3 h-3" />
-                                  Kayıtlı adreslerden seç
-                                </span>
-                                <ChevronDown className={`w-3 h-3 transition-transform ${showAddressPicker ? "rotate-180" : ""}`} />
-                              </button>
-                              {showAddressPicker && (
-                                <div className="mt-1 space-y-1">
-                                  {savedAddresses.map((addr: any) => (
-                                    <button
-                                      key={addr.id}
-                                      type="button"
-                                      onClick={() => { setCustomerAddress(addr.address); setShowAddressPicker(false); }}
-                                      className={`w-full text-left p-2 rounded-md border text-xs transition-colors hover:bg-accent ${customerAddress === addr.address ? "border-primary bg-primary/5" : ""}`}
-                                      data-testid={`btn-select-address-${addr.id}`}
-                                    >
-                                      <span className="font-medium">{addr.label}</span>
-                                      {addr.isDefault && <Badge variant="secondary" className="ml-1.5 text-[10px] py-0">Varsayılan</Badge>}
-                                      <p className="text-muted-foreground mt-0.5 line-clamp-2">{addr.address}</p>
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          <div className="relative">
-                            <Textarea
-                              placeholder="Sokak, bina no, daire no..."
-                              value={customerAddress}
-                              onChange={(e) => setCustomerAddress(e.target.value)}
-                              rows={2}
-                              className="text-sm pr-10"
-                              data-testid="input-customer-address"
-                            />
-                            {customerLocation ? (
-                              <button
-                                type="button"
-                                onClick={() => setCustomerLocation(null)}
-                                className="absolute right-2 top-2 p-1 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
-                                title="Konum paylaşıldı - kaldırmak için tıklayın"
-                                data-testid="btn-remove-location"
-                              >
-                                <Navigation className="w-3.5 h-3.5" />
-                              </button>
-                            ) : (
-                              <button
-                                type="button"
-                                onClick={handleShareLocation}
-                                disabled={locationLoading}
-                                className="absolute right-2 top-2 p-1 rounded-full text-muted-foreground hover:bg-accent transition-colors"
-                                title="Konumumu paylaş"
-                                data-testid="btn-share-location"
-                              >
-                                {locationLoading ? (
-                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                ) : (
-                                  <Navigation className="w-3.5 h-3.5" />
-                                )}
-                              </button>
-                            )}
-                          </div>
-                          {customerLocation && (
-                            <a
-                              href={`https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-xs text-green-600 underline flex items-center gap-1"
-                              data-testid="link-location-map"
-                            >
-                              <CheckCircle2 className="w-3 h-3" />
-                              Konum alındı - Haritada gör
-                            </a>
-                          )}
-                        </motion.div>
-                      )}
+                <CardContent className="p-4">
+                  {mahalleSaved ? (
+                    <div className="flex items-center gap-2 p-2 rounded-lg border border-green-200 bg-green-50" data-testid="mahalle-saved">
+                      <MapPin className="w-4 h-4 text-green-600 shrink-0" />
+                      <span className="text-sm font-medium text-green-700">{selectedMahalle}</span>
+                      <button
+                        type="button"
+                        onClick={() => { localStorage.removeItem("jet55_mahalle"); setSelectedMahalle(""); setMahalleSaved(false); }}
+                        className="ml-auto text-xs text-muted-foreground underline hover:text-foreground"
+                        data-testid="btn-change-mahalle"
+                      >
+                        Değiştir
+                      </button>
                     </div>
                   ) : (
-                    <div className="space-y-3" data-testid="guest-customer-form">
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">Ad Soyad</label>
-                        <Input
-                          value={customerName}
-                          onChange={(e) => setCustomerName(e.target.value)}
-                          placeholder="Adınız Soyadınız"
-                          className="h-9"
-                          data-testid="input-guest-name"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">Telefon</label>
-                        <Input
-                          value={customerPhone}
-                          onChange={(e) => setCustomerPhone(e.target.value)}
-                          placeholder="05XX XXX XX XX"
-                          type="tel"
-                          className="h-9"
-                          data-testid="input-guest-phone"
-                        />
-                      </div>
-
-                      {mahalleSaved ? (
-                        <div className="flex items-center gap-2 p-2 rounded-lg border border-green-200 bg-green-50" data-testid="mahalle-saved-guest">
-                          <MapPin className="w-4 h-4 text-green-600 shrink-0" />
-                          <span className="text-sm font-medium text-green-700">{selectedMahalle}</span>
-                          <button
-                            type="button"
-                            onClick={() => { localStorage.removeItem("jet55_mahalle"); setSelectedMahalle(""); setMahalleSaved(false); }}
-                            className="ml-auto text-xs text-muted-foreground underline hover:text-foreground"
-                            data-testid="btn-change-mahalle-guest"
-                          >
-                            Değiştir
-                          </button>
-                        </div>
-                      ) : (
-                        <Select value={selectedMahalle} onValueChange={(val) => { setSelectedMahalle(val); localStorage.setItem("jet55_mahalle", val); setMahalleSaved(true); }}>
-                          <SelectTrigger data-testid="select-mahalle-guest" className={`h-9 text-sm ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
-                            <SelectValue placeholder="Teslimat mahallesi seçiniz..." />
-                          </SelectTrigger>
-                          <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
-                            {TESLIMAT_MAHALLELERI.map((m) => (
-                              <SelectItem key={m} value={m} data-testid={`option-mahalle-guest-${m}`}>
-                                {m}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-
-                      {selectedMahalle && (
-                        <div className="space-y-2">
-                          <Textarea
-                            placeholder="Sokak, bina no, daire no..."
-                            value={customerAddress}
-                            onChange={(e) => setCustomerAddress(e.target.value)}
-                            rows={2}
-                            className="text-sm"
-                            data-testid="input-guest-address"
-                          />
-                        </div>
-                      )}
-                    </div>
+                    <Select value={selectedMahalle} onValueChange={(val) => { setSelectedMahalle(val); localStorage.setItem("jet55_mahalle", val); setMahalleSaved(true); }}>
+                      <SelectTrigger data-testid="select-mahalle" className={`h-9 text-sm ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
+                        <SelectValue placeholder="Teslimat mahallesi seçiniz..." />
+                      </SelectTrigger>
+                      <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
+                        {TESLIMAT_MAHALLELERI.map((m) => (
+                          <SelectItem key={m} value={m} data-testid={`option-mahalle-${m}`}>
+                            {m}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   )}
                 </CardContent>
               </Card>
