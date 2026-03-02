@@ -3,22 +3,44 @@ import fs from "fs";
 import path from "path";
 
 export function serveStatic(app: Express) {
-  const distPath = path.resolve(__dirname, "public");
-  if (!fs.existsSync(distPath)) {
+  const candidates = [
+    path.resolve(__dirname, "public"),
+    path.resolve(process.cwd(), "dist", "public"),
+  ];
+
+  const distPath = candidates.find((p) => fs.existsSync(p));
+  if (!distPath) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the build directory. Tried: ${candidates.join(", ")}`,
     );
   }
 
-  const productImagesPath = path.resolve(distPath, "product-images");
-  app.use("/product-images", express.static(productImagesPath, {
-    maxAge: "7d",
-    immutable: true,
-  }));
+  console.log(`[static] serving from: ${distPath}`);
+
+  const productImagesPath = path.join(distPath, "product-images");
+  const productImagesExist = fs.existsSync(productImagesPath);
+  console.log(`[static] product-images path: ${productImagesPath}, exists: ${productImagesExist}`);
+
+  if (productImagesExist) {
+    const count = fs.readdirSync(productImagesPath).length;
+    console.log(`[static] product-images count: ${count}`);
+  }
+
+  app.use("/product-images", (req, res, next) => {
+    const filePath = path.join(productImagesPath, req.path);
+    if (fs.existsSync(filePath)) {
+      res.setHeader("Cache-Control", "public, max-age=604800, immutable");
+      if (filePath.endsWith(".webp")) {
+        res.setHeader("Content-Type", "image/webp");
+      }
+      return res.sendFile(filePath);
+    }
+    console.log(`[static] product image not found: ${filePath}`);
+    next();
+  });
 
   app.use(express.static(distPath));
 
-  // fall through to index.html if the file doesn't exist
   app.use("/{*path}", (_req, res) => {
     res.sendFile(path.resolve(distPath, "index.html"));
   });
