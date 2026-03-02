@@ -14,7 +14,7 @@ export default function BottomTabBar() {
   const TABS = [
     { name: "Ana Sayfa", href: "/", icon: Home, testId: "tab-home" },
     { name: "Kategoriler", href: "/kategori", icon: Grid3X3, testId: "tab-categories" },
-    { name: "Sepet", href: isLoggedIn ? "/odeme" : "/giris?redirect=/odeme", icon: ShoppingCart, testId: "tab-cart" },
+    { name: "Sepet", href: "/odeme", icon: ShoppingCart, testId: "tab-cart" },
     { name: "Takip", href: "/siparis-takip", icon: Package, testId: "tab-tracking" },
     { name: isLoggedIn ? "Hesabım" : "Giriş", href: isLoggedIn ? "/hesabim" : "/giris", icon: User, testId: "tab-account" },
   ];

@@ -154,7 +154,7 @@ export default function Checkout() {
   }, [isLoggedIn, customer, savedAddresses, addressInitialized]);
 
   useEffect(() => {
-    if (!isLoggedIn && selectedProducts.length > 0) {
+    if (!isLoggedIn) {
       setShowAuthModal(true);
     }
   }, []);
@@ -174,7 +174,7 @@ export default function Checkout() {
 
   const handleAuthLocation = () => {
     if (!navigator.geolocation) {
-      toast({ title: "Tarayiciniz konum paylasimini desteklemiyor", variant: "destructive" });
+      toast({ title: "Tarayıcınız konum paylaşımını desteklemiyor", variant: "destructive" });
       return;
     }
     setAuthLocationLoading(true);
@@ -182,11 +182,11 @@ export default function Checkout() {
       (pos) => {
         setAuthLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         setAuthLocationLoading(false);
-        toast({ title: "Konum alindi" });
+        toast({ title: "Konum alındı" });
       },
       () => {
         setAuthLocationLoading(false);
-        toast({ title: "Konum alinamadi", variant: "destructive" });
+        toast({ title: "Konum alınamadı", variant: "destructive" });
       },
       { enableHighAccuracy: true, timeout: 10000 }
     );
@@ -195,11 +195,11 @@ export default function Checkout() {
   const handleAuthSubmit = async () => {
     const normalized = authPhone.replace(/\D/g, "");
     if (normalized.length < 10) {
-      toast({ title: "Gecerli bir telefon numarasi girin", variant: "destructive" });
+      toast({ title: "Geçerli bir telefon numarası girin", variant: "destructive" });
       return;
     }
     if (authPassword.length < 4) {
-      toast({ title: "Sifre en az 4 karakter olmali", variant: "destructive" });
+      toast({ title: "Şifre en az 4 karakter olmalı", variant: "destructive" });
       return;
     }
     if (authMode === "register" && !authName.trim()) {
@@ -458,7 +458,7 @@ export default function Checkout() {
             >
               <div className="sticky top-0 z-10 bg-background rounded-t-2xl border-b px-4 pt-4 pb-3">
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-base font-bold" data-testid="text-auth-modal-title">Devam etmek icin</h2>
+                  <h2 className="text-base font-bold" data-testid="text-auth-modal-title">Devam etmek için</h2>
                   <button
                     type="button"
                     onClick={() => setShowAuthModal(false)}
@@ -475,7 +475,7 @@ export default function Checkout() {
                     className={`flex-1 py-2 text-xs font-semibold rounded-md transition-colors ${authMode === "login" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
                     data-testid="btn-auth-tab-login"
                   >
-                    Uye Girisi
+                    Üye Girişi
                   </button>
                   <button
                     type="button"
@@ -483,7 +483,7 @@ export default function Checkout() {
                     className={`flex-1 py-2 text-xs font-semibold rounded-md transition-colors ${authMode === "register" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
                     data-testid="btn-auth-tab-register"
                   >
-                    Uye Ol
+                    Üye Ol
                   </button>
                 </div>
               </div>
@@ -516,11 +516,11 @@ export default function Checkout() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Sifre (dogum yili)</label>
+                  <label className="text-xs font-medium text-muted-foreground">Şifre (doğum yılı)</label>
                   <div className="relative">
                     <Input
                       type={showAuthPassword ? "text" : "password"}
-                      placeholder="ornek: 1990"
+                      placeholder="Örnek: 1990"
                       value={authPassword}
                       onChange={(e) => setAuthPassword(e.target.value)}
                       maxLength={4}
@@ -556,7 +556,7 @@ export default function Checkout() {
                       {authLocation ? (
                         <div className="flex items-center gap-2 p-2 rounded-lg border border-green-200 bg-green-50">
                           <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                          <span className="text-xs text-green-700">Konum alindi</span>
+                          <span className="text-xs text-green-700">Konum alındı</span>
                           <button type="button" onClick={() => setAuthLocation(null)} className="ml-auto text-muted-foreground">
                             <X className="w-3.5 h-3.5" />
                           </button>
@@ -576,7 +576,7 @@ export default function Checkout() {
                           ) : (
                             <Navigation className="w-4 h-4 mr-1.5" />
                           )}
-                          {authLocationLoading ? "Konum aliniyor..." : "Konum Ekle"}
+                          {authLocationLoading ? "Konum alınıyor..." : "Konum Ekle"}
                         </Button>
                       )}
                     </div>
@@ -595,22 +595,22 @@ export default function Checkout() {
                   ) : (
                     <LogIn className="w-4 h-4 mr-2" />
                   )}
-                  {authMode === "login" ? "Giris Yap" : "Uye Ol ve Devam Et"}
+                  {authMode === "login" ? "Giriş Yap" : "Üye Ol ve Devam Et"}
                 </Button>
 
                 {authMode === "login" && (
                   <p className="text-center text-xs text-muted-foreground">
-                    Henuz uyeliginiz yok mu?{" "}
+                    Henüz üyeliğiniz yok mu?{" "}
                     <button type="button" onClick={() => setAuthMode("register")} className="font-semibold underline" style={{ color: "#6B3480" }}>
-                      Uye Ol
+                      Üye Ol
                     </button>
                   </p>
                 )}
                 {authMode === "register" && (
                   <p className="text-center text-xs text-muted-foreground">
-                    Zaten uyeniz var mi?{" "}
+                    Zaten üyeniz var mı?{" "}
                     <button type="button" onClick={() => setAuthMode("login")} className="font-semibold underline" style={{ color: "#6B3480" }}>
-                      Giris Yap
+                      Giriş Yap
                     </button>
                   </p>
                 )}
@@ -803,7 +803,7 @@ export default function Checkout() {
                                 type="button"
                                 onClick={() => setCustomerLocation(null)}
                                 className="absolute right-2 top-2 p-1 rounded-full bg-green-100 text-green-600 hover:bg-green-200 transition-colors"
-                                title="Konum paylasıldı - kaldırmak icin tıklayın"
+                                title="Konum paylaşıldı - kaldırmak için tıklayın"
                                 data-testid="btn-remove-location"
                               >
                                 <Navigation className="w-3.5 h-3.5" />
@@ -842,7 +842,7 @@ export default function Checkout() {
                     </div>
                   ) : (
                     <div className="text-center py-2" data-testid="guest-auth-prompt">
-                      <p className="text-sm text-muted-foreground mb-3">Siparis vermek icin giris yapin veya uye olun</p>
+                      <p className="text-sm text-muted-foreground mb-3">Sipariş vermek için giriş yapın veya üye olun</p>
                       <Button
                         className="w-full font-semibold"
                         style={{ backgroundColor: "#6B3480" }}
@@ -850,7 +850,7 @@ export default function Checkout() {
                         data-testid="btn-open-auth-modal"
                       >
                         <LogIn className="w-4 h-4 mr-2" />
-                        Giris Yap / Uye Ol
+                        Giriş Yap / Üye Ol
                       </Button>
                     </div>
                   )}
