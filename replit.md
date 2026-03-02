@@ -25,8 +25,9 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `client/src/pages/product-detail.tsx` - Individual product detail page with cross-sell sections, stock alerts, food calculator
 - `client/src/components/FoodCalculator.tsx` - Smart food calculator with reorder reminder
 - `client/src/pages/home.tsx` - Product browsing page with catalog (static products)
-- `client/src/pages/checkout.tsx` - Cart/checkout page with payment options, customer info, and WhatsApp order
+- `client/src/pages/checkout.tsx` - Cart/checkout page with payment options, customer info, WhatsApp order (opens new tab), redirects to member panel
 - `client/src/pages/order-tracking.tsx` - Order tracking by phone number
+- `client/src/pages/auth.tsx` - Customer login/register (phone + birth year as 4-digit password)
 - `client/src/pages/admin.tsx` - Admin panel with login, product/category CRUD, SKT warnings
 - `client/src/components/SearchBar.tsx` - Debounced product search with dropdown results
 - `client/src/contexts/CartContext.tsx` - Global cart state provider (fetches from API)

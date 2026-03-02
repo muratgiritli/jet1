@@ -830,7 +830,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <div className="flex gap-1 bg-muted/50 rounded-lg p-1" data-testid="tabs-order-filter">
               {([
                 { key: "gelen" as const, label: "Gelen Siparişler", statuses: ["yeni"] },
-                { key: "bekleyen" as const, label: "Bekleyen", statuses: ["hazirlaniyor"] },
+                { key: "bekleyen" as const, label: "Bekleyen", statuses: ["onaylandi", "hazirlaniyor"] },
                 { key: "giden" as const, label: "Giden Siparişler", statuses: ["tamamlandi", "iptal"] },
               ]).map((tab) => {
                 const count = allOrders.filter((o) => tab.statuses.includes(o.status)).length;
@@ -896,7 +896,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           ) : (() => {
             const tabStatuses: Record<string, string[]> = {
               gelen: ["yeni"],
-              bekleyen: ["hazirlaniyor"],
+              bekleyen: ["onaylandi", "hazirlaniyor"],
               giden: ["tamamlandi", "iptal"],
             };
             const filteredOrders = allOrders
@@ -932,12 +932,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
             const statusColors: Record<string, string> = {
               yeni: "#2196F3",
+              onaylandi: "#00BFA5",
               hazirlaniyor: "#FF9800",
               tamamlandi: "#4CAF50",
               iptal: "#F44336",
             };
             const statusLabels: Record<string, string> = {
-              yeni: "Yeni",
+              yeni: "Bekliyor",
+              onaylandi: "Onaylandı",
               hazirlaniyor: "Hazırlanıyor",
               tamamlandi: "Tamamlandı",
               iptal: "İptal",
@@ -1000,7 +1002,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="yeni">Yeni</SelectItem>
+                              <SelectItem value="yeni">Bekliyor</SelectItem>
+                              <SelectItem value="onaylandi">Onaylandı</SelectItem>
                               <SelectItem value="hazirlaniyor">Hazırlanıyor</SelectItem>
                               <SelectItem value="tamamlandi">Tamamlandı</SelectItem>
                               <SelectItem value="iptal">İptal</SelectItem>
@@ -1062,10 +1065,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                   {customerOrders.map((order) => {
                     const statusColors: Record<string, string> = {
-                      yeni: "#2196F3", hazirlaniyor: "#FF9800", tamamlandi: "#4CAF50", iptal: "#F44336",
+                      yeni: "#2196F3", hazirlaniyor: "#FF9800", onaylandi: "#00BFA5", tamamlandi: "#4CAF50", iptal: "#F44336",
                     };
                     const statusLabels: Record<string, string> = {
-                      yeni: "Yeni", hazirlaniyor: "Hazırlanıyor", tamamlandi: "Tamamlandı", iptal: "İptal",
+                      yeni: "Bekliyor", hazirlaniyor: "Hazırlanıyor", onaylandi: "Onaylandı", tamamlandi: "Tamamlandı", iptal: "İptal",
                     };
                     return (
                       <Card key={order.id} data-testid={`card-history-order-${order.id}`}>
@@ -1121,10 +1124,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             {orderDetailDialog && (() => {
               const order = orderDetailDialog;
               const statusColors: Record<string, string> = {
-                yeni: "#2196F3", hazirlaniyor: "#FF9800", tamamlandi: "#4CAF50", iptal: "#F44336",
+                yeni: "#2196F3", hazirlaniyor: "#FF9800", onaylandi: "#00BFA5", tamamlandi: "#4CAF50", iptal: "#F44336",
               };
               const statusLabels: Record<string, string> = {
-                yeni: "Yeni", hazirlaniyor: "Hazırlanıyor", tamamlandi: "Tamamlandı", iptal: "İptal",
+                yeni: "Bekliyor", hazirlaniyor: "Hazırlanıyor", onaylandi: "Onaylandı", tamamlandi: "Tamamlandı", iptal: "İptal",
               };
               return (
                 <div className="space-y-4">
@@ -1253,7 +1256,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="yeni">Yeni</SelectItem>
+                        <SelectItem value="yeni">Bekliyor</SelectItem>
+                        <SelectItem value="onaylandi">Onaylandı</SelectItem>
                         <SelectItem value="hazirlaniyor">Hazırlanıyor</SelectItem>
                         <SelectItem value="tamamlandi">Tamamlandı</SelectItem>
                         <SelectItem value="iptal">İptal</SelectItem>

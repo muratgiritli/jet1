@@ -1,9 +1,10 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Truck, CreditCard, MapPin } from "lucide-react";
+import { Truck, CreditCard, MapPin, User, LogIn } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import SEO, { LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import SearchBar from "@/components/SearchBar";
+import { useCustomer } from "@/contexts/CustomerContext";
 
 import Logo from "@/components/Logo";
 import catDog from "@/assets/images/cat-dog.png";
@@ -33,6 +34,8 @@ const FEATURES = [
 ];
 
 export default function Landing() {
+  const { isLoggedIn, customer } = useCustomer();
+
   return (
     <div className="min-h-screen flex flex-col bg-background pb-16">
       <SEO
@@ -42,8 +45,29 @@ export default function Landing() {
         jsonLd={LOCAL_BUSINESS_JSONLD}
       />
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center">
+        <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-between">
+          <div className="w-[100px]" />
           <Logo className="text-3xl" />
+          <div className="w-[100px] flex justify-end">
+            <Link href={isLoggedIn ? "/hesabim" : "/giris"}>
+              <button
+                className="flex items-center gap-1 text-white/90 hover:text-white text-[11px] font-medium px-2 py-1 rounded-full border border-white/30 hover:border-white/50 transition-colors"
+                data-testid="btn-header-auth"
+              >
+                {isLoggedIn ? (
+                  <>
+                    <User className="w-3.5 h-3.5" />
+                    <span className="truncate max-w-[60px]">{customer?.name?.split(" ")[0] || "Hesabım"}</span>
+                  </>
+                ) : (
+                  <>
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>Üye Ol / Üye Girişi</span>
+                  </>
+                )}
+              </button>
+            </Link>
+          </div>
         </div>
       </header>
 

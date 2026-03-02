@@ -34,8 +34,9 @@ const TABS: { key: TabKey; label: string; icon: any }[] = [
 ];
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
-  yeni: { label: "Yeni", color: "bg-blue-100 text-blue-700" },
+  yeni: { label: "Bekliyor", color: "bg-blue-100 text-blue-700" },
   hazirlaniyor: { label: "Hazırlanıyor", color: "bg-yellow-100 text-yellow-700" },
+  onaylandi: { label: "Onaylandı", color: "bg-emerald-100 text-emerald-700" },
   tamamlandi: { label: "Tamamlandı", color: "bg-green-100 text-green-700" },
   iptal: { label: "İptal", color: "bg-red-100 text-red-700" },
 };
@@ -51,7 +52,12 @@ export default function ProfilePage() {
   const { customer, isLoggedIn, isLoading, logout, updateProfile, refetch } = useCustomer();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState<TabKey>("profile");
+  const [activeTab, setActiveTab] = useState<TabKey>(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tab = params.get("tab");
+    if (tab && TABS.some(t => t.key === tab)) return tab as TabKey;
+    return "profile";
+  });
 
   useEffect(() => {
     if (!isLoading && !isLoggedIn) {

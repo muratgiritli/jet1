@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import {
   ShoppingCart,
   Truck,
@@ -85,6 +85,7 @@ const paymentIcons: Record<string, typeof CreditCard> = {
 };
 
 export default function Checkout() {
+  const [, setLocation] = useLocation();
   const [orderLoading, setOrderLoading] = useState(false);
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -395,10 +396,16 @@ export default function Checkout() {
       if (pay.id === "eft") msg += CONFIG.bankInfo;
 
       const url = `https://wa.me/${CONFIG.phone.replace("+", "")}?text=${encodeURIComponent(msg)}`;
-      window.location.href = url;
+      window.open(url, "_blank");
 
       clearCart();
-      toast({ title: "Siparis kaydedildi", description: "WhatsApp uzerinden siparisiz iletiliyor." });
+      toast({ title: "Sipariş kaydedildi", description: "WhatsApp üzerinden siparişiniz iletiliyor." });
+
+      if (isLoggedIn) {
+        setLocation("/hesabim?tab=orders");
+      } else {
+        setLocation("/giris?redirect=" + encodeURIComponent("/hesabim?tab=orders"));
+      }
     } catch {
       toast({ title: "Hata", description: "Siparis kaydedilemedi, lutfen tekrar deneyin.", variant: "destructive" });
     } finally {
