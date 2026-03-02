@@ -1,10 +1,10 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import Logo from "@/components/Logo";
-import catDog from "@/assets/images/cat-dog.png";
-import catCat from "@/assets/images/cat-cat.png";
-import catBird from "@/assets/images/cat-bird.png";
-import catRabbit from "@/assets/images/cat-rabbit.png";
+import catDog from "@/assets/images/cat-dog.webp";
+import catCat from "@/assets/images/cat-cat.webp";
+import catBird from "@/assets/images/cat-bird.webp";
+import catRabbit from "@/assets/images/cat-rabbit.webp";
 
 const CATEGORIES = [
   { name: "Köpek", image: catDog, href: "/kategori/kopek" },

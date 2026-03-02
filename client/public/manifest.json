@@ -10,9 +10,9 @@
   "scope": "/",
   "icons": [
     {
-      "src": "/favicon.png",
+      "src": "/favicon.webp",
       "sizes": "192x192",
-      "type": "image/png",
+      "type": "image/webp",
       "purpose": "any maskable"
     }
   ],

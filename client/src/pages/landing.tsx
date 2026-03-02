@@ -7,10 +7,10 @@ import SearchBar from "@/components/SearchBar";
 import { useCustomer } from "@/contexts/CustomerContext";
 
 import Logo from "@/components/Logo";
-import catDog from "@/assets/images/cat-dog.png";
-import catCat from "@/assets/images/cat-cat.png";
-import catBird from "@/assets/images/cat-bird.png";
-import catRabbit from "@/assets/images/cat-rabbit.png";
+import catDog from "@/assets/images/cat-dog.webp";
+import catCat from "@/assets/images/cat-cat.webp";
+import catBird from "@/assets/images/cat-bird.webp";
+import catRabbit from "@/assets/images/cat-rabbit.webp";
 
 const CATEGORIES = [
   { name: "Köpek", image: catDog, href: "/kategori/kopek" },
@@ -104,7 +104,7 @@ export default function Landing() {
         >
           <div className="relative w-full overflow-hidden" data-testid="banner-hero">
             <img
-              src="/banner-jetgo.png"
+              src="/banner-jetgo.webp"
               alt="JETGO - Sen İste Jet İle Gelsin | Şimdi Samsun'da"
               className="w-full h-auto object-contain rounded-lg"
               data-testid="img-hero-banner"

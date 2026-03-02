@@ -9,7 +9,7 @@ interface LogoProps {
 export default function Logo({ className = "h-8", linkTo = "/", testId = "img-brand-logo" }: LogoProps) {
   const logo = (
     <img
-      src="/logo-jetgo.png"
+      src="/logo-jetgo.webp"
       alt="JETGO Pet Shop"
       className={`object-contain select-none cursor-pointer ${className}`}
       style={{ maxWidth: "140px" }}
