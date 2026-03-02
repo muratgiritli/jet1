@@ -349,7 +349,7 @@ export default function Checkout() {
         usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
       };
 
-      if ((pay.id === "taksit" || pay.id === "pos") && selectedInstallment) {
+      if (pay.id === "taksit" && selectedInstallment) {
         const instRate = installmentRates.find((r) => r.months === selectedInstallment);
         if (instRate) {
           const instTotal = finalTotal * (1 + instRate.rate / 100);
@@ -385,7 +385,7 @@ export default function Checkout() {
       msg += `\n*Teslimat:* ${shipping === 0 ? "Ücretsiz" : shipping + " TL"}`;
       msg += `\n*Genel Toplam:* ${Math.round(finalTotal)} TL`;
       msg += `\n*Ödeme:* ${pay.name}`;
-      if ((pay.id === "taksit" || pay.id === "pos") && selectedInstallment) {
+      if (pay.id === "taksit" && selectedInstallment) {
         const instRate = installmentRates.find((r) => r.months === selectedInstallment);
         if (instRate) {
           const instTotal = finalTotal * (1 + instRate.rate / 100);
@@ -744,7 +744,7 @@ export default function Checkout() {
               </h2>
               <Card>
                 <CardContent className="p-4">
-                  <RadioGroup value={paymentId} onValueChange={(val) => { setPaymentId(val); if (val !== "taksit" && val !== "pos") { setSelectedInstallment(null); } }} data-testid="radio-payment">
+                  <RadioGroup value={paymentId} onValueChange={(val) => { setPaymentId(val); if (val !== "taksit") { setSelectedInstallment(null); } }} data-testid="radio-payment">
                     {PAYMENT_OPTIONS.map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
                       return (
@@ -774,7 +774,7 @@ export default function Checkout() {
                     })}
                   </RadioGroup>
 
-                  {(paymentId === "taksit" || paymentId === "pos") && installmentRates.length > 0 && (
+                  {paymentId === "taksit" && installmentRates.length > 0 && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
@@ -1001,9 +1001,23 @@ export default function Checkout() {
 
                   <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t flex-wrap">
                     <span className="text-lg font-bold">Genel Toplam</span>
-                    <span className="text-2xl font-extrabold text-primary" data-testid="text-total">
-                      {Math.round(displayTotal)} TL
-                    </span>
+                    {paymentId === "taksit" && selectedInstallment ? (() => {
+                      const rate = installmentRates.find((r) => r.months === selectedInstallment);
+                      if (!rate) return <span className="text-2xl font-extrabold text-primary" data-testid="text-total">{Math.round(displayTotal)} TL</span>;
+                      const totalWithRate = displayTotal * (1 + rate.rate / 100);
+                      return (
+                        <div className="text-right" data-testid="text-total">
+                          <span className="text-2xl font-extrabold text-primary">
+                            {totalWithRate.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                          </span>
+                          <p className="text-xs text-muted-foreground">{selectedInstallment} Taksit × {(totalWithRate / selectedInstallment).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
+                        </div>
+                      );
+                    })() : (
+                      <span className="text-2xl font-extrabold text-primary" data-testid="text-total">
+                        {Math.round(displayTotal)} TL
+                      </span>
+                    )}
                   </div>
 
                   <Button
