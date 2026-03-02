@@ -139,7 +139,7 @@ export default function AuthPage() {
               <div className="space-y-1.5">
                 <label className="text-sm font-medium flex items-center gap-1.5">
                   <Lock className="w-4 h-4 text-muted-foreground" />
-                  Sifre (4 haneli dogum yiliniz)
+                  Şifre (4 haneli doğum yılınız)
                 </label>
                 <div className="relative">
                   <Input
@@ -149,7 +149,7 @@ export default function AuthPage() {
                       setPassword(val);
                     }}
                     type={showPassword ? "text" : "password"}
-                    placeholder="ornegin: 1990"
+                    placeholder="Örneğin: 1990"
                     inputMode="numeric"
                     maxLength={4}
                     data-testid="input-auth-password"

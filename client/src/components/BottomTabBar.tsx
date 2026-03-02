@@ -5,7 +5,7 @@ import { useCustomer } from "@/contexts/CustomerContext";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function BottomTabBar() {
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const { itemCount } = useCart();
   const { isLoggedIn } = useCustomer();
 
@@ -14,16 +14,17 @@ export default function BottomTabBar() {
   const TABS = [
     { name: "Ana Sayfa", href: "/", icon: Home, testId: "tab-home" },
     { name: "Kategoriler", href: "/kategori", icon: Grid3X3, testId: "tab-categories" },
-    { name: "Sepet", href: "/odeme", icon: ShoppingCart, testId: "tab-cart" },
+    { name: "Sepet", href: isLoggedIn ? "/odeme" : "/giris?redirect=/odeme", icon: ShoppingCart, testId: "tab-cart" },
     { name: "Takip", href: "/siparis-takip", icon: Package, testId: "tab-tracking" },
-    { name: isLoggedIn ? "Hesabim" : "Giris", href: isLoggedIn ? "/hesabim" : "/giris", icon: User, testId: "tab-account" },
+    { name: isLoggedIn ? "Hesabım" : "Giriş", href: isLoggedIn ? "/hesabim" : "/giris", icon: User, testId: "tab-account" },
   ];
 
   const isActive = (href: string) => {
     if (href === "/") return location === "/";
     if (href === "/kategori") return location.startsWith("/kategori");
     if (href === "/hesabim" || href === "/giris") return location === "/hesabim" || location === "/giris";
-    return location.startsWith(href);
+    const basePath = href.split("?")[0];
+    return location.startsWith(basePath);
   };
 
   return (
