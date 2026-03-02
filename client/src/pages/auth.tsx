@@ -173,7 +173,7 @@ export default function AuthPage() {
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-1.5 lg:hidden">
                     <label className="text-sm font-medium flex items-center gap-1.5">
                       <Navigation className="w-4 h-4 text-muted-foreground" />
                       Konum
