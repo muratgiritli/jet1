@@ -212,6 +212,7 @@ export default function Checkout() {
         }
       }
       setShowAuthModal(false);
+      setPendingOrderAfterAuth(true);
     } catch (err: any) {
       const msg = err.message || "Bir hata olustu";
       const cleaned = msg.replace(/^\d+:\s*/, "");
@@ -285,6 +286,8 @@ export default function Checkout() {
   const displayTotal = pointsDiscount > 0 ? Math.max(0, grandTotal - pointsDiscount) : grandTotal;
 
   const [locationError, setLocationError] = useState("");
+  const [orderError, setOrderError] = useState("");
+  const [pendingOrderAfterAuth, setPendingOrderAfterAuth] = useState(false);
 
   const handleShareLocation = () => {
     if (!navigator.geolocation) {
@@ -313,10 +316,11 @@ export default function Checkout() {
     }
     if (!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle) {
       if (!selectedMahalle) {
-        toast({ title: "Hesabınızda mahalle bilgisi yok. Lütfen profilinizden mahallenizi güncelleyin.", variant: "destructive" });
+        setOrderError("Mahalle seçimi yapınız.");
       }
       return;
     }
+    setOrderError("");
     const pay = PAYMENT_OPTIONS.find((p) => p.id === paymentId)!;
 
     setOrderLoading(true);
@@ -397,7 +401,6 @@ export default function Checkout() {
       window.open(url, "_blank");
 
       clearCart();
-      toast({ title: "Sipariş kaydedildi", description: "WhatsApp üzerinden siparişiniz iletiliyor." });
 
       if (isLoggedIn) {
         setLocation("/hesabim?tab=orders");
@@ -405,11 +408,18 @@ export default function Checkout() {
         setLocation("/giris?redirect=" + encodeURIComponent("/hesabim?tab=orders"));
       }
     } catch {
-      toast({ title: "Hata", description: "Siparis kaydedilemedi, lutfen tekrar deneyin.", variant: "destructive" });
+      setOrderError("Sipariş kaydedilemedi, lütfen tekrar deneyin.");
     } finally {
       setOrderLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (pendingOrderAfterAuth && isLoggedIn && !showAuthModal) {
+      setPendingOrderAfterAuth(false);
+      setTimeout(() => handleOrder(), 300);
+    }
+  }, [pendingOrderAfterAuth, isLoggedIn, showAuthModal]);
 
   return (
     <div className="min-h-screen bg-background pb-16">
@@ -998,6 +1008,10 @@ export default function Checkout() {
                     {orderLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <SiWhatsapp className="w-5 h-5" />}
                     {orderLoading ? "Kaydediliyor..." : "Siparişi Ver"}
                   </Button>
+
+                  {orderError && (
+                    <p className="text-[12px] text-red-500 text-center mt-2">{orderError}</p>
+                  )}
 
                   {!minReached && selectedProducts.length > 0 && (
                     <p className="text-xs text-center mt-2 text-muted-foreground" data-testid="text-min-warning">
