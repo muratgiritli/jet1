@@ -87,6 +87,7 @@ export default function Checkout() {
   const [authLocationLoading, setAuthLocationLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [authErrors, setAuthErrors] = useState<Record<string, string>>({});
   const { toast } = useToast();
   const { customer, isLoggedIn, login, register, updateProfile } = useCustomer();
 
@@ -171,25 +172,29 @@ export default function Checkout() {
   };
 
   const handleAuthSubmit = async () => {
+    const errors: Record<string, string> = {};
     const normalized = authPhone.replace(/\D/g, "");
+
+    if (authMode === "register" && !authName.trim()) {
+      errors.name = "Ad soyad girin";
+    }
     if (normalized.length < 10) {
-      toast({ title: "Geçerli bir telefon numarası girin", variant: "destructive" });
-      return;
+      errors.phone = "Geçerli bir telefon numarası girin";
     }
     if (authPassword.length < 4) {
-      toast({ title: "Şifre en az 4 karakter olmalı", variant: "destructive" });
-      return;
-    }
-    if (authMode === "register" && !authName.trim()) {
-      toast({ title: "Ad soyad girin", variant: "destructive" });
-      return;
+      errors.password = "4 haneli doğum yılınızı girin";
     }
 
+    if (Object.keys(errors).length > 0) {
+      setAuthErrors(errors);
+      return;
+    }
+    setAuthErrors({});
     setAuthLoading(true);
     try {
       if (authMode === "login") {
         await login(normalized, authPassword);
-        toast({ title: "Hos geldiniz!" });
+        toast({ title: "Hoş geldiniz!" });
       } else {
         await register(normalized, authPassword, authName.trim());
         const fullAddress = authMahalle
@@ -206,17 +211,23 @@ export default function Checkout() {
         if (authLocation) {
           setCustomerLocation(authLocation);
         }
-        toast({ title: "Kayit basarili!" });
+        toast({ title: "Kayıt başarılı!" });
       }
       setShowAuthModal(false);
     } catch (err: any) {
       const msg = err.message || "Bir hata olustu";
       const cleaned = msg.replace(/^\d+:\s*/, "");
+      let errorMsg = cleaned;
       try {
         const parsed = JSON.parse(cleaned);
-        toast({ title: "Hata", description: parsed.message || cleaned, variant: "destructive" });
-      } catch {
-        toast({ title: "Hata", description: cleaned, variant: "destructive" });
+        errorMsg = parsed.message || cleaned;
+      } catch {}
+      if (errorMsg.toLowerCase().includes("kayıtlı") || errorMsg.toLowerCase().includes("zaten") || errorMsg.toLowerCase().includes("already")) {
+        setAuthErrors({ phone: "Bu numara zaten kayıtlı" });
+      } else if (errorMsg.toLowerCase().includes("şifre") || errorMsg.toLowerCase().includes("password") || errorMsg.toLowerCase().includes("hatalı")) {
+        setAuthErrors({ password: "Şifre hatalı" });
+      } else {
+        setAuthErrors({ general: errorMsg });
       }
     } finally {
       setAuthLoading(false);
@@ -455,7 +466,7 @@ export default function Checkout() {
                 <div className="flex rounded-lg bg-muted p-0.5">
                   <button
                     type="button"
-                    onClick={() => setAuthMode("login")}
+                    onClick={() => { setAuthMode("login"); setAuthErrors({}); }}
                     className={`flex-1 py-2 text-xs font-semibold rounded-md transition-colors ${authMode === "login" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
                     data-testid="btn-auth-tab-login"
                   >
@@ -480,10 +491,11 @@ export default function Checkout() {
                       type="text"
                       placeholder="Ad Soyad"
                       value={authName}
-                      onChange={(e) => setAuthName(e.target.value)}
-                      className="h-10"
+                      onChange={(e) => { setAuthName(e.target.value); setAuthErrors((p) => ({ ...p, name: "" })); }}
+                      className={`h-10 ${authErrors.name ? "border-red-400" : ""}`}
                       data-testid="input-auth-name"
                     />
+                    {authErrors.name && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.name}</p>}
                   </div>
                 )}
 
@@ -552,10 +564,11 @@ export default function Checkout() {
                     type="tel"
                     placeholder="05XX XXX XX XX"
                     value={authPhone}
-                    onChange={(e) => handleAuthPhoneChange(e.target.value)}
-                    className="h-10"
+                    onChange={(e) => { handleAuthPhoneChange(e.target.value); setAuthErrors((p) => ({ ...p, phone: "" })); }}
+                    className={`h-10 ${authErrors.phone ? "border-red-400" : ""}`}
                     data-testid="input-auth-phone"
                   />
+                  {authErrors.phone && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.phone}</p>}
                 </div>
 
                 <div className="space-y-1">
@@ -570,10 +583,11 @@ export default function Checkout() {
                       onChange={(e) => {
                         const val = e.target.value.replace(/\D/g, "").slice(0, 4);
                         setAuthPassword(val);
+                        setAuthErrors((p) => ({ ...p, password: "" }));
                       }}
                       maxLength={4}
                       inputMode="numeric"
-                      className="h-10 pr-10"
+                      className={`h-10 pr-10 ${authErrors.password ? "border-red-400" : ""}`}
                       data-testid="input-auth-password"
                     />
                     <button
@@ -584,7 +598,12 @@ export default function Checkout() {
                       {showAuthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
+                  {authErrors.password && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.password}</p>}
                 </div>
+
+                {authErrors.general && (
+                  <p className="text-[11px] text-red-500 text-center">{authErrors.general}</p>
+                )}
 
                 <Button
                   className="w-full h-11 font-semibold"
