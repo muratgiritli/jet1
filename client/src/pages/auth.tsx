@@ -5,8 +5,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Phone, Lock, User, Loader2, ArrowLeft, Eye, EyeOff, MapPin, Navigation, Home, Calendar } from "lucide-react";
-
-const BIRTH_YEARS = Array.from({ length: 2011 - 1945 + 1 }, (_, i) => String(2011 - i));
 import { useCustomer } from "@/contexts/CustomerContext";
 import { useToast } from "@/hooks/use-toast";
 import { TESLIMAT_MAHALLELERI } from "@/lib/data";
@@ -237,41 +235,28 @@ export default function AuthPage() {
                   {mode === "register" ? <Calendar className="w-4 h-4 text-muted-foreground" /> : <Lock className="w-4 h-4 text-muted-foreground" />}
                   {mode === "register" ? "Doğum Yılı (Şifreniz olacak)" : "Şifre (Doğum yılınız)"}
                 </label>
-                {mode === "register" ? (
-                  <Select value={password} onValueChange={setPassword}>
-                    <SelectTrigger data-testid="select-auth-birthyear" className={`h-9 text-sm ${!password ? "text-muted-foreground" : ""}`}>
-                      <SelectValue placeholder="Doğum yılınızı seçiniz" />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[250px]">
-                      {BIRTH_YEARS.map((y) => (
-                        <SelectItem key={y} value={y}>{y}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <div className="relative">
-                    <Input
-                      value={password}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "").slice(0, 4);
-                        setPassword(val);
-                      }}
-                      type={showPassword ? "text" : "password"}
-                      placeholder="Doğum yılınız: 1990"
-                      inputMode="numeric"
-                      maxLength={4}
-                      data-testid="input-auth-password"
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                      onClick={() => setShowPassword(!showPassword)}
-                      data-testid="btn-toggle-password"
-                    >
-                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                    </button>
-                  </div>
-                )}
+                <div className="relative">
+                  <Input
+                    value={password}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, "").slice(0, 4);
+                      setPassword(val);
+                    }}
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Örn: 1990"
+                    inputMode="numeric"
+                    maxLength={4}
+                    data-testid="input-auth-password"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    onClick={() => setShowPassword(!showPassword)}
+                    data-testid="btn-toggle-password"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
               </div>
 
               <Button

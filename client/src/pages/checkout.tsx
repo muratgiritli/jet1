@@ -50,8 +50,6 @@ import BackNavigation from "@/components/BackNavigation";
 import { useCustomer } from "@/contexts/CustomerContext";
 import type { InstallmentRate } from "@shared/schema";
 
-const BIRTH_YEARS = Array.from({ length: 2011 - 1945 + 1 }, (_, i) => String(2011 - i));
-
 const paymentIcons: Record<string, typeof CreditCard> = {
   nakit: Banknote,
   eft: Wallet,
@@ -84,6 +82,7 @@ export default function Checkout() {
   const [authPassword, setAuthPassword] = useState("");
   const [authName, setAuthName] = useState("");
   const [authAddress, setAuthAddress] = useState("");
+  const [authMahalle, setAuthMahalle] = useState("");
   const [authLocation, setAuthLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [authLocationLoading, setAuthLocationLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
@@ -193,8 +192,16 @@ export default function Checkout() {
         toast({ title: "Hos geldiniz!" });
       } else {
         await register(normalized, authPassword, authName.trim());
-        if (authAddress.trim()) {
-          try { await updateProfile({ address: authAddress.trim() }); } catch {}
+        const fullAddress = authMahalle
+          ? (authAddress.trim() ? `${authMahalle}, ${authAddress.trim()}` : authMahalle)
+          : authAddress.trim();
+        if (fullAddress) {
+          try { await updateProfile({ address: fullAddress }); } catch {}
+        }
+        if (authMahalle) {
+          localStorage.setItem("jet55_mahalle", authMahalle);
+          setSelectedMahalle(authMahalle);
+          setMahalleSaved(true);
         }
         if (authLocation) {
           setCustomerLocation(authLocation);
@@ -480,60 +487,10 @@ export default function Checkout() {
                   </div>
                 )}
 
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Telefon</label>
-                  <Input
-                    type="tel"
-                    placeholder="05XX XXX XX XX"
-                    value={authPhone}
-                    onChange={(e) => handleAuthPhoneChange(e.target.value)}
-                    className="h-10"
-                    data-testid="input-auth-phone"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    {authMode === "register" ? "Doğum Yılı (Şifreniz olacak)" : "Şifre (Doğum yılınız)"}
-                  </label>
-                  {authMode === "register" ? (
-                    <Select value={authPassword} onValueChange={setAuthPassword}>
-                      <SelectTrigger data-testid="select-auth-birthyear" className={`h-10 text-sm ${!authPassword ? "text-muted-foreground" : ""}`}>
-                        <SelectValue placeholder="Doğum yılınızı seçiniz" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[250px]">
-                        {BIRTH_YEARS.map((y) => (
-                          <SelectItem key={y} value={y}>{y}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  ) : (
-                    <div className="relative">
-                      <Input
-                        type={showAuthPassword ? "text" : "password"}
-                        placeholder="Doğum yılınız: 1990"
-                        value={authPassword}
-                        onChange={(e) => setAuthPassword(e.target.value)}
-                        maxLength={4}
-                        inputMode="numeric"
-                        className="h-10 pr-10"
-                        data-testid="input-auth-password"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowAuthPassword(!showAuthPassword)}
-                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
-                      >
-                        {showAuthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                      </button>
-                    </div>
-                  )}
-                </div>
-
                 {authMode === "register" && (
                   <>
                     <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Adres (opsiyonel)</label>
+                      <label className="text-xs font-medium text-muted-foreground">Adres</label>
                       <Textarea
                         placeholder="Sokak, bina no, daire no..."
                         value={authAddress}
@@ -542,6 +499,20 @@ export default function Checkout() {
                         className="text-sm"
                         data-testid="input-auth-address"
                       />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Mahalle</label>
+                      <Select value={authMahalle} onValueChange={setAuthMahalle}>
+                        <SelectTrigger data-testid="select-auth-mahalle" className={`h-10 text-sm ${!authMahalle ? "text-muted-foreground" : ""}`}>
+                          <SelectValue placeholder="Mahallenizi seçiniz" />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[250px]">
+                          {TESLIMAT_MAHALLELERI.map((m) => (
+                            <SelectItem key={m} value={m}>{m}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
 
                     <div>
@@ -574,6 +545,46 @@ export default function Checkout() {
                     </div>
                   </>
                 )}
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">Telefon</label>
+                  <Input
+                    type="tel"
+                    placeholder="05XX XXX XX XX"
+                    value={authPhone}
+                    onChange={(e) => handleAuthPhoneChange(e.target.value)}
+                    className="h-10"
+                    data-testid="input-auth-phone"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-muted-foreground">
+                    {authMode === "register" ? "Doğum Yılı (Şifreniz olacak)" : "Şifre (Doğum yılınız)"}
+                  </label>
+                  <div className="relative">
+                    <Input
+                      type={showAuthPassword ? "text" : "password"}
+                      placeholder="Örn: 1990"
+                      value={authPassword}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, "").slice(0, 4);
+                        setAuthPassword(val);
+                      }}
+                      maxLength={4}
+                      inputMode="numeric"
+                      className="h-10 pr-10"
+                      data-testid="input-auth-password"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowAuthPassword(!showAuthPassword)}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    >
+                      {showAuthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
 
                 <Button
                   className="w-full h-11 font-semibold"
