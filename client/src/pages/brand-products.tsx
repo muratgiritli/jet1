@@ -14,7 +14,7 @@ import { CATEGORIES, productUrl } from "@/lib/data";
 import FavoriteButton from "@/components/FavoriteButton";
 import { ProductGridSkeleton } from "@/components/ProductSkeleton";
 import Logo from "@/components/Logo";
-import SEO from "@/components/SEO";
+import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import ProductImage from "@/components/ProductImage";
 
 interface SubcategoryInfo {
@@ -499,9 +499,9 @@ export default function BrandProductsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16">
       <SEO
-        title={`${data.category.brandName} - ${animal === "kedi" ? "Kedi" : animal === "kopek" ? "Köpek" : animal === "kus" ? "Kuş" : "Kemirgen"} | JETGO Pet Shop`}
-        description={`${data.category.brandName} ürünlerini JETGO Pet Shop'tan sipariş edin. Samsun içi hızlı teslimat, kapıda ödeme.`}
-        canonical={`https://jet55.app/siparis/${animal}/${subcategory}/${brandSlug}`}
+        title={`${data.category.brandName} ${animal === "kedi" ? "Kedi" : animal === "kopek" ? "Köpek" : animal === "kus" ? "Kuş" : "Kemirgen"} Maması Samsun - Fiyatları ve Online Sipariş | JETGO`}
+        description={`${data.category.brandName} ${animal === "kedi" ? "kedi" : animal === "kopek" ? "köpek" : animal === "kus" ? "kuş" : "kemirgen"} maması Samsun'da en uygun fiyatlarla JETGO Pet Shop'ta. Samsun içi aynı gün teslimat, kapıda ödeme. ${data.category.brandName} ürünlerini online sipariş edin.`}
+        canonical={`${SITE_DOMAIN}/siparis/${animal}/${subcategory}/${brandSlug}`}
       />
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">

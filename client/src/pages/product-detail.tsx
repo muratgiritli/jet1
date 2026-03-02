@@ -21,7 +21,7 @@ import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
 import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import Logo from "@/components/Logo";
 import FoodCalculator from "@/components/FoodCalculator";
-import SEO from "@/components/SEO";
+import SEO, { SITE_DOMAIN } from "@/components/SEO";
 
 type ProductDetailData = {
   product: Product;
@@ -238,10 +238,10 @@ export default function ProductDetailPage() {
     if (!resolvedData) return null;
     const p = resolvedData.product;
     const catName = resolvedData.category?.brandName || "";
-    const title = `${p.name} - ${catName ? catName + " | " : ""}JETGO Pet Shop`;
-    const description = `${p.name} en uygun fiyatla JETGO Pet Shop'ta. ${Math.round(p.price)} TL${p.originalPrice ? ` (eski fiyat ${Math.round(p.originalPrice)} TL)` : ""}. Hızlı sipariş ve kapıda ödeme.`;
+    const title = `${p.name} Samsun Fiyatı ${Math.round(p.price)} TL | ${catName ? catName + " - " : ""}JETGO Pet Shop`;
+    const description = `${p.name} Samsun'da en uygun fiyatla ${Math.round(p.price)} TL${p.originalPrice ? ` (liste fiyatı ${Math.round(p.originalPrice)} TL)` : ""}. Samsun içi aynı gün teslimat, kapıda ödeme. Online sipariş JETGO Pet Shop.`;
     const slug = p.name.toLowerCase().replace(/[^a-z0-9ğüşıöç]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-    const canonical = `https://jet55.app/urun/${p.id}/${slug}`;
+    const canonical = `${SITE_DOMAIN}/urun/${p.id}/${slug}`;
     const jsonLd = {
       "@context": "https://schema.org",
       "@type": "Product",
@@ -256,7 +256,21 @@ export default function ProductDetailPage() {
         "priceCurrency": "TRY",
         "price": p.price,
         "availability": p.stock && p.stock > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
-        "seller": { "@type": "Organization", "name": "JETGO Pet Shop" },
+        "seller": { "@type": "Organization", "name": "JETGO Pet Shop Samsun" },
+        "areaServed": { "@type": "City", "name": "Samsun" },
+        "shippingDetails": {
+          "@type": "OfferShippingDetails",
+          "shippingDestination": {
+            "@type": "DefinedRegion",
+            "addressCountry": "TR",
+            "addressRegion": "Samsun",
+          },
+          "deliveryTime": {
+            "@type": "ShippingDeliveryTime",
+            "handlingTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 1, "unitCode": "DAY" },
+            "transitTime": { "@type": "QuantitativeValue", "minValue": 0, "maxValue": 1, "unitCode": "DAY" },
+          },
+        },
       },
     };
     return { title, description, canonical, ogImage: p.img || undefined, jsonLd };

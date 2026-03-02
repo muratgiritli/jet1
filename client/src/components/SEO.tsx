@@ -8,6 +8,8 @@ interface SEOProps {
   jsonLd?: object;
 }
 
+export const SITE_DOMAIN = "https://jetgo.shop";
+
 export default function SEO({ title, description, canonical, ogImage, jsonLd }: SEOProps) {
   useEffect(() => {
     document.title = title;
@@ -21,6 +23,8 @@ export default function SEO({ title, description, canonical, ogImage, jsonLd }: 
     setMeta("name", "description", description);
     setMeta("property", "og:title", title);
     setMeta("property", "og:description", description);
+    setMeta("name", "geo.region", "TR-55");
+    setMeta("name", "geo.placename", "Samsun");
 
     if (ogImage) {
       setMeta("property", "og:image", ogImage);
@@ -39,7 +43,7 @@ export default function SEO({ title, description, canonical, ogImage, jsonLd }: 
     }
 
     return () => {
-      document.title = "JETGO Pet Shop - Kedi ve Köpek Maması | Hızlı Sipariş";
+      document.title = "JETGO Pet Shop Samsun - Kedi Köpek Maması | Online Sipariş & Kapıda Ödeme";
       if (canonicalEl) canonicalEl.remove();
       if (ldScript) ldScript.remove();
     };
@@ -51,12 +55,16 @@ export default function SEO({ title, description, canonical, ogImage, jsonLd }: 
 export const LOCAL_BUSINESS_JSONLD = {
   "@context": "https://schema.org",
   "@type": "PetStore",
-  "name": "JETGO Pet Shop",
-  "url": "https://jet55.app",
+  "name": "JETGO Pet Shop Samsun",
+  "alternateName": "JETGO Samsun Pet Shop",
+  "url": SITE_DOMAIN,
   "telephone": "+908508403959",
   "address": {
     "@type": "PostalAddress",
+    "streetAddress": "Samsun",
     "addressLocality": "Samsun",
+    "addressRegion": "Samsun",
+    "postalCode": "55000",
     "addressCountry": "TR",
   },
   "geo": {
@@ -65,11 +73,32 @@ export const LOCAL_BUSINESS_JSONLD = {
     "longitude": 36.33,
   },
   "priceRange": "₺₺",
-  "paymentAccepted": "Cash, Credit Card, Bank Transfer",
+  "currenciesAccepted": "TRY",
+  "paymentAccepted": "Nakit, Kredi Kartı, Havale/EFT",
+  "openingHoursSpecification": {
+    "@type": "OpeningHoursSpecification",
+    "dayOfWeek": ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"],
+    "opens": "09:00",
+    "closes": "21:00",
+  },
   "areaServed": {
     "@type": "City",
     "name": "Samsun",
+    "containedInPlace": {
+      "@type": "Country",
+      "name": "Türkiye",
+    },
   },
-  "description": "Samsun'da kedi ve köpek maması, kum, ödül maması ve bakım ürünleri. Kapıda ödeme ve hızlı teslimat.",
+  "description": "Samsun pet shop - Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri. Samsun içi aynı gün teslimat, kapıda ödeme. En uygun fiyatlarla online sipariş verin.",
+  "hasOfferCatalog": {
+    "@type": "OfferCatalog",
+    "name": "Samsun Pet Shop Ürünleri",
+    "itemListElement": [
+      { "@type": "OfferCatalog", "name": "Kedi Maması Samsun" },
+      { "@type": "OfferCatalog", "name": "Köpek Maması Samsun" },
+      { "@type": "OfferCatalog", "name": "Kedi Kumu Samsun" },
+      { "@type": "OfferCatalog", "name": "Evcil Hayvan Ürünleri Samsun" },
+    ],
+  },
   "sameAs": [],
 };

@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import BackNavigation from "@/components/BackNavigation";
-import SEO from "@/components/SEO";
+import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import Logo from "@/components/Logo";
 
 interface SubCategory {
@@ -104,9 +104,9 @@ export default function CategoryPage() {
   return (
     <div className="min-h-screen flex flex-col pb-16" style={{ backgroundColor: "#f0f2f5" }}>
       <SEO
-        title={`${category.title} Ürünleri - JETGO Pet Shop | Samsun`}
-        description={`${category.title} maması, bakım ürünleri ve aksesuar çeşitleri. Samsun içi hızlı teslimat, kapıda ödeme. JETGO Pet Shop.`}
-        canonical={`https://jet55.app/kategori/${animalSlug}`}
+        title={`${category.title} Maması Samsun - ${category.title} Ürünleri Fiyatları | JETGO Pet Shop`}
+        description={`Samsun ${category.title.toLowerCase()} maması, ${category.title.toLowerCase()} bakım ürünleri ve aksesuar çeşitleri en uygun fiyatlarla. Samsun içi aynı gün teslimat, kapıda ödeme. ${category.title} maması online sipariş.`}
+        canonical={`${SITE_DOMAIN}/kategori/${animalSlug}`}
       />
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-lg mx-auto px-4 py-2 flex items-center gap-3">

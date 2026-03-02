@@ -2,7 +2,7 @@ import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { Truck, CreditCard, MapPin, User, UserPlus } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
-import SEO, { LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
+import SEO, { LOCAL_BUSINESS_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import SearchBar from "@/components/SearchBar";
 import { useCustomer } from "@/contexts/CustomerContext";
 
@@ -39,9 +39,9 @@ export default function Landing() {
   return (
     <div className="min-h-screen flex flex-col bg-background pb-16">
       <SEO
-        title="JETGO Pet Shop - Kedi ve Köpek Maması | Samsun Hızlı Sipariş"
-        description="Samsun'da kedi ve köpek maması, kum, ödül maması, malt ve bakım ürünlerini en uygun fiyatlarla sipariş edin. Kapıda ödeme, hızlı teslimat."
-        canonical="https://jet55.app/"
+        title="Samsun Pet Shop - Kedi Köpek Maması Online Sipariş | JETGO"
+        description="Samsun pet shop JETGO - Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri. Samsun içi aynı gün kapıya teslimat, kapıda ödeme. En uygun fiyatlarla online sipariş."
+        canonical={`${SITE_DOMAIN}/`}
         jsonLd={LOCAL_BUSINESS_JSONLD}
       />
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
