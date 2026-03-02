@@ -153,11 +153,6 @@ export default function Checkout() {
     }
   }, [isLoggedIn, customer, savedAddresses, addressInitialized]);
 
-  useEffect(() => {
-    if (!isLoggedIn) {
-      setShowAuthModal(true);
-    }
-  }, []);
 
   const formatAuthPhone = (val: string) => {
     const digits = val.replace(/\D/g, "");
@@ -307,6 +302,10 @@ export default function Checkout() {
   };
 
   const handleOrder = async () => {
+    if (!isLoggedIn) {
+      setShowAuthModal(true);
+      return;
+    }
     if (!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle || !customerName.trim() || !customerPhone.trim()) {
       if (!selectedMahalle) {
         toast({ title: "Lütfen teslimat mahallenizi seçin", variant: "destructive" });
@@ -694,7 +693,7 @@ export default function Checkout() {
 
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-customer-info">
-                Musteri Bilgileri
+                Müşteri Bilgileri
               </h2>
               <Card>
                 <CardContent className="p-4 space-y-3">
@@ -718,7 +717,7 @@ export default function Checkout() {
                       {customerLocation && (
                         <p className="text-xs text-green-600 mt-1 flex items-center gap-1" data-testid="text-summary-location">
                           <Navigation className="w-3 h-3" />
-                          Konum paylasıldı
+                          Konum paylaşıldı
                         </p>
                       )}
 
@@ -732,13 +731,13 @@ export default function Checkout() {
                             className="ml-auto text-xs text-muted-foreground underline hover:text-foreground"
                             data-testid="btn-change-mahalle"
                           >
-                            Degistir
+                            Değiştir
                           </button>
                         </div>
                       ) : (
                         <Select value={selectedMahalle} onValueChange={(val) => { setSelectedMahalle(val); localStorage.setItem("jet55_mahalle", val); setMahalleSaved(true); }}>
                           <SelectTrigger data-testid="select-mahalle" className={`h-9 text-sm mt-2 ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
-                            <SelectValue placeholder="Teslimat mahallesi seciniz..." />
+                            <SelectValue placeholder="Teslimat mahallesi seçiniz..." />
                           </SelectTrigger>
                           <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
                             {TESLIMAT_MAHALLELERI.map((m) => (
@@ -766,7 +765,7 @@ export default function Checkout() {
                               >
                                 <span className="flex items-center gap-1.5">
                                   <Home className="w-3 h-3" />
-                                  Kayitli adreslerden sec
+                                  Kayıtlı adreslerden seç
                                 </span>
                                 <ChevronDown className={`w-3 h-3 transition-transform ${showAddressPicker ? "rotate-180" : ""}`} />
                               </button>
@@ -781,7 +780,7 @@ export default function Checkout() {
                                       data-testid={`btn-select-address-${addr.id}`}
                                     >
                                       <span className="font-medium">{addr.label}</span>
-                                      {addr.isDefault && <Badge variant="secondary" className="ml-1.5 text-[10px] py-0">Varsayilan</Badge>}
+                                      {addr.isDefault && <Badge variant="secondary" className="ml-1.5 text-[10px] py-0">Varsayılan</Badge>}
                                       <p className="text-muted-foreground mt-0.5 line-clamp-2">{addr.address}</p>
                                     </button>
                                   ))}
@@ -814,7 +813,7 @@ export default function Checkout() {
                                 onClick={handleShareLocation}
                                 disabled={locationLoading}
                                 className="absolute right-2 top-2 p-1 rounded-full text-muted-foreground hover:bg-accent transition-colors"
-                                title="Konumumu paylas"
+                                title="Konumumu paylaş"
                                 data-testid="btn-share-location"
                               >
                                 {locationLoading ? (
@@ -834,24 +833,76 @@ export default function Checkout() {
                               data-testid="link-location-map"
                             >
                               <CheckCircle2 className="w-3 h-3" />
-                              Konum alındı - Haritada gor
+                              Konum alındı - Haritada gör
                             </a>
                           )}
                         </motion.div>
                       )}
                     </div>
                   ) : (
-                    <div className="text-center py-2" data-testid="guest-auth-prompt">
-                      <p className="text-sm text-muted-foreground mb-3">Sipariş vermek için giriş yapın veya üye olun</p>
-                      <Button
-                        className="w-full font-semibold"
-                        style={{ backgroundColor: "#6B3480" }}
-                        onClick={() => setShowAuthModal(true)}
-                        data-testid="btn-open-auth-modal"
-                      >
-                        <LogIn className="w-4 h-4 mr-2" />
-                        Giriş Yap / Üye Ol
-                      </Button>
+                    <div className="space-y-3" data-testid="guest-customer-form">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Ad Soyad</label>
+                        <Input
+                          value={customerName}
+                          onChange={(e) => setCustomerName(e.target.value)}
+                          placeholder="Adınız Soyadınız"
+                          className="h-9"
+                          data-testid="input-guest-name"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Telefon</label>
+                        <Input
+                          value={customerPhone}
+                          onChange={(e) => setCustomerPhone(e.target.value)}
+                          placeholder="05XX XXX XX XX"
+                          type="tel"
+                          className="h-9"
+                          data-testid="input-guest-phone"
+                        />
+                      </div>
+
+                      {mahalleSaved ? (
+                        <div className="flex items-center gap-2 p-2 rounded-lg border border-green-200 bg-green-50" data-testid="mahalle-saved-guest">
+                          <MapPin className="w-4 h-4 text-green-600 shrink-0" />
+                          <span className="text-sm font-medium text-green-700">{selectedMahalle}</span>
+                          <button
+                            type="button"
+                            onClick={() => { localStorage.removeItem("jet55_mahalle"); setSelectedMahalle(""); setMahalleSaved(false); }}
+                            className="ml-auto text-xs text-muted-foreground underline hover:text-foreground"
+                            data-testid="btn-change-mahalle-guest"
+                          >
+                            Değiştir
+                          </button>
+                        </div>
+                      ) : (
+                        <Select value={selectedMahalle} onValueChange={(val) => { setSelectedMahalle(val); localStorage.setItem("jet55_mahalle", val); setMahalleSaved(true); }}>
+                          <SelectTrigger data-testid="select-mahalle-guest" className={`h-9 text-sm ${!selectedMahalle ? "text-muted-foreground" : ""}`}>
+                            <SelectValue placeholder="Teslimat mahallesi seçiniz..." />
+                          </SelectTrigger>
+                          <SelectContent position="popper" className="max-h-[250px] overflow-y-auto z-[9999]">
+                            {TESLIMAT_MAHALLELERI.map((m) => (
+                              <SelectItem key={m} value={m} data-testid={`option-mahalle-guest-${m}`}>
+                                {m}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+
+                      {selectedMahalle && (
+                        <div className="space-y-2">
+                          <Textarea
+                            placeholder="Sokak, bina no, daire no..."
+                            value={customerAddress}
+                            onChange={(e) => setCustomerAddress(e.target.value)}
+                            rows={2}
+                            className="text-sm"
+                            data-testid="input-guest-address"
+                          />
+                        </div>
+                      )}
                     </div>
                   )}
                 </CardContent>
@@ -1135,7 +1186,7 @@ export default function Checkout() {
                     data-testid="btn-order-whatsapp"
                   >
                     {orderLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <SiWhatsapp className="w-5 h-5" />}
-                    {orderLoading ? "Kaydediliyor..." : "Siparisi Ver"}
+                    {orderLoading ? "Kaydediliyor..." : "Siparişi Ver"}
                   </Button>
 
                   {!minReached && selectedProducts.length > 0 && (
