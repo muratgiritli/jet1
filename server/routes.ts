@@ -51,6 +51,13 @@ export async function registerRoutes(
   await seedDatabase();
   await ensureAdminExists();
 
+  if (process.env.NODE_ENV === "production") {
+    migrateAllImages().then(result => {
+      console.log(`[image] Startup migration:`, result);
+    }).catch(err => {
+      console.error(`[image] Startup migration error:`, err);
+    });
+  }
 
   app.get("/api/brand-categories", async (_req, res) => {
     const categories = await storage.getAllBrandCategories();

@@ -17,23 +17,27 @@ export function serveStatic(app: Express) {
 
   console.log(`[static] serving from: ${distPath}`);
 
-  const productImagesPath = path.join(distPath, "product-images");
-  const productImagesExist = fs.existsSync(productImagesPath);
-  console.log(`[static] product-images path: ${productImagesPath}, exists: ${productImagesExist}`);
+  const imageDirs = [
+    path.join(distPath, "product-images"),
+    path.join(process.cwd(), "client", "public", "product-images"),
+  ].filter(d => fs.existsSync(d));
 
-  if (productImagesExist) {
-    const count = fs.readdirSync(productImagesPath).length;
-    console.log(`[static] product-images count: ${count}`);
+  for (const dir of imageDirs) {
+    const count = fs.readdirSync(dir).length;
+    console.log(`[static] product-images dir: ${dir}, count: ${count}`);
   }
 
   app.use("/product-images", (req, res) => {
-    const filePath = path.join(productImagesPath, req.path);
-    if (fs.existsSync(filePath)) {
-      res.setHeader("Cache-Control", "public, max-age=604800, immutable");
-      if (filePath.endsWith(".webp")) {
-        res.setHeader("Content-Type", "image/webp");
+    const cleanPath = req.path.split("?")[0];
+    for (const dir of imageDirs) {
+      const filePath = path.join(dir, cleanPath);
+      if (fs.existsSync(filePath)) {
+        res.setHeader("Cache-Control", "public, max-age=604800, immutable");
+        if (filePath.endsWith(".webp")) {
+          res.setHeader("Content-Type", "image/webp");
+        }
+        return res.sendFile(filePath);
       }
-      return res.sendFile(filePath);
     }
     res.status(404).end();
   });

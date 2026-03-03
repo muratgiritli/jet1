@@ -3,20 +3,32 @@ import path from "path";
 import fs from "fs";
 import { storage } from "./storage";
 
-function getImageDir(): string {
-  const candidates = [
-    path.join(process.cwd(), "client", "public", "product-images"),
+function getImageDirs(): string[] {
+  const dirs = [
     path.join(process.cwd(), "dist", "public", "product-images"),
+    path.join(process.cwd(), "client", "public", "product-images"),
   ];
-  for (const dir of candidates) {
-    if (fs.existsSync(dir)) return dir;
-  }
-  const fallback = candidates[0];
-  fs.mkdirSync(fallback, { recursive: true });
-  return fallback;
+  return dirs.filter(d => fs.existsSync(d));
 }
 
-const IMAGE_DIR = getImageDir();
+function getWriteDir(): string {
+  const distDir = path.join(process.cwd(), "dist", "public", "product-images");
+  if (fs.existsSync(distDir)) return distDir;
+
+  const clientDir = path.join(process.cwd(), "client", "public", "product-images");
+  if (fs.existsSync(clientDir)) return clientDir;
+
+  fs.mkdirSync(distDir, { recursive: true });
+  return distDir;
+}
+
+function imageFileExists(productId: number): boolean {
+  const filename = `product-${productId}.webp`;
+  for (const dir of getImageDirs()) {
+    if (fs.existsSync(path.join(dir, filename))) return true;
+  }
+  return false;
+}
 
 export async function downloadAndConvertImage(imageUrl: string, productId: number): Promise<string | null> {
   try {
@@ -40,9 +52,19 @@ export async function downloadAndConvertImage(imageUrl: string, productId: numbe
       .webp({ quality: 80 })
       .toBuffer();
 
+    if (webpBuffer.length < 500) {
+      console.log(`[image] Image too small for product ${productId}: ${webpBuffer.length} bytes`);
+      return null;
+    }
+
     const filename = `product-${productId}.webp`;
-    const filepath = path.join(IMAGE_DIR, filename);
-    fs.writeFileSync(filepath, webpBuffer);
+    const writeDir = getWriteDir();
+    fs.writeFileSync(path.join(writeDir, filename), webpBuffer);
+
+    const clientDir = path.join(process.cwd(), "client", "public", "product-images");
+    if (fs.existsSync(clientDir) && clientDir !== writeDir) {
+      fs.writeFileSync(path.join(clientDir, filename), webpBuffer);
+    }
 
     const localPath = `/product-images/${filename}?v=${Date.now()}`;
     console.log(`[image] Converted product ${productId} -> ${filename} (${Math.round(webpBuffer.length / 1024)} KB)`);
@@ -60,8 +82,13 @@ export async function saveUploadedImage(buffer: Buffer, productId: number): Prom
     .toBuffer();
 
   const filename = `product-${productId}.webp`;
-  const filepath = path.join(IMAGE_DIR, filename);
-  fs.writeFileSync(filepath, webpBuffer);
+  const writeDir = getWriteDir();
+  fs.writeFileSync(path.join(writeDir, filename), webpBuffer);
+
+  const clientDir = path.join(process.cwd(), "client", "public", "product-images");
+  if (fs.existsSync(clientDir) && clientDir !== writeDir) {
+    fs.writeFileSync(path.join(clientDir, filename), webpBuffer);
+  }
 
   const localPath = `/product-images/${filename}?v=${Date.now()}`;
   console.log(`[image] Uploaded product ${productId} -> ${filename} (${Math.round(webpBuffer.length / 1024)} KB)`);
@@ -80,9 +107,7 @@ export async function migrateAllImages(): Promise<{ success: number; failed: num
       continue;
     }
 
-    const filename = `product-${product.id}.webp`;
-    const filepath = path.join(IMAGE_DIR, filename);
-    const fileExists = fs.existsSync(filepath);
+    const fileExists = imageFileExists(product.id);
 
     if (product.img.startsWith("/product-images/")) {
       if (fileExists) {
@@ -104,7 +129,7 @@ export async function migrateAllImages(): Promise<{ success: number; failed: num
 
     if (fileExists) {
       await storage.updateProduct(product.id, {
-        img: `/product-images/${filename}`,
+        img: `/product-images/product-${product.id}.webp`,
         originalImg: product.img,
       });
       skipped++;
