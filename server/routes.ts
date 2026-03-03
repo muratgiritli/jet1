@@ -53,11 +53,78 @@ export async function registerRoutes(
 
   const pgPool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
   await pgPool.query(`CREATE TABLE IF NOT EXISTS product_images (product_id INTEGER PRIMARY KEY, data TEXT NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT NOW())`);
+  
+  const { rows: [{ count: imgCount }] } = await pgPool.query(`SELECT COUNT(*)::int as count FROM product_images`);
   await pgPool.end();
+  
+  if (imgCount === 0) {
+    setTimeout(async () => {
+      console.log(`[image] product_images table is empty, importing disk images in background...`);
+      const fs = await import("fs");
+      const pathMod = await import("path");
+      const { Pool } = await import("pg");
+      const bgPool = new Pool({ connectionString: process.env.DATABASE_URL });
+      
+      const imageDirs = [
+        pathMod.default.join(process.cwd(), "dist", "public", "product-images"),
+        pathMod.default.join(process.cwd(), "client", "public", "product-images"),
+      ].filter(d => fs.existsSync(d));
+      
+      let imported = 0;
+      for (const dir of imageDirs) {
+        const files = fs.readdirSync(dir).filter((f: string) => f.endsWith(".webp"));
+        for (let i = 0; i < files.length; i += 50) {
+          const batch = files.slice(i, i + 50);
+          for (const file of batch) {
+            const match = file.match(/product-(\d+)\.webp/);
+            if (!match) continue;
+            const productId = parseInt(match[1]);
+            const data = fs.readFileSync(pathMod.default.join(dir, file));
+            const base64 = data.toString("base64");
+            try {
+              await bgPool.query(
+                `INSERT INTO product_images (product_id, data, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (product_id) DO NOTHING`,
+                [productId, base64]
+              );
+              imported++;
+            } catch {}
+          }
+          console.log(`[image] Imported ${Math.min(i + 50, files.length)}/${files.length} from ${dir}`);
+        }
+      }
+      console.log(`[image] Disk import complete: ${imported} images`);
+
+      const allProducts = await storage.getAllProducts();
+      for (const p of allProducts) {
+        if (p.originalImg && p.img?.startsWith("/product-images/")) {
+          try {
+            const imgPath = await (await import("./image-service")).downloadAndSaveImage(p.originalImg, p.id);
+            if (imgPath) {
+              await storage.updateProduct(p.id, { img: imgPath });
+            }
+          } catch {}
+          await new Promise(r => setTimeout(r, 300));
+        }
+      }
+      console.log(`[image] Background import fully complete`);
+      await bgPool.end();
+    }, 3000);
+  }
 
   app.get("/api/product-image/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).end();
+    const buffer = await getProductImage(id);
+    if (!buffer) return res.status(404).end();
+    res.setHeader("Content-Type", "image/webp");
+    res.setHeader("Cache-Control", "public, max-age=604800, immutable");
+    res.send(buffer);
+  });
+
+  app.get("/product-images/:filename", async (req, res) => {
+    const match = req.params.filename.match(/product-(\d+)\.webp/);
+    if (!match) return res.status(404).end();
+    const id = parseInt(match[1]);
     const buffer = await getProductImage(id);
     if (!buffer) return res.status(404).end();
     res.setHeader("Content-Type", "image/webp");
