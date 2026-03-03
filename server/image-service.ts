@@ -1,36 +1,41 @@
 import sharp from "sharp";
-import path from "path";
-import fs from "fs";
-import { storage } from "./storage";
+import { db } from "./storage";
+import { productImages } from "@shared/schema";
+import { eq } from "drizzle-orm";
 
-function getImageDirs(): string[] {
-  const dirs = [
-    path.join(process.cwd(), "dist", "public", "product-images"),
-    path.join(process.cwd(), "client", "public", "product-images"),
-  ];
-  return dirs.filter(d => fs.existsSync(d));
+export async function saveProductImage(buffer: Buffer, productId: number): Promise<string> {
+  const webpBuffer = await sharp(buffer)
+    .resize(800, 800, { fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 80 })
+    .toBuffer();
+
+  const base64 = webpBuffer.toString("base64");
+
+  await db
+    .insert(productImages)
+    .values({ productId, data: base64, updatedAt: new Date() })
+    .onConflictDoUpdate({
+      target: productImages.productId,
+      set: { data: base64, updatedAt: new Date() },
+    });
+
+  const imgPath = `/api/product-image/${productId}?v=${Date.now()}`;
+  console.log(`[image] Saved product ${productId} (${Math.round(webpBuffer.length / 1024)} KB)`);
+  return imgPath;
 }
 
-function getWriteDir(): string {
-  const distDir = path.join(process.cwd(), "dist", "public", "product-images");
-  if (fs.existsSync(distDir)) return distDir;
+export async function getProductImage(productId: number): Promise<Buffer | null> {
+  const [row] = await db
+    .select({ data: productImages.data })
+    .from(productImages)
+    .where(eq(productImages.productId, productId))
+    .limit(1);
 
-  const clientDir = path.join(process.cwd(), "client", "public", "product-images");
-  if (fs.existsSync(clientDir)) return clientDir;
-
-  fs.mkdirSync(distDir, { recursive: true });
-  return distDir;
+  if (!row) return null;
+  return Buffer.from(row.data, "base64");
 }
 
-function imageFileExists(productId: number): boolean {
-  const filename = `product-${productId}.webp`;
-  for (const dir of getImageDirs()) {
-    if (fs.existsSync(path.join(dir, filename))) return true;
-  }
-  return false;
-}
-
-export async function downloadAndConvertImage(imageUrl: string, productId: number): Promise<string | null> {
+export async function downloadAndSaveImage(imageUrl: string, productId: number): Promise<string | null> {
   try {
     const response = await fetch(imageUrl, {
       headers: {
@@ -41,201 +46,23 @@ export async function downloadAndConvertImage(imageUrl: string, productId: numbe
     });
 
     if (!response.ok) {
-      console.log(`[image] Failed to download image for product ${productId}: HTTP ${response.status}`);
+      console.log(`[image] Download failed for product ${productId}: HTTP ${response.status}`);
       return null;
     }
 
     const buffer = Buffer.from(await response.arrayBuffer());
-
-    const webpBuffer = await sharp(buffer)
-      .resize(800, 800, { fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 80 })
-      .toBuffer();
-
-    if (webpBuffer.length < 500) {
-      console.log(`[image] Image too small for product ${productId}: ${webpBuffer.length} bytes`);
-      return null;
-    }
-
-    const filename = `product-${productId}.webp`;
-    const writeDir = getWriteDir();
-    fs.writeFileSync(path.join(writeDir, filename), webpBuffer);
-
-    const clientDir = path.join(process.cwd(), "client", "public", "product-images");
-    if (fs.existsSync(clientDir) && clientDir !== writeDir) {
-      fs.writeFileSync(path.join(clientDir, filename), webpBuffer);
-    }
-
-    const localPath = `/product-images/${filename}?v=${Date.now()}`;
-    console.log(`[image] Converted product ${productId} -> ${filename} (${Math.round(webpBuffer.length / 1024)} KB)`);
-    return localPath;
+    return await saveProductImage(buffer, productId);
   } catch (err: any) {
-    console.log(`[image] Error processing product ${productId}: ${err.message}`);
+    console.log(`[image] Error downloading product ${productId}: ${err.message}`);
     return null;
   }
 }
 
-export async function saveUploadedImage(buffer: Buffer, productId: number): Promise<string> {
-  const webpBuffer = await sharp(buffer)
-    .resize(800, 800, { fit: "inside", withoutEnlargement: true })
-    .webp({ quality: 80 })
-    .toBuffer();
-
-  const filename = `product-${productId}.webp`;
-  const writeDir = getWriteDir();
-  fs.writeFileSync(path.join(writeDir, filename), webpBuffer);
-
-  const clientDir = path.join(process.cwd(), "client", "public", "product-images");
-  if (fs.existsSync(clientDir) && clientDir !== writeDir) {
-    fs.writeFileSync(path.join(clientDir, filename), webpBuffer);
-  }
-
-  const localPath = `/product-images/${filename}?v=${Date.now()}`;
-  console.log(`[image] Uploaded product ${productId} -> ${filename} (${Math.round(webpBuffer.length / 1024)} KB)`);
-  return localPath;
-}
-
-function findImageFile(productId: number): string | null {
-  const filename = `product-${productId}.webp`;
-  for (const dir of getImageDirs()) {
-    const filePath = path.join(dir, filename);
-    if (fs.existsSync(filePath)) return filePath;
-  }
-  return null;
-}
-
-function copyImageFile(sourceProductId: number, targetProductId: number): boolean {
-  const sourcePath = findImageFile(sourceProductId);
-  if (!sourcePath) return false;
-  
-  const filename = `product-${targetProductId}.webp`;
-  const writeDir = getWriteDir();
-  try {
-    fs.copyFileSync(sourcePath, path.join(writeDir, filename));
-    const clientDir = path.join(process.cwd(), "client", "public", "product-images");
-    if (fs.existsSync(clientDir) && clientDir !== writeDir) {
-      fs.copyFileSync(sourcePath, path.join(clientDir, filename));
-    }
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-function normalizeProductName(name: string): string {
-  return name.toLowerCase().replace(/[^a-zçğıöşüâ0-9]/g, " ").replace(/\s+/g, " ").trim();
-}
-
-function wordSimilarity(a: string, b: string): number {
-  const wordsA = new Set(normalizeProductName(a).split(" "));
-  const wordsB = new Set(normalizeProductName(b).split(" "));
-  let common = 0;
-  wordsA.forEach(w => { if (wordsB.has(w)) common++; });
-  return common / Math.max(wordsA.size, wordsB.size);
-}
-
-export async function migrateAllImages(): Promise<{ success: number; failed: number; skipped: number }> {
-  const products = await storage.getAllProducts();
-  let success = 0;
-  let failed = 0;
-  let skipped = 0;
-
-  const productsWithFiles: { id: number; name: string }[] = [];
-  const needsImage: typeof products = [];
-
-  for (const product of products) {
-    if (!product.img) {
-      skipped++;
-      continue;
-    }
-
-    const fileExists = imageFileExists(product.id);
-
-    if (product.img.startsWith("/product-images/")) {
-      if (fileExists) {
-        productsWithFiles.push({ id: product.id, name: product.name });
-        skipped++;
-      } else if (product.originalImg) {
-        const localPath = await downloadAndConvertImage(product.originalImg, product.id);
-        if (localPath) {
-          await storage.updateProduct(product.id, { img: localPath });
-          productsWithFiles.push({ id: product.id, name: product.name });
-          success++;
-        } else {
-          needsImage.push(product);
-          failed++;
-        }
-        await new Promise(r => setTimeout(r, 200));
-      } else {
-        needsImage.push(product);
-      }
-      continue;
-    }
-
-    if (fileExists) {
-      await storage.updateProduct(product.id, {
-        img: `/product-images/product-${product.id}.webp`,
-        originalImg: product.img,
-      });
-      productsWithFiles.push({ id: product.id, name: product.name });
-      skipped++;
-      continue;
-    }
-
-    await storage.updateProduct(product.id, { originalImg: product.img });
-
-    const localPath = await downloadAndConvertImage(product.img, product.id);
-    if (localPath) {
-      await storage.updateProduct(product.id, { img: localPath });
-      productsWithFiles.push({ id: product.id, name: product.name });
-      success++;
-    } else {
-      needsImage.push(product);
-      failed++;
-    }
-
-    await new Promise(r => setTimeout(r, 200));
-  }
-
-  if (needsImage.length > 0 && productsWithFiles.length > 0) {
-    console.log(`[image] Phase 2: Trying name-match copy for ${needsImage.length} products without images...`);
-    let nameCopied = 0;
-
-    const nameIndex = new Map<string, { id: number; name: string }>();
-    for (const p of productsWithFiles) {
-      nameIndex.set(normalizeProductName(p.name), p);
-    }
-
-    for (const product of needsImage) {
-      const normName = normalizeProductName(product.name);
-      let matchedSource = nameIndex.get(normName);
-
-      if (!matchedSource) {
-        let bestScore = 0;
-        let bestMatch: { id: number; name: string } | null = null;
-        for (const src of productsWithFiles) {
-          const score = wordSimilarity(product.name, src.name);
-          if (score > bestScore) {
-            bestScore = score;
-            bestMatch = src;
-          }
-        }
-        if (bestScore >= 0.7 && bestMatch) {
-          matchedSource = bestMatch;
-        }
-      }
-
-      if (matchedSource && copyImageFile(matchedSource.id, product.id)) {
-        const localPath = `/product-images/product-${product.id}.webp?v=${Date.now()}`;
-        await storage.updateProduct(product.id, { img: localPath });
-        nameCopied++;
-        console.log(`[image] Copied product ${matchedSource.id} -> ${product.id} (${product.name.slice(0, 50)})`);
-      }
-    }
-    console.log(`[image] Phase 2 complete: ${nameCopied} copied by name match`);
-    success += nameCopied;
-  }
-
-  console.log(`[image] Migration complete: ${success} converted, ${failed} failed, ${skipped} skipped`);
-  return { success, failed, skipped };
+export async function hasProductImage(productId: number): Promise<boolean> {
+  const [row] = await db
+    .select({ productId: productImages.productId })
+    .from(productImages)
+    .where(eq(productImages.productId, productId))
+    .limit(1);
+  return !!row;
 }

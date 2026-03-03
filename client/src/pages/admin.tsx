@@ -1709,32 +1709,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
             <div className="flex items-center gap-2 flex-wrap">
               {(() => {
-                const webpCount = filteredProducts.filter(p => p.img?.startsWith("/product-images/")).length;
-                const extCount = filteredProducts.filter(p => p.img && !p.img.startsWith("/product-images/")).length;
+                const dbImgCount = filteredProducts.filter(p => p.img?.startsWith("/api/product-image/")).length;
+                const extCount = filteredProducts.filter(p => p.img && p.img.startsWith("http")).length;
                 const noImgCount = filteredProducts.filter(p => !p.img).length;
                 return (
                   <div className="flex items-center gap-2 text-xs">
-                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />{webpCount} WebP</span>
-                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-orange-400 inline-block" />{extCount} Dış</span>
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block" />{dbImgCount} Resimli</span>
+                    {extCount > 0 && <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-full bg-orange-400 inline-block" />{extCount} Dış</span>}
                     {noImgCount > 0 && <span className="flex items-center gap-1 text-muted-foreground">{noImgCount} Resim yok</span>}
                   </div>
                 );
               })()}
-              <Button
-                variant="outline"
-                data-testid="btn-migrate-images"
-                onClick={async () => {
-                  try {
-                    await apiRequest("POST", "/api/admin/migrate-images");
-                    toast({ title: "Resim aktarimi baslatildi", description: "Arka planda tum resimler WebP formatina donusturuluyor..." });
-                  } catch {
-                    toast({ title: "Hata", variant: "destructive" });
-                  }
-                }}
-              >
-                <ImageIcon className="w-4 h-4" />
-                Resimleri WebP Yap
-              </Button>
               <Dialog open={bulkPriceDialogOpen} onOpenChange={(open) => { setBulkPriceDialogOpen(open); if (!open) { setBulkPricePercent(""); setIndividualPrices({}); } }}>
                 <DialogTrigger asChild>
                   <Button variant="outline" disabled={filteredProducts.length === 0} data-testid="btn-bulk-price">
@@ -1938,15 +1923,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             <ImageIcon className="w-5 h-5 text-muted-foreground/40" />
                           </div>
                         )}
-                        {product.img?.startsWith("/product-images/") ? (
-                          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center" title="WebP">
+                        {product.img?.startsWith("/api/product-image/") ? (
+                          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center" title="DB Resim">
                             <Check className="w-3 h-3 text-white" />
                           </span>
-                        ) : (
+                        ) : product.img ? (
                           <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-orange-400 flex items-center justify-center" title="Dış URL">
                             <AlertTriangle className="w-3 h-3 text-white" />
                           </span>
-                        )}
+                        ) : null}
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate" data-testid={`text-admin-product-name-${product.id}`}>

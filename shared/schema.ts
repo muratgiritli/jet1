@@ -229,3 +229,9 @@ export const reorderReminders = pgTable("reorder_reminders", {
 export const insertReorderReminderSchema = createInsertSchema(reorderReminders).omit({ id: true, createdAt: true, notifiedAt: true });
 export type InsertReorderReminder = z.infer<typeof insertReorderReminderSchema>;
 export type ReorderReminder = typeof reorderReminders.$inferSelect;
+
+export const productImages = pgTable("product_images", {
+  productId: integer("product_id").primaryKey(),
+  data: text("data").notNull(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});

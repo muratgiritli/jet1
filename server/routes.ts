@@ -8,7 +8,7 @@ import bcrypt from "bcryptjs";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
 import pg from "pg";
-import { downloadAndConvertImage, migrateAllImages, saveUploadedImage } from "./image-service";
+import { saveProductImage, getProductImage, downloadAndSaveImage } from "./image-service";
 import multer from "multer";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
@@ -51,13 +51,19 @@ export async function registerRoutes(
   await seedDatabase();
   await ensureAdminExists();
 
-  if (process.env.NODE_ENV === "production") {
-    migrateAllImages().then(result => {
-      console.log(`[image] Startup migration:`, result);
-    }).catch(err => {
-      console.error(`[image] Startup migration error:`, err);
-    });
-  }
+  const pgPool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+  await pgPool.query(`CREATE TABLE IF NOT EXISTS product_images (product_id INTEGER PRIMARY KEY, data TEXT NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT NOW())`);
+  await pgPool.end();
+
+  app.get("/api/product-image/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).end();
+    const buffer = await getProductImage(id);
+    if (!buffer) return res.status(404).end();
+    res.setHeader("Content-Type", "image/webp");
+    res.setHeader("Cache-Control", "public, max-age=604800, immutable");
+    res.send(buffer);
+  });
 
   app.get("/api/brand-categories", async (_req, res) => {
     const categories = await storage.getAllBrandCategories();
@@ -204,10 +210,10 @@ export async function registerRoutes(
     const parsed = insertProductSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
     const product = await storage.createProduct(parsed.data);
-    if (product.img && !product.img.startsWith("/product-images/")) {
-      const localPath = await downloadAndConvertImage(product.img, product.id);
-      if (localPath) {
-        const updated = await storage.updateProduct(product.id, { img: localPath });
+    if (product.img && product.img.startsWith("http")) {
+      const imgPath = await downloadAndSaveImage(product.img, product.id);
+      if (imgPath) {
+        const updated = await storage.updateProduct(product.id, { img: imgPath });
         return res.status(201).json(updated);
       }
     }
@@ -216,14 +222,10 @@ export async function registerRoutes(
 
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
-    if (req.body.img && !req.body.img.startsWith("/product-images/")) {
-      try {
-        const localPath = await downloadAndConvertImage(req.body.img, id);
-        if (localPath) {
-          req.body.img = localPath;
-        }
-      } catch (err) {
-        console.log(`[image] Download failed for product ${id}, keeping external URL`);
+    if (req.body.img && req.body.img.startsWith("http")) {
+      const imgPath = await downloadAndSaveImage(req.body.img, id);
+      if (imgPath) {
+        req.body.img = imgPath;
       }
     }
     const product = await storage.updateProduct(id, req.body);
@@ -236,8 +238,8 @@ export async function registerRoutes(
     if (!req.file) return res.status(400).json({ message: "Resim dosyası gerekli" });
     if (!req.file.mimetype.startsWith("image/")) return res.status(400).json({ message: "Sadece resim dosyaları yüklenebilir" });
     try {
-      const localPath = await saveUploadedImage(req.file.buffer, id);
-      const product = await storage.updateProduct(id, { img: localPath });
+      const imgPath = await saveProductImage(req.file.buffer, id);
+      const product = await storage.updateProduct(id, { img: imgPath });
       if (!product) return res.status(404).json({ message: "Ürün bulunamadı" });
       res.json(product);
     } catch (err: any) {
@@ -855,13 +857,66 @@ export async function registerRoutes(
     res.json({ message: "Deleted" });
   });
 
-  app.post("/api/admin/migrate-images", requireAdmin, async (req, res) => {
-    res.json({ message: "Image migration started in background" });
-    migrateAllImages().then(result => {
-      console.log(`[image] Migration finished:`, result);
-    }).catch(err => {
-      console.error(`[image] Migration error:`, err);
-    });
+
+  app.post("/api/admin/migrate-disk-images", requireAdmin, async (req, res) => {
+    res.json({ message: "Disk resimlerinin DB'ye aktarımı başlatıldı" });
+    
+    const fs = await import("fs");
+    const pathMod = await import("path");
+    
+    const imageDirs = [
+      pathMod.default.join(process.cwd(), "dist", "public", "product-images"),
+      pathMod.default.join(process.cwd(), "client", "public", "product-images"),
+    ].filter(d => fs.existsSync(d));
+    
+    const products = await storage.getAllProducts();
+    let migrated = 0;
+    let skipped = 0;
+    let failed = 0;
+    
+    for (const product of products) {
+      if (product.img?.startsWith("/api/product-image/")) {
+        const hasImg = await (await import("./image-service")).hasProductImage(product.id);
+        if (hasImg) { skipped++; continue; }
+      }
+      
+      let buffer: Buffer | null = null;
+      const filename = `product-${product.id}.webp`;
+      for (const dir of imageDirs) {
+        const filePath = pathMod.default.join(dir, filename);
+        if (fs.existsSync(filePath)) {
+          buffer = fs.readFileSync(filePath);
+          break;
+        }
+      }
+      
+      if (buffer) {
+        try {
+          const imgPath = await (await import("./image-service")).saveProductImage(buffer, product.id);
+          await storage.updateProduct(product.id, { img: imgPath });
+          migrated++;
+        } catch (err: any) {
+          console.log(`[migrate] Failed for product ${product.id}: ${err.message}`);
+          failed++;
+        }
+      } else if (product.img?.startsWith("http") || product.originalImg) {
+        const url = product.originalImg || product.img;
+        if (url) {
+          const imgPath = await (await import("./image-service")).downloadAndSaveImage(url, product.id);
+          if (imgPath) {
+            await storage.updateProduct(product.id, { img: imgPath });
+            migrated++;
+          } else {
+            failed++;
+          }
+          await new Promise(r => setTimeout(r, 200));
+        }
+      } else {
+        skipped++;
+      }
+    }
+    
+    console.log(`[migrate] Complete: ${migrated} migrated, ${skipped} skipped, ${failed} failed`);
   });
 
   return httpServer;
