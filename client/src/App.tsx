@@ -8,6 +8,7 @@ import { CustomerProvider } from "@/contexts/CustomerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import BottomTabBar from "@/components/BottomTabBar";
 import FloatingCartBar from "@/components/FloatingCartBar";
+import Header from "@/components/Header";
 import Landing from "@/pages/landing";
 import Checkout from "@/pages/checkout";
 import CategoryPage from "@/pages/category";
@@ -62,6 +63,7 @@ function AppShell() {
 
   return (
     <>
+      {!isAdmin && <Header />}
       <Router />
       {!isAdmin && <FloatingCartBar />}
       {!isAdmin && <BottomTabBar />}

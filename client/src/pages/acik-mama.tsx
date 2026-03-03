@@ -4,12 +4,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRoute } from "wouter";
-import { ArrowLeft, ShoppingCart, Loader2, Plus, Minus } from "lucide-react";
+import { ShoppingCart, Loader2, Plus, Minus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import Logo from "@/components/Logo";
-import BackNavigation from "@/components/BackNavigation";
 import ProductImage from "@/components/ProductImage";
 import { productUrl } from "@/lib/data";
 
@@ -137,30 +136,6 @@ export default function AcikMamaPage() {
 
   return (
     <div className="min-h-screen flex flex-col pb-16" style={{ backgroundColor: "#f0f2f5" }}>
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <Link href={`/kategori/${animal}`}>
-              <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
-                <ArrowLeft />
-              </Button>
-            </Link>
-            <Logo className="text-2xl" linkTo="/" />
-          </div>
-          {itemCount > 0 && (
-            <Link href="/odeme">
-              <Button variant="outline" className="bg-white/90" data-testid="btn-go-to-cart">
-                <ShoppingCart className="w-4 h-4" />
-                <span data-testid="text-cart-count">{itemCount}</span>
-                <Badge variant="secondary" className="no-default-hover-elevate" data-testid="text-cart-total">{Math.round(grandTotal)} TL</Badge>
-              </Button>
-            </Link>
-          )}
-        </div>
-      </header>
-
-      <BackNavigation />
-
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-extrabold" data-testid="text-acik-title">

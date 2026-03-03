@@ -1,12 +1,10 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Truck, CreditCard, MapPin, User, UserPlus } from "lucide-react";
+import { Truck, CreditCard, MapPin } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import SEO, { LOCAL_BUSINESS_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import SearchBar from "@/components/SearchBar";
-import { useCustomer } from "@/contexts/CustomerContext";
 
-import Logo from "@/components/Logo";
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
 import catBird from "@/assets/images/cat-bird.webp";
@@ -34,8 +32,6 @@ const FEATURES = [
 ];
 
 export default function Landing() {
-  const { isLoggedIn, customer } = useCustomer();
-
   return (
     <div className="min-h-screen flex flex-col bg-background pb-16">
       <SEO
@@ -44,46 +40,6 @@ export default function Landing() {
         canonical={`${SITE_DOMAIN}/`}
         jsonLd={LOCAL_BUSINESS_JSONLD}
       />
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center relative">
-          <Logo className="text-3xl" />
-          <Link href={isLoggedIn ? "/hesabim" : "/giris"} className="absolute right-4">
-            <button
-              className="flex flex-col items-center justify-center text-white/80 hover:text-white transition-colors"
-              data-testid="btn-header-auth"
-            >
-              <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                {isLoggedIn ? (
-                  <User className="w-4 h-4" />
-                ) : (
-                  <UserPlus className="w-4 h-4" />
-                )}
-              </div>
-              <span className="text-[9px] font-medium mt-0.5 whitespace-nowrap">
-                {isLoggedIn ? (customer?.name?.split(" ")[0] || "Hesabım") : "Giriş"}
-              </span>
-            </button>
-          </Link>
-        </div>
-      </header>
-
-      <nav className="sticky top-[52px] z-[9998]" style={{ backgroundColor: "#7c4dff" }}>
-        <div className="max-w-lg mx-auto px-2">
-          <ul className="flex items-center justify-center gap-0 py-1.5 flex-wrap" data-testid="nav-categories">
-            {NAV_ITEMS.map((item) => (
-              <li key={item.name}>
-                <Link href={item.href}
-                  className="px-4 py-1 text-sm font-medium text-white/90"
-                  data-testid={`nav-link-${item.name}`}
-                >
-                  {item.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </nav>
-
       <main className="flex-1 max-w-lg mx-auto w-full">
 
         <motion.section

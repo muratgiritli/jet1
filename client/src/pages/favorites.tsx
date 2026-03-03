@@ -8,7 +8,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import Logo from "@/components/Logo";
 import ProductImage from "@/components/ProductImage";
 import { productUrl } from "@/lib/data";
 
@@ -99,12 +98,6 @@ export default function FavoritesPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center">
-          <Logo className="text-3xl" linkTo="/" />
-        </div>
-      </header>
-
       <div className="max-w-lg mx-auto px-3 py-4">
         <h1 className="text-lg font-bold flex items-center gap-2 mb-4" data-testid="text-favorites-title">
           <Heart className="w-5 h-5 text-red-500 fill-red-500" />

@@ -83,12 +83,6 @@ export default function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center">
-          <Logo className="text-3xl" linkTo="/" testId="img-profile-logo" />
-        </div>
-      </header>
-
       <div className="max-w-lg mx-auto px-3 py-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-lg font-bold" data-testid="text-profile-title">Hesabım</h1>

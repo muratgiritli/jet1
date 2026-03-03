@@ -8,7 +8,6 @@ import { Phone, Lock, User, Loader2, ArrowLeft, Eye, EyeOff, MapPin, Navigation,
 import { useCustomer } from "@/contexts/CustomerContext";
 import { useToast } from "@/hooks/use-toast";
 import { TESLIMAT_MAHALLELERI } from "@/lib/data";
-import Logo from "@/components/Logo";
 
 export default function AuthPage() {
   const [mode, setMode] = useState<"login" | "register">("login");
@@ -103,17 +102,6 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center relative">
-          <Link href="/">
-            <button className="absolute left-4 top-1/2 -translate-y-1/2 text-white" data-testid="btn-auth-back">
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          </Link>
-          <Logo className="text-3xl" linkTo="/" testId="img-auth-logo" />
-        </div>
-      </header>
-
       <div className="max-w-sm mx-auto px-4 py-8">
         <div className="text-center mb-6">
           <h1 className="text-xl font-bold" data-testid="text-auth-title">

@@ -46,7 +46,6 @@ import {
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
-import BackNavigation from "@/components/BackNavigation";
 import { useCustomer } from "@/contexts/CustomerContext";
 import type { InstallmentRate } from "@shared/schema";
 
@@ -432,31 +431,6 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen bg-background pb-16">
-      <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b">
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Link href="/">
-              <Button variant="ghost" size="icon" data-testid="btn-back-to-products">
-                <ArrowLeft />
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-lg font-bold leading-tight" data-testid="text-checkout-title">Sepetim</h1>
-              <p className="text-xs text-muted-foreground" data-testid="text-checkout-subtitle">
-                {itemCount > 0 ? `${itemCount} ürün` : "Sepet boş"}
-              </p>
-            </div>
-          </div>
-          {itemCount > 0 && (
-            <Badge variant="secondary" className="no-default-hover-elevate" data-testid="text-checkout-total-badge">
-              {Math.round(displayTotal)} TL
-            </Badge>
-          )}
-        </div>
-      </header>
-
-      <BackNavigation />
-
       <AnimatePresence>
         {showAuthModal && !isLoggedIn && (
           <motion.div

@@ -1,10 +1,7 @@
 import { Link, useRoute, useLocation } from "wouter";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import BackNavigation from "@/components/BackNavigation";
-import Logo from "@/components/Logo";
+
 
 interface Brand {
   name: string;
@@ -133,16 +130,6 @@ export default function BrandsPage() {
   if (!brandData) {
     return (
       <div className="min-h-screen flex flex-col bg-white pb-16">
-        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-          <div className="max-w-lg mx-auto px-4 py-2 flex items-center gap-3">
-            <Link href={`/kategori/${animalSlug}`}>
-              <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
-                <ArrowLeft />
-              </Button>
-            </Link>
-            <Logo className="text-2xl" linkTo="/" />
-          </div>
-        </header>
         <div className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground" data-testid="text-not-found">Bu kategori henüz eklenmedi</p>
         </div>
@@ -152,21 +139,6 @@ export default function BrandsPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16">
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-lg mx-auto px-4 py-2 flex items-center gap-3">
-          <Link href={`/kategori/${animalSlug}`}>
-            <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
-              <ArrowLeft />
-            </Button>
-          </Link>
-          <Link href="/">
-            <Logo className="text-2xl" linkTo="/" />
-          </Link>
-        </div>
-      </header>
-
-      <BackNavigation />
-
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-extrabold" data-testid="text-brands-title">

@@ -1,10 +1,7 @@
 import { Link, useRoute, useLocation } from "wouter";
 import { motion } from "framer-motion";
-import { ArrowLeft } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import BackNavigation from "@/components/BackNavigation";
+
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
-import Logo from "@/components/Logo";
 
 interface SubCategory {
   name: string;
@@ -108,19 +105,6 @@ export default function CategoryPage() {
         description={`Samsun ${category.title.toLowerCase()} maması, ${category.title.toLowerCase()} bakım ürünleri ve aksesuar çeşitleri en uygun fiyatlarla. Samsun içi aynı gün teslimat, kapıda ödeme. ${category.title} maması online sipariş.`}
         canonical={`${SITE_DOMAIN}/kategori/${animalSlug}`}
       />
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-lg mx-auto px-4 py-2 flex items-center gap-3">
-          <Link href="/">
-            <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
-              <ArrowLeft />
-            </Button>
-          </Link>
-          <Logo className="text-2xl" linkTo="/" />
-        </div>
-      </header>
-
-      <BackNavigation />
-
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
         <div className="text-center mb-6">
           <h2 className="text-3xl font-extrabold" data-testid="text-category-title">

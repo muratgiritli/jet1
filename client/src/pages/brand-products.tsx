@@ -8,12 +8,10 @@ import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, Eye, 
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
-import BackNavigation from "@/components/BackNavigation";
 import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
 import { CATEGORIES, productUrl } from "@/lib/data";
 import FavoriteButton from "@/components/FavoriteButton";
 import { ProductGridSkeleton } from "@/components/ProductSkeleton";
-import Logo from "@/components/Logo";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import ProductImage from "@/components/ProductImage";
 
@@ -459,16 +457,6 @@ export default function BrandProductsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex flex-col bg-white pb-16">
-        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-          <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
-            <Link href={backUrl}>
-              <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
-                <ArrowLeft />
-              </Button>
-            </Link>
-            <Logo className="text-2xl" linkTo="/" />
-          </div>
-        </header>
         <div className="px-3 pt-4">
           <ProductGridSkeleton count={6} />
         </div>
@@ -479,16 +467,6 @@ export default function BrandProductsPage() {
   if (!data) {
     return (
       <div className="min-h-screen flex flex-col bg-white pb-16">
-        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-          <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
-            <Link href={backUrl}>
-              <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
-                <ArrowLeft />
-              </Button>
-            </Link>
-            <Logo className="text-2xl" linkTo="/" />
-          </div>
-        </header>
         <div className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground" data-testid="text-not-found">Bu marka henüz eklenmedi</p>
         </div>
@@ -503,30 +481,6 @@ export default function BrandProductsPage() {
         description={`${data.category.brandName} ${animal === "kedi" ? "kedi" : animal === "kopek" ? "köpek" : animal === "kus" ? "kuş" : "kemirgen"} maması Samsun'da en uygun fiyatlarla JETGO Pet Shop'ta. Samsun içi aynı gün teslimat, kapıda ödeme. ${data.category.brandName} ürünlerini online sipariş edin.`}
         canonical={`${SITE_DOMAIN}/siparis/${animal}/${subcategory}/${brandSlug}`}
       />
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <Link href={backUrl}>
-              <Button variant="ghost" size="icon" className="text-white" data-testid="btn-back">
-                <ArrowLeft />
-              </Button>
-            </Link>
-            <Logo className="text-2xl" linkTo="/" />
-          </div>
-          {itemCount > 0 && (
-            <Link href="/odeme">
-              <Button variant="outline" className="bg-white/90" data-testid="btn-go-to-cart">
-                <ShoppingCart className="w-4 h-4" />
-                <span data-testid="text-cart-count">{itemCount}</span>
-                <Badge variant="secondary" className="no-default-hover-elevate" data-testid="text-cart-total">{Math.round(grandTotal)} TL</Badge>
-              </Button>
-            </Link>
-          )}
-        </div>
-      </header>
-
-      <BackNavigation />
-
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6 pb-28">
         <div className="text-center mb-6">
           <h2 className="text-xl font-extrabold" data-testid="text-brand-title">

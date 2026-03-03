@@ -1,6 +1,5 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import Logo from "@/components/Logo";
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
 import catBird from "@/assets/images/cat-bird.webp";
@@ -16,12 +15,6 @@ const CATEGORIES = [
 export default function CategoriesOverview() {
   return (
     <div className="min-h-screen bg-background pb-20">
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center">
-          <Logo className="text-3xl" linkTo="/" />
-        </div>
-      </header>
-
       <div className="max-w-lg mx-auto px-3 py-4">
         <h1 className="text-lg font-bold mb-4 text-center" data-testid="text-categories-title">
           Kategoriler

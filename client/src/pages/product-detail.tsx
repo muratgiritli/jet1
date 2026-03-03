@@ -11,7 +11,6 @@ import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory, CrossSellSection, BreedStat, InstallmentRate } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
-import BackNavigation from "@/components/BackNavigation";
 import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
 import { CATEGORIES, productUrl } from "@/lib/data";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -19,7 +18,6 @@ import ImageZoom from "@/components/ImageZoom";
 import ProductImage from "@/components/ProductImage";
 import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
 import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
-import Logo from "@/components/Logo";
 import FoodCalculator from "@/components/FoodCalculator";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 
@@ -288,14 +286,6 @@ export default function ProductDetailPage() {
   if (isLoading && isNumericId) {
     return (
       <div className="min-h-screen flex flex-col bg-background pb-16">
-        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
-              <ArrowLeft />
-            </Button>
-            <Logo className="text-2xl" linkTo="/" />
-          </div>
-        </header>
         <ProductDetailSkeleton />
       </div>
     );
@@ -304,14 +294,6 @@ export default function ProductDetailPage() {
   if (!resolvedData) {
     return (
       <div className="min-h-screen flex flex-col bg-background pb-16">
-        <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-          <div className="max-w-2xl mx-auto px-4 py-3 flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
-              <ArrowLeft />
-            </Button>
-            <Logo className="text-2xl" linkTo="/" />
-          </div>
-        </header>
         <div className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground" data-testid="text-not-found">Urun bulunamadi</p>
         </div>
@@ -356,28 +338,6 @@ export default function ProductDetailPage() {
           jsonLd={seoData.jsonLd}
         />
       )}
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" className="text-white" onClick={() => window.history.back()} data-testid="btn-back">
-              <ArrowLeft />
-            </Button>
-            <Logo className="text-2xl" linkTo="/" />
-          </div>
-          {itemCount > 0 && (
-            <Link href="/odeme">
-              <Button variant="outline" className="bg-white/90" data-testid="btn-go-to-cart">
-                <ShoppingCart className="w-4 h-4" />
-                <span data-testid="text-cart-count">{itemCount}</span>
-                <Badge variant="secondary" className="no-default-hover-elevate" data-testid="text-cart-total">{Math.round(grandTotal)} TL</Badge>
-              </Button>
-            </Link>
-          )}
-        </div>
-      </header>
-
-      <BackNavigation />
-
       <main className="flex-1 max-w-2xl mx-auto px-4 w-full py-6 pb-28">
         <motion.div
           initial={{ opacity: 0, y: 10 }}
