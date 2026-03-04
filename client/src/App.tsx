@@ -24,6 +24,7 @@ import FavoritesPage from "@/pages/favorites";
 import AuthPage from "@/pages/auth";
 import ProfilePage from "@/pages/profile";
 import NotFound from "@/pages/not-found";
+import { SSSPage, KVKKPage, GizlilikPage, KullanimKosullariPage, CerezPage, IslemRehberiPage, HakkimizdaPage, IletisimPage } from "@/pages/static-pages";
 
 function Router() {
   const [location] = useLocation();
@@ -51,6 +52,14 @@ function Router() {
           <Route path="/favoriler" component={FavoritesPage} />
           <Route path="/giris" component={AuthPage} />
           <Route path="/hesabim" component={ProfilePage} />
+          <Route path="/sss" component={SSSPage} />
+          <Route path="/kvkk" component={KVKKPage} />
+          <Route path="/gizlilik" component={GizlilikPage} />
+          <Route path="/kullanim-kosullari" component={KullanimKosullariPage} />
+          <Route path="/cerez-politikasi" component={CerezPage} />
+          <Route path="/islem-rehberi" component={IslemRehberiPage} />
+          <Route path="/hakkimizda" component={HakkimizdaPage} />
+          <Route path="/iletisim" component={IletisimPage} />
           <Route component={NotFound} />
         </Switch>
       </motion.div>

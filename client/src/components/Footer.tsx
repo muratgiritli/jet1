@@ -1,14 +1,14 @@
 import { Link } from "wouter";
-import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info, MessageCircle } from "lucide-react";
+import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 
 const FOOTER_LINKS = [
-  { label: "Sıkça Sorulan Sorular", href: "#sss", icon: HelpCircle },
-  { label: "Kişisel Verilerin Korunması", href: "#kvkk", icon: Shield },
-  { label: "Gizlilik Politikası", href: "#gizlilik", icon: FileText },
-  { label: "Kullanım Koşulları", href: "#kullanim", icon: BookOpen },
-  { label: "Çerez Politikası", href: "#cerez", icon: Cookie },
-  { label: "İşlem Rehberi", href: "#rehber", icon: Info },
+  { label: "Sıkça Sorulan Sorular", href: "/sss", icon: HelpCircle },
+  { label: "Kişisel Verilerin Korunması", href: "/kvkk", icon: Shield },
+  { label: "Gizlilik Politikası", href: "/gizlilik", icon: FileText },
+  { label: "Kullanım Koşulları", href: "/kullanim-kosullari", icon: BookOpen },
+  { label: "Çerez Politikası", href: "/cerez-politikasi", icon: Cookie },
+  { label: "İşlem Rehberi", href: "/islem-rehberi", icon: Info },
 ];
 
 export default function Footer() {
@@ -24,10 +24,10 @@ export default function Footer() {
                 const Icon = link.icon;
                 return (
                   <li key={link.href}>
-                    <a href={link.href} className="flex items-center gap-2 text-sm hover:text-white transition-colors" data-testid={`footer-link-${link.href.replace("#", "")}`}>
+                    <Link href={link.href} className="flex items-center gap-2 text-sm hover:text-white transition-colors" data-testid={`footer-link-${link.href.slice(1)}`}>
                       <Icon className="w-4 h-4 flex-shrink-0" />
                       {link.label}
-                    </a>
+                    </Link>
                   </li>
                 );
               })}
@@ -35,7 +35,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">Hakkımızda</h3>
+            <Link href="/hakkimizda" className="text-white font-bold text-lg mb-4 block hover:underline" data-testid="footer-hakkimizda">Hakkımızda</Link>
             <p className="text-sm leading-relaxed text-gray-400 mb-3">
               Sizpa İnternet Tic. Ltd. Şti. olarak Samsun'da evcil hayvan ürünleri alanında hizmet vermekteyiz. Kaliteli ürünler, uygun fiyatlar ve hızlı teslimat ile her zaman yanınızdayız.
             </p>
@@ -43,7 +43,7 @@ export default function Footer() {
           </div>
 
           <div>
-            <h3 className="text-white font-bold text-lg mb-4">İletişim</h3>
+            <Link href="/iletisim" className="text-white font-bold text-lg mb-4 block hover:underline" data-testid="footer-iletisim">İletişim</Link>
             <ul className="space-y-3">
               <li className="flex items-start gap-2.5 text-sm">
                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />

@@ -44,6 +44,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `client/src/hooks/useRecentlyViewed.ts` - Recently viewed products tracking (localStorage)
 - `client/src/lib/data.ts` - Static product data, categories, payment options, config
 - `client/src/App.tsx` - Root component with routing, page transitions (framer-motion)
+- `client/src/pages/static-pages.tsx` - Static content pages: SSS, KVKK, Gizlilik, Kullanım Koşulları, Çerez Politikası, İşlem Rehberi, Hakkımızda, İletişim
 
 ## API Routes
 - `GET /api/products` - All products from database
@@ -101,6 +102,14 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `/giris` - Customer login/register page (phone+password)
 - `/hesabim` - Customer profile page (edit name, address)
 - `/admin` - Admin panel (login required)
+- `/sss` - Sıkça Sorulan Sorular (FAQ)
+- `/kvkk` - Kişisel Verilerin Korunması (KVKK)
+- `/gizlilik` - Gizlilik Politikası
+- `/kullanim-kosullari` - Kullanım Koşulları
+- `/cerez-politikasi` - Çerez Politikası
+- `/islem-rehberi` - İşlem Rehberi
+- `/hakkimizda` - Hakkımızda
+- `/iletisim` - İletişim
 
 ## Admin Panel
 - Default credentials: admin / jetgo2024
