@@ -34,6 +34,8 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `client/src/contexts/CartContext.tsx` - Global cart state provider (fetches from API)
 - `client/src/components/FloatingCartBar.tsx` - Floating cart indicator (above bottom tab bar)
 - `client/src/components/BottomTabBar.tsx` - Fixed bottom navigation (Ana Sayfa, Kategoriler, Favoriler, Sepet, Takip)
+- `client/src/components/Footer.tsx` - Desktop-only footer (hidden on mobile via `hidden md:block`), shows company info, legal links, contact details
+- `client/src/components/Header.tsx` - Global header with logo, back button, auth button, category nav bar
 - `client/src/components/FavoriteButton.tsx` - Heart toggle button for products
 - `client/src/components/ImageZoom.tsx` - Pinch-to-zoom image viewer for product photos
 - `client/src/components/ProductSkeleton.tsx` - Skeleton loading components
