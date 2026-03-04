@@ -20,7 +20,7 @@ import {
   users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders,
 } from "@shared/schema";
 
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
+export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
 export const db = drizzle(pool);
 
 export interface IStorage {

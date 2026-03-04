@@ -1,13 +1,12 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
-import { storage } from "./storage";
+import { storage, pool as sharedPool } from "./storage";
 import { seedDatabase } from "./seed";
 import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema } from "@shared/schema";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
-import pg from "pg";
 import { saveProductImage, getProductImage, downloadAndSaveImage } from "./image-service";
 import multer from "multer";
 
@@ -38,7 +37,7 @@ export async function registerRoutes(
   app.use(
     session({
       store: new PgSession({
-        pool: new pg.Pool({ connectionString: process.env.DATABASE_URL }),
+        pool: sharedPool,
         createTableIfMissing: true,
       }),
       secret: process.env.SESSION_SECRET || "jetgo-fallback-secret",
@@ -51,19 +50,16 @@ export async function registerRoutes(
   await seedDatabase();
   await ensureAdminExists();
 
-  const pgPool = new pg.Pool({ connectionString: process.env.DATABASE_URL });
-  await pgPool.query(`CREATE TABLE IF NOT EXISTS product_images (product_id INTEGER PRIMARY KEY, data TEXT NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT NOW())`);
+  await sharedPool.query(`CREATE TABLE IF NOT EXISTS product_images (product_id INTEGER PRIMARY KEY, data TEXT NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT NOW())`);
   
-  const { rows: [{ count: imgCount }] } = await pgPool.query(`SELECT COUNT(*)::int as count FROM product_images`);
-  await pgPool.end();
+  const { rows: [{ count: imgCount }] } = await sharedPool.query(`SELECT COUNT(*)::int as count FROM product_images`);
   
   if (imgCount === 0) {
     setTimeout(async () => {
       console.log(`[image] product_images table is empty, importing disk images in background...`);
       const fs = await import("fs");
       const pathMod = await import("path");
-      const { Pool } = await import("pg");
-      const bgPool = new Pool({ connectionString: process.env.DATABASE_URL });
+      const bgPool = sharedPool;
       
       const imageDirs = [
         pathMod.default.join(process.cwd(), "dist", "public", "product-images"),
@@ -107,7 +103,6 @@ export async function registerRoutes(
         }
       }
       console.log(`[image] Background import fully complete`);
-      await bgPool.end();
     }, 3000);
   }
 
