@@ -16,7 +16,8 @@ import {
 import { useCustomer } from "@/contexts/CustomerContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { productUrl } from "@/lib/data";
+import { productUrl, TESLIMAT_MAHALLELERI } from "@/lib/data";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Logo from "@/components/Logo";
 import ProductImage from "@/components/ProductImage";
 
@@ -363,6 +364,7 @@ function AddressesSection() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
   const [label, setLabel] = useState("");
+  const [mahalle, setMahalle] = useState("");
   const [address, setAddress] = useState("");
   const [isDefault, setIsDefault] = useState(false);
   const { toast } = useToast();
@@ -412,6 +414,7 @@ function AddressesSection() {
     setShowForm(false);
     setEditId(null);
     setLabel("");
+    setMahalle("");
     setAddress("");
     setIsDefault(false);
   };
@@ -419,20 +422,37 @@ function AddressesSection() {
   const startEdit = (addr: any) => {
     setEditId(addr.id);
     setLabel(addr.label);
-    setAddress(addr.address);
+    const savedAddress = addr.address || "";
+    const foundMahalle = TESLIMAT_MAHALLELERI.find(m => savedAddress.startsWith(m));
+    if (foundMahalle) {
+      setMahalle(foundMahalle);
+      setAddress(savedAddress.replace(foundMahalle + ", ", "").replace(foundMahalle, "").trim());
+    } else {
+      setMahalle("");
+      setAddress(savedAddress);
+    }
     setIsDefault(addr.isDefault);
     setShowForm(true);
   };
 
   const handleSave = () => {
-    if (!label.trim() || !address.trim()) {
-      toast({ title: "Hata", description: "Etiket ve adres gerekli", variant: "destructive" });
+    if (!label.trim()) {
+      toast({ title: "Hata", description: "Etiket gerekli", variant: "destructive" });
       return;
     }
+    if (!mahalle) {
+      toast({ title: "Hata", description: "Mahalle seçimi gerekli", variant: "destructive" });
+      return;
+    }
+    if (!address.trim()) {
+      toast({ title: "Hata", description: "Adres detayı gerekli", variant: "destructive" });
+      return;
+    }
+    const fullAddress = mahalle + ", " + address.trim();
     if (editId) {
-      updateMutation.mutate({ id: editId, data: { label: label.trim(), address: address.trim(), isDefault } });
+      updateMutation.mutate({ id: editId, data: { label: label.trim(), address: fullAddress, isDefault } });
     } else {
-      createMutation.mutate({ label: label.trim(), address: address.trim(), isDefault });
+      createMutation.mutate({ label: label.trim(), address: fullAddress, isDefault });
     }
   };
 
@@ -456,7 +476,20 @@ function AddressesSection() {
           <CardContent className="p-4 space-y-3">
             <h3 className="font-semibold text-sm">{editId ? "Adresi Düzenle" : "Yeni Adres"}</h3>
             <Input placeholder="Etiket (Ev, İş vb.)" value={label} onChange={(e) => setLabel(e.target.value)} data-testid="input-address-label" />
-            <Textarea placeholder="Adres detayı" value={address} onChange={(e) => setAddress(e.target.value)} rows={3} data-testid="input-address-detail" />
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Mahalle</label>
+              <Select value={mahalle} onValueChange={setMahalle}>
+                <SelectTrigger data-testid="select-address-mahalle">
+                  <SelectValue placeholder="Mahalle seçiniz" />
+                </SelectTrigger>
+                <SelectContent>
+                  {TESLIMAT_MAHALLELERI.map((m) => (
+                    <SelectItem key={m} value={m}>{m}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Textarea placeholder="Sokak, cadde, bina no, daire no..." value={address} onChange={(e) => setAddress(e.target.value)} rows={3} data-testid="input-address-detail" />
             <label className="flex items-center gap-2 text-sm">
               <Switch checked={isDefault} onCheckedChange={setIsDefault} data-testid="switch-address-default" />
               Varsayılan adres olarak ayarla

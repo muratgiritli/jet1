@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 
 interface CustomerData {
   id: number;
@@ -78,6 +78,10 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   const logout = useCallback(async () => {
     await apiRequest("POST", "/api/customer/logout");
     setCustomer(null);
+    queryClient.removeQueries({ queryKey: ["/api/customer/orders"] });
+    queryClient.removeQueries({ queryKey: ["/api/customer/favorites"] });
+    queryClient.removeQueries({ queryKey: ["/api/customer/addresses"] });
+    queryClient.removeQueries({ queryKey: ["/api/customer/pets"] });
   }, []);
 
   const updateProfile = useCallback(async (data: { name?: string; address?: string }) => {
