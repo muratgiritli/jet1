@@ -17,6 +17,20 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
+export const subcategories = pgTable("subcategories", {
+  id: serial("id").primaryKey(),
+  animal: text("animal").notNull(),
+  slug: text("slug").notNull(),
+  displayName: text("display_name").notNull(),
+  color: text("color").notNull().default("#607D8B"),
+  hasBrands: boolean("has_brands").notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const insertSubcategorySchema = createInsertSchema(subcategories).omit({ id: true });
+export type InsertSubcategory = z.infer<typeof insertSubcategorySchema>;
+export type Subcategory = typeof subcategories.$inferSelect;
+
 export const brandCategories = pgTable("brand_categories", {
   id: serial("id").primaryKey(),
   brandName: text("brand_name").notNull(),

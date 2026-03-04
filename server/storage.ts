@@ -3,6 +3,7 @@ import pg from "pg";
 import { eq, desc, ilike, or, and } from "drizzle-orm";
 import {
   type User, type InsertUser,
+  type Subcategory, type InsertSubcategory,
   type BrandCategory, type InsertBrandCategory,
   type Product, type InsertProduct,
   type CrossSellSection, type InsertCrossSellSection,
@@ -17,7 +18,7 @@ import {
   type PetProfile, type InsertPetProfile,
   type LoyaltyPoint, type InsertLoyaltyPoint,
   type ReorderReminder, type InsertReorderReminder,
-  users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders,
+  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders,
 } from "@shared/schema";
 
 export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
@@ -27,6 +28,12 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+
+  getAllSubcategories(): Promise<Subcategory[]>;
+  getSubcategoriesByAnimal(animal: string): Promise<Subcategory[]>;
+  createSubcategory(data: InsertSubcategory): Promise<Subcategory>;
+  updateSubcategory(id: number, data: Partial<InsertSubcategory>): Promise<Subcategory | undefined>;
+  deleteSubcategory(id: number): Promise<void>;
 
   getAllBrandCategories(): Promise<BrandCategory[]>;
   getBrandCategory(id: number): Promise<BrandCategory | undefined>;
@@ -124,6 +131,28 @@ export class DatabaseStorage implements IStorage {
   async createUser(insertUser: InsertUser): Promise<User> {
     const [user] = await db.insert(users).values(insertUser).returning();
     return user;
+  }
+
+  async getAllSubcategories(): Promise<Subcategory[]> {
+    return db.select().from(subcategories).orderBy(subcategories.sortOrder);
+  }
+
+  async getSubcategoriesByAnimal(animal: string): Promise<Subcategory[]> {
+    return db.select().from(subcategories).where(eq(subcategories.animal, animal)).orderBy(subcategories.sortOrder);
+  }
+
+  async createSubcategory(data: InsertSubcategory): Promise<Subcategory> {
+    const [sub] = await db.insert(subcategories).values(data).returning();
+    return sub;
+  }
+
+  async updateSubcategory(id: number, data: Partial<InsertSubcategory>): Promise<Subcategory | undefined> {
+    const [sub] = await db.update(subcategories).set(data).where(eq(subcategories.id, id)).returning();
+    return sub;
+  }
+
+  async deleteSubcategory(id: number): Promise<void> {
+    await db.delete(subcategories).where(eq(subcategories.id, id));
   }
 
   async getAllBrandCategories(): Promise<BrandCategory[]> {

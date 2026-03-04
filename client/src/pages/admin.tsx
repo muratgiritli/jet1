@@ -56,7 +56,7 @@ import {
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order, BreedStat, StockAlert, InstallmentRate } from "@shared/schema";
+import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order, BreedStat, StockAlert, InstallmentRate, Subcategory } from "@shared/schema";
 
 const ANIMALS = [
   { id: "kedi", name: "Kedi", icon: Cat },
@@ -65,41 +65,17 @@ const ANIMALS = [
   { id: "kemirgen", name: "Kemirgen", icon: Rabbit },
 ];
 
-const SUBCATEGORIES: Record<string, { slug: string; name: string }[]> = {
-  kedi: [
-    { slug: "kedi-mamasi", name: "Kedi Maması" },
-    { slug: "acik-mama", name: "Açık Mama" },
-    { slug: "kedi-kumu", name: "Kedi Kumu" },
-    { slug: "malt-macun", name: "Malt & Macun" },
-    { slug: "odul", name: "Kedi Ödülleri" },
-    { slug: "bakim-saglik", name: "Bakım ve Sağlık" },
-    { slug: "kedi-tasima", name: "Kedi Taşıma" },
-    { slug: "kedi-tuvaleti", name: "Kedi Tuvaleti" },
-    { slug: "kedi-konserve", name: "Kedi Konserve" },
-    { slug: "yas-mama", name: "Yaş Mama" },
-  ],
-  kopek: [
-    { slug: "mama-markalari", name: "Mama Markaları" },
-    { slug: "acik-mama", name: "Açık Mama" },
-    { slug: "tuvalet-malzemeleri", name: "Tuvalet Malzemeleri" },
-    { slug: "yas-mama", name: "Yaş Mama" },
-    { slug: "odul-kemik", name: "Ödül Kemik" },
-    { slug: "tasima-kulube", name: "Taşıma ve Kulübeler" },
-    { slug: "bakim-saglik", name: "Bakım ve Sağlık" },
-  ],
-  kus: [
-    { slug: "kus-yemi", name: "Kuş Yemi" },
-    { slug: "kus-kafesi", name: "Kuş Kafesi" },
-    { slug: "kus-vitamin", name: "Kuş Vitaminleri" },
-    { slug: "bakim-aksesuar", name: "Bakım ve Aksesuar" },
-  ],
-  kemirgen: [
-    { slug: "kemirgen-yemi", name: "Kemirgen Yemleri" },
-    { slug: "kemirgen-kafesi", name: "Kemirgen Kafesleri" },
-    { slug: "bakim-aksesuar", name: "Bakım ve Aksesuar" },
-    { slug: "vitamin-takviye", name: "Vitamin ve Takviye" },
-  ],
-};
+function useSubcategories() {
+  const { data: allSubs = [] } = useQuery<Subcategory[]>({
+    queryKey: ["/api/subcategories"],
+  });
+  const byAnimal: Record<string, { slug: string; name: string }[]> = {};
+  for (const s of allSubs) {
+    if (!byAnimal[s.animal]) byAnimal[s.animal] = [];
+    byAnimal[s.animal].push({ slug: s.slug, name: s.displayName.replace(/\n/g, " ") });
+  }
+  return { allSubs, byAnimal };
+}
 
 function LoginForm({ onLogin }: { onLogin: () => void }) {
   const [username, setUsername] = useState("");
@@ -181,11 +157,13 @@ function ProductForm({
   product,
   onSave,
   isPending,
+  subcategoriesByAnimal,
 }: {
   categories: BrandCategory[];
   product?: Product;
   onSave: (data: any) => void;
   isPending: boolean;
+  subcategoriesByAnimal: Record<string, { slug: string; name: string }[]>;
 }) {
   const existingCat = product
     ? categories.find((c) => c.id === product.brandCategoryId)
@@ -205,7 +183,7 @@ function ProductForm({
     product?.brandCategoryId?.toString() || ""
   );
 
-  const availableSubcategories = SUBCATEGORIES[selectedAnimal] || [];
+  const availableSubcategories = subcategoriesByAnimal[selectedAnimal] || [];
 
   const filteredCategories = categories.filter(
     (c) => c.animal === selectedAnimal && c.subcategory === selectedSubcategory
@@ -390,19 +368,88 @@ function ProductForm({
   );
 }
 
-function CategoryForm({
+function SubcategoryForm({
   onSave,
   isPending,
 }: {
   onSave: (data: any) => void;
   isPending: boolean;
 }) {
+  const [animal, setAnimal] = useState("");
+  const [displayName, setDisplayName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [color, setColor] = useState("#607D8B");
+  const [hasBrands, setHasBrands] = useState(false);
+  const [sortOrder, setSortOrder] = useState("0");
+
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const finalSlug = slug || displayName.toLowerCase().replace(/\n/g, " ").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+        onSave({ animal, displayName, slug: finalSlug, color, hasBrands, sortOrder: parseInt(sortOrder) || 0 });
+      }}
+      className="space-y-4"
+    >
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>Hayvan</Label>
+          <Select value={animal} onValueChange={setAnimal}>
+            <SelectTrigger data-testid="input-subcategory-animal">
+              <SelectValue placeholder="Hayvan seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {ANIMALS.map((a) => (
+                <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-2">
+          <Label>Görünen İsim</Label>
+          <Input value={displayName} onChange={(e) => setDisplayName(e.target.value)} placeholder="Örn: Köpek Maması" required data-testid="input-subcategory-name" />
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <div className="space-y-2">
+          <Label>Slug (opsiyonel)</Label>
+          <Input value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="otomatik" data-testid="input-subcategory-slug" />
+        </div>
+        <div className="space-y-2">
+          <Label>Renk</Label>
+          <Input type="color" value={color} onChange={(e) => setColor(e.target.value)} data-testid="input-subcategory-color" />
+        </div>
+        <div className="space-y-2">
+          <Label>Sıra</Label>
+          <Input type="number" value={sortOrder} onChange={(e) => setSortOrder(e.target.value)} data-testid="input-subcategory-order" />
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <input type="checkbox" checked={hasBrands} onChange={(e) => setHasBrands(e.target.checked)} id="hasBrands" data-testid="input-subcategory-has-brands" />
+        <Label htmlFor="hasBrands">Marka sayfası var (alt markalar gösterilsin)</Label>
+      </div>
+      <Button type="submit" className="w-full" disabled={isPending || !animal || !displayName} data-testid="btn-save-subcategory">
+        {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Alt Kategori Ekle"}
+      </Button>
+    </form>
+  );
+}
+
+function CategoryForm({
+  onSave,
+  isPending,
+  subcategoriesByAnimal,
+}: {
+  onSave: (data: any) => void;
+  isPending: boolean;
+  subcategoriesByAnimal: Record<string, { slug: string; name: string }[]>;
+}) {
   const [brandName, setBrandName] = useState("");
   const [brandSlug, setBrandSlug] = useState("");
   const [animal, setAnimal] = useState("");
   const [subcategory, setSubcategory] = useState("");
 
-  const availableSubcategories = SUBCATEGORIES[animal] || [];
+  const availableSubcategories = subcategoriesByAnimal[animal] || [];
 
   return (
     <form
@@ -460,10 +507,12 @@ function CategoryForm({
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const { toast } = useToast();
+  const { allSubs, byAnimal: subcategoriesByAnimal } = useSubcategories();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [subcategoryDialogOpen, setSubcategoryDialogOpen] = useState(false);
   const [selectedAnimalFilter, setSelectedAnimalFilter] = useState<string>("all");
   const [selectedSubcategoryFilter, setSelectedSubcategoryFilter] = useState<string>("all");
   const [selectedBrandFilter, setSelectedBrandFilter] = useState<string>("all");
@@ -659,6 +708,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
   });
 
+  const createSubcategoryMutation = useMutation({
+    mutationFn: async (data: any) => {
+      await apiRequest("POST", "/api/admin/subcategories", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/subcategories"] });
+      toast({ title: "Alt kategori eklendi" });
+    },
+  });
+
+  const deleteSubcategoryMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/subcategories/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/subcategories"] });
+      toast({ title: "Alt kategori silindi" });
+    },
+  });
+
   const [crossSellDialogOpen, setCrossSellDialogOpen] = useState(false);
   const [addItemDialogOpen, setAddItemDialogOpen] = useState(false);
   const [selectedSectionId, setSelectedSectionId] = useState<number | null>(null);
@@ -826,7 +895,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   };
 
   const getSubcategoryName = (animal: string, slug: string) => {
-    const subs = SUBCATEGORIES[animal] || [];
+    const subs = subcategoriesByAnimal[animal] || [];
     const sc = subs.find((s) => s.slug === slug);
     return sc ? sc.name : slug;
   };
@@ -1338,6 +1407,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <CategoryForm
                   onSave={(data) => createCategoryMutation.mutate(data)}
                   isPending={createCategoryMutation.isPending}
+                  subcategoriesByAnimal={subcategoriesByAnimal}
                 />
               </DialogContent>
             </Dialog>
@@ -1375,7 +1445,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                     {isExpanded && (
                       <div className="px-4 pb-4 space-y-3">
-                        {(SUBCATEGORIES[animalInfo.id] || []).map((sc) => {
+                        {(subcategoriesByAnimal[animalInfo.id] || []).map((sc) => {
                           const brands = animalCats[sc.slug] || [];
                           if (brands.length === 0) return null;
                           return (
@@ -1413,6 +1483,68 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         )}
                       </div>
                     )}
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </section>
+
+        <section className="mb-6" data-testid="section-subcategory-management">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-lg font-bold" data-testid="text-subcategory-title">Alt Kategori Yönetimi</h3>
+            <Dialog open={subcategoryDialogOpen} onOpenChange={setSubcategoryDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" data-testid="btn-add-subcategory">
+                  <Plus className="w-4 h-4 mr-1" /> Alt Kategori Ekle
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Yeni Alt Kategori Ekle</DialogTitle>
+                </DialogHeader>
+                <SubcategoryForm
+                  onSave={(data) => {
+                    createSubcategoryMutation.mutate(data);
+                    setSubcategoryDialogOpen(false);
+                  }}
+                  isPending={createSubcategoryMutation.isPending}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+          <div className="space-y-2">
+            {ANIMALS.map((animalInfo) => {
+              const animalSubs = allSubs.filter(s => s.animal === animalInfo.id);
+              if (animalSubs.length === 0) return null;
+              const AnimalIcon = animalInfo.icon;
+              return (
+                <Card key={animalInfo.id}>
+                  <CardContent className="p-3">
+                    <div className="flex items-center gap-2 mb-2">
+                      <AnimalIcon className="w-4 h-4" />
+                      <p className="font-semibold text-sm">{animalInfo.name}</p>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      {animalSubs.sort((a, b) => a.sortOrder - b.sortOrder).map((sub) => (
+                        <div key={sub.id} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 border" data-testid={`subcategory-tag-${sub.id}`}>
+                          <div className="w-3 h-3 rounded-full" style={{ backgroundColor: sub.color }} />
+                          <span className="text-xs font-medium">{sub.displayName.replace(/\n/g, " ")}</span>
+                          {sub.hasBrands && <Badge variant="secondary" className="text-[9px] no-default-hover-elevate no-default-active-elevate">Marka</Badge>}
+                          <button
+                            className="text-muted-foreground/50 ml-0.5"
+                            onClick={() => {
+                              if (confirm(`"${sub.displayName.replace(/\n/g, " ")}" alt kategorisi silinecek. Emin misiniz?`)) {
+                                deleteSubcategoryMutation.mutate(sub.id);
+                              }
+                            }}
+                            data-testid={`btn-delete-subcategory-${sub.id}`}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -1686,7 +1818,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Tüm Alt Kategoriler</SelectItem>
-                    {(SUBCATEGORIES[selectedAnimalFilter] || []).map((sc) => (
+                    {(subcategoriesByAnimal[selectedAnimalFilter] || []).map((sc) => (
                       <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
                     ))}
                   </SelectContent>
@@ -1882,6 +2014,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     categories={categories}
                     onSave={(data) => createProductMutation.mutate(data)}
                     isPending={createProductMutation.isPending}
+                    subcategoriesByAnimal={subcategoriesByAnimal}
                   />
                 </DialogContent>
               </Dialog>
@@ -2048,6 +2181,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   updateProductMutation.mutate({ id: editingProduct.id, data })
                 }
                 isPending={updateProductMutation.isPending}
+                subcategoriesByAnimal={subcategoriesByAnimal}
               />
             )}
           </DialogContent>

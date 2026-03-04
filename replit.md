@@ -6,13 +6,14 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 ## Architecture
 - **Frontend**: React + TypeScript with shadcn/ui components, Tailwind CSS, framer-motion
 - **Backend**: Express with session-based auth (bcryptjs + express-session + connect-pg-simple)
-- **Database**: PostgreSQL (Drizzle ORM) - brand_categories, products, product_images, cross_sell_sections, cross_sell_items, orders, breed_stats, installment_rates, customers, customer_favorites, customer_addresses, pet_profiles, loyalty_points, reorder_reminders tables
+- **Database**: PostgreSQL (Drizzle ORM) - subcategories, brand_categories, products, product_images, cross_sell_sections, cross_sell_items, orders, breed_stats, installment_rates, customers, customer_favorites, customer_addresses, pet_profiles, loyalty_points, reorder_reminders tables
 - **Product Images**: Stored as base64 in `product_images` table (PostgreSQL), served via `/api/product-image/:id` endpoint. No filesystem dependency — images survive deployments. Admin uploads via multipart form, external URLs auto-downloaded and converted to WebP (800x800, quality 80).
 - **Loyalty Points**: Para Puan system - customers earn 5% of subtotal on each order, can spend points on future orders (auto-applied at checkout)
 - **Food Calculator**: Akıllı Mama Hesaplama - calculates daily food needs based on pet weight/age, shows how many days a package lasts, allows setting reorder reminders
 - **Reorder Reminders**: Customers set reminders via food calculator, admin sees upcoming/overdue reminders with one-click WhatsApp messaging
+- **Subcategories**: Dynamic from `subcategories` table — admin can add/delete subcategories per animal, each with slug, color, hasBrands flag, sortOrder
 - **Static data**: CATEGORIES in client/src/lib/data.ts (category tab names only, no products), CONFIG, PAYMENT_OPTIONS
-- **Dynamic data**: All products served from database via API (no static product lists)
+- **Dynamic data**: All products and categories served from database via API (no static product lists or category lists)
 - **Cross-sell**: Reusable recommendation sections linked to products via junction table, displayed on product detail pages
 
 ## Key Files

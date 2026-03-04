@@ -1,83 +1,37 @@
 import { Link, useRoute, useLocation } from "wouter";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 
-interface SubCategory {
-  name: string;
+interface Subcategory {
+  id: number;
+  animal: string;
   slug: string;
+  displayName: string;
   color: string;
-  hasBrands?: boolean;
-  directLink?: string;
+  hasBrands: boolean;
+  sortOrder: number;
 }
 
-interface AnimalCategory {
-  title: string;
-  titleHighlight: string;
-  subtitle: string;
-  subcategories: SubCategory[];
-}
-
-const ANIMAL_CATEGORIES: Record<string, AnimalCategory> = {
-  kopek: {
-    title: "Köpek",
-    titleHighlight: "Kategorileri",
-    subtitle: "LÜTFEN KATEGORİ SEÇİNİZ",
-    subcategories: [
-      { name: "Köpek\nMaması", slug: "mama-markalari", color: "#2196F3", hasBrands: true },
-      { name: "Açık Mama\nÇeşitleri", slug: "acik-mama", color: "#00BFA5", hasBrands: true },
-      { name: "Tuvalet\nMalzemeleri", slug: "tuvalet-malzemeleri", color: "#7B1FA2", directLink: "/siparis/kopek/tuvalet-malzemeleri/tuvalet-malzemeleri" },
-      { name: "Yaş Mama\nÇeşitleri", slug: "yas-mama", color: "#FF9800", directLink: "/siparis/kopek/yas-mama/yas-mama" },
-      { name: "Ödül Kemik\nÇeşitleri", slug: "odul-kemik", color: "#F44336", directLink: "/siparis/kopek/odul-kemik/odul-kemik" },
-      { name: "Taşıma ve\nKulübeler", slug: "tasima-kulube", color: "#37474F", directLink: "/siparis/kopek/tasima-kulube/tasima-kulube" },
-      { name: "Bakım ve\nSağlık", slug: "bakim-saglik", color: "#4CAF50", directLink: "/siparis/kopek/bakim-saglik/bakim-saglik" },
-    ],
-  },
-  kedi: {
-    title: "Kedi",
-    titleHighlight: "Kategorileri",
-    subtitle: "LÜTFEN KATEGORİ SEÇİNİZ",
-    subcategories: [
-      { name: "Kedi\nMaması", slug: "kedi-mamasi", color: "#E91E63", hasBrands: true },
-      { name: "Açık\nMamalar", slug: "acik-mama", color: "#00BFA5", hasBrands: true },
-      { name: "Kedi\nKumu", slug: "kedi-kumu", color: "#00BCD4", directLink: "/siparis/kedi/kedi-kumu/kedi-kumu" },
-      { name: "Kedi\nÖdülü", slug: "kedi-odulu", color: "#9C27B0", directLink: "/siparis/kedi/odul/odul" },
-      { name: "Kedi\nMaltı", slug: "kedi-malti", color: "#FF9800", directLink: "/siparis/kedi/malt-macun/malt-macun" },
-      { name: "Kedi Bakım\nSağlık", slug: "kedi-bakim-saglik", color: "#4CAF50", directLink: "/siparis/kedi/bakim-saglik/bakim-saglik" },
-      { name: "Kedi\nTaşıma", slug: "kedi-tasima", color: "#37474F", directLink: "/siparis/kedi/kedi-tasima/kedi-tasima" },
-      { name: "Kedi\nTuvaleti", slug: "kedi-tuvaleti", color: "#795548", directLink: "/siparis/kedi/kedi-tuvaleti/kedi-tuvaleti" },
-    ],
-  },
-  kus: {
-    title: "Kuş",
-    titleHighlight: "Kategorileri",
-    subtitle: "LÜTFEN KATEGORİ SEÇİNİZ",
-    subcategories: [
-      { name: "Kuş Yemi\nÇeşitleri", slug: "kus-yemi", color: "#2196F3", directLink: "/siparis/kus/kus-yemi/kus-yemi" },
-      { name: "Kuş Kafesi\nÇeşitleri", slug: "kus-kafesi", color: "#FF9800", directLink: "/siparis/kus/kus-kafesi/kus-kafesi" },
-      { name: "Kuş\nVitaminleri", slug: "kus-vitamin", color: "#4CAF50", directLink: "/siparis/kus/kus-vitamin/kus-vitamin" },
-      { name: "Bakım ve\nAksesuar", slug: "bakim-aksesuar", color: "#9C27B0", directLink: "/siparis/kus/bakim-aksesuar/bakim-aksesuar" },
-    ],
-  },
-  kemirgen: {
-    title: "Kemirgen",
-    titleHighlight: "Kategorileri",
-    subtitle: "LÜTFEN KATEGORİ SEÇİNİZ",
-    subcategories: [
-      { name: "Kemirgen\nYemleri", slug: "kemirgen-yemi", color: "#4CAF50", directLink: "/siparis/kemirgen/kemirgen-yemi/kemirgen-yemi" },
-      { name: "Kemirgen\nKafesleri", slug: "kemirgen-kafesi", color: "#2196F3", directLink: "/siparis/kemirgen/kemirgen-kafesi/kemirgen-kafesi" },
-      { name: "Bakım ve\nAksesuar", slug: "bakim-aksesuar", color: "#FF9800", directLink: "/siparis/kemirgen/bakim-aksesuar/bakim-aksesuar" },
-      { name: "Vitamin ve\nTakviye", slug: "vitamin-takviye", color: "#9C27B0", directLink: "/siparis/kemirgen/vitamin-takviye/vitamin-takviye" },
-    ],
-  },
+const ANIMAL_TITLES: Record<string, { title: string; titleHighlight: string }> = {
+  kopek: { title: "Köpek", titleHighlight: "Kategorileri" },
+  kedi: { title: "Kedi", titleHighlight: "Kategorileri" },
+  kus: { title: "Kuş", titleHighlight: "Kategorileri" },
+  kemirgen: { title: "Kemirgen", titleHighlight: "Kategorileri" },
 };
 
 export default function CategoryPage() {
   const [, params] = useRoute("/kategori/:animal");
   const animalSlug = params?.animal || "kopek";
-  const category = ANIMAL_CATEGORIES[animalSlug];
+  const animalInfo = ANIMAL_TITLES[animalSlug];
 
   const [, setLocation] = useLocation();
+
+  const { data: subcategories = [], isLoading } = useQuery<Subcategory[]>({
+    queryKey: ["/api/subcategories", animalSlug],
+    queryFn: () => fetch(`/api/subcategories/${animalSlug}`).then(r => r.json()),
+  });
 
   if (animalSlug === "kus") {
     setLocation("/siparis/kus/kus-yemi/kus-yemi", { replace: true });
@@ -89,7 +43,7 @@ export default function CategoryPage() {
     return null;
   }
 
-  if (!category) {
+  if (!animalInfo) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <p className="text-muted-foreground" data-testid="text-category-not-found">Kategori bulunamadı</p>
@@ -100,43 +54,57 @@ export default function CategoryPage() {
   return (
     <div className="min-h-screen flex flex-col pb-16" style={{ backgroundColor: "#f0f2f5" }}>
       <SEO
-        title={`${category.title} Maması Samsun - ${category.title} Ürünleri Fiyatları | JETGO Pet Shop`}
-        description={`Samsun ${category.title.toLowerCase()} maması, ${category.title.toLowerCase()} bakım ürünleri ve aksesuar çeşitleri en uygun fiyatlarla. Samsun içi aynı gün teslimat, kapıda ödeme. ${category.title} maması online sipariş.`}
+        title={`${animalInfo.title} Maması Samsun - ${animalInfo.title} Ürünleri Fiyatları | JETGO Pet Shop`}
+        description={`Samsun ${animalInfo.title.toLowerCase()} maması, ${animalInfo.title.toLowerCase()} bakım ürünleri ve aksesuar çeşitleri en uygun fiyatlarla. Samsun içi aynı gün teslimat, kapıda ödeme. ${animalInfo.title} maması online sipariş.`}
         canonical={`${SITE_DOMAIN}/kategori/${animalSlug}`}
       />
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
         <div className="text-center mb-6">
           <h2 className="text-3xl font-extrabold" data-testid="text-category-title">
-            <span className="text-foreground">{category.title} </span>
-            <span style={{ color: "#2196F3" }}>{category.titleHighlight}</span>
+            <span className="text-foreground">{animalInfo.title} </span>
+            <span style={{ color: "#2196F3" }}>{animalInfo.titleHighlight}</span>
           </h2>
           <p className="text-sm text-muted-foreground font-semibold tracking-wider mt-1" data-testid="text-category-subtitle">
-            {category.subtitle}
+            LÜTFEN KATEGORİ SEÇİNİZ
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3" data-testid="grid-subcategories">
-          {category.subcategories.map((sub, i) => (
-            <motion.div
-              key={sub.slug}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.05 * i }}
-            >
-              <Link href={sub.directLink ? sub.directLink : sub.slug === "acik-mama" ? `/acik-mama/${animalSlug}` : sub.hasBrands ? `/kategori/${animalSlug}/${sub.slug}` : `/siparis?kategori=${animalSlug}&alt=${sub.slug}`}>
-                <div
-                  className="rounded-xl p-5 cursor-pointer flex items-center justify-center min-h-[90px]"
-                  style={{ backgroundColor: sub.color }}
-                  data-testid={`btn-subcategory-${sub.slug}`}
+        {isLoading ? (
+          <div className="grid grid-cols-2 gap-3">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="rounded-xl p-5 min-h-[90px] bg-gray-200 animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3" data-testid="grid-subcategories">
+            {subcategories.map((sub, i) => {
+              const href = sub.hasBrands
+                ? (sub.slug === "acik-mama" ? `/acik-mama/${animalSlug}` : `/kategori/${animalSlug}/${sub.slug}`)
+                : `/siparis/${animalSlug}/${sub.slug}/${sub.slug}`;
+
+              return (
+                <motion.div
+                  key={sub.id}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.3, delay: 0.05 * i }}
                 >
-                  <span className="text-white font-bold text-base text-center leading-tight whitespace-pre-line" data-testid={`text-subcategory-${sub.slug}`}>
-                    {sub.name}
-                  </span>
-                </div>
-              </Link>
-            </motion.div>
-          ))}
-        </div>
+                  <Link href={href}>
+                    <div
+                      className="rounded-xl p-5 cursor-pointer flex items-center justify-center min-h-[90px]"
+                      style={{ backgroundColor: sub.color }}
+                      data-testid={`btn-subcategory-${sub.slug}`}
+                    >
+                      <span className="text-white font-bold text-base text-center leading-tight whitespace-pre-line" data-testid={`text-subcategory-${sub.slug}`}>
+                        {sub.displayName}
+                      </span>
+                    </div>
+                  </Link>
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
       </main>
 
       <footer style={{ backgroundColor: "#6B3480" }} className="py-4 px-4 text-center">

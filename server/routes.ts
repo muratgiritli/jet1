@@ -127,6 +127,39 @@ export async function registerRoutes(
     res.send(buffer);
   });
 
+  app.get("/api/subcategories", async (_req, res) => {
+    const subs = await storage.getAllSubcategories();
+    res.json(subs);
+  });
+
+  app.get("/api/subcategories/:animal", async (req, res) => {
+    const subs = await storage.getSubcategoriesByAnimal(req.params.animal);
+    res.json(subs);
+  });
+
+  app.post("/api/admin/subcategories", requireAdmin, async (req, res) => {
+    try {
+      const data = req.body;
+      const sub = await storage.createSubcategory(data);
+      res.status(201).json(sub);
+    } catch (e: any) {
+      res.status(400).json({ message: e.message });
+    }
+  });
+
+  app.patch("/api/admin/subcategories/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const sub = await storage.updateSubcategory(id, req.body);
+    if (!sub) return res.status(404).json({ message: "Subcategory not found" });
+    res.json(sub);
+  });
+
+  app.delete("/api/admin/subcategories/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteSubcategory(id);
+    res.json({ message: "Deleted" });
+  });
+
   app.get("/api/brand-categories", async (_req, res) => {
     const categories = await storage.getAllBrandCategories();
     res.json(categories);
