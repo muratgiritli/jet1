@@ -25,7 +25,6 @@ const BRAND_DATA: Record<string, Record<string, SubcategoryBrands>> = {
         { name: "Royal Canin", slug: "royal-canin", color: "#C62828" },
         { name: "Pro Plan", slug: "pro-plan", color: "#1565C0" },
         { name: "Hill's", slug: "hills", color: "#2E7D32" },
-        { name: "Brit", slug: "brit", color: "#0277BD" },
         { name: "ProChoice", slug: "prochoice", color: "#00838F" },
         { name: "Reflex", slug: "reflex-mama", color: "#F57F17" },
         { name: "Reflex Plus", slug: "reflex-plus", color: "#FF9800" },
