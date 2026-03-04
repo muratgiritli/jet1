@@ -1,5 +1,5 @@
 import { db } from "./storage";
-import { brandCategories, products, breedStats, crossSellSections, crossSellItems } from "@shared/schema";
+import { brandCategories, products, breedStats, crossSellSections, crossSellItems, subcategories } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import brandDataJson from "./brand_data.json";
 
@@ -547,7 +547,60 @@ async function seedCrossSellSections() {
   }
 }
 
+const SUBCATEGORY_SEED_DATA = [
+  { animal: "kopek", slug: "mama-markalari", displayName: "Köpek\nMaması", color: "#FF5722", hasBrands: true, sortOrder: 1 },
+  { animal: "kopek", slug: "acik-mama", displayName: "Açık Mama\nÇeşitleri", color: "#FF9800", hasBrands: true, sortOrder: 2 },
+  { animal: "kopek", slug: "tuvalet-malzemeleri", displayName: "Tuvalet\nMalzemeleri", color: "#8BC34A", hasBrands: false, sortOrder: 3 },
+  { animal: "kopek", slug: "yas-mama", displayName: "Yaş Mama\nÇeşitleri", color: "#E91E63", hasBrands: false, sortOrder: 4 },
+  { animal: "kopek", slug: "odul-kemik", displayName: "Ödül Kemik\nÇeşitleri", color: "#9C27B0", hasBrands: false, sortOrder: 5 },
+  { animal: "kopek", slug: "tasima-kulube", displayName: "Taşıma ve\nKulübeler", color: "#795548", hasBrands: false, sortOrder: 6 },
+  { animal: "kopek", slug: "bakim-saglik", displayName: "Bakım ve\nSağlık", color: "#00BCD4", hasBrands: false, sortOrder: 7 },
+  { animal: "kopek", slug: "uygun-cuval", displayName: "Uygun Çuval\nMamalar", color: "#607D8B", hasBrands: false, sortOrder: 8 },
+  { animal: "kedi", slug: "kedi-mamasi", displayName: "Kedi\nMaması", color: "#FF5722", hasBrands: true, sortOrder: 1 },
+  { animal: "kedi", slug: "acik-mama", displayName: "Açık\nMamalar", color: "#FF9800", hasBrands: true, sortOrder: 2 },
+  { animal: "kedi", slug: "kedi-kumu", displayName: "Kedi\nKumu", color: "#8BC34A", hasBrands: false, sortOrder: 3 },
+  { animal: "kedi", slug: "odul", displayName: "Kedi\nÖdülü", color: "#9C27B0", hasBrands: false, sortOrder: 4 },
+  { animal: "kedi", slug: "malt-macun", displayName: "Malt &\nMacun", color: "#FF9800", hasBrands: false, sortOrder: 5 },
+  { animal: "kedi", slug: "malt-vitamin", displayName: "Kedi\nMaltı", color: "#4CAF50", hasBrands: false, sortOrder: 5 },
+  { animal: "kedi", slug: "bakim-saglik", displayName: "Kedi Bakım\nSağlık", color: "#00BCD4", hasBrands: false, sortOrder: 6 },
+  { animal: "kedi", slug: "kedi-tasima", displayName: "Kedi\nTaşıma", color: "#795548", hasBrands: false, sortOrder: 7 },
+  { animal: "kedi", slug: "kedi-tuvaleti", displayName: "Kedi\nTuvaleti", color: "#607D8B", hasBrands: false, sortOrder: 8 },
+  { animal: "kedi", slug: "yas-mama", displayName: "Yaş Mama\nÇeşitleri", color: "#E91E63", hasBrands: false, sortOrder: 9 },
+  { animal: "kedi", slug: "kedi-konserve", displayName: "Kedi\nKonserve", color: "#F44336", hasBrands: false, sortOrder: 10 },
+  { animal: "kus", slug: "kus-yemi", displayName: "Kuş Yemi\nÇeşitleri", color: "#FFC107", hasBrands: false, sortOrder: 1 },
+  { animal: "kus", slug: "kus-kafesi", displayName: "Kuş Kafesi\nÇeşitleri", color: "#795548", hasBrands: false, sortOrder: 2 },
+  { animal: "kus", slug: "kus-vitamin", displayName: "Kuş\nVitaminleri", color: "#4CAF50", hasBrands: false, sortOrder: 3 },
+  { animal: "kus", slug: "bakim-aksesuar", displayName: "Bakım ve\nAksesuar", color: "#00BCD4", hasBrands: false, sortOrder: 4 },
+  { animal: "kemirgen", slug: "kemirgen-yemi", displayName: "Kemirgen\nYemleri", color: "#FF9800", hasBrands: false, sortOrder: 1 },
+  { animal: "kemirgen", slug: "kemirgen-kafesi", displayName: "Kemirgen\nKafesleri", color: "#795548", hasBrands: false, sortOrder: 2 },
+  { animal: "kemirgen", slug: "bakim-aksesuar", displayName: "Bakım ve\nAksesuar", color: "#00BCD4", hasBrands: false, sortOrder: 3 },
+  { animal: "kemirgen", slug: "vitamin-takviye", displayName: "Vitamin ve\nTakviye", color: "#4CAF50", hasBrands: false, sortOrder: 4 },
+];
+
+async function seedSubcategories() {
+  const validSlugs = new Set(SUBCATEGORY_SEED_DATA.map(s => `${s.animal}/${s.slug}`));
+  const allExisting = await db.select().from(subcategories);
+  for (const row of allExisting) {
+    if (!validSlugs.has(`${row.animal}/${row.slug}`)) {
+      await db.delete(subcategories).where(eq(subcategories.id, row.id));
+      console.log(`Removed invalid subcategory: ${row.animal}/${row.slug}`);
+    }
+  }
+  for (const sub of SUBCATEGORY_SEED_DATA) {
+    const existing = await db.select().from(subcategories).where(
+      and(
+        eq(subcategories.animal, sub.animal),
+        eq(subcategories.slug, sub.slug)
+      )
+    );
+    if (existing.length > 0) continue;
+    await db.insert(subcategories).values(sub);
+    console.log(`Seeded subcategory: ${sub.animal}/${sub.slug}`);
+  }
+}
+
 export async function seedDatabase() {
+  await seedSubcategories();
   console.log("Checking database for missing brand data...");
 
   for (const brand of ALL_BRAND_DATA) {

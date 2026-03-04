@@ -386,7 +386,7 @@ function SubcategoryForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const finalSlug = slug || displayName.toLowerCase().replace(/\n/g, " ").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+        const finalSlug = slug || displayName.toLowerCase().replace(/\n/g, " ").replace(/ö/g,"o").replace(/ü/g,"u").replace(/ş/g,"s").replace(/ç/g,"c").replace(/ı/g,"i").replace(/ğ/g,"g").replace(/İ/g,"i").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
         onSave({ animal, displayName, slug: finalSlug, color, hasBrands, sortOrder: parseInt(sortOrder) || 0 });
       }}
       className="space-y-4"
@@ -455,7 +455,7 @@ function CategoryForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        const slug = brandSlug || brandName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+        const slug = brandSlug || brandName.toLowerCase().replace(/ö/g,"o").replace(/ü/g,"u").replace(/ş/g,"s").replace(/ç/g,"c").replace(/ı/g,"i").replace(/ğ/g,"g").replace(/İ/g,"i").replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
         onSave({ brandName, brandSlug: slug, animal, subcategory });
       }}
       className="space-y-4"
