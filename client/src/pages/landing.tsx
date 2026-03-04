@@ -129,7 +129,7 @@ export default function Landing() {
         </section>
       </main>
 
-      <footer style={{ backgroundColor: "#7c4dff" }} className="py-5 px-4 text-center">
+      <footer style={{ backgroundColor: "#7c4dff" }} className="md:hidden py-5 px-4 text-center">
         <p className="text-white font-semibold text-sm leading-relaxed" data-testid="text-delivery-info">
           Samsun içinde kapınıza getiriyoruz
         </p>
@@ -138,7 +138,7 @@ export default function Landing() {
         </p>
       </footer>
 
-      <div style={{ backgroundColor: "#5c35c9" }} className="py-4 px-4 text-center">
+      <div style={{ backgroundColor: "#5c35c9" }} className="md:hidden py-4 px-4 text-center">
         <p className="text-white font-bold text-sm" data-testid="text-footer-brand">
           Tüm Petshop Ürünleri
         </p>
