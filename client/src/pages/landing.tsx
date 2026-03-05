@@ -37,6 +37,17 @@ export default function Landing() {
           <SearchBar />
         </section>
 
+        <div className="px-3 pb-2" data-testid="section-hook-banner">
+          <div
+            className="animate-heartbeat rounded-lg py-2 px-3 flex items-center justify-center gap-2"
+            style={{ background: "linear-gradient(135deg, #ff6f00 0%, #ff9100 100%)" }}
+          >
+            <span className="text-white text-xs font-extrabold tracking-wide text-center">
+              Mama Bitti Panik Yok 🚚 1 Saatte Kapında!
+            </span>
+          </div>
+        </div>
+
         <section data-testid="section-hero-banner">
           <div className="relative w-full overflow-hidden" data-testid="banner-hero">
             <img
