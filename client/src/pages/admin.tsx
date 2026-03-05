@@ -742,6 +742,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [newSectionSortOrder, setNewSectionSortOrder] = useState("0");
   const [newSectionForProductId, setNewSectionForProductId] = useState("");
   const [selectedProductId, setSelectedProductId] = useState("");
+  const [csAnimalFilter, setCsAnimalFilter] = useState("all");
+  const [csSubFilter, setCsSubFilter] = useState("all");
+  const [csBrandFilter, setCsBrandFilter] = useState("all");
 
   const [breedStatsDialogOpen, setBreedStatsDialogOpen] = useState(false);
   const [breedStatsProductId, setBreedStatsProductId] = useState<number | null>(null);
@@ -2347,27 +2350,89 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           if (!open) {
             setSelectedProductId("");
             setSelectedSectionId(null);
+            setCsAnimalFilter("all");
+            setCsSubFilter("all");
+            setCsBrandFilter("all");
           }
         }}>
-          <DialogContent>
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle>Bölüme Ürün Ekle</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Ürün Seçin</Label>
-                <Select value={selectedProductId} onValueChange={setSelectedProductId}>
-                  <SelectTrigger data-testid="select-cross-sell-product">
-                    <SelectValue placeholder="Ürün seçin" />
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <Select value={csAnimalFilter} onValueChange={(val) => { setCsAnimalFilter(val); setCsSubFilter("all"); setCsBrandFilter("all"); setSelectedProductId(""); }}>
+                  <SelectTrigger className="h-9 text-xs" data-testid="select-cs-animal">
+                    <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {allProducts.map((p) => (
-                      <SelectItem key={p.id} value={String(p.id)} data-testid={`option-cross-sell-product-${p.id}`}>
-                        {p.name}
-                      </SelectItem>
+                    <SelectItem value="all">Tüm Hayvanlar</SelectItem>
+                    {ANIMALS.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {csAnimalFilter !== "all" && (
+                  <Select value={csSubFilter} onValueChange={(val) => { setCsSubFilter(val); setCsBrandFilter("all"); setSelectedProductId(""); }}>
+                    <SelectTrigger className="h-9 text-xs" data-testid="select-cs-sub">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Tüm Alt Kat.</SelectItem>
+                      {(subcategoriesByAnimal[csAnimalFilter] || []).map((sc) => (
+                        <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+                {csSubFilter !== "all" && (() => {
+                  const brandsInSub = categories.filter(c => c.animal === csAnimalFilter && c.subcategory === csSubFilter);
+                  return brandsInSub.length > 1 ? (
+                    <Select value={csBrandFilter} onValueChange={(val) => { setCsBrandFilter(val); setSelectedProductId(""); }}>
+                      <SelectTrigger className="h-9 text-xs" data-testid="select-cs-brand">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tüm Markalar</SelectItem>
+                        {brandsInSub.map((b) => (
+                          <SelectItem key={b.id} value={String(b.id)}>{b.brandName}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  ) : null;
+                })()}
+              </div>
+              <div className="space-y-2">
+                <Label>Ürün Seçin</Label>
+                {(() => {
+                  let filtered = allProducts;
+                  if (csAnimalFilter !== "all") {
+                    const catIds = new Set(categories.filter(c => {
+                      if (c.animal !== csAnimalFilter) return false;
+                      if (csSubFilter !== "all" && c.subcategory !== csSubFilter) return false;
+                      if (csBrandFilter !== "all" && String(c.id) !== csBrandFilter) return false;
+                      return true;
+                    }).map(c => c.id));
+                    filtered = filtered.filter(p => catIds.has(p.brandCategoryId));
+                  }
+                  return (
+                    <>
+                      <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+                        <SelectTrigger data-testid="select-cross-sell-product">
+                          <SelectValue placeholder={`Ürün seçin (${filtered.length} ürün)`} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filtered.map((p) => (
+                            <SelectItem key={p.id} value={String(p.id)} data-testid={`option-cross-sell-product-${p.id}`}>
+                              {p.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">{filtered.length} ürün listeleniyor</p>
+                    </>
+                  );
+                })()}
               </div>
               <Button
                 className="w-full"
