@@ -404,20 +404,15 @@ function InlineSubcategories({
               {inlineProducts.length} ürün
             </p>
             <div className="grid grid-cols-2 gap-3">
-              {inlineProducts.map((product, i) => (
-                <motion.div
-                  key={product.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.25, delay: 0.03 * Math.min(i, 10) }}
-                >
+              {inlineProducts.map((product) => (
+                <div key={product.id}>
                   <InlineSubcategoryProductCard
                     product={product}
                     quantity={basket[product.id] || 0}
                     onUpdate={updateQty}
                     showDetailLink={!!selectedSc?.hasBrands}
                   />
-                </motion.div>
+                </div>
               ))}
             </div>
           </motion.div>
@@ -510,20 +505,15 @@ export default function BrandProductsPage() {
         )}
 
         <div className="grid grid-cols-2 gap-3" data-testid="grid-products">
-          {data.products.map((product, i) => (
-            <motion.div
-              key={product.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: 0.03 * i }}
-            >
+          {data.products.map((product) => (
+            <div key={product.id}>
               <BrandProductCard
                 product={product}
                 quantity={basket[String(product.id)] || 0}
                 onUpdate={updateQty}
                 showDetailLink={subcategory !== brandSlug}
               />
-            </motion.div>
+            </div>
           ))}
         </div>
 

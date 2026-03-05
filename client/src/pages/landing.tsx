@@ -1,5 +1,4 @@
 import { Link } from "wouter";
-import { motion } from "framer-motion";
 import { Bike, CreditCard, Banknote, QrCode } from "lucide-react";
 import SEO, { LOCAL_BUSINESS_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import SearchBar from "@/components/SearchBar";
@@ -14,13 +13,6 @@ const CATEGORIES = [
   { name: "Kedi", image: catCat, href: "/kategori/kedi" },
   { name: "Kuş", image: catBird, href: "/kategori/kus" },
   { name: "Kemirgen", image: catRabbit, href: "/kategori/kemirgen" },
-];
-
-const NAV_ITEMS = [
-  { name: "Kedi", href: "/kategori/kedi" },
-  { name: "Köpek", href: "/kategori/kopek" },
-  { name: "Kuş", href: "/kategori/kus" },
-  { name: "Kemirgen", href: "/kategori/kemirgen" },
 ];
 
 const FEATURES = [
@@ -41,22 +33,11 @@ export default function Landing() {
       />
       <main className="flex-1 max-w-lg mx-auto w-full">
 
-        <motion.section
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-          className="px-3 pt-3 pb-2"
-          data-testid="section-search"
-        >
+        <section className="px-3 pt-3 pb-2" data-testid="section-search">
           <SearchBar />
-        </motion.section>
+        </section>
 
-        <motion.section
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5 }}
-          data-testid="section-hero-banner"
-        >
+        <section data-testid="section-hero-banner">
           <div className="relative w-full overflow-hidden" data-testid="banner-hero">
             <img
               src="/banner-jetgo.webp"
@@ -65,22 +46,13 @@ export default function Landing() {
               data-testid="img-hero-banner"
             />
           </div>
-        </motion.section>
+        </section>
 
-        <motion.section
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4, delay: 0.15 }}
-          className="px-3 py-3"
-          data-testid="section-features"
-        >
+        <section className="px-3 py-3" data-testid="section-features">
           <div className="grid grid-cols-4 gap-2">
             {FEATURES.map((f, i) => (
-              <motion.div
+              <div
                 key={f.text}
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.2 + 0.05 * i }}
                 className="flex flex-col items-center gap-1 py-2 px-1 rounded-lg"
                 style={{ backgroundColor: "#f0faf0" }}
                 data-testid={`feature-${i}`}
@@ -89,23 +61,18 @@ export default function Landing() {
                 <span className="text-[10px] font-semibold text-center leading-tight" style={{ color: "#333" }}>
                   {f.text}
                 </span>
-              </motion.div>
+              </div>
             ))}
           </div>
-        </motion.section>
+        </section>
 
         <section className="px-3 pb-4">
           <h2 className="text-base font-bold mb-2.5 text-center" style={{ color: "#333" }} data-testid="text-categories-heading">
             Kategoriler
           </h2>
           <div className="grid grid-cols-2 gap-3" data-testid="grid-categories">
-            {CATEGORIES.map((cat, i) => (
-              <motion.div
-                key={cat.name}
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35, delay: 0.25 + 0.08 * i }}
-              >
+            {CATEGORIES.map((cat) => (
+              <div key={cat.name}>
                 <Link href={cat.href}>
                   <div className="cursor-pointer" data-testid={`card-category-${cat.name}`}>
                     <div className="rounded-xl overflow-hidden aspect-square shadow-sm">
@@ -122,13 +89,11 @@ export default function Landing() {
                     </p>
                   </div>
                 </Link>
-              </motion.div>
+              </div>
             ))}
           </div>
         </section>
       </main>
-
-
     </div>
   );
 }

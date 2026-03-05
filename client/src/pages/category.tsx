@@ -1,5 +1,4 @@
 import { Link, useRoute, useLocation } from "wouter";
-import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
@@ -77,18 +76,13 @@ export default function CategoryPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3" data-testid="grid-subcategories">
-            {subcategories.map((sub, i) => {
+            {subcategories.map((sub) => {
               const href = sub.hasBrands
                 ? (sub.slug === "acik-mama" ? `/acik-mama/${animalSlug}` : `/kategori/${animalSlug}/${sub.slug}`)
                 : `/siparis/${animalSlug}/${sub.slug}/${sub.slug}`;
 
               return (
-                <motion.div
-                  key={sub.id}
-                  initial={{ opacity: 0, y: 12 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.05 * i }}
-                >
+                <div key={sub.id}>
                   <Link href={href}>
                     <div
                       className="rounded-xl p-5 cursor-pointer flex items-center justify-center min-h-[90px]"
@@ -100,7 +94,7 @@ export default function CategoryPage() {
                       </span>
                     </div>
                   </Link>
-                </motion.div>
+                </div>
               );
             })}
           </div>

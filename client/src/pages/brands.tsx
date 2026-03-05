@@ -1,5 +1,4 @@
 import { Link, useRoute } from "wouter";
-import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 
 interface BrandCategory {
@@ -97,14 +96,8 @@ export default function BrandsPage() {
         </div>
 
         <div className="flex flex-col gap-2.5 items-center" data-testid="list-brands">
-          {brands.map((brand, i) => (
-            <motion.div
-              key={brand.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.25, delay: 0.05 * i }}
-              className="w-full max-w-[280px]"
-            >
+          {brands.map((brand) => (
+            <div key={brand.id} className="w-full max-w-[280px]">
               <Link href={`/siparis/${animalSlug}/${subSlug}/${brand.brandSlug}`}>
                 <div
                   className="rounded-md overflow-visible hover-elevate active-elevate-2 flex items-center justify-center py-3 px-4"
@@ -116,7 +109,7 @@ export default function BrandsPage() {
                   </span>
                 </div>
               </Link>
-            </motion.div>
+            </div>
           ))}
         </div>
       </main>

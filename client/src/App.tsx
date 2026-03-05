@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -5,67 +6,84 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
 import { CustomerProvider } from "@/contexts/CustomerContext";
-import { motion, AnimatePresence } from "framer-motion";
 import BottomTabBar from "@/components/BottomTabBar";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import InstallBanner from "@/components/InstallBanner";
 import Landing from "@/pages/landing";
-import Checkout from "@/pages/checkout";
-import CategoryPage from "@/pages/category";
-import CategoriesOverview from "@/pages/categories-overview";
-import BrandsPage from "@/pages/brands";
-import BrandProductsPage from "@/pages/brand-products";
-import AdminPage from "@/pages/admin";
-import ProductDetailPage from "@/pages/product-detail";
-import AcikMamaPage from "@/pages/acik-mama";
-import OrderTrackingPage from "@/pages/order-tracking";
-import FavoritesPage from "@/pages/favorites";
-import AuthPage from "@/pages/auth";
-import ProfilePage from "@/pages/profile";
-import NotFound from "@/pages/not-found";
-import { SSSPage, KVKKPage, GizlilikPage, KullanimKosullariPage, CerezPage, IslemRehberiPage, HakkimizdaPage, IletisimPage } from "@/pages/static-pages";
+
+const Checkout = lazy(() => import("@/pages/checkout"));
+const CategoryPage = lazy(() => import("@/pages/category"));
+const CategoriesOverview = lazy(() => import("@/pages/categories-overview"));
+const BrandsPage = lazy(() => import("@/pages/brands"));
+const BrandProductsPage = lazy(() => import("@/pages/brand-products"));
+const AdminPage = lazy(() => import("@/pages/admin"));
+const ProductDetailPage = lazy(() => import("@/pages/product-detail"));
+const AcikMamaPage = lazy(() => import("@/pages/acik-mama"));
+const OrderTrackingPage = lazy(() => import("@/pages/order-tracking"));
+const FavoritesPage = lazy(() => import("@/pages/favorites"));
+const AuthPage = lazy(() => import("@/pages/auth"));
+const ProfilePage = lazy(() => import("@/pages/profile"));
+const NotFound = lazy(() => import("@/pages/not-found"));
+const StaticPages = lazy(() => import("@/pages/static-pages"));
+
+function PageLoader() {
+  return (
+    <div className="flex items-center justify-center py-20">
+      <div className="w-8 h-8 border-3 border-gray-200 border-t-[#6B3480] rounded-full animate-spin" />
+    </div>
+  );
+}
 
 function Router() {
-  const [location] = useLocation();
-
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <motion.div
-        key={location}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ duration: 0.15 }}
-      >
-        <Switch location={location}>
-          <Route path="/" component={Landing} />
-          <Route path="/kategori" component={CategoriesOverview} />
-          <Route path="/acik-mama/:animal" component={AcikMamaPage} />
-          <Route path="/urun/:id/:slug?" component={ProductDetailPage} />
-          <Route path="/siparis/:animal/:subcategory/:brand" component={BrandProductsPage} />
-          <Route path="/kategori/:animal/:subcategory" component={BrandsPage} />
-          <Route path="/kategori/:animal" component={CategoryPage} />
-          <Route path="/odeme" component={Checkout} />
-          <Route path="/admin" component={AdminPage} />
-          <Route path="/siparis-takip" component={OrderTrackingPage} />
-          <Route path="/favoriler" component={FavoritesPage} />
-          <Route path="/giris" component={AuthPage} />
-          <Route path="/hesabim" component={ProfilePage} />
-          <Route path="/sss" component={SSSPage} />
-          <Route path="/kvkk" component={KVKKPage} />
-          <Route path="/gizlilik" component={GizlilikPage} />
-          <Route path="/kullanim-kosullari" component={KullanimKosullariPage} />
-          <Route path="/cerez-politikasi" component={CerezPage} />
-          <Route path="/islem-rehberi" component={IslemRehberiPage} />
-          <Route path="/hakkimizda" component={HakkimizdaPage} />
-          <Route path="/iletisim" component={IletisimPage} />
-          <Route component={NotFound} />
-        </Switch>
-      </motion.div>
-    </AnimatePresence>
+    <Suspense fallback={<PageLoader />}>
+      <Switch>
+        <Route path="/" component={Landing} />
+        <Route path="/kategori" component={CategoriesOverview} />
+        <Route path="/acik-mama/:animal" component={AcikMamaPage} />
+        <Route path="/urun/:id/:slug?" component={ProductDetailPage} />
+        <Route path="/siparis/:animal/:subcategory/:brand" component={BrandProductsPage} />
+        <Route path="/kategori/:animal/:subcategory" component={BrandsPage} />
+        <Route path="/kategori/:animal" component={CategoryPage} />
+        <Route path="/odeme" component={Checkout} />
+        <Route path="/admin" component={AdminPage} />
+        <Route path="/siparis-takip" component={OrderTrackingPage} />
+        <Route path="/favoriler" component={FavoritesPage} />
+        <Route path="/giris" component={AuthPage} />
+        <Route path="/hesabim" component={ProfilePage} />
+        <Route path="/sss">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="sss" /></Suspense>}</Route>
+        <Route path="/kvkk">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="kvkk" /></Suspense>}</Route>
+        <Route path="/gizlilik">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="gizlilik" /></Suspense>}</Route>
+        <Route path="/kullanim-kosullari">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="kullanim" /></Suspense>}</Route>
+        <Route path="/cerez-politikasi">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="cerez" /></Suspense>}</Route>
+        <Route path="/islem-rehberi">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="islem" /></Suspense>}</Route>
+        <Route path="/hakkimizda">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="hakkimizda" /></Suspense>}</Route>
+        <Route path="/iletisim">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="iletisim" /></Suspense>}</Route>
+        <Route component={NotFound} />
+      </Switch>
+    </Suspense>
   );
+}
+
+function StaticPageWrapper({ page }: { page: string }) {
+  const LazyStatic = lazy(() =>
+    import("@/pages/static-pages").then((mod) => {
+      const map: Record<string, any> = {
+        sss: mod.SSSPage,
+        kvkk: mod.KVKKPage,
+        gizlilik: mod.GizlilikPage,
+        kullanim: mod.KullanimKosullariPage,
+        cerez: mod.CerezPage,
+        islem: mod.IslemRehberiPage,
+        hakkimizda: mod.HakkimizdaPage,
+        iletisim: mod.IletisimPage,
+      };
+      return { default: map[page] };
+    })
+  );
+  return <LazyStatic />;
 }
 
 function AppShell() {

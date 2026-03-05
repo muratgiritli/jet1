@@ -339,11 +339,7 @@ export default function ProductDetailPage() {
         />
       )}
       <main className="flex-1 max-w-2xl mx-auto px-4 w-full py-6 pb-28">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
+        <div>
           <div className="flex flex-col md:flex-row gap-6">
               <ImageZoom src={product.img || ""} alt={product.name} className="md:w-1/2 w-full">
                 <div className="aspect-square flex items-center justify-center rounded-lg overflow-hidden bg-muted/30 relative" data-testid="img-product-detail">
@@ -543,13 +539,10 @@ export default function ProductDetailPage() {
 
             </div>
           </div>
-        </motion.div>
+        </div>
 
         {breedStats && breedStats.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
+          <div
             className="mt-8"
             data-testid="section-breed-stats"
           >
@@ -585,72 +578,50 @@ export default function ProductDetailPage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
+          </div>
         )}
 
         {category && ["kedi-mamasi", "acik-mama", "mama-markalari", "yas-mama", "uygun-cuval"].includes(category.subcategory) && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.15 }}
-            className="mt-6"
-          >
+          <div className="mt-6">
             <FoodCalculator
               productId={product.id}
               productName={product.name}
               productPrice={product.price}
               defaultAnimal={category.animal === "kopek" ? "kopek" : "kedi"}
             />
-          </motion.div>
+          </div>
         )}
 
         {needsCrossSell && alsoBoughtCategories.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="mt-8"
-            data-testid="section-also-bought"
-          >
+          <div className="mt-8" data-testid="section-also-bought">
             <h3 className="text-lg font-extrabold mb-4" data-testid="text-also-bought-title">
               Bu ürünü alanlar bunları da aldı
             </h3>
             <div className="space-y-6">
-              {alsoBoughtCategories.map((cat, catIdx) => (
+              {alsoBoughtCategories.map((cat) => (
                 <div key={cat.title} data-testid={`section-also-bought-${cat.title}`}>
                   <h4 className="text-sm font-bold text-white px-3 py-1.5 rounded-t-lg" style={{ backgroundColor: "#6B3480" }} data-testid={`text-cat-title-${cat.title}`}>
                     {cat.title}
                   </h4>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
-                    {cat.products.map((p, i) => (
-                      <motion.div
-                        key={p.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: 0.03 * i }}
-                      >
+                    {cat.products.map((p) => (
+                      <div key={p.id}>
                         <CrossSellProductCard
                           product={p}
                           quantity={basket[String(p.id)] || 0}
                           onUpdate={updateQty}
                         />
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {crossSellSections.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="mt-8"
-            data-testid="section-cross-sell-all"
-          >
+          <div className="mt-8" data-testid="section-cross-sell-all">
             <h3 className="text-lg font-extrabold mb-4" data-testid="text-cross-sell-title">
               Bu ürünü alanlar bunları da aldı
             </h3>
@@ -661,34 +632,24 @@ export default function ProductDetailPage() {
                     {section.title}
                   </h4>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
-                    {section.products.map((p, i) => (
-                      <motion.div
-                        key={p.id}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.2, delay: 0.03 * i }}
-                      >
+                    {section.products.map((p) => (
+                      <div key={p.id}>
                         <CrossSellProductCard
                           product={p}
                           quantity={basket[String(p.id)] || 0}
                           onUpdate={updateQty}
                         />
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                 </div>
               ))}
             </div>
-          </motion.div>
+          </div>
         )}
 
         {recentlyViewed.length > 0 && (
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3, delay: 0.2 }}
-            className="mt-6"
-          >
+          <div className="mt-6">
             <h3 className="text-sm font-bold text-muted-foreground mb-3" data-testid="text-recently-viewed-title">
               Son Görüntülenenler
             </h3>
@@ -705,7 +666,7 @@ export default function ProductDetailPage() {
                 </Link>
               ))}
             </div>
-          </motion.div>
+          </div>
         )}
 
       </main>
