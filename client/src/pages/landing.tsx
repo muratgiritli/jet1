@@ -1,7 +1,6 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
-import { Truck, CreditCard, MapPin } from "lucide-react";
-import { SiWhatsapp } from "react-icons/si";
+import { Bike, CreditCard, Banknote, QrCode } from "lucide-react";
 import SEO, { LOCAL_BUSINESS_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import SearchBar from "@/components/SearchBar";
 
