@@ -24,10 +24,10 @@ const NAV_ITEMS = [
 ];
 
 const FEATURES = [
-  { icon: Truck, text: "Samsun İçi Teslimat" },
-  { icon: MapPin, text: "Kapınıza Kadar" },
-  { icon: CreditCard, text: "Kapıda Ödeme" },
-  { icon: SiWhatsapp, text: "0850 840 3959" },
+  { icon: CreditCard, text: "12 Taksit" },
+  { icon: Bike, text: "1 Saat Teslimat" },
+  { icon: Banknote, text: "Kapıda Ödeme" },
+  { icon: QrCode, text: "QR / Kapıda Kart" },
 ];
 
 export default function Landing() {
