@@ -588,7 +588,7 @@ export default function ProductDetailPage() {
           </motion.div>
         )}
 
-        {category && ["kedi-mamasi", "acik-mama", "mama-markalari", "yas-mama"].includes(category.subcategory) && (
+        {category && ["kedi-mamasi", "acik-mama", "mama-markalari", "yas-mama", "uygun-cuval"].includes(category.subcategory) && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -598,6 +598,7 @@ export default function ProductDetailPage() {
             <FoodCalculator
               productId={product.id}
               productName={product.name}
+              productPrice={product.price}
               defaultAnimal={category.animal === "kopek" ? "kopek" : "kedi"}
             />
           </motion.div>

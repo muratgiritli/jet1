@@ -1,10 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Calculator, Cat, Dog, Bell, Check } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { UtensilsCrossed, Clock, Home, Activity, Zap } from "lucide-react";
 
 const FEEDING_GUIDE = {
   kedi: [
@@ -29,11 +25,11 @@ const FEEDING_GUIDE = {
   ],
 };
 
-function getAgeMultiplier(ageYears: number): number {
-  if (ageYears < 1) return 1.5;
-  if (ageYears <= 7) return 1.0;
-  return 0.85;
-}
+const ACTIVITY_MULTIPLIERS = [
+  { key: "low", label: "Az Hareketli", icon: Home, multiplier: 0.85 },
+  { key: "normal", label: "Normal", icon: Activity, multiplier: 1.0 },
+  { key: "high", label: "Çok Aktif", icon: Zap, multiplier: 1.2 },
+] as const;
 
 function parsePackageWeight(productName: string): number | null {
   const cleaned = productName.replace(/\d+\s*(?:adet|lu|'lu|'lü|lü|x\s*\d+)/gi, "");
@@ -41,220 +37,192 @@ function parsePackageWeight(productName: string): number | null {
   if (kgMatch) return parseFloat(kgMatch[1].replace(",", ".")) * 1000;
   const grMatch = cleaned.match(/(\d+(?:[.,]\d+)?)\s*gr/i);
   if (grMatch) return parseFloat(grMatch[1].replace(",", "."));
-  const ltMatch = cleaned.match(/(\d+(?:[.,]\d+)?)\s*lt/i);
-  if (ltMatch) return null;
   return null;
 }
 
-function calculateDailyGrams(animalType: "kedi" | "kopek", weightKg: number, ageYears: number): number {
+function getBaseGrams(animalType: "kedi" | "kopek", weightKg: number): number {
   const guide = FEEDING_GUIDE[animalType];
-  let baseGrams = guide[guide.length - 1].gramsPerDay;
   for (const tier of guide) {
-    if (weightKg <= tier.maxKg) {
-      baseGrams = tier.gramsPerDay;
-      break;
-    }
+    if (weightKg <= tier.maxKg) return tier.gramsPerDay;
   }
-  return Math.round(baseGrams * getAgeMultiplier(ageYears));
+  return guide[guide.length - 1].gramsPerDay;
 }
 
 interface FoodCalculatorProps {
   productId: number;
   productName: string;
+  productPrice: number;
   defaultAnimal?: "kedi" | "kopek";
 }
 
-export default function FoodCalculator({ productId, productName, defaultAnimal }: FoodCalculatorProps) {
-  const [animalType, setAnimalType] = useState<"kedi" | "kopek">(defaultAnimal || "kedi");
-  const [weight, setWeight] = useState("");
-  const [age, setAge] = useState("");
-  const [result, setResult] = useState<{ dailyGrams: number; packageGrams: number; estimatedDays: number; dailyCost: number } | null>(null);
-  const [showReminder, setShowReminder] = useState(false);
-  const [reminderPhone, setReminderPhone] = useState("");
-  const [reminderName, setReminderName] = useState("");
-  const [reminderSent, setReminderSent] = useState(false);
-  const [reminderLoading, setReminderLoading] = useState(false);
-  const { toast } = useToast();
+export default function FoodCalculator({ productName, productPrice, defaultAnimal }: FoodCalculatorProps) {
+  const animalType = defaultAnimal || "kedi";
+  const isKedi = animalType === "kedi";
+  const maxWeight = isKedi ? 15 : 60;
+  const defaultWeight = isKedi ? 4 : 15;
+  const mealCount = isKedi ? 3 : 2;
+  const animalLabel = isKedi ? "Kedi" : "Köpek";
 
-  const handleCalculate = () => {
-    const w = parseFloat(weight);
-    const a = parseFloat(age);
-    if (!w || w <= 0 || isNaN(a) || a < 0) {
-      toast({ title: "Lütfen geçerli kilo ve yaş girin", variant: "destructive" });
-      return;
-    }
-    const packageGrams = parsePackageWeight(productName);
-    if (!packageGrams) {
-      toast({ title: "Ürün gramajı tespit edilemedi", variant: "destructive" });
-      return;
-    }
-    const dailyGrams = calculateDailyGrams(animalType, w, a);
-    const estimatedDays = Math.max(1, Math.floor(packageGrams / dailyGrams));
-    setResult({ dailyGrams, packageGrams, estimatedDays, dailyCost: 0 });
-    setShowReminder(false);
-    setReminderSent(false);
-  };
+  const [portionWeight, setPortionWeight] = useState(defaultWeight);
+  const [activity, setActivity] = useState<"low" | "normal" | "high">("low");
+  const [durationWeight, setDurationWeight] = useState(isKedi ? 5 : 20);
 
-  const handleSetReminder = async () => {
-    if (!result) return;
-    const normalized = reminderPhone.replace(/\D/g, "");
-    if (normalized.length < 10) {
-      toast({ title: "Geçerli bir telefon numarası girin", variant: "destructive" });
-      return;
-    }
-    setReminderLoading(true);
-    try {
-      await apiRequest("POST", "/api/reorder-reminders", {
-        customerPhone: reminderPhone.trim(),
-        customerName: reminderName.trim() || undefined,
-        productId,
-        productName,
-        animalType,
-        dailyGrams: result.dailyGrams,
-        packageGrams: result.packageGrams,
-        estimatedDays: result.estimatedDays,
-      });
-      setReminderSent(true);
-      toast({ title: "Hatırlatma kaydedildi!", description: `${result.estimatedDays} gün sonra size haber vereceğiz.` });
-    } catch {
-      toast({ title: "Bir hata oluştu", variant: "destructive" });
-    } finally {
-      setReminderLoading(false);
-    }
-  };
+  const packageGrams = useMemo(() => parsePackageWeight(productName), [productName]);
+
+  const activityMultiplier = ACTIVITY_MULTIPLIERS.find(a => a.key === activity)!.multiplier;
+
+  const portionResult = useMemo(() => {
+    const base = getBaseGrams(animalType, portionWeight);
+    const daily = Math.round(base * activityMultiplier);
+    const perMeal = Math.round(daily / mealCount);
+    return { daily, perMeal, mealCount };
+  }, [animalType, portionWeight, activityMultiplier, mealCount]);
+
+  const durationResult = useMemo(() => {
+    if (!packageGrams) return null;
+    const dailyGrams = Math.round(getBaseGrams(animalType, durationWeight) * 1.0);
+    const days = Math.max(1, Math.floor(packageGrams / dailyGrams));
+    const weeks = (days / 7).toFixed(1);
+    const months = (days / 30).toFixed(1);
+    const dailyCost = productPrice / days;
+    return { dailyGrams, days, weeks, months, dailyCost };
+  }, [animalType, durationWeight, packageGrams, productPrice]);
+
+  if (!packageGrams) return null;
 
   return (
-    <Card className="overflow-hidden">
-      <div className="px-4 py-3 flex items-center gap-3" style={{ background: "linear-gradient(135deg, #fce4ec 0%, #fff 100%)" }}>
-        <div className="w-9 h-9 rounded-full flex items-center justify-center" style={{ backgroundColor: "#f8bbd0" }}>
-          <Calculator className="w-5 h-5" style={{ color: "#c62828" }} />
+    <div className="space-y-4">
+      <Card className="overflow-hidden border border-gray-200" data-testid="card-portion-calculator">
+        <div className="px-4 py-3 flex items-center gap-2 border-b border-gray-100">
+          <UtensilsCrossed className="w-5 h-5 text-gray-700" />
+          <h3 className="font-bold text-base text-gray-900" data-testid="text-portion-title">Günlük Porsiyon Hesaplayıcı</h3>
         </div>
-        <div>
-          <p className="font-bold text-sm" data-testid="text-calculator-title">Akıllı Mama Hesaplama</p>
-          <p className="text-xs text-muted-foreground">Dostunuz için günlük mama ihtiyacını hesaplayın</p>
-        </div>
-      </div>
-      <CardContent className="p-4 space-y-3">
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            type="button"
-            onClick={() => { setAnimalType("kedi"); setResult(null); }}
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${animalType === "kedi" ? "ring-2 ring-rose-400 bg-rose-50" : "bg-gray-50 hover:bg-gray-100"}`}
-            data-testid="btn-animal-kedi"
-          >
-            <Cat className="w-4 h-4" />
-            Kedi
-          </button>
-          <button
-            type="button"
-            onClick={() => { setAnimalType("kopek"); setResult(null); }}
-            className={`flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-all ${animalType === "kopek" ? "ring-2 ring-rose-400 bg-rose-50" : "bg-gray-50 hover:bg-gray-100"}`}
-            data-testid="btn-animal-kopek"
-          >
-            <Dog className="w-4 h-4" />
-            Köpek
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-3">
+        <CardContent className="p-4 space-y-4">
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Kilo (kg)</label>
-            <Input
-              type="number"
-              placeholder="örn. 4"
-              value={weight}
-              onChange={(e) => { setWeight(e.target.value); setResult(null); }}
-              data-testid="input-pet-weight"
+            <p className="text-sm text-gray-600 mb-1">
+              {animalLabel} ağırlığı: <span className="font-bold text-gray-900">{portionWeight} kg</span>
+            </p>
+            <input
+              type="range"
+              min={1}
+              max={maxWeight}
+              step={1}
+              value={portionWeight}
+              onChange={(e) => setPortionWeight(Number(e.target.value))}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer accent-orange-500"
+              style={{ background: `linear-gradient(to right, #f97316 0%, #f97316 ${((portionWeight - 1) / (maxWeight - 1)) * 100}%, #e5e7eb ${((portionWeight - 1) / (maxWeight - 1)) * 100}%, #e5e7eb 100%)` }}
+              data-testid="slider-portion-weight"
             />
+            <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+              <span>1 kg</span>
+              <span>{maxWeight} kg</span>
+            </div>
           </div>
+
           <div>
-            <label className="text-xs text-muted-foreground mb-1 block">Yaş (yıl)</label>
-            <Input
-              type="number"
-              placeholder="örn. 3"
-              value={age}
-              onChange={(e) => { setAge(e.target.value); setResult(null); }}
-              data-testid="input-pet-age"
-            />
+            <p className="text-sm text-gray-600 mb-2">Aktivite Seviyesi</p>
+            <div className="grid grid-cols-3 gap-2">
+              {ACTIVITY_MULTIPLIERS.map((a) => {
+                const Icon = a.icon;
+                const isActive = activity === a.key;
+                return (
+                  <button
+                    key={a.key}
+                    type="button"
+                    onClick={() => setActivity(a.key)}
+                    className={`flex flex-col items-center gap-1 py-2.5 px-2 rounded-lg text-xs font-medium transition-all border ${
+                      isActive
+                        ? "border-orange-400 bg-orange-50 text-orange-700"
+                        : "border-gray-200 bg-white text-gray-600 hover:border-gray-300"
+                    }`}
+                    data-testid={`btn-activity-${a.key}`}
+                  >
+                    <Icon className="w-5 h-5" />
+                    {a.label}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
 
-        <Button
-          onClick={handleCalculate}
-          className="w-full"
-          style={{ background: "linear-gradient(135deg, #e57373 0%, #ef9a9a 100%)" }}
-          data-testid="btn-calculate"
-        >
-          <Calculator className="w-4 h-4 mr-1" />
-          Hesapla
-        </Button>
-
-        {result && (
-          <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#f3e5f5", border: "1px solid #ce93d8" }}>
-            <div className="grid grid-cols-2 gap-2 text-sm">
-              <div className="text-center p-2 rounded-md bg-white/70">
-                <p className="text-xs text-muted-foreground">Günlük İhtiyaç</p>
-                <p className="font-bold text-lg" style={{ color: "#7b1fa2" }} data-testid="text-daily-grams">{result.dailyGrams} gr</p>
+          <div className="rounded-lg border border-gray-200 overflow-hidden">
+            <div className="grid grid-cols-2 divide-x divide-gray-200">
+              <div className="p-3">
+                <p className="text-xs text-gray-500">Günlük toplam:</p>
+                <p className="text-xl font-bold text-orange-600" data-testid="text-daily-total">{portionResult.daily} gram</p>
               </div>
-              <div className="text-center p-2 rounded-md bg-white/70">
-                <p className="text-xs text-muted-foreground">Bu Paket Yeter</p>
-                <p className="font-bold text-lg" style={{ color: "#7b1fa2" }} data-testid="text-estimated-days">{result.estimatedDays} gün</p>
+              <div className="p-3">
+                <p className="text-xs text-gray-500">Öğün sayısı:</p>
+                <p className="text-xl font-bold text-gray-900" data-testid="text-meal-count">Günde {portionResult.mealCount} öğün</p>
               </div>
             </div>
-            <p className="text-xs text-center text-muted-foreground">
-              {result.packageGrams >= 1000 ? `${result.packageGrams / 1000} kg` : `${result.packageGrams} gr`} paket, günde {result.dailyGrams} gr tüketimle yaklaşık {result.estimatedDays} gün sürer.
-            </p>
-
-            {!reminderSent && (
-              <button
-                type="button"
-                onClick={() => setShowReminder(!showReminder)}
-                className="w-full text-center text-xs font-medium py-2 rounded-md transition-colors"
-                style={{ color: "#7b1fa2", backgroundColor: "#e1bee7" }}
-                data-testid="btn-show-reminder"
-              >
-                <Bell className="w-3.5 h-3.5 inline mr-1" />
-                Mama bitince bana hatırlat
-              </button>
-            )}
-
-            {showReminder && !reminderSent && (
-              <div className="space-y-2 pt-1">
-                <Input
-                  type="tel"
-                  placeholder="Telefon numaranız"
-                  value={reminderPhone}
-                  onChange={(e) => setReminderPhone(e.target.value)}
-                  data-testid="input-reminder-phone"
-                />
-                <Input
-                  placeholder="Adınız (isteğe bağlı)"
-                  value={reminderName}
-                  onChange={(e) => setReminderName(e.target.value)}
-                  data-testid="input-reminder-name"
-                />
-                <Button
-                  onClick={handleSetReminder}
-                  className="w-full"
-                  size="sm"
-                  disabled={reminderLoading}
-                  style={{ backgroundColor: "#7b1fa2" }}
-                  data-testid="btn-set-reminder"
-                >
-                  {reminderLoading ? "Kaydediliyor..." : "Hatırlatma Kur"}
-                </Button>
+            <div className="border-t border-gray-200 p-3">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-500">Öğün başına:</span>
+                <span className="text-xl font-bold text-gray-900" data-testid="text-per-meal">~{portionResult.perMeal} gram</span>
               </div>
-            )}
-
-            {reminderSent && (
-              <div className="flex items-center gap-2 text-xs justify-center py-2 rounded-md" style={{ backgroundColor: "#e8f5e9", color: "#2e7d32" }} data-testid="text-reminder-success">
-                <Check className="w-4 h-4" />
-                Hatırlatma kaydedildi! Mama bitme zamanı gelince size ulaşacağız.
-              </div>
-            )}
+            </div>
           </div>
-        )}
-      </CardContent>
-    </Card>
+        </CardContent>
+      </Card>
+
+      {durationResult && (
+        <Card className="overflow-hidden border border-gray-200" data-testid="card-duration-calculator">
+          <div className="px-4 py-3 flex items-center gap-2 border-b border-gray-100">
+            <Clock className="w-5 h-5 text-gray-700" />
+            <h3 className="font-bold text-base text-gray-900" data-testid="text-duration-title">Kaç Gün Gider?</h3>
+          </div>
+          <CardContent className="p-4 space-y-4">
+            <div>
+              <p className="text-sm text-gray-600 mb-1">
+                {animalLabel} ağırlığı: <span className="font-bold text-gray-900">{durationWeight} kg</span>
+              </p>
+              <input
+                type="range"
+                min={1}
+                max={maxWeight}
+                step={1}
+                value={durationWeight}
+                onChange={(e) => setDurationWeight(Number(e.target.value))}
+                className="w-full h-2 rounded-full appearance-none cursor-pointer accent-orange-500"
+                style={{ background: `linear-gradient(to right, #f97316 0%, #f97316 ${((durationWeight - 1) / (maxWeight - 1)) * 100}%, #e5e7eb ${((durationWeight - 1) / (maxWeight - 1)) * 100}%, #e5e7eb 100%)` }}
+                data-testid="slider-duration-weight"
+              />
+              <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+                <span>1 kg</span>
+                <span>{maxWeight} kg</span>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 overflow-hidden">
+              <div className="grid grid-cols-2 divide-x divide-gray-200">
+                <div className="p-3">
+                  <p className="text-xs text-gray-500">Günlük porsiyon:</p>
+                  <p className="font-bold text-gray-900" data-testid="text-duration-daily">{durationResult.dailyGrams} g</p>
+                </div>
+                <div className="p-3">
+                  <p className="text-xs text-gray-500">Paket süresi:</p>
+                  <p className="text-xl font-bold text-gray-900" data-testid="text-duration-days">{durationResult.days} gün</p>
+                </div>
+              </div>
+              <div className="border-t border-gray-200 p-3">
+                <p className="text-xs text-gray-500">
+                  ({durationResult.weeks} hafta / ~{durationResult.months} ay)
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Günlük maliyet:</span>
+                <span className="text-xl font-bold text-orange-600" data-testid="text-daily-cost">
+                  {durationResult.dailyCost.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL/gün
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
