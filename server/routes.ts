@@ -9,6 +9,7 @@ import session from "express-session";
 import pgSession from "connect-pg-simple";
 import { saveProductImage, getProductImage, downloadAndSaveImage } from "./image-service";
 import multer from "multer";
+import OpenAI from "openai";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -1012,6 +1013,39 @@ export async function registerRoutes(
     }
     
     console.log(`[migrate] Complete: ${migrated} migrated, ${skipped} skipped, ${failed} failed`);
+  });
+
+  const petAI = new OpenAI({
+    apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+    baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  });
+
+  app.post("/api/pet-ask", async (req: Request, res: Response) => {
+    try {
+      const { question } = req.body;
+      if (!question || typeof question !== "string" || question.trim().length < 2) {
+        return res.status(400).json({ error: "Lütfen bir soru yazın" });
+      }
+
+      const completion = await petAI.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `Sen Türkiye'de bir pet shop'un yapay zeka asistanısın. Sadece evcil hayvanlar (kedi, köpek, kuş, kemirgen, balık) hakkında sorulara cevap ver. Konular: beslenme, mama seçimi, sağlık, bakım, davranış, eğitim, veteriner tavsiyeleri. Cevapları Türkçe ver, kısa ve öz tut (max 3-4 cümle). Evcil hayvanla ilgili olmayan sorulara "Bu konuda yardımcı olamıyorum, sadece evcil hayvan bakımı hakkında sorular sorabilirsiniz." de. Asla ilaç dozu veya tedavi reçetesi verme, veterinere yönlendir.`
+          },
+          { role: "user", content: question.trim() }
+        ],
+        max_tokens: 300,
+        temperature: 0.7,
+      });
+
+      const answer = completion.choices[0]?.message?.content || "Üzgünüm, şu an cevap veremiyorum.";
+      res.json({ answer });
+    } catch (error: any) {
+      console.error("Pet AI error:", error?.message || error);
+      res.status(500).json({ error: "Yapay zeka şu an meşgul, lütfen tekrar deneyin." });
+    }
   });
 
   return httpServer;
