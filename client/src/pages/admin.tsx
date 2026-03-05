@@ -528,6 +528,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [bulkPricePercent, setBulkPricePercent] = useState("");
   const [bulkPriceMode, setBulkPriceMode] = useState<"percent" | "individual">("individual");
   const [individualPrices, setIndividualPrices] = useState<Record<number, string>>({});
+  const [ordersExpanded, setOrdersExpanded] = useState(false);
   const [orderTab, setOrderTab] = useState<"gelen" | "giden" | "bekleyen">("gelen");
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
@@ -946,16 +947,20 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         <section>
-          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-            <div className="flex items-center gap-2 flex-wrap">
-              <ShoppingBag className="w-5 h-5" />
-              <h2 className="text-lg font-bold" data-testid="text-section-orders">Sipariş Yönetimi</h2>
-              <Badge className="no-default-hover-elevate no-default-active-elevate" data-testid="badge-order-count">
-                {allOrders.length}
-              </Badge>
-            </div>
-          </div>
+          <button
+            onClick={() => setOrdersExpanded(!ordersExpanded)}
+            className="flex items-center gap-2 mb-4 w-full text-left"
+            data-testid="btn-toggle-orders"
+          >
+            <ShoppingBag className="w-5 h-5" />
+            <h2 className="text-lg font-bold" data-testid="text-section-orders">Sipariş Yönetimi</h2>
+            <Badge className="no-default-hover-elevate no-default-active-elevate" data-testid="badge-order-count">
+              {allOrders.filter(o => o.status === "yeni").length} yeni / {allOrders.length} toplam
+            </Badge>
+            <ChevronDown className={`w-5 h-5 ml-auto transition-transform ${ordersExpanded ? "rotate-180" : ""}`} />
+          </button>
 
+          {ordersExpanded && <>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
             <div className="flex gap-1 bg-muted/50 rounded-lg p-1" data-testid="tabs-order-filter">
               {([
@@ -1153,6 +1158,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </div>
             );
           })()}
+          </>}
         </section>
 
         <Dialog open={!!phoneHistoryDialog} onOpenChange={(open) => { if (!open) setPhoneHistoryDialog(null); }}>
