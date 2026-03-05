@@ -129,25 +129,7 @@ export default function Landing() {
         </section>
       </main>
 
-      <footer style={{ backgroundColor: "#7c4dff" }} className="md:hidden py-5 px-4 text-center">
-        <p className="text-white font-semibold text-sm leading-relaxed" data-testid="text-delivery-info">
-          Samsun içinde kapınıza getiriyoruz
-        </p>
-        <p className="text-white/90 text-sm mt-1" data-testid="text-payment-methods">
-          Havale / Kapıda nakit / Kapıda kredi kartı / QR ödeme
-        </p>
-      </footer>
 
-      <div style={{ backgroundColor: "#5c35c9" }} className="md:hidden py-4 px-4 text-center">
-        <p className="text-white font-bold text-sm" data-testid="text-footer-brand">
-          Tüm Petshop Ürünleri
-        </p>
-        <Link href="/kategori">
-          <p className="text-white/80 text-sm mt-0.5 cursor-pointer" data-testid="text-footer-cta">
-            Sipariş Ver - Hemen Kapına Gelsin
-          </p>
-        </Link>
-      </div>
     </div>
   );
 }

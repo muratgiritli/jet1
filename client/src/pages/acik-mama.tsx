@@ -190,14 +190,6 @@ export default function AcikMamaPage() {
         )}
       </main>
 
-      <footer style={{ backgroundColor: "#6B3480" }} className="py-4 px-4 text-center">
-        <p className="text-white font-semibold text-sm" data-testid="text-delivery-info">
-          Samsun içinde kapınıza getiriyoruz..
-        </p>
-        <p className="text-white/90 text-xs mt-1" data-testid="text-payment-methods">
-          Havale / Kapıda nakit / Kapıda kredi kartı / QR ödeme
-        </p>
-      </footer>
     </div>
   );
 }
