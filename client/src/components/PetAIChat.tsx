@@ -62,7 +62,7 @@ export default function PetAIChat() {
             <Sparkles className="w-4 h-4 text-white" />
           </div>
           <div>
-            <h3 className="text-white font-bold text-sm">Yapay Zeka Pet Danışmanı</h3>
+            <h3 className="text-white font-bold text-sm">JETGO Yapay Zeka Danışmanı</h3>
             <p className="text-purple-200 text-[10px]">Evcil hayvan bakım ve sağlık soruları</p>
           </div>
         </div>
