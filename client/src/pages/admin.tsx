@@ -234,7 +234,12 @@ function ProductForm({
             value={selectedSubcategory}
             onValueChange={(val) => {
               setSelectedSubcategory(val);
-              setBrandCategoryId("");
+              const matching = categories.filter(c => c.animal === selectedAnimal && c.subcategory === val);
+              if (matching.length === 1) {
+                setBrandCategoryId(String(matching[0].id));
+              } else {
+                setBrandCategoryId("");
+              }
             }}
             disabled={!selectedAnimal}
           >
@@ -252,28 +257,30 @@ function ProductForm({
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label>Marka</Label>
-        <Select
-          value={brandCategoryId}
-          onValueChange={setBrandCategoryId}
-          disabled={!selectedSubcategory}
-        >
-          <SelectTrigger data-testid="select-brand-category">
-            <SelectValue placeholder={filteredCategories.length === 0 ? "Bu alt kategoride marka yok" : "Marka seçin"} />
-          </SelectTrigger>
-          <SelectContent>
-            {filteredCategories.map((c) => (
-              <SelectItem key={c.id} value={String(c.id)} data-testid={`option-category-${c.id}`}>
-                {c.brandName}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        {selectedSubcategory && filteredCategories.length === 0 && (
-          <p className="text-xs text-muted-foreground">Bu alt kategoride henüz marka eklenmemiş</p>
-        )}
-      </div>
+      {filteredCategories.length > 1 && (
+        <div className="space-y-2">
+          <Label>Marka</Label>
+          <Select
+            value={brandCategoryId}
+            onValueChange={setBrandCategoryId}
+            disabled={!selectedSubcategory}
+          >
+            <SelectTrigger data-testid="select-brand-category">
+              <SelectValue placeholder="Marka seçin" />
+            </SelectTrigger>
+            <SelectContent>
+              {filteredCategories.map((c) => (
+                <SelectItem key={c.id} value={String(c.id)} data-testid={`option-category-${c.id}`}>
+                  {c.brandName}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+      {selectedSubcategory && filteredCategories.length === 0 && (
+        <p className="text-xs text-red-500 text-sm">Bu alt kategoride henüz marka eklenmemiş</p>
+      )}
 
       <div className="space-y-2">
         <Label>Ürün Adı</Label>

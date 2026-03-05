@@ -449,7 +449,18 @@ const KOPEK_ACIK_MAMA_REFLEX: BrandProductData = {
   ],
 };
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, ECONATURE_KOPEK, FELICIA_KOPEK, ENJOY_KOPEK, LAVITAL_KOPEK, PROCHOICE_KOPEK, PRONATURE_KOPEK, PROPERFORMANCE_KOPEK, REFLEX_KOPEK, REFLEX_PLUS_KOPEK, WANPY_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX];
+const KEMIRGEN_KUS_BRAND_DATA: BrandProductData[] = [
+  { brandName: "Kemirgen Yemleri", brandSlug: "kemirgen-yemi", animal: "kemirgen", subcategory: "kemirgen-yemi", products: [] },
+  { brandName: "Kemirgen Kafesleri", brandSlug: "kemirgen-kafesi", animal: "kemirgen", subcategory: "kemirgen-kafesi", products: [] },
+  { brandName: "Bakım ve Aksesuar", brandSlug: "bakim-aksesuar", animal: "kemirgen", subcategory: "bakim-aksesuar", products: [] },
+  { brandName: "Vitamin ve Takviye", brandSlug: "vitamin-takviye", animal: "kemirgen", subcategory: "vitamin-takviye", products: [] },
+  { brandName: "Kuş Yemi Çeşitleri", brandSlug: "kus-yemi", animal: "kus", subcategory: "kus-yemi", products: [] },
+  { brandName: "Kuş Kafesi Çeşitleri", brandSlug: "kus-kafesi", animal: "kus", subcategory: "kus-kafesi", products: [] },
+  { brandName: "Kuş Vitaminleri", brandSlug: "kus-vitamin", animal: "kus", subcategory: "kus-vitamin", products: [] },
+  { brandName: "Bakım ve Aksesuar", brandSlug: "bakim-aksesuar", animal: "kus", subcategory: "bakim-aksesuar", products: [] },
+];
+
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, ECONATURE_KOPEK, FELICIA_KOPEK, ENJOY_KOPEK, LAVITAL_KOPEK, PROCHOICE_KOPEK, PRONATURE_KOPEK, PROPERFORMANCE_KOPEK, REFLEX_KOPEK, REFLEX_PLUS_KOPEK, WANPY_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX, ...KEMIRGEN_KUS_BRAND_DATA];
 
 const KOPEK_CROSS_SELL_SECTIONS = [
   {
