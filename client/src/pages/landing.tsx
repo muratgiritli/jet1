@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Bike, CreditCard, Banknote, QrCode } from "lucide-react";
+import { Bike, CreditCard, Banknote, Smartphone } from "lucide-react";
 import SEO, { LOCAL_BUSINESS_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import SearchBar from "@/components/SearchBar";
 
@@ -16,10 +16,10 @@ const CATEGORIES = [
 ];
 
 const FEATURES = [
-  { icon: CreditCard, text: "12 Taksit" },
-  { icon: Bike, text: "1 Saat Teslimat" },
-  { icon: Banknote, text: "Kapıda Ödeme" },
-  { icon: QrCode, text: "QR / Kapıda Kart" },
+  { icon: Bike, text: "1 Saatte\nTeslimat", pulse: true },
+  { icon: CreditCard, text: "Tüm Kartlara\n12 Ay Taksit", pulse: false },
+  { icon: Banknote, text: "Kapıda Nakit\nBanka Havalesi", pulse: false },
+  { icon: Smartphone, text: "Kapıda POS\nveya QR Ödeme", pulse: false },
 ];
 
 export default function Landing() {
@@ -52,13 +52,16 @@ export default function Landing() {
           <div className="grid grid-cols-4 gap-2">
             {FEATURES.map((f, i) => (
               <div
-                key={f.text}
-                className="flex flex-col items-center gap-1 py-2 px-1 rounded-lg"
-                style={{ backgroundColor: "#f0faf0" }}
+                key={i}
+                className={`flex flex-col items-center justify-center gap-1.5 py-2.5 px-1 rounded-lg ${f.pulse ? "animate-heartbeat" : ""}`}
+                style={{ backgroundColor: f.pulse ? "#fff3e0" : "#f0faf0" }}
                 data-testid={`feature-${i}`}
               >
-                <f.icon className="w-5 h-5" style={{ color: "#2ecc40" }} />
-                <span className="text-[10px] font-semibold text-center leading-tight" style={{ color: "#333" }}>
+                <f.icon className="w-5 h-5" style={{ color: f.pulse ? "#e65100" : "#2ecc40" }} />
+                <span
+                  className="text-[9px] font-bold text-center leading-tight whitespace-pre-line"
+                  style={{ color: f.pulse ? "#e65100" : "#333" }}
+                >
                   {f.text}
                 </span>
               </div>
