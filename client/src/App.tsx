@@ -10,6 +10,7 @@ import BottomTabBar from "@/components/BottomTabBar";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import InstallBanner from "@/components/InstallBanner";
 import Landing from "@/pages/landing";
 import Checkout from "@/pages/checkout";
 import CategoryPage from "@/pages/category";
@@ -73,6 +74,7 @@ function AppShell() {
 
   return (
     <>
+      {!isAdmin && <InstallBanner />}
       {!isAdmin && <Header />}
       <Router />
       {!isAdmin && <Footer />}
