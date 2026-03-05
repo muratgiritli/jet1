@@ -2,6 +2,7 @@ import { Link } from "wouter";
 import { Bike, CreditCard, Banknote, Smartphone } from "lucide-react";
 import SEO, { LOCAL_BUSINESS_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import SearchBar from "@/components/SearchBar";
+import PetAIChat from "@/components/PetAIChat";
 
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
@@ -107,6 +108,8 @@ export default function Landing() {
             ))}
           </div>
         </section>
+
+        <PetAIChat />
       </main>
     </div>
   );

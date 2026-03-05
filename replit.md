@@ -1,7 +1,7 @@
 # JETGO - Hızlı Sipariş
 
 ## Overview
-Pet shop quick ordering application built with React/TypeScript. Customers browse pet products, add items to cart, and submit orders via WhatsApp. Admin panel allows dynamic product management.
+Pet shop quick ordering application built with React/TypeScript. Customers browse pet products, add items to cart, and submit orders via WhatsApp. Admin panel allows dynamic product management. AI-powered pet care Q&A chatbot on landing page (OpenAI via Replit AI Integrations).
 
 ## Architecture
 - **Frontend**: React + TypeScript with shadcn/ui components, Tailwind CSS, framer-motion
@@ -26,6 +26,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `client/src/pages/brand-products.tsx` - Brand product listing (fetches from API)
 - `client/src/pages/product-detail.tsx` - Individual product detail page with cross-sell sections, stock alerts, food calculator
 - `client/src/components/FoodCalculator.tsx` - Smart food calculator with reorder reminder
+- `client/src/components/PetAIChat.tsx` - AI pet care Q&A chatbot (landing page, OpenAI integration)
 - `client/src/pages/home.tsx` - Product browsing page with catalog (static products)
 - `client/src/pages/checkout.tsx` - Cart/checkout page with payment options, customer info, WhatsApp order (opens new tab), redirects to member panel
 - `client/src/pages/order-tracking.tsx` - Order tracking by phone number
@@ -67,6 +68,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `DELETE /api/admin/cross-sell-sections/:id` - Delete cross-sell section (auth required)
 - `POST /api/admin/cross-sell-items` - Add product to cross-sell section (auth required)
 - `DELETE /api/admin/cross-sell-items/:id` - Remove product from cross-sell section (auth required)
+- `POST /api/pet-ask` - AI pet care Q&A (OpenAI, Turkish responses, max 300 tokens)
 - `POST /api/orders` - Create new order (requires phone+name, decrements stock, saves installment info)
 - `GET /api/admin/orders` - List all orders (auth required)
 - `PATCH /api/admin/orders/:id/status` - Update order status (auth required)
