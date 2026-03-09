@@ -46,7 +46,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `client/src/hooks/useRecentlyViewed.ts` - Recently viewed products tracking (localStorage)
 - `client/src/lib/data.ts` - Static product data, categories, payment options, config
 - `client/src/App.tsx` - Root component with routing, page transitions (framer-motion)
-- `client/src/pages/static-pages.tsx` - Static content pages: SSS, KVKK, Gizlilik, Kullanım Koşulları, Çerez Politikası, İşlem Rehberi, Hakkımızda, İletişim
+- `client/src/pages/static-pages.tsx` - Static content pages: SSS, KVKK, Gizlilik, Kullanım Koşulları, Çerez Politikası, İşlem Rehberi, Hakkımızda, İletişim, Teslimat/İade, Gizlilik Sözleşmesi, Mesafeli Satış Sözleşmesi. Company info centralized in COMPANY constant (Tic.Sicil:29458, MERSİS:0772071161700010, Vergi:Gaziler/7720711617)
 
 ## API Routes
 - `GET /api/products` - All products from database

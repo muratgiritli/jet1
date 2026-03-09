@@ -71,7 +71,7 @@ export default function Footer() {
             <ul className="space-y-3">
               <li className="flex items-start gap-2.5 text-sm">
                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
-                <span>Atatürk 3. Kısım Bulvarı No:113/A, Atakum, Samsun</span>
+                <span>Yenimahalle Atatürk 3. Kısım Blv. No:113/A, Atakum, Samsun</span>
               </li>
               <li>
                 <a href="tel:+908508403959" className="flex items-center gap-2.5 text-sm hover:text-white transition-colors" data-testid="footer-phone">
