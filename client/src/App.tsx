@@ -26,7 +26,18 @@ const FavoritesPage = lazy(() => import("@/pages/favorites"));
 const AuthPage = lazy(() => import("@/pages/auth"));
 const ProfilePage = lazy(() => import("@/pages/profile"));
 const NotFound = lazy(() => import("@/pages/not-found"));
-const StaticPages = lazy(() => import("@/pages/static-pages"));
+
+const SSSPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.SSSPage })));
+const KVKKPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.KVKKPage })));
+const GizlilikPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.GizlilikPage })));
+const KullanimKosullariPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.KullanimKosullariPage })));
+const CerezPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.CerezPage })));
+const IslemRehberiPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.IslemRehberiPage })));
+const HakkimizdaPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.HakkimizdaPage })));
+const IletisimPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.IletisimPage })));
+const TeslimatIadePage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.TeslimatIadePage })));
+const GizlilikSozlesmesiPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.GizlilikSozlesmesiPage })));
+const MesafeliSatisSozlesmesiPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.MesafeliSatisSozlesmesiPage })));
 
 function PageLoader() {
   return (
@@ -53,43 +64,21 @@ function Router() {
         <Route path="/favoriler" component={FavoritesPage} />
         <Route path="/giris" component={AuthPage} />
         <Route path="/hesabim" component={ProfilePage} />
-        <Route path="/sss">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="sss" /></Suspense>}</Route>
-        <Route path="/kvkk">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="kvkk" /></Suspense>}</Route>
-        <Route path="/gizlilik">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="gizlilik" /></Suspense>}</Route>
-        <Route path="/kullanim-kosullari">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="kullanim" /></Suspense>}</Route>
-        <Route path="/cerez-politikasi">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="cerez" /></Suspense>}</Route>
-        <Route path="/islem-rehberi">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="islem" /></Suspense>}</Route>
-        <Route path="/hakkimizda">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="hakkimizda" /></Suspense>}</Route>
-        <Route path="/iletisim">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="iletisim" /></Suspense>}</Route>
-        <Route path="/teslimat-iade">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="teslimat-iade" /></Suspense>}</Route>
-        <Route path="/gizlilik-sozlesmesi">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="gizlilik-sozlesmesi" /></Suspense>}</Route>
-        <Route path="/mesafeli-satis">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="mesafeli-satis" /></Suspense>}</Route>
+        <Route path="/sss" component={SSSPage} />
+        <Route path="/kvkk" component={KVKKPage} />
+        <Route path="/gizlilik" component={GizlilikPage} />
+        <Route path="/kullanim-kosullari" component={KullanimKosullariPage} />
+        <Route path="/cerez-politikasi" component={CerezPage} />
+        <Route path="/islem-rehberi" component={IslemRehberiPage} />
+        <Route path="/hakkimizda" component={HakkimizdaPage} />
+        <Route path="/iletisim" component={IletisimPage} />
+        <Route path="/teslimat-iade" component={TeslimatIadePage} />
+        <Route path="/gizlilik-sozlesmesi" component={GizlilikSozlesmesiPage} />
+        <Route path="/mesafeli-satis" component={MesafeliSatisSozlesmesiPage} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
   );
-}
-
-function StaticPageWrapper({ page }: { page: string }) {
-  const LazyStatic = lazy(() =>
-    import("@/pages/static-pages").then((mod) => {
-      const map: Record<string, any> = {
-        sss: mod.SSSPage,
-        kvkk: mod.KVKKPage,
-        gizlilik: mod.GizlilikPage,
-        kullanim: mod.KullanimKosullariPage,
-        cerez: mod.CerezPage,
-        islem: mod.IslemRehberiPage,
-        hakkimizda: mod.HakkimizdaPage,
-        iletisim: mod.IletisimPage,
-        "teslimat-iade": mod.TeslimatIadePage,
-        "gizlilik-sozlesmesi": mod.GizlilikSozlesmesiPage,
-        "mesafeli-satis": mod.MesafeliSatisSozlesmesiPage,
-      };
-      return { default: map[page] };
-    })
-  );
-  return <LazyStatic />;
 }
 
 function AppShell() {
