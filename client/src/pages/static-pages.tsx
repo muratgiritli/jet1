@@ -20,7 +20,7 @@ const COMPANY = {
 
 function PageWrapper({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 md:pb-8">
       <div className="max-w-3xl mx-auto px-4 py-6">
         <h1 className="text-xl font-bold mb-6" data-testid="text-page-title">{title}</h1>
         {children}

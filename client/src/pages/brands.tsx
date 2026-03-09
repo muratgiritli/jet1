@@ -58,7 +58,7 @@ export default function BrandsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex flex-col bg-white pb-16">
+      <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
         <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
           <div className="text-center mb-6">
             <div className="h-8 w-48 mx-auto bg-gray-200 animate-pulse rounded" />
@@ -75,7 +75,7 @@ export default function BrandsPage() {
 
   if (brands.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col bg-white pb-16">
+      <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
         <div className="flex-1 flex items-center justify-center">
           <p className="text-muted-foreground" data-testid="text-not-found">Bu kategoride henüz marka eklenmedi</p>
         </div>
@@ -84,7 +84,7 @@ export default function BrandsPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-white pb-16">
+    <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-extrabold" data-testid="text-brands-title">

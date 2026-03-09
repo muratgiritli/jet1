@@ -338,7 +338,7 @@ export default function ProductDetailPage() {
           jsonLd={seoData.jsonLd}
         />
       )}
-      <main className="flex-1 max-w-2xl mx-auto px-4 w-full py-6 pb-28">
+      <main className="flex-1 max-w-2xl mx-auto px-4 w-full py-6 pb-28 md:pb-8">
         <div>
           <div className="flex flex-col md:flex-row gap-6">
               <ImageZoom src={product.img || ""} alt={product.name} className="md:w-1/2 w-full">

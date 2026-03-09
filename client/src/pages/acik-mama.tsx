@@ -135,7 +135,7 @@ export default function AcikMamaPage() {
   const title = animal === "kedi" ? "Kedi Açık Mama" : "Köpek Açık Mama";
 
   return (
-    <div className="min-h-screen flex flex-col pb-16" style={{ backgroundColor: "#f0f2f5" }}>
+    <div className="min-h-screen flex flex-col pb-16 md:pb-0" style={{ backgroundColor: "#f0f2f5" }}>
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
         <div className="text-center mb-6">
           <h2 className="text-2xl font-extrabold" data-testid="text-acik-title">

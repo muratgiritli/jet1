@@ -430,7 +430,7 @@ export default function Checkout() {
   }, [pendingOrderAfterAuth, isLoggedIn, showAuthModal]);
 
   return (
-    <div className="min-h-screen bg-background pb-16">
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
       <AnimatePresence>
         {showAuthModal && !isLoggedIn && (
           <motion.div

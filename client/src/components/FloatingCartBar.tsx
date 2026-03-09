@@ -15,7 +15,7 @@ export default function FloatingCartBar() {
           initial={{ y: 80, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           exit={{ y: 80, opacity: 0 }}
-          className="fixed left-0 right-0 z-[9998] bg-background/80 backdrop-blur-lg border-t p-2.5"
+          className="fixed left-0 right-0 z-[9998] bg-background/80 backdrop-blur-lg border-t p-2.5 md:hidden"
           style={{ bottom: "calc(60px + env(safe-area-inset-bottom, 0px))" }}
         >
           <div className="max-w-lg mx-auto flex items-center justify-between gap-3">

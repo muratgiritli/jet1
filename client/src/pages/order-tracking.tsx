@@ -53,7 +53,7 @@ export default function OrderTrackingPage() {
   const loading = customerLoading || (!!customer && ordersLoading);
 
   return (
-    <div className="min-h-screen bg-background pb-16">
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
       <main className="max-w-2xl mx-auto px-4 pb-8">
         {loading && (
           <div className="flex justify-center py-12">

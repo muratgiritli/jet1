@@ -14,7 +14,7 @@ const CATEGORIES = [
 
 export default function CategoriesOverview() {
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 md:pb-8">
       <div className="max-w-lg mx-auto px-3 py-4">
         <h1 className="text-lg font-bold mb-4 text-center" data-testid="text-categories-title">
           Kategoriler

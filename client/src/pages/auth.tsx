@@ -101,7 +101,7 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 md:pb-8">
       <div className="max-w-sm mx-auto px-4 py-8">
         <div className="text-center mb-6">
           <h1 className="text-xl font-bold" data-testid="text-auth-title">

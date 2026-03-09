@@ -51,7 +51,7 @@ export default function CategoryPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col pb-16" style={{ backgroundColor: "#f0f2f5" }}>
+    <div className="min-h-screen flex flex-col pb-16 md:pb-0" style={{ backgroundColor: "#f0f2f5" }}>
       <SEO
         title={`${animalInfo.title} Maması Samsun - ${animalInfo.title} Ürünleri Fiyatları | JETGO Pet Shop`}
         description={`Samsun ${animalInfo.title.toLowerCase()} maması, ${animalInfo.title.toLowerCase()} bakım ürünleri ve aksesuar çeşitleri en uygun fiyatlarla. Samsun içi aynı gün teslimat, kapıda ödeme. ${animalInfo.title} maması online sipariş.`}

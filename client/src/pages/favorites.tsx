@@ -97,7 +97,7 @@ export default function FavoritesPage() {
   const favorites = isLoggedIn ? serverFavorites : localFavorites;
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 md:pb-8">
       <div className="max-w-lg mx-auto px-3 py-4">
         <h1 className="text-lg font-bold flex items-center gap-2 mb-4" data-testid="text-favorites-title">
           <Heart className="w-5 h-5 text-red-500 fill-red-500" />

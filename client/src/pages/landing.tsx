@@ -25,7 +25,7 @@ const FEATURES = [
 
 export default function Landing() {
   return (
-    <div className="min-h-screen flex flex-col bg-background pb-16">
+    <div className="min-h-screen flex flex-col bg-background pb-16 md:pb-0">
       <SEO
         title="Samsun Pet Shop - Kedi Köpek Maması Online Sipariş | JETGO"
         description="Samsun pet shop JETGO - Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri. Samsun içi aynı gün kapıya teslimat, kapıda ödeme. En uygun fiyatlarla online sipariş."

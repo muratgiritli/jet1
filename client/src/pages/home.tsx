@@ -187,7 +187,7 @@ export default function Home() {
 
       <BackNavigation />
 
-      <main className="max-w-2xl mx-auto px-4 pb-24">
+      <main className="max-w-2xl mx-auto px-4 pb-24 md:pb-8">
         <section className="mt-6">
           {directCategory ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

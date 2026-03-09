@@ -68,7 +68,7 @@ export default function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center pb-20">
+      <div className="min-h-screen bg-background flex items-center justify-center pb-20 md:pb-8">
         <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
       </div>
     );
@@ -83,7 +83,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 md:pb-8">
       <div className="max-w-lg mx-auto px-3 py-4">
         <div className="flex items-center justify-between mb-4">
           <h1 className="text-lg font-bold" data-testid="text-profile-title">Hesabım</h1>

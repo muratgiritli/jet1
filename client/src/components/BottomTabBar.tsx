@@ -29,7 +29,7 @@ export default function BottomTabBar() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-[9999] bg-background/95 backdrop-blur-lg border-t safe-area-bottom"
+      className="fixed bottom-0 left-0 right-0 z-[9999] bg-background/95 backdrop-blur-lg border-t safe-area-bottom md:hidden"
       data-testid="bottom-tab-bar"
     >
       <div className="flex items-center justify-around max-w-lg mx-auto">

@@ -476,7 +476,7 @@ export default function BrandProductsPage() {
         description={`${data.category.brandName} ${animal === "kedi" ? "kedi" : animal === "kopek" ? "köpek" : animal === "kus" ? "kuş" : "kemirgen"} maması Samsun'da en uygun fiyatlarla JETGO Pet Shop'ta. Samsun içi aynı gün teslimat, kapıda ödeme. ${data.category.brandName} ürünlerini online sipariş edin.`}
         canonical={`${SITE_DOMAIN}/siparis/${animal}/${subcategory}/${brandSlug}`}
       />
-      <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6 pb-28">
+      <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6 pb-28 md:pb-8">
         <div className="text-center mb-6">
           <h2 className="text-xl font-extrabold" data-testid="text-brand-title">
             {data.category.brandName}
