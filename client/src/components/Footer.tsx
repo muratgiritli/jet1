@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info, Truck, Lock, ShieldCheck, ScrollText } from "lucide-react";
-import { SiWhatsapp, SiVisa, SiMastercard } from "react-icons/si";
+import { SiWhatsapp } from "react-icons/si";
 
 const FOOTER_LINKS_COL1 = [
   { label: "Sıkça Sorulan Sorular", href: "/sss", icon: HelpCircle },
@@ -106,10 +106,12 @@ export default function Footer() {
                 <span className="text-[10px] text-gray-400">Güvenli Bağlantı</span>
               </div>
 
-              <div className="flex items-center gap-2 bg-gray-800 rounded px-2.5 py-1.5" data-testid="footer-payment-logos">
-                <SiVisa className="w-8 h-5 text-blue-400" />
-                <SiMastercard className="w-8 h-5 text-orange-400" />
-              </div>
+              <img
+                src="/iyzico-band-white.png"
+                alt="iyzico ile öde - Visa, Mastercard, American Express, Troy"
+                className="h-5 object-contain"
+                data-testid="footer-iyzico-band"
+              />
             </div>
 
             <p className="text-xs text-gray-500">JETGO - Samsun Pet Shop</p>
