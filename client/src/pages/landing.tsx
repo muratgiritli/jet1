@@ -110,6 +110,57 @@ export default function Landing() {
         </section>
 
         <PetAIChat />
+
+        <section className="px-3 pt-2 pb-4 md:hidden" data-testid="section-mobile-footer">
+          <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 space-y-4">
+            <div>
+              <h4 className="text-xs font-bold text-gray-700 mb-2">Müşteri Hizmetleri</h4>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[
+                  { label: "SSS", href: "/sss" },
+                  { label: "İşlem Rehberi", href: "/islem-rehberi" },
+                  { label: "Teslimat ve İade", href: "/teslimat-iade" },
+                  { label: "Hakkımızda", href: "/hakkimizda" },
+                  { label: "İletişim", href: "/iletisim" },
+                ].map((l) => (
+                  <Link key={l.href} href={l.href} className="text-[11px] text-gray-500 py-1" data-testid={`mobile-footer-${l.href.slice(1)}`}>
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h4 className="text-xs font-bold text-gray-700 mb-2">Yasal</h4>
+              <div className="grid grid-cols-2 gap-1.5">
+                {[
+                  { label: "KVKK", href: "/kvkk" },
+                  { label: "Gizlilik Politikası", href: "/gizlilik" },
+                  { label: "Gizlilik Sözleşmesi", href: "/gizlilik-sozlesmesi" },
+                  { label: "Kullanım Koşulları", href: "/kullanim-kosullari" },
+                  { label: "Çerez Politikası", href: "/cerez-politikasi" },
+                  { label: "Mesafeli Satış Söz.", href: "/mesafeli-satis" },
+                ].map((l) => (
+                  <Link key={l.href} href={l.href} className="text-[11px] text-gray-500 py-1" data-testid={`mobile-footer-${l.href.slice(1)}`}>
+                    {l.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+              <div className="flex items-center gap-1.5" data-testid="mobile-ssl-badge">
+                <svg className="w-4 h-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                <span className="text-[10px] text-green-700 font-semibold">SSL Güvenli</span>
+              </div>
+              <div className="flex items-center gap-3 text-gray-400">
+                <span className="text-[11px] font-bold tracking-wider" style={{ color: "#1a1f71" }}>VISA</span>
+                <span className="text-[11px] font-bold tracking-wider" style={{ color: "#eb001b" }}>master<span style={{ color: "#f79e1b" }}>card</span></span>
+              </div>
+            </div>
+            <p className="text-[10px] text-gray-400 text-center">© {new Date().getFullYear()} Sizpa İnternet Tic. Ltd. Şti.</p>
+          </div>
+        </section>
       </main>
     </div>
   );

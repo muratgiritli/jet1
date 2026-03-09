@@ -1,26 +1,50 @@
 import { Link } from "wouter";
-import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info } from "lucide-react";
-import { SiWhatsapp } from "react-icons/si";
+import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info, Truck, Lock, ShieldCheck, ScrollText } from "lucide-react";
+import { SiWhatsapp, SiVisa, SiMastercard } from "react-icons/si";
 
-const FOOTER_LINKS = [
+const FOOTER_LINKS_COL1 = [
   { label: "Sıkça Sorulan Sorular", href: "/sss", icon: HelpCircle },
+  { label: "İşlem Rehberi", href: "/islem-rehberi", icon: Info },
+  { label: "Teslimat ve İade Şartları", href: "/teslimat-iade", icon: Truck },
+  { label: "Mesafeli Satış Sözleşmesi", href: "/mesafeli-satis", icon: ScrollText },
+];
+
+const FOOTER_LINKS_COL2 = [
   { label: "Kişisel Verilerin Korunması", href: "/kvkk", icon: Shield },
   { label: "Gizlilik Politikası", href: "/gizlilik", icon: FileText },
+  { label: "Gizlilik Sözleşmesi", href: "/gizlilik-sozlesmesi", icon: Lock },
   { label: "Kullanım Koşulları", href: "/kullanim-kosullari", icon: BookOpen },
   { label: "Çerez Politikası", href: "/cerez-politikasi", icon: Cookie },
-  { label: "İşlem Rehberi", href: "/islem-rehberi", icon: Info },
 ];
 
 export default function Footer() {
   return (
     <footer className="hidden md:block bg-gray-900 text-gray-300 mt-8" data-testid="footer-desktop">
       <div className="max-w-6xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-3 gap-8">
+        <div className="grid grid-cols-4 gap-8">
           <div>
-            <h3 className="text-white font-bold text-lg mb-1">Yardıma mı ihtiyacın var?</h3>
-            <p className="text-gray-400 text-sm mb-4">Sorularınız için bize ulaşabilirsiniz.</p>
+            <h3 className="text-white font-bold text-lg mb-1">Müşteri Hizmetleri</h3>
+            <p className="text-gray-400 text-sm mb-4">Sorularınız için bize ulaşın</p>
             <ul className="space-y-2">
-              {FOOTER_LINKS.map((link) => {
+              {FOOTER_LINKS_COL1.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <li key={link.href}>
+                    <Link href={link.href} className="flex items-center gap-2 text-sm hover:text-white transition-colors" data-testid={`footer-link-${link.href.slice(1)}`}>
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-white font-bold text-lg mb-1">Yasal</h3>
+            <p className="text-gray-400 text-sm mb-4">Sözleşme ve politikalar</p>
+            <ul className="space-y-2">
+              {FOOTER_LINKS_COL2.map((link) => {
                 const Icon = link.icon;
                 return (
                   <li key={link.href}>
@@ -71,9 +95,25 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-gray-700 mt-8 pt-6 flex items-center justify-between">
-          <p className="text-xs text-gray-500">© {new Date().getFullYear()} Sizpa İnternet Tic. Ltd. Şti. Tüm hakları saklıdır.</p>
-          <p className="text-xs text-gray-500">JETGO - Samsun Pet Shop</p>
+        <div className="border-t border-gray-700 mt-8 pt-6">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <p className="text-xs text-gray-500">© {new Date().getFullYear()} Sizpa İnternet Tic. Ltd. Şti. Tüm hakları saklıdır.</p>
+
+            <div className="flex items-center gap-4" data-testid="footer-badges">
+              <div className="flex items-center gap-1.5 bg-gray-800 rounded px-2.5 py-1.5" data-testid="footer-ssl-badge">
+                <ShieldCheck className="w-4 h-4 text-green-500" />
+                <span className="text-[10px] text-green-400 font-semibold">SSL</span>
+                <span className="text-[10px] text-gray-400">Güvenli Bağlantı</span>
+              </div>
+
+              <div className="flex items-center gap-2 bg-gray-800 rounded px-2.5 py-1.5" data-testid="footer-payment-logos">
+                <SiVisa className="w-8 h-5 text-blue-400" />
+                <SiMastercard className="w-8 h-5 text-orange-400" />
+              </div>
+            </div>
+
+            <p className="text-xs text-gray-500">JETGO - Samsun Pet Shop</p>
+          </div>
         </div>
       </div>
     </footer>

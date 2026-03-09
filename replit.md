@@ -113,6 +113,9 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `/islem-rehberi` - İşlem Rehberi
 - `/hakkimizda` - Hakkımızda
 - `/iletisim` - İletişim
+- `/teslimat-iade` - Teslimat ve İade Şartları
+- `/gizlilik-sozlesmesi` - Gizlilik Sözleşmesi
+- `/mesafeli-satis` - Mesafeli Satış Sözleşmesi
 
 ## Admin Panel
 - Default credentials: admin / jetgo2024

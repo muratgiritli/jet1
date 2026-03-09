@@ -321,6 +321,275 @@ export function HakkimizdaPage() {
   );
 }
 
+export function TeslimatIadePage() {
+  return (
+    <PageWrapper title="Teslimat ve İade Şartları">
+      <SEO title="Teslimat ve İade Şartları | JETGO Samsun Pet Shop" description="JETGO Pet Shop teslimat koşulları ve iade politikası hakkında bilgi edinin." />
+
+      <Section title="Teslimat Koşulları">
+        <p>JETGO olarak Samsun Atakum bölgesinde hızlı ve güvenilir teslimat hizmeti sunmaktayız.</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Teslimat bölgemiz Samsun Atakum ilçesi ve çevresindeki belirli mahallelerle sınırlıdır.</li>
+          <li>Siparişleriniz genellikle aynı gün veya ertesi gün teslim edilir.</li>
+          <li>Teslimat saatleri: Pazartesi - Cumartesi 09:00 - 20:00, Pazar 10:00 - 18:00 arasındadır.</li>
+          <li>Minimum sipariş tutarı <strong>500 TL</strong>'dir.</li>
+          <li><strong>1.000 TL</strong> ve üzeri siparişlerde teslimat <strong>ücretsizdir</strong>.</li>
+          <li>1.000 TL altı siparişlerde teslimat ücreti <strong>89 TL</strong>'dir.</li>
+          <li>Teslimat sırasında alıcının belirtilen adreste bulunması gerekmektedir.</li>
+          <li>Teslimat esnasında ürünlerin kontrol edilmesi önerilir.</li>
+        </ul>
+      </Section>
+
+      <Section title="Teslimat Süreleri">
+        <p>Sipariş onayından sonra teslimat süreleri aşağıdaki gibidir:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li><strong>Standart teslimat:</strong> Sipariş onayından itibaren aynı gün veya ertesi iş günü</li>
+          <li><strong>Yoğun dönemlerde:</strong> Bayram, kampanya ve özel günlerde teslimat süresi 1-2 iş günü uzayabilir</li>
+          <li>Stokta olmayan ürünler için tahmini tedarik süresi sipariş onayında bildirilir</li>
+        </ul>
+      </Section>
+
+      <Section title="İade Koşulları">
+        <p>6502 sayılı Tüketicinin Korunması Hakkında Kanun kapsamında aşağıdaki iade koşulları geçerlidir:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Teslim tarihinden itibaren <strong>14 gün</strong> içinde cayma hakkınızı kullanabilirsiniz.</li>
+          <li>İade edilecek ürünler <strong>açılmamış, kullanılmamış ve orijinal ambalajında</strong> olmalıdır.</li>
+          <li>Ürünün faturası ile birlikte iade edilmesi gerekmektedir.</li>
+          <li>İade talebinizi WhatsApp hattımız (<strong>+90 850 840 3959</strong>) üzerinden iletebilirsiniz.</li>
+        </ul>
+      </Section>
+
+      <Section title="İade Edilemeyecek Ürünler">
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Açılmış veya kullanılmış mamalar ve gıda ürünleri</li>
+          <li>Açık mama olarak satılan ürünler</li>
+          <li>Hijyen ürünleri (kedi kumu, çiş pedi vb.) açılmış olanlar</li>
+          <li>Konserve ve yaş mama ürünleri (açılmış olanlar)</li>
+          <li>Kişiye özel hazırlanan veya ambalajı bozulmuş ürünler</li>
+        </ul>
+      </Section>
+
+      <Section title="İade Süreci">
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li><strong>1.</strong> WhatsApp üzerinden iade talebinizi iletin</li>
+          <li><strong>2.</strong> Ürünü orijinal ambalajında ve faturasıyla birlikte hazırlayın</li>
+          <li><strong>3.</strong> Kurye ürünü adresinizden teslim alacaktır</li>
+          <li><strong>4.</strong> Ürün kontrolü sonrası iade bedeli ödeme yönteminize göre 3-7 iş günü içinde iade edilir</li>
+        </ul>
+      </Section>
+
+      <Section title="Hasarlı veya Hatalı Ürün">
+        <p>Teslimat sırasında hasarlı veya hatalı ürün teslim alındığında:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Teslimat anında ürünü kontrol ediniz</li>
+          <li>Hasarlı ürünü teslim almayınız veya tutanak tutturarak teslim alınız</li>
+          <li>24 saat içinde WhatsApp hattımızdan durumu bildiriniz</li>
+          <li>Hasarlı/hatalı ürünler ücretsiz olarak değiştirilir</li>
+        </ul>
+      </Section>
+
+      <Section title="İletişim">
+        <p>Teslimat ve iade konusundaki tüm sorularınız için:</p>
+        <p><strong>Telefon:</strong> +90 850 840 3959</p>
+        <p><strong>WhatsApp:</strong> +90 850 840 3959</p>
+        <p><strong>E-posta:</strong> info@sizpa.com</p>
+      </Section>
+    </PageWrapper>
+  );
+}
+
+export function GizlilikSozlesmesiPage() {
+  return (
+    <PageWrapper title="Gizlilik Sözleşmesi">
+      <SEO title="Gizlilik Sözleşmesi | JETGO Samsun Pet Shop" description="JETGO Pet Shop gizlilik sözleşmesi. Kişisel verilerinizin korunması ve gizliliğinize ilişkin taahhütlerimiz." />
+
+      <Section>
+        <p>İşbu Gizlilik Sözleşmesi, <strong>Sizpa İnternet Tic. Ltd. Şti.</strong> ("Şirket") tarafından işletilen JETGO Pet Shop web sitesini ("Site") kullanan kullanıcıların ("Kullanıcı") kişisel verilerinin korunmasına ilişkin koşulları düzenler.</p>
+      </Section>
+
+      <Section title="Madde 1 – Taraflar">
+        <p><strong>Hizmet Sağlayıcı:</strong> Sizpa İnternet Tic. Ltd. Şti.</p>
+        <p><strong>Adres:</strong> Atatürk 3. Kısım Bulvarı No:113/A, Atakum, Samsun</p>
+        <p><strong>Kullanıcı:</strong> Siteyi kullanan ve/veya üyelik oluşturan gerçek kişi</p>
+      </Section>
+
+      <Section title="Madde 2 – Sözleşmenin Konusu">
+        <p>İşbu sözleşme, Kullanıcı'nın Site'yi kullanması sırasında paylaştığı kişisel verilerin toplanması, işlenmesi, saklanması ve korunmasına ilişkin Şirket'in yükümlülüklerini ve Kullanıcı'nın haklarını belirler.</p>
+      </Section>
+
+      <Section title="Madde 3 – Toplanan Veriler">
+        <p>Site üzerinden aşağıdaki kişisel veriler toplanabilmektedir:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Ad ve soyad</li>
+          <li>Telefon numarası</li>
+          <li>Teslimat adresi bilgileri</li>
+          <li>Doğum yılı (üyelik şifresi olarak)</li>
+          <li>Sipariş geçmişi ve tercih bilgileri</li>
+          <li>Evcil hayvan profil bilgileri (isteğe bağlı)</li>
+          <li>Konum bilgisi (teslimat amacıyla, izin dahilinde)</li>
+        </ul>
+      </Section>
+
+      <Section title="Madde 4 – Verilerin İşlenme Amaçları">
+        <p>Toplanan kişisel veriler yalnızca aşağıdaki amaçlarla işlenir:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Sipariş oluşturma, onaylama ve teslimat süreçlerinin yürütülmesi</li>
+          <li>Üyelik hesabının oluşturulması ve yönetilmesi</li>
+          <li>Para Puan sadakat programının işletilmesi</li>
+          <li>Stok bildirimi ve sipariş hatırlatma hizmetlerinin sunulması</li>
+          <li>Müşteri destek hizmetlerinin sağlanması</li>
+          <li>Yasal yükümlülüklerin yerine getirilmesi</li>
+        </ul>
+      </Section>
+
+      <Section title="Madde 5 – Verilerin Korunması">
+        <p>Şirket, Kullanıcı'nın kişisel verilerini korumak için aşağıdaki önlemleri almaktadır:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>SSL (Secure Socket Layer) şifreli bağlantı ile veri iletimi</li>
+          <li>Şifrelerin tek yönlü hash algoritması (bcrypt) ile saklanması</li>
+          <li>Güvenli oturum yönetimi ve otomatik oturum sonlandırma</li>
+          <li>Veritabanı erişiminin yetkilendirilmiş personelle sınırlandırılması</li>
+          <li>Düzenli güvenlik güncellemeleri ve sistem kontrolleri</li>
+        </ul>
+      </Section>
+
+      <Section title="Madde 6 – Verilerin Üçüncü Taraflarla Paylaşımı">
+        <p>Kullanıcı'nın kişisel verileri, açık rızası olmaksızın üçüncü taraflarla paylaşılmaz. Aşağıdaki istisnai durumlar saklıdır:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Teslimat hizmeti için gerekli minimum bilgilerin teslimat personeliyle paylaşılması</li>
+          <li>Yasal zorunluluk halinde yetkili kamu kurum ve kuruluşlarıyla paylaşım</li>
+          <li>WhatsApp Business üzerinden sipariş iletişimi (Kullanıcı'nın talebi doğrultusunda)</li>
+        </ul>
+      </Section>
+
+      <Section title="Madde 7 – Kullanıcı Hakları">
+        <p>Kullanıcı, 6698 sayılı KVKK kapsamında aşağıdaki haklara sahiptir:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Kişisel verilerinin işlenip işlenmediğini öğrenme</li>
+          <li>Verilerin düzeltilmesini veya silinmesini talep etme</li>
+          <li>Verilerin aktarıldığı üçüncü kişileri bilme</li>
+          <li>İşlemenin sonuçlarına itiraz etme</li>
+          <li>Hesabını ve verilerini tamamen silme (hesap silme talebi)</li>
+        </ul>
+      </Section>
+
+      <Section title="Madde 8 – Çerezler">
+        <p>Site, oturum yönetimi ve kullanıcı tercihlerinin saklanması amacıyla zorunlu çerezler kullanmaktadır. Detaylı bilgi için <Link href="/cerez-politikasi" className="text-primary underline">Çerez Politikası</Link> sayfamızı inceleyebilirsiniz.</p>
+      </Section>
+
+      <Section title="Madde 9 – Sözleşme Değişiklikleri">
+        <p>Şirket, işbu sözleşmeyi önceden bildirmeksizin güncelleme hakkını saklı tutar. Güncellenmiş sözleşme Site üzerinde yayınlandığı tarihte yürürlüğe girer.</p>
+      </Section>
+
+      <Section title="Madde 10 – İletişim ve Başvuru">
+        <p>Gizlilik sözleşmesi kapsamındaki haklarınızı kullanmak veya sorularınız için:</p>
+        <p><strong>E-posta:</strong> <a href="mailto:info@sizpa.com" className="text-primary underline">info@sizpa.com</a></p>
+        <p><strong>Telefon:</strong> +90 850 840 3959</p>
+        <p><strong>Adres:</strong> Atatürk 3. Kısım Bulvarı No:113/A, Atakum, Samsun</p>
+      </Section>
+    </PageWrapper>
+  );
+}
+
+export function MesafeliSatisSozlesmesiPage() {
+  return (
+    <PageWrapper title="Mesafeli Satış Sözleşmesi">
+      <SEO title="Mesafeli Satış Sözleşmesi | JETGO Samsun Pet Shop" description="JETGO Pet Shop mesafeli satış sözleşmesi. 6502 sayılı Tüketicinin Korunması Hakkında Kanun kapsamında ön bilgilendirme." />
+
+      <Section>
+        <p>İşbu Mesafeli Satış Sözleşmesi, 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği hükümlerine uygun olarak düzenlenmiştir.</p>
+      </Section>
+
+      <Section title="Madde 1 – Satıcı Bilgileri">
+        <p><strong>Ticari Unvan:</strong> Sizpa İnternet Tic. Ltd. Şti.</p>
+        <p><strong>Marka:</strong> JETGO Pet Shop</p>
+        <p><strong>Adres:</strong> Atatürk 3. Kısım Bulvarı No:113/A, Atakum, Samsun</p>
+        <p><strong>Telefon:</strong> +90 850 840 3959</p>
+        <p><strong>E-posta:</strong> info@sizpa.com</p>
+      </Section>
+
+      <Section title="Madde 2 – Sözleşmenin Konusu">
+        <p>İşbu sözleşmenin konusu, Alıcı'nın Satıcı'ya ait JETGO web sitesinden elektronik ortamda sipariş vererek satın almak istediği ürünlerin satışı ve teslimatına ilişkin tarafların hak ve yükümlülüklerinin belirlenmesidir.</p>
+      </Section>
+
+      <Section title="Madde 3 – Sözleşme Konusu Ürün/Hizmet">
+        <p>Sipariş edilen ürünlerin cinsi, miktarı, KDV dahil satış fiyatı ve ödeme bilgileri sipariş özeti ve WhatsApp sipariş mesajında belirtildiği şekildedir. Ürün açıklamaları ve görselleri bilgi amaçlıdır.</p>
+      </Section>
+
+      <Section title="Madde 4 – Genel Hükümler">
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Alıcı, sipariş verdiği ürünlerin temel nitelikleri, satış fiyatı, ödeme şekli ve teslimata ilişkin ön bilgilendirmeyi okuduğunu kabul eder.</li>
+          <li>Sözleşme, Alıcı tarafından onaylandığı tarihte yürürlüğe girer.</li>
+          <li>Ürünler, sipariş onayını takiben en geç 30 gün içinde teslim edilir.</li>
+          <li>Ürünler, Samsun Atakum bölgesinde Alıcı'nın belirttiği adrese teslim edilir.</li>
+        </ul>
+      </Section>
+
+      <Section title="Madde 5 – Teslimat Koşulları">
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Teslimat, Samsun Atakum ilçesi ve çevresindeki belirli mahallelerle sınırlıdır.</li>
+          <li>Minimum sipariş tutarı 500 TL'dir.</li>
+          <li>1.000 TL ve üzeri siparişlerde teslimat ücretsizdir.</li>
+          <li>1.000 TL altı siparişlerde 89 TL teslimat ücreti uygulanır.</li>
+          <li>Siparişler genellikle aynı gün veya ertesi iş günü teslim edilir.</li>
+          <li>Mücbir sebepler (doğal afet, pandemi, hükümet kararları vb.) nedeniyle teslimat gecikebilir.</li>
+        </ul>
+      </Section>
+
+      <Section title="Madde 6 – Ödeme Koşulları">
+        <p>Alıcı, sipariş tutarını aşağıdaki yöntemlerden biriyle ödeyebilir:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li><strong>Kapıda nakit ödeme:</strong> Sipariş tutarında %5 indirim uygulanır</li>
+          <li><strong>Banka havalesi / EFT:</strong> Sipariş onayından önce ödeme yapılır</li>
+          <li><strong>Kapıda POS cihazı ile kredi kartı / banka kartı:</strong> Tek çekim veya taksitli</li>
+          <li><strong>Kapıda QR ödeme:</strong> Mobil bankacılık uygulaması ile</li>
+          <li><strong>Kredi kartı taksit:</strong> 3, 4, 6, 9 ve 12 aya varan taksit imkanı (vade farkı uygulanır)</li>
+        </ul>
+      </Section>
+
+      <Section title="Madde 7 – Cayma Hakkı">
+        <p>Alıcı, ürünü teslim aldığı tarihten itibaren <strong>14 (on dört) gün</strong> içinde herhangi bir gerekçe göstermeksizin ve cezai şart ödemeksizin cayma hakkını kullanabilir.</p>
+        <p className="mt-2">Cayma hakkının kullanılması için:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Ürün kullanılmamış ve ambalajı açılmamış olmalıdır</li>
+          <li>WhatsApp hattından (+90 850 840 3959) cayma bildirimi yapılmalıdır</li>
+          <li>Ürün, faturasıyla birlikte eksiksiz iade edilmelidir</li>
+        </ul>
+      </Section>
+
+      <Section title="Madde 8 – Cayma Hakkı Kullanılamayacak Ürünler">
+        <p>Aşağıdaki ürünlerde cayma hakkı kullanılamaz:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Ambalajı açılmış gıda ürünleri (kuru mama, yaş mama, konserve, ödül maması)</li>
+          <li>Açık mama olarak tartılarak satılan ürünler</li>
+          <li>Ambalajı açılmış hijyen ürünleri (kedi kumu, çiş pedi vb.)</li>
+          <li>Tek kullanımlık ürünler ve ambalajı bozulmuş ürünler</li>
+          <li>Fiyatı borsa veya piyasa koşullarına göre değişen ürünler</li>
+        </ul>
+      </Section>
+
+      <Section title="Madde 9 – İade ve Geri Ödeme">
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Cayma hakkının kullanılması halinde, iade edilen ürünler Satıcı tarafından kontrol edilir.</li>
+          <li>Ürünün iade koşullarına uygun olması halinde, ürün bedeli ödeme yöntemine göre en geç <strong>14 gün</strong> içinde Alıcı'ya iade edilir.</li>
+          <li>Nakit ödemelerde nakit iade yapılır.</li>
+          <li>Kredi kartı ödemelerinde iade, karta yapılır.</li>
+          <li>İade kargo/teslimat ücreti Alıcı'ya aittir (hasarlı/hatalı ürün hariç).</li>
+        </ul>
+      </Section>
+
+      <Section title="Madde 10 – Uyuşmazlık Çözümü">
+        <p>İşbu sözleşmeden doğan uyuşmazlıklarda Samsun Tüketici Hakem Heyetleri ve Tüketici Mahkemeleri yetkilidir. Başvuru sınırları her yıl Ticaret Bakanlığı tarafından belirlenir.</p>
+      </Section>
+
+      <Section title="Madde 11 – Yürürlük">
+        <p>İşbu sözleşme, Alıcı tarafından elektronik ortamda onaylandığı veya sipariş verildiği tarihte yürürlüğe girer. Sözleşmenin bir nüshası sipariş onayı ile birlikte Alıcı'ya iletilir.</p>
+        <p className="mt-2 font-medium">Alıcı, işbu sözleşmenin tüm maddelerini okuduğunu, anladığını ve kabul ettiğini beyan eder.</p>
+      </Section>
+    </PageWrapper>
+  );
+}
+
 export function IletisimPage() {
   return (
     <PageWrapper title="İletişim">

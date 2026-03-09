@@ -61,6 +61,9 @@ function Router() {
         <Route path="/islem-rehberi">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="islem" /></Suspense>}</Route>
         <Route path="/hakkimizda">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="hakkimizda" /></Suspense>}</Route>
         <Route path="/iletisim">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="iletisim" /></Suspense>}</Route>
+        <Route path="/teslimat-iade">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="teslimat-iade" /></Suspense>}</Route>
+        <Route path="/gizlilik-sozlesmesi">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="gizlilik-sozlesmesi" /></Suspense>}</Route>
+        <Route path="/mesafeli-satis">{() => <Suspense fallback={<PageLoader />}><StaticPageWrapper page="mesafeli-satis" /></Suspense>}</Route>
         <Route component={NotFound} />
       </Switch>
     </Suspense>
@@ -79,6 +82,9 @@ function StaticPageWrapper({ page }: { page: string }) {
         islem: mod.IslemRehberiPage,
         hakkimizda: mod.HakkimizdaPage,
         iletisim: mod.IletisimPage,
+        "teslimat-iade": mod.TeslimatIadePage,
+        "gizlilik-sozlesmesi": mod.GizlilikSozlesmesiPage,
+        "mesafeli-satis": mod.MesafeliSatisSozlesmesiPage,
       };
       return { default: map[page] };
     })
