@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Bike, CreditCard, Banknote, Smartphone } from "lucide-react";
+import { Bike, CreditCard, Banknote, Smartphone, Tag, ArrowRight } from "lucide-react";
 import SEO, { LOCAL_BUSINESS_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import SearchBar from "@/components/SearchBar";
 import PetAIChat from "@/components/PetAIChat";
@@ -58,6 +58,25 @@ export default function Landing() {
               data-testid="img-hero-banner"
             />
           </div>
+        </section>
+
+        <section className="px-3 pb-2" data-testid="section-campaign-banner">
+          <Link href="/kampanya">
+            <div
+              className="rounded-xl p-3 flex items-center gap-3 cursor-pointer shadow-sm border border-orange-200"
+              style={{ background: "linear-gradient(135deg, #ff6f00 0%, #ff9100 50%, #ffa726 100%)" }}
+              data-testid="banner-campaign"
+            >
+              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                <Tag className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-white text-sm font-extrabold">Kampanyali Urunler</p>
+                <p className="text-white/80 text-[10px] font-medium">Ozel fiyatlarla mama firsatlari!</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-white flex-shrink-0" />
+            </div>
+          </Link>
         </section>
 
         <section className="px-3 py-3" data-testid="section-features">

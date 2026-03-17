@@ -486,10 +486,40 @@ export async function registerRoutes(
     if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
     const { usedPoints, ...orderData } = parsed.data;
 
+    const allCampaignItems = await sharedPool.query("SELECT product_id, item_type FROM campaign_items WHERE is_active = true");
+    const campaignMap = new Map<number, string>();
+    for (const row of allCampaignItems.rows) {
+      campaignMap.set(row.product_id, row.item_type);
+    }
+
+    let campaignMainCount = 0;
+    let campaignExtraCount = 0;
+    for (const item of orderData.items) {
+      const pid = parseInt(String(item.productId));
+      const type = campaignMap.get(pid);
+      if (type === "main") campaignMainCount += item.quantity;
+      if (type === "extra") campaignExtraCount += item.quantity;
+    }
+    const isCampaignOrder = campaignMainCount > 0 || campaignExtraCount > 0;
+
+    if (isCampaignOrder) {
+      if (campaignMainCount < 1 || campaignExtraCount < 1) {
+        return res.status(400).json({ message: "Kampanya siparişlerinde en az 1 ana ürün ve 1 ek ürün gereklidir." });
+      }
+      if (orderData.paymentMethod !== "Kapıda Nakit") {
+        return res.status(400).json({ message: "Kampanya siparişlerinde sadece kapıda nakit ödeme geçerlidir." });
+      }
+      orderData.discount = 0;
+      const CAMPAIGN_SHIP_LIMIT = 4000;
+      const SHIP_FEE = 89;
+      orderData.shipping = orderData.subtotal >= CAMPAIGN_SHIP_LIMIT ? 0 : SHIP_FEE;
+      orderData.grandTotal = orderData.subtotal + orderData.shipping;
+    }
+
     const customerId = (req.session as any)?.customerId;
     let pointsToUse = 0;
 
-    if (customerId && usedPoints && usedPoints > 0) {
+    if (!isCampaignOrder && customerId && usedPoints && usedPoints > 0) {
       const balance = await storage.getCustomerPointsBalance(customerId);
       pointsToUse = Math.min(usedPoints, balance);
       const serverTotal = Math.max(0, orderData.subtotal - orderData.discount + orderData.shipping - pointsToUse);
@@ -509,7 +539,7 @@ export async function registerRoutes(
     const order = await storage.createOrder(orderData);
 
     if (customerId) {
-      if (pointsToUse > 0) {
+      if (!isCampaignOrder && pointsToUse > 0) {
         await storage.addLoyaltyPoints({
           customerId,
           orderId: order.id,
@@ -518,15 +548,17 @@ export async function registerRoutes(
           description: `Sipariş #${order.id} - Para Puan kullanımı`,
         });
       }
-      const earnedPoints = Math.round(parsed.data.subtotal * 0.05 * 100) / 100;
-      if (earnedPoints > 0) {
-        await storage.addLoyaltyPoints({
-          customerId,
-          orderId: order.id,
-          amount: earnedPoints,
-          type: "earned",
-          description: `Sipariş #${order.id} - %5 Para Puan kazanımı`,
-        });
+      if (!isCampaignOrder) {
+        const earnedPoints = Math.round(parsed.data.subtotal * 0.05 * 100) / 100;
+        if (earnedPoints > 0) {
+          await storage.addLoyaltyPoints({
+            customerId,
+            orderId: order.id,
+            amount: earnedPoints,
+            type: "earned",
+            description: `Sipariş #${order.id} - %5 Para Puan kazanımı`,
+          });
+        }
       }
     }
     res.status(201).json(order);
@@ -1013,6 +1045,67 @@ export async function registerRoutes(
     }
     
     console.log(`[migrate] Complete: ${migrated} migrated, ${skipped} skipped, ${failed} failed`);
+  });
+
+  app.get("/api/campaign-items", async (req, res) => {
+    try {
+      const { rows } = await sharedPool.query(`
+        SELECT ci.*, p.name, p.price, p.original_price, p.img, p.stock, p.is_active, p.skt
+        FROM campaign_items ci
+        JOIN products p ON p.id = ci.product_id
+        WHERE ci.is_active = true AND p.is_active = true
+        ORDER BY ci.item_type, ci.sort_order
+      `);
+      res.json(rows);
+    } catch (err) {
+      res.status(500).json({ message: "Campaign items fetch error" });
+    }
+  });
+
+  app.get("/api/campaign-check/:productId", async (req, res) => {
+    try {
+      const pid = parseInt(req.params.productId);
+      const { rows } = await sharedPool.query(
+        `SELECT item_type FROM campaign_items WHERE product_id = $1 AND is_active = true LIMIT 1`,
+        [pid]
+      );
+      if (rows.length > 0) {
+        res.json({ isCampaign: true, itemType: rows[0].item_type });
+      } else {
+        res.json({ isCampaign: false });
+      }
+    } catch {
+      res.json({ isCampaign: false });
+    }
+  });
+
+  app.post("/api/admin/campaign-items", requireAdmin, async (req, res) => {
+    try {
+      const { productId, itemType, sortOrder } = req.body;
+      if (!productId || !itemType) return res.status(400).json({ message: "productId and itemType required" });
+      const existing = await sharedPool.query(
+        `SELECT id FROM campaign_items WHERE product_id = $1`, [productId]
+      );
+      if (existing.rows.length > 0) {
+        return res.status(400).json({ message: "Bu ürün zaten kampanyada" });
+      }
+      const { rows } = await sharedPool.query(
+        `INSERT INTO campaign_items (product_id, item_type, sort_order) VALUES ($1, $2, $3) RETURNING *`,
+        [productId, itemType, sortOrder || 0]
+      );
+      res.json(rows[0]);
+    } catch (err) {
+      res.status(500).json({ message: "Campaign item create error" });
+    }
+  });
+
+  app.delete("/api/admin/campaign-items/:id", requireAdmin, async (req, res) => {
+    try {
+      await sharedPool.query(`DELETE FROM campaign_items WHERE id = $1`, [req.params.id]);
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ message: "Campaign item delete error" });
+    }
   });
 
   const petAI = new OpenAI({

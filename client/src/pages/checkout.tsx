@@ -279,10 +279,23 @@ export default function Checkout() {
     minPerc,
     shipPerc,
     clearCart,
+    hasCampaignItems,
+    campaignMainCount,
+    campaignExtraCount,
+    campaignValid,
   } = useCart();
 
-  const pointsDiscount = isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, grandTotal) : 0;
-  const displayTotal = pointsDiscount > 0 ? Math.max(0, grandTotal - pointsDiscount) : grandTotal;
+  const CAMPAIGN_SHIP_LIMIT = 4000;
+  const campaignShipping = hasCampaignItems ? (subtotal >= CAMPAIGN_SHIP_LIMIT ? 0 : CONFIG.shipFee) : shipping;
+  const campaignDiscount = hasCampaignItems ? 0 : discount;
+  const campaignGrandTotal = hasCampaignItems ? (subtotal + campaignShipping) : grandTotal;
+
+  const effectiveShipping = hasCampaignItems ? campaignShipping : shipping;
+  const effectiveDiscount = hasCampaignItems ? campaignDiscount : discount;
+  const effectiveGrandTotal = hasCampaignItems ? campaignGrandTotal : grandTotal;
+
+  const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
+  const displayTotal = pointsDiscount > 0 ? Math.max(0, effectiveGrandTotal - pointsDiscount) : effectiveGrandTotal;
 
   const [locationError, setLocationError] = useState("");
   const [orderError, setOrderError] = useState("");
@@ -313,6 +326,10 @@ export default function Checkout() {
       setShowAuthModal(true);
       return;
     }
+    if (hasCampaignItems && !campaignValid) {
+      setOrderError("Kampanyadan faydalanmak için sepete en az 1 ana ürün ve 1 ek ürün ekleyin.");
+      return;
+    }
     if (!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle) {
       if (!selectedMahalle) {
         setOrderError("Mahalle seçimi yapınız.");
@@ -332,16 +349,17 @@ export default function Checkout() {
         img: product.img || undefined,
       }));
 
-      const pointsUsed = isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, grandTotal) : 0;
-      const finalTotal = pointsUsed > 0 ? Math.max(0, grandTotal - pointsUsed) : grandTotal;
+      const payMethod = hasCampaignItems ? "Kapıda Nakit" : pay.name;
+      const pointsUsed = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
+      const finalTotal = pointsUsed > 0 ? Math.max(0, effectiveGrandTotal - pointsUsed) : effectiveGrandTotal;
 
       const orderPayload: Record<string, unknown> = {
         items: orderItems,
         subtotal,
-        shipping,
-        discount,
+        shipping: effectiveShipping,
+        discount: effectiveDiscount,
         grandTotal: finalTotal,
-        paymentMethod: pay.name,
+        paymentMethod: payMethod,
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         customerAddress: selectedMahalle + (customerAddress.trim() ? ", " + customerAddress.trim() : ""),
@@ -379,12 +397,13 @@ export default function Checkout() {
         msg += `${qty}x ${product.name} — ${Math.round(qty * product.price)} TL\n`;
       });
       msg += `\n*Ara Toplam:* ${Math.round(subtotal)} TL`;
-      if (discount > 0) msg += `\n*İndirim (${pay.tag}):* -${Math.round(discount)} TL`;
+      if (effectiveDiscount > 0) msg += `\n*İndirim (${pay.tag}):* -${Math.round(effectiveDiscount)} TL`;
       if (pointsUsed > 0) msg += `\n*Para Puan İndirimi:* -${pointsUsed.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`;
-      msg += `\n*Teslimat:* ${shipping === 0 ? "Ücretsiz" : shipping + " TL"}`;
+      msg += `\n*Teslimat:* ${effectiveShipping === 0 ? "Ücretsiz" : effectiveShipping + " TL"}`;
       msg += `\n*Genel Toplam:* ${Math.round(finalTotal)} TL`;
-      msg += `\n*Ödeme:* ${pay.name}`;
-      if (pay.id === "taksit" && selectedInstallment) {
+      msg += `\n*Ödeme:* ${payMethod}`;
+      if (hasCampaignItems) msg += `\n*Kampanya Siparişi*`;
+      if (!hasCampaignItems && pay.id === "taksit" && selectedInstallment) {
         const instRate = installmentRates.find((r) => r.months === selectedInstallment);
         if (instRate) {
           const instTotal = finalTotal * (1 + instRate.rate / 100);
@@ -718,6 +737,19 @@ export default function Checkout() {
               </h2>
               <Card>
                 <CardContent className="p-4">
+                  {hasCampaignItems ? (
+                    <div className="p-3 rounded-md bg-accent" data-testid="campaign-payment-only">
+                      <div className="flex items-center gap-3">
+                        <Banknote className="w-4 h-4 text-muted-foreground shrink-0" />
+                        <span className="text-sm font-medium">Kapıda Nakit</span>
+                        <span className="flex-1" />
+                        <Badge variant="secondary" className="no-default-hover-elevate shrink-0">
+                          {Math.round(displayTotal)} TL
+                        </Badge>
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">Kampanya siparislerinde sadece kapida nakit odeme gecerlidir.</p>
+                    </div>
+                  ) : (
                   <RadioGroup value={paymentId} onValueChange={(val) => { setPaymentId(val); if (val !== "taksit") { setSelectedInstallment(null); } }} data-testid="radio-payment">
                     {PAYMENT_OPTIONS.map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
@@ -747,6 +779,7 @@ export default function Checkout() {
                       );
                     })}
                   </RadioGroup>
+                  )}
 
                   {paymentId === "taksit" && installmentRates.length > 0 && (
                     <motion.div
@@ -888,25 +921,25 @@ export default function Checkout() {
                         <span className="text-sm font-medium" data-testid="text-ship-label">Ücretsiz Teslimat</span>
                       </div>
                       <span className="text-xs font-bold text-muted-foreground" data-testid="text-ship-progress">
-                        {Math.round(subtotal)}/{CONFIG.shipLimit} TL
+                        {Math.round(subtotal)}/{hasCampaignItems ? CAMPAIGN_SHIP_LIMIT : CONFIG.shipLimit} TL
                       </span>
                     </div>
                     <Progress
-                      value={shipPerc}
+                      value={Math.min((subtotal / (hasCampaignItems ? CAMPAIGN_SHIP_LIMIT : CONFIG.shipLimit)) * 100, 100)}
                       className="h-2"
                       data-testid="bar-ship"
                     />
                     <p className="text-xs font-medium mt-1.5 text-muted-foreground" data-testid="text-ship-hint">
-                      {subtotal >= CONFIG.shipLimit ? (
+                      {subtotal >= (hasCampaignItems ? CAMPAIGN_SHIP_LIMIT : CONFIG.shipLimit) ? (
                         <span className="text-chart-2 flex items-center gap-1">
                           <Check className="w-3 h-3" /> Ücretsiz teslimat kazandınız!
                         </span>
                       ) : (
-                        `Ücretsiz teslimat için ${Math.round(CONFIG.shipLimit - subtotal)} TL daha ekleyin`
+                        `Ücretsiz teslimat için ${Math.round((hasCampaignItems ? CAMPAIGN_SHIP_LIMIT : CONFIG.shipLimit) - subtotal)} TL daha ekleyin`
                       )}
                     </p>
-                    {subtotal < CONFIG.shipLimit && (
-                      <Link href="/">
+                    {subtotal < (hasCampaignItems ? CAMPAIGN_SHIP_LIMIT : CONFIG.shipLimit) && (
+                      <Link href={hasCampaignItems ? "/kampanya" : "/"}>
                         <Button
                           variant="outline"
                           size="sm"
@@ -919,6 +952,37 @@ export default function Checkout() {
                       </Link>
                     )}
                   </div>
+
+                  {hasCampaignItems && (
+                    <div className="mt-4 pt-4 border-t">
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-sm font-bold text-orange-600">Kampanya Durumu</span>
+                      </div>
+                      <div className="text-xs space-y-1">
+                        <div className="flex items-center gap-2">
+                          {campaignMainCount >= 1 ? (
+                            <Check className="w-3 h-3 text-chart-2" />
+                          ) : (
+                            <span className="w-3 h-3 rounded-full border border-gray-300 inline-block" />
+                          )}
+                          <span>Ana ürün: {campaignMainCount} adet ({campaignMainCount >= 1 ? "Tamam" : "En az 1 gerekli"})</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {campaignExtraCount >= 1 ? (
+                            <Check className="w-3 h-3 text-chart-2" />
+                          ) : (
+                            <span className="w-3 h-3 rounded-full border border-gray-300 inline-block" />
+                          )}
+                          <span>Ek ürün: {campaignExtraCount} adet ({campaignExtraCount >= 1 ? "Tamam" : "En az 1 gerekli"})</span>
+                        </div>
+                      </div>
+                      {!campaignValid && (
+                        <p className="text-xs text-red-500 mt-2 font-medium">
+                          Kampanyadan faydalanmak için sepete en az 1 ana ürün ve 1 ek ürün ekleyin.
+                        </p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </section>
@@ -934,13 +998,13 @@ export default function Checkout() {
                       <span className="text-muted-foreground">Ara Toplam</span>
                       <span className="font-medium" data-testid="text-subtotal">{Math.round(subtotal)} TL</span>
                     </div>
-                    {discount > 0 && (
+                    {effectiveDiscount > 0 && (
                       <div className="flex justify-between gap-3 text-chart-2 flex-wrap">
                         <span data-testid="text-discount-label">İndirim ({PAYMENT_OPTIONS.find((p) => p.id === paymentId)?.tag})</span>
-                        <span className="font-medium" data-testid="text-discount">-{Math.round(discount)} TL</span>
+                        <span className="font-medium" data-testid="text-discount">-{Math.round(effectiveDiscount)} TL</span>
                       </div>
                     )}
-                    {isLoggedIn && pointsBalance > 0 && (
+                    {!hasCampaignItems && isLoggedIn && pointsBalance > 0 && (
                       <div className="flex justify-between items-center gap-3 flex-wrap">
                         <button
                           type="button"
@@ -964,10 +1028,10 @@ export default function Checkout() {
                     <div className="flex justify-between gap-3 flex-wrap">
                       <span className="text-muted-foreground">Teslimat Ücreti</span>
                       <span className="font-medium" data-testid="text-shipping">
-                        {shipping === 0 ? (
+                        {effectiveShipping === 0 ? (
                           <span className="text-chart-2">Ücretsiz</span>
                         ) : (
-                          `${shipping} TL`
+                          `${effectiveShipping} TL`
                         )}
                       </span>
                     </div>
@@ -998,7 +1062,7 @@ export default function Checkout() {
                     className="w-full mt-5"
                     variant="default"
                     size="lg"
-                    disabled={!minReached || selectedProducts.length === 0 || orderLoading}
+                    disabled={!minReached || selectedProducts.length === 0 || orderLoading || (hasCampaignItems && !campaignValid)}
                     onClick={handleOrder}
                     data-testid="btn-order-whatsapp"
                   >

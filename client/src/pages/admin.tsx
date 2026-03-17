@@ -52,6 +52,7 @@ import {
   Check,
   ImageIcon,
   Upload,
+  Tag,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -529,6 +530,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [bulkPriceMode, setBulkPriceMode] = useState<"percent" | "individual">("individual");
   const [individualPrices, setIndividualPrices] = useState<Record<number, string>>({});
   const [ordersExpanded, setOrdersExpanded] = useState(false);
+  const [campaignExpanded, setCampaignExpanded] = useState(false);
+  const [campaignAddType, setCampaignAddType] = useState<"main" | "extra">("main");
+  const [campaignProductId, setCampaignProductId] = useState("");
+  const [campaignSortOrder, setCampaignSortOrder] = useState("1");
   const [orderTab, setOrderTab] = useState<"gelen" | "giden" | "bekleyen">("gelen");
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
@@ -893,6 +898,44 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/installment-rates"] });
+    },
+  });
+
+  interface CampaignItem {
+    id: number;
+    product_id: number;
+    item_type: string;
+    sort_order: number;
+    is_active: boolean;
+    name: string;
+    price: number;
+    original_price: number | null;
+    img: string | null;
+    stock: number;
+    skt: string | null;
+  }
+
+  const { data: campaignItems = [] } = useQuery<CampaignItem[]>({
+    queryKey: ["/api/campaign-items"],
+  });
+
+  const addCampaignItemMutation = useMutation({
+    mutationFn: async (data: { productId: number; itemType: string; sortOrder: number }) => {
+      await apiRequest("POST", "/api/admin/campaign-items", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
+      setCampaignProductId("");
+      setCampaignSortOrder("1");
+    },
+  });
+
+  const removeCampaignItemMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/campaign-items/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
     },
   });
 
@@ -2810,6 +2853,121 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               )}
             </CardContent>
           </Card>
+        </section>
+
+        <section>
+          <button
+            onClick={() => setCampaignExpanded(!campaignExpanded)}
+            className="flex items-center gap-2 mb-4 w-full text-left"
+            data-testid="btn-toggle-campaign"
+          >
+            <Tag className="w-5 h-5 text-orange-500" />
+            <h2 className="text-lg font-bold" data-testid="text-section-campaign">Kampanya Yönetimi</h2>
+            <Badge className="no-default-hover-elevate no-default-active-elevate" data-testid="badge-campaign-count">
+              {campaignItems.filter(i => i.item_type === "main").length} ana / {campaignItems.filter(i => i.item_type === "extra").length} ek
+            </Badge>
+            <ChevronDown className={`w-5 h-5 ml-auto transition-transform ${campaignExpanded ? "rotate-180" : ""}`} />
+          </button>
+
+          {campaignExpanded && (
+            <Card>
+              <CardContent className="p-4 space-y-6">
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Select value={campaignAddType} onValueChange={(v) => setCampaignAddType(v as "main" | "extra")} data-testid="select-campaign-type">
+                    <SelectTrigger className="w-full sm:w-36" data-testid="trigger-campaign-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="main">Ana Ürün</SelectItem>
+                      <SelectItem value="extra">Ek Ürün</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={campaignProductId} onValueChange={setCampaignProductId}>
+                    <SelectTrigger className="flex-1" data-testid="trigger-campaign-product">
+                      <SelectValue placeholder="Ürün seçin..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {products
+                        .filter(p => !campaignItems.some(ci => ci.product_id === p.id))
+                        .slice(0, 100)
+                        .map(p => (
+                          <SelectItem key={p.id} value={String(p.id)} data-testid={`option-campaign-product-${p.id}`}>
+                            {p.name} — {p.price} TL
+                          </SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    placeholder="Sıra"
+                    className="w-20"
+                    value={campaignSortOrder}
+                    onChange={(e) => setCampaignSortOrder(e.target.value)}
+                    data-testid="input-campaign-sort-order"
+                  />
+                  <Button
+                    disabled={!campaignProductId || addCampaignItemMutation.isPending}
+                    onClick={() => {
+                      addCampaignItemMutation.mutate({
+                        productId: parseInt(campaignProductId),
+                        itemType: campaignAddType,
+                        sortOrder: parseInt(campaignSortOrder) || 1,
+                      });
+                    }}
+                    data-testid="btn-add-campaign-item"
+                  >
+                    {addCampaignItemMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ekle"}
+                  </Button>
+                </div>
+
+                {(["main", "extra"] as const).map(type => {
+                  const items = campaignItems.filter(i => i.item_type === type).sort((a, b) => a.sort_order - b.sort_order);
+                  return (
+                    <div key={type}>
+                      <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-2" data-testid={`text-campaign-${type}-heading`}>
+                        {type === "main" ? "Ana Ürünler" : "Ek Ürünler"} ({items.length})
+                      </h3>
+                      {items.length === 0 ? (
+                        <p className="text-sm text-muted-foreground">Henüz ürün eklenmemiş</p>
+                      ) : (
+                        <div className="space-y-1">
+                          {items.map(item => (
+                            <div
+                              key={item.id}
+                              className="flex items-center gap-3 py-2 px-3 rounded-md bg-muted/30"
+                              data-testid={`row-campaign-item-${item.id}`}
+                            >
+                              {item.img && (
+                                <img src={item.img} alt="" className="w-8 h-8 rounded object-cover" />
+                              )}
+                              <span className="text-sm flex-1 truncate" data-testid={`text-campaign-item-name-${item.id}`}>
+                                {item.name}
+                              </span>
+                              <span className="text-xs text-muted-foreground whitespace-nowrap">
+                                {item.price} TL
+                              </span>
+                              <span className="text-xs text-muted-foreground">
+                                Sıra: {item.sort_order}
+                              </span>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => removeCampaignItemMutation.mutate(item.id)}
+                                disabled={removeCampaignItemMutation.isPending}
+                                data-testid={`btn-remove-campaign-item-${item.id}`}
+                              >
+                                <Trash2 className="w-4 h-4 text-destructive" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          )}
         </section>
 
         <ReorderRemindersSection />

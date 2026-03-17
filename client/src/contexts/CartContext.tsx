@@ -17,6 +17,11 @@ interface CartProduct {
 
 type BasketItems = Record<string, number>;
 
+interface CampaignItemInfo {
+  product_id: number;
+  item_type: string;
+}
+
 interface CartContextType {
   basket: BasketItems;
   paymentId: string;
@@ -32,6 +37,10 @@ interface CartContextType {
   itemCount: number;
   minPerc: number;
   shipPerc: number;
+  hasCampaignItems: boolean;
+  campaignMainCount: number;
+  campaignExtraCount: number;
+  campaignValid: boolean;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -66,6 +75,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const { data: dbProducts = [] } = useQuery<DbProduct[]>({
     queryKey: ["/api/products"],
+  });
+
+  const { data: campaignData = [] } = useQuery<CampaignItemInfo[]>({
+    queryKey: ["/api/campaign-items"],
   });
 
   const allProducts: CartProduct[] = useMemo(() => {
@@ -133,6 +146,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const minPerc = Math.min((subtotal / CONFIG.minLimit) * 100, 100);
   const shipPerc = Math.min((subtotal / CONFIG.shipLimit) * 100, 100);
 
+  const campaignSet = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const ci of campaignData) {
+      map.set(String(ci.product_id), ci.item_type);
+    }
+    return map;
+  }, [campaignData]);
+
+  const { hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid } = useMemo(() => {
+    let mainCount = 0;
+    let extraCount = 0;
+    for (const { product, qty } of selectedProducts) {
+      const type = campaignSet.get(product.id);
+      if (type === "main") mainCount += qty;
+      if (type === "extra") extraCount += qty;
+    }
+    const hasCampaign = mainCount > 0 || extraCount > 0;
+    return {
+      hasCampaignItems: hasCampaign,
+      campaignMainCount: mainCount,
+      campaignExtraCount: extraCount,
+      campaignValid: !hasCampaign || (mainCount >= 1 && extraCount >= 1),
+    };
+  }, [selectedProducts, campaignSet]);
+
   const value = useMemo(
     () => ({
       basket,
@@ -149,8 +187,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       itemCount,
       minPerc,
       shipPerc,
+      hasCampaignItems,
+      campaignMainCount,
+      campaignExtraCount,
+      campaignValid,
     }),
-    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc]
+    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

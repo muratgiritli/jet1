@@ -249,3 +249,15 @@ export const productImages = pgTable("product_images", {
   data: text("data").notNull(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
+
+export const campaignItems = pgTable("campaign_items", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  itemType: text("item_type").notNull().default("main"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
+});
+
+export const insertCampaignItemSchema = createInsertSchema(campaignItems).omit({ id: true });
+export type InsertCampaignItem = z.infer<typeof insertCampaignItemSchema>;
+export type CampaignItem = typeof campaignItems.$inferSelect;

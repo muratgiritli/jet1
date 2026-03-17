@@ -15,9 +15,11 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - **Static data**: CATEGORIES in client/src/lib/data.ts (category tab names only, no products), CONFIG, PAYMENT_OPTIONS
 - **Dynamic data**: All products and categories served from database via API (no static product lists or category lists)
 - **Cross-sell**: Reusable recommendation sections linked to products via junction table, displayed on product detail pages
+- **Campaign System**: campaign_items table with main/extra products. Campaign page at /kampanya, campaign banner on landing. Product detail campaign mode via ?kampanya=1 hides taksit/points/hemen-al. Checkout campaign mode: only Kapıda Nakit payment, 4000 TL free shipping, no discount/points, requires min 1 main + 1 extra. Server-side campaign validation in /api/orders. Admin campaign management tab.
 
 ## Key Files
-- `shared/schema.ts` - Drizzle schema: users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts tables
+- `client/src/pages/campaign.tsx` - Campaign product listing page with main/extra sections
+- `shared/schema.ts` - Drizzle schema: users, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, campaignItems tables
 - `server/storage.ts` - DatabaseStorage class with CRUD operations
 - `server/routes.ts` - API routes (public + admin with session auth)
 - `server/seed.ts` - Seeds database with initial brand product data
@@ -85,6 +87,10 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `GET /api/orders/track` - Track orders (customer auth required, uses session phone)
 - `POST /api/admin/stock-alerts/:productId/notify` - Notify stock alert subscribers (admin auth)
 - `GET /api/customer/orders` - Customer order history (customer auth required)
+- `GET /api/campaign-items` - Get all active campaign items with product details (public)
+- `GET /api/campaign-check/:productId` - Check if a product is a campaign item (public)
+- `POST /api/admin/campaign-items` - Add product to campaign (auth required)
+- `DELETE /api/admin/campaign-items/:id` - Remove product from campaign (auth required)
 - `GET /api/installment-rates` - Get active installment rates (public)
 - `GET /api/admin/installment-rates` - All installment rates (auth required)
 - `POST /api/admin/installment-rates` - Create installment rate (auth required)
@@ -101,6 +107,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `/odeme` - Cart/checkout page with payment, summary, WhatsApp order
 - `/siparis-takip` - Order tracking (requires login)
 - `/favoriler` - Favorites page (localStorage)
+- `/kampanya` - Campaign products page (main + extra items)
 - `/kategori` - Categories overview page
 - `/giris` - Customer login/register page (phone+password)
 - `/hesabim` - Customer profile page (edit name, address)

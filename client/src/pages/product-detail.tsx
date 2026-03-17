@@ -5,8 +5,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Link, useRoute } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift } from "lucide-react";
+import { Link, useRoute, useSearch } from "wouter";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory, CrossSellSection, BreedStat, InstallmentRate } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -147,6 +147,8 @@ export default function ProductDetailPage() {
   const [, params] = useRoute("/urun/:id/:slug?");
   const productId = params?.id || "";
   const isNumericId = /^\d+$/.test(productId);
+  const searchStr = useSearch();
+  const isCampaignMode = new URLSearchParams(searchStr).get("kampanya") === "1";
 
   const { basket, updateQty, grandTotal, itemCount } = useCart();
 
@@ -218,6 +220,40 @@ export default function ProductDetailPage() {
   }, [needsCrossSell, isKediMama, kumData, odulData, yasMamaData, bakimData]);
 
   const resolvedData = isNumericId ? data : staticData;
+
+  interface CampaignItem {
+    id: number;
+    product_id: number;
+    item_type: string;
+    name: string;
+    price: number;
+    original_price: number | null;
+    img: string | null;
+    stock: number;
+  }
+
+  const { data: campaignItems = [] } = useQuery<CampaignItem[]>({
+    queryKey: ["/api/campaign-items"],
+    enabled: isCampaignMode,
+  });
+
+  const campaignExtras = useMemo(() => {
+    if (!isCampaignMode) return [];
+    return campaignItems
+      .filter((i) => i.item_type === "extra")
+      .map((i) => ({
+        id: i.product_id,
+        name: i.name,
+        price: i.price,
+        originalPrice: i.original_price,
+        img: i.img,
+        stock: i.stock,
+        isActive: true,
+        brandCategoryId: 0,
+        skt: null,
+        originalImg: null,
+      } as Product));
+  }, [isCampaignMode, campaignItems]);
 
   const [stockName, setStockName] = useState("");
   const [stockPhone, setStockPhone] = useState("");
@@ -408,20 +444,35 @@ export default function ProductDetailPage() {
                 </span>
               </div>
 
-              <div
-                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
-                style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}
-                data-testid="text-loyalty-points-earn"
-              >
-                <Gift className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
-                <span style={{ color: "#bf360c" }}>
-                  Bu ürünü satın aldığınızda{" "}
-                  <strong>{(product.price * 0.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
-                  değerinde Para Puan kazanacaksınız.
-                </span>
-              </div>
+              {!isCampaignMode && (
+                <div
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                  style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}
+                  data-testid="text-loyalty-points-earn"
+                >
+                  <Gift className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
+                  <span style={{ color: "#bf360c" }}>
+                    Bu ürünü satın aldığınızda{" "}
+                    <strong>{(product.price * 0.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
+                    değerinde Para Puan kazanacaksınız.
+                  </span>
+                </div>
+              )}
 
-              {installmentRates.length > 0 && (() => {
+              {isCampaignMode && (
+                <div
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                  style={{ backgroundColor: "#fff3e0", border: "1px solid #ffcc80" }}
+                  data-testid="text-campaign-badge"
+                >
+                  <Tag className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
+                  <span className="font-semibold" style={{ color: "#bf360c" }}>
+                    Kampanya Urunu
+                  </span>
+                </div>
+              )}
+
+              {!isCampaignMode && installmentRates.length > 0 && (() => {
                 const maxRate = installmentRates.reduce((a, b) => a.months > b.months ? a : b);
                 const totalWithRate = product.price * (1 + maxRate.rate / 100);
                 const monthly = Math.ceil(totalWithRate / maxRate.months);
@@ -446,7 +497,7 @@ export default function ProductDetailPage() {
                 );
               })()}
 
-              <Dialog open={taksitDialogOpen} onOpenChange={setTaksitDialogOpen}>
+              {!isCampaignMode && <Dialog open={taksitDialogOpen} onOpenChange={setTaksitDialogOpen}>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
                     <DialogTitle className="flex items-center gap-2">
@@ -487,7 +538,7 @@ export default function ProductDetailPage() {
                     Taksit seçenekleri bilgi amaçlıdır. Ödeme sırasında taksit seçimi yapılacaktır.
                   </p>
                 </DialogContent>
-              </Dialog>
+              </Dialog>}
 
               {product.stock === 0 ? (
                 <div className="mt-2 space-y-2">
@@ -516,23 +567,25 @@ export default function ProductDetailPage() {
                   </div>
                   <div className="flex gap-3 flex-wrap">
                     <Button
-                      className="flex-1"
+                      className={isCampaignMode ? "w-full" : "flex-1"}
                       style={{ backgroundColor: "#e65100" }}
                       onClick={() => { if (quantity === 0) updateQty(pid, 1); }}
                       data-testid="btn-add-to-cart"
                     >
                       SEPETE EKLE
                     </Button>
-                    <Link href="/odeme" className="flex-1">
-                      <Button
-                        variant="outline"
-                        className="w-full"
-                        onClick={() => { if (quantity === 0) updateQty(pid, 1); }}
-                        data-testid="btn-buy-now"
-                      >
-                        HEMEN AL
-                      </Button>
-                    </Link>
+                    {!isCampaignMode && (
+                      <Link href="/odeme" className="flex-1">
+                        <Button
+                          variant="outline"
+                          className="w-full"
+                          onClick={() => { if (quantity === 0) updateQty(pid, 1); }}
+                          data-testid="btn-buy-now"
+                        >
+                          HEMEN AL
+                        </Button>
+                      </Link>
+                    )}
                   </div>
                 </div>
               )}
@@ -592,7 +645,31 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        {needsCrossSell && alsoBoughtCategories.length > 0 && (
+        {isCampaignMode && campaignExtras.length > 0 && (
+          <div className="mt-8" data-testid="section-campaign-extras">
+            <div
+              className="rounded-lg p-3 mb-3 text-center"
+              style={{ backgroundColor: "#fff3e0", border: "1px solid #ffcc80" }}
+            >
+              <p className="text-sm font-bold" style={{ color: "#e65100" }}>
+                Kampanyadan faydalanmak icin sepete 1 urun ekle
+              </p>
+            </div>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {campaignExtras.map((p) => (
+                <div key={p.id}>
+                  <CrossSellProductCard
+                    product={p}
+                    quantity={basket[String(p.id)] || 0}
+                    onUpdate={updateQty}
+                  />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {!isCampaignMode && needsCrossSell && alsoBoughtCategories.length > 0 && (
           <div className="mt-8" data-testid="section-also-bought">
             <h3 className="text-lg font-extrabold mb-4" data-testid="text-also-bought-title">
               Bu ürünü alanlar bunları da aldı
@@ -620,7 +697,7 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        {crossSellSections.length > 0 && (
+        {!isCampaignMode && crossSellSections.length > 0 && (
           <div className="mt-8" data-testid="section-cross-sell-all">
             <h3 className="text-lg font-extrabold mb-4" data-testid="text-cross-sell-title">
               Bu ürünü alanlar bunları da aldı

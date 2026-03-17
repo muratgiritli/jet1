@@ -26,6 +26,7 @@ const FavoritesPage = lazy(() => import("@/pages/favorites"));
 const AuthPage = lazy(() => import("@/pages/auth"));
 const ProfilePage = lazy(() => import("@/pages/profile"));
 const NotFound = lazy(() => import("@/pages/not-found"));
+const CampaignPage = lazy(() => import("@/pages/campaign"));
 
 const SSSPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.SSSPage })));
 const KVKKPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.KVKKPage })));
@@ -64,6 +65,7 @@ function Router() {
         <Route path="/favoriler" component={FavoritesPage} />
         <Route path="/giris" component={AuthPage} />
         <Route path="/hesabim" component={ProfilePage} />
+        <Route path="/kampanya" component={CampaignPage} />
         <Route path="/sss" component={SSSPage} />
         <Route path="/kvkk" component={KVKKPage} />
         <Route path="/gizlilik" component={GizlilikPage} />
