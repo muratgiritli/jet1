@@ -534,9 +534,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [campaignAddType, setCampaignAddType] = useState<"main" | "extra">("main");
   const [campaignProductId, setCampaignProductId] = useState("");
   const [campaignSortOrder, setCampaignSortOrder] = useState("1");
-  const [campaignSearchTerm, setCampaignSearchTerm] = useState("");
-  const [campaignAnimalFilter, setCampaignAnimalFilter] = useState<string>("all");
-  const [campaignSubcatFilter, setCampaignSubcatFilter] = useState<string>("all");
+  const [campaignAddDialogOpen, setCampaignAddDialogOpen] = useState(false);
+  const [campaignAddProductId, setCampaignAddProductId] = useState<number | null>(null);
   const [orderTab, setOrderTab] = useState<"gelen" | "giden" | "bekleyen">("gelen");
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
@@ -932,7 +931,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/campaign-items"] });
       setCampaignProductId("");
       setCampaignSortOrder("1");
-      setCampaignSearchTerm("");
+      setCampaignAddDialogOpen(false);
+      setCampaignAddProductId(null);
     },
   });
 
@@ -1035,151 +1035,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
           {campaignExpanded && (
             <div className="space-y-5">
-
-              <div className="rounded-xl border-2 border-purple-200 bg-purple-50/50 p-4 space-y-4">
-                <h3 className="font-bold text-purple-800 flex items-center gap-2">
-                  <Plus className="w-5 h-5" />
-                  Yeni Ürün Ekle
-                </h3>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <Label className="text-xs text-purple-700 mb-1 block">Tür</Label>
-                    <Select value={campaignAddType} onValueChange={(v) => setCampaignAddType(v as "main" | "extra")} data-testid="select-campaign-type">
-                      <SelectTrigger data-testid="trigger-campaign-type">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="main">Ana Ürün</SelectItem>
-                        <SelectItem value="extra">Ek Ürün (İlave)</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label className="text-xs text-purple-700 mb-1 block">Sıra No</Label>
-                    <Input
-                      type="number"
-                      placeholder="1"
-                      value={campaignSortOrder}
-                      onChange={(e) => setCampaignSortOrder(e.target.value)}
-                      data-testid="input-campaign-sort-order"
-                    />
-                  </div>
-                  {campaignAddType === "extra" && (
-                    <div>
-                      <Label className="text-xs text-purple-700 mb-1 block">Hayvan Filtresi</Label>
-                      <Select value={campaignAnimalFilter} onValueChange={(v) => { setCampaignAnimalFilter(v); setCampaignSubcatFilter("all"); }}>
-                        <SelectTrigger data-testid="trigger-campaign-animal">
-                          <SelectValue placeholder="Tümü" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="all">Tüm Hayvanlar</SelectItem>
-                          {ANIMALS.map(a => (
-                            <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
-                </div>
-
-                {campaignAddType === "extra" && campaignAnimalFilter !== "all" && (
-                  <div>
-                    <Label className="text-xs text-purple-700 mb-1 block">Alt Kategori</Label>
-                    <Select value={campaignSubcatFilter} onValueChange={setCampaignSubcatFilter}>
-                      <SelectTrigger className="w-full sm:w-64" data-testid="trigger-campaign-subcat">
-                        <SelectValue placeholder="Tümü" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">Tüm Alt Kategoriler</SelectItem>
-                        {(subcategoriesByAnimal[campaignAnimalFilter] || []).map(sc => (
-                          <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
-                  <Input
-                    placeholder="Ürün adı veya ID yazarak arayın..."
-                    className="pl-10 border-purple-200 focus:border-purple-400"
-                    value={campaignSearchTerm}
-                    onChange={(e) => setCampaignSearchTerm(e.target.value)}
-                    data-testid="input-campaign-search"
-                  />
-                </div>
-
-                {addCampaignItemMutation.isPending && (
-                  <div className="flex items-center gap-2 text-sm text-purple-600 py-2">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Ekleniyor...
-                  </div>
-                )}
-
-                {campaignSearchTerm.length >= 2 && !addCampaignItemMutation.isPending && (() => {
-                  const term = campaignSearchTerm.toLowerCase();
-                  const existingIds = new Set(campaignItems.map(ci => ci.product_id));
-                  let filtered = products.filter(p => !existingIds.has(p.id));
-                  if (campaignAddType === "extra" && campaignAnimalFilter !== "all") {
-                    const catIds = categories
-                      .filter(c => c.animal === campaignAnimalFilter && (campaignSubcatFilter === "all" || c.subcategory === campaignSubcatFilter))
-                      .map(c => c.id);
-                    filtered = filtered.filter(p => p.brandCategoryId && catIds.includes(p.brandCategoryId));
-                  }
-                  const results = filtered
-                    .filter(p => p.name.toLowerCase().includes(term) || String(p.id) === term)
-                    .slice(0, 30);
-                  return results.length > 0 ? (
-                    <div className="border border-purple-200 rounded-xl overflow-hidden max-h-72 overflow-y-auto bg-white" data-testid="campaign-search-results">
-                      {results.map((p, idx) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          className={`flex items-center gap-3 w-full text-left p-3 hover:bg-purple-50 active:bg-purple-100 transition-colors ${idx > 0 ? "border-t border-gray-100" : ""}`}
-                          onClick={() => {
-                            addCampaignItemMutation.mutate({
-                              productId: p.id,
-                              itemType: campaignAddType,
-                              sortOrder: parseInt(campaignSortOrder) || 1,
-                            });
-                          }}
-                          data-testid={`campaign-search-result-${p.id}`}
-                        >
-                          {p.img ? (
-                            <img src={p.img} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border" />
-                          ) : (
-                            <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                              <ImageIcon className="w-5 h-5 text-gray-400" />
-                            </div>
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold truncate">{p.name}</p>
-                            <p className="text-xs text-gray-500 mt-0.5">ID: {p.id} — {getCategoryName(p.brandCategoryId || 0)}</p>
-                          </div>
-                          <div className="text-right flex-shrink-0 mr-2">
-                            <p className="text-sm font-bold">{p.price} TL</p>
-                            {p.originalPrice && p.originalPrice > p.price && (
-                              <p className="text-xs text-gray-400 line-through">{p.originalPrice} TL</p>
-                            )}
-                          </div>
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
-                            <Plus className="w-4 h-4 text-white" />
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-gray-500 py-3 text-center">"{campaignSearchTerm}" için sonuç bulunamadı</p>
-                  );
-                })()}
-
-                {campaignSearchTerm.length < 2 && campaignSearchTerm.length > 0 && (
-                  <p className="text-xs text-gray-400">En az 2 karakter yazın...</p>
-                )}
-              </div>
-
               {(["main", "extra"] as const).map(type => {
                 const items = campaignItems.filter(i => i.item_type === type).sort((a, b) => a.sort_order - b.sort_order);
                 const activeCount = items.filter(i => i.is_active).length;
@@ -2457,6 +2312,31 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        {(() => {
+                          const ci = campaignItems.find(c => c.product_id === product.id);
+                          if (ci) {
+                            return (
+                              <Badge className="text-[10px] no-default-hover-elevate no-default-active-elevate" style={{ backgroundColor: "#6B3480", color: "#fff" }}>
+                                {ci.item_type === "main" ? "Kampanya Ana" : "Kampanya Ek"}
+                              </Badge>
+                            );
+                          }
+                          return (
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              title="Kampanyaya Ekle"
+                              className="border-purple-300 text-purple-600 hover:bg-purple-50"
+                              onClick={() => {
+                                setCampaignAddProductId(product.id);
+                                setCampaignAddDialogOpen(true);
+                              }}
+                              data-testid={`btn-campaign-add-${product.id}`}
+                            >
+                              <Tag className="w-4 h-4" />
+                            </Button>
+                          );
+                        })()}
                         <Button
                           variant="outline"
                           size="icon"
@@ -2517,6 +2397,86 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 subcategoriesByAnimal={subcategoriesByAnimal}
               />
             )}
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={campaignAddDialogOpen} onOpenChange={(open) => {
+          setCampaignAddDialogOpen(open);
+          if (!open) { setCampaignAddProductId(null); setCampaignAddType("main"); setCampaignSortOrder("1"); }
+        }}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Tag className="w-5 h-5 text-purple-600" />
+                Kampanyaya Ekle
+              </DialogTitle>
+            </DialogHeader>
+            {campaignAddProductId && (() => {
+              const p = products.find(x => x.id === campaignAddProductId);
+              if (!p) return null;
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    {p.img ? (
+                      <img src={p.img} alt="" className="w-14 h-14 rounded-lg object-cover border" />
+                    ) : (
+                      <div className="w-14 h-14 rounded-lg bg-gray-100 flex items-center justify-center">
+                        <ImageIcon className="w-6 h-6 text-gray-300" />
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold truncate">{p.name}</p>
+                      <p className="text-sm text-purple-700 font-semibold mt-0.5">{p.price} TL</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-sm font-medium mb-1.5 block">Kampanya Türü</Label>
+                      <Select value={campaignAddType} onValueChange={(v) => setCampaignAddType(v as "main" | "extra")}>
+                        <SelectTrigger data-testid="trigger-campaign-type">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="main">Ana Ürün</SelectItem>
+                          <SelectItem value="extra">Ek Ürün (İlave)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium mb-1.5 block">Sıra No</Label>
+                      <Input
+                        type="number"
+                        value={campaignSortOrder}
+                        onChange={(e) => setCampaignSortOrder(e.target.value)}
+                        data-testid="input-campaign-sort-order"
+                      />
+                    </div>
+                  </div>
+                  <Button
+                    className="w-full"
+                    style={{ backgroundColor: "#6B3480" }}
+                    disabled={addCampaignItemMutation.isPending}
+                    onClick={() => {
+                      addCampaignItemMutation.mutate({
+                        productId: p.id,
+                        itemType: campaignAddType,
+                        sortOrder: parseInt(campaignSortOrder) || 1,
+                      });
+                    }}
+                    data-testid="btn-confirm-campaign-add"
+                  >
+                    {addCampaignItemMutation.isPending ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <Tag className="w-4 h-4 mr-2" />
+                        Kampanyaya Ekle
+                      </>
+                    )}
+                  </Button>
+                </div>
+              );
+            })()}
           </DialogContent>
         </Dialog>
 
