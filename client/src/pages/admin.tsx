@@ -2314,27 +2314,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <div className="flex items-center gap-1 shrink-0">
                         {(() => {
                           const ci = campaignItems.find(c => c.product_id === product.id);
-                          if (ci) {
-                            return (
-                              <Badge className="text-[10px] no-default-hover-elevate no-default-active-elevate" style={{ backgroundColor: "#6B3480", color: "#fff" }}>
-                                {ci.item_type === "main" ? "Kampanya Ana" : "Kampanya Ek"}
-                              </Badge>
-                            );
-                          }
-                          return (
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              title="Kampanyaya Ekle"
-                              className="border-purple-300 text-purple-600 hover:bg-purple-50"
-                              onClick={() => {
-                                setCampaignAddProductId(product.id);
-                                setCampaignAddDialogOpen(true);
-                              }}
-                              data-testid={`btn-campaign-add-${product.id}`}
-                            >
-                              <Tag className="w-4 h-4" />
-                            </Button>
+                          return ci ? (
+                            <Badge className="text-[10px] no-default-hover-elevate no-default-active-elevate" style={{ backgroundColor: "#6B3480", color: "#fff" }}>
+                              {ci.item_type === "main" ? "Kampanya Ana" : "Kampanya Ek"}
+                            </Badge>
+                          ) : (
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            title="Kampanyaya Ekle"
+                            className="border-purple-300 text-purple-600 hover:bg-purple-50"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setCampaignAddProductId(product.id);
+                              setCampaignAddDialogOpen(true);
+                            }}
+                            data-testid={`btn-campaign-add-${product.id}`}
+                          >
+                            <Tag className="w-4 h-4" />
+                          </Button>
                           );
                         })()}
                         <Button
@@ -2400,85 +2399,86 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </DialogContent>
         </Dialog>
 
-        <Dialog open={campaignAddDialogOpen} onOpenChange={(open) => {
-          setCampaignAddDialogOpen(open);
-          if (!open) { setCampaignAddProductId(null); setCampaignAddType("main"); setCampaignSortOrder("1"); }
-        }}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Tag className="w-5 h-5 text-purple-600" />
-                Kampanyaya Ekle
-              </DialogTitle>
-            </DialogHeader>
-            {campaignAddProductId && (() => {
-              const p = products.find(x => x.id === campaignAddProductId);
-              if (!p) return null;
-              return (
-                <div className="space-y-4">
-                  <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
-                    {p.img ? (
-                      <img src={p.img} alt="" className="w-14 h-14 rounded-lg object-cover border" />
-                    ) : (
-                      <div className="w-14 h-14 rounded-lg bg-gray-100 flex items-center justify-center">
-                        <ImageIcon className="w-6 h-6 text-gray-300" />
+        {campaignAddDialogOpen && campaignAddProductId && (
+          <Dialog open={true} onOpenChange={(open) => {
+            if (!open) { setCampaignAddDialogOpen(false); setCampaignAddProductId(null); setCampaignAddType("main"); setCampaignSortOrder("1"); }
+          }}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Tag className="w-5 h-5 text-purple-600" />
+                  Kampanyaya Ekle
+                </DialogTitle>
+              </DialogHeader>
+              {(() => {
+                const p = allProducts.find(x => x.id === campaignAddProductId);
+                if (!p) return <p>Ürün bulunamadı</p>;
+                return (
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
+                      {p.img ? (
+                        <img src={p.img} alt="" className="w-14 h-14 rounded-lg object-cover border" />
+                      ) : (
+                        <div className="w-14 h-14 rounded-lg bg-gray-100 flex items-center justify-center">
+                          <ImageIcon className="w-6 h-6 text-gray-300" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-bold truncate">{p.name}</p>
+                        <p className="text-sm text-purple-700 font-semibold mt-0.5">{p.price} TL</p>
                       </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-bold truncate">{p.name}</p>
-                      <p className="text-sm text-purple-700 font-semibold mt-0.5">{p.price} TL</p>
                     </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label className="text-sm font-medium mb-1.5 block">Kampanya Türü</Label>
+                        <Select value={campaignAddType} onValueChange={(v) => setCampaignAddType(v as "main" | "extra")}>
+                          <SelectTrigger data-testid="trigger-campaign-type">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="main">Ana Ürün</SelectItem>
+                            <SelectItem value="extra">Ek Ürün (İlave)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium mb-1.5 block">Sıra No</Label>
+                        <Input
+                          type="number"
+                          value={campaignSortOrder}
+                          onChange={(e) => setCampaignSortOrder(e.target.value)}
+                          data-testid="input-campaign-sort-order"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      className="w-full"
+                      style={{ backgroundColor: "#6B3480" }}
+                      disabled={addCampaignItemMutation.isPending}
+                      onClick={() => {
+                        addCampaignItemMutation.mutate({
+                          productId: p.id,
+                          itemType: campaignAddType,
+                          sortOrder: parseInt(campaignSortOrder) || 1,
+                        });
+                      }}
+                      data-testid="btn-confirm-campaign-add"
+                    >
+                      {addCampaignItemMutation.isPending ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                      ) : (
+                        <>
+                          <Tag className="w-4 h-4 mr-2" />
+                          Kampanyaya Ekle
+                        </>
+                      )}
+                    </Button>
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label className="text-sm font-medium mb-1.5 block">Kampanya Türü</Label>
-                      <Select value={campaignAddType} onValueChange={(v) => setCampaignAddType(v as "main" | "extra")}>
-                        <SelectTrigger data-testid="trigger-campaign-type">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="main">Ana Ürün</SelectItem>
-                          <SelectItem value="extra">Ek Ürün (İlave)</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <Label className="text-sm font-medium mb-1.5 block">Sıra No</Label>
-                      <Input
-                        type="number"
-                        value={campaignSortOrder}
-                        onChange={(e) => setCampaignSortOrder(e.target.value)}
-                        data-testid="input-campaign-sort-order"
-                      />
-                    </div>
-                  </div>
-                  <Button
-                    className="w-full"
-                    style={{ backgroundColor: "#6B3480" }}
-                    disabled={addCampaignItemMutation.isPending}
-                    onClick={() => {
-                      addCampaignItemMutation.mutate({
-                        productId: p.id,
-                        itemType: campaignAddType,
-                        sortOrder: parseInt(campaignSortOrder) || 1,
-                      });
-                    }}
-                    data-testid="btn-confirm-campaign-add"
-                  >
-                    {addCampaignItemMutation.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <Tag className="w-4 h-4 mr-2" />
-                        Kampanyaya Ekle
-                      </>
-                    )}
-                  </Button>
-                </div>
-              );
-            })()}
-          </DialogContent>
-        </Dialog>
+                );
+              })()}
+            </DialogContent>
+          </Dialog>
+        )}
 
         <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
