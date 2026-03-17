@@ -2,11 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Plus, Minus, Tag, Gift, ArrowRight } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Tag, Gift, ArrowRight, Lock } from "lucide-react";
 import ProductImage from "@/components/ProductImage";
 import { useCart } from "@/contexts/CartContext";
 import { productUrl } from "@/lib/data";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
+
+const KEDI_KUMU_IDS = new Set(["461", "474", "473"]);
 
 interface CampaignProduct {
   id: number;
@@ -22,17 +24,19 @@ interface CampaignProduct {
 }
 
 function CampaignProductCard({ item }: { item: CampaignProduct }) {
-  const { basket, updateQty } = useCart();
+  const { basket, updateQty, campaignMainInCart } = useCart();
   const pid = String(item.product_id);
   const qty = basket[pid] || 0;
   const isMain = item.item_type === "main";
-  const maxQty = isMain ? 1 : 99;
+  const isKediKumu = KEDI_KUMU_IDS.has(pid);
+  const maxQty = isKediKumu ? 1 : 99;
+  const isLockedMain = isMain && campaignMainInCart !== null && campaignMainInCart !== pid;
   const discount = item.original_price
     ? Math.round(((item.original_price - item.price) / item.original_price) * 100)
     : 0;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-testid={`campaign-product-${item.product_id}`}>
+    <div className={`bg-white rounded-xl shadow-sm border overflow-hidden ${isLockedMain ? "border-gray-200 opacity-60" : "border-gray-100"}`} data-testid={`campaign-product-${item.product_id}`}>
       <Link href={productUrl(item.product_id, item.name) + "?kampanya=1"}>
         <div className="relative aspect-square bg-gray-50 p-2 cursor-pointer">
           <ProductImage
@@ -77,8 +81,13 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
           )}
         </div>
         {item.stock > 0 ? (
-          qty > 0 ? (
-            isMain ? (
+          isLockedMain ? (
+            <div className="text-center text-[11px] font-semibold py-1.5 rounded-md flex items-center justify-center gap-1" style={{ backgroundColor: "#f5f5f5", color: "#9e9e9e" }} data-testid={`locked-${item.product_id}`}>
+              <Lock className="w-3 h-3" />
+              Başka ürün seçildi
+            </div>
+          ) : qty > 0 ? (
+            (isMain || isKediKumu) ? (
               <div className="text-center text-[11px] font-semibold py-1.5 rounded-md" style={{ backgroundColor: "#f3e5f9", color: "#6B3480" }} data-testid={`qty-added-${item.product_id}`}>
                 Sepette ✓
                 <button

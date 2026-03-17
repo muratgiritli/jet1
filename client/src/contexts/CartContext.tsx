@@ -41,6 +41,8 @@ interface CartContextType {
   campaignMainCount: number;
   campaignExtraCount: number;
   campaignValid: boolean;
+  campaignMainInCart: string | null;
+  campaignData: CampaignItemInfo[];
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -82,20 +84,33 @@ export function CartProvider({ children }: { children: ReactNode }) {
   });
 
   const campaignMainIdsRef = useRef<Set<string>>(new Set());
+  const campaignLitterIdsRef = useRef<Set<string>>(new Set());
   useEffect(() => {
-    const s = new Set<string>();
+    const mainSet = new Set<string>();
+    const litterSet = new Set<string>();
     for (const ci of campaignData) {
-      if (ci.item_type === "main") s.add(String(ci.product_id));
+      const pid = String(ci.product_id);
+      if (ci.item_type === "main") mainSet.add(pid);
     }
-    campaignMainIdsRef.current = s;
-    if (s.size > 0) {
+    campaignMainIdsRef.current = mainSet;
+    campaignLitterIdsRef.current = litterSet;
+    if (mainSet.size > 0) {
       setBasket((prev) => {
         let changed = false;
         const copy = { ...prev };
-        for (const id of s) {
-          if (copy[id] && copy[id] > 1) {
-            copy[id] = 1;
-            changed = true;
+        let foundMain = false;
+        for (const id of mainSet) {
+          if (copy[id]) {
+            if (foundMain) {
+              delete copy[id];
+              changed = true;
+            } else {
+              foundMain = true;
+              if (copy[id] > 1) {
+                copy[id] = 1;
+                changed = true;
+              }
+            }
           }
         }
         if (changed) {
@@ -122,8 +137,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setBasket((prev) => {
       const current = prev[id] || 0;
       let next = current + delta;
-      if (campaignMainIdsRef.current.has(id) && next > 1) {
-        next = 1;
+      if (campaignMainIdsRef.current.has(id)) {
+        if (next > 1) next = 1;
+        if (delta > 0 && current === 0) {
+          const hasAnotherMain = Array.from(campaignMainIdsRef.current).some(
+            (mid) => mid !== id && (prev[mid] || 0) > 0
+          );
+          if (hasAnotherMain) return prev;
+        }
       }
       let updated: BasketItems;
       if (next <= 0) {
@@ -184,12 +205,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return map;
   }, [campaignData]);
 
-  const { hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid } = useMemo(() => {
+  const { hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart } = useMemo(() => {
     let mainCount = 0;
     let extraCount = 0;
+    let mainInCart: string | null = null;
     for (const { product, qty } of selectedProducts) {
       const type = campaignSet.get(product.id);
-      if (type === "main") mainCount += qty;
+      if (type === "main") {
+        mainCount += qty;
+        mainInCart = product.id;
+      }
       if (type === "extra") extraCount += qty;
     }
     const hasCampaign = mainCount > 0 || extraCount > 0;
@@ -198,6 +223,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       campaignMainCount: mainCount,
       campaignExtraCount: extraCount,
       campaignValid: !hasCampaign || (mainCount >= 1 && extraCount >= 1),
+      campaignMainInCart: mainInCart,
     };
   }, [selectedProducts, campaignSet]);
 
@@ -221,8 +247,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       campaignMainCount,
       campaignExtraCount,
       campaignValid,
+      campaignMainInCart,
+      campaignData,
     }),
-    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid]
+    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
