@@ -63,18 +63,14 @@ export default function Landing() {
         <section className="px-3 pb-2" data-testid="section-campaign-banner">
           <Link href="/kampanya">
             <div
-              className="rounded-xl p-3 flex items-center gap-3 cursor-pointer shadow-sm border border-orange-200"
-              style={{ background: "linear-gradient(135deg, #ff6f00 0%, #ff9100 50%, #ffa726 100%)" }}
+              className="rounded-lg px-3 py-2 flex items-center gap-2.5 cursor-pointer border border-orange-100/60 backdrop-blur-sm transition-all active:scale-[0.98]"
+              style={{ background: "linear-gradient(90deg, #ff8a00 0%, #e52e71 100%)" }}
               data-testid="banner-campaign"
             >
-              <div className="flex-shrink-0 w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
-                <Tag className="w-5 h-5 text-white" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-white text-sm font-extrabold">Kampanyali Urunler</p>
-                <p className="text-white/80 text-[10px] font-medium">Ozel fiyatlarla mama firsatlari!</p>
-              </div>
-              <ArrowRight className="w-5 h-5 text-white flex-shrink-0" />
+              <Tag className="w-4 h-4 text-white/90 flex-shrink-0" />
+              <span className="text-white text-xs font-bold tracking-wide flex-1">Kampanyalı Ürünler</span>
+              <span className="text-[10px] text-white/70 font-medium hidden sm:inline">Fırsatları Keşfet</span>
+              <ArrowRight className="w-3.5 h-3.5 text-white/80 flex-shrink-0" />
             </div>
           </Link>
         </section>
