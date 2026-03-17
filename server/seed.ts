@@ -1,4 +1,4 @@
-import { db } from "./storage";
+import { db, pool } from "./storage";
 import { brandCategories, products, breedStats, crossSellSections, crossSellItems, subcategories } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import brandDataJson from "./brand_data.json";
@@ -652,6 +652,7 @@ export async function seedDatabase() {
 
   await seedBreedStats();
   await seedCrossSellSections();
+  await seedCampaignItems();
   console.log("Database seeding complete!");
 }
 
@@ -767,4 +768,50 @@ async function seedBreedStats() {
   } else {
     console.log("All mama products already have breed stats.");
   }
+}
+
+async function seedCampaignItems() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS campaign_items (
+      id SERIAL PRIMARY KEY,
+      product_id INTEGER NOT NULL,
+      item_type VARCHAR(10) NOT NULL DEFAULT 'main',
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      is_active BOOLEAN NOT NULL DEFAULT true
+    )
+  `);
+
+  const existing = await pool.query("SELECT COUNT(*) as cnt FROM campaign_items");
+  if (parseInt(existing.rows[0].cnt) > 0) {
+    console.log("Campaign items already exist, skipping...");
+    return;
+  }
+
+  const CAMPAIGN_MAIN_PRODUCTS = [86, 103, 25, 197, 204, 28, 30, 98, 337, 365, 362, 354, 294, 292, 323, 298];
+  const CAMPAIGN_EXTRA_PRODUCTS = [946, 937, 461, 936, 414, 910, 474, 473, 941, 930];
+
+  let seeded = 0;
+  for (let i = 0; i < CAMPAIGN_MAIN_PRODUCTS.length; i++) {
+    const pid = CAMPAIGN_MAIN_PRODUCTS[i];
+    const productExists = await pool.query("SELECT id FROM products WHERE id = $1", [pid]);
+    if (productExists.rows.length > 0) {
+      await pool.query(
+        "INSERT INTO campaign_items (product_id, item_type, sort_order) VALUES ($1, $2, $3)",
+        [pid, "main", i + 1]
+      );
+      seeded++;
+    }
+  }
+  for (let i = 0; i < CAMPAIGN_EXTRA_PRODUCTS.length; i++) {
+    const pid = CAMPAIGN_EXTRA_PRODUCTS[i];
+    const productExists = await pool.query("SELECT id FROM products WHERE id = $1", [pid]);
+    if (productExists.rows.length > 0) {
+      await pool.query(
+        "INSERT INTO campaign_items (product_id, item_type, sort_order) VALUES ($1, $2, $3)",
+        [pid, "extra", i + 1]
+      );
+      seeded++;
+    }
+  }
+  console.log(`Seeded ${seeded} campaign items.`);
 }
