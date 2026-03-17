@@ -1028,24 +1028,25 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <Tag className="w-5 h-5 text-purple-600" />
             <h2 className="text-lg font-bold" data-testid="text-section-campaign">Kampanya Yönetimi</h2>
             <Badge className="no-default-hover-elevate no-default-active-elevate" style={{ backgroundColor: "#6B3480", color: "#fff" }} data-testid="badge-campaign-count">
-              {campaignItems.filter(i => i.item_type === "main").length} ana / {campaignItems.filter(i => i.item_type === "extra").length} ek
+              {campaignItems.filter(i => i.is_active && i.item_type === "main").length} ana / {campaignItems.filter(i => i.is_active && i.item_type === "extra").length} ek aktif
             </Badge>
             <ChevronDown className={`w-5 h-5 ml-auto transition-transform ${campaignExpanded ? "rotate-180" : ""}`} />
           </button>
 
           {campaignExpanded && (
-            <div className="space-y-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base flex items-center gap-2">
-                    <Plus className="w-4 h-4" />
-                    Kampanyaya Ürün Ekle
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="flex flex-col sm:flex-row gap-3">
+            <div className="space-y-5">
+
+              <div className="rounded-xl border-2 border-purple-200 bg-purple-50/50 p-4 space-y-4">
+                <h3 className="font-bold text-purple-800 flex items-center gap-2">
+                  <Plus className="w-5 h-5" />
+                  Yeni Ürün Ekle
+                </h3>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <Label className="text-xs text-purple-700 mb-1 block">Tür</Label>
                     <Select value={campaignAddType} onValueChange={(v) => setCampaignAddType(v as "main" | "extra")} data-testid="select-campaign-type">
-                      <SelectTrigger className="w-full sm:w-40" data-testid="trigger-campaign-type">
+                      <SelectTrigger data-testid="trigger-campaign-type">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -1053,21 +1054,23 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         <SelectItem value="extra">Ek Ürün (İlave)</SelectItem>
                       </SelectContent>
                     </Select>
+                  </div>
+                  <div>
+                    <Label className="text-xs text-purple-700 mb-1 block">Sıra No</Label>
                     <Input
                       type="number"
-                      placeholder="Sıra No"
-                      className="w-24"
+                      placeholder="1"
                       value={campaignSortOrder}
                       onChange={(e) => setCampaignSortOrder(e.target.value)}
                       data-testid="input-campaign-sort-order"
                     />
                   </div>
-
                   {campaignAddType === "extra" && (
-                    <div className="flex flex-col sm:flex-row gap-3">
+                    <div>
+                      <Label className="text-xs text-purple-700 mb-1 block">Hayvan Filtresi</Label>
                       <Select value={campaignAnimalFilter} onValueChange={(v) => { setCampaignAnimalFilter(v); setCampaignSubcatFilter("all"); }}>
-                        <SelectTrigger className="w-full sm:w-36" data-testid="trigger-campaign-animal">
-                          <SelectValue placeholder="Hayvan" />
+                        <SelectTrigger data-testid="trigger-campaign-animal">
+                          <SelectValue placeholder="Tümü" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="all">Tüm Hayvanlar</SelectItem>
@@ -1076,152 +1079,184 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           ))}
                         </SelectContent>
                       </Select>
-                      {campaignAnimalFilter !== "all" && (
-                        <Select value={campaignSubcatFilter} onValueChange={setCampaignSubcatFilter}>
-                          <SelectTrigger className="w-full sm:w-48" data-testid="trigger-campaign-subcat">
-                            <SelectValue placeholder="Alt Kategori" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="all">Tüm Alt Kategoriler</SelectItem>
-                            {(subcategoriesByAnimal[campaignAnimalFilter] || []).map(sc => (
-                              <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
                     </div>
                   )}
+                </div>
 
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Ürün ara (isim veya ID)..."
-                      className="pl-10"
-                      value={campaignSearchTerm}
-                      onChange={(e) => setCampaignSearchTerm(e.target.value)}
-                      data-testid="input-campaign-search"
-                    />
+                {campaignAddType === "extra" && campaignAnimalFilter !== "all" && (
+                  <div>
+                    <Label className="text-xs text-purple-700 mb-1 block">Alt Kategori</Label>
+                    <Select value={campaignSubcatFilter} onValueChange={setCampaignSubcatFilter}>
+                      <SelectTrigger className="w-full sm:w-64" data-testid="trigger-campaign-subcat">
+                        <SelectValue placeholder="Tümü" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tüm Alt Kategoriler</SelectItem>
+                        {(subcategoriesByAnimal[campaignAnimalFilter] || []).map(sc => (
+                          <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                )}
 
-                  {campaignSearchTerm.length >= 2 && (() => {
-                    const term = campaignSearchTerm.toLowerCase();
-                    const existingIds = new Set(campaignItems.map(ci => ci.product_id));
-                    let filtered = products.filter(p => !existingIds.has(p.id));
-                    if (campaignAddType === "extra" && campaignAnimalFilter !== "all") {
-                      const catIds = categories
-                        .filter(c => c.animal === campaignAnimalFilter && (campaignSubcatFilter === "all" || c.subcategory === campaignSubcatFilter))
-                        .map(c => c.id);
-                      filtered = filtered.filter(p => p.brandCategoryId && catIds.includes(p.brandCategoryId));
-                    }
-                    const results = filtered
-                      .filter(p => p.name.toLowerCase().includes(term) || String(p.id) === term)
-                      .slice(0, 20);
-                    return results.length > 0 ? (
-                      <div className="border rounded-lg max-h-60 overflow-y-auto divide-y" data-testid="campaign-search-results">
-                        {results.map(p => (
-                          <div key={p.id} className="flex items-center gap-3 p-2 hover:bg-muted/50 cursor-pointer" onClick={() => {
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-purple-400" />
+                  <Input
+                    placeholder="Ürün adı veya ID yazarak arayın..."
+                    className="pl-10 border-purple-200 focus:border-purple-400"
+                    value={campaignSearchTerm}
+                    onChange={(e) => setCampaignSearchTerm(e.target.value)}
+                    data-testid="input-campaign-search"
+                  />
+                </div>
+
+                {addCampaignItemMutation.isPending && (
+                  <div className="flex items-center gap-2 text-sm text-purple-600 py-2">
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Ekleniyor...
+                  </div>
+                )}
+
+                {campaignSearchTerm.length >= 2 && !addCampaignItemMutation.isPending && (() => {
+                  const term = campaignSearchTerm.toLowerCase();
+                  const existingIds = new Set(campaignItems.map(ci => ci.product_id));
+                  let filtered = products.filter(p => !existingIds.has(p.id));
+                  if (campaignAddType === "extra" && campaignAnimalFilter !== "all") {
+                    const catIds = categories
+                      .filter(c => c.animal === campaignAnimalFilter && (campaignSubcatFilter === "all" || c.subcategory === campaignSubcatFilter))
+                      .map(c => c.id);
+                    filtered = filtered.filter(p => p.brandCategoryId && catIds.includes(p.brandCategoryId));
+                  }
+                  const results = filtered
+                    .filter(p => p.name.toLowerCase().includes(term) || String(p.id) === term)
+                    .slice(0, 30);
+                  return results.length > 0 ? (
+                    <div className="border border-purple-200 rounded-xl overflow-hidden max-h-72 overflow-y-auto bg-white" data-testid="campaign-search-results">
+                      {results.map((p, idx) => (
+                        <button
+                          key={p.id}
+                          type="button"
+                          className={`flex items-center gap-3 w-full text-left p-3 hover:bg-purple-50 active:bg-purple-100 transition-colors ${idx > 0 ? "border-t border-gray-100" : ""}`}
+                          onClick={() => {
                             addCampaignItemMutation.mutate({
                               productId: p.id,
                               itemType: campaignAddType,
                               sortOrder: parseInt(campaignSortOrder) || 1,
                             });
-                          }} data-testid={`campaign-search-result-${p.id}`}>
-                            {p.img && <img src={p.img} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium truncate">{p.name}</p>
-                              <p className="text-xs text-muted-foreground">ID: {p.id} — {getCategoryName(p.brandCategoryId || 0)}</p>
+                          }}
+                          data-testid={`campaign-search-result-${p.id}`}
+                        >
+                          {p.img ? (
+                            <img src={p.img} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border" />
+                          ) : (
+                            <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                              <ImageIcon className="w-5 h-5 text-gray-400" />
                             </div>
-                            <div className="text-right flex-shrink-0">
-                              <p className="text-sm font-bold">{p.price} TL</p>
-                              {p.originalPrice && p.originalPrice > p.price && (
-                                <p className="text-xs text-muted-foreground line-through">{p.originalPrice} TL</p>
-                              )}
-                            </div>
-                            <Plus className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold truncate">{p.name}</p>
+                            <p className="text-xs text-gray-500 mt-0.5">ID: {p.id} — {getCategoryName(p.brandCategoryId || 0)}</p>
                           </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-sm text-muted-foreground py-2">Sonuç bulunamadı</p>
-                    );
-                  })()}
-                </CardContent>
-              </Card>
+                          <div className="text-right flex-shrink-0 mr-2">
+                            <p className="text-sm font-bold">{p.price} TL</p>
+                            {p.originalPrice && p.originalPrice > p.price && (
+                              <p className="text-xs text-gray-400 line-through">{p.originalPrice} TL</p>
+                            )}
+                          </div>
+                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center">
+                            <Plus className="w-4 h-4 text-white" />
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-500 py-3 text-center">"{campaignSearchTerm}" için sonuç bulunamadı</p>
+                  );
+                })()}
+
+                {campaignSearchTerm.length < 2 && campaignSearchTerm.length > 0 && (
+                  <p className="text-xs text-gray-400">En az 2 karakter yazın...</p>
+                )}
+              </div>
 
               {(["main", "extra"] as const).map(type => {
                 const items = campaignItems.filter(i => i.item_type === type).sort((a, b) => a.sort_order - b.sort_order);
                 const activeCount = items.filter(i => i.is_active).length;
                 return (
-                  <Card key={type}>
-                    <CardHeader className="pb-3">
-                      <CardTitle className="text-base flex items-center gap-2">
-                        {type === "main" ? <Tag className="w-4 h-4 text-purple-600" /> : <Package className="w-4 h-4 text-green-600" />}
-                        {type === "main" ? "Kampanya Ana Ürünleri" : "İlave Ürünler"}
-                        <Badge variant="outline" className="ml-auto">{activeCount} aktif / {items.length} toplam</Badge>
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {items.length === 0 ? (
-                        <p className="text-sm text-muted-foreground text-center py-4">Henüz ürün eklenmemiş</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {items.map(item => (
-                            <div
-                              key={item.id}
-                              className={`flex items-center gap-3 py-2.5 px-3 rounded-lg border transition-opacity ${item.is_active ? "bg-white border-gray-200" : "bg-muted/40 border-dashed border-gray-300 opacity-60"}`}
-                              data-testid={`row-campaign-item-${item.id}`}
-                            >
-                              {item.img ? (
-                                <img src={item.img} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
-                              ) : (
-                                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
-                                  <ImageIcon className="w-5 h-5 text-muted-foreground" />
-                                </div>
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold truncate" data-testid={`text-campaign-item-name-${item.id}`}>{item.name}</p>
-                                <div className="flex items-center gap-2 mt-0.5">
-                                  <span className="text-xs font-bold text-primary">{item.price} TL</span>
-                                  {item.original_price && item.original_price > item.price && (
-                                    <span className="text-xs text-muted-foreground line-through">{item.original_price} TL</span>
-                                  )}
-                                  <span className="text-xs text-muted-foreground">Sıra: {item.sort_order}</span>
-                                  {item.stock <= 0 && <Badge variant="destructive" className="text-[10px] h-4 no-default-hover-elevate no-default-active-elevate">Stok Yok</Badge>}
-                                </div>
+                  <div key={type} className="rounded-xl border bg-white overflow-hidden">
+                    <div className={`px-4 py-3 flex items-center gap-2 ${type === "main" ? "bg-purple-600 text-white" : "bg-green-600 text-white"}`}>
+                      {type === "main" ? <Tag className="w-4 h-4" /> : <Package className="w-4 h-4" />}
+                      <span className="font-bold">{type === "main" ? "Ana Ürünler" : "İlave Ürünler"}</span>
+                      <span className="ml-auto text-sm opacity-90">{activeCount} aktif / {items.length} toplam</span>
+                    </div>
+                    {items.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-6">Henüz ürün eklenmemiş</p>
+                    ) : (
+                      <div className="divide-y">
+                        {items.map((item, idx) => (
+                          <div
+                            key={item.id}
+                            className={`flex items-center gap-3 p-3 transition-all ${item.is_active ? "" : "opacity-40 bg-gray-50"}`}
+                            data-testid={`row-campaign-item-${item.id}`}
+                          >
+                            <span className="text-xs font-mono text-gray-400 w-6 text-center flex-shrink-0">{item.sort_order}</span>
+                            {item.img ? (
+                              <img src={item.img} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border" />
+                            ) : (
+                              <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                <ImageIcon className="w-6 h-6 text-gray-300" />
                               </div>
-                              <div className="flex items-center gap-1 flex-shrink-0">
-                                <Button
-                                  variant={item.is_active ? "default" : "outline"}
-                                  size="sm"
-                                  className="h-7 text-xs px-2"
-                                  style={item.is_active ? { backgroundColor: "#16a34a" } : {}}
-                                  onClick={() => toggleCampaignItemMutation.mutate({ id: item.id, isActive: !item.is_active })}
-                                  disabled={toggleCampaignItemMutation.isPending}
-                                  data-testid={`btn-toggle-campaign-item-${item.id}`}
-                                >
-                                  {item.is_active ? (
-                                    <><Eye className="w-3 h-3 mr-1" />Yayında</>
-                                  ) : (
-                                    <><EyeOff className="w-3 h-3 mr-1" />Durduruldu</>
-                                  )}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 w-7 p-0"
-                                  onClick={() => removeCampaignItemMutation.mutate(item.id)}
-                                  disabled={removeCampaignItemMutation.isPending}
-                                  data-testid={`btn-remove-campaign-item-${item.id}`}
-                                >
-                                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
-                                </Button>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate" data-testid={`text-campaign-item-name-${item.id}`}>{item.name}</p>
+                              <div className="flex items-center gap-3 mt-1">
+                                <span className="text-sm font-bold text-purple-700">{item.price} TL</span>
+                                {item.original_price && item.original_price > item.price && (
+                                  <span className="text-xs text-gray-400 line-through">{item.original_price} TL</span>
+                                )}
+                                {item.stock <= 0 && (
+                                  <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">STOK YOK</span>
+                                )}
                               </div>
                             </div>
-                          ))}
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                            <div className="flex items-center gap-2 flex-shrink-0">
+                              <button
+                                type="button"
+                                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                                  item.is_active
+                                    ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                }`}
+                                onClick={() => toggleCampaignItemMutation.mutate({ id: item.id, isActive: !item.is_active })}
+                                disabled={toggleCampaignItemMutation.isPending}
+                                data-testid={`btn-toggle-campaign-item-${item.id}`}
+                              >
+                                {item.is_active ? (
+                                  <><Eye className="w-3.5 h-3.5" /> Yayında</>
+                                ) : (
+                                  <><EyeOff className="w-3.5 h-3.5" /> Durduruldu</>
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                className="w-8 h-8 rounded-full flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                onClick={() => {
+                                  if (confirm(`"${item.name}" kampanyadan silinsin mi?`)) {
+                                    removeCampaignItemMutation.mutate(item.id);
+                                  }
+                                }}
+                                disabled={removeCampaignItemMutation.isPending}
+                                data-testid={`btn-remove-campaign-item-${item.id}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 );
               })}
             </div>
