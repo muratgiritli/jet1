@@ -534,6 +534,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [campaignAddType, setCampaignAddType] = useState<"main" | "extra">("main");
   const [campaignProductId, setCampaignProductId] = useState("");
   const [campaignSortOrder, setCampaignSortOrder] = useState("1");
+  const [campaignSearchTerm, setCampaignSearchTerm] = useState("");
+  const [campaignAnimalFilter, setCampaignAnimalFilter] = useState<string>("all");
+  const [campaignSubcatFilter, setCampaignSubcatFilter] = useState<string>("all");
   const [orderTab, setOrderTab] = useState<"gelen" | "giden" | "bekleyen">("gelen");
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
@@ -913,10 +916,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     img: string | null;
     stock: number;
     skt: string | null;
+    product_active?: boolean;
   }
 
   const { data: campaignItems = [] } = useQuery<CampaignItem[]>({
-    queryKey: ["/api/campaign-items"],
+    queryKey: ["/api/admin/campaign-items"],
   });
 
   const addCampaignItemMutation = useMutation({
@@ -925,8 +929,30 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/campaign-items"] });
       setCampaignProductId("");
       setCampaignSortOrder("1");
+      setCampaignSearchTerm("");
+    },
+  });
+
+  const toggleCampaignItemMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/campaign-items/${id}`, { isActive });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/campaign-items"] });
+    },
+  });
+
+  const updateCampaignItemMutation = useMutation({
+    mutationFn: async ({ id, ...data }: { id: number; sortOrder?: number; itemType?: string }) => {
+      await apiRequest("PATCH", `/api/admin/campaign-items/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/campaign-items"] });
     },
   });
 
@@ -936,6 +962,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/campaign-items"] });
     },
   });
 
@@ -2861,112 +2888,206 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             className="flex items-center gap-2 mb-4 w-full text-left"
             data-testid="btn-toggle-campaign"
           >
-            <Tag className="w-5 h-5 text-orange-500" />
+            <Tag className="w-5 h-5 text-purple-600" />
             <h2 className="text-lg font-bold" data-testid="text-section-campaign">Kampanya Yönetimi</h2>
-            <Badge className="no-default-hover-elevate no-default-active-elevate" data-testid="badge-campaign-count">
+            <Badge className="no-default-hover-elevate no-default-active-elevate" style={{ backgroundColor: "#6B3480", color: "#fff" }} data-testid="badge-campaign-count">
               {campaignItems.filter(i => i.item_type === "main").length} ana / {campaignItems.filter(i => i.item_type === "extra").length} ek
             </Badge>
             <ChevronDown className={`w-5 h-5 ml-auto transition-transform ${campaignExpanded ? "rotate-180" : ""}`} />
           </button>
 
           {campaignExpanded && (
-            <Card>
-              <CardContent className="p-4 space-y-6">
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Select value={campaignAddType} onValueChange={(v) => setCampaignAddType(v as "main" | "extra")} data-testid="select-campaign-type">
-                    <SelectTrigger className="w-full sm:w-36" data-testid="trigger-campaign-type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="main">Ana Ürün</SelectItem>
-                      <SelectItem value="extra">Ek Ürün</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={campaignProductId} onValueChange={setCampaignProductId}>
-                    <SelectTrigger className="flex-1" data-testid="trigger-campaign-product">
-                      <SelectValue placeholder="Ürün seçin..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {products
-                        .filter(p => !campaignItems.some(ci => ci.product_id === p.id))
-                        .slice(0, 100)
-                        .map(p => (
-                          <SelectItem key={p.id} value={String(p.id)} data-testid={`option-campaign-product-${p.id}`}>
-                            {p.name} — {p.price} TL
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <Input
-                    type="number"
-                    placeholder="Sıra"
-                    className="w-20"
-                    value={campaignSortOrder}
-                    onChange={(e) => setCampaignSortOrder(e.target.value)}
-                    data-testid="input-campaign-sort-order"
-                  />
-                  <Button
-                    disabled={!campaignProductId || addCampaignItemMutation.isPending}
-                    onClick={() => {
-                      addCampaignItemMutation.mutate({
-                        productId: parseInt(campaignProductId),
-                        itemType: campaignAddType,
-                        sortOrder: parseInt(campaignSortOrder) || 1,
-                      });
-                    }}
-                    data-testid="btn-add-campaign-item"
-                  >
-                    {addCampaignItemMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ekle"}
-                  </Button>
-                </div>
+            <div className="space-y-4">
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
+                    Kampanyaya Ürün Ekle
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Select value={campaignAddType} onValueChange={(v) => setCampaignAddType(v as "main" | "extra")} data-testid="select-campaign-type">
+                      <SelectTrigger className="w-full sm:w-40" data-testid="trigger-campaign-type">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="main">Ana Ürün</SelectItem>
+                        <SelectItem value="extra">Ek Ürün (İlave)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="number"
+                      placeholder="Sıra No"
+                      className="w-24"
+                      value={campaignSortOrder}
+                      onChange={(e) => setCampaignSortOrder(e.target.value)}
+                      data-testid="input-campaign-sort-order"
+                    />
+                  </div>
 
-                {(["main", "extra"] as const).map(type => {
-                  const items = campaignItems.filter(i => i.item_type === type).sort((a, b) => a.sort_order - b.sort_order);
-                  return (
-                    <div key={type}>
-                      <h3 className="text-sm font-bold text-muted-foreground uppercase tracking-wide mb-2" data-testid={`text-campaign-${type}-heading`}>
-                        {type === "main" ? "Ana Ürünler" : "Ek Ürünler"} ({items.length})
-                      </h3>
+                  {campaignAddType === "extra" && (
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <Select value={campaignAnimalFilter} onValueChange={(v) => { setCampaignAnimalFilter(v); setCampaignSubcatFilter("all"); }}>
+                        <SelectTrigger className="w-full sm:w-36" data-testid="trigger-campaign-animal">
+                          <SelectValue placeholder="Hayvan" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">Tüm Hayvanlar</SelectItem>
+                          {ANIMALS.map(a => (
+                            <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {campaignAnimalFilter !== "all" && (
+                        <Select value={campaignSubcatFilter} onValueChange={setCampaignSubcatFilter}>
+                          <SelectTrigger className="w-full sm:w-48" data-testid="trigger-campaign-subcat">
+                            <SelectValue placeholder="Alt Kategori" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Tüm Alt Kategoriler</SelectItem>
+                            {(subcategoriesByAnimal[campaignAnimalFilter] || []).map(sc => (
+                              <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                    <Input
+                      placeholder="Ürün ara (isim veya ID)..."
+                      className="pl-10"
+                      value={campaignSearchTerm}
+                      onChange={(e) => setCampaignSearchTerm(e.target.value)}
+                      data-testid="input-campaign-search"
+                    />
+                  </div>
+
+                  {campaignSearchTerm.length >= 2 && (() => {
+                    const term = campaignSearchTerm.toLowerCase();
+                    const existingIds = new Set(campaignItems.map(ci => ci.product_id));
+                    let filtered = products.filter(p => !existingIds.has(p.id));
+                    if (campaignAddType === "extra" && campaignAnimalFilter !== "all") {
+                      const catIds = categories
+                        .filter(c => c.animal === campaignAnimalFilter && (campaignSubcatFilter === "all" || c.subcategory === campaignSubcatFilter))
+                        .map(c => c.id);
+                      filtered = filtered.filter(p => p.brandCategoryId && catIds.includes(p.brandCategoryId));
+                    }
+                    const results = filtered
+                      .filter(p => p.name.toLowerCase().includes(term) || String(p.id) === term)
+                      .slice(0, 20);
+                    return results.length > 0 ? (
+                      <div className="border rounded-lg max-h-60 overflow-y-auto divide-y" data-testid="campaign-search-results">
+                        {results.map(p => (
+                          <div key={p.id} className="flex items-center gap-3 p-2 hover:bg-muted/50 cursor-pointer" onClick={() => {
+                            addCampaignItemMutation.mutate({
+                              productId: p.id,
+                              itemType: campaignAddType,
+                              sortOrder: parseInt(campaignSortOrder) || 1,
+                            });
+                          }} data-testid={`campaign-search-result-${p.id}`}>
+                            {p.img && <img src={p.img} alt="" className="w-10 h-10 rounded object-cover flex-shrink-0" />}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{p.name}</p>
+                              <p className="text-xs text-muted-foreground">ID: {p.id} — {getCategoryName(p.brandCategoryId || 0)}</p>
+                            </div>
+                            <div className="text-right flex-shrink-0">
+                              <p className="text-sm font-bold">{p.price} TL</p>
+                              {p.originalPrice && p.originalPrice > p.price && (
+                                <p className="text-xs text-muted-foreground line-through">{p.originalPrice} TL</p>
+                              )}
+                            </div>
+                            <Plus className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground py-2">Sonuç bulunamadı</p>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              {(["main", "extra"] as const).map(type => {
+                const items = campaignItems.filter(i => i.item_type === type).sort((a, b) => a.sort_order - b.sort_order);
+                const activeCount = items.filter(i => i.is_active).length;
+                return (
+                  <Card key={type}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        {type === "main" ? <Tag className="w-4 h-4 text-purple-600" /> : <Package className="w-4 h-4 text-green-600" />}
+                        {type === "main" ? "Kampanya Ana Ürünleri" : "İlave Ürünler"}
+                        <Badge variant="outline" className="ml-auto">{activeCount} aktif / {items.length} toplam</Badge>
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
                       {items.length === 0 ? (
-                        <p className="text-sm text-muted-foreground">Henüz ürün eklenmemiş</p>
+                        <p className="text-sm text-muted-foreground text-center py-4">Henüz ürün eklenmemiş</p>
                       ) : (
-                        <div className="space-y-1">
+                        <div className="space-y-2">
                           {items.map(item => (
                             <div
                               key={item.id}
-                              className="flex items-center gap-3 py-2 px-3 rounded-md bg-muted/30"
+                              className={`flex items-center gap-3 py-2.5 px-3 rounded-lg border transition-opacity ${item.is_active ? "bg-white border-gray-200" : "bg-muted/40 border-dashed border-gray-300 opacity-60"}`}
                               data-testid={`row-campaign-item-${item.id}`}
                             >
-                              {item.img && (
-                                <img src={item.img} alt="" className="w-8 h-8 rounded object-cover" />
+                              {item.img ? (
+                                <img src={item.img} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0" />
+                              ) : (
+                                <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                                  <ImageIcon className="w-5 h-5 text-muted-foreground" />
+                                </div>
                               )}
-                              <span className="text-sm flex-1 truncate" data-testid={`text-campaign-item-name-${item.id}`}>
-                                {item.name}
-                              </span>
-                              <span className="text-xs text-muted-foreground whitespace-nowrap">
-                                {item.price} TL
-                              </span>
-                              <span className="text-xs text-muted-foreground">
-                                Sıra: {item.sort_order}
-                              </span>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => removeCampaignItemMutation.mutate(item.id)}
-                                disabled={removeCampaignItemMutation.isPending}
-                                data-testid={`btn-remove-campaign-item-${item.id}`}
-                              >
-                                <Trash2 className="w-4 h-4 text-destructive" />
-                              </Button>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm font-semibold truncate" data-testid={`text-campaign-item-name-${item.id}`}>{item.name}</p>
+                                <div className="flex items-center gap-2 mt-0.5">
+                                  <span className="text-xs font-bold text-primary">{item.price} TL</span>
+                                  {item.original_price && item.original_price > item.price && (
+                                    <span className="text-xs text-muted-foreground line-through">{item.original_price} TL</span>
+                                  )}
+                                  <span className="text-xs text-muted-foreground">Sıra: {item.sort_order}</span>
+                                  {item.stock <= 0 && <Badge variant="destructive" className="text-[10px] h-4 no-default-hover-elevate no-default-active-elevate">Stok Yok</Badge>}
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                <Button
+                                  variant={item.is_active ? "default" : "outline"}
+                                  size="sm"
+                                  className="h-7 text-xs px-2"
+                                  style={item.is_active ? { backgroundColor: "#16a34a" } : {}}
+                                  onClick={() => toggleCampaignItemMutation.mutate({ id: item.id, isActive: !item.is_active })}
+                                  disabled={toggleCampaignItemMutation.isPending}
+                                  data-testid={`btn-toggle-campaign-item-${item.id}`}
+                                >
+                                  {item.is_active ? (
+                                    <><Eye className="w-3 h-3 mr-1" />Yayında</>
+                                  ) : (
+                                    <><EyeOff className="w-3 h-3 mr-1" />Durduruldu</>
+                                  )}
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 w-7 p-0"
+                                  onClick={() => removeCampaignItemMutation.mutate(item.id)}
+                                  disabled={removeCampaignItemMutation.isPending}
+                                  data-testid={`btn-remove-campaign-item-${item.id}`}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5 text-destructive" />
+                                </Button>
+                              </div>
                             </div>
                           ))}
                         </div>
                       )}
-                    </div>
-                  );
-                })}
-              </CardContent>
-            </Card>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
           )}
         </section>
 

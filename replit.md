@@ -15,7 +15,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - **Static data**: CATEGORIES in client/src/lib/data.ts (category tab names only, no products), CONFIG, PAYMENT_OPTIONS
 - **Dynamic data**: All products and categories served from database via API (no static product lists or category lists)
 - **Cross-sell**: Reusable recommendation sections linked to products via junction table, displayed on product detail pages
-- **Campaign System**: campaign_items table with main/extra products. Campaign page at /kampanya, campaign banner on landing. Product detail campaign mode via ?kampanya=1 hides taksit/points/hemen-al. Checkout campaign mode: only Kapıda Nakit payment, 4000 TL free shipping, no discount/points, requires min 1 main + 1 extra. Server-side campaign validation in /api/orders. Admin campaign management tab.
+- **Campaign System**: campaign_items table with main/extra products. Campaign page at /kampanya (purple theme), campaign banner on landing. Product detail campaign mode via ?kampanya=1 hides taksit/points/hemen-al. Checkout campaign mode: only Kapıda Nakit payment, 4000 TL free shipping, no discount/points, requires min 1 main + 1 extra. Server-side campaign validation in /api/orders. Max 1 main product per order (all others locked when one selected). Kedi kumu (IDs 461,474,473) max 1 per order. Admin campaign management: search & add products, publish/unpublish toggle, category-based filtering for extras, sort order management.
 
 ## Key Files
 - `client/src/pages/campaign.tsx` - Campaign product listing page with main/extra sections
@@ -89,7 +89,9 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `GET /api/customer/orders` - Customer order history (customer auth required)
 - `GET /api/campaign-items` - Get all active campaign items with product details (public)
 - `GET /api/campaign-check/:productId` - Check if a product is a campaign item (public)
+- `GET /api/admin/campaign-items` - All campaign items including inactive (auth required)
 - `POST /api/admin/campaign-items` - Add product to campaign (auth required)
+- `PATCH /api/admin/campaign-items/:id` - Update campaign item (toggle active, sort order, type) (auth required)
 - `DELETE /api/admin/campaign-items/:id` - Remove product from campaign (auth required)
 - `GET /api/installment-rates` - Get active installment rates (public)
 - `GET /api/admin/installment-rates` - All installment rates (auth required)

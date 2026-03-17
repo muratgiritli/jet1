@@ -1110,6 +1110,43 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/campaign-items", requireAdmin, async (req, res) => {
+    try {
+      const { rows } = await sharedPool.query(`
+        SELECT ci.*, p.name, p.price, p.original_price, p.img, p.stock, p.is_active AS product_active, p.skt
+        FROM campaign_items ci
+        JOIN products p ON p.id = ci.product_id
+        ORDER BY ci.item_type, ci.sort_order
+      `);
+      res.json(rows);
+    } catch (err) {
+      res.status(500).json({ message: "Admin campaign items fetch error" });
+    }
+  });
+
+  app.patch("/api/admin/campaign-items/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { isActive, sortOrder, itemType } = req.body;
+      const sets: string[] = [];
+      const vals: any[] = [];
+      let idx = 1;
+      if (typeof isActive === "boolean") { sets.push(`is_active = $${idx++}`); vals.push(isActive); }
+      if (typeof sortOrder === "number") { sets.push(`sort_order = $${idx++}`); vals.push(sortOrder); }
+      if (typeof itemType === "string") { sets.push(`item_type = $${idx++}`); vals.push(itemType); }
+      if (sets.length === 0) return res.status(400).json({ message: "No fields to update" });
+      vals.push(id);
+      const { rows } = await sharedPool.query(
+        `UPDATE campaign_items SET ${sets.join(", ")} WHERE id = $${idx} RETURNING *`,
+        vals
+      );
+      if (rows.length === 0) return res.status(404).json({ message: "Not found" });
+      res.json(rows[0]);
+    } catch (err) {
+      res.status(500).json({ message: "Campaign item update error" });
+    }
+  });
+
   app.delete("/api/admin/campaign-items/:id", requireAdmin, async (req, res) => {
     try {
       await sharedPool.query(`DELETE FROM campaign_items WHERE id = $1`, [req.params.id]);
