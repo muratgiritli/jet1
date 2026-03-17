@@ -133,6 +133,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }));
   }, [dbProducts]);
 
+  const KEDI_KUMU_IDS = useMemo(() => new Set(["461", "474", "473"]), []);
+
   const updateQty = useCallback((id: string, delta: number) => {
     setBasket((prev) => {
       const current = prev[id] || 0;
@@ -145,6 +147,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
           );
           if (hasAnotherMain) return prev;
         }
+      }
+      if (KEDI_KUMU_IDS.has(id) && next > 1) {
+        next = 1;
       }
       let updated: BasketItems;
       if (next <= 0) {

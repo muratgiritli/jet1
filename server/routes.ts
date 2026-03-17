@@ -502,20 +502,19 @@ export async function registerRoutes(
     }
     const isCampaignOrder = campaignMainCount > 0 || campaignExtraCount > 0;
 
+    const KEDI_KUMU_IDS = new Set([461, 474, 473]);
+
     if (isCampaignOrder) {
       if (campaignMainCount < 1 || campaignExtraCount < 1) {
         return res.status(400).json({ message: "Kampanya siparişlerinde en az 1 ana ürün ve 1 ek ürün gereklidir." });
       }
-      const mainQtyMap = new Map<number, number>();
+      if (campaignMainCount > 1) {
+        return res.status(400).json({ message: "Kampanya ana ürünlerinden toplamda sadece 1 adet alabilirsiniz." });
+      }
       for (const item of orderData.items) {
         const pid = parseInt(String(item.productId));
-        if (campaignMap.get(pid) === "main") {
-          mainQtyMap.set(pid, (mainQtyMap.get(pid) || 0) + item.quantity);
-        }
-      }
-      for (const [pid, totalQty] of mainQtyMap) {
-        if (totalQty > 1) {
-          return res.status(400).json({ message: "Kampanya ana ürünlerinden en fazla 1 adet alabilirsiniz." });
+        if (KEDI_KUMU_IDS.has(pid) && item.quantity > 1) {
+          return res.status(400).json({ message: "Kedi kumundan en fazla 1 adet alabilirsiniz." });
         }
       }
       if (orderData.paymentMethod !== "Kapıda Nakit") {
