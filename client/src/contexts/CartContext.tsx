@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react";
+import { createContext, useContext, useState, useCallback, useMemo, useRef, useEffect, type ReactNode } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   CONFIG,
@@ -81,6 +81,32 @@ export function CartProvider({ children }: { children: ReactNode }) {
     queryKey: ["/api/campaign-items"],
   });
 
+  const campaignMainIdsRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    const s = new Set<string>();
+    for (const ci of campaignData) {
+      if (ci.item_type === "main") s.add(String(ci.product_id));
+    }
+    campaignMainIdsRef.current = s;
+    if (s.size > 0) {
+      setBasket((prev) => {
+        let changed = false;
+        const copy = { ...prev };
+        for (const id of s) {
+          if (copy[id] && copy[id] > 1) {
+            copy[id] = 1;
+            changed = true;
+          }
+        }
+        if (changed) {
+          saveBasket(copy);
+          return copy;
+        }
+        return prev;
+      });
+    }
+  }, [campaignData]);
+
   const allProducts: CartProduct[] = useMemo(() => {
     return dbProducts.map((p) => ({
       id: String(p.id),
@@ -94,7 +120,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const updateQty = useCallback((id: string, delta: number) => {
     setBasket((prev) => {
-      const next = (prev[id] || 0) + delta;
+      const current = prev[id] || 0;
+      let next = current + delta;
+      if (campaignMainIdsRef.current.has(id) && next > 1) {
+        next = 1;
+      }
       let updated: BasketItems;
       if (next <= 0) {
         const copy = { ...prev };

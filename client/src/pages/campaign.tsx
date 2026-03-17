@@ -25,6 +25,8 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
   const { basket, updateQty } = useCart();
   const pid = String(item.product_id);
   const qty = basket[pid] || 0;
+  const isMain = item.item_type === "main";
+  const maxQty = isMain ? 1 : 99;
   const discount = item.original_price
     ? Math.round(((item.original_price - item.price) / item.original_price) * 100)
     : 0;
@@ -48,10 +50,10 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
               %{discount}
             </Badge>
           )}
-          {item.item_type === "main" && (
+          {isMain && (
             <Badge
               className="absolute top-2 left-2 text-[10px] font-bold"
-              style={{ backgroundColor: "#ff6f00", color: "#fff" }}
+              style={{ backgroundColor: "#6B3480", color: "#fff" }}
             >
               KAMPANYA
             </Badge>
@@ -76,29 +78,43 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
         </div>
         {item.stock > 0 ? (
           qty > 0 ? (
-            <div className="flex items-center justify-center gap-0" data-testid={`qty-control-${item.product_id}`}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => updateQty(pid, -1)}
-                data-testid={`btn-minus-${item.product_id}`}
-              >
-                <Minus className="w-3.5 h-3.5" />
-              </Button>
-              <div className="flex items-center justify-center font-bold text-primary w-10 text-base">
-                {qty}
+            isMain ? (
+              <div className="text-center text-[11px] font-semibold py-1.5 rounded-md" style={{ backgroundColor: "#f3e5f9", color: "#6B3480" }} data-testid={`qty-added-${item.product_id}`}>
+                Sepette ✓
+                <button
+                  className="ml-2 underline text-[10px]"
+                  onClick={() => updateQty(pid, -1)}
+                  data-testid={`btn-remove-${item.product_id}`}
+                >
+                  Çıkar
+                </button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => updateQty(pid, 1)}
-                data-testid={`btn-plus-${item.product_id}`}
-              >
-                <Plus className="w-3.5 h-3.5" />
-              </Button>
-            </div>
+            ) : (
+              <div className="flex items-center justify-center gap-0" data-testid={`qty-control-${item.product_id}`}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => updateQty(pid, -1)}
+                  data-testid={`btn-minus-${item.product_id}`}
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </Button>
+                <div className="flex items-center justify-center font-bold text-primary w-10 text-base">
+                  {qty}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => { if (qty < maxQty) updateQty(pid, 1); }}
+                  disabled={qty >= maxQty}
+                  data-testid={`btn-plus-${item.product_id}`}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )
           ) : (
             <Button
               className="w-full h-8 text-xs font-bold"
@@ -138,27 +154,13 @@ export default function CampaignPage() {
       <main className="flex-1 max-w-lg mx-auto w-full px-3 py-4">
         <div
           className="rounded-xl p-4 mb-4 text-center"
-          style={{ background: "linear-gradient(135deg, #ff6f00 0%, #ff9100 50%, #ffa726 100%)" }}
+          style={{ background: "linear-gradient(135deg, #6B3480 0%, #8e44ad 50%, #9b59b6 100%)" }}
           data-testid="campaign-hero"
         >
-          <div className="flex items-center justify-center gap-2 mb-2">
+          <div className="flex items-center justify-center gap-2">
             <Tag className="w-6 h-6 text-white" />
             <h1 className="text-xl font-extrabold text-white">Kampanyalı Ürünler</h1>
           </div>
-          <p className="text-white/90 text-sm font-medium">
-            Özel fiyatlarla mama fırsatları! Sepete 1 ekstra ürün ekleyerek kampanyadan faydalanın.
-          </p>
-        </div>
-
-        <div
-          className="rounded-lg p-3 mb-4 flex items-center gap-2 border"
-          style={{ backgroundColor: "#fff3e0", borderColor: "#ffcc80" }}
-          data-testid="campaign-rule-banner"
-        >
-          <Gift className="w-5 h-5 flex-shrink-0" style={{ color: "#e65100" }} />
-          <p className="text-xs font-semibold" style={{ color: "#bf360c" }}>
-            Kampanyadan faydalanmak için ana ürünle birlikte sepete en az 1 ekstra ürün eklemelisiniz.
-          </p>
         </div>
 
         {isLoading ? (
@@ -189,14 +191,10 @@ export default function CampaignPage() {
 
             {extraItems.length > 0 && (
               <section data-testid="section-extra-products">
-                <div
-                  className="rounded-lg p-3 mb-3 text-center"
-                  style={{ backgroundColor: "#e8f5e9" }}
-                >
-                  <p className="text-sm font-bold" style={{ color: "#2e7d32" }}>
-                    Kampanyadan faydalanmak için sepete 1 ürün ekle
-                  </p>
-                </div>
+                <h2 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
+                  <Gift className="w-4 h-4" style={{ color: "#2e7d32" }} />
+                  Ek Ürünler
+                </h2>
                 <div className="grid grid-cols-2 gap-3">
                   {extraItems.map((item) => (
                     <CampaignProductCard key={item.id} item={item} />

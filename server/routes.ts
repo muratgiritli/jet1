@@ -506,6 +506,18 @@ export async function registerRoutes(
       if (campaignMainCount < 1 || campaignExtraCount < 1) {
         return res.status(400).json({ message: "Kampanya siparişlerinde en az 1 ana ürün ve 1 ek ürün gereklidir." });
       }
+      const mainQtyMap = new Map<number, number>();
+      for (const item of orderData.items) {
+        const pid = parseInt(String(item.productId));
+        if (campaignMap.get(pid) === "main") {
+          mainQtyMap.set(pid, (mainQtyMap.get(pid) || 0) + item.quantity);
+        }
+      }
+      for (const [pid, totalQty] of mainQtyMap) {
+        if (totalQty > 1) {
+          return res.status(400).json({ message: "Kampanya ana ürünlerinden en fazla 1 adet alabilirsiniz." });
+        }
+      }
       if (orderData.paymentMethod !== "Kapıda Nakit") {
         return res.status(400).json({ message: "Kampanya siparişlerinde sadece kapıda nakit ödeme geçerlidir." });
       }
