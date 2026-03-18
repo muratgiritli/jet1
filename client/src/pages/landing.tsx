@@ -1,15 +1,12 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
-import { useQuery } from "@tanstack/react-query";
 import {
-  Truck, CreditCard, Banknote, Smartphone, Tag,
-  ArrowRight, ChevronRight, Star, Clock, Shield, Sparkles,
-  Heart, MessageCircle, PawPrint, Gift, Zap, MapPin
+  Truck, CreditCard, Banknote, Smartphone,
+  ArrowRight, ChevronRight, Star, Clock, Shield,
+  Gift, MapPin
 } from "lucide-react";
 import SEO, { LOCAL_BUSINESS_JSONLD, SITE_DOMAIN } from "@/components/SEO";
-import SearchBar from "@/components/SearchBar";
 import PetAIChat from "@/components/PetAIChat";
-import type { Product } from "@shared/schema";
 
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
@@ -185,67 +182,6 @@ function CategoryGrid() {
   );
 }
 
-function getProductImageUrl(product: Product): string {
-  if (product.img?.startsWith("/api/product-image/")) return product.img;
-  return `/product-images/product-${product.id}.webp`;
-}
-
-function TrendingProducts() {
-  const { data: products } = useQuery<Product[]>({ queryKey: ["/api/products"] });
-
-  const trending = (products || [])
-    .filter((p) => p.isActive && p.originalPrice && p.originalPrice > p.price)
-    .sort((a, b) => {
-      const discA = ((a.originalPrice! - a.price) / a.originalPrice!) * 100;
-      const discB = ((b.originalPrice! - b.price) / b.originalPrice!) * 100;
-      return discB - discA;
-    })
-    .slice(0, 8);
-
-  if (trending.length === 0) return null;
-
-  return (
-    <div className="mt-5" data-testid="section-trending">
-      <div className="flex items-center justify-between mx-3 mb-3">
-        <div className="flex items-center gap-1.5">
-          <Zap className="w-4 h-4 text-orange-500" />
-          <h3 className="text-base font-extrabold text-gray-900">Popüler Ürünler</h3>
-        </div>
-      </div>
-      <div className="flex gap-3 overflow-x-auto px-3 pb-1" style={{ scrollbarWidth: "none", WebkitOverflowScrolling: "touch" }}>
-        {trending.map((p) => {
-          const discount = p.originalPrice ? Math.round(((p.originalPrice - p.price) / p.originalPrice) * 100) : 0;
-          return (
-            <Link key={p.id} href={`/urun/${p.id}`}>
-              <div className="min-w-[150px] max-w-[150px] bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden shrink-0 cursor-pointer active:scale-[0.97] transition-transform" data-testid={`card-trending-${p.id}`}>
-                <div className="relative aspect-square bg-gray-50 p-2">
-                  <img src={getProductImageUrl(p)} alt={p.name} className="w-full h-full object-cover rounded-lg" loading="lazy" />
-                  {discount > 0 && (
-                    <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md" data-testid={`badge-discount-${p.id}`}>
-                      %{discount}
-                    </span>
-                  )}
-                </div>
-                <div className="p-2.5">
-                  <p className="text-[11px] font-semibold text-gray-800 line-clamp-2 leading-tight min-h-[28px]">
-                    {p.name}
-                  </p>
-                  <div className="mt-1.5 flex items-baseline gap-1">
-                    <span className="text-sm font-extrabold text-gray-900">{p.price.toLocaleString("tr-TR")} ₺</span>
-                    {p.originalPrice && (
-                      <span className="text-[10px] text-gray-400 line-through">{p.originalPrice.toLocaleString("tr-TR")} ₺</span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 function LocationBanner() {
   return (
     <div className="mx-3 mt-4" data-testid="section-location">
@@ -352,15 +288,10 @@ export default function Landing() {
         jsonLd={LOCAL_BUSINESS_JSONLD}
       />
       <main className="flex-1 max-w-lg mx-auto w-full">
-        <section className="px-3 pt-3 pb-1" data-testid="section-search">
-          <SearchBar />
-        </section>
-
         <HeroCarousel />
         <QuickActions />
         <CampaignBanner />
         <CategoryGrid />
-        <TrendingProducts />
         <LocationBanner />
 
         <div className="mt-4">
