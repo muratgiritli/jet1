@@ -3,10 +3,12 @@ import { Link } from "wouter";
 import {
   Truck, CreditCard, Banknote, Smartphone,
   ArrowRight, ChevronRight, Star, Clock, Shield,
-  Gift, MapPin
+  Gift, MapPin, Phone, Mail
 } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import SEO, { LOCAL_BUSINESS_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import PetAIChat from "@/components/PetAIChat";
+import SearchBar from "@/components/SearchBar";
 
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
@@ -58,31 +60,31 @@ function HeroCarousel() {
   const slide = HERO_SLIDES[current];
 
   const content = (
-    <div className="relative overflow-hidden rounded-2xl mx-3 mt-2" data-testid="hero-carousel">
+    <div className="relative overflow-hidden rounded-2xl" data-testid="hero-carousel">
       <div
-        className={`bg-gradient-to-br ${slide.gradient} p-5 pb-6 transition-all duration-700`}
+        className={`bg-gradient-to-br ${slide.gradient} p-5 md:p-8 lg:p-10 pb-6 md:pb-8 transition-all duration-700`}
         style={{ minHeight: 160 }}
       >
-        <div className="relative z-10">
-          <h2 className="text-2xl font-black text-white whitespace-pre-line leading-tight drop-shadow-sm">
+        <div className="relative z-10 max-w-2xl">
+          <h2 className="text-2xl md:text-4xl lg:text-5xl font-black text-white whitespace-pre-line leading-tight drop-shadow-sm">
             {slide.title}
           </h2>
-          <p className="text-white/90 text-sm mt-2 font-medium">{slide.subtitle}</p>
-          <span className="mt-3 bg-white/20 backdrop-blur-md text-white text-xs font-bold px-4 py-2 rounded-full border border-white/30 inline-flex items-center gap-1.5">
-            Hemen Keşfet <ArrowRight className="w-3.5 h-3.5" />
+          <p className="text-white/90 text-sm md:text-lg mt-2 md:mt-3 font-medium">{slide.subtitle}</p>
+          <span className="mt-3 md:mt-5 bg-white/20 backdrop-blur-md text-white text-xs md:text-sm font-bold px-4 md:px-6 py-2 md:py-2.5 rounded-full border border-white/30 inline-flex items-center gap-1.5">
+            Hemen Keşfet <ArrowRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
           </span>
         </div>
-        <div className="absolute right-3 bottom-2 opacity-20 text-8xl select-none pointer-events-none">
+        <div className="absolute right-3 md:right-8 bottom-2 md:bottom-4 opacity-20 text-8xl md:text-[120px] select-none pointer-events-none">
           🐾
         </div>
       </div>
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
+      <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2">
         {HERO_SLIDES.map((_, i) => (
           <button
             key={i}
             onClick={(e) => { e.preventDefault(); e.stopPropagation(); setCurrent(i); }}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === current ? "w-6 bg-white" : "w-1.5 bg-white/40"
+            className={`h-1.5 md:h-2 rounded-full transition-all duration-300 ${
+              i === current ? "w-6 md:w-8 bg-white" : "w-1.5 md:w-2 bg-white/40"
             }`}
             data-testid={`hero-dot-${i}`}
           />
@@ -99,22 +101,22 @@ function HeroCarousel() {
 
 function QuickActions() {
   return (
-    <div className="mx-3 mt-4" data-testid="section-quick-actions">
-      <div className="grid grid-cols-4 gap-2">
+    <div data-testid="section-quick-actions">
+      <div className="grid grid-cols-4 gap-2 md:gap-4">
         {QUICK_ACTIONS.map((a, i) => (
           <div
             key={i}
-            className={`${a.bg} rounded-xl p-2.5 flex flex-col items-center gap-1.5`}
+            className={`${a.bg} rounded-xl p-2.5 md:p-4 flex flex-col items-center gap-1.5 md:gap-2 hover:shadow-md transition-shadow`}
             data-testid={`quick-action-${i}`}
           >
             <div
-              className="w-9 h-9 rounded-full flex items-center justify-center"
+              className="w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center"
               style={{ backgroundColor: a.color + "15" }}
             >
-              <a.icon className="w-[18px] h-[18px]" style={{ color: a.color }} />
+              <a.icon className="w-[18px] h-[18px] md:w-6 md:h-6" style={{ color: a.color }} />
             </div>
             <span
-              className="text-[10px] font-bold text-center leading-tight whitespace-pre-line"
+              className="text-[10px] md:text-xs font-bold text-center leading-tight whitespace-pre-line"
               style={{ color: a.color }}
             >
               {a.label}
@@ -128,10 +130,10 @@ function QuickActions() {
 
 function CampaignBanner() {
   return (
-    <div className="mx-3 mt-4" data-testid="section-campaign-banner">
+    <div data-testid="section-campaign-banner">
       <Link href="/kampanya">
         <div
-          className="relative overflow-hidden rounded-xl p-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
+          className="relative overflow-hidden rounded-xl p-3.5 md:p-5 flex items-center gap-3 cursor-pointer active:scale-[0.98] hover:shadow-lg transition-all"
           style={{ background: "linear-gradient(135deg, #6B3480 0%, #9b59b6 50%, #c39bd3 100%)" }}
           data-testid="banner-campaign"
         >
@@ -139,15 +141,15 @@ function CampaignBanner() {
             <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white" />
             <div className="absolute -left-4 -bottom-4 w-16 h-16 rounded-full bg-white" />
           </div>
-          <div className="relative z-10 flex items-center gap-3 flex-1">
-            <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shrink-0">
-              <Gift className="w-5 h-5 text-white" />
+          <div className="relative z-10 flex items-center gap-3 md:gap-4 flex-1">
+            <div className="w-10 h-10 md:w-14 md:h-14 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shrink-0">
+              <Gift className="w-5 h-5 md:w-7 md:h-7 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-white text-sm font-extrabold">Kampanyalı Ürünler</p>
-              <p className="text-white/70 text-[11px] mt-0.5">Ana mama + ek ürün fırsatları</p>
+              <p className="text-white text-sm md:text-lg font-extrabold">Kampanyalı Ürünler</p>
+              <p className="text-white/70 text-[11px] md:text-sm mt-0.5">Ana mama + ek ürün fırsatları</p>
             </div>
-            <ChevronRight className="w-5 h-5 text-white/60 shrink-0" />
+            <ChevronRight className="w-5 h-5 md:w-6 md:h-6 text-white/60 shrink-0" />
           </div>
         </div>
       </Link>
@@ -157,23 +159,23 @@ function CampaignBanner() {
 
 function CategoryGrid() {
   return (
-    <div className="mx-3 mt-5" data-testid="section-categories">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-extrabold text-gray-900" data-testid="text-categories-heading">Kategoriler</h3>
-        <Link href="/kategori" className="text-xs text-orange-500 font-semibold flex items-center gap-0.5" data-testid="link-all-categories">
+    <div data-testid="section-categories">
+      <div className="flex items-center justify-between mb-3 md:mb-5">
+        <h3 className="text-base md:text-xl font-extrabold text-gray-900" data-testid="text-categories-heading">Kategoriler</h3>
+        <Link href="/kategori" className="text-xs md:text-sm text-orange-500 font-semibold flex items-center gap-0.5" data-testid="link-all-categories">
           Tümü <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
-      <div className="grid grid-cols-4 gap-2.5" data-testid="grid-categories">
+      <div className="grid grid-cols-4 gap-2.5 md:gap-5" data-testid="grid-categories">
         {CATEGORIES.map((cat) => (
           <Link key={cat.name} href={cat.href}>
-            <div className="flex flex-col items-center gap-1.5 cursor-pointer active:scale-95 transition-transform" data-testid={`card-category-${cat.name}`}>
-              <div className={`w-full aspect-square rounded-2xl overflow-hidden bg-gradient-to-br ${cat.color} p-[3px]`}>
-                <div className="w-full h-full rounded-[13px] overflow-hidden bg-white">
+            <div className="flex flex-col items-center gap-1.5 md:gap-2.5 cursor-pointer active:scale-95 hover:scale-105 transition-transform" data-testid={`card-category-${cat.name}`}>
+              <div className={`w-full aspect-square rounded-2xl md:rounded-3xl overflow-hidden bg-gradient-to-br ${cat.color} p-[3px] md:p-1`}>
+                <div className="w-full h-full rounded-[13px] md:rounded-[20px] overflow-hidden bg-white">
                   <img src={cat.img} alt={cat.name} className="w-full h-full object-cover" loading="lazy" data-testid={`img-category-${cat.name}`} />
                 </div>
               </div>
-              <span className="text-xs font-bold text-gray-800" data-testid={`text-category-name-${cat.name}`}>{cat.name}</span>
+              <span className="text-xs md:text-base font-bold text-gray-800" data-testid={`text-category-name-${cat.name}`}>{cat.name}</span>
             </div>
           </Link>
         ))}
@@ -184,14 +186,14 @@ function CategoryGrid() {
 
 function LocationBanner() {
   return (
-    <div className="mx-3 mt-4" data-testid="section-location">
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-3 flex items-center gap-3 border border-emerald-100">
-        <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
-          <MapPin className="w-5 h-5 text-emerald-600" />
+    <div data-testid="section-location">
+      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-3 md:p-4 flex items-center gap-3 border border-emerald-100">
+        <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
+          <MapPin className="w-5 h-5 md:w-6 md:h-6 text-emerald-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-emerald-800">Samsun İçi Teslimat</p>
-          <p className="text-[10px] text-emerald-600/80 mt-0.5">Atakum, İlkadım, Canik bölgelerine teslimat</p>
+          <p className="text-xs md:text-sm font-bold text-emerald-800">Samsun İçi Teslimat</p>
+          <p className="text-[10px] md:text-xs text-emerald-600/80 mt-0.5">Atakum, İlkadım, Canik bölgelerine teslimat</p>
         </div>
       </div>
     </div>
@@ -200,23 +202,23 @@ function LocationBanner() {
 
 function TrustBadges() {
   return (
-    <div className="mx-3 mt-5" data-testid="section-trust">
-      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 p-3.5">
-        <div className="grid grid-cols-3 gap-3">
+    <div data-testid="section-trust">
+      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 p-3.5 md:p-6">
+        <div className="grid grid-cols-3 gap-3 md:gap-6">
           {[
             { icon: Clock, label: "Hızlı Teslimat", sub: "1 saat içinde", color: "#f59e0b" },
             { icon: Shield, label: "Güvenli Alışveriş", sub: "256-bit SSL", color: "#10b981" },
             { icon: Star, label: "Müşteri Memnuniyeti", sub: "4.9 puan", color: "#6366f1" },
           ].map((b, i) => (
-            <div key={i} className="flex flex-col items-center gap-1.5 text-center">
+            <div key={i} className="flex flex-col items-center gap-1.5 md:gap-2 text-center">
               <div
-                className="w-9 h-9 rounded-full flex items-center justify-center"
+                className="w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center"
                 style={{ backgroundColor: b.color + "15" }}
               >
-                <b.icon className="w-4 h-4" style={{ color: b.color }} />
+                <b.icon className="w-4 h-4 md:w-5 md:h-5" style={{ color: b.color }} />
               </div>
-              <span className="text-[10px] font-bold text-gray-800">{b.label}</span>
-              <span className="text-[9px] text-gray-400">{b.sub}</span>
+              <span className="text-[10px] md:text-sm font-bold text-gray-800">{b.label}</span>
+              <span className="text-[9px] md:text-xs text-gray-400">{b.sub}</span>
             </div>
           ))}
         </div>
@@ -227,7 +229,7 @@ function TrustBadges() {
 
 function MobileFooter() {
   return (
-    <section className="mx-3 mt-5 mb-20 md:hidden" data-testid="section-mobile-footer">
+    <section className="md:hidden" data-testid="section-mobile-footer">
       <div className="bg-gray-50 rounded-xl border border-gray-200/80 p-4 space-y-3">
         <div>
           <h4 className="text-xs font-bold text-gray-700 mb-2">Müşteri Hizmetleri</h4>
@@ -278,6 +280,44 @@ function MobileFooter() {
   );
 }
 
+function DesktopContactStrip() {
+  return (
+    <div className="hidden md:block" data-testid="section-desktop-contact">
+      <div className="bg-gray-50 rounded-xl border border-gray-200 p-6">
+        <div className="grid grid-cols-3 gap-6">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center shrink-0">
+              <Phone className="w-5 h-5 text-purple-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-800">Telefon</p>
+              <a href="tel:+908508403959" className="text-xs text-gray-500 hover:text-purple-600 transition-colors">0 850 840 3959</a>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+              <SiWhatsapp className="w-5 h-5 text-green-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-800">WhatsApp</p>
+              <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="text-xs text-gray-500 hover:text-green-600 transition-colors">Hemen yaz</a>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center shrink-0">
+              <Mail className="w-5 h-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-800">E-posta</p>
+              <a href="mailto:info@sizpa.com" className="text-xs text-gray-500 hover:text-blue-600 transition-colors">info@sizpa.com</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
@@ -287,19 +327,45 @@ export default function Landing() {
         canonical={`${SITE_DOMAIN}/`}
         jsonLd={LOCAL_BUSINESS_JSONLD}
       />
-      <main className="flex-1 max-w-lg mx-auto w-full">
-        <HeroCarousel />
-        <QuickActions />
-        <CampaignBanner />
-        <CategoryGrid />
-        <LocationBanner />
 
-        <div className="mt-4">
+      <div className="md:hidden px-3 pt-3 pb-1" data-testid="section-mobile-search">
+        <SearchBar />
+      </div>
+
+      <main className="flex-1 w-full max-w-6xl mx-auto px-3 md:px-6 lg:px-8">
+        <div className="mt-2 md:mt-6">
+          <HeroCarousel />
+        </div>
+
+        <div className="mt-4 md:mt-8">
+          <QuickActions />
+        </div>
+
+        <div className="mt-4 md:mt-8 md:grid md:grid-cols-2 md:gap-6">
+          <CampaignBanner />
+          <div className="mt-4 md:mt-0">
+            <LocationBanner />
+          </div>
+        </div>
+
+        <div className="mt-5 md:mt-10">
+          <CategoryGrid />
+        </div>
+
+        <div className="mt-4 md:mt-8">
           <PetAIChat />
         </div>
 
-        <TrustBadges />
-        <MobileFooter />
+        <div className="mt-5 md:mt-8 md:grid md:grid-cols-2 md:gap-6">
+          <TrustBadges />
+          <div className="mt-5 md:mt-0">
+            <DesktopContactStrip />
+          </div>
+        </div>
+
+        <div className="mt-5 mb-4 md:mb-8">
+          <MobileFooter />
+        </div>
       </main>
     </div>
   );

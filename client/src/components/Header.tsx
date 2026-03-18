@@ -1,13 +1,15 @@
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, User, UserPlus } from "lucide-react";
+import { ArrowLeft, User, UserPlus, Search } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import Logo from "@/components/Logo";
+import SearchBar from "@/components/SearchBar";
 
 const NAV_ITEMS = [
   { name: "Kedi", href: "/kategori/kedi" },
   { name: "Köpek", href: "/kategori/kopek" },
   { name: "Kuş", href: "/kategori/kus" },
   { name: "Kemirgen", href: "/kategori/kemirgen" },
+  { name: "Kampanya", href: "/kampanya" },
 ];
 
 export default function Header() {
@@ -19,45 +21,58 @@ export default function Header() {
   return (
     <>
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
-        <div className="max-w-lg mx-auto px-4 py-2 flex items-center justify-center relative">
-          {!isHome && (
-            <button
-              onClick={() => window.history.back()}
-              className="absolute left-3 text-white/80 hover:text-white transition-colors p-1"
-              data-testid="btn-header-back"
-            >
-              <ArrowLeft className="w-5 h-5" />
-            </button>
-          )}
-          <Logo className="text-3xl" />
-          <Link href={isLoggedIn ? "/hesabim" : "/giris"} className="absolute right-4">
-            <button
-              className="flex flex-col items-center justify-center text-white/80 hover:text-white transition-colors"
-              data-testid="btn-header-auth"
-            >
-              <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                {isLoggedIn ? (
-                  <User className="w-4 h-4" />
-                ) : (
-                  <UserPlus className="w-4 h-4" />
-                )}
-              </div>
-              <span className="text-[9px] font-medium mt-0.5 whitespace-nowrap">
-                {isLoggedIn ? (customer?.name?.split(" ")[0] || "Hesabım") : "Giriş"}
-              </span>
-            </button>
-          </Link>
+        <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            {!isHome && (
+              <button
+                onClick={() => window.history.back()}
+                className="text-white/80 hover:text-white transition-colors p-1 md:hidden"
+                data-testid="btn-header-back"
+              >
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+            )}
+            <Link href="/">
+              <Logo className="text-3xl" />
+            </Link>
+          </div>
+
+          <div className="hidden md:block flex-1 max-w-md mx-8">
+            <SearchBar />
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Link href={isLoggedIn ? "/hesabim" : "/giris"}>
+              <button
+                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+                data-testid="btn-header-auth"
+              >
+                <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
+                  {isLoggedIn ? (
+                    <User className="w-4 h-4" />
+                  ) : (
+                    <UserPlus className="w-4 h-4" />
+                  )}
+                </div>
+                <span className="hidden md:inline text-sm font-medium whitespace-nowrap">
+                  {isLoggedIn ? (customer?.name?.split(" ")[0] || "Hesabım") : "Giriş Yap"}
+                </span>
+              </button>
+            </Link>
+          </div>
         </div>
       </header>
 
       <nav className="sticky top-[52px] z-[9998]" style={{ backgroundColor: "#7c4dff" }}>
-        <div className="max-w-lg mx-auto px-2">
-          <ul className="flex items-center justify-center gap-0 py-1.5 flex-wrap" data-testid="nav-categories">
+        <div className="max-w-6xl mx-auto px-2">
+          <ul className="flex items-center justify-center gap-0 md:gap-2 py-1.5 flex-wrap" data-testid="nav-categories">
             {NAV_ITEMS.map((item) => (
               <li key={item.name}>
                 <Link
                   href={item.href}
-                  className="px-4 py-1 text-sm font-medium text-white/90"
+                  className={`px-4 md:px-6 py-1 md:py-1.5 text-sm md:text-base font-medium text-white/90 hover:text-white transition-colors rounded-lg hover:bg-white/10 ${
+                    location.startsWith(item.href) ? "text-white bg-white/15 font-semibold" : ""
+                  }`}
                   data-testid={`nav-link-${item.name}`}
                 >
                   {item.name}
