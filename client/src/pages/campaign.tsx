@@ -8,7 +8,6 @@ import { useCart } from "@/contexts/CartContext";
 import { productUrl } from "@/lib/data";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 
-const KEDI_KUMU_IDS = new Set(["461", "474", "473"]);
 
 interface CampaignProduct {
   id: number;
@@ -24,12 +23,11 @@ interface CampaignProduct {
 }
 
 function CampaignProductCard({ item }: { item: CampaignProduct }) {
-  const { basket, updateQty, campaignMainInCart } = useCart();
+  const { basket, updateQty, campaignMainInCart, isKediKumu } = useCart();
   const pid = String(item.product_id);
   const qty = basket[pid] || 0;
   const isMain = item.item_type === "main";
-  const isKediKumu = KEDI_KUMU_IDS.has(pid);
-  const maxQty = isKediKumu ? 1 : 99;
+  const maxQty = isKediKumu(pid) ? 2 : 99;
   const isLockedMain = isMain && campaignMainInCart !== null && campaignMainInCart !== pid;
   const discount = item.original_price
     ? Math.round(((item.original_price - item.price) / item.original_price) * 100)

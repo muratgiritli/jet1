@@ -22,6 +22,8 @@ interface CampaignItemInfo {
   item_type: string;
 }
 
+export const KEDI_KUMU_MAX_QTY = 2;
+
 interface CartContextType {
   basket: BasketItems;
   paymentId: string;
@@ -43,6 +45,7 @@ interface CartContextType {
   campaignValid: boolean;
   campaignMainInCart: string | null;
   campaignData: CampaignItemInfo[];
+  isKediKumu: (id: string) => boolean;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -133,7 +136,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }));
   }, [dbProducts]);
 
-  const KEDI_KUMU_IDS = useMemo(() => new Set(["461", "474", "473"]), []);
+  const kediKumuIdsRef = useRef<Set<string>>(new Set());
+  const kediKumuIds = useMemo(() => {
+    const s = new Set(dbProducts.filter(p => p.brandCategoryId === 24).map(p => String(p.id)));
+    kediKumuIdsRef.current = s;
+    return s;
+  }, [dbProducts]);
+  const isKediKumu = useCallback((id: string) => kediKumuIdsRef.current.has(id), []);
 
   const updateQty = useCallback((id: string, delta: number) => {
     setBasket((prev) => {
@@ -148,8 +157,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
           if (hasAnotherMain) return prev;
         }
       }
-      if (KEDI_KUMU_IDS.has(id) && next > 1) {
-        next = 1;
+      if (kediKumuIdsRef.current.has(id) && next > KEDI_KUMU_MAX_QTY) {
+        next = KEDI_KUMU_MAX_QTY;
       }
       let updated: BasketItems;
       if (next <= 0) {
@@ -254,8 +263,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       campaignValid,
       campaignMainInCart,
       campaignData,
+      isKediKumu,
     }),
-    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData]
+    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

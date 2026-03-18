@@ -502,7 +502,19 @@ export async function registerRoutes(
     }
     const isCampaignOrder = campaignMainCount > 0 || campaignExtraCount > 0;
 
-    const KEDI_KUMU_IDS = new Set([461, 474, 473]);
+    const KEDI_KUMU_MAX = 2;
+    const kediKumuProductIds = new Set<number>();
+    const allProds = await storage.getProducts();
+    for (const p of allProds) {
+      if (p.brandCategoryId === 24) kediKumuProductIds.add(p.id);
+    }
+
+    for (const item of orderData.items) {
+      const pid = parseInt(String(item.productId));
+      if (kediKumuProductIds.has(pid) && item.quantity > KEDI_KUMU_MAX) {
+        return res.status(400).json({ message: `Kedi kumundan en fazla ${KEDI_KUMU_MAX} adet alabilirsiniz.` });
+      }
+    }
 
     if (isCampaignOrder) {
       if (campaignMainCount < 1 || campaignExtraCount < 1) {
@@ -510,12 +522,6 @@ export async function registerRoutes(
       }
       if (campaignMainCount > 1) {
         return res.status(400).json({ message: "Kampanya ana ürünlerinden toplamda sadece 1 adet alabilirsiniz." });
-      }
-      for (const item of orderData.items) {
-        const pid = parseInt(String(item.productId));
-        if (KEDI_KUMU_IDS.has(pid) && item.quantity > 1) {
-          return res.status(400).json({ message: "Kedi kumundan en fazla 1 adet alabilirsiniz." });
-        }
       }
       if (orderData.paymentMethod !== "Kapıda Nakit") {
         return res.status(400).json({ message: "Kampanya siparişlerinde sadece kapıda nakit ödeme geçerlidir." });
