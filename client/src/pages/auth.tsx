@@ -17,7 +17,11 @@ export default function AuthPage() {
   const [phone, setPhone] = useState("");
   const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
   const [name, setName] = useState("");
-  const [address, setAddress] = useState("");
+  const [cadde, setCadde] = useState("");
+  const [binaNo, setBinaNo] = useState("");
+  const [apartmanAdi, setApartmanAdi] = useState("");
+  const [kat, setKat] = useState("");
+  const [daireNo, setDaireNo] = useState("");
   const [mahalle, setMahalle] = useState("");
   const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
@@ -158,7 +162,15 @@ export default function AuthPage() {
     setLoading(true);
     const normalized = phone.replace(/\D/g, "");
     const code = otpCode.join("");
-    const fullAddress = [mahalle, address.trim()].filter(Boolean).join(", ");
+    const addressParts = [
+      mahalle,
+      cadde.trim(),
+      binaNo.trim() ? `No: ${binaNo.trim()}` : "",
+      apartmanAdi.trim(),
+      kat.trim() ? `Kat: ${kat.trim()}` : "",
+      daireNo.trim() ? `Daire: ${daireNo.trim()}` : "",
+    ].filter(Boolean).join(", ");
+    const fullAddress = addressParts;
     try {
       await loginWithOtp(normalized, code, name.trim(), fullAddress || undefined);
       if (mahalle) localStorage.setItem("jet55_mahalle", mahalle);
@@ -323,19 +335,6 @@ export default function AuthPage() {
 
                 <div className="space-y-1.5">
                   <label className="text-sm font-medium flex items-center gap-1.5">
-                    <Home className="w-4 h-4 text-muted-foreground" />
-                    Adres
-                  </label>
-                  <Input
-                    value={address}
-                    onChange={(e) => setAddress(e.target.value)}
-                    placeholder="Sokak, bina no, daire no"
-                    data-testid="input-auth-address"
-                  />
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
                     Mahalle
                   </label>
@@ -349,6 +348,61 @@ export default function AuthPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium flex items-center gap-1.5">
+                    <Home className="w-4 h-4 text-muted-foreground" />
+                    Cadde / Sokak
+                  </label>
+                  <Input
+                    value={cadde}
+                    onChange={(e) => setCadde(e.target.value)}
+                    placeholder="Cadde veya sokak adı"
+                    data-testid="input-auth-cadde"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Bina No</label>
+                    <Input
+                      value={binaNo}
+                      onChange={(e) => setBinaNo(e.target.value)}
+                      placeholder="Bina no"
+                      data-testid="input-auth-bina-no"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Apartman Adı</label>
+                    <Input
+                      value={apartmanAdi}
+                      onChange={(e) => setApartmanAdi(e.target.value)}
+                      placeholder="Apartman adı"
+                      data-testid="input-auth-apartman"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Kat</label>
+                    <Input
+                      value={kat}
+                      onChange={(e) => setKat(e.target.value)}
+                      placeholder="Kat"
+                      data-testid="input-auth-kat"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Daire No</label>
+                    <Input
+                      value={daireNo}
+                      onChange={(e) => setDaireNo(e.target.value)}
+                      placeholder="Daire no"
+                      data-testid="input-auth-daire"
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-1.5 lg:hidden">

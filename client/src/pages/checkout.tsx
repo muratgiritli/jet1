@@ -63,7 +63,11 @@ export default function Checkout() {
   const [orderLoading, setOrderLoading] = useState(false);
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [customerAddress, setCustomerAddress] = useState("");
+  const [customerCadde, setCustomerCadde] = useState("");
+  const [customerBinaNo, setCustomerBinaNo] = useState("");
+  const [customerApartmanAdi, setCustomerApartmanAdi] = useState("");
+  const [customerKat, setCustomerKat] = useState("");
+  const [customerDaireNo, setCustomerDaireNo] = useState("");
   const [isReturningCustomer, setIsReturningCustomer] = useState(false);
   const [lookupDone, setLookupDone] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
@@ -81,7 +85,11 @@ export default function Checkout() {
   const [authPhone, setAuthPhone] = useState("");
   const [authOtpCode, setAuthOtpCode] = useState(["", "", "", "", "", ""]);
   const [authName, setAuthName] = useState("");
-  const [authAddress, setAuthAddress] = useState("");
+  const [authCadde, setAuthCadde] = useState("");
+  const [authBinaNo, setAuthBinaNo] = useState("");
+  const [authApartmanAdi, setAuthApartmanAdi] = useState("");
+  const [authKat, setAuthKat] = useState("");
+  const [authDaireNo, setAuthDaireNo] = useState("");
   const [authMahalle, setAuthMahalle] = useState("");
   const [authLocation, setAuthLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [authLocationLoading, setAuthLocationLoading] = useState(false);
@@ -125,12 +133,27 @@ export default function Checkout() {
           setMahalleSaved(true);
         }
       }
+      const parseAddress = (addr: string) => {
+        const parts = addr.split(",").map(p => p.trim());
+        let cadde = "", bNo = "", apt = "", kt = "", dNo = "";
+        for (const part of parts) {
+          if (part.startsWith("No:")) bNo = part.replace("No:", "").trim();
+          else if (part.startsWith("Kat:")) kt = part.replace("Kat:", "").trim();
+          else if (part.startsWith("Daire:")) dNo = part.replace("Daire:", "").trim();
+          else if (!cadde && !TESLIMAT_MAHALLELERI.includes(part)) cadde = part;
+          else if (cadde && !apt && !TESLIMAT_MAHALLELERI.includes(part)) apt = part;
+        }
+        return { cadde, binaNo: bNo, apartmanAdi: apt, kat: kt, daireNo: dNo };
+      };
       const defaultAddr = savedAddresses.find((a: any) => a.isDefault);
-      if (defaultAddr) {
-        setCustomerAddress(defaultAddr.address);
-        setAddressInitialized(true);
-      } else if (customer.address) {
-        setCustomerAddress(customer.address);
+      const addrStr = defaultAddr?.address || customer.address || "";
+      if (addrStr) {
+        const parsed = parseAddress(addrStr);
+        setCustomerCadde(parsed.cadde);
+        setCustomerBinaNo(parsed.binaNo);
+        setCustomerApartmanAdi(parsed.apartmanAdi);
+        setCustomerKat(parsed.kat);
+        setCustomerDaireNo(parsed.daireNo);
         setAddressInitialized(true);
       } else if (savedAddresses.length > 0) {
         setAddressInitialized(true);
@@ -267,7 +290,14 @@ export default function Checkout() {
     setAuthLoading(true);
     const normalized = authPhone.replace(/\D/g, "");
     const code = authOtpCode.join("");
-    const fullAddress = [authMahalle, authAddress.trim()].filter(Boolean).join(", ");
+    const fullAddress = [
+      authMahalle,
+      authCadde.trim(),
+      authBinaNo.trim() ? `No: ${authBinaNo.trim()}` : "",
+      authApartmanAdi.trim(),
+      authKat.trim() ? `Kat: ${authKat.trim()}` : "",
+      authDaireNo.trim() ? `Daire: ${authDaireNo.trim()}` : "",
+    ].filter(Boolean).join(", ");
     try {
       await loginWithOtp(normalized, code, authName.trim(), fullAddress || undefined);
       if (authMahalle) {
@@ -416,7 +446,14 @@ export default function Checkout() {
         paymentMethod: payMethod,
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
-        customerAddress: selectedMahalle + (customerAddress.trim() ? ", " + customerAddress.trim() : ""),
+        customerAddress: [
+          selectedMahalle,
+          customerCadde.trim(),
+          customerBinaNo.trim() ? `No: ${customerBinaNo.trim()}` : "",
+          customerApartmanAdi.trim(),
+          customerKat.trim() ? `Kat: ${customerKat.trim()}` : "",
+          customerDaireNo.trim() ? `Daire: ${customerDaireNo.trim()}` : "",
+        ].filter(Boolean).join(", "),
         usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
       };
 
@@ -434,9 +471,16 @@ export default function Checkout() {
 
       await apiRequest("POST", "/api/orders", orderPayload);
 
-      if (isLoggedIn && customerAddress.trim() && (!customer?.address || customer.address !== customerAddress.trim())) {
+      const builtAddress = [
+        customerCadde.trim(),
+        customerBinaNo.trim() ? `No: ${customerBinaNo.trim()}` : "",
+        customerApartmanAdi.trim(),
+        customerKat.trim() ? `Kat: ${customerKat.trim()}` : "",
+        customerDaireNo.trim() ? `Daire: ${customerDaireNo.trim()}` : "",
+      ].filter(Boolean).join(", ");
+      if (isLoggedIn && builtAddress && (!customer?.address || customer.address !== builtAddress)) {
         try {
-          await updateProfile({ address: customerAddress.trim() });
+          await updateProfile({ address: selectedMahalle + ", " + builtAddress });
         } catch {}
       }
 
@@ -444,7 +488,7 @@ export default function Checkout() {
       if (customerName.trim()) msg += `*Ad Soyad:* ${customerName.trim()}\n`;
       if (customerPhone.trim()) msg += `*Telefon:* ${customerPhone.trim()}\n`;
       msg += `*Mahalle:* ${selectedMahalle}\n`;
-      if (customerAddress.trim()) msg += `*Adres Detayı:* ${customerAddress.trim()}\n`;
+      if (builtAddress) msg += `*Adres Detayı:* ${builtAddress}\n`;
       if (customerLocation) msg += `*Konum:* https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}\n`;
       if (customerName.trim() || customerPhone.trim()) msg += `\n`;
       selectedProducts.forEach(({ product, qty }) => {
@@ -641,17 +685,6 @@ export default function Checkout() {
                       {authErrors.name && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.name}</p>}
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Adres</label>
-                      <Textarea
-                        placeholder="Sokak, bina no, daire no..."
-                        value={authAddress}
-                        onChange={(e) => setAuthAddress(e.target.value)}
-                        rows={2}
-                        className="text-sm"
-                        data-testid="input-auth-address"
-                      />
-                    </div>
-                    <div className="space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">Mahalle</label>
                       <Select value={authMahalle} onValueChange={setAuthMahalle}>
                         <SelectTrigger data-testid="select-auth-mahalle" className={`h-10 text-sm ${!authMahalle ? "text-muted-foreground" : ""}`}>
@@ -663,6 +696,60 @@ export default function Checkout() {
                           ))}
                         </SelectContent>
                       </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Cadde / Sokak</label>
+                      <Input
+                        value={authCadde}
+                        onChange={(e) => setAuthCadde(e.target.value)}
+                        placeholder="Cadde veya sokak adı"
+                        className="h-10"
+                        data-testid="input-auth-cadde"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Bina No</label>
+                        <Input
+                          value={authBinaNo}
+                          onChange={(e) => setAuthBinaNo(e.target.value)}
+                          placeholder="Bina no"
+                          className="h-10"
+                          data-testid="input-auth-bina-no"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Apartman Adı</label>
+                        <Input
+                          value={authApartmanAdi}
+                          onChange={(e) => setAuthApartmanAdi(e.target.value)}
+                          placeholder="Apartman adı"
+                          className="h-10"
+                          data-testid="input-auth-apartman"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Kat</label>
+                        <Input
+                          value={authKat}
+                          onChange={(e) => setAuthKat(e.target.value)}
+                          placeholder="Kat"
+                          className="h-10"
+                          data-testid="input-auth-kat"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <label className="text-xs font-medium text-muted-foreground">Daire No</label>
+                        <Input
+                          value={authDaireNo}
+                          onChange={(e) => setAuthDaireNo(e.target.value)}
+                          placeholder="Daire no"
+                          className="h-10"
+                          data-testid="input-auth-daire"
+                        />
+                      </div>
                     </div>
                     <div className="lg:hidden">
                       {authLocation ? (
