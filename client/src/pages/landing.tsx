@@ -40,10 +40,10 @@ const CATEGORIES = [
 ];
 
 const QUICK_ACTIONS = [
-  { icon: Truck, label: "1 Saatte\nTeslimat", color: "#ff6f00", bg: "bg-orange-50" },
-  { icon: CreditCard, label: "12 Ay\nTaksit", color: "#7c3aed", bg: "bg-purple-50" },
-  { icon: Banknote, label: "Kapıda\nÖdeme", color: "#059669", bg: "bg-emerald-50" },
-  { icon: Smartphone, label: "QR ile\nÖdeme", color: "#0284c7", bg: "bg-sky-50" },
+  { icon: Smartphone, label: "Kapıda\nQR", color: "#0284c7", bg: "bg-sky-50" },
+  { icon: CreditCard, label: "Kapıda\nPos", color: "#7c3aed", bg: "bg-purple-50" },
+  { icon: Banknote, label: "Kapıda\nNakit", color: "#059669", bg: "bg-emerald-50" },
+  { icon: CreditCard, label: "Kredi Kartına\nTaksit", color: "#ff6f00", bg: "bg-orange-50" },
 ];
 
 function HeroCarousel() {
