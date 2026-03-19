@@ -5,7 +5,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 
 ## Architecture
 - **Frontend**: React + TypeScript with shadcn/ui components, Tailwind CSS, framer-motion
-- **Backend**: Express with session-based auth (bcryptjs + express-session + connect-pg-simple)
+- **Backend**: Express with session-based auth (bcryptjs + express-session + connect-pg-simple), NetGSM SMS OTP for customer auth
 - **Database**: PostgreSQL (Drizzle ORM) - subcategories, brand_categories, products, product_images, cross_sell_sections, cross_sell_items, orders, breed_stats, installment_rates, customers, customer_favorites, customer_addresses, pet_profiles, loyalty_points, reorder_reminders tables
 - **Product Images**: Stored as base64 in `product_images` table (PostgreSQL), served via `/api/product-image/:id` endpoint. No filesystem dependency — images survive deployments. Admin uploads via multipart form, external URLs auto-downloaded and converted to WebP (800x800, quality 80).
 - **Loyalty Points**: Para Puan system - customers earn 5% of subtotal on each order, can spend points on future orders (auto-applied at checkout)
@@ -78,7 +78,9 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `POST /api/admin/breed-stats` - Create breed stat (auth required)
 - `DELETE /api/admin/breed-stats/:id` - Delete breed stat (auth required)
 - `GET /api/products/search?q=` - Search products by name
-- `POST /api/customer/register` - Customer registration (phone+password+name)
+- `POST /api/otp/send` - Send SMS OTP to phone (NetGSM), returns isExisting flag
+- `POST /api/otp/verify` - Verify OTP code, auto-login or create new customer
+- `POST /api/customer/register` - Customer registration (phone+password+name) (legacy fallback)
 - `POST /api/customer/login` - Customer login (phone+password)
 - `POST /api/customer/logout` - Customer logout
 - `GET /api/customer/me` - Get current customer (session-based)

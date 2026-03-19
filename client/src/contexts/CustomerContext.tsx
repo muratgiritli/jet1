@@ -16,6 +16,7 @@ interface CustomerContextType {
   isLoggedIn: boolean;
   login: (phone: string, password: string) => Promise<void>;
   register: (phone: string, password: string, name: string, address?: string) => Promise<void>;
+  loginWithOtp: (phone: string, code: string, name?: string, address?: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: { name?: string; address?: string }) => Promise<void>;
   refetch: () => Promise<void>;
@@ -75,6 +76,13 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     setTimeout(syncLocalFavorites, 500);
   }, [syncLocalFavorites]);
 
+  const loginWithOtp = useCallback(async (phone: string, code: string, name?: string, address?: string) => {
+    const res = await apiRequest("POST", "/api/otp/verify", { phone, code, name, address });
+    const data = await res.json();
+    setCustomer(data);
+    setTimeout(syncLocalFavorites, 500);
+  }, [syncLocalFavorites]);
+
   const logout = useCallback(async () => {
     await apiRequest("POST", "/api/customer/logout");
     setCustomer(null);
@@ -98,6 +106,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
         isLoggedIn: !!customer,
         login,
         register,
+        loginWithOtp,
         logout,
         updateProfile,
         refetch: fetchMe,

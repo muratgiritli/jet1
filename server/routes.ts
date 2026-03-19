@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { storage, pool as sharedPool } from "./storage";
@@ -12,6 +13,41 @@ import multer from "multer";
 import OpenAI from "openai";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+const otpStore = new Map<string, { code: string; expiresAt: number; attempts: number }>();
+const otpSendCount = new Map<string, { count: number; resetAt: number }>();
+
+function generateOTP(): string {
+  return crypto.randomInt(100000, 1000000).toString();
+}
+
+async function sendSmsViaNetgsm(phone: string, message: string): Promise<boolean> {
+  const usercode = process.env.NETGSM_USERCODE;
+  const password = process.env.NETGSM_PASSWORD;
+  const msgheader = process.env.NETGSM_MSGHEADER;
+  if (!usercode || !password || !msgheader) {
+    console.error("NetGSM credentials not configured");
+    return false;
+  }
+  try {
+    const params = new URLSearchParams({
+      usercode,
+      password,
+      gsmno: phone.startsWith("90") ? phone : "90" + phone,
+      message,
+      msgheader,
+      dil: "TR",
+    });
+    const res = await fetch(`https://api.netgsm.com.tr/sms/send/get/?${params.toString()}`);
+    const text = await res.text();
+    console.log("NetGSM response:", text);
+    const code = text.split(" ")[0];
+    return ["00", "01", "02"].includes(code);
+  } catch (err) {
+    console.error("NetGSM SMS error:", err);
+    return false;
+  }
+}
 
 const PgSession = pgSession(session);
 
@@ -595,6 +631,81 @@ export async function registerRoutes(
     const order = await storage.updateOrderStatus(id, status);
     if (!order) return res.status(404).json({ message: "Order not found" });
     res.json(order);
+  });
+
+  app.post("/api/otp/send", async (req, res) => {
+    const { phone } = req.body;
+    if (!phone) return res.status(400).json({ message: "Telefon numarası gerekli" });
+    const normalized = phone.replace(/\D/g, "");
+    if (normalized.length < 10) return res.status(400).json({ message: "Geçerli bir telefon numarası girin" });
+
+    const sendTrack = otpSendCount.get(normalized);
+    if (sendTrack && sendTrack.resetAt > Date.now() && sendTrack.count >= 5) {
+      return res.status(429).json({ message: "Günlük SMS limiti aşıldı, lütfen yarın tekrar deneyin" });
+    }
+
+    const existing = otpStore.get(normalized);
+    if (existing && existing.expiresAt > Date.now() && (existing.expiresAt - Date.now()) > 150000) {
+      return res.status(429).json({ message: "Lütfen biraz bekleyin, kısa süre önce kod gönderildi" });
+    }
+
+    const code = generateOTP();
+    otpStore.set(normalized, { code, expiresAt: Date.now() + 180000, attempts: 0 });
+
+    const message = `JETGO dogrulama kodunuz: ${code} (3 dakika gecerlidir)`;
+    const sent = await sendSmsViaNetgsm(normalized, message);
+    if (!sent) {
+      otpStore.delete(normalized);
+      return res.status(500).json({ message: "SMS gönderilemedi, lütfen tekrar deneyin" });
+    }
+
+    const currentTrack = otpSendCount.get(normalized);
+    const dayMs = 24 * 60 * 60 * 1000;
+    if (currentTrack && currentTrack.resetAt > Date.now()) {
+      currentTrack.count++;
+    } else {
+      otpSendCount.set(normalized, { count: 1, resetAt: Date.now() + dayMs });
+    }
+
+    const customerExists = !!(await storage.getCustomerByPhone(normalized));
+    res.json({ message: "Doğrulama kodu gönderildi", isExisting: customerExists });
+  });
+
+  app.post("/api/otp/verify", async (req, res) => {
+    const { phone, code, name, address } = req.body;
+    if (!phone || !code) return res.status(400).json({ message: "Telefon ve doğrulama kodu gerekli" });
+    const normalized = phone.replace(/\D/g, "");
+
+    const entry = otpStore.get(normalized);
+    if (!entry) return res.status(400).json({ message: "Doğrulama kodu bulunamadı, yeni kod isteyin" });
+    if (entry.expiresAt < Date.now()) {
+      otpStore.delete(normalized);
+      return res.status(400).json({ message: "Doğrulama kodunun süresi doldu, yeni kod isteyin" });
+    }
+    if (entry.attempts >= 5) {
+      otpStore.delete(normalized);
+      return res.status(429).json({ message: "Çok fazla hatalı deneme, yeni kod isteyin" });
+    }
+    if (entry.code !== code) {
+      entry.attempts++;
+      return res.status(400).json({ message: "Doğrulama kodu hatalı" });
+    }
+
+    otpStore.delete(normalized);
+
+    let customer = await storage.getCustomerByPhone(normalized);
+    if (!customer) {
+      const dummyPass = await bcrypt.hash(Math.random().toString(36), 10);
+      customer = await storage.createCustomer({
+        phone: normalized,
+        password: dummyPass,
+        name: (name || "").trim() || "Müşteri",
+        address: (address || "").trim() || null,
+      });
+    }
+
+    (req.session as any).customerId = customer.id;
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
   });
 
   app.post("/api/customer/register", async (req, res) => {

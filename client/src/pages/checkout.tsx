@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -35,6 +35,7 @@ import {
   Eye,
   EyeOff,
   Lock,
+  ShieldCheck,
 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SiWhatsapp } from "react-icons/si";
@@ -76,19 +77,21 @@ export default function Checkout() {
   const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authMode, setAuthMode] = useState<"login" | "register">("login");
+  const [authStep, setAuthStep] = useState<"phone" | "otp" | "register">("phone");
   const [authPhone, setAuthPhone] = useState("");
-  const [authPassword, setAuthPassword] = useState("");
+  const [authOtpCode, setAuthOtpCode] = useState(["", "", "", "", "", ""]);
   const [authName, setAuthName] = useState("");
   const [authAddress, setAuthAddress] = useState("");
   const [authMahalle, setAuthMahalle] = useState("");
   const [authLocation, setAuthLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [authLocationLoading, setAuthLocationLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
-  const [showAuthPassword, setShowAuthPassword] = useState(false);
+  const [authIsExisting, setAuthIsExisting] = useState(false);
+  const [authCountdown, setAuthCountdown] = useState(0);
   const [authErrors, setAuthErrors] = useState<Record<string, string>>({});
+  const authOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const { toast } = useToast();
-  const { customer, isLoggedIn, login, register, updateProfile } = useCustomer();
+  const { customer, isLoggedIn, loginWithOtp, updateProfile } = useCustomer();
 
   const { data: installmentRates = [] } = useQuery<InstallmentRate[]>({
     queryKey: ["/api/installment-rates"],
@@ -170,66 +173,106 @@ export default function Checkout() {
     );
   };
 
-  const handleAuthSubmit = async () => {
-    const errors: Record<string, string> = {};
+  useEffect(() => {
+    if (authCountdown <= 0) return;
+    const t = setTimeout(() => setAuthCountdown(authCountdown - 1), 1000);
+    return () => clearTimeout(t);
+  }, [authCountdown]);
+
+  const handleAuthSendOtp = async () => {
     const normalized = authPhone.replace(/\D/g, "");
-
-    if (authMode === "register" && !authName.trim()) {
-      errors.name = "Ad soyad girin";
-    }
     if (normalized.length < 10) {
-      errors.phone = "Geçerli bir telefon numarası girin";
-    }
-    if (authPassword.length < 4) {
-      errors.password = "4 haneli doğum yılınızı girin";
-    }
-
-    if (Object.keys(errors).length > 0) {
-      setAuthErrors(errors);
+      setAuthErrors({ phone: "Geçerli bir telefon numarası girin" });
       return;
     }
     setAuthErrors({});
     setAuthLoading(true);
     try {
-      if (authMode === "login") {
-        await login(normalized, authPassword);
+      const res = await apiRequest("POST", "/api/otp/send", { phone: normalized });
+      const data = await res.json();
+      setAuthIsExisting(data.isExisting);
+      setAuthStep("otp");
+      setAuthCountdown(180);
+      setAuthOtpCode(["", "", "", "", "", ""]);
+      setTimeout(() => authOtpRefs.current[0]?.focus(), 100);
+    } catch (err: any) {
+      let msg = "SMS gönderilemedi";
+      try { msg = JSON.parse(err.message.replace(/^\d+:\s*/, "")).message; } catch {}
+      setAuthErrors({ phone: msg });
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleAuthOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return;
+    const newCode = [...authOtpCode];
+    if (value.length > 1) {
+      const digits = value.replace(/\D/g, "").split("");
+      for (let i = 0; i < 6; i++) newCode[i] = digits[i] || "";
+      setAuthOtpCode(newCode);
+      authOtpRefs.current[Math.min(digits.length - 1, 5)]?.focus();
+      return;
+    }
+    newCode[index] = value;
+    setAuthOtpCode(newCode);
+    if (value && index < 5) authOtpRefs.current[index + 1]?.focus();
+  };
+
+  const handleAuthOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
+    if (e.key === "Backspace" && !authOtpCode[index] && index > 0) {
+      authOtpRefs.current[index - 1]?.focus();
+    }
+  };
+
+  const handleAuthVerifyOtp = async () => {
+    const code = authOtpCode.join("");
+    if (code.length !== 6) { setAuthErrors({ otp: "6 haneli kodu girin" }); return; }
+    setAuthErrors({});
+    setAuthLoading(true);
+    const normalized = authPhone.replace(/\D/g, "");
+    try {
+      if (authIsExisting) {
+        await loginWithOtp(normalized, code);
+        setShowAuthModal(false);
+        setPendingOrderAfterAuth(true);
       } else {
-        await register(normalized, authPassword, authName.trim());
-        const fullAddress = authMahalle
-          ? (authAddress.trim() ? `${authMahalle}, ${authAddress.trim()}` : authMahalle)
-          : authAddress.trim();
-        if (fullAddress) {
-          try { await updateProfile({ address: fullAddress }); } catch {}
-        }
-        if (authMahalle) {
-          localStorage.setItem("jet55_mahalle", authMahalle);
-          setSelectedMahalle(authMahalle);
-          setMahalleSaved(true);
-        }
-        if (authLocation) {
-          setCustomerLocation(authLocation);
-        }
+        setAuthStep("register");
+      }
+    } catch (err: any) {
+      let msg = "Doğrulama kodu hatalı";
+      try { msg = JSON.parse(err.message.replace(/^\d+:\s*/, "")).message; } catch {}
+      setAuthErrors({ otp: msg });
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const handleAuthRegister = async () => {
+    const errors: Record<string, string> = {};
+    if (!authName.trim()) errors.name = "Ad soyad girin";
+    if (Object.keys(errors).length > 0) { setAuthErrors(errors); return; }
+    setAuthErrors({});
+    setAuthLoading(true);
+    const normalized = authPhone.replace(/\D/g, "");
+    const code = authOtpCode.join("");
+    const fullAddress = [authMahalle, authAddress.trim()].filter(Boolean).join(", ");
+    try {
+      await loginWithOtp(normalized, code, authName.trim(), fullAddress || undefined);
+      if (authMahalle) {
+        localStorage.setItem("jet55_mahalle", authMahalle);
+        setSelectedMahalle(authMahalle);
+        setMahalleSaved(true);
+      }
+      if (authLocation) {
+        setCustomerLocation(authLocation);
       }
       setShowAuthModal(false);
       setPendingOrderAfterAuth(true);
     } catch (err: any) {
-      const msg = err.message || "Bir hata olustu";
-      const cleaned = msg.replace(/^\d+:\s*/, "");
-      let errorMsg = cleaned;
-      try {
-        const parsed = JSON.parse(cleaned);
-        errorMsg = parsed.message || cleaned;
-      } catch {}
-      const lower = errorMsg.toLowerCase();
-      if (lower.includes("kayıtlı") || lower.includes("zaten") || lower.includes("already") || lower.includes("registered")) {
-        setAuthErrors({ phone: "Bu numara zaten kayıtlı" });
-      } else if (lower.includes("şifre") || lower.includes("password") || lower.includes("hatalı") || lower.includes("incorrect") || lower.includes("wrong")) {
-        setAuthErrors({ password: "Şifre hatalı" });
-      } else if (lower.includes("bulunamadı") || lower.includes("not found") || lower.includes("kullanıcı")) {
-        setAuthErrors({ phone: "Bu numara ile kayıt bulunamadı" });
-      } else {
-        setAuthErrors({ general: errorMsg });
-      }
+      let msg = "Bir hata oluştu";
+      try { msg = JSON.parse(err.message.replace(/^\d+:\s*/, "")).message; } catch {}
+      setAuthErrors({ general: msg });
     } finally {
       setAuthLoading(false);
     }
@@ -467,55 +510,125 @@ export default function Checkout() {
               data-testid="modal-auth"
             >
               <div className="sticky top-0 z-10 bg-background rounded-t-2xl border-b px-4 pt-4 pb-3">
-                <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-base font-bold" data-testid="text-auth-modal-title">Devam etmek için</h2>
+                <div className="flex items-center justify-between">
+                  <h2 className="text-base font-bold" data-testid="text-auth-modal-title">
+                    {authStep === "phone" && "Giriş / Üye Ol"}
+                    {authStep === "otp" && "Doğrulama Kodu"}
+                    {authStep === "register" && "Bilgilerinizi Tamamlayın"}
+                  </h2>
                   <button
                     type="button"
-                    onClick={() => setShowAuthModal(false)}
+                    onClick={() => { setShowAuthModal(false); setAuthStep("phone"); setAuthErrors({}); }}
                     className="p-1 rounded-full hover:bg-accent"
                     data-testid="btn-close-auth-modal"
                   >
                     <X className="w-4 h-4" />
                   </button>
                 </div>
-                <div className="flex rounded-lg bg-muted p-0.5">
-                  <button
-                    type="button"
-                    onClick={() => { setAuthMode("login"); setAuthErrors({}); }}
-                    className={`flex-1 py-2 text-xs font-semibold rounded-md transition-colors ${authMode === "login" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
-                    data-testid="btn-auth-tab-login"
-                  >
-                    Üye Girişi
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setAuthMode("register"); setAuthErrors({}); }}
-                    className={`flex-1 py-2 text-xs font-semibold rounded-md transition-colors ${authMode === "register" ? "bg-background shadow-sm" : "text-muted-foreground"}`}
-                    data-testid="btn-auth-tab-register"
-                  >
-                    Üye Ol
-                  </button>
-                </div>
               </div>
 
               <div className="p-4 space-y-3">
-                {authMode === "register" && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-muted-foreground">Ad Soyad</label>
-                    <Input
-                      type="text"
-                      placeholder="Ad Soyad"
-                      value={authName}
-                      onChange={(e) => { setAuthName(e.target.value); setAuthErrors((p) => ({ ...p, name: "" })); }}
-                      className={`h-10 ${authErrors.name ? "border-red-400" : ""}`}
-                      data-testid="input-auth-name"
-                    />
-                    {authErrors.name && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.name}</p>}
-                  </div>
+                {authStep === "phone" && (
+                  <>
+                    <p className="text-xs text-muted-foreground text-center">Telefon numaranıza SMS ile doğrulama kodu göndereceğiz</p>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Telefon</label>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-muted-foreground font-medium shrink-0">+90</span>
+                        <Input
+                          type="tel"
+                          placeholder="5XX XXX XX XX"
+                          value={authPhone}
+                          onChange={(e) => { handleAuthPhoneChange(e.target.value); setAuthErrors({}); }}
+                          className={`h-10 ${authErrors.phone ? "border-red-400" : ""}`}
+                          data-testid="input-auth-phone"
+                          onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAuthSendOtp(); } }}
+                        />
+                      </div>
+                      {authErrors.phone && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.phone}</p>}
+                    </div>
+                    <Button
+                      className="w-full h-11 font-semibold"
+                      style={{ backgroundColor: "#6B3480" }}
+                      onClick={handleAuthSendOtp}
+                      disabled={authLoading}
+                      data-testid="btn-send-otp"
+                    >
+                      {authLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      SMS Kodu Gönder
+                    </Button>
+                  </>
                 )}
 
-                {authMode === "register" && (
+                {authStep === "otp" && (
                   <>
+                    <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-50 border border-purple-100">
+                      <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0" />
+                      <span className="text-xs text-purple-700">+90 {authPhone} numarasına kod gönderildi</span>
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground text-center block">Doğrulama Kodu</label>
+                      <div className="flex gap-2 justify-center">
+                        {authOtpCode.map((digit, i) => (
+                          <Input
+                            key={i}
+                            ref={(el) => { authOtpRefs.current[i] = el; }}
+                            value={digit}
+                            onChange={(e) => handleAuthOtpChange(i, e.target.value)}
+                            onKeyDown={(e) => handleAuthOtpKeyDown(i, e)}
+                            onPaste={(e) => { e.preventDefault(); handleAuthOtpChange(0, e.clipboardData.getData("text").replace(/\D/g, "")); }}
+                            type="tel"
+                            inputMode="numeric"
+                            maxLength={1}
+                            className={`w-10 h-12 text-center text-lg font-bold ${authErrors.otp ? "border-red-400" : ""}`}
+                            data-testid={`input-auth-otp-${i}`}
+                          />
+                        ))}
+                      </div>
+                      {authErrors.otp && <p className="text-[11px] text-red-500 text-center mt-1">{authErrors.otp}</p>}
+                    </div>
+                    {authCountdown > 0 && (
+                      <p className="text-xs text-center text-muted-foreground">
+                        Kod {Math.floor(authCountdown / 60)}:{(authCountdown % 60).toString().padStart(2, "0")} süre geçerli
+                      </p>
+                    )}
+                    <Button
+                      className="w-full h-11 font-semibold"
+                      style={{ backgroundColor: "#6B3480" }}
+                      onClick={handleAuthVerifyOtp}
+                      disabled={authLoading || authOtpCode.join("").length !== 6}
+                      data-testid="btn-verify-otp"
+                    >
+                      {authLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Doğrula
+                    </Button>
+                    <div className="flex items-center justify-between">
+                      <button type="button" className="text-xs text-muted-foreground hover:underline" onClick={() => { setAuthStep("phone"); setAuthErrors({}); }} data-testid="btn-auth-back-phone">
+                        ← Numarayı Değiştir
+                      </button>
+                      {authCountdown <= 0 && (
+                        <button type="button" className="text-xs hover:underline" style={{ color: "#6B3480" }} onClick={handleAuthSendOtp} disabled={authLoading} data-testid="btn-auth-resend">
+                          Tekrar Gönder
+                        </button>
+                      )}
+                    </div>
+                  </>
+                )}
+
+                {authStep === "register" && (
+                  <>
+                    <div className="space-y-1">
+                      <label className="text-xs font-medium text-muted-foreground">Ad Soyad</label>
+                      <Input
+                        type="text"
+                        placeholder="Ad Soyad"
+                        value={authName}
+                        onChange={(e) => { setAuthName(e.target.value); setAuthErrors((p) => ({ ...p, name: "" })); }}
+                        className={`h-10 ${authErrors.name ? "border-red-400" : ""}`}
+                        data-testid="input-auth-name"
+                      />
+                      {authErrors.name && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.name}</p>}
+                    </div>
                     <div className="space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">Adres</label>
                       <Textarea
@@ -527,7 +640,6 @@ export default function Checkout() {
                         data-testid="input-auth-address"
                       />
                     </div>
-
                     <div className="space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">Mahalle</label>
                       <Select value={authMahalle} onValueChange={setAuthMahalle}>
@@ -541,7 +653,6 @@ export default function Checkout() {
                         </SelectContent>
                       </Select>
                     </div>
-
                     <div className="lg:hidden">
                       {authLocation ? (
                         <div className="flex items-center gap-2 p-2 rounded-lg border border-green-200 bg-green-50">
@@ -561,96 +672,27 @@ export default function Checkout() {
                           disabled={authLocationLoading}
                           data-testid="btn-auth-location"
                         >
-                          {authLocationLoading ? (
-                            <Loader2 className="w-4 h-4 mr-1.5 animate-spin" />
-                          ) : (
-                            <Navigation className="w-4 h-4 mr-1.5" />
-                          )}
+                          {authLocationLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Navigation className="w-4 h-4 mr-1.5" />}
                           {authLocationLoading ? "Konum alınıyor..." : "Konum Ekle"}
                         </Button>
                       )}
                       {authErrors.location && <p className="text-[11px] text-red-500 mt-1">{authErrors.location}</p>}
                     </div>
-                  </>
-                )}
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">Telefon</label>
-                  <Input
-                    type="tel"
-                    placeholder="05XX XXX XX XX"
-                    value={authPhone}
-                    onChange={(e) => { handleAuthPhoneChange(e.target.value); setAuthErrors((p) => ({ ...p, phone: "" })); }}
-                    className={`h-10 ${authErrors.phone ? "border-red-400" : ""}`}
-                    data-testid="input-auth-phone"
-                  />
-                  {authErrors.phone && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.phone}</p>}
-                </div>
-
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-muted-foreground">
-                    {authMode === "register" ? "Doğum Yılı (Şifreniz olacak)" : "Şifre (Doğum yılınız)"}
-                  </label>
-                  <div className="relative">
-                    <Input
-                      type={showAuthPassword ? "text" : "password"}
-                      placeholder="Örn: 1990"
-                      value={authPassword}
-                      onChange={(e) => {
-                        const val = e.target.value.replace(/\D/g, "").slice(0, 4);
-                        setAuthPassword(val);
-                        setAuthErrors((p) => ({ ...p, password: "" }));
-                      }}
-                      maxLength={4}
-                      inputMode="numeric"
-                      className={`h-10 pr-10 ${authErrors.password ? "border-red-400" : ""}`}
-                      data-testid="input-auth-password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowAuthPassword(!showAuthPassword)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    {authErrors.general && <p className="text-[11px] text-red-500 text-center">{authErrors.general}</p>}
+                    <Button
+                      className="w-full h-11 font-semibold"
+                      style={{ backgroundColor: "#6B3480" }}
+                      onClick={handleAuthRegister}
+                      disabled={authLoading}
+                      data-testid="btn-auth-submit"
                     >
-                      {showAuthPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      {authLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+                      Üye Ol ve Devam Et
+                    </Button>
+                    <button type="button" className="text-xs text-muted-foreground hover:underline mx-auto block" onClick={() => { setAuthStep("phone"); setAuthErrors({}); }}>
+                      ← Başa Dön
                     </button>
-                  </div>
-                  {authErrors.password && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.password}</p>}
-                </div>
-
-                {authErrors.general && (
-                  <p className="text-[11px] text-red-500 text-center">{authErrors.general}</p>
-                )}
-
-                <Button
-                  className="w-full h-11 font-semibold"
-                  style={{ backgroundColor: "#6B3480" }}
-                  onClick={handleAuthSubmit}
-                  disabled={authLoading}
-                  data-testid="btn-auth-submit"
-                >
-                  {authLoading ? (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  ) : (
-                    <LogIn className="w-4 h-4 mr-2" />
-                  )}
-                  {authMode === "login" ? "Giriş Yap" : "Üye Ol ve Devam Et"}
-                </Button>
-
-                {authMode === "login" && (
-                  <p className="text-center text-xs text-muted-foreground">
-                    Henüz üyeliğiniz yok mu?{" "}
-                    <button type="button" onClick={() => { setAuthMode("register"); setAuthErrors({}); }} className="font-semibold underline" style={{ color: "#6B3480" }}>
-                      Üye Ol
-                    </button>
-                  </p>
-                )}
-                {authMode === "register" && (
-                  <p className="text-center text-xs text-muted-foreground">
-                    Zaten üyeniz var mı?{" "}
-                    <button type="button" onClick={() => { setAuthMode("login"); setAuthErrors({}); }} className="font-semibold underline" style={{ color: "#6B3480" }}>
-                      Giriş Yap
-                    </button>
-                  </p>
+                  </>
                 )}
               </div>
             </motion.div>
