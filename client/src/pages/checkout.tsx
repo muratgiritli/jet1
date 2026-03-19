@@ -90,6 +90,7 @@ export default function Checkout() {
   const [authCountdown, setAuthCountdown] = useState(0);
   const [authErrors, setAuthErrors] = useState<Record<string, string>>({});
   const authOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const authVerifyingRef = useRef(false);
   const { toast } = useToast();
   const { customer, isLoggedIn, loginWithOtp, updateProfile } = useCustomer();
 
@@ -212,11 +213,19 @@ export default function Checkout() {
       for (let i = 0; i < 6; i++) newCode[i] = digits[i] || "";
       setAuthOtpCode(newCode);
       authOtpRefs.current[Math.min(digits.length - 1, 5)]?.focus();
+      if (newCode.every(d => d !== "") && !authVerifyingRef.current) {
+        authVerifyingRef.current = true;
+        setTimeout(() => doAuthVerify(newCode.join("")), 150);
+      }
       return;
     }
     newCode[index] = value;
     setAuthOtpCode(newCode);
     if (value && index < 5) authOtpRefs.current[index + 1]?.focus();
+    if (newCode.every(d => d !== "") && !authVerifyingRef.current) {
+      authVerifyingRef.current = true;
+      setTimeout(() => doAuthVerify(newCode.join("")), 150);
+    }
   };
 
   const handleAuthOtpKeyDown = (index: number, e: React.KeyboardEvent) => {
@@ -225,9 +234,8 @@ export default function Checkout() {
     }
   };
 
-  const handleAuthVerifyOtp = async () => {
-    const code = authOtpCode.join("");
-    if (code.length !== 6) { setAuthErrors({ otp: "6 haneli kodu girin" }); return; }
+  const doAuthVerify = async (code: string) => {
+    if (code.length !== 6) { authVerifyingRef.current = false; return; }
     setAuthErrors({});
     setAuthLoading(true);
     const normalized = authPhone.replace(/\D/g, "");
@@ -245,8 +253,11 @@ export default function Checkout() {
       setAuthErrors({ otp: msg });
     } finally {
       setAuthLoading(false);
+      authVerifyingRef.current = false;
     }
   };
+
+  const handleAuthVerifyOtp = () => doAuthVerify(authOtpCode.join(""));
 
   const handleAuthRegister = async () => {
     const errors: Record<string, string> = {};

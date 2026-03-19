@@ -25,9 +25,11 @@ export default function AuthPage() {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isExistingUser, setIsExistingUser] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  const [autoVerifying, setAutoVerifying] = useState(false);
   const { loginWithOtp } = useCustomer();
   const [, setLocation] = useLocation();
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const verifyingRef = useRef(false);
 
   useEffect(() => {
     if (countdown <= 0) return;
@@ -86,12 +88,20 @@ export default function AuthPage() {
       setOtpCode(newCode);
       const lastFilledIndex = Math.min(digits.length - 1, 5);
       otpRefs.current[lastFilledIndex]?.focus();
+      if (newCode.every(d => d !== "") && !verifyingRef.current) {
+        verifyingRef.current = true;
+        setTimeout(() => autoVerify(newCode.join("")), 150);
+      }
       return;
     }
     newCode[index] = value;
     setOtpCode(newCode);
     if (value && index < 5) {
       otpRefs.current[index + 1]?.focus();
+    }
+    if (newCode.every(d => d !== "") && !verifyingRef.current) {
+      verifyingRef.current = true;
+      setTimeout(() => autoVerify(newCode.join("")), 150);
     }
   };
 
@@ -101,14 +111,10 @@ export default function AuthPage() {
     }
   };
 
-  const verifyOtp = async () => {
-    const code = otpCode.join("");
-    if (code.length !== 6) {
-      setFormErrors({ otp: "6 haneli kodu girin" });
-      return;
-    }
+  const doVerify = async (code: string) => {
     setFormErrors({});
     setLoading(true);
+    setAutoVerifying(true);
     const normalized = phone.replace(/\D/g, "");
     try {
       if (isExistingUser) {
@@ -124,7 +130,23 @@ export default function AuthPage() {
       setFormErrors({ otp: msg });
     } finally {
       setLoading(false);
+      setAutoVerifying(false);
+      verifyingRef.current = false;
     }
+  };
+
+  const autoVerify = (code: string) => {
+    if (code.length === 6) doVerify(code);
+    else verifyingRef.current = false;
+  };
+
+  const verifyOtp = async () => {
+    const code = otpCode.join("");
+    if (code.length !== 6) {
+      setFormErrors({ otp: "6 haneli kodu girin" });
+      return;
+    }
+    doVerify(code);
   };
 
   const handleRegister = async (e: React.FormEvent) => {
