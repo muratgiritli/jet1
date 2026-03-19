@@ -74,12 +74,6 @@ export default function Footer() {
                 <span>Yenimahalle Atatürk 3. Kısım Blv. No:113/A, Atakum, Samsun</span>
               </li>
               <li>
-                <a href="tel:+908508403959" className="flex items-center gap-2.5 text-sm hover:text-white transition-colors" data-testid="footer-phone">
-                  <Phone className="w-4 h-4 flex-shrink-0 text-gray-400" />
-                  +90 850 840 3959
-                </a>
-              </li>
-              <li>
                 <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-sm hover:text-green-400 transition-colors" data-testid="footer-whatsapp">
                   <SiWhatsapp className="w-4 h-4 flex-shrink-0 text-green-500" />
                   WhatsApp ile ulaşın
