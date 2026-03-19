@@ -23,15 +23,15 @@ import ProductImage from "@/components/ProductImage";
 
 type TabKey = "profile" | "points" | "orders" | "favorites" | "addresses" | "pets" | "notifications" | "password";
 
-const TABS: { key: TabKey; label: string; icon: any }[] = [
-  { key: "profile", label: "Profilim", icon: User },
-  { key: "points", label: "Para Puanlarım", icon: Star },
-  { key: "orders", label: "Siparişlerim", icon: Package },
-  { key: "favorites", label: "Favorilerim", icon: Heart },
-  { key: "addresses", label: "Adreslerim", icon: Home },
-  { key: "pets", label: "Evcil Hayvanlarım", icon: PawPrint },
-  { key: "notifications", label: "Bildirimler", icon: Bell },
-  { key: "password", label: "Şifre Değiştir", icon: Lock },
+const TABS: { key: TabKey; label: string; icon: any; emoji: string }[] = [
+  { key: "profile", label: "Profilim", icon: User, emoji: "👤" },
+  { key: "points", label: "Para Puanlarım", icon: Star, emoji: "⭐" },
+  { key: "orders", label: "Siparişlerim", icon: Package, emoji: "📦" },
+  { key: "favorites", label: "Favorilerim", icon: Heart, emoji: "❤️" },
+  { key: "addresses", label: "Adreslerim", icon: Home, emoji: "🏠" },
+  { key: "pets", label: "Evcil Hayvanlarım", icon: PawPrint, emoji: "🐾" },
+  { key: "notifications", label: "Bildirimler", icon: Bell, emoji: "🔔" },
+  { key: "password", label: "Şifre Değiştir", icon: Lock, emoji: "🔒" },
 ];
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
@@ -82,15 +82,27 @@ export default function ProfilePage() {
     setLocation("/");
   };
 
+  const activeTabInfo = TABS.find(t => t.key === activeTab);
+
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-8">
-      <div className="max-w-lg mx-auto px-3 py-4">
-        <div className="flex items-center justify-between mb-4">
-          <h1 className="text-lg font-bold" data-testid="text-profile-title">Hesabım</h1>
+    <div className="min-h-screen bg-gradient-to-b from-purple-50/60 to-background pb-20 md:pb-8">
+      <div className="max-w-4xl mx-auto px-3 py-4 md:px-6 md:py-6">
+        <div className="flex items-center justify-between mb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg" style={{ background: "linear-gradient(135deg, #6B3480, #9b59b6)" }}>
+              {customer?.name?.charAt(0)?.toUpperCase() || "?"}
+            </div>
+            <div>
+              <h1 className="text-lg font-bold" data-testid="text-profile-title">
+                {customer?.name || "Hesabım"}
+              </h1>
+              <p className="text-xs text-muted-foreground">+90 {customer?.phone}</p>
+            </div>
+          </div>
           <Button
-            variant="ghost"
+            variant="outline"
             size="sm"
-            className="text-red-500 hover:text-red-600"
+            className="text-red-500 border-red-200 hover:bg-red-50 hover:text-red-600 rounded-xl"
             onClick={handleLogout}
             data-testid="btn-profile-logout"
           >
@@ -99,37 +111,69 @@ export default function ProfilePage() {
           </Button>
         </div>
 
-        <div className="flex gap-1.5 overflow-x-auto pb-3 mb-4 scrollbar-hide" data-testid="tabs-profile">
+        <div className="md:hidden flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide" data-testid="tabs-profile">
           {TABS.map((tab) => {
-            const Icon = tab.icon;
             const isActive = activeTab === tab.key;
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border ${
                   isActive
-                    ? "text-white"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                    ? "text-white border-transparent shadow-lg shadow-purple-200"
+                    : "bg-white border-gray-100 text-gray-600 hover:border-purple-200 hover:text-purple-700 shadow-sm"
                 }`}
-                style={isActive ? { backgroundColor: "#6B3480" } : undefined}
+                style={isActive ? { background: "linear-gradient(135deg, #6B3480, #9b59b6)" } : undefined}
                 data-testid={`tab-${tab.key}`}
               >
-                <Icon className="w-3.5 h-3.5" />
+                <span className="text-sm">{tab.emoji}</span>
                 {tab.label}
               </button>
             );
           })}
         </div>
 
-        {activeTab === "profile" && <ProfileSection customer={customer!} updateProfile={updateProfile} toast={toast} />}
-        {activeTab === "points" && <LoyaltyPointsSection />}
-        {activeTab === "orders" && <OrdersSection />}
-        {activeTab === "favorites" && <FavoritesSection />}
-        {activeTab === "addresses" && <AddressesSection />}
-        {activeTab === "pets" && <PetsSection />}
-        {activeTab === "notifications" && <NotificationsSection customer={customer!} refetch={refetch} toast={toast} />}
-        {activeTab === "password" && <PasswordSection toast={toast} />}
+        <div className="md:flex md:gap-6">
+          <div className="hidden md:block md:w-56 md:flex-shrink-0">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-2 space-y-1 sticky top-4" data-testid="tabs-profile-desktop">
+              {TABS.map((tab) => {
+                const Icon = tab.icon;
+                const isActive = activeTab === tab.key;
+                return (
+                  <button
+                    key={tab.key}
+                    onClick={() => setActiveTab(tab.key)}
+                    className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all text-left ${
+                      isActive
+                        ? "text-white shadow-md shadow-purple-200"
+                        : "text-gray-600 hover:bg-purple-50 hover:text-purple-700"
+                    }`}
+                    style={isActive ? { background: "linear-gradient(135deg, #6B3480, #9b59b6)" } : undefined}
+                    data-testid={`tab-${tab.key}`}
+                  >
+                    <Icon className="w-4.5 h-4.5 flex-shrink-0" />
+                    {tab.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="md:flex-1 md:min-w-0">
+            <div className="hidden md:flex items-center gap-2 mb-4">
+              <span className="text-lg">{activeTabInfo?.emoji}</span>
+              <h2 className="text-lg font-bold text-gray-800">{activeTabInfo?.label}</h2>
+            </div>
+            {activeTab === "profile" && <ProfileSection customer={customer!} updateProfile={updateProfile} toast={toast} />}
+            {activeTab === "points" && <LoyaltyPointsSection />}
+            {activeTab === "orders" && <OrdersSection />}
+            {activeTab === "favorites" && <FavoritesSection />}
+            {activeTab === "addresses" && <AddressesSection />}
+            {activeTab === "pets" && <PetsSection />}
+            {activeTab === "notifications" && <NotificationsSection customer={customer!} refetch={refetch} toast={toast} />}
+            {activeTab === "password" && <PasswordSection toast={toast} />}
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -165,22 +209,22 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
   };
 
   return (
-    <Card>
-      <CardContent className="p-4 space-y-4">
+    <Card className="rounded-2xl border-gray-100 shadow-sm">
+      <CardContent className="p-5 space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-semibold">Kişisel Bilgiler</h2>
+          <h2 className="font-bold text-base">Kişisel Bilgiler</h2>
           {!editing && (
-            <Button variant="ghost" size="sm" onClick={startEdit} data-testid="btn-profile-edit">
+            <Button variant="outline" size="sm" onClick={startEdit} className="rounded-xl border-purple-200 text-purple-700 hover:bg-purple-50" data-testid="btn-profile-edit">
               <Edit2 className="w-4 h-4 mr-1" /> Düzenle
             </Button>
           )}
         </div>
 
-        <div className="space-y-1.5">
+        <div className="space-y-1.5 bg-gray-50 rounded-xl p-3">
           <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
             <Phone className="w-3.5 h-3.5" /> Telefon
           </label>
-          <p className="text-sm font-medium" data-testid="text-profile-phone">+90 {customer.phone}</p>
+          <p className="text-sm font-semibold" data-testid="text-profile-phone">+90 {customer.phone}</p>
         </div>
 
         {editing ? (
@@ -189,31 +233,31 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
               <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
                 <User className="w-3.5 h-3.5" /> Ad Soyad
               </label>
-              <Input value={editName} onChange={(e) => setEditName(e.target.value)} data-testid="input-profile-name" />
+              <Input value={editName} onChange={(e) => setEditName(e.target.value)} className="rounded-xl" data-testid="input-profile-name" />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
                 <MapPin className="w-3.5 h-3.5" /> Adres
               </label>
-              <Textarea value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Teslimat adresiniz" rows={3} data-testid="input-profile-address" />
+              <Textarea value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Teslimat adresiniz" rows={3} className="rounded-xl" data-testid="input-profile-address" />
             </div>
             <div className="flex gap-2">
-              <Button onClick={saveProfile} disabled={saving} className="flex-1" style={{ backgroundColor: "#6B3480" }} data-testid="btn-profile-save">
+              <Button onClick={saveProfile} disabled={saving} className="flex-1 rounded-xl" style={{ background: "linear-gradient(135deg, #6B3480, #9b59b6)" }} data-testid="btn-profile-save">
                 {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
                 Kaydet
               </Button>
-              <Button variant="outline" onClick={() => setEditing(false)} data-testid="btn-profile-cancel">Vazgeç</Button>
+              <Button variant="outline" onClick={() => setEditing(false)} className="rounded-xl" data-testid="btn-profile-cancel">Vazgeç</Button>
             </div>
           </>
         ) : (
           <>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 bg-gray-50 rounded-xl p-3">
               <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
                 <User className="w-3.5 h-3.5" /> Ad Soyad
               </label>
-              <p className="text-sm font-medium" data-testid="text-profile-name">{customer.name}</p>
+              <p className="text-sm font-semibold" data-testid="text-profile-name">{customer.name}</p>
             </div>
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 bg-gray-50 rounded-xl p-3">
               <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
                 <MapPin className="w-3.5 h-3.5" /> Adres
               </label>
@@ -253,12 +297,12 @@ function OrdersSection() {
         const status = STATUS_MAP[order.status] || { label: order.status, color: "bg-gray-100 text-gray-700" };
         const date = new Date(order.createdAt);
         return (
-          <Card key={order.id} data-testid={`card-order-${order.id}`}>
+          <Card key={order.id} className="rounded-2xl border-gray-100 shadow-sm" data-testid={`card-order-${order.id}`}>
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-bold">#{order.id}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${status.color}`}>{status.label}</span>
+                  <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${status.color}`}>{status.label}</span>
                 </div>
                 <span className="text-xs text-muted-foreground">
                   {date.toLocaleDateString("tr-TR")}
@@ -322,7 +366,7 @@ function FavoritesSection() {
   return (
     <div className="space-y-2">
       {favoriteProducts.map((product: any) => (
-        <Card key={product.id} data-testid={`card-fav-${product.id}`}>
+        <Card key={product.id} className="rounded-2xl border-gray-100 shadow-sm" data-testid={`card-fav-${product.id}`}>
           <CardContent className="p-3 flex items-center gap-3">
             <Link href={productUrl(product.id, product.name)}>
               {product.img ? (
@@ -498,8 +542,8 @@ function AddressesSection() {
               <Button
                 onClick={handleSave}
                 disabled={createMutation.isPending || updateMutation.isPending}
-                className="flex-1"
-                style={{ backgroundColor: "#6B3480" }}
+                className="flex-1 rounded-xl"
+                style={{ background: "linear-gradient(135deg, #6B3480, #9b59b6)" }}
                 data-testid="btn-save-address"
               >
                 {(createMutation.isPending || updateMutation.isPending) ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
@@ -513,7 +557,7 @@ function AddressesSection() {
 
       {addresses && addresses.length > 0 ? (
         addresses.map((addr: any) => (
-          <Card key={addr.id} data-testid={`card-address-${addr.id}`}>
+          <Card key={addr.id} className="rounded-2xl border-gray-100 shadow-sm" data-testid={`card-address-${addr.id}`}>
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
@@ -677,8 +721,8 @@ function PetsSection() {
               <Button
                 onClick={handleSave}
                 disabled={createMutation.isPending || updateMutation.isPending}
-                className="flex-1"
-                style={{ backgroundColor: "#6B3480" }}
+                className="flex-1 rounded-xl"
+                style={{ background: "linear-gradient(135deg, #6B3480, #9b59b6)" }}
                 data-testid="btn-save-pet"
               >
                 {(createMutation.isPending || updateMutation.isPending) ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
@@ -694,7 +738,7 @@ function PetsSection() {
         pets.map((pet: any) => {
           const petTypeInfo = PET_TYPES.find((pt) => pt.value === pet.type);
           return (
-            <Card key={pet.id} data-testid={`card-pet-${pet.id}`}>
+            <Card key={pet.id} className="rounded-2xl border-gray-100 shadow-sm" data-testid={`card-pet-${pet.id}`}>
               <CardContent className="p-4">
                 <div className="flex items-start justify-between">
                   <div className="flex items-center gap-3">
@@ -890,8 +934,8 @@ function PasswordSection({ toast }: { toast: any }) {
         <Button
           onClick={handleSubmit}
           disabled={saving}
-          className="w-full"
-          style={{ backgroundColor: "#6B3480" }}
+          className="w-full rounded-xl"
+          style={{ background: "linear-gradient(135deg, #6B3480, #9b59b6)" }}
           data-testid="btn-change-password"
         >
           {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Lock className="w-4 h-4 mr-1" />}
