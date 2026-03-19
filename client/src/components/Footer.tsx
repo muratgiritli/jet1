@@ -80,9 +80,9 @@ export default function Footer() {
                 </a>
               </li>
               <li>
-                <a href="mailto:info@sizpa.com" className="flex items-center gap-2.5 text-sm hover:text-white transition-colors" data-testid="footer-email">
+                <a href="mailto:info@sizpa.net" className="flex items-center gap-2.5 text-sm hover:text-white transition-colors" data-testid="footer-email">
                   <Mail className="w-4 h-4 flex-shrink-0 text-gray-400" />
-                  info@sizpa.com
+                  info@sizpa.net
                 </a>
               </li>
             </ul>

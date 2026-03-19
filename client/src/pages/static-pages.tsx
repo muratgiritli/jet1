@@ -15,7 +15,7 @@ const COMPANY = {
   phone: "0 850 840 3959",
   phoneHref: "+908508403959",
   whatsapp: "908508403959",
-  email: "info@sizpa.com",
+  email: "info@sizpa.net",
 };
 
 function PageWrapper({ title, children }: { title: string; children: React.ReactNode }) {
