@@ -45,3 +45,9 @@ waitForPort = 5000
 
 [agent]
 integrations = ["javascript_openai_ai_integrations:2.0.0"]
+
+[userenv]
+
+[userenv.shared]
+NETGSM_USERCODE = "8508403959"
+NETGSM_MSGHEADER = "SIZPA INT."
