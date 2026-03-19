@@ -542,7 +542,7 @@ export async function registerRoutes(
 
     const KEDI_KUMU_MAX = 2;
     const kediKumuProductIds = new Set<number>();
-    const allProds = await storage.getProducts();
+    const allProds = await storage.getAllProducts();
     for (const p of allProds) {
       if (p.brandCategoryId === 24) kediKumuProductIds.add(p.id);
     }
