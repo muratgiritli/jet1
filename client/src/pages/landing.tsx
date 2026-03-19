@@ -7,7 +7,6 @@ import {
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import SEO, { LOCAL_BUSINESS_JSONLD, SITE_DOMAIN } from "@/components/SEO";
-import PetAIChat from "@/components/PetAIChat";
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
 import catBird from "@/assets/images/cat-bird.webp";
@@ -345,10 +344,6 @@ export default function Landing() {
 
         <div className="mt-5 md:mt-10">
           <CategoryGrid />
-        </div>
-
-        <div className="mt-4 md:mt-8">
-          <PetAIChat />
         </div>
 
         <div className="mt-5 md:mt-8 md:grid md:grid-cols-2 md:gap-6">
