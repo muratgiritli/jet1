@@ -226,7 +226,7 @@ function TrustBadges() {
 
 function MobileFooter() {
   return (
-    <section className="md:hidden" data-testid="section-mobile-footer">
+    <section className="hidden" data-testid="section-mobile-footer">
       <div className="bg-gray-50 rounded-xl border border-gray-200/80 p-4 space-y-3">
         <div>
           <h4 className="text-xs font-bold text-gray-700 mb-2">Müşteri Hizmetleri</h4>
