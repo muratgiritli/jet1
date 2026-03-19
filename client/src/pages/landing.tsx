@@ -8,8 +8,6 @@ import {
 import { SiWhatsapp } from "react-icons/si";
 import SEO, { LOCAL_BUSINESS_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import PetAIChat from "@/components/PetAIChat";
-import SearchBar from "@/components/SearchBar";
-
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
 import catBird from "@/assets/images/cat-bird.webp";
@@ -328,9 +326,6 @@ export default function Landing() {
         jsonLd={LOCAL_BUSINESS_JSONLD}
       />
 
-      <div className="md:hidden px-3 pt-3 pb-1" data-testid="section-mobile-search">
-        <SearchBar />
-      </div>
 
       <main className="flex-1 w-full max-w-6xl mx-auto px-3 md:px-6 lg:px-8">
         <div className="mt-2 md:mt-6">
