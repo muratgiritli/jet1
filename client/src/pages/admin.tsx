@@ -68,7 +68,8 @@ const ANIMALS = [
 
 function useSubcategories() {
   const { data: allSubs = [] } = useQuery<Subcategory[]>({
-    queryKey: ["/api/subcategories"],
+    queryKey: ["/api/subcategories", "all"],
+    queryFn: () => fetch("/api/subcategories?all=true").then(r => r.json()),
   });
   const byAnimal: Record<string, { slug: string; name: string }[]> = {};
   for (const s of allSubs) {
@@ -740,6 +741,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/subcategories"] });
       toast({ title: "Alt kategori silindi" });
+    },
+  });
+
+  const toggleSubcategoryMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/subcategories/${id}`, { isActive });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/subcategories"] });
     },
   });
 
@@ -1715,10 +1725,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     </div>
                     <div className="flex flex-wrap gap-2">
                       {animalSubs.sort((a, b) => a.sortOrder - b.sortOrder).map((sub) => (
-                        <div key={sub.id} className="flex items-center gap-1.5 rounded-md px-2.5 py-1.5 border" data-testid={`subcategory-tag-${sub.id}`}>
+                        <div key={sub.id} className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 border ${!sub.isActive ? "opacity-50 bg-gray-50" : ""}`} data-testid={`subcategory-tag-${sub.id}`}>
                           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: sub.color }} />
                           <span className="text-xs font-medium">{sub.displayName.replace(/\n/g, " ")}</span>
                           {sub.hasBrands && <Badge variant="secondary" className="text-[9px] no-default-hover-elevate no-default-active-elevate">Marka</Badge>}
+                          <button
+                            className={`ml-0.5 text-xs font-medium px-1.5 py-0.5 rounded ${sub.isActive ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                            onClick={() => toggleSubcategoryMutation.mutate({ id: sub.id, isActive: !sub.isActive })}
+                            data-testid={`btn-toggle-subcategory-${sub.id}`}
+                          >
+                            {sub.isActive ? "Yayında" : "Durduruldu"}
+                          </button>
                           <button
                             className="text-muted-foreground/50 ml-0.5"
                             onClick={() => {

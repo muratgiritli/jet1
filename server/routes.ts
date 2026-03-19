@@ -128,14 +128,16 @@ export async function registerRoutes(
     res.send(buffer);
   });
 
-  app.get("/api/subcategories", async (_req, res) => {
+  app.get("/api/subcategories", async (req, res) => {
     const subs = await storage.getAllSubcategories();
-    res.json(subs);
+    if (req.query.all === "true") return res.json(subs);
+    res.json(subs.filter(s => s.isActive));
   });
 
   app.get("/api/subcategories/:animal", async (req, res) => {
     const subs = await storage.getSubcategoriesByAnimal(req.params.animal);
-    res.json(subs);
+    if (req.query.all === "true") return res.json(subs);
+    res.json(subs.filter(s => s.isActive));
   });
 
   app.post("/api/admin/subcategories", requireAdmin, async (req, res) => {

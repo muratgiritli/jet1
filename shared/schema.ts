@@ -25,6 +25,7 @@ export const subcategories = pgTable("subcategories", {
   color: text("color").notNull().default("#607D8B"),
   hasBrands: boolean("has_brands").notNull().default(false),
   sortOrder: integer("sort_order").notNull().default(0),
+  isActive: boolean("is_active").notNull().default(true),
 });
 
 export const insertSubcategorySchema = createInsertSchema(subcategories).omit({ id: true });
