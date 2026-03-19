@@ -163,7 +163,7 @@ function CategoryGrid() {
           Tümü <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
-      <div className="grid grid-cols-4 gap-2.5 md:gap-5" data-testid="grid-categories">
+      <div className="grid grid-cols-2 gap-2.5 md:gap-5" data-testid="grid-categories">
         {CATEGORIES.map((cat) => (
           <Link key={cat.name} href={cat.href}>
             <div className="flex flex-col items-center gap-1.5 md:gap-2.5 cursor-pointer active:scale-95 hover:scale-105 transition-transform" data-testid={`card-category-${cat.name}`}>
