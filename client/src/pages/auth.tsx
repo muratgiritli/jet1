@@ -12,6 +12,7 @@ import { apiRequest } from "@/lib/queryClient";
 type Step = "phone" | "otp" | "register";
 
 export default function AuthPage() {
+  const isRegisterTab = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "register";
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
   const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
@@ -155,12 +156,14 @@ export default function AuthPage() {
       <div className="max-w-sm mx-auto px-4 py-8">
         <div className="text-center mb-6">
           <h1 className="text-xl font-bold" data-testid="text-auth-title">
-            {step === "phone" && "Giriş Yap / Üye Ol"}
+            {step === "phone" && (isRegisterTab ? "Üye Ol" : "Giriş Yap / Üye Ol")}
             {step === "otp" && "Doğrulama Kodu"}
             {step === "register" && "Bilgilerinizi Tamamlayın"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {step === "phone" && "Telefon numaranıza SMS ile doğrulama kodu göndereceğiz"}
+            {step === "phone" && (isRegisterTab
+              ? "Hızlı sipariş için üye olun — telefonunuza SMS kodu göndereceğiz"
+              : "Telefon numaranıza SMS ile doğrulama kodu göndereceğiz")}
             {step === "otp" && `+90 ${phone} numarasına gönderilen 6 haneli kodu girin`}
             {step === "register" && "Sipariş için bilgilerinizi girin"}
           </p>

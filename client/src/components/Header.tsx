@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, User, UserPlus, Search } from "lucide-react";
+import { ArrowLeft, User, LogIn, UserPlus } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
@@ -41,24 +41,44 @@ export default function Header() {
             <SearchBar />
           </div>
 
-          <div className="flex items-center gap-3">
-            <Link href={isLoggedIn ? "/hesabim" : "/giris"}>
-              <button
-                className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
-                data-testid="btn-header-auth"
-              >
-                <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
-                  {isLoggedIn ? (
+          <div className="flex items-center gap-2">
+            {isLoggedIn ? (
+              <Link href="/hesabim">
+                <button
+                  className="flex items-center gap-2 text-white/80 hover:text-white transition-colors"
+                  data-testid="btn-header-account"
+                >
+                  <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
                     <User className="w-4 h-4" />
-                  ) : (
-                    <UserPlus className="w-4 h-4" />
-                  )}
-                </div>
-                <span className="hidden md:inline text-sm font-medium whitespace-nowrap">
-                  {isLoggedIn ? (customer?.name?.split(" ")[0] || "Hesabım") : "Giriş Yap"}
-                </span>
-              </button>
-            </Link>
+                  </div>
+                  <span className="hidden md:inline text-sm font-medium whitespace-nowrap">
+                    {customer?.name?.split(" ")[0] || "Hesabım"}
+                  </span>
+                </button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/giris">
+                  <button
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/15 hover:bg-white/25 text-white text-xs md:text-sm font-medium transition-colors"
+                    data-testid="btn-header-login"
+                  >
+                    <LogIn className="w-3.5 h-3.5" />
+                    <span>Giriş Yap</span>
+                  </button>
+                </Link>
+                <Link href="/giris?tab=register">
+                  <button
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-[#6B3480] text-xs md:text-sm font-semibold hover:bg-white/90 transition-colors"
+                    data-testid="btn-header-register"
+                  >
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Üye Ol</span>
+                    <span className="sm:hidden">Üye Ol</span>
+                  </button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </header>
