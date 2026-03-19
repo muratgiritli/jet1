@@ -92,7 +92,7 @@ function AppShell() {
       {!isAdmin && <InstallBanner />}
       {!isAdmin && <Header />}
       <Router />
-      {!isAdmin && <Footer />}
+      {!isAdmin && location === "/" && <Footer />}
       {!isAdmin && <FloatingCartBar />}
       {!isAdmin && <BottomTabBar />}
     </>
