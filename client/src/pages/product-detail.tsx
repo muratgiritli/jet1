@@ -589,19 +589,20 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {isCampaignMode && (
-                <div
-                  className="mt-4 px-4 py-3 rounded-lg text-center text-sm font-medium"
-                  style={{ backgroundColor: "#fff8e1", border: "1px solid #ffe082", color: "#e65100" }}
-                  data-testid="text-campaign-hint"
-                >
-                  Kampanyadan faydalanmak için sepete 1 ürün ekleyin.
-                </div>
-              )}
 
             </div>
           </div>
         </div>
+
+        {isCampaignMode && (
+          <div
+            className="mt-6 px-4 py-3 rounded-lg text-center text-sm font-semibold"
+            style={{ backgroundColor: "#fff8e1", border: "1px solid #ffe082", color: "#e65100" }}
+            data-testid="text-campaign-hint"
+          >
+            Kampanyadan faydalanmak için sepete 1 ürün ekleyin.
+          </div>
+        )}
 
         {isCampaignMode && breedStats && breedStats.length > 0 && (
           <div
