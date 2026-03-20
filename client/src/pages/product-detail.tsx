@@ -428,7 +428,7 @@ export default function ProductDetailPage() {
                 </p>
               )}
 
-              {category && shouldShowFastDelivery(category.animal, category.subcategory) && (
+              {!isCampaignMode && category && shouldShowFastDelivery(category.animal, category.subcategory) && (
                 <FastDeliveryBanner />
               )}
 
@@ -466,7 +466,7 @@ export default function ProductDetailPage() {
                 >
                   <Tag className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
                   <span className="font-semibold" style={{ color: "#bf360c" }}>
-                    Kampanya Urunu
+                    Kampanya Ürünü — Sadece 1 adet alabilirsiniz.
                   </span>
                 </div>
               )}
@@ -593,7 +593,7 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {breedStats && breedStats.length > 0 && (
+        {!isCampaignMode && breedStats && breedStats.length > 0 && (
           <div
             className="mt-8"
             data-testid="section-breed-stats"
