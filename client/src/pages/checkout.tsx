@@ -1028,6 +1028,8 @@ export default function Checkout() {
               </h2>
               <Card>
                 <CardContent className="p-4 space-y-5">
+                  {!hasCampaignItems && (
+                  <>
                   <div>
                     <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
                       <div className="flex items-center gap-2 flex-wrap">
@@ -1061,25 +1063,25 @@ export default function Checkout() {
                         <span className="text-sm font-medium" data-testid="text-ship-label">Ücretsiz Teslimat</span>
                       </div>
                       <span className="text-xs font-bold text-muted-foreground" data-testid="text-ship-progress">
-                        {Math.round(subtotal)}/{hasCampaignItems ? CAMPAIGN_SHIP_LIMIT : CONFIG.shipLimit} TL
+                        {Math.round(subtotal)}/{CONFIG.shipLimit} TL
                       </span>
                     </div>
                     <Progress
-                      value={Math.min((subtotal / (hasCampaignItems ? CAMPAIGN_SHIP_LIMIT : CONFIG.shipLimit)) * 100, 100)}
+                      value={Math.min((subtotal / CONFIG.shipLimit) * 100, 100)}
                       className="h-2"
                       data-testid="bar-ship"
                     />
                     <p className="text-xs font-medium mt-1.5 text-muted-foreground" data-testid="text-ship-hint">
-                      {subtotal >= (hasCampaignItems ? CAMPAIGN_SHIP_LIMIT : CONFIG.shipLimit) ? (
+                      {subtotal >= CONFIG.shipLimit ? (
                         <span className="text-chart-2 flex items-center gap-1">
                           <Check className="w-3 h-3" /> Ücretsiz teslimat kazandınız!
                         </span>
                       ) : (
-                        `Ücretsiz teslimat için ${Math.round((hasCampaignItems ? CAMPAIGN_SHIP_LIMIT : CONFIG.shipLimit) - subtotal)} TL daha ekleyin`
+                        `Ücretsiz teslimat için ${Math.round(CONFIG.shipLimit - subtotal)} TL daha ekleyin`
                       )}
                     </p>
-                    {subtotal < (hasCampaignItems ? CAMPAIGN_SHIP_LIMIT : CONFIG.shipLimit) && (
-                      <Link href={hasCampaignItems ? "/kampanya" : "/"}>
+                    {subtotal < CONFIG.shipLimit && (
+                      <Link href="/">
                         <Button
                           variant="outline"
                           size="sm"
@@ -1092,6 +1094,8 @@ export default function Checkout() {
                       </Link>
                     )}
                   </div>
+                  </>
+                  )}
 
                   {hasCampaignItems && (
                     <div className="mt-4 pt-4 border-t">
