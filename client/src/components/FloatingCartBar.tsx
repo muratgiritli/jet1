@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ShoppingCart } from "lucide-react";
+import { ShoppingCart, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
@@ -7,6 +8,7 @@ import { useCart } from "@/contexts/CartContext";
 export default function FloatingCartBar() {
   const { itemCount, grandTotal } = useCart();
   const [location] = useLocation();
+  const [showWarning, setShowWarning] = useState(false);
 
   const isCampaignPage = location === "/kampanya" || window.location.search.includes("kampanya=1");
 
@@ -14,6 +16,8 @@ export default function FloatingCartBar() {
     if (isCampaignPage) {
       e.preventDefault();
       e.stopPropagation();
+      setShowWarning(true);
+      setTimeout(() => setShowWarning(false), 4000);
       const el = document.getElementById("campaign-extras-section");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
@@ -23,6 +27,44 @@ export default function FloatingCartBar() {
     <AnimatePresence>
       {itemCount > 0 && location !== "/odeme" && (
         <>
+          <AnimatePresence>
+            {showWarning && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="fixed left-2 right-2 z-[9999] md:hidden"
+                style={{ bottom: "calc(130px + env(safe-area-inset-bottom, 0px))" }}
+              >
+                <div
+                  className="rounded-xl px-4 py-3 text-center text-sm font-bold shadow-lg"
+                  style={{ backgroundColor: "#ffebee", border: "2px solid #ef5350", color: "#c62828" }}
+                  data-testid="text-float-campaign-warning"
+                >
+                  <AlertTriangle className="w-4 h-4 inline-block mr-1 -mt-0.5" />
+                  Kampanyadan yararlanmak için en az yukarıdaki seçeneklerden bir ürün eklemeniz gerekmektedir!
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+          <AnimatePresence>
+            {showWarning && (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 20 }}
+                className="fixed left-2 right-2 z-[9999] hidden md:block bottom-16"
+              >
+                <div
+                  className="max-w-lg mx-auto rounded-xl px-4 py-3 text-center text-sm font-bold shadow-lg"
+                  style={{ backgroundColor: "#ffebee", border: "2px solid #ef5350", color: "#c62828" }}
+                >
+                  <AlertTriangle className="w-4 h-4 inline-block mr-1 -mt-0.5" />
+                  Kampanyadan yararlanmak için en az yukarıdaki seçeneklerden bir ürün eklemeniz gerekmektedir!
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
           <motion.div
             initial={{ y: 80, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
