@@ -6,14 +6,15 @@ import { Link, useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
 
 export default function FloatingCartBar() {
-  const { itemCount, grandTotal } = useCart();
+  const { itemCount, grandTotal, hasCampaignItems, campaignExtraCount } = useCart();
   const [location] = useLocation();
   const [showWarning, setShowWarning] = useState(false);
 
   const isCampaignPage = location === "/kampanya" || window.location.search.includes("kampanya=1");
+  const needsExtra = isCampaignPage && hasCampaignItems && campaignExtraCount < 1;
 
   const handleCampaignBlock = (e: React.MouseEvent) => {
-    if (isCampaignPage) {
+    if (needsExtra) {
       e.preventDefault();
       e.stopPropagation();
       setShowWarning(true);
@@ -82,7 +83,7 @@ export default function FloatingCartBar() {
                   </span>
                 </div>
               </div>
-              {isCampaignPage ? (
+              {needsExtra ? (
                 <Button variant="default" size="sm" onClick={handleCampaignBlock} data-testid="btn-float-go-cart">
                   <ShoppingCart className="w-3.5 h-3.5 mr-1" />
                   Sepete Git
@@ -113,7 +114,7 @@ export default function FloatingCartBar() {
                   </span>
                 </div>
               </div>
-              {isCampaignPage ? (
+              {needsExtra ? (
                 <Button variant="default" size="sm" onClick={handleCampaignBlock} data-testid="btn-float-go-cart-desktop">
                   <ShoppingCart className="w-3.5 h-3.5 mr-1" />
                   Sepete Git
