@@ -87,6 +87,113 @@ export async function registerRoutes(
   await seedDatabase();
   await ensureAdminExists();
 
+  app.get("/api/export/xlsx", async (_req, res) => {
+    try {
+      const XLSX = await import("xlsx");
+      const SITE = "https://jetgo.shop";
+      const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen" };
+
+      const { rows } = await sharedPool.query(`
+        SELECT p.id, p.name, p.price, p.original_price, p.skt, p.img, p.stock,
+               bc.brand_name, bc.animal, s.display_name as subcategory_name
+        FROM products p
+        LEFT JOIN brand_categories bc ON p.brand_category_id = bc.id
+        LEFT JOIN subcategories s ON bc.subcategory = s.slug AND bc.animal = s.animal
+        WHERE p.is_active = true AND p.stock > 0 AND p.price > 0
+        ORDER BY p.id
+      `);
+
+      const data = rows.map((r: any) => ({
+        "ID": r.id,
+        "Ürün Adı": r.name,
+        "Fiyat (TL)": r.price,
+        "Eski Fiyat (TL)": r.original_price || "",
+        "Stok": r.stock,
+        "SKT": r.skt || "",
+        "Marka": r.brand_name || "",
+        "Hayvan": ANIMAL_MAP[r.animal] || r.animal || "",
+        "Kategori": r.subcategory_name || "",
+        "Görsel URL": r.img ? `${SITE}${r.img}` : "",
+        "Ürün URL": `${SITE}/urun/${r.id}`,
+      }));
+
+      const wb = XLSX.utils.book_new();
+      const ws = XLSX.utils.json_to_sheet(data);
+      ws['!cols'] = [
+        { wch: 6 }, { wch: 60 }, { wch: 12 }, { wch: 14 },
+        { wch: 6 }, { wch: 10 }, { wch: 25 }, { wch: 10 },
+        { wch: 20 }, { wch: 45 }, { wch: 35 },
+      ];
+      XLSX.utils.book_append_sheet(wb, ws, "Ürünler");
+
+      const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+      res.setHeader("Content-Disposition", "attachment; filename=jetgo_urunler.xlsx");
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.send(buf);
+    } catch (err) {
+      console.error("Export XLSX error:", err);
+      res.status(500).json({ error: "Export failed" });
+    }
+  });
+
+  app.get("/api/export/yml", async (_req, res) => {
+    try {
+      const SITE = "https://jetgo.shop";
+      const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen" };
+
+      const { rows } = await sharedPool.query(`
+        SELECT p.id, p.name, p.price, p.original_price, p.skt, p.img, p.stock,
+               bc.brand_name, bc.animal, s.display_name as subcategory_name
+        FROM products p
+        LEFT JOIN brand_categories bc ON p.brand_category_id = bc.id
+        LEFT JOIN subcategories s ON bc.subcategory = s.slug AND bc.animal = s.animal
+        WHERE p.is_active = true AND p.stock > 0 AND p.price > 0
+        ORDER BY p.id
+      `);
+
+      const categories = new Map<string, { id: number; animal: string; subcat: string }>();
+      let catId = 1;
+      for (const r of rows as any[]) {
+        const key = (r.animal || "") + "|" + (r.subcategory_name || "");
+        if (!categories.has(key) && r.subcategory_name) {
+          categories.set(key, { id: catId++, animal: r.animal, subcat: r.subcategory_name });
+        }
+      }
+
+      const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+      let yml = `<?xml version="1.0" encoding="UTF-8"?>\n<yml_catalog date="${new Date().toISOString().split("T")[0]}">\n  <shop>\n    <name>JETGO Pet Shop</name>\n    <company>Sizpa İnternet Tic. Ltd. Şti.</company>\n    <url>https://jetgo.shop</url>\n    <currencies>\n      <currency id="TRY" rate="1"/>\n    </currencies>\n    <categories>\n`;
+
+      for (const [, cat] of categories) {
+        yml += `      <category id="${cat.id}">${esc(cat.subcat)} (${ANIMAL_MAP[cat.animal] || cat.animal})</category>\n`;
+      }
+      yml += "    </categories>\n    <offers>\n";
+
+      for (const r of rows as any[]) {
+        const key = (r.animal || "") + "|" + (r.subcategory_name || "");
+        const cat = categories.get(key);
+        yml += `      <offer id="${r.id}" available="true">\n`;
+        yml += `        <name>${esc(r.name)}</name>\n`;
+        yml += `        <url>${SITE}/urun/${r.id}</url>\n`;
+        yml += `        <price>${r.price}</price>\n`;
+        if (r.original_price && r.original_price > r.price) yml += `        <oldprice>${r.original_price}</oldprice>\n`;
+        yml += `        <currencyId>TRY</currencyId>\n`;
+        if (cat) yml += `        <categoryId>${cat.id}</categoryId>\n`;
+        if (r.img) yml += `        <picture>${SITE}${r.img}</picture>\n`;
+        if (r.brand_name) yml += `        <vendor>${esc(r.brand_name)}</vendor>\n`;
+        yml += `        <delivery>true</delivery>\n        <store>true</store>\n      </offer>\n`;
+      }
+      yml += "    </offers>\n  </shop>\n</yml_catalog>\n";
+
+      res.setHeader("Content-Disposition", "attachment; filename=jetgo_urunler.yml");
+      res.setHeader("Content-Type", "application/xml; charset=utf-8");
+      res.send(yml);
+    } catch (err) {
+      console.error("Export YML error:", err);
+      res.status(500).json({ error: "Export failed" });
+    }
+  });
+
   await sharedPool.query(`CREATE TABLE IF NOT EXISTS product_images (product_id INTEGER PRIMARY KEY, data TEXT NOT NULL, updated_at TIMESTAMP NOT NULL DEFAULT NOW())`);
   
   const { rows: [{ count: imgCount }] } = await sharedPool.query(`SELECT COUNT(*)::int as count FROM product_images`);
