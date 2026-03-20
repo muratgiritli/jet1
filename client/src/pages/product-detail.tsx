@@ -659,14 +659,6 @@ export default function ProductDetailPage() {
 
         {isCampaignMode && campaignExtras.length > 0 && (
           <div className="mt-8" data-testid="section-campaign-extras">
-            <div
-              className="rounded-lg p-3 mb-3 text-center"
-              style={{ backgroundColor: "#fff3e0", border: "1px solid #ffcc80" }}
-            >
-              <p className="text-sm font-bold" style={{ color: "#e65100" }}>
-                Kampanyadan yararlanmak için aşağıdan bir ürün eklemeniz gerekmektedir
-              </p>
-            </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {campaignExtras.map((p) => (
                 <div key={p.id}>
