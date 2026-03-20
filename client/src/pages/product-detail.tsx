@@ -615,15 +615,6 @@ export default function ProductDetailPage() {
           </div>
         </div>
 
-        {isCampaignMode && (
-          <div
-            className="mt-6 px-4 py-3 rounded-lg text-center text-sm font-semibold"
-            style={{ backgroundColor: "#fff8e1", border: "1px solid #ffe082", color: "#e65100" }}
-            data-testid="text-campaign-hint"
-          >
-            Kampanyadan yararlanmak için aşağıdan bir ürün eklemeniz gerekmektedir.
-          </div>
-        )}
 
         {!isCampaignMode && breedStats && breedStats.length > 0 && (
           <div
