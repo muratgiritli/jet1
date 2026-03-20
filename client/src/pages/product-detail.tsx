@@ -18,7 +18,6 @@ import ImageZoom from "@/components/ImageZoom";
 import ProductImage from "@/components/ProductImage";
 import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
 import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
-import FoodCalculator from "@/components/FoodCalculator";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 
 type ProductDetailData = {
@@ -634,16 +633,6 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        {category && ["kedi-mamasi", "acik-mama", "mama-markalari", "yas-mama", "uygun-cuval"].includes(category.subcategory) && (
-          <div className="mt-6">
-            <FoodCalculator
-              productId={product.id}
-              productName={product.name}
-              productPrice={product.price}
-              defaultAnimal={category.animal === "kopek" ? "kopek" : "kedi"}
-            />
-          </div>
-        )}
 
         {isCampaignMode && campaignExtras.length > 0 && (
           <div className="mt-8" data-testid="section-campaign-extras">
