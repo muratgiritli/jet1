@@ -589,9 +589,58 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
+              {isCampaignMode && (
+                <div
+                  className="mt-4 px-4 py-3 rounded-lg text-center text-sm font-medium"
+                  style={{ backgroundColor: "#fff8e1", border: "1px solid #ffe082", color: "#e65100" }}
+                  data-testid="text-campaign-hint"
+                >
+                  Kampanyadan faydalanmak için sepete 1 ürün ekleyin.
+                </div>
+              )}
+
             </div>
           </div>
         </div>
+
+        {isCampaignMode && breedStats && breedStats.length > 0 && (
+          <div
+            className="mt-6"
+            data-testid="section-breed-stats-campaign"
+          >
+            <Card>
+              <CardContent className="p-5">
+                <h3 className="text-base font-bold text-center mb-1">
+                  Bu ürünü hangi ırk (cins) {category?.animal === "kopek" ? "köpekler" : "kediler"} tüketiyor?
+                </h3>
+                <p className="text-xs text-muted-foreground text-center mb-4">
+                  {product.name}
+                </p>
+                <div className="space-y-3">
+                  {breedStats.map((stat, i) => (
+                    <div key={stat.id} className="flex items-center gap-3">
+                      <span className="text-sm font-medium w-28 text-right shrink-0">
+                        {stat.breedName}
+                      </span>
+                      <div className="flex-1 h-5 bg-muted/40 rounded-full overflow-hidden relative">
+                        <motion.div
+                          className="h-full rounded-full"
+                          style={{ backgroundColor: stat.color }}
+                          initial={{ width: 0 }}
+                          animate={{ width: `${stat.percentage}%` }}
+                          transition={{ duration: 0.6, delay: 0.1 * i, ease: "easeOut" }}
+                        />
+                      </div>
+                      <span className="text-sm font-bold w-10 text-right shrink-0">
+                        {stat.percentage}%
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {!isCampaignMode && breedStats && breedStats.length > 0 && (
           <div
