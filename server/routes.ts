@@ -105,24 +105,25 @@ export async function registerRoutes(
 
       const data = rows.map((r: any) => ({
         "ID": r.id,
-        "Ürün Adı": r.name,
-        "Fiyat (TL)": r.price,
-        "Eski Fiyat (TL)": r.original_price || "",
-        "Stok": r.stock,
-        "SKT": r.skt || "",
-        "Marka": r.brand_name || "",
-        "Hayvan": ANIMAL_MAP[r.animal] || r.animal || "",
-        "Kategori": r.subcategory_name || "",
-        "Görsel URL": r.img ? `${SITE}${r.img}` : "",
-        "Ürün URL": `${SITE}/urun/${r.id}`,
+        "Title": r.name,
+        "Description": `${r.brand_name ? r.brand_name + " - " : ""}${r.name}${r.subcategory_name ? " | " + r.subcategory_name : ""}`,
+        "Price": r.price,
+        "Old price": r.original_price || "",
+        "Currency": "TRY",
+        "URL": `${SITE}/urun/${r.id}`,
+        "Image URL": r.img ? `${SITE}${r.img}` : "",
+        "Category": `${ANIMAL_MAP[r.animal] || r.animal || ""} > ${r.subcategory_name || ""}`,
+        "Brand": r.brand_name || "",
+        "Availability": r.stock > 0 ? "in stock" : "out of stock",
+        "Stock": r.stock,
       }));
 
       const wb = XLSX.utils.book_new();
       const ws = XLSX.utils.json_to_sheet(data);
       ws['!cols'] = [
-        { wch: 6 }, { wch: 60 }, { wch: 12 }, { wch: 14 },
-        { wch: 6 }, { wch: 10 }, { wch: 25 }, { wch: 10 },
-        { wch: 20 }, { wch: 45 }, { wch: 35 },
+        { wch: 6 }, { wch: 60 }, { wch: 70 }, { wch: 12 },
+        { wch: 14 }, { wch: 6 }, { wch: 35 }, { wch: 45 },
+        { wch: 30 }, { wch: 25 }, { wch: 12 }, { wch: 6 },
       ];
       XLSX.utils.book_append_sheet(wb, ws, "Ürünler");
 
