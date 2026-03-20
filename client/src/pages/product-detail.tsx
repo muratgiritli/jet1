@@ -260,6 +260,13 @@ export default function ProductDetailPage() {
   const [stockAlertLoading, setStockAlertLoading] = useState(false);
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
   const [taksitDialogOpen, setTaksitDialogOpen] = useState(false);
+  const [campaignWarning, setCampaignWarning] = useState(false);
+
+  const hasExtraInCart = useMemo(() => {
+    if (!isCampaignMode) return false;
+    const extraIds = campaignExtras.map((e) => String(e.id));
+    return extraIds.some((eid) => (basket[eid] || 0) > 0);
+  }, [isCampaignMode, campaignExtras, basket]);
 
   const { data: installmentRates = [] } = useQuery<InstallmentRate[]>({
     queryKey: ["/api/installment-rates"],
@@ -568,7 +575,12 @@ export default function ProductDetailPage() {
                     <Button
                       className={isCampaignMode ? "w-full" : "flex-1"}
                       style={{ backgroundColor: "#e65100" }}
-                      onClick={() => { if (quantity === 0) updateQty(pid, 1); }}
+                      onClick={() => {
+                        if (quantity === 0) updateQty(pid, 1);
+                        if (isCampaignMode && !hasExtraInCart) {
+                          setCampaignWarning(true);
+                        }
+                      }}
                       data-testid="btn-add-to-cart"
                     >
                       SEPETE EKLE
@@ -589,6 +601,15 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
+              {isCampaignMode && campaignWarning && !hasExtraInCart && (
+                <div
+                  className="mt-3 px-4 py-3 rounded-lg text-center text-sm font-bold animate-pulse"
+                  style={{ backgroundColor: "#ffebee", border: "2px solid #ef5350", color: "#c62828" }}
+                  data-testid="text-campaign-warning"
+                >
+                  ⚠️ Kampanyadan yararlanmak için aşağıdan bir ürün eklemeniz gerekmektedir!
+                </div>
+              )}
 
             </div>
           </div>
@@ -600,7 +621,7 @@ export default function ProductDetailPage() {
             style={{ backgroundColor: "#fff8e1", border: "1px solid #ffe082", color: "#e65100" }}
             data-testid="text-campaign-hint"
           >
-            Kampanyadan faydalanmak için sepete 1 ürün ekleyin.
+            Kampanyadan yararlanmak için aşağıdan bir ürün eklemeniz gerekmektedir.
           </div>
         )}
 
@@ -652,7 +673,7 @@ export default function ProductDetailPage() {
               style={{ backgroundColor: "#fff3e0", border: "1px solid #ffcc80" }}
             >
               <p className="text-sm font-bold" style={{ color: "#e65100" }}>
-                Kampanyadan faydalanmak icin sepete 1 urun ekle
+                Kampanyadan yararlanmak için aşağıdan bir ürün eklemeniz gerekmektedir
               </p>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">

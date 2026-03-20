@@ -411,7 +411,7 @@ export default function Checkout() {
       return;
     }
     if (hasCampaignItems && !campaignValid) {
-      setOrderError("Kampanyadan faydalanmak için sepete en az 1 ana ürün ve 1 ek ürün ekleyin.");
+      setOrderError("Kampanyadan yararlanmak için sepete en az 1 ana ürün ve 1 ek ürün eklemeniz gerekmektedir.");
       return;
     }
     if (!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle) {
@@ -1118,7 +1118,7 @@ export default function Checkout() {
                       </div>
                       {!campaignValid && (
                         <p className="text-xs text-red-500 mt-2 font-medium">
-                          Kampanyadan faydalanmak için sepete en az 1 ana ürün ve 1 ek ürün ekleyin.
+                          Kampanyadan yararlanmak için sepete en az 1 ana ürün ve 1 ek ürün eklemeniz gerekmektedir.
                         </p>
                       )}
                     </div>
