@@ -1,0 +1,14 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "9y2QoewR6z_sxq3OzRlmR"
+uri = "file://jetgo_urunler.xlsx"
+type = "table"
+title = "JETGO Ürünler (Excel)"
+
+[[outputs]]
+id = "tCTBZ3-hFo7hNItuoR43i"
+uri = "file://jetgo_urunler.yml"
+type = "unspecified"
+title = "JETGO Ürünler (Yandex Business YML)"
