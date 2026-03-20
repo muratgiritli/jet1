@@ -8,6 +8,17 @@ export default function FloatingCartBar() {
   const { itemCount, grandTotal } = useCart();
   const [location] = useLocation();
 
+  const isCampaignPage = location === "/kampanya" || window.location.search.includes("kampanya=1");
+
+  const handleCampaignBlock = (e: React.MouseEvent) => {
+    if (isCampaignPage) {
+      e.preventDefault();
+      e.stopPropagation();
+      const el = document.getElementById("campaign-extras-section");
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <AnimatePresence>
       {itemCount > 0 && location !== "/odeme" && (
@@ -29,12 +40,19 @@ export default function FloatingCartBar() {
                   </span>
                 </div>
               </div>
-              <Link href="/odeme">
-                <Button variant="default" size="sm" data-testid="btn-float-go-cart">
+              {isCampaignPage ? (
+                <Button variant="default" size="sm" onClick={handleCampaignBlock} data-testid="btn-float-go-cart">
                   <ShoppingCart className="w-3.5 h-3.5 mr-1" />
                   Sepete Git
                 </Button>
-              </Link>
+              ) : (
+                <Link href="/odeme">
+                  <Button variant="default" size="sm" data-testid="btn-float-go-cart">
+                    <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                    Sepete Git
+                  </Button>
+                </Link>
+              )}
             </div>
           </motion.div>
           <motion.div
@@ -53,12 +71,19 @@ export default function FloatingCartBar() {
                   </span>
                 </div>
               </div>
-              <Link href="/odeme">
-                <Button variant="default" size="sm" data-testid="btn-float-go-cart-desktop">
+              {isCampaignPage ? (
+                <Button variant="default" size="sm" onClick={handleCampaignBlock} data-testid="btn-float-go-cart-desktop">
                   <ShoppingCart className="w-3.5 h-3.5 mr-1" />
                   Sepete Git
                 </Button>
-              </Link>
+              ) : (
+                <Link href="/odeme">
+                  <Button variant="default" size="sm" data-testid="btn-float-go-cart-desktop">
+                    <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                    Sepete Git
+                  </Button>
+                </Link>
+              )}
             </div>
           </motion.div>
         </>

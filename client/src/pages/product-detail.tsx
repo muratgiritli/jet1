@@ -579,12 +579,27 @@ export default function ProductDetailPage() {
                         if (quantity === 0) updateQty(pid, 1);
                         if (isCampaignMode && !hasExtraInCart) {
                           setCampaignWarning(true);
+                          setTimeout(() => {
+                            const el = document.getElementById("campaign-extras-section");
+                            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+                          }, 200);
                         }
                       }}
                       data-testid="btn-add-to-cart"
                     >
                       SEPETE EKLE
                     </Button>
+                    {isCampaignMode && hasExtraInCart && quantity > 0 && (
+                      <Link href="/odeme" className="w-full">
+                        <Button
+                          className="w-full"
+                          style={{ backgroundColor: "#2e7d32" }}
+                          data-testid="btn-campaign-go-cart"
+                        >
+                          SEPETE GİT
+                        </Button>
+                      </Link>
+                    )}
                     {!isCampaignMode && (
                       <Link href="/odeme" className="flex-1">
                         <Button
@@ -658,7 +673,7 @@ export default function ProductDetailPage() {
 
 
         {isCampaignMode && campaignExtras.length > 0 && (
-          <div className="mt-8" data-testid="section-campaign-extras">
+          <div className="mt-8" id="campaign-extras-section" data-testid="section-campaign-extras">
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {campaignExtras.map((p) => (
                 <div key={p.id}>
