@@ -29,22 +29,75 @@ async function sendSmsViaNetgsm(phone: string, message: string): Promise<boolean
     console.error("NetGSM credentials not configured");
     return false;
   }
+  const gsmno = phone.replace(/\D/g, "");
+  const fullPhone = gsmno.startsWith("90") ? gsmno : "90" + gsmno;
+  console.log(`NetGSM sending to: ${fullPhone}`);
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const xmlBody = `<?xml version="1.0" encoding="UTF-8"?>
+<mainbody>
+<header>
+<company dession="1">Netgsm</company>
+<usercode>${usercode}</usercode>
+<password>${password}</password>
+<type>1:n</type>
+<msgheader>${msgheader}</msgheader>
+</header>
+<body>
+<msg><![CDATA[${message}]]></msg>
+<no>${fullPhone}</no>
+</body>
+</mainbody>`;
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const res = await fetch("http://api.netgsm.com.tr/sms/send/xml", {
+        method: "POST",
+        headers: { "Content-Type": "application/xml" },
+        body: xmlBody,
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      const text = await res.text();
+      console.log(`NetGSM response (attempt ${attempt}):`, text);
+      const code = text.split(" ")[0];
+      if (["00", "01", "02"].includes(code)) return true;
+      if (["30", "40", "50", "51", "70", "80", "85"].includes(code)) {
+        console.error(`NetGSM permanent error code: ${code}`);
+        return false;
+      }
+    } catch (err: any) {
+      console.error(`NetGSM SMS error (attempt ${attempt}):`, err?.message || err);
+      if (attempt < 3) {
+        await new Promise(r => setTimeout(r, 1000 * attempt));
+        continue;
+      }
+    }
+  }
+
   try {
+    console.log("NetGSM XML failed, trying GET fallback...");
     const params = new URLSearchParams({
       usercode,
       password,
-      gsmno: phone.startsWith("90") ? phone : "90" + phone,
+      gsmno: fullPhone,
       message,
       msgheader,
       dil: "TR",
     });
-    const res = await fetch(`https://api.netgsm.com.tr/sms/send/get/?${params.toString()}`);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 15000);
+    const res = await fetch(`http://api.netgsm.com.tr/sms/send/get/?${params.toString()}`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
     const text = await res.text();
-    console.log("NetGSM response:", text);
+    console.log("NetGSM GET fallback response:", text);
     const code = text.split(" ")[0];
     return ["00", "01", "02"].includes(code);
-  } catch (err) {
-    console.error("NetGSM SMS error:", err);
+  } catch (err: any) {
+    console.error("NetGSM GET fallback error:", err?.message || err);
     return false;
   }
 }
