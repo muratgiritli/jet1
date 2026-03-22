@@ -370,7 +370,7 @@ export default function Checkout() {
 
   const districts = [...new Set(neighborhoods.map((n: any) => n.district))].sort();
   const filteredNeighborhoods = selectedDistrict
-    ? neighborhoods.filter((n: any) => n.district === selectedDistrict)
+    ? neighborhoods.filter((n: any) => n.district === selectedDistrict).sort((a: any, b: any) => a.name.localeCompare(b.name, 'tr'))
     : [];
 
   const activeNeighborhood = neighborhoods.find((n) => String(n.id) === selectedNeighborhood);
