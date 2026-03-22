@@ -9,8 +9,8 @@ import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import {
   User, Phone, MapPin, LogOut, Loader2, Check, Edit2,
-  Package, Heart, Home, PawPrint, Bell, Lock,
-  Plus, Trash2, Star, ChevronRight, Eye, EyeOff,
+  Package, Heart, Home, PawPrint, Bell,
+  Plus, Trash2, Star, ChevronRight,
   ShoppingCart
 } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
@@ -21,7 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Logo from "@/components/Logo";
 import ProductImage from "@/components/ProductImage";
 
-type TabKey = "profile" | "points" | "orders" | "favorites" | "addresses" | "pets" | "notifications" | "password";
+type TabKey = "profile" | "points" | "orders" | "favorites" | "addresses" | "pets" | "notifications";
 
 const TABS: { key: TabKey; label: string; icon: any; emoji: string }[] = [
   { key: "profile", label: "Profilim", icon: User, emoji: "👤" },
@@ -31,7 +31,6 @@ const TABS: { key: TabKey; label: string; icon: any; emoji: string }[] = [
   { key: "addresses", label: "Adreslerim", icon: Home, emoji: "🏠" },
   { key: "pets", label: "Evcil Hayvanlarım", icon: PawPrint, emoji: "🐾" },
   { key: "notifications", label: "Bildirimler", icon: Bell, emoji: "🔔" },
-  { key: "password", label: "Şifre Değiştir", icon: Lock, emoji: "🔒" },
 ];
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
@@ -171,7 +170,6 @@ export default function ProfilePage() {
             {activeTab === "addresses" && <AddressesSection />}
             {activeTab === "pets" && <PetsSection />}
             {activeTab === "notifications" && <NotificationsSection customer={customer!} refetch={refetch} toast={toast} />}
-            {activeTab === "password" && <PasswordSection toast={toast} />}
           </div>
         </div>
       </div>
@@ -841,110 +839,6 @@ function NotificationsSection({ customer, refetch, toast }: { customer: any; ref
   );
 }
 
-function PasswordSection({ toast }: { toast: any }) {
-  const [currentPassword, setCurrentPassword] = useState("");
-  const [newPassword, setNewPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showCurrent, setShowCurrent] = useState(false);
-  const [showNew, setShowNew] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const handleSubmit = async () => {
-    if (!currentPassword || !newPassword) {
-      toast({ title: "Hata", description: "Tüm alanları doldurun", variant: "destructive" });
-      return;
-    }
-    if (newPassword.length < 4) {
-      toast({ title: "Hata", description: "Yeni şifre en az 4 karakter olmalı", variant: "destructive" });
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      toast({ title: "Hata", description: "Yeni şifreler eşleşmiyor", variant: "destructive" });
-      return;
-    }
-    setSaving(true);
-    try {
-      const res = await apiRequest("PATCH", "/api/customer/password", { currentPassword, newPassword });
-      const data = await res.json();
-      toast({ title: data.message || "Şifre değiştirildi" });
-      setCurrentPassword("");
-      setNewPassword("");
-      setConfirmPassword("");
-    } catch (e: any) {
-      const msg = e?.message || "Şifre değiştirilemedi";
-      toast({ title: "Hata", description: msg, variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  return (
-    <Card>
-      <CardContent className="p-4 space-y-4">
-        <h2 className="font-semibold">Şifre Değiştir</h2>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Mevcut Şifre</label>
-          <div className="relative">
-            <Input
-              type={showCurrent ? "text" : "password"}
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              data-testid="input-current-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowCurrent(!showCurrent)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-            >
-              {showCurrent ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Yeni Şifre</label>
-          <div className="relative">
-            <Input
-              type={showNew ? "text" : "password"}
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              data-testid="input-new-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowNew(!showNew)}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground"
-            >
-              {showNew ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-1.5">
-          <label className="text-xs font-medium text-muted-foreground">Yeni Şifre (Tekrar)</label>
-          <Input
-            type="password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            data-testid="input-confirm-password"
-          />
-        </div>
-
-        <Button
-          onClick={handleSubmit}
-          disabled={saving}
-          className="w-full rounded-xl"
-          style={{ background: "linear-gradient(135deg, #6B3480, #9b59b6)" }}
-          data-testid="btn-change-password"
-        >
-          {saving ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Lock className="w-4 h-4 mr-1" />}
-          Şifreyi Değiştir
-        </Button>
-      </CardContent>
-    </Card>
-  );
-}
 
 function LoyaltyPointsSection() {
   const { data, isLoading } = useQuery<{ balance: number; history: any[] }>({

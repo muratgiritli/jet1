@@ -105,6 +105,7 @@ export const orders = pgTable("orders", {
   paymentMethod: text("payment_method").notNull(),
   status: text("status").notNull().default("yeni"),
   customerNote: text("customer_note"),
+  deliverySlot: text("delivery_slot"),
   customerPhone: text("customer_phone"),
   customerName: text("customer_name"),
   customerAddress: text("customer_address"),

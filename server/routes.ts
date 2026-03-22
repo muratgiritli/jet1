@@ -669,7 +669,8 @@ export async function registerRoutes(
     discount: z.number(),
     grandTotal: z.number(),
     paymentMethod: z.string(),
-    customerNote: z.string().optional(),
+    customerNote: z.string().max(500).optional(),
+    deliverySlot: z.enum(["hemen", "bugun_ogle", "bugun_aksam", "yarin_sabah"]).optional(),
     customerPhone: z.string().min(7, "Telefon numarası gerekli"),
     customerName: z.string().min(1, "Ad soyad gerekli"),
     customerAddress: z.string().optional(),
@@ -1039,7 +1040,7 @@ export async function registerRoutes(
     res.json(customerOrders.map(o => ({
       id: o.id, items: o.items, subtotal: o.subtotal, shipping: o.shipping, discount: o.discount,
       grandTotal: o.grandTotal, status: o.status, paymentMethod: o.paymentMethod, createdAt: o.createdAt,
-      customerNote: o.customerNote,
+      customerNote: o.customerNote, deliverySlot: o.deliverySlot,
     })));
   });
 

@@ -16,6 +16,9 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - **Dynamic data**: All products and categories served from database via API (no static product lists or category lists)
 - **Cross-sell**: Reusable recommendation sections linked to products via junction table, displayed on product detail pages
 - **Campaign System**: campaign_items table with main/extra products. Campaign page at /kampanya (purple theme), campaign banner on landing. Product detail campaign mode via ?kampanya=1 hides taksit/points/hemen-al. Checkout campaign mode: only Kapıda Nakit payment, 4000 TL free shipping, no discount/points, requires min 1 main + 1 extra. Server-side campaign validation in /api/orders. Max 1 main product per order (all others locked when one selected). Kedi kumu (IDs 461,474,473) max 1 per order. Admin campaign management: search & add products, publish/unpublish toggle, category-based filtering for extras, sort order management.
+- **Delivery Slots**: Checkout has delivery time slot selection (Hemen, Bugün 12-14, Bugün 16-19, Yarın Sabah 10-12). Stored as `delivery_slot` in orders table, shown in WhatsApp message and admin order detail.
+- **Order Notes**: Checkout has optional order note textarea (max 500 chars). Stored as `customer_note` in orders table, shown in WhatsApp message and admin order detail.
+- **Order Counter**: Landing page shows time-based daily order counter (10:00-20:00). Varies by time of day with deterministic daily seed for consistency.
 
 ## Key Files
 - `client/src/pages/campaign.tsx` - Campaign product listing page with main/extra sections

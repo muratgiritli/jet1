@@ -1555,6 +1555,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     </div>
                   )}
 
+                  {(order as any).deliverySlot && (
+                    <div className="text-sm bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
+                      <span className="font-medium">Teslimat Zamanı: </span>
+                      {({
+                        hemen: "Hemen (En kısa sürede)",
+                        bugun_ogle: "Bugün 12:00-14:00",
+                        bugun_aksam: "Bugün 16:00-19:00",
+                        yarin_sabah: "Yarın Sabah 10:00-12:00",
+                      } as Record<string, string>)[(order as any).deliverySlot] || (order as any).deliverySlot}
+                    </div>
+                  )}
+
                   {order.customerNote && (
                     <div className="text-sm bg-yellow-50 dark:bg-yellow-950/30 rounded-lg p-3">
                       <span className="font-medium">Müşteri Notu: </span>{order.customerNote}

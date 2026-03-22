@@ -96,6 +96,61 @@ function HeroCarousel() {
   return content;
 }
 
+function OrderCounter() {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    const getOrderCount = () => {
+      const trTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Istanbul" }));
+      const hour = trTime.getHours();
+      const minute = trTime.getMinutes();
+      const timeInMinutes = hour * 60 + minute;
+
+      if (timeInMinutes < 600 || timeInMinutes >= 1200) return 0;
+
+      const seed = trTime.getFullYear() * 10000 + (trTime.getMonth() + 1) * 100 + trTime.getDate();
+      const rng = (n: number) => {
+        let x = Math.sin(seed * 9301 + n * 49297 + 233280) * 49297;
+        return x - Math.floor(x);
+      };
+
+      const elapsed = timeInMinutes - 600;
+      const maxOrders = 160 + Math.round(rng(0) * 30);
+      const totalMinutes = 600;
+
+      let progress = 0;
+      if (elapsed <= 60) progress = (elapsed / totalMinutes) * 0.06;
+      else if (elapsed <= 240) progress = 0.06 + ((elapsed - 60) / totalMinutes) * 0.25;
+      else if (elapsed <= 360) progress = 0.31 + ((elapsed - 240) / totalMinutes) * 0.30;
+      else if (elapsed <= 480) progress = 0.61 + ((elapsed - 360) / totalMinutes) * 0.25;
+      else progress = 0.86 + ((elapsed - 480) / totalMinutes) * 0.14;
+
+      return Math.round(maxOrders * Math.min(progress, 1));
+    };
+
+    setCount(getOrderCount());
+    const t = setInterval(() => setCount(getOrderCount()), 60000);
+    return () => clearInterval(t);
+  }, []);
+
+  if (count === 0) return null;
+
+  return (
+    <div className="rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 border border-emerald-200 p-3 flex items-center gap-3" data-testid="section-order-counter">
+      <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center shrink-0">
+        <Truck className="w-5 h-5 text-emerald-600" />
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-xs text-emerald-700 font-medium">Bugün şu ana kadar</p>
+        <p className="text-lg font-extrabold text-emerald-800">
+          {count}+ sipariş <span className="text-sm font-medium text-emerald-600">teslim edildi</span>
+        </p>
+      </div>
+      <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+    </div>
+  );
+}
+
 function QuickActions() {
   return (
     <div data-testid="section-quick-actions">
@@ -320,6 +375,10 @@ export default function Landing() {
       <main className="flex-1 w-full max-w-6xl mx-auto px-3 md:px-6 lg:px-8">
         <div className="mt-2 md:mt-6">
           <HeroCarousel />
+        </div>
+
+        <div className="mt-4 md:mt-8">
+          <OrderCounter />
         </div>
 
         <div className="mt-4 md:mt-8">
