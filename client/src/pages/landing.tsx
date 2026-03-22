@@ -244,8 +244,8 @@ function LocationBanner() {
           <MapPin className="w-5 h-5 md:w-6 md:h-6 text-emerald-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-xs md:text-sm font-bold text-emerald-800">Atakum İçi Teslimat</p>
-          <p className="text-[10px] md:text-xs text-emerald-600/80 mt-0.5">Atakum bölgesine teslimat</p>
+          <p className="text-xs md:text-sm font-bold text-emerald-800">Samsun İçin Kapıya Teslim</p>
+          <p className="text-[10px] md:text-xs text-emerald-600/80 mt-0.5">Samsun bölgesine kapıya teslimat</p>
         </div>
       </div>
     </div>
