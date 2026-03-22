@@ -1,6 +1,6 @@
 import { Link } from "wouter";
 import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info, Truck, Lock, ShieldCheck, ScrollText } from "lucide-react";
-import { SiWhatsapp } from "react-icons/si";
+import { SiWhatsapp, SiInstagram, SiFacebook } from "react-icons/si";
 
 const FOOTER_LINKS_COL1 = [
   { label: "Sıkça Sorulan Sorular", href: "/sss", icon: HelpCircle },
@@ -86,6 +86,17 @@ export default function Footer() {
                 </a>
               </li>
             </ul>
+            <div className="flex items-center gap-3 mt-5">
+              <a href="https://www.instagram.com/jetgo.pet" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-800 hover:bg-gradient-to-br hover:from-purple-600 hover:to-pink-500 flex items-center justify-center transition-all" data-testid="footer-instagram">
+                <SiInstagram className="w-4.5 h-4.5 text-gray-300" />
+              </a>
+              <a href="https://www.facebook.com/jetgo.pet" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-800 hover:bg-blue-600 flex items-center justify-center transition-all" data-testid="footer-facebook">
+                <SiFacebook className="w-4.5 h-4.5 text-gray-300" />
+              </a>
+              <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-all" data-testid="footer-whatsapp-icon">
+                <SiWhatsapp className="w-4.5 h-4.5 text-gray-300" />
+              </a>
+            </div>
           </div>
         </div>
 
