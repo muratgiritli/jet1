@@ -10,7 +10,7 @@ interface SEOProps {
   noindex?: boolean;
 }
 
-export const SITE_DOMAIN = "https://jetgo.shop";
+export const SITE_DOMAIN = "https://jetgopet.com";
 export const SITE_NAME = "JETGO Pet Shop Samsun";
 export const DEFAULT_OG_IMAGE = `${SITE_DOMAIN}/og-image.webp`;
 
