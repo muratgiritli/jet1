@@ -141,13 +141,70 @@ export async function registerRoutes(
   await seedDatabase();
   await ensureAdminExists();
 
+  const SEO_PAGES_DATA: { slug: string; district: string }[] = [
+    { slug: "samsun-petshop", district: "Samsun" },
+    { slug: "atakum-petshop", district: "Atakum" },
+    { slug: "yeni-mahalle-petshop", district: "Atakum" },
+    { slug: "denizevleri-petshop", district: "Atakum" },
+    { slug: "guzelyali-petshop", district: "Atakum" },
+    { slug: "kurupelit-petshop", district: "Atakum" },
+    { slug: "atakent-petshop", district: "Atakum" },
+    { slug: "incesu-petshop", district: "Atakum" },
+    { slug: "balac-petshop", district: "Atakum" },
+    { slug: "cakirlar-petshop", district: "Atakum" },
+    { slug: "mimar-sinan-petshop", district: "Atakum" },
+    { slug: "korfez-petshop", district: "Atakum" },
+    { slug: "soguksu-petshop", district: "Atakum" },
+    { slug: "taflan-petshop", district: "Atakum" },
+    { slug: "ilkadim-kadikoy-petshop", district: "İlkadım" },
+    { slug: "ilkadim-rasathane-petshop", district: "İlkadım" },
+    { slug: "ilkadim-kilicdede-petshop", district: "İlkadım" },
+    { slug: "ilkadim-kalkanci-petshop", district: "İlkadım" },
+    { slug: "ilkadim-baruthane-petshop", district: "İlkadım" },
+    { slug: "ilkadim-ulugazi-petshop", district: "İlkadım" },
+    { slug: "canik-karsiyaka-petshop", district: "Canik" },
+    { slug: "canik-gaziosmanpasa-petshop", district: "Canik" },
+    { slug: "canik-yenimahalle-petshop", district: "Canik" },
+    { slug: "canik-kuzeyyildizi-petshop", district: "Canik" },
+    { slug: "tekkekoy-19mayis-petshop", district: "Tekkeköy" },
+    { slug: "tekkekoy-sanayi-petshop", district: "Tekkeköy" },
+  ];
+
+  const DISTRICT_SITEMAP_SLUGS: Record<string, string> = {
+    "atakum": "Atakum",
+    "ilkadim": "İlkadım",
+    "canik": "Canik",
+    "tekkekoy": "Tekkeköy",
+    "samsun": "Samsun",
+  };
+
   app.get("/sitemap.xml", async (_req, res) => {
     try {
       const SITE = "https://jetgopet.com";
-      const allProducts = await storage.getAllProducts();
-      const activeProducts = allProducts.filter((p: any) => p.isActive && p.stock > 0 && p.price > 0);
-      const categories = await storage.getAllBrandCategories();
+      const today = new Date().toISOString().split("T")[0];
 
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      xml += `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+      xml += `  <sitemap>\n    <loc>${SITE}/sitemap-main.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
+      xml += `  <sitemap>\n    <loc>${SITE}/sitemap-products.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
+
+      for (const key of Object.keys(DISTRICT_SITEMAP_SLUGS)) {
+        xml += `  <sitemap>\n    <loc>${SITE}/sitemap-${key}.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
+      }
+
+      xml += `</sitemapindex>`;
+
+      res.set("Content-Type", "application/xml");
+      res.set("Cache-Control", "public, max-age=3600");
+      res.send(xml);
+    } catch (err) {
+      res.status(500).send("Sitemap error");
+    }
+  });
+
+  app.get("/sitemap-main.xml", async (_req, res) => {
+    try {
+      const SITE = "https://jetgopet.com";
       const staticPages = [
         { url: "/", priority: "1.0", changefreq: "daily" },
         { url: "/kategori", priority: "0.9", changefreq: "weekly" },
@@ -170,19 +227,56 @@ export async function registerRoutes(
       ];
 
       const today = new Date().toISOString().split("T")[0];
-
-      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-      xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
       for (const page of staticPages) {
         xml += `  <url>\n    <loc>${SITE}${page.url}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>\n`;
       }
+      xml += `</urlset>`;
 
+      res.set("Content-Type", "application/xml");
+      res.set("Cache-Control", "public, max-age=3600");
+      res.send(xml);
+    } catch (err) {
+      res.status(500).send("Sitemap error");
+    }
+  });
+
+  app.get("/sitemap-products.xml", async (_req, res) => {
+    try {
+      const SITE = "https://jetgopet.com";
+      const allProducts = await storage.getAllProducts();
+      const activeProducts = allProducts.filter((p: any) => p.isActive && p.stock > 0 && p.price > 0);
+      const today = new Date().toISOString().split("T")[0];
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
       for (const p of activeProducts) {
         const slug = p.name.toLowerCase().replace(/[^a-z0-9ğüşıöç]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
         xml += `  <url>\n    <loc>${SITE}/urun/${p.id}/${slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
       }
+      xml += `</urlset>`;
 
+      res.set("Content-Type", "application/xml");
+      res.set("Cache-Control", "public, max-age=3600");
+      res.send(xml);
+    } catch (err) {
+      res.status(500).send("Sitemap error");
+    }
+  });
+
+  app.get("/sitemap-:district.xml", (req, res) => {
+    try {
+      const districtSlug = req.params.district;
+      const districtName = DISTRICT_SITEMAP_SLUGS[districtSlug];
+      if (!districtName) return res.status(404).send("Not found");
+
+      const SITE = "https://jetgopet.com";
+      const today = new Date().toISOString().split("T")[0];
+      const pages = SEO_PAGES_DATA.filter(p => p.district === districtName);
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+      for (const p of pages) {
+        xml += `  <url>\n    <loc>${SITE}/${p.slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+      }
       xml += `</urlset>`;
 
       res.set("Content-Type", "application/xml");

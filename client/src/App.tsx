@@ -39,6 +39,7 @@ const IletisimPage = lazy(() => import("@/pages/static-pages").then(m => ({ defa
 const TeslimatIadePage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.TeslimatIadePage })));
 const GizlilikSozlesmesiPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.GizlilikSozlesmesiPage })));
 const MesafeliSatisSozlesmesiPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.MesafeliSatisSozlesmesiPage })));
+const SeoLandingPage = lazy(() => import("@/pages/seo-landing"));
 
 function PageLoader() {
   return (
@@ -77,6 +78,7 @@ function Router() {
         <Route path="/teslimat-iade" component={TeslimatIadePage} />
         <Route path="/gizlilik-sozlesmesi" component={GizlilikSozlesmesiPage} />
         <Route path="/mesafeli-satis" component={MesafeliSatisSozlesmesiPage} />
+        <Route path="/:slug" component={SeoLandingPage} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>

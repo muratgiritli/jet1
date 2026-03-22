@@ -8,13 +8,14 @@ interface SEOProps {
   ogType?: string;
   jsonLd?: object | object[];
   noindex?: boolean;
+  keywords?: string;
 }
 
 export const SITE_DOMAIN = "https://jetgopet.com";
 export const SITE_NAME = "JETGO Pet Shop Samsun";
 export const DEFAULT_OG_IMAGE = `${SITE_DOMAIN}/og-image.webp`;
 
-export default function SEO({ title, description, canonical, ogImage, ogType, jsonLd, noindex }: SEOProps) {
+export default function SEO({ title, description, canonical, ogImage, ogType, jsonLd, noindex, keywords }: SEOProps) {
   useEffect(() => {
     document.title = title;
 
@@ -25,6 +26,7 @@ export default function SEO({ title, description, canonical, ogImage, ogType, js
     };
 
     setMeta("name", "description", description);
+    if (keywords) setMeta("name", "keywords", keywords);
     setMeta("property", "og:title", title);
     setMeta("property", "og:description", description);
     setMeta("property", "og:type", ogType || "website");
