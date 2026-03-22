@@ -1,5 +1,5 @@
 import { db, pool } from "./storage";
-import { brandCategories, products, breedStats, crossSellSections, crossSellItems, subcategories } from "@shared/schema";
+import { brandCategories, products, breedStats, crossSellSections, crossSellItems, subcategories, deliveryNeighborhoods } from "@shared/schema";
 import { eq, and, sql } from "drizzle-orm";
 import brandDataJson from "./brand_data.json";
 
@@ -610,8 +610,88 @@ async function seedSubcategories() {
   }
 }
 
+async function seedDeliveryNeighborhoods() {
+  const existing = await db.select().from(deliveryNeighborhoods).limit(1);
+  if (existing.length > 0) {
+    console.log("Delivery neighborhoods already exist, skipping...");
+    return;
+  }
+
+  const NEIGHBORHOODS = [
+    { district: "Atakum", name: "Körfez", distance: 1, sortOrder: 1 },
+    { district: "Atakum", name: "Denizevleri", distance: 1.5, sortOrder: 2 },
+    { district: "Atakum", name: "Mimar Sinan", distance: 2, sortOrder: 3 },
+    { district: "Atakum", name: "Atakent", distance: 2, sortOrder: 4 },
+    { district: "Atakum", name: "Güzelyalı", distance: 2.5, sortOrder: 5 },
+    { district: "Atakum", name: "Ömürevleri", distance: 2, sortOrder: 6 },
+    { district: "Atakum", name: "Mevlana", distance: 2, sortOrder: 7 },
+    { district: "Atakum", name: "Kurupelit", distance: 4, sortOrder: 8 },
+    { district: "Atakum", name: "Esenevler", distance: 4, sortOrder: 9 },
+    { district: "Atakum", name: "Balaç", distance: 5, sortOrder: 10 },
+    { district: "Atakum", name: "Alanlı", distance: 6, sortOrder: 11 },
+    { district: "Atakum", name: "Çakırlar", distance: 6, sortOrder: 12 },
+    { district: "Atakum", name: "Küçükkolpınar", distance: 6, sortOrder: 13 },
+    { district: "Atakum", name: "Büyükkolpınar", distance: 7, sortOrder: 14 },
+    { district: "Atakum", name: "Atatepe", distance: 7, sortOrder: 15 },
+    { district: "Atakum", name: "Kamalı", distance: 9, sortOrder: 16 },
+    { district: "Atakum", name: "Çatalçam", distance: 9, sortOrder: 17 },
+    { district: "Atakum", name: "Karaoyumca", distance: 8, sortOrder: 18 },
+    { district: "Atakum", name: "Taflan", distance: 10.5, sortOrder: 19 },
+    { district: "Atakum", name: "Yeni Mahalle", distance: 11.5, sortOrder: 20 },
+    { district: "Atakum", name: "İncesu", distance: 12, sortOrder: 21 },
+    { district: "İlkadım", name: "19 Mayıs", distance: 9, sortOrder: 1 },
+    { district: "İlkadım", name: "Adalet", distance: 7, sortOrder: 2 },
+    { district: "İlkadım", name: "Ağabali", distance: 10, sortOrder: 3 },
+    { district: "İlkadım", name: "Anadolu", distance: 8, sortOrder: 4 },
+    { district: "İlkadım", name: "Bahçelievler", distance: 7, sortOrder: 5 },
+    { district: "İlkadım", name: "Baruthane", distance: 6, sortOrder: 6 },
+    { district: "İlkadım", name: "Cedit", distance: 10, sortOrder: 7 },
+    { district: "İlkadım", name: "Çatalarmut", distance: 11, sortOrder: 8 },
+    { district: "İlkadım", name: "Derebahçe", distance: 11, sortOrder: 9 },
+    { district: "İlkadım", name: "Fevzi Çakmak", distance: 9, sortOrder: 10 },
+    { district: "İlkadım", name: "Gazi", distance: 9, sortOrder: 11 },
+    { district: "İlkadım", name: "Hacınabi", distance: 10, sortOrder: 12 },
+    { district: "İlkadım", name: "Hançerli", distance: 9, sortOrder: 13 },
+    { district: "İlkadım", name: "İlyasköy", distance: 12, sortOrder: 14 },
+    { district: "İlkadım", name: "İstasyon", distance: 10, sortOrder: 15 },
+    { district: "İlkadım", name: "Kadıköy", distance: 11, sortOrder: 16 },
+    { district: "İlkadım", name: "Kale", distance: 10, sortOrder: 17 },
+    { district: "İlkadım", name: "Karadeniz", distance: 9, sortOrder: 18 },
+    { district: "İlkadım", name: "Kılıçdede", distance: 10, sortOrder: 19 },
+    { district: "İlkadım", name: "Liman", distance: 8, sortOrder: 20 },
+    { district: "İlkadım", name: "Pazar", distance: 10, sortOrder: 21 },
+    { district: "İlkadım", name: "Rasathane", distance: 12, sortOrder: 22 },
+    { district: "İlkadım", name: "Selahiye", distance: 10, sortOrder: 23 },
+    { district: "İlkadım", name: "Tepecik", distance: 11, sortOrder: 24 },
+    { district: "İlkadım", name: "Ulugazi", distance: 10, sortOrder: 25 },
+    { district: "İlkadım", name: "Unkapanı", distance: 10, sortOrder: 26 },
+    { district: "İlkadım", name: "Yaşardoğu", distance: 11, sortOrder: 27 },
+    { district: "İlkadım", name: "Zeytinlik", distance: 8, sortOrder: 28 },
+    { district: "Canik", name: "Karşıyaka", distance: 9, sortOrder: 1 },
+    { district: "Canik", name: "Gaziosmanpaşa", distance: 10, sortOrder: 2 },
+    { district: "Canik", name: "Yavuz Selim", distance: 10, sortOrder: 3 },
+    { district: "Canik", name: "Uludağ", distance: 10, sortOrder: 4 },
+    { district: "Canik", name: "Orhangazi", distance: 11, sortOrder: 5 },
+  ];
+
+  for (const nh of NEIGHBORHOODS) {
+    await db.insert(deliveryNeighborhoods).values({
+      district: nh.district,
+      name: nh.name,
+      distance: nh.distance,
+      minOrder: 700,
+      shippingFee: 89,
+      freeShippingLimit: 2000,
+      isActive: true,
+      sortOrder: nh.sortOrder,
+    });
+  }
+  console.log(`Seeded ${NEIGHBORHOODS.length} delivery neighborhoods.`);
+}
+
 export async function seedDatabase() {
   await seedSubcategories();
+  await seedDeliveryNeighborhoods();
   console.log("Checking database for missing brand data...");
 
   for (const brand of ALL_BRAND_DATA) {
