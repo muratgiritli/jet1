@@ -543,6 +543,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [phoneHistoryDialog, setPhoneHistoryDialog] = useState<string | null>(null);
   const [orderSearchPhone, setOrderSearchPhone] = useState("");
   const [orderDetailDialog, setOrderDetailDialog] = useState<Order | null>(null);
+  const [neighborhoodExpanded, setNeighborhoodExpanded] = useState(false);
+  const [nhDialogOpen, setNhDialogOpen] = useState(false);
+  const [editingNh, setEditingNh] = useState<any | null>(null);
+  const [nhName, setNhName] = useState("");
+  const [nhMinOrder, setNhMinOrder] = useState("700");
+  const [nhShipFee, setNhShipFee] = useState("89");
+  const [nhFreeShipLimit, setNhFreeShipLimit] = useState("2000");
+  const [nhSortOrder, setNhSortOrder] = useState("0");
 
   const bulkPriceUpdateMutation = useMutation({
     mutationFn: async ({ productIds, percentage }: { productIds: number[]; percentage: number }) => {
@@ -973,6 +981,51 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/campaign-items"] });
+    },
+  });
+
+  const { data: adminNeighborhoods = [] } = useQuery<any[]>({
+    queryKey: ["/api/admin/delivery-neighborhoods"],
+  });
+
+  const createNhMutation = useMutation({
+    mutationFn: async (data: { name: string; minOrder: number; shippingFee: number; freeShippingLimit: number; sortOrder: number }) => {
+      await apiRequest("POST", "/api/admin/delivery-neighborhoods", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/delivery-neighborhoods"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/delivery-neighborhoods"] });
+      setNhDialogOpen(false);
+      setNhName("");
+      setNhMinOrder("700");
+      setNhShipFee("89");
+      setNhFreeShipLimit("2000");
+      setNhSortOrder("0");
+      toast({ title: "Başarılı", description: "Mahalle eklendi" });
+    },
+  });
+
+  const updateNhMutation = useMutation({
+    mutationFn: async ({ id, ...data }: { id: number; name?: string; minOrder?: number; shippingFee?: number; freeShippingLimit?: number; isActive?: boolean; sortOrder?: number }) => {
+      await apiRequest("PATCH", `/api/admin/delivery-neighborhoods/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/delivery-neighborhoods"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/delivery-neighborhoods"] });
+      setNhDialogOpen(false);
+      setEditingNh(null);
+      toast({ title: "Başarılı", description: "Mahalle güncellendi" });
+    },
+  });
+
+  const deleteNhMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/delivery-neighborhoods/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/delivery-neighborhoods"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/delivery-neighborhoods"] });
+      toast({ title: "Başarılı", description: "Mahalle silindi" });
     },
   });
 
@@ -1599,6 +1652,195 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             })()}
           </DialogContent>
         </Dialog>
+
+        <section>
+          <button
+            onClick={() => setNeighborhoodExpanded(!neighborhoodExpanded)}
+            className="flex items-center gap-2 mb-4 w-full text-left"
+            data-testid="btn-toggle-neighborhoods"
+          >
+            <MapPin className="w-5 h-5 text-blue-600" />
+            <h2 className="text-lg font-bold" data-testid="text-section-neighborhoods">Mahalle Yönetimi</h2>
+            <Badge className="no-default-hover-elevate no-default-active-elevate" style={{ backgroundColor: "#2563eb", color: "#fff" }} data-testid="badge-nh-count">
+              {adminNeighborhoods.filter((n: any) => n.isActive).length} aktif
+            </Badge>
+            <ChevronDown className={`w-5 h-5 ml-auto transition-transform ${neighborhoodExpanded ? "rotate-180" : ""}`} />
+          </button>
+
+          {neighborhoodExpanded && (
+            <div className="space-y-3">
+              <div className="flex justify-end">
+                <Dialog open={nhDialogOpen} onOpenChange={(open) => {
+                  setNhDialogOpen(open);
+                  if (!open) {
+                    setEditingNh(null);
+                    setNhName("");
+                    setNhMinOrder("700");
+                    setNhShipFee("89");
+                    setNhFreeShipLimit("2000");
+                    setNhSortOrder("0");
+                  }
+                }}>
+                  <DialogTrigger asChild>
+                    <Button data-testid="btn-add-neighborhood">
+                      <Plus className="w-4 h-4" />
+                      Yeni Mahalle Ekle
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent>
+                    <DialogHeader>
+                      <DialogTitle>{editingNh ? "Mahalle Düzenle" : "Yeni Mahalle Ekle"}</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-3">
+                      <div>
+                        <Label>Mahalle Adı</Label>
+                        <Input
+                          value={nhName}
+                          onChange={(e) => setNhName(e.target.value)}
+                          placeholder="Örn: Atakum Merkez"
+                          data-testid="input-nh-name"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Min. Sipariş (TL)</Label>
+                          <Input
+                            type="number"
+                            value={nhMinOrder}
+                            onChange={(e) => setNhMinOrder(e.target.value)}
+                            data-testid="input-nh-min-order"
+                          />
+                        </div>
+                        <div>
+                          <Label>Teslimat Ücreti (TL)</Label>
+                          <Input
+                            type="number"
+                            value={nhShipFee}
+                            onChange={(e) => setNhShipFee(e.target.value)}
+                            data-testid="input-nh-ship-fee"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label>Ücretsiz Teslimat (TL)</Label>
+                          <Input
+                            type="number"
+                            value={nhFreeShipLimit}
+                            onChange={(e) => setNhFreeShipLimit(e.target.value)}
+                            data-testid="input-nh-free-ship"
+                          />
+                        </div>
+                        <div>
+                          <Label>Sıralama</Label>
+                          <Input
+                            type="number"
+                            value={nhSortOrder}
+                            onChange={(e) => setNhSortOrder(e.target.value)}
+                            data-testid="input-nh-sort"
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        className="w-full"
+                        disabled={!nhName.trim() || createNhMutation.isPending || updateNhMutation.isPending}
+                        onClick={() => {
+                          const data = {
+                            name: nhName.trim(),
+                            minOrder: parseFloat(nhMinOrder) || 700,
+                            shippingFee: parseFloat(nhShipFee) || 89,
+                            freeShippingLimit: parseFloat(nhFreeShipLimit) || 2000,
+                            sortOrder: parseInt(nhSortOrder) || 0,
+                          };
+                          if (editingNh) {
+                            updateNhMutation.mutate({ id: editingNh.id, ...data });
+                          } else {
+                            createNhMutation.mutate(data);
+                          }
+                        }}
+                        data-testid="btn-save-neighborhood"
+                      >
+                        {(createNhMutation.isPending || updateNhMutation.isPending) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                        {editingNh ? "Güncelle" : "Ekle"}
+                      </Button>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
+
+              {adminNeighborhoods.length === 0 ? (
+                <Card>
+                  <CardContent className="p-6 text-center text-muted-foreground">
+                    <MapPin className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                    <p className="text-sm">Henüz mahalle eklenmemiş.</p>
+                    <p className="text-xs mt-1">Mahalle ekleyerek her bölge için farklı teslimat koşulları belirleyin.</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                <div className="space-y-2">
+                  {adminNeighborhoods.map((nh: any) => (
+                    <Card key={nh.id} className={!nh.isActive ? "opacity-60" : ""} data-testid={`nh-card-${nh.id}`}>
+                      <CardContent className="p-3">
+                        <div className="flex items-center justify-between gap-2 flex-wrap">
+                          <div className="flex items-center gap-2 flex-1 min-w-0">
+                            <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
+                            <span className="font-medium text-sm truncate">{nh.name}</span>
+                            {!nh.isActive && <Badge variant="secondary" className="text-[10px]">Pasif</Badge>}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => updateNhMutation.mutate({ id: nh.id, isActive: !nh.isActive })}
+                              data-testid={`btn-toggle-nh-${nh.id}`}
+                            >
+                              {nh.isActive ? "Pasifle" : "Aktifle"}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setEditingNh(nh);
+                                setNhName(nh.name);
+                                setNhMinOrder(String(nh.minOrder));
+                                setNhShipFee(String(nh.shippingFee));
+                                setNhFreeShipLimit(String(nh.freeShippingLimit));
+                                setNhSortOrder(String(nh.sortOrder));
+                                setNhDialogOpen(true);
+                              }}
+                              data-testid={`btn-edit-nh-${nh.id}`}
+                            >
+                              <Pencil className="w-3.5 h-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-red-500 hover:text-red-600"
+                              onClick={() => {
+                                if (confirm(`"${nh.name}" mahallesini silmek istediğinize emin misiniz?`)) {
+                                  deleteNhMutation.mutate(nh.id);
+                                }
+                              }}
+                              data-testid={`btn-delete-nh-${nh.id}`}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+                          <span>Min: <strong className="text-foreground">{nh.minOrder} TL</strong></span>
+                          <span>Teslimat: <strong className="text-foreground">{nh.shippingFee} TL</strong></span>
+                          <span>Ücretsiz: <strong className="text-foreground">{nh.freeShippingLimit} TL+</strong></span>
+                          <span>Sıra: <strong className="text-foreground">{nh.sortOrder}</strong></span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </section>
 
         <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">

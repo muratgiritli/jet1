@@ -676,6 +676,7 @@ export async function registerRoutes(
     customerName: z.string().min(1, "Ad soyad gerekli"),
     customerAddress: z.string().optional(),
     usedPoints: z.number().optional(),
+    neighborhoodId: z.number().optional(),
     installmentMonths: z.number().optional(),
     installmentRate: z.number().optional(),
     installmentMonthly: z.number().optional(),
@@ -685,7 +686,19 @@ export async function registerRoutes(
   app.post("/api/orders", async (req, res) => {
     const parsed = createOrderSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
-    const { usedPoints, ...orderData } = parsed.data;
+    const { usedPoints, neighborhoodId, ...orderData } = parsed.data;
+
+    if (neighborhoodId) {
+      const neighborhoods = await storage.getActiveDeliveryNeighborhoods();
+      const nh = neighborhoods.find(n => n.id === neighborhoodId);
+      if (nh) {
+        if (orderData.subtotal < nh.minOrder) {
+          return res.status(400).json({ message: `Bu mahalle için minimum sipariş tutarı ${nh.minOrder} TL'dir.` });
+        }
+        orderData.shipping = orderData.subtotal >= nh.freeShippingLimit ? 0 : nh.shippingFee;
+        orderData.grandTotal = orderData.subtotal - orderData.discount + orderData.shipping;
+      }
+    }
 
     const allCampaignItems = await sharedPool.query("SELECT product_id, item_type FROM campaign_items WHERE is_active = true");
     const campaignMap = new Map<number, string>();
@@ -1435,6 +1448,71 @@ export async function registerRoutes(
       res.json({ ok: true });
     } catch (err) {
       res.status(500).json({ message: "Campaign item delete error" });
+    }
+  });
+
+  app.get("/api/delivery-neighborhoods", async (_req, res) => {
+    try {
+      const neighborhoods = await storage.getActiveDeliveryNeighborhoods();
+      res.json(neighborhoods);
+    } catch (err) {
+      res.status(500).json({ message: "Delivery neighborhoods fetch error" });
+    }
+  });
+
+  app.get("/api/admin/delivery-neighborhoods", requireAdmin, async (_req, res) => {
+    try {
+      const neighborhoods = await storage.getAllDeliveryNeighborhoods();
+      res.json(neighborhoods);
+    } catch (err) {
+      res.status(500).json({ message: "Delivery neighborhoods fetch error" });
+    }
+  });
+
+  app.post("/api/admin/delivery-neighborhoods", requireAdmin, async (req, res) => {
+    try {
+      const { name, minOrder, shippingFee, freeShippingLimit, isActive, sortOrder } = req.body;
+      if (!name || typeof name !== "string") {
+        return res.status(400).json({ message: "Mahalle adı gerekli" });
+      }
+      const nh = await storage.createDeliveryNeighborhood({
+        name: name.trim(),
+        minOrder: parseFloat(minOrder) || 700,
+        shippingFee: parseFloat(shippingFee) || 89,
+        freeShippingLimit: parseFloat(freeShippingLimit) || 2000,
+        isActive: isActive !== false,
+        sortOrder: parseInt(sortOrder) || 0,
+      });
+      res.json(nh);
+    } catch (err) {
+      res.status(500).json({ message: "Delivery neighborhood create error" });
+    }
+  });
+
+  app.patch("/api/admin/delivery-neighborhoods/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates: Record<string, any> = {};
+      if (req.body.name !== undefined) updates.name = req.body.name.trim();
+      if (req.body.minOrder !== undefined) updates.minOrder = parseFloat(req.body.minOrder);
+      if (req.body.shippingFee !== undefined) updates.shippingFee = parseFloat(req.body.shippingFee);
+      if (req.body.freeShippingLimit !== undefined) updates.freeShippingLimit = parseFloat(req.body.freeShippingLimit);
+      if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
+      if (req.body.sortOrder !== undefined) updates.sortOrder = parseInt(req.body.sortOrder);
+      const updated = await storage.updateDeliveryNeighborhood(id, updates);
+      if (!updated) return res.status(404).json({ message: "Not found" });
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ message: "Delivery neighborhood update error" });
+    }
+  });
+
+  app.delete("/api/admin/delivery-neighborhoods/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteDeliveryNeighborhood(parseInt(req.params.id));
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ message: "Delivery neighborhood delete error" });
     }
   });
 

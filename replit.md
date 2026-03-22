@@ -6,7 +6,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 ## Architecture
 - **Frontend**: React + TypeScript with shadcn/ui components, Tailwind CSS, framer-motion
 - **Backend**: Express with session-based auth (bcryptjs + express-session + connect-pg-simple), NetGSM SMS OTP for customer auth
-- **Database**: PostgreSQL (Drizzle ORM) - subcategories, brand_categories, products, product_images, cross_sell_sections, cross_sell_items, orders, breed_stats, installment_rates, customers, customer_favorites, customer_addresses, pet_profiles, loyalty_points, reorder_reminders tables
+- **Database**: PostgreSQL (Drizzle ORM) - subcategories, brand_categories, products, product_images, cross_sell_sections, cross_sell_items, orders, breed_stats, installment_rates, customers, customer_favorites, customer_addresses, pet_profiles, loyalty_points, reorder_reminders, delivery_neighborhoods tables
 - **Product Images**: Stored as base64 in `product_images` table (PostgreSQL), served via `/api/product-image/:id` endpoint. No filesystem dependency — images survive deployments. Admin uploads via multipart form, external URLs auto-downloaded and converted to WebP (800x800, quality 80).
 - **Loyalty Points**: Para Puan system - customers earn 5% of subtotal on each order, can spend points on future orders (auto-applied at checkout)
 - **Food Calculator**: Akıllı Mama Hesaplama - calculates daily food needs based on pet weight/age, shows how many days a package lasts, allows setting reorder reminders
@@ -18,6 +18,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - **Campaign System**: campaign_items table with main/extra products. Campaign page at /kampanya (purple theme), campaign banner on landing. Product detail campaign mode via ?kampanya=1 hides taksit/points/hemen-al. Checkout campaign mode: only Kapıda Nakit payment, 4000 TL free shipping, no discount/points, requires min 1 main + 1 extra. Server-side campaign validation in /api/orders. Max 1 main product per order (all others locked when one selected). Kedi kumu (IDs 461,474,473) max 1 per order. Admin campaign management: search & add products, publish/unpublish toggle, category-based filtering for extras, sort order management.
 - **Delivery Slots**: Checkout has delivery time slot selection (Hemen, Bugün 12-14, Bugün 16-19, Yarın Sabah 10-12). Stored as `delivery_slot` in orders table, shown in WhatsApp message and admin order detail.
 - **Order Notes**: Checkout has optional order note textarea (max 500 chars). Stored as `customer_note` in orders table, shown in WhatsApp message and admin order detail.
+- **Delivery Neighborhoods**: Mahalle-based delivery pricing. Admin creates neighborhoods with individual min order, shipping fee, and free shipping thresholds. Checkout shows neighborhood selector; when selected, overrides global CONFIG values for that order. Stored in `delivery_neighborhoods` table.
 - **Order Counter**: Landing page shows time-based daily order counter (10:00-20:00). Varies by time of day with deterministic daily seed for consistency.
 
 ## Key Files
@@ -98,6 +99,11 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - `POST /api/admin/campaign-items` - Add product to campaign (auth required)
 - `PATCH /api/admin/campaign-items/:id` - Update campaign item (toggle active, sort order, type) (auth required)
 - `DELETE /api/admin/campaign-items/:id` - Remove product from campaign (auth required)
+- `GET /api/delivery-neighborhoods` - Get active delivery neighborhoods (public)
+- `GET /api/admin/delivery-neighborhoods` - All delivery neighborhoods (auth required)
+- `POST /api/admin/delivery-neighborhoods` - Create delivery neighborhood (auth required)
+- `PATCH /api/admin/delivery-neighborhoods/:id` - Update delivery neighborhood (auth required)
+- `DELETE /api/admin/delivery-neighborhoods/:id` - Delete delivery neighborhood (auth required)
 - `GET /api/installment-rates` - Get active installment rates (public)
 - `GET /api/admin/installment-rates` - All installment rates (auth required)
 - `POST /api/admin/installment-rates` - Create installment rate (auth required)

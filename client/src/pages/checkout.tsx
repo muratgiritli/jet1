@@ -47,7 +47,14 @@ import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { useCustomer } from "@/contexts/CustomerContext";
-import type { InstallmentRate } from "@shared/schema";
+import type { InstallmentRate, DeliveryNeighborhood } from "@shared/schema";
+import {
+  Select as SSelect,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 const paymentIcons: Record<string, typeof CreditCard> = {
   nakit: Banknote,
@@ -349,23 +356,37 @@ export default function Checkout() {
     campaignValid,
   } = useCart();
 
-  const CAMPAIGN_SHIP_LIMIT = 4000;
-  const campaignShipping = hasCampaignItems ? (subtotal >= CAMPAIGN_SHIP_LIMIT ? 0 : CONFIG.shipFee) : shipping;
-  const campaignDiscount = hasCampaignItems ? 0 : discount;
-  const campaignGrandTotal = hasCampaignItems ? (subtotal + campaignShipping) : grandTotal;
-
-  const effectiveShipping = hasCampaignItems ? campaignShipping : shipping;
-  const effectiveDiscount = hasCampaignItems ? campaignDiscount : discount;
-  const effectiveGrandTotal = hasCampaignItems ? campaignGrandTotal : grandTotal;
-
-  const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
-  const displayTotal = pointsDiscount > 0 ? Math.max(0, effectiveGrandTotal - pointsDiscount) : effectiveGrandTotal;
-
   const [locationError, setLocationError] = useState("");
   const [orderError, setOrderError] = useState("");
   const [orderNote, setOrderNote] = useState("");
   const [deliverySlot, setDeliverySlot] = useState("hemen");
   const [pendingOrderAfterAuth, setPendingOrderAfterAuth] = useState(false);
+  const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>("");
+
+  const { data: neighborhoods = [] } = useQuery<DeliveryNeighborhood[]>({
+    queryKey: ["/api/delivery-neighborhoods"],
+  });
+
+  const activeNeighborhood = neighborhoods.find((n) => String(n.id) === selectedNeighborhood);
+  const nhMinLimit = activeNeighborhood ? activeNeighborhood.minOrder : CONFIG.minLimit;
+  const nhShipFee = activeNeighborhood ? activeNeighborhood.shippingFee : CONFIG.shipFee;
+  const nhFreeShipLimit = activeNeighborhood ? activeNeighborhood.freeShippingLimit : CONFIG.shipLimit;
+  const nhShipping = subtotal >= nhFreeShipLimit ? 0 : nhShipFee;
+  const nhMinReached = subtotal >= nhMinLimit;
+
+  const CAMPAIGN_SHIP_LIMIT = 4000;
+  const campaignShipping = hasCampaignItems ? (subtotal >= CAMPAIGN_SHIP_LIMIT ? 0 : CONFIG.shipFee) : nhShipping;
+  const campaignDiscount = hasCampaignItems ? 0 : discount;
+  const normalGrandTotal = subtotal - discount + nhShipping;
+  const campaignGrandTotal = hasCampaignItems ? (subtotal + campaignShipping) : normalGrandTotal;
+
+  const effectiveShipping = hasCampaignItems ? campaignShipping : nhShipping;
+  const effectiveDiscount = hasCampaignItems ? campaignDiscount : discount;
+  const effectiveGrandTotal = hasCampaignItems ? campaignGrandTotal : normalGrandTotal;
+  const effectiveMinReached = hasCampaignItems ? minReached : nhMinReached;
+
+  const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
+  const displayTotal = pointsDiscount > 0 ? Math.max(0, effectiveGrandTotal - pointsDiscount) : effectiveGrandTotal;
 
   const handleShareLocation = () => {
     if (!navigator.geolocation) {
@@ -396,7 +417,7 @@ export default function Checkout() {
       setOrderError("Kampanyadan yararlanmak için sepete en az 1 ana ürün ve 1 ek ürün eklemeniz gerekmektedir.");
       return;
     }
-    if (!minReached || selectedProducts.length === 0 || orderLoading) {
+    if (!effectiveMinReached || selectedProducts.length === 0 || orderLoading) {
       return;
     }
     setOrderError("");
@@ -433,6 +454,7 @@ export default function Checkout() {
           customerDaireNo.trim() ? `Daire: ${customerDaireNo.trim()}` : "",
         ].filter(Boolean).join(", "),
         usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
+        neighborhoodId: activeNeighborhood ? activeNeighborhood.id : undefined,
         customerNote: orderNote.trim() || undefined,
         deliverySlot: deliverySlot || undefined,
       };
@@ -468,6 +490,7 @@ export default function Checkout() {
       if (customerName.trim()) msg += `*Ad Soyad:* ${customerName.trim()}\n`;
       if (customerPhone.trim()) msg += `*Telefon:* ${customerPhone.trim()}\n`;
       if (builtAddress) msg += `*Adres:* ${builtAddress}\n`;
+      if (activeNeighborhood) msg += `*Mahalle:* ${activeNeighborhood.name}\n`;
       if (customerLocation) msg += `*Konum:* https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}\n`;
       if (customerName.trim() || customerPhone.trim()) msg += `\n`;
       selectedProducts.forEach(({ product, qty }) => {
@@ -1002,7 +1025,39 @@ export default function Checkout() {
                 Konum Bilgisi
               </h2>
               <Card>
-                <CardContent className="p-4">
+                <CardContent className="p-4 space-y-4">
+                  {neighborhoods.length > 0 && (
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">Mahalle Seçin</label>
+                      <SSelect value={selectedNeighborhood} onValueChange={setSelectedNeighborhood}>
+                        <SelectTrigger className="w-full" data-testid="select-neighborhood">
+                          <SelectValue placeholder="Mahalle seçiniz..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {neighborhoods.map((n) => (
+                            <SelectItem key={n.id} value={String(n.id)} data-testid={`neighborhood-${n.id}`}>
+                              {n.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </SSelect>
+                      {activeNeighborhood && (
+                        <div className="mt-2 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
+                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                            <span className="text-blue-700 dark:text-blue-300">
+                              Min. Sipariş: <strong>{activeNeighborhood.minOrder} TL</strong>
+                            </span>
+                            <span className="text-blue-700 dark:text-blue-300">
+                              Teslimat: <strong>{activeNeighborhood.shippingFee} TL</strong>
+                            </span>
+                            <span className="text-blue-700 dark:text-blue-300">
+                              Ücretsiz Teslimat: <strong>{activeNeighborhood.freeShippingLimit} TL+</strong>
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                   {customerLocation ? (
                     <div className="flex items-center gap-3 p-3 rounded-lg border border-green-200 bg-green-50" data-testid="location-added">
                       <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
@@ -1114,21 +1169,21 @@ export default function Checkout() {
                         <span className="text-sm font-medium" data-testid="text-min-label">Minimum Sipariş</span>
                       </div>
                       <span className="text-xs font-bold text-muted-foreground" data-testid="text-min-progress">
-                        {Math.round(subtotal)}/{CONFIG.minLimit} TL
+                        {Math.round(subtotal)}/{nhMinLimit} TL
                       </span>
                     </div>
                     <Progress
-                      value={minPerc}
+                      value={Math.min((subtotal / nhMinLimit) * 100, 100)}
                       className="h-2 [&>div]:bg-amber-500 dark:[&>div]:bg-amber-400"
                       data-testid="bar-min"
                     />
                     <p className="text-xs font-medium mt-1.5 text-muted-foreground" data-testid="text-min-hint">
-                      {subtotal >= CONFIG.minLimit ? (
+                      {subtotal >= nhMinLimit ? (
                         <span className="text-chart-2 flex items-center gap-1">
                           <Check className="w-3 h-3" /> Minimum tutar aşıldı
                         </span>
                       ) : (
-                        `Minimum sipariş için ${Math.round(CONFIG.minLimit - subtotal)} TL daha ekleyin`
+                        `Minimum sipariş için ${Math.round(nhMinLimit - subtotal)} TL daha ekleyin`
                       )}
                     </p>
                   </div>
@@ -1140,24 +1195,24 @@ export default function Checkout() {
                         <span className="text-sm font-medium" data-testid="text-ship-label">Ücretsiz Teslimat</span>
                       </div>
                       <span className="text-xs font-bold text-muted-foreground" data-testid="text-ship-progress">
-                        {Math.round(subtotal)}/{CONFIG.shipLimit} TL
+                        {Math.round(subtotal)}/{nhFreeShipLimit} TL
                       </span>
                     </div>
                     <Progress
-                      value={Math.min((subtotal / CONFIG.shipLimit) * 100, 100)}
+                      value={Math.min((subtotal / nhFreeShipLimit) * 100, 100)}
                       className="h-2"
                       data-testid="bar-ship"
                     />
                     <p className="text-xs font-medium mt-1.5 text-muted-foreground" data-testid="text-ship-hint">
-                      {subtotal >= CONFIG.shipLimit ? (
+                      {subtotal >= nhFreeShipLimit ? (
                         <span className="text-chart-2 flex items-center gap-1">
                           <Check className="w-3 h-3" /> Ücretsiz teslimat kazandınız!
                         </span>
                       ) : (
-                        `Ücretsiz teslimat için ${Math.round(CONFIG.shipLimit - subtotal)} TL daha ekleyin`
+                        `Ücretsiz teslimat için ${Math.round(nhFreeShipLimit - subtotal)} TL daha ekleyin`
                       )}
                     </p>
-                    {subtotal < CONFIG.shipLimit && (
+                    {subtotal < nhFreeShipLimit && (
                       <Link href="/">
                         <Button
                           variant="outline"
@@ -1283,7 +1338,7 @@ export default function Checkout() {
                     className="w-full mt-5"
                     variant="default"
                     size="lg"
-                    disabled={!minReached || selectedProducts.length === 0 || orderLoading || (hasCampaignItems && !campaignValid)}
+                    disabled={!effectiveMinReached || selectedProducts.length === 0 || orderLoading || (hasCampaignItems && !campaignValid)}
                     onClick={handleOrder}
                     data-testid="btn-order-whatsapp"
                   >
@@ -1295,9 +1350,9 @@ export default function Checkout() {
                     <p className="text-[12px] text-red-500 text-center mt-2">{orderError}</p>
                   )}
 
-                  {!minReached && selectedProducts.length > 0 && (
+                  {!effectiveMinReached && selectedProducts.length > 0 && (
                     <p className="text-xs text-center mt-2 text-muted-foreground" data-testid="text-min-warning">
-                      Minimum sipariş tutarı {CONFIG.minLimit} TL'dir
+                      Minimum sipariş tutarı {nhMinLimit} TL'dir
                     </p>
                   )}
 

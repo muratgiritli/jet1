@@ -18,7 +18,8 @@ import {
   type PetProfile, type InsertPetProfile,
   type LoyaltyPoint, type InsertLoyaltyPoint,
   type ReorderReminder, type InsertReorderReminder,
-  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders,
+  type DeliveryNeighborhood, type InsertDeliveryNeighborhood,
+  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders, deliveryNeighborhoods,
 } from "@shared/schema";
 
 export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
@@ -115,6 +116,12 @@ export interface IStorage {
   createReorderReminder(data: InsertReorderReminder): Promise<ReorderReminder>;
   getReorderReminders(): Promise<ReorderReminder[]>;
   updateReorderReminderStatus(id: number, status: string): Promise<ReorderReminder | undefined>;
+
+  getAllDeliveryNeighborhoods(): Promise<DeliveryNeighborhood[]>;
+  getActiveDeliveryNeighborhoods(): Promise<DeliveryNeighborhood[]>;
+  createDeliveryNeighborhood(data: InsertDeliveryNeighborhood): Promise<DeliveryNeighborhood>;
+  updateDeliveryNeighborhood(id: number, data: Partial<InsertDeliveryNeighborhood>): Promise<DeliveryNeighborhood | undefined>;
+  deleteDeliveryNeighborhood(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -471,6 +478,28 @@ export class DatabaseStorage implements IStorage {
   async updateReorderReminderStatus(id: number, status: string): Promise<ReorderReminder | undefined> {
     const [updated] = await db.update(reorderReminders).set({ status, notifiedAt: status === "notified" ? new Date() : undefined }).where(eq(reorderReminders.id, id)).returning();
     return updated;
+  }
+
+  async getAllDeliveryNeighborhoods(): Promise<DeliveryNeighborhood[]> {
+    return db.select().from(deliveryNeighborhoods).orderBy(deliveryNeighborhoods.sortOrder);
+  }
+
+  async getActiveDeliveryNeighborhoods(): Promise<DeliveryNeighborhood[]> {
+    return db.select().from(deliveryNeighborhoods).where(eq(deliveryNeighborhoods.isActive, true)).orderBy(deliveryNeighborhoods.sortOrder);
+  }
+
+  async createDeliveryNeighborhood(data: InsertDeliveryNeighborhood): Promise<DeliveryNeighborhood> {
+    const [nh] = await db.insert(deliveryNeighborhoods).values(data).returning();
+    return nh;
+  }
+
+  async updateDeliveryNeighborhood(id: number, data: Partial<InsertDeliveryNeighborhood>): Promise<DeliveryNeighborhood | undefined> {
+    const [updated] = await db.update(deliveryNeighborhoods).set(data).where(eq(deliveryNeighborhoods.id, id)).returning();
+    return updated;
+  }
+
+  async deleteDeliveryNeighborhood(id: number): Promise<void> {
+    await db.delete(deliveryNeighborhoods).where(eq(deliveryNeighborhoods.id, id));
   }
 }
 

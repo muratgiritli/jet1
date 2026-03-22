@@ -252,6 +252,20 @@ export const productImages = pgTable("product_images", {
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
 });
 
+export const deliveryNeighborhoods = pgTable("delivery_neighborhoods", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  minOrder: real("min_order").notNull().default(700),
+  shippingFee: real("shipping_fee").notNull().default(89),
+  freeShippingLimit: real("free_shipping_limit").notNull().default(2000),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+});
+
+export const insertDeliveryNeighborhoodSchema = createInsertSchema(deliveryNeighborhoods).omit({ id: true });
+export type InsertDeliveryNeighborhood = z.infer<typeof insertDeliveryNeighborhoodSchema>;
+export type DeliveryNeighborhood = typeof deliveryNeighborhoods.$inferSelect;
+
 export const campaignItems = pgTable("campaign_items", {
   id: serial("id").primaryKey(),
   productId: integer("product_id").notNull(),
