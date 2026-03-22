@@ -34,8 +34,8 @@ export interface PaymentOption {
 
 export const CONFIG = {
   phone: "+908508403959",
-  shipLimit: 1000,
-  minLimit: 500,
+  shipLimit: 2000,
+  minLimit: 700,
   shipFee: 89,
   bankInfo:
     "\n\n*BANKA HESAP NO :* TR54 0006 2001 0550 0006 2959 82 \n*BANKA HESAP ADI :* SİZPA İNTERNET TİCARET LİMİTED ŞİRKETİ",
