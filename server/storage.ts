@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { eq, desc, ilike, or, and } from "drizzle-orm";
+import { eq, desc, ilike, or, and, gte, sql } from "drizzle-orm";
 import {
   type User, type InsertUser,
   type Subcategory, type InsertSubcategory,
@@ -172,8 +172,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getBrandCategoryBySlug(animal: string, subcategory: string, brandSlug: string): Promise<BrandCategory | undefined> {
-    const all = await db.select().from(brandCategories);
-    return all.find(c => c.animal === animal && c.subcategory === subcategory && c.brandSlug === brandSlug);
+    const [cat] = await db.select().from(brandCategories).where(
+      and(
+        eq(brandCategories.animal, animal),
+        eq(brandCategories.subcategory, subcategory),
+        eq(brandCategories.brandSlug, brandSlug)
+      )
+    );
+    return cat;
   }
 
   async createBrandCategory(data: InsertBrandCategory): Promise<BrandCategory> {
@@ -283,8 +289,9 @@ export class DatabaseStorage implements IStorage {
 
   async getOrdersByPhone(phone: string): Promise<Order[]> {
     const normalized = phone.replace(/\D/g, "");
-    const allOrders = await db.select().from(orders).orderBy(desc(orders.createdAt));
-    return allOrders.filter(o => o.customerPhone && o.customerPhone.replace(/\D/g, "").includes(normalized));
+    return db.select().from(orders)
+      .where(sql`regexp_replace(${orders.customerPhone}, '\\D', '', 'g') = ${normalized}`)
+      .orderBy(desc(orders.createdAt));
   }
 
   async getBreedStatsByProduct(productId: number): Promise<BreedStat[]> {
@@ -302,11 +309,11 @@ export class DatabaseStorage implements IStorage {
 
 
   async decrementStock(productId: number, quantity: number): Promise<boolean> {
-    const [product] = await db.select().from(products).where(eq(products.id, productId));
-    if (!product || product.stock < quantity) return false;
-    const newStock = product.stock - quantity;
-    await db.update(products).set({ stock: newStock }).where(eq(products.id, productId));
-    return true;
+    const result = await db.update(products)
+      .set({ stock: sql`${products.stock} - ${quantity}` })
+      .where(and(eq(products.id, productId), gte(products.stock, quantity)))
+      .returning();
+    return result.length > 0;
   }
 
   async createStockAlert(data: InsertStockAlert): Promise<StockAlert> {
@@ -354,8 +361,10 @@ export class DatabaseStorage implements IStorage {
 
   async getCustomerByPhone(phone: string): Promise<Customer | undefined> {
     const normalized = phone.replace(/\D/g, "");
-    const all = await db.select().from(customers);
-    return all.find(c => c.phone.replace(/\D/g, "") === normalized);
+    const [customer] = await db.select().from(customers).where(
+      sql`regexp_replace(${customers.phone}, '\\D', '', 'g') = ${normalized}`
+    );
+    return customer;
   }
 
   async getCustomer(id: number): Promise<Customer | undefined> {
@@ -444,8 +453,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCustomerPointsBalance(customerId: number): Promise<number> {
-    const points = await db.select().from(loyaltyPoints).where(eq(loyaltyPoints.customerId, customerId));
-    return points.reduce((sum, p) => sum + p.amount, 0);
+    const [result] = await db.select({ total: sql<number>`coalesce(sum(${loyaltyPoints.amount}), 0)` })
+      .from(loyaltyPoints).where(eq(loyaltyPoints.customerId, customerId));
+    return Number(result?.total ?? 0);
   }
 
   async addLoyaltyPoints(data: InsertLoyaltyPoint): Promise<LoyaltyPoint> {
@@ -454,16 +464,19 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllCustomersWithPoints(): Promise<{ id: number; phone: string; name: string; balance: number }[]> {
-    const allCustomers = await db.select().from(customers);
-    const allPoints = await db.select().from(loyaltyPoints);
-    const balanceMap = new Map<number, number>();
-    for (const p of allPoints) {
-      balanceMap.set(p.customerId, (balanceMap.get(p.customerId) || 0) + p.amount);
-    }
-    return allCustomers
-      .map(c => ({ id: c.id, phone: c.phone, name: c.name, balance: balanceMap.get(c.id) || 0 }))
-      .filter(c => c.balance !== 0)
-      .sort((a, b) => b.balance - a.balance);
+    const results = await db
+      .select({
+        id: customers.id,
+        phone: customers.phone,
+        name: customers.name,
+        balance: sql<number>`coalesce(sum(${loyaltyPoints.amount}), 0)`,
+      })
+      .from(customers)
+      .innerJoin(loyaltyPoints, eq(customers.id, loyaltyPoints.customerId))
+      .groupBy(customers.id, customers.phone, customers.name)
+      .having(sql`sum(${loyaltyPoints.amount}) != 0`)
+      .orderBy(sql`sum(${loyaltyPoints.amount}) desc`);
+    return results.map(r => ({ ...r, balance: Number(r.balance) }));
   }
 
   async createReorderReminder(data: InsertReorderReminder): Promise<ReorderReminder> {

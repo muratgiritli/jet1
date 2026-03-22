@@ -1,4 +1,4 @@
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, Component, type ReactNode } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -12,6 +12,23 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import InstallBanner from "@/components/InstallBanner";
 import Landing from "@/pages/landing";
+
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
+  state = { hasError: false };
+  static getDerivedStateFromError() { return { hasError: true }; }
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="flex flex-col items-center justify-center min-h-[60vh] px-4 text-center">
+          <h2 className="text-xl font-bold text-gray-900 mb-2">Bir hata oluştu</h2>
+          <p className="text-gray-500 mb-4 text-sm">Sayfa yüklenirken bir sorun oluştu.</p>
+          <button onClick={() => { this.setState({ hasError: false }); window.location.href = "/"; }} className="px-4 py-2 bg-[#6B3480] text-white rounded-lg font-medium text-sm" data-testid="btn-error-home">Ana Sayfaya Dön</button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 const Checkout = lazy(() => import("@/pages/checkout"));
 const CategoryPage = lazy(() => import("@/pages/category"));
@@ -93,7 +110,7 @@ function AppShell() {
     <>
       {!isAdmin && <InstallBanner />}
       {!isAdmin && <Header />}
-      <Router />
+      <ErrorBoundary><Router /></ErrorBoundary>
       {!isAdmin && location === "/" && <Footer />}
       {!isAdmin && <FloatingCartBar />}
       {!isAdmin && <BottomTabBar />}

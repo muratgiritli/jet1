@@ -130,7 +130,7 @@ export async function registerRoutes(
         pool: sharedPool,
         createTableIfMissing: true,
       }),
-      secret: process.env.SESSION_SECRET || "jetgo-fallback-secret",
+      secret: process.env.SESSION_SECRET!,
       resave: false,
       saveUninitialized: false,
       rolling: true,
