@@ -141,6 +141,58 @@ export async function registerRoutes(
   await seedDatabase();
   await ensureAdminExists();
 
+  app.get("/sitemap.xml", async (_req, res) => {
+    try {
+      const SITE = "https://jetgo.shop";
+      const allProducts = await storage.getAllProducts();
+      const activeProducts = allProducts.filter((p: any) => p.isActive && p.stock > 0 && p.price > 0);
+      const categories = await storage.getAllBrandCategories();
+
+      const staticPages = [
+        { url: "/", priority: "1.0", changefreq: "daily" },
+        { url: "/kategori", priority: "0.9", changefreq: "weekly" },
+        { url: "/kategori/kopek", priority: "0.8", changefreq: "weekly" },
+        { url: "/kategori/kedi", priority: "0.8", changefreq: "weekly" },
+        { url: "/kategori/kus", priority: "0.7", changefreq: "weekly" },
+        { url: "/kategori/kemirgen", priority: "0.7", changefreq: "weekly" },
+        { url: "/kampanya", priority: "0.8", changefreq: "daily" },
+        { url: "/sss", priority: "0.5", changefreq: "monthly" },
+        { url: "/hakkimizda", priority: "0.4", changefreq: "monthly" },
+        { url: "/iletisim", priority: "0.4", changefreq: "monthly" },
+        { url: "/islem-rehberi", priority: "0.5", changefreq: "monthly" },
+        { url: "/teslimat-iade", priority: "0.5", changefreq: "monthly" },
+        { url: "/kvkk", priority: "0.3", changefreq: "yearly" },
+        { url: "/gizlilik", priority: "0.3", changefreq: "yearly" },
+        { url: "/kullanim-kosullari", priority: "0.3", changefreq: "yearly" },
+        { url: "/cerez-politikasi", priority: "0.3", changefreq: "yearly" },
+        { url: "/mesafeli-satis", priority: "0.3", changefreq: "yearly" },
+        { url: "/gizlilik-sozlesmesi", priority: "0.3", changefreq: "yearly" },
+      ];
+
+      const today = new Date().toISOString().split("T")[0];
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+
+      for (const page of staticPages) {
+        xml += `  <url>\n    <loc>${SITE}${page.url}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>\n`;
+      }
+
+      for (const p of activeProducts) {
+        const slug = p.name.toLowerCase().replace(/[^a-z0-9ğüşıöç]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
+        xml += `  <url>\n    <loc>${SITE}/urun/${p.id}/${slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+      }
+
+      xml += `</urlset>`;
+
+      res.set("Content-Type", "application/xml");
+      res.set("Cache-Control", "public, max-age=3600");
+      res.send(xml);
+    } catch (err) {
+      res.status(500).send("Sitemap error");
+    }
+  });
+
   app.get("/api/export/xlsx", async (_req, res) => {
     try {
       const XLSX = await import("xlsx");
@@ -439,7 +491,7 @@ export async function registerRoutes(
 
   app.get("/robots.txt", (req, res) => {
     res.set("Content-Type", "text/plain");
-    res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /api/\nSitemap: https://jet55.app/sitemap.xml\n`);
+    res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /odeme\nDisallow: /giris\nDisallow: /hesabim\nDisallow: /siparis-takip\n\nSitemap: https://jetgo.shop/sitemap.xml\n`);
   });
 
   app.get("/api/products", async (req, res) => {

@@ -3,6 +3,7 @@ import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { motion, AnimatePresence } from "framer-motion";
 import { Heart, ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
+import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useCart } from "@/contexts/CartContext";
@@ -98,6 +99,11 @@ export default function FavoritesPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
+      <SEO
+        title="Favorilerim | JETGO Pet Shop Samsun"
+        description="Favori evcil hayvan ürünleriniz. Beğendiğiniz mama, aksesuar ve bakım ürünlerini favorilerinize ekleyin."
+        noindex
+      />
       <div className="max-w-lg mx-auto px-3 py-4">
         <h1 className="text-lg font-bold flex items-center gap-2 mb-4" data-testid="text-favorites-title">
           <Heart className="w-5 h-5 text-red-500 fill-red-500" />

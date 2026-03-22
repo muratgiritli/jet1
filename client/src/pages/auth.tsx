@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Phone, User, Loader2, MapPin, Navigation, Home, ShieldCheck, ArrowLeft } from "lucide-react";
+import SEO from "@/components/SEO";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { TESLIMAT_MAHALLELERI } from "@/lib/data";
 import { apiRequest } from "@/lib/queryClient";
@@ -187,6 +188,11 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-8">
+      <SEO
+        title="Giriş Yap / Üye Ol | JETGO Pet Shop Samsun"
+        description="JETGO Pet Shop üyelik girişi. Siparişlerinizi takip edin, para puan kazanın, favori ürünlerinizi kaydedin."
+        noindex
+      />
       <div className="max-w-sm mx-auto px-4 py-8">
         <div className="text-center mb-6">
           <h1 className="text-xl font-bold" data-testid="text-auth-title">

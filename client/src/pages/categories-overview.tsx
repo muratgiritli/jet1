@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
+import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD } from "@/components/SEO";
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
 import catBird from "@/assets/images/cat-bird.webp";
@@ -44,6 +45,15 @@ const CATEGORIES = [
 export default function CategoriesOverview() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white pb-20 md:pb-8">
+      <SEO
+        title="Evcil Hayvan Kategorileri | JETGO Pet Shop Samsun"
+        description="Kedi, köpek, kuş ve kemirgen için mama, aksesuar, bakım ürünleri. Samsun'da aynı gün teslimat ile evcil hayvan ürünleri online sipariş."
+        canonical={`${SITE_DOMAIN}/kategori`}
+        jsonLd={BREADCRUMB_JSONLD([
+          { name: "Ana Sayfa", url: SITE_DOMAIN },
+          { name: "Kategoriler", url: `${SITE_DOMAIN}/kategori` },
+        ])}
+      />
       <div className="max-w-2xl mx-auto px-4 py-6">
         <div className="text-center mb-6">
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight" data-testid="text-categories-title">

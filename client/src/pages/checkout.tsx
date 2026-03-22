@@ -39,6 +39,7 @@ import {
   Clock,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
+import SEO from "@/components/SEO";
 import {
   CONFIG,
   PAYMENT_OPTIONS,
@@ -564,6 +565,11 @@ export default function Checkout() {
 
   return (
     <div className="min-h-screen bg-background pb-16 md:pb-0">
+      <SEO
+        title="Sepet ve Ödeme | JETGO Pet Shop Samsun"
+        description="JETGO Pet Shop sepetiniz. Kapıda nakit, kredi kartı, havale/EFT ile ödeme. Samsun içi aynı gün teslimat."
+        noindex
+      />
       <AnimatePresence>
         {showAuthModal && !isLoggedIn && (
           <motion.div

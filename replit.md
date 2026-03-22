@@ -20,6 +20,7 @@ Pet shop quick ordering application built with React/TypeScript. Customers brows
 - **Order Notes**: Checkout has optional order note textarea (max 500 chars). Stored as `customer_note` in orders table, shown in WhatsApp message and admin order detail.
 - **Delivery Neighborhoods**: Mahalle-based delivery pricing. Admin creates neighborhoods with individual min order, shipping fee, and free shipping thresholds. Checkout shows neighborhood selector; when selected, overrides global CONFIG values for that order. Stored in `delivery_neighborhoods` table.
 - **Order Counter**: Landing page shows time-based daily order counter (10:00-20:00). Varies by time of day with deterministic daily seed for consistency.
+- **SEO**: Custom SEO component (`client/src/components/SEO.tsx`) with per-page title, description, canonical URLs, Open Graph, Twitter Cards, structured data (Schema.org). Dynamic sitemap.xml endpoint, robots.txt, FAQ/Product/BreadcrumbList/LocalBusiness/WebSite JSON-LD. Google site verification active. Only Inter font loaded (optimized from 30+ fonts).
 
 ## Key Files
 - `client/src/pages/campaign.tsx` - Campaign product listing page with main/extra sections

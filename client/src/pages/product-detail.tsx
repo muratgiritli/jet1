@@ -18,7 +18,7 @@ import ImageZoom from "@/components/ImageZoom";
 import ProductImage from "@/components/ProductImage";
 import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
 import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
-import SEO, { SITE_DOMAIN } from "@/components/SEO";
+import SEO, { SITE_DOMAIN, PRODUCT_JSONLD, BREADCRUMB_JSONLD } from "@/components/SEO";
 
 type ProductDetailData = {
   product: Product;

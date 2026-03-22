@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /odeme
+Disallow: /giris
+Disallow: /hesabim
+Disallow: /siparis-takip
+
+Sitemap: https://jetgo.shop/sitemap.xml

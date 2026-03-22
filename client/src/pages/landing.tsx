@@ -6,7 +6,7 @@ import {
   Gift, MapPin, Phone, Mail
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
-import SEO, { LOCAL_BUSINESS_JSONLD, SITE_DOMAIN } from "@/components/SEO";
+import SEO, { LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
 import catBird from "@/assets/images/cat-bird.webp";
@@ -368,7 +368,7 @@ export default function Landing() {
         title="Samsun Pet Shop - Kedi Köpek Maması Online Sipariş | JETGO"
         description="Samsun pet shop JETGO - Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri. Samsun içi aynı gün kapıya teslimat, kapıda ödeme. En uygun fiyatlarla online sipariş."
         canonical={`${SITE_DOMAIN}/`}
-        jsonLd={LOCAL_BUSINESS_JSONLD}
+        jsonLd={[LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD]}
       />
 
 

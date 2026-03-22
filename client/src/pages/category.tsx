@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
-import SEO, { SITE_DOMAIN } from "@/components/SEO";
+import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD } from "@/components/SEO";
 
 interface Subcategory {
   id: number;
@@ -108,6 +108,11 @@ export default function CategoryPage() {
         title={`${animalMeta.title} Maması Samsun - ${animalMeta.title} Ürünleri Fiyatları | JETGO Pet Shop`}
         description={`Samsun ${animalMeta.title.toLowerCase()} maması, ${animalMeta.title.toLowerCase()} bakım ürünleri ve aksesuar çeşitleri en uygun fiyatlarla. Samsun içi aynı gün teslimat, kapıda ödeme. ${animalMeta.title} maması online sipariş.`}
         canonical={`${SITE_DOMAIN}/kategori/${animalSlug}`}
+        jsonLd={BREADCRUMB_JSONLD([
+          { name: "Ana Sayfa", url: SITE_DOMAIN },
+          { name: "Kategoriler", url: `${SITE_DOMAIN}/kategori` },
+          { name: animalMeta.title, url: `${SITE_DOMAIN}/kategori/${animalSlug}` },
+        ])}
       />
 
       <main className="flex-1 max-w-2xl mx-auto px-4 w-full py-6">

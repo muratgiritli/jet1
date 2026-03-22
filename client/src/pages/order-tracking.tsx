@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Package, Loader2, LogIn } from "lucide-react";
 import { Link, useLocation } from "wouter";
+import SEO from "@/components/SEO";
 import type { OrderItem } from "@shared/schema";
 
 interface TrackedOrder {
@@ -54,6 +55,11 @@ export default function OrderTrackingPage() {
 
   return (
     <div className="min-h-screen bg-background pb-16 md:pb-0">
+      <SEO
+        title="Sipariş Takip | JETGO Pet Shop Samsun"
+        description="JETGO Pet Shop siparişlerinizi takip edin. Sipariş durumunuzu anlık olarak görüntüleyin."
+        noindex
+      />
       <main className="max-w-2xl mx-auto px-4 pb-8">
         {loading && (
           <div className="flex justify-center py-12">
