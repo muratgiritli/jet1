@@ -449,8 +449,8 @@ export default function ProductDetailPage() {
                 <span className="text-2xl font-extrabold text-black dark:text-white" data-testid="text-price">
                   {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                 </span>
-                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700 border border-green-200" data-testid="badge-pesin">
-                  Peşin Fiyat
+                <span className="text-sm font-bold text-green-700" data-testid="text-pesin-price">
+                  {(product.price * 0.95).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                 </span>
               </div>
 
