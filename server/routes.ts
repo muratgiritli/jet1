@@ -133,7 +133,8 @@ export async function registerRoutes(
       secret: process.env.SESSION_SECRET || "jetgo-fallback-secret",
       resave: false,
       saveUninitialized: false,
-      cookie: { secure: false, maxAge: 30 * 24 * 60 * 60 * 1000 },
+      rolling: true,
+      cookie: { secure: false, maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "lax" },
     })
   );
 

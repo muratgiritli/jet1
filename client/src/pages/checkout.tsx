@@ -38,12 +38,10 @@ import {
   ShieldCheck,
   Clock,
 } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { SiWhatsapp } from "react-icons/si";
 import {
   CONFIG,
   PAYMENT_OPTIONS,
-  TESLIMAT_MAHALLELERI,
 } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
@@ -75,10 +73,6 @@ export default function Checkout() {
   const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
   const [editingInfo, setEditingInfo] = useState(false);
   const [usePoints, setUsePoints] = useState(true);
-  const [selectedMahalle, setSelectedMahalle] = useState(() => {
-    return localStorage.getItem("jet55_mahalle") || "";
-  });
-  const [mahalleSaved, setMahalleSaved] = useState(() => !!localStorage.getItem("jet55_mahalle"));
   const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -91,7 +85,6 @@ export default function Checkout() {
   const [authApartmanAdi, setAuthApartmanAdi] = useState("");
   const [authKat, setAuthKat] = useState("");
   const [authDaireNo, setAuthDaireNo] = useState("");
-  const [authMahalle, setAuthMahalle] = useState("");
   const [authLocation, setAuthLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [authLocationLoading, setAuthLocationLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
@@ -126,14 +119,6 @@ export default function Checkout() {
     if (isLoggedIn && customer && !addressInitialized) {
       setCustomerPhone(customer.phone);
       setCustomerName(customer.name);
-      if (customer.address) {
-        const mahalleMatch = TESLIMAT_MAHALLELERI.find((m) => customer.address!.includes(m));
-        if (mahalleMatch && !selectedMahalle) {
-          setSelectedMahalle(mahalleMatch);
-          localStorage.setItem("jet55_mahalle", mahalleMatch);
-          setMahalleSaved(true);
-        }
-      }
       const parseAddress = (addr: string) => {
         const parts = addr.split(",").map(p => p.trim());
         let cadde = "", bNo = "", apt = "", kt = "", dNo = "";
@@ -141,8 +126,8 @@ export default function Checkout() {
           if (part.startsWith("No:")) bNo = part.replace("No:", "").trim();
           else if (part.startsWith("Kat:")) kt = part.replace("Kat:", "").trim();
           else if (part.startsWith("Daire:")) dNo = part.replace("Daire:", "").trim();
-          else if (!cadde && !TESLIMAT_MAHALLELERI.includes(part)) cadde = part;
-          else if (cadde && !apt && !TESLIMAT_MAHALLELERI.includes(part)) apt = part;
+          else if (!cadde) cadde = part;
+          else if (cadde && !apt) apt = part;
         }
         return { cadde, binaNo: bNo, apartmanAdi: apt, kat: kt, daireNo: dNo };
       };
@@ -292,7 +277,6 @@ export default function Checkout() {
     const normalized = authPhone.replace(/\D/g, "");
     const code = authOtpCode.join("");
     const fullAddress = [
-      authMahalle,
       authCadde.trim(),
       authBinaNo.trim() ? `No: ${authBinaNo.trim()}` : "",
       authApartmanAdi.trim(),
@@ -301,11 +285,6 @@ export default function Checkout() {
     ].filter(Boolean).join(", ");
     try {
       await loginWithOtp(normalized, code, authName.trim(), fullAddress || undefined);
-      if (authMahalle) {
-        localStorage.setItem("jet55_mahalle", authMahalle);
-        setSelectedMahalle(authMahalle);
-        setMahalleSaved(true);
-      }
       if (authLocation) {
         setCustomerLocation(authLocation);
       }
@@ -417,10 +396,7 @@ export default function Checkout() {
       setOrderError("Kampanyadan yararlanmak için sepete en az 1 ana ürün ve 1 ek ürün eklemeniz gerekmektedir.");
       return;
     }
-    if (!minReached || selectedProducts.length === 0 || orderLoading || !selectedMahalle) {
-      if (!selectedMahalle) {
-        setOrderError("Mahalle seçimi yapınız.");
-      }
+    if (!minReached || selectedProducts.length === 0 || orderLoading) {
       return;
     }
     setOrderError("");
@@ -450,7 +426,6 @@ export default function Checkout() {
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         customerAddress: [
-          selectedMahalle,
           customerCadde.trim(),
           customerBinaNo.trim() ? `No: ${customerBinaNo.trim()}` : "",
           customerApartmanAdi.trim(),
@@ -485,15 +460,14 @@ export default function Checkout() {
       ].filter(Boolean).join(", ");
       if (isLoggedIn && builtAddress && (!customer?.address || customer.address !== builtAddress)) {
         try {
-          await updateProfile({ address: selectedMahalle + ", " + builtAddress });
+          await updateProfile({ address: builtAddress });
         } catch {}
       }
 
       let msg = `*JETGO Sipariş*\n\n`;
       if (customerName.trim()) msg += `*Ad Soyad:* ${customerName.trim()}\n`;
       if (customerPhone.trim()) msg += `*Telefon:* ${customerPhone.trim()}\n`;
-      msg += `*Mahalle:* ${selectedMahalle}\n`;
-      if (builtAddress) msg += `*Adres Detayı:* ${builtAddress}\n`;
+      if (builtAddress) msg += `*Adres:* ${builtAddress}\n`;
       if (customerLocation) msg += `*Konum:* https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}\n`;
       if (customerName.trim() || customerPhone.trim()) msg += `\n`;
       selectedProducts.forEach(({ product, qty }) => {
@@ -698,19 +672,6 @@ export default function Checkout() {
                       {authErrors.name && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.name}</p>}
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Mahalle</label>
-                      <Select value={authMahalle} onValueChange={setAuthMahalle}>
-                        <SelectTrigger data-testid="select-auth-mahalle" className={`h-10 text-sm ${!authMahalle ? "text-muted-foreground" : ""}`}>
-                          <SelectValue placeholder="Mahallenizi seçiniz" />
-                        </SelectTrigger>
-                        <SelectContent className="max-h-[250px] z-[10001]">
-                          {TESLIMAT_MAHALLELERI.map((m) => (
-                            <SelectItem key={m} value={m}>{m}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div className="space-y-1">
                       <label className="text-xs font-medium text-muted-foreground">Cadde / Sokak</label>
                       <Input
                         value={authCadde}
@@ -764,7 +725,7 @@ export default function Checkout() {
                         />
                       </div>
                     </div>
-                    <div className="lg:hidden">
+                    <div>
                       {authLocation ? (
                         <div className="flex items-center gap-2 p-2 rounded-lg border border-green-200 bg-green-50">
                           <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
@@ -1030,6 +991,57 @@ export default function Checkout() {
                         );
                       })()}
                     </motion.div>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
+
+            <section className="mt-6">
+              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-location">
+                <MapPin className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+                Konum Bilgisi
+              </h2>
+              <Card>
+                <CardContent className="p-4">
+                  {customerLocation ? (
+                    <div className="flex items-center gap-3 p-3 rounded-lg border border-green-200 bg-green-50" data-testid="location-added">
+                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-green-800">Konum eklendi</p>
+                        <a
+                          href={`https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-green-600 underline"
+                        >
+                          Haritada Gör
+                        </a>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setCustomerLocation(null)}
+                        className="text-muted-foreground hover:text-red-500 transition-colors"
+                        data-testid="btn-remove-location"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ) : (
+                    <div>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="w-full h-12 font-medium border-dashed border-2"
+                        onClick={handleShareLocation}
+                        disabled={locationLoading}
+                        data-testid="btn-add-location"
+                      >
+                        {locationLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Navigation className="w-5 h-5 mr-2" />}
+                        {locationLoading ? "Konum alınıyor..." : "Konum Ekle"}
+                      </Button>
+                      <p className="text-xs text-muted-foreground text-center mt-2">Teslimat için konumunuzu paylaşın</p>
+                      {locationError && <p className="text-xs text-red-500 text-center mt-1">{locationError}</p>}
+                    </div>
                   )}
                 </CardContent>
               </Card>
