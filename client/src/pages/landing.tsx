@@ -20,7 +20,7 @@ const HERO_SLIDES = [
   },
   {
     title: "Büyük\nKampanya 🎉",
-    subtitle: "Ana mama + ekstra ürün fırsatları",
+    subtitle: "Mama Çeşitleri + ekstra ürün fırsatları",
     gradient: "from-purple-600 via-violet-500 to-fuchsia-400",
     href: "/kampanya",
   },
