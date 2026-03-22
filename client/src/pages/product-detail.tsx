@@ -260,6 +260,7 @@ export default function ProductDetailPage() {
   const [stockAlertLoading, setStockAlertLoading] = useState(false);
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
   const [taksitDialogOpen, setTaksitDialogOpen] = useState(false);
+  const [paraPuanInfoOpen, setParaPuanInfoOpen] = useState(false);
   const [campaignWarning, setCampaignWarning] = useState(false);
 
   const hasExtraInCart = useMemo(() => {
@@ -448,20 +449,33 @@ export default function ProductDetailPage() {
                 <span className="text-2xl font-extrabold text-black dark:text-white" data-testid="text-price">
                   {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                 </span>
+                <span className="text-xs font-semibold px-2 py-0.5 rounded bg-green-100 text-green-700 border border-green-200" data-testid="badge-pesin">
+                  Peşin Fiyat
+                </span>
               </div>
 
               {!isCampaignMode && (
-                <div
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
-                  style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}
-                  data-testid="text-loyalty-points-earn"
-                >
-                  <Gift className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
-                  <span style={{ color: "#bf360c" }}>
-                    Bu ürünü satın aldığınızda{" "}
-                    <strong>{(product.price * 0.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
-                    değerinde Para Puan kazanacaksınız.
-                  </span>
+                <div data-testid="text-loyalty-points-earn">
+                  <div
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                    style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}
+                  >
+                    <Gift className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
+                    <span style={{ color: "#bf360c" }}>
+                      Bu ürünü satın aldığınızda{" "}
+                      <strong>{(product.price * 0.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
+                      değerinde Para Puan kazanacaksınız.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setParaPuanInfoOpen(true)}
+                    className="mt-1.5 ml-1 text-xs font-semibold animate-pulse hover:animate-none transition-all"
+                    style={{ color: "#e65100" }}
+                    data-testid="btn-para-puan-info"
+                  >
+                    Para Puan nedir?
+                  </button>
                 </div>
               )}
 
@@ -545,6 +559,38 @@ export default function ProductDetailPage() {
                   </p>
                 </DialogContent>
               </Dialog>}
+
+              <Dialog open={paraPuanInfoOpen} onOpenChange={setParaPuanInfoOpen}>
+                <DialogContent className="max-w-md">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2">
+                      <Gift className="w-5 h-5" style={{ color: "#e65100" }} />
+                      Para Puan Nedir?
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-3 text-sm text-gray-700">
+                    <p>
+                      <strong>Para Puan</strong>, JETGO Pet Shop'ta yaptığınız her alışverişte kazandığınız sadakat puanıdır.
+                    </p>
+                    <div className="rounded-lg p-3" style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}>
+                      <p className="font-semibold" style={{ color: "#e65100" }}>Nasıl Kazanılır?</p>
+                      <p className="mt-1">Her siparişinizde toplam tutarın <strong>%5'i</strong> kadar Para Puan kazanırsınız. Örneğin 1.000 TL'lik alışverişte <strong>50 TL</strong> Para Puan!</p>
+                    </div>
+                    <div className="rounded-lg p-3" style={{ backgroundColor: "#e8f5e9", border: "1px solid #c8e6c9" }}>
+                      <p className="font-semibold" style={{ color: "#2e7d32" }}>Nasıl Kullanılır?</p>
+                      <p className="mt-1">Biriken puanlarınız bir sonraki siparişinizde otomatik olarak indirim olarak uygulanır. Sepetinizde Para Puan bakiyeniz görünür.</p>
+                    </div>
+                    <div className="rounded-lg p-3 bg-gray-50 border border-gray-200">
+                      <p className="font-semibold text-gray-800">Önemli Bilgiler</p>
+                      <ul className="mt-1 space-y-1 list-disc list-inside text-gray-600">
+                        <li>Para Puan kazanmak için üye girişi yapmanız gerekir.</li>
+                        <li>Puanlarınız hesabınızda birikir ve istediğiniz zaman kullanabilirsiniz.</li>
+                        <li>Kampanyalı ürünlerde Para Puan geçerli değildir.</li>
+                      </ul>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
 
               {product.stock === 0 ? (
                 <div className="mt-2 space-y-2">
