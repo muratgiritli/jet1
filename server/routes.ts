@@ -1471,12 +1471,14 @@ export async function registerRoutes(
 
   app.post("/api/admin/delivery-neighborhoods", requireAdmin, async (req, res) => {
     try {
-      const { name, minOrder, shippingFee, freeShippingLimit, isActive, sortOrder } = req.body;
+      const { district, name, distance, minOrder, shippingFee, freeShippingLimit, isActive, sortOrder } = req.body;
       if (!name || typeof name !== "string") {
         return res.status(400).json({ message: "Mahalle adı gerekli" });
       }
       const nh = await storage.createDeliveryNeighborhood({
+        district: (district || "Atakum").trim(),
         name: name.trim(),
+        distance: distance ? parseFloat(distance) : null,
         minOrder: parseFloat(minOrder) || 700,
         shippingFee: parseFloat(shippingFee) || 89,
         freeShippingLimit: parseFloat(freeShippingLimit) || 2000,
@@ -1493,7 +1495,9 @@ export async function registerRoutes(
     try {
       const id = parseInt(req.params.id);
       const updates: Record<string, any> = {};
+      if (req.body.district !== undefined) updates.district = req.body.district.trim();
       if (req.body.name !== undefined) updates.name = req.body.name.trim();
+      if (req.body.distance !== undefined) updates.distance = req.body.distance !== null ? parseFloat(req.body.distance) : null;
       if (req.body.minOrder !== undefined) updates.minOrder = parseFloat(req.body.minOrder);
       if (req.body.shippingFee !== undefined) updates.shippingFee = parseFloat(req.body.shippingFee);
       if (req.body.freeShippingLimit !== undefined) updates.freeShippingLimit = parseFloat(req.body.freeShippingLimit);

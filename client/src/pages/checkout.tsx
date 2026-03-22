@@ -361,11 +361,17 @@ export default function Checkout() {
   const [orderNote, setOrderNote] = useState("");
   const [deliverySlot, setDeliverySlot] = useState("hemen");
   const [pendingOrderAfterAuth, setPendingOrderAfterAuth] = useState(false);
+  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>("");
 
   const { data: neighborhoods = [] } = useQuery<DeliveryNeighborhood[]>({
     queryKey: ["/api/delivery-neighborhoods"],
   });
+
+  const districts = [...new Set(neighborhoods.map((n: any) => n.district))].sort();
+  const filteredNeighborhoods = selectedDistrict
+    ? neighborhoods.filter((n: any) => n.district === selectedDistrict)
+    : [];
 
   const activeNeighborhood = neighborhoods.find((n) => String(n.id) === selectedNeighborhood);
   const nhMinLimit = activeNeighborhood ? activeNeighborhood.minOrder : CONFIG.minLimit;
@@ -1027,22 +1033,44 @@ export default function Checkout() {
               <Card>
                 <CardContent className="p-4 space-y-4">
                   {neighborhoods.length > 0 && (
-                    <div>
-                      <label className="text-sm font-medium mb-1.5 block">Mahalle Seçin</label>
-                      <SSelect value={selectedNeighborhood} onValueChange={setSelectedNeighborhood}>
-                        <SelectTrigger className="w-full" data-testid="select-neighborhood">
-                          <SelectValue placeholder="Mahalle seçiniz..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {neighborhoods.map((n) => (
-                            <SelectItem key={n.id} value={String(n.id)} data-testid={`neighborhood-${n.id}`}>
-                              {n.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </SSelect>
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-sm font-medium mb-1.5 block">İlçe Seçin</label>
+                        <SSelect value={selectedDistrict} onValueChange={(val) => {
+                          setSelectedDistrict(val);
+                          setSelectedNeighborhood("");
+                        }}>
+                          <SelectTrigger className="w-full" data-testid="select-district">
+                            <SelectValue placeholder="İlçe seçiniz..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {districts.map((d) => (
+                              <SelectItem key={d} value={d} data-testid={`district-${d}`}>
+                                {d}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </SSelect>
+                      </div>
+                      {selectedDistrict && (
+                        <div>
+                          <label className="text-sm font-medium mb-1.5 block">Mahalle Seçin</label>
+                          <SSelect value={selectedNeighborhood} onValueChange={setSelectedNeighborhood}>
+                            <SelectTrigger className="w-full" data-testid="select-neighborhood">
+                              <SelectValue placeholder="Mahalle seçiniz..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {filteredNeighborhoods.map((n) => (
+                                <SelectItem key={n.id} value={String(n.id)} data-testid={`neighborhood-${n.id}`}>
+                                  {n.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </SSelect>
+                        </div>
+                      )}
                       {activeNeighborhood && (
-                        <div className="mt-2 p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
+                        <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
                           <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
                             <span className="text-blue-700 dark:text-blue-300">
                               Min. Sipariş: <strong>{activeNeighborhood.minOrder} TL</strong>
@@ -1051,7 +1079,7 @@ export default function Checkout() {
                               Teslimat: <strong>{activeNeighborhood.shippingFee} TL</strong>
                             </span>
                             <span className="text-blue-700 dark:text-blue-300">
-                              Ücretsiz Teslimat: <strong>{activeNeighborhood.freeShippingLimit} TL+</strong>
+                              Ücretsiz Teslimat: <strong>{(activeNeighborhood as any).freeShippingLimit} TL+</strong>
                             </span>
                           </div>
                         </div>

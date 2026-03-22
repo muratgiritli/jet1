@@ -254,7 +254,9 @@ export const productImages = pgTable("product_images", {
 
 export const deliveryNeighborhoods = pgTable("delivery_neighborhoods", {
   id: serial("id").primaryKey(),
+  district: text("district").notNull().default("Atakum"),
   name: text("name").notNull(),
+  distance: real("distance"),
   minOrder: real("min_order").notNull().default(700),
   shippingFee: real("shipping_fee").notNull().default(89),
   freeShippingLimit: real("free_shipping_limit").notNull().default(2000),

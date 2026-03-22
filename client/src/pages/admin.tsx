@@ -546,11 +546,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [neighborhoodExpanded, setNeighborhoodExpanded] = useState(false);
   const [nhDialogOpen, setNhDialogOpen] = useState(false);
   const [editingNh, setEditingNh] = useState<any | null>(null);
+  const [nhDistrict, setNhDistrict] = useState("Atakum");
   const [nhName, setNhName] = useState("");
+  const [nhDistance, setNhDistance] = useState("");
   const [nhMinOrder, setNhMinOrder] = useState("700");
   const [nhShipFee, setNhShipFee] = useState("89");
   const [nhFreeShipLimit, setNhFreeShipLimit] = useState("2000");
   const [nhSortOrder, setNhSortOrder] = useState("0");
+  const [nhDistrictFilter, setNhDistrictFilter] = useState<string>("all");
 
   const bulkPriceUpdateMutation = useMutation({
     mutationFn: async ({ productIds, percentage }: { productIds: number[]; percentage: number }) => {
@@ -989,14 +992,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   });
 
   const createNhMutation = useMutation({
-    mutationFn: async (data: { name: string; minOrder: number; shippingFee: number; freeShippingLimit: number; sortOrder: number }) => {
+    mutationFn: async (data: { district: string; name: string; distance?: number; minOrder: number; shippingFee: number; freeShippingLimit: number; sortOrder: number }) => {
       await apiRequest("POST", "/api/admin/delivery-neighborhoods", data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/delivery-neighborhoods"] });
       queryClient.invalidateQueries({ queryKey: ["/api/delivery-neighborhoods"] });
       setNhDialogOpen(false);
+      setNhDistrict("Atakum");
       setNhName("");
+      setNhDistance("");
       setNhMinOrder("700");
       setNhShipFee("89");
       setNhFreeShipLimit("2000");
@@ -1669,103 +1674,153 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
           {neighborhoodExpanded && (
             <div className="space-y-3">
-              <div className="flex justify-end">
-                <Dialog open={nhDialogOpen} onOpenChange={(open) => {
-                  setNhDialogOpen(open);
-                  if (!open) {
-                    setEditingNh(null);
-                    setNhName("");
-                    setNhMinOrder("700");
-                    setNhShipFee("89");
-                    setNhFreeShipLimit("2000");
-                    setNhSortOrder("0");
-                  }
-                }}>
-                  <DialogTrigger asChild>
-                    <Button data-testid="btn-add-neighborhood">
-                      <Plus className="w-4 h-4" />
-                      Yeni Mahalle Ekle
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex gap-1">
+                  {["all", "Atakum", "İlkadım", "Canik"].map((d) => (
+                    <Button
+                      key={d}
+                      variant={nhDistrictFilter === d ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setNhDistrictFilter(d)}
+                      data-testid={`btn-filter-district-${d}`}
+                    >
+                      {d === "all" ? "Tümü" : d}
+                      {d !== "all" && (
+                        <span className="ml-1 text-xs opacity-70">
+                          ({adminNeighborhoods.filter((n: any) => n.district === d).length})
+                        </span>
+                      )}
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent>
-                    <DialogHeader>
-                      <DialogTitle>{editingNh ? "Mahalle Düzenle" : "Yeni Mahalle Ekle"}</DialogTitle>
-                    </DialogHeader>
-                    <div className="space-y-3">
-                      <div>
-                        <Label>Mahalle Adı</Label>
-                        <Input
-                          value={nhName}
-                          onChange={(e) => setNhName(e.target.value)}
-                          placeholder="Örn: Atakum Merkez"
-                          data-testid="input-nh-name"
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label>Min. Sipariş (TL)</Label>
-                          <Input
-                            type="number"
-                            value={nhMinOrder}
-                            onChange={(e) => setNhMinOrder(e.target.value)}
-                            data-testid="input-nh-min-order"
-                          />
-                        </div>
-                        <div>
-                          <Label>Teslimat Ücreti (TL)</Label>
-                          <Input
-                            type="number"
-                            value={nhShipFee}
-                            onChange={(e) => setNhShipFee(e.target.value)}
-                            data-testid="input-nh-ship-fee"
-                          />
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div>
-                          <Label>Ücretsiz Teslimat (TL)</Label>
-                          <Input
-                            type="number"
-                            value={nhFreeShipLimit}
-                            onChange={(e) => setNhFreeShipLimit(e.target.value)}
-                            data-testid="input-nh-free-ship"
-                          />
-                        </div>
-                        <div>
-                          <Label>Sıralama</Label>
-                          <Input
-                            type="number"
-                            value={nhSortOrder}
-                            onChange={(e) => setNhSortOrder(e.target.value)}
-                            data-testid="input-nh-sort"
-                          />
-                        </div>
-                      </div>
-                      <Button
-                        className="w-full"
-                        disabled={!nhName.trim() || createNhMutation.isPending || updateNhMutation.isPending}
-                        onClick={() => {
-                          const data = {
-                            name: nhName.trim(),
-                            minOrder: parseFloat(nhMinOrder) || 700,
-                            shippingFee: parseFloat(nhShipFee) || 89,
-                            freeShippingLimit: parseFloat(nhFreeShipLimit) || 2000,
-                            sortOrder: parseInt(nhSortOrder) || 0,
-                          };
-                          if (editingNh) {
-                            updateNhMutation.mutate({ id: editingNh.id, ...data });
-                          } else {
-                            createNhMutation.mutate(data);
-                          }
-                        }}
-                        data-testid="btn-save-neighborhood"
-                      >
-                        {(createNhMutation.isPending || updateNhMutation.isPending) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
-                        {editingNh ? "Güncelle" : "Ekle"}
+                  ))}
+                </div>
+                <div className="ml-auto">
+                  <Dialog open={nhDialogOpen} onOpenChange={(open) => {
+                    setNhDialogOpen(open);
+                    if (!open) {
+                      setEditingNh(null);
+                      setNhDistrict("Atakum");
+                      setNhName("");
+                      setNhDistance("");
+                      setNhMinOrder("700");
+                      setNhShipFee("89");
+                      setNhFreeShipLimit("2000");
+                      setNhSortOrder("0");
+                    }
+                  }}>
+                    <DialogTrigger asChild>
+                      <Button data-testid="btn-add-neighborhood" size="sm">
+                        <Plus className="w-4 h-4" />
+                        Yeni Mahalle
                       </Button>
-                    </div>
-                  </DialogContent>
-                </Dialog>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>{editingNh ? "Mahalle Düzenle" : "Yeni Mahalle Ekle"}</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-3">
+                        <div>
+                          <Label>İlçe</Label>
+                          <select
+                            className="w-full border rounded-md px-3 py-2 text-sm"
+                            value={nhDistrict}
+                            onChange={(e) => setNhDistrict(e.target.value)}
+                            data-testid="select-nh-district"
+                          >
+                            <option value="Atakum">Atakum</option>
+                            <option value="İlkadım">İlkadım</option>
+                            <option value="Canik">Canik</option>
+                          </select>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label>Mahalle Adı</Label>
+                            <Input
+                              value={nhName}
+                              onChange={(e) => setNhName(e.target.value)}
+                              placeholder="Örn: Körfez"
+                              data-testid="input-nh-name"
+                            />
+                          </div>
+                          <div>
+                            <Label>Mesafe (km)</Label>
+                            <Input
+                              type="number"
+                              step="0.5"
+                              value={nhDistance}
+                              onChange={(e) => setNhDistance(e.target.value)}
+                              placeholder="Örn: 2.5"
+                              data-testid="input-nh-distance"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label>Min. Sipariş (TL)</Label>
+                            <Input
+                              type="number"
+                              value={nhMinOrder}
+                              onChange={(e) => setNhMinOrder(e.target.value)}
+                              data-testid="input-nh-min-order"
+                            />
+                          </div>
+                          <div>
+                            <Label>Teslimat Ücreti (TL)</Label>
+                            <Input
+                              type="number"
+                              value={nhShipFee}
+                              onChange={(e) => setNhShipFee(e.target.value)}
+                              data-testid="input-nh-ship-fee"
+                            />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-3">
+                          <div>
+                            <Label>Ücretsiz Teslimat (TL)</Label>
+                            <Input
+                              type="number"
+                              value={nhFreeShipLimit}
+                              onChange={(e) => setNhFreeShipLimit(e.target.value)}
+                              data-testid="input-nh-free-ship"
+                            />
+                          </div>
+                          <div>
+                            <Label>Sıralama</Label>
+                            <Input
+                              type="number"
+                              value={nhSortOrder}
+                              onChange={(e) => setNhSortOrder(e.target.value)}
+                              data-testid="input-nh-sort"
+                            />
+                          </div>
+                        </div>
+                        <Button
+                          className="w-full"
+                          disabled={!nhName.trim() || createNhMutation.isPending || updateNhMutation.isPending}
+                          onClick={() => {
+                            const data: any = {
+                              district: nhDistrict,
+                              name: nhName.trim(),
+                              minOrder: parseFloat(nhMinOrder) || 700,
+                              shippingFee: parseFloat(nhShipFee) || 89,
+                              freeShippingLimit: parseFloat(nhFreeShipLimit) || 2000,
+                              sortOrder: parseInt(nhSortOrder) || 0,
+                            };
+                            if (nhDistance) data.distance = parseFloat(nhDistance);
+                            if (editingNh) {
+                              updateNhMutation.mutate({ id: editingNh.id, ...data });
+                            } else {
+                              createNhMutation.mutate(data);
+                            }
+                          }}
+                          data-testid="btn-save-neighborhood"
+                        >
+                          {(createNhMutation.isPending || updateNhMutation.isPending) && <Loader2 className="w-4 h-4 animate-spin mr-2" />}
+                          {editingNh ? "Güncelle" : "Ekle"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
               </div>
 
               {adminNeighborhoods.length === 0 ? (
@@ -1777,65 +1832,81 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="space-y-2">
-                  {adminNeighborhoods.map((nh: any) => (
-                    <Card key={nh.id} className={!nh.isActive ? "opacity-60" : ""} data-testid={`nh-card-${nh.id}`}>
-                      <CardContent className="p-3">
-                        <div className="flex items-center justify-between gap-2 flex-wrap">
-                          <div className="flex items-center gap-2 flex-1 min-w-0">
-                            <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
-                            <span className="font-medium text-sm truncate">{nh.name}</span>
-                            {!nh.isActive && <Badge variant="secondary" className="text-[10px]">Pasif</Badge>}
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => updateNhMutation.mutate({ id: nh.id, isActive: !nh.isActive })}
-                              data-testid={`btn-toggle-nh-${nh.id}`}
-                            >
-                              {nh.isActive ? "Pasifle" : "Aktifle"}
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setEditingNh(nh);
-                                setNhName(nh.name);
-                                setNhMinOrder(String(nh.minOrder));
-                                setNhShipFee(String(nh.shippingFee));
-                                setNhFreeShipLimit(String(nh.freeShippingLimit));
-                                setNhSortOrder(String(nh.sortOrder));
-                                setNhDialogOpen(true);
-                              }}
-                              data-testid={`btn-edit-nh-${nh.id}`}
-                            >
-                              <Pencil className="w-3.5 h-3.5" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-500 hover:text-red-600"
-                              onClick={() => {
-                                if (confirm(`"${nh.name}" mahallesini silmek istediğinize emin misiniz?`)) {
-                                  deleteNhMutation.mutate(nh.id);
-                                }
-                              }}
-                              data-testid={`btn-delete-nh-${nh.id}`}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </Button>
-                          </div>
+                <div className="space-y-4">
+                  {(nhDistrictFilter === "all" ? ["Atakum", "İlkadım", "Canik"] : [nhDistrictFilter]).map((district) => {
+                    const districtNhs = adminNeighborhoods.filter((n: any) => n.district === district);
+                    if (districtNhs.length === 0) return null;
+                    return (
+                      <div key={district}>
+                        <div className="flex items-center gap-2 mb-2">
+                          <h3 className="font-semibold text-sm text-blue-700">{district} İlçesi</h3>
+                          <Badge variant="secondary" className="text-[10px]">{districtNhs.length} mahalle</Badge>
                         </div>
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
-                          <span>Min: <strong className="text-foreground">{nh.minOrder} TL</strong></span>
-                          <span>Teslimat: <strong className="text-foreground">{nh.shippingFee} TL</strong></span>
-                          <span>Ücretsiz: <strong className="text-foreground">{nh.freeShippingLimit} TL+</strong></span>
-                          <span>Sıra: <strong className="text-foreground">{nh.sortOrder}</strong></span>
+                        <div className="space-y-1.5">
+                          {districtNhs.map((nh: any) => (
+                            <Card key={nh.id} className={!nh.isActive ? "opacity-60" : ""} data-testid={`nh-card-${nh.id}`}>
+                              <CardContent className="p-3">
+                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                  <div className="flex items-center gap-2 flex-1 min-w-0">
+                                    <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
+                                    <span className="font-medium text-sm truncate">{nh.name}</span>
+                                    {nh.distance && <Badge variant="outline" className="text-[10px] shrink-0">{nh.distance} km</Badge>}
+                                    {!nh.isActive && <Badge variant="secondary" className="text-[10px]">Pasif</Badge>}
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => updateNhMutation.mutate({ id: nh.id, isActive: !nh.isActive })}
+                                      data-testid={`btn-toggle-nh-${nh.id}`}
+                                    >
+                                      {nh.isActive ? "Pasifle" : "Aktifle"}
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      onClick={() => {
+                                        setEditingNh(nh);
+                                        setNhDistrict(nh.district || "Atakum");
+                                        setNhName(nh.name);
+                                        setNhDistance(nh.distance ? String(nh.distance) : "");
+                                        setNhMinOrder(String(nh.minOrder));
+                                        setNhShipFee(String(nh.shippingFee));
+                                        setNhFreeShipLimit(String(nh.freeShippingLimit));
+                                        setNhSortOrder(String(nh.sortOrder));
+                                        setNhDialogOpen(true);
+                                      }}
+                                      data-testid={`btn-edit-nh-${nh.id}`}
+                                    >
+                                      <Pencil className="w-3.5 h-3.5" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-red-500 hover:text-red-600"
+                                      onClick={() => {
+                                        if (confirm(`"${nh.name}" mahallesini silmek istediğinize emin misiniz?`)) {
+                                          deleteNhMutation.mutate(nh.id);
+                                        }
+                                      }}
+                                      data-testid={`btn-delete-nh-${nh.id}`}
+                                    >
+                                      <Trash2 className="w-3.5 h-3.5" />
+                                    </Button>
+                                  </div>
+                                </div>
+                                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-2 text-xs text-muted-foreground">
+                                  <span>Min: <strong className="text-foreground">{nh.minOrder} TL</strong></span>
+                                  <span>Teslimat: <strong className="text-foreground">{nh.shippingFee} TL</strong></span>
+                                  <span>Ücretsiz: <strong className="text-foreground">{nh.freeShippingLimit} TL+</strong></span>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
