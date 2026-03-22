@@ -326,11 +326,8 @@ export default function Landing() {
           <QuickActions />
         </div>
 
-        <div className="mt-4 md:mt-8 md:grid md:grid-cols-2 md:gap-6">
-          <CampaignBanner />
-          <div className="mt-4 md:mt-0">
-            <LocationBanner />
-          </div>
+        <div className="mt-4 md:mt-8">
+          <LocationBanner />
         </div>
 
         <div className="mt-5 md:mt-10">
