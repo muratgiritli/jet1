@@ -194,7 +194,7 @@ function BrandProductCard({
             </span>
           )}
           <span className="text-sm font-bold text-foreground" data-testid={`text-price-${pid}`}>
-            {(product.price * 0.95).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+            {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
         </div>
         {product.stock === 0 ? (
@@ -279,7 +279,7 @@ function InlineSubcategoryProductCard({
             </span>
           )}
           <span className="text-sm font-bold text-foreground">
-            {(product.price * 0.95).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+            {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
         </div>
         {showDetailLink ? (

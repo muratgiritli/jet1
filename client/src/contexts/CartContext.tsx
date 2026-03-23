@@ -185,7 +185,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const key = p.id;
       const qty = basket[key] || 0;
       if (qty > 0) {
-        sub += qty * (p.price * 0.95);
+        sub += qty * p.price;
         selected.push({ product: p, qty });
       }
     });

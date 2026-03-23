@@ -434,7 +434,7 @@ export default function Checkout() {
       const orderItems = selectedProducts.map(({ product, qty }) => ({
         productId: product.id,
         name: product.name,
-        price: Math.round(product.price * 0.95 * 100) / 100,
+        price: product.price,
         quantity: qty,
         img: product.img || undefined,
       }));
@@ -500,10 +500,10 @@ export default function Checkout() {
       if (customerLocation) msg += `*Konum:* https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}\n`;
       if (customerName.trim() || customerPhone.trim()) msg += `\n`;
       selectedProducts.forEach(({ product, qty }) => {
-        msg += `${qty}x ${product.name} — ${Math.round(qty * product.price * 0.95)} TL\n`;
+        msg += `${qty}x ${product.name} — ${(qty * product.price).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL\n`;
       });
-      msg += `\n*Ara Toplam:* ${Math.round(subtotal)} TL`;
-      if (effectiveDiscount > 0) msg += `\n*İndirim (${pay.tag}):* -${Math.round(effectiveDiscount)} TL`;
+      msg += `\n*Ara Toplam:* ${subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`;
+      if (effectiveDiscount < 0) msg += `\n*Kart Ücreti (${pay.tag}):* +${Math.abs(effectiveDiscount).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`;
       if (pointsUsed > 0) msg += `\n*Para Puan İndirimi:* -${pointsUsed.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`;
       msg += `\n*Teslimat:* ${effectiveShipping === 0 ? "Ücretsiz" : effectiveShipping + " TL"}`;
       msg += `\n*Genel Toplam:* ${Math.round(finalTotal)} TL`;
@@ -836,7 +836,7 @@ export default function Checkout() {
                               {product.name}
                             </p>
                             <p className="text-xs text-muted-foreground" data-testid={`text-checkout-unit-${product.id}`}>
-                              {(product.price * 0.95).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL / adet
+                              {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL / adet
                             </p>
                           </div>
                           <div className="flex items-center gap-1">
@@ -861,7 +861,7 @@ export default function Checkout() {
                             </Button>
                           </div>
                           <span className="text-sm font-bold shrink-0 min-w-[70px] text-right" data-testid={`text-checkout-linetotal-${product.id}`}>
-                            {(qty * product.price * 0.95).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                            {(qty * product.price).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                           </span>
                         </motion.div>
                       ))}
@@ -903,18 +903,18 @@ export default function Checkout() {
                           <RadioGroupItem value={opt.id} data-testid={`input-radio-${opt.id}`} />
                           <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
                           <span className="text-sm font-medium" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
-                          {opt.disc > 0 && (
+                          {opt.disc !== 0 && (
                             <span className="flex-1 text-sm font-bold text-center" data-testid={`text-payment-discounted-${opt.id}`}>
                               {opt.tag}
                             </span>
                           )}
-                          {!opt.disc && <span className="flex-1" />}
+                          {opt.disc === 0 && <span className="flex-1" />}
                           <Badge
                             variant="secondary"
                             className="no-default-hover-elevate shrink-0"
                             data-testid={`badge-payment-tag-${opt.id}`}
                           >
-                            {opt.id === "taksit" ? opt.tag : `${subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`}
+                            {opt.id === "taksit" ? opt.tag : opt.disc < 0 ? `${(subtotal * (1 + Math.abs(opt.disc))).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL` : `${subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`}
                           </Badge>
                         </label>
                       );
@@ -1268,10 +1268,10 @@ export default function Checkout() {
                       <span className="text-muted-foreground">Ara Toplam</span>
                       <span className="font-medium" data-testid="text-subtotal">{subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                     </div>
-                    {effectiveDiscount > 0 && (
-                      <div className="flex justify-between gap-3 text-chart-2 flex-wrap">
-                        <span data-testid="text-discount-label">İndirim ({PAYMENT_OPTIONS.find((p) => p.id === paymentId)?.tag})</span>
-                        <span className="font-medium" data-testid="text-discount">-{Math.round(effectiveDiscount)} TL</span>
+                    {effectiveDiscount < 0 && (
+                      <div className="flex justify-between gap-3 text-orange-600 flex-wrap">
+                        <span data-testid="text-discount-label">Kart Ücreti ({PAYMENT_OPTIONS.find((p) => p.id === paymentId)?.tag})</span>
+                        <span className="font-medium" data-testid="text-discount">+{Math.abs(effectiveDiscount).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                       </div>
                     )}
                     {!hasCampaignItems && isLoggedIn && pointsBalance > 0 && (

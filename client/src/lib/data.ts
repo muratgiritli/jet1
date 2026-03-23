@@ -88,10 +88,10 @@ export const TESLIMAT_MAHALLELERI = [
 ];
 
 export const PAYMENT_OPTIONS: PaymentOption[] = [
-  { id: "nakit", name: "Kapıda Nakit", disc: 0, tag: "Net" },
-  { id: "eft", name: "Banka Havalesi", disc: 0, tag: "Net" },
-  { id: "qr", name: "Kapıda QR Ödeme", disc: 0, tag: "Net" },
-  { id: "pos", name: "Kapıda Kredi Kartı", disc: 0, tag: "Net" },
-  { id: "taksit", name: "Kredi Kartına Taksit", disc: 0, tag: "Taksitli" },
+  { id: "nakit", name: "Kapıda Nakit", disc: 0, tag: "Nakit" },
+  { id: "eft", name: "Banka Havalesi", disc: -0.05, tag: "+%5" },
+  { id: "qr", name: "Kapıda QR Ödeme", disc: -0.05, tag: "+%5" },
+  { id: "pos", name: "Kapıda Kredi Kartı", disc: -0.05, tag: "+%5" },
+  { id: "taksit", name: "Kredi Kartına Taksit", disc: -0.05, tag: "Taksitli" },
 ];
 

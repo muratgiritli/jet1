@@ -442,7 +442,7 @@ export default function ProductDetailPage() {
 
               <div className="flex items-baseline gap-3 mt-1 flex-wrap">
                 <span className="text-2xl font-extrabold text-black dark:text-white" data-testid="text-pesin-price">
-                  {(product.price * 0.95).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                  {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                 </span>
               </div>
 
