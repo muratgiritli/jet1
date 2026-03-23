@@ -441,15 +441,10 @@ export default function ProductDetailPage() {
               )}
 
               <div className="flex items-baseline gap-3 mt-1 flex-wrap">
-                {product.originalPrice && product.originalPrice > product.price && (
-                  <span className="text-base text-muted-foreground line-through" data-testid="text-original-price">
-                    {product.originalPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-                  </span>
-                )}
-                <span className="text-2xl font-extrabold text-black dark:text-white" data-testid="text-price">
+                <span className="text-sm text-muted-foreground line-through" data-testid="text-original-price">
                   {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                 </span>
-                <span className="text-sm font-bold text-green-700" data-testid="text-pesin-price">
+                <span className="text-2xl font-extrabold text-green-700" data-testid="text-pesin-price">
                   {(product.price * 0.95).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                 </span>
               </div>

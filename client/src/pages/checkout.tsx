@@ -36,7 +36,6 @@ import {
   EyeOff,
   Lock,
   ShieldCheck,
-  Clock,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import SEO from "@/components/SEO";
@@ -509,13 +508,6 @@ export default function Checkout() {
       msg += `\n*Teslimat:* ${effectiveShipping === 0 ? "Ücretsiz" : effectiveShipping + " TL"}`;
       msg += `\n*Genel Toplam:* ${Math.round(finalTotal)} TL`;
       msg += `\n*Ödeme:* ${payMethod}`;
-      const slotLabels: Record<string, string> = {
-        hemen: "Hemen (En kısa sürede)",
-        bugun_ogle: "Bugün 12:00-14:00",
-        bugun_aksam: "Bugün 16:00-19:00",
-        yarin_sabah: "Yarın Sabah 10:00-12:00",
-      };
-      msg += `\n*Teslimat Zamanı:* ${slotLabels[deliverySlot] || deliverySlot}`;
       if (orderNote.trim()) msg += `\n*Sipariş Notu:* ${orderNote.trim()}`;
       if (hasCampaignItems) msg += `\n*Kampanya Siparişi*`;
       if (!hasCampaignItems && pay.id === "taksit" && selectedInstallment) {
@@ -1137,45 +1129,13 @@ export default function Checkout() {
             </section>
 
             <section className="mt-6">
-              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-delivery-slot">
-                <Clock className="w-4 h-4 inline mr-1.5 -mt-0.5" />
-                Teslimat Zamanı
-              </h2>
-              <Card>
-                <CardContent className="p-4">
-                  <RadioGroup value={deliverySlot} onValueChange={setDeliverySlot} data-testid="radio-delivery-slot">
-                    {[
-                      { id: "hemen", label: "Hemen", desc: "En kısa sürede teslim", icon: "🚀" },
-                      { id: "bugun_ogle", label: "Bugün 12:00-14:00", desc: "Öğle saatlerinde", icon: "☀️" },
-                      { id: "bugun_aksam", label: "Bugün 16:00-19:00", desc: "Akşam saatlerinde", icon: "🌆" },
-                      { id: "yarin_sabah", label: "Yarın Sabah 10:00-12:00", desc: "Ertesi gün sabah", icon: "🌅" },
-                    ].map((slot) => (
-                      <label
-                        key={slot.id}
-                        className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors ${deliverySlot === slot.id ? "bg-accent" : ""}`}
-                        data-testid={`radio-slot-${slot.id}`}
-                      >
-                        <RadioGroupItem value={slot.id} />
-                        <span className="text-lg">{slot.icon}</span>
-                        <div className="flex-1">
-                          <span className="text-sm font-medium">{slot.label}</span>
-                          <p className="text-xs text-muted-foreground">{slot.desc}</p>
-                        </div>
-                      </label>
-                    ))}
-                  </RadioGroup>
-                </CardContent>
-              </Card>
-            </section>
-
-            <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-note">
                 Sipariş Notu (Opsiyonel)
               </h2>
               <Card>
                 <CardContent className="p-4">
                   <Textarea
-                    placeholder="Kapıya bırakın, zili çalmayın, vb. notunuzu yazabilirsiniz..."
+                    placeholder="Teslimat zamanı, kapıya bırakın, zili çalmayın vb. notunuzu yazabilirsiniz..."
                     value={orderNote}
                     onChange={(e) => setOrderNote(e.target.value)}
                     className="resize-none"

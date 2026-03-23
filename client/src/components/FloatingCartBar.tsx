@@ -6,7 +6,7 @@ import { Link, useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
 
 export default function FloatingCartBar() {
-  const { itemCount, grandTotal, hasCampaignItems, campaignExtraCount } = useCart();
+  const { itemCount, subtotal, hasCampaignItems, campaignExtraCount } = useCart();
   const [location] = useLocation();
   const [showWarning, setShowWarning] = useState(false);
 
@@ -79,7 +79,7 @@ export default function FloatingCartBar() {
                 <div className="flex flex-col">
                   <span className="text-[10px] text-muted-foreground" data-testid="text-float-count">{itemCount} ürün</span>
                   <span className="text-base font-extrabold text-primary" data-testid="text-float-total">
-                    {Math.round(grandTotal)} TL
+                    {Math.round(subtotal)} TL
                   </span>
                 </div>
               </div>
@@ -110,7 +110,7 @@ export default function FloatingCartBar() {
                 <div className="flex flex-col">
                   <span className="text-[10px] text-muted-foreground">{itemCount} ürün</span>
                   <span className="text-base font-extrabold text-primary">
-                    {Math.round(grandTotal)} TL
+                    {Math.round(subtotal)} TL
                   </span>
                 </div>
               </div>
