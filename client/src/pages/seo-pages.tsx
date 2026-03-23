@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD, FAQ_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import { SEO_PAGES, type SeoPageData } from "@/lib/seo-data";
+import NotFound from "@/pages/not-found";
 
 function SeoPageContent({ page }: { page: SeoPageData }) {
   const breadcrumbs = [
@@ -16,7 +17,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
 
   const jsonLd = [
     BREADCRUMB_JSONLD(breadcrumbs),
-    FAQ_JSONLD(page.faq),
+    FAQ_JSONLD(page.faq.map(f => ({ question: f.q, answer: f.a }))),
     LOCAL_BUSINESS_JSONLD,
   ];
 
@@ -196,7 +197,9 @@ export default function SeoPage() {
   const slug = params?.slug;
   const page = SEO_PAGES.find((p) => p.slug === slug);
 
-  if (!page) return null;
+  if (!page) {
+    return <NotFound />;
+  }
 
   return <SeoPageContent page={page} />;
 }

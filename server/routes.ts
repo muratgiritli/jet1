@@ -232,6 +232,39 @@ export async function registerRoutes(
   });
 
 
+  app.get("/sitemap-seo.xml", async (_req, res) => {
+    try {
+      const SITE = "https://www.jetgo.shop";
+      const today = new Date().toISOString().split("T")[0];
+      const seoSlugs = [
+        { url: "/samsun-petshop", priority: "0.9", changefreq: "weekly" },
+        { url: "/atakum-petshop", priority: "0.8", changefreq: "weekly" },
+        { url: "/ilkadim-petshop", priority: "0.8", changefreq: "weekly" },
+        { url: "/canik-petshop", priority: "0.8", changefreq: "weekly" },
+        { url: "/atakum-mahalleler", priority: "0.7", changefreq: "monthly" },
+        { url: "/kedi-mamasi", priority: "0.8", changefreq: "weekly" },
+        { url: "/kopek-mamasi", priority: "0.8", changefreq: "weekly" },
+        { url: "/kedi-kumu", priority: "0.8", changefreq: "weekly" },
+        { url: "/pet-aksesuar", priority: "0.7", changefreq: "weekly" },
+        { url: "/kedi-mamasi-en-iyi-markalar", priority: "0.7", changefreq: "monthly" },
+        { url: "/kedi-kumu-en-iyi", priority: "0.7", changefreq: "monthly" },
+        { url: "/kopek-mamasi-fiyatlari", priority: "0.7", changefreq: "monthly" },
+      ];
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
+      for (const page of seoSlugs) {
+        xml += `  <url>\n    <loc>${SITE}${page.url}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>\n`;
+      }
+      xml += `</urlset>`;
+
+      res.set("Content-Type", "application/xml");
+      res.set("Cache-Control", "public, max-age=3600");
+      res.send(xml);
+    } catch (err) {
+      res.status(500).send("Sitemap error");
+    }
+  });
+
   app.get("/api/export/xlsx", async (_req, res) => {
     try {
       const XLSX = await import("xlsx");

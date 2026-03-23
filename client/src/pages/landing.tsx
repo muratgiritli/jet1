@@ -332,6 +332,49 @@ function MobileFooter() {
   );
 }
 
+function RegionLinks() {
+  const regions = [
+    { name: "Samsun Pet Shop", href: "/samsun-petshop", desc: "Kapıya teslim hizmet" },
+    { name: "Atakum Pet Shop", href: "/atakum-petshop", desc: "Aynı gün teslimat" },
+    { name: "İlkadım Pet Shop", href: "/ilkadim-petshop", desc: "Hızlı teslimat" },
+    { name: "Canik Pet Shop", href: "/canik-petshop", desc: "Aynı gün teslimat" },
+  ];
+  const categories = [
+    { name: "Kedi Maması", href: "/kedi-mamasi" },
+    { name: "Köpek Maması", href: "/kopek-mamasi" },
+    { name: "Kedi Kumu", href: "/kedi-kumu" },
+    { name: "Pet Aksesuar", href: "/pet-aksesuar" },
+  ];
+  return (
+    <div data-testid="section-region-links">
+      <h3 className="text-base md:text-xl font-extrabold text-gray-900 mb-3 md:mb-4">Bölgeler & Ürünler</h3>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-3 mb-3">
+        {regions.map((r) => (
+          <Link key={r.href} href={r.href}>
+            <div className="bg-gradient-to-br from-[#6B3480]/5 to-[#6B3480]/10 rounded-xl p-3 cursor-pointer hover:shadow-md transition-shadow border border-[#6B3480]/10" data-testid={`link-region-${r.href.slice(1)}`}>
+              <div className="flex items-center gap-1.5 mb-1">
+                <MapPin className="w-3.5 h-3.5 text-[#6B3480]" />
+                <span className="text-xs md:text-sm font-bold text-gray-800">{r.name}</span>
+              </div>
+              <span className="text-[10px] md:text-xs text-gray-500">{r.desc}</span>
+            </div>
+          </Link>
+        ))}
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {categories.map((c) => (
+          <Link key={c.href} href={c.href}>
+            <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-orange-50 text-orange-600 text-xs font-semibold hover:bg-orange-100 transition-colors cursor-pointer border border-orange-100" data-testid={`link-cat-${c.href.slice(1)}`}>
+              <ChevronRight className="w-3 h-3" />
+              {c.name}
+            </span>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DesktopContactStrip() {
   return (
     <div className="hidden md:block" data-testid="section-desktop-contact">
@@ -368,6 +411,7 @@ export default function Landing() {
         title="Samsun Pet Shop - Kedi Köpek Maması Online Sipariş | JETGO"
         description="Samsun pet shop JETGO - Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri. Samsun içi aynı gün kapıya teslimat, kapıda ödeme. En uygun fiyatlarla online sipariş."
         canonical={`${SITE_DOMAIN}/`}
+        keywords="samsun petshop, samsun pet shop, kedi maması samsun, köpek maması samsun, kapıya teslim petshop, online pet shop samsun, kedi kumu samsun, evcil hayvan ürünleri samsun"
         jsonLd={[LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD]}
       />
 
@@ -391,6 +435,10 @@ export default function Landing() {
 
         <div className="mt-5 md:mt-10">
           <CategoryGrid />
+        </div>
+
+        <div className="mt-5 md:mt-8">
+          <RegionLinks />
         </div>
 
         <div className="mt-5 md:mt-8 md:grid md:grid-cols-2 md:gap-6">
