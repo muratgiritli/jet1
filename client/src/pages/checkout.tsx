@@ -903,12 +903,7 @@ export default function Checkout() {
                           <RadioGroupItem value={opt.id} data-testid={`input-radio-${opt.id}`} />
                           <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
                           <span className="text-sm font-medium" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
-                          {opt.disc !== 0 && (
-                            <span className="flex-1 text-sm font-bold text-center" data-testid={`text-payment-discounted-${opt.id}`}>
-                              {opt.tag}
-                            </span>
-                          )}
-                          {opt.disc === 0 && <span className="flex-1" />}
+                          <span className="flex-1" />
                           <Badge
                             variant="secondary"
                             className="no-default-hover-elevate shrink-0"
@@ -959,10 +954,10 @@ export default function Checkout() {
                               <span className="text-sm font-medium">Tek Çekim</span>
                             </span>
                             <span className="text-sm text-center font-medium">
-                              {displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                              {(subtotal * 1.05).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                             </span>
                             <span className="text-sm text-right font-bold">
-                              {displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                              {(subtotal * 1.05).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                             </span>
                           </label>
 
