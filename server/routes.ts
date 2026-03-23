@@ -134,7 +134,7 @@ export async function registerRoutes(
       resave: false,
       saveUninitialized: false,
       rolling: true,
-      cookie: { secure: false, maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "lax" },
+      cookie: { secure: process.env.NODE_ENV === "production", httpOnly: true, maxAge: 30 * 24 * 60 * 60 * 1000, sameSite: "lax" },
     })
   );
 
@@ -531,8 +531,9 @@ export async function registerRoutes(
 
   app.get("/api/products", async (req, res) => {
     const allProducts = await storage.getAllProducts();
-    const activeOnly = req.query.all !== "true";
-    res.json(activeOnly ? allProducts.filter(p => p.isActive) : allProducts);
+    const isAdmin = !!(req.session as any)?.userId;
+    const showAll = req.query.all === "true" && isAdmin;
+    res.json(showAll ? allProducts : allProducts.filter(p => p.isActive));
   });
 
   app.get("/api/products/search", async (req, res) => {
@@ -542,15 +543,34 @@ export async function registerRoutes(
     res.json(results.filter(p => p.isActive).slice(0, 20));
   });
 
+  const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
+
   app.post("/api/admin/login", async (req, res) => {
+    const ip = req.ip || "unknown";
+    const now = Date.now();
+    const attempt = loginAttempts.get(ip);
+    if (attempt && attempt.blockedUntil > now) {
+      const wait = Math.ceil((attempt.blockedUntil - now) / 1000);
+      return res.status(429).json({ message: `Çok fazla deneme. ${wait} saniye bekleyin.` });
+    }
+
     const { username, password } = req.body;
     if (!username || !password) {
       return res.status(400).json({ message: "Username and password required" });
     }
     const user = await storage.getUserByUsername(username);
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) {
+      const c = (attempt?.count || 0) + 1;
+      loginAttempts.set(ip, { count: c, blockedUntil: c >= 5 ? now + 5 * 60 * 1000 : 0 });
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
     const valid = await bcrypt.compare(password, user.password);
-    if (!valid) return res.status(401).json({ message: "Invalid credentials" });
+    if (!valid) {
+      const c = (attempt?.count || 0) + 1;
+      loginAttempts.set(ip, { count: c, blockedUntil: c >= 5 ? now + 5 * 60 * 1000 : 0 });
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+    loginAttempts.delete(ip);
     (req.session as any).userId = user.id;
     res.json({ message: "Login successful" });
   });
