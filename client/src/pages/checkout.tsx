@@ -502,8 +502,7 @@ export default function Checkout() {
       selectedProducts.forEach(({ product, qty }) => {
         msg += `${qty}x ${product.name} — ${(qty * product.price).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL\n`;
       });
-      msg += `\n*Ara Toplam:* ${subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`;
-      if (effectiveDiscount < 0) msg += `\n*Kart Ücreti (${pay.tag}):* +${Math.abs(effectiveDiscount).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`;
+      msg += `\n*Ara Toplam:* ${(subtotal - effectiveDiscount).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`;
       if (pointsUsed > 0) msg += `\n*Para Puan İndirimi:* -${pointsUsed.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`;
       msg += `\n*Teslimat:* ${effectiveShipping === 0 ? "Ücretsiz" : effectiveShipping + " TL"}`;
       msg += `\n*Genel Toplam:* ${Math.round(finalTotal)} TL`;
@@ -1261,14 +1260,8 @@ export default function Checkout() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between gap-3 flex-wrap">
                       <span className="text-muted-foreground">Ara Toplam</span>
-                      <span className="font-medium" data-testid="text-subtotal">{subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                      <span className="font-medium" data-testid="text-subtotal">{(subtotal - effectiveDiscount).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                     </div>
-                    {effectiveDiscount < 0 && (
-                      <div className="flex justify-between gap-3 text-orange-600 flex-wrap">
-                        <span data-testid="text-discount-label">Kart Ücreti ({PAYMENT_OPTIONS.find((p) => p.id === paymentId)?.tag})</span>
-                        <span className="font-medium" data-testid="text-discount">+{Math.abs(effectiveDiscount).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                      </div>
-                    )}
                     {!hasCampaignItems && isLoggedIn && pointsBalance > 0 && (
                       <div className="flex justify-between items-center gap-3 flex-wrap">
                         <button
