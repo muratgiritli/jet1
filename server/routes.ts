@@ -231,6 +231,13 @@ export async function registerRoutes(
       for (const page of staticPages) {
         xml += `  <url>\n    <loc>${SITE}${page.url}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>\n`;
       }
+
+      const categories = await storage.getAllBrandCategories();
+      for (const cat of categories) {
+        xml += `  <url>\n    <loc>${SITE}/kategori/${cat.animal}/${cat.subcategory}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+        xml += `  <url>\n    <loc>${SITE}/siparis/${cat.animal}/${cat.subcategory}/${cat.slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+      }
+
       xml += `</urlset>`;
 
       res.set("Content-Type", "application/xml");
@@ -538,50 +545,6 @@ export async function registerRoutes(
     res.json({ category, products: prods.filter(p => p.isActive) });
   });
 
-  app.get("/sitemap.xml", async (req, res) => {
-    try {
-      const products = (await storage.getAllProducts()).filter(p => p.isActive);
-      const categories = await storage.getAllBrandCategories();
-      const baseUrl = "https://jet55.app";
-      const today = new Date().toISOString().split("T")[0];
-
-      const staticPages = [
-        { loc: "/", priority: "1.0", changefreq: "daily" },
-        { loc: "/kategori", priority: "0.8", changefreq: "weekly" },
-        { loc: "/kategori/kopek", priority: "0.8", changefreq: "weekly" },
-        { loc: "/kategori/kedi", priority: "0.8", changefreq: "weekly" },
-        { loc: "/kategori/kus", priority: "0.7", changefreq: "weekly" },
-        { loc: "/kategori/kemirgen", priority: "0.7", changefreq: "weekly" },
-        { loc: "/odeme", priority: "0.5", changefreq: "monthly" },
-        { loc: "/giris", priority: "0.4", changefreq: "monthly" },
-        { loc: "/siparis-takip", priority: "0.4", changefreq: "monthly" },
-        { loc: "/favoriler", priority: "0.4", changefreq: "monthly" },
-      ];
-
-      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
-      xml += `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-
-      for (const page of staticPages) {
-        xml += `  <url>\n    <loc>${baseUrl}${page.loc}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>${page.changefreq}</changefreq>\n    <priority>${page.priority}</priority>\n  </url>\n`;
-      }
-
-      for (const cat of categories) {
-        xml += `  <url>\n    <loc>${baseUrl}/kategori/${cat.animal}/${cat.subcategory}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
-        xml += `  <url>\n    <loc>${baseUrl}/siparis/${cat.animal}/${cat.subcategory}/${cat.slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
-      }
-
-      for (const product of products) {
-        const slug = product.name.toLowerCase().replace(/[^a-z0-9ğüşıöç]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
-        xml += `  <url>\n    <loc>${baseUrl}/urun/${product.id}/${slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
-      }
-
-      xml += `</urlset>`;
-      res.set("Content-Type", "application/xml");
-      res.send(xml);
-    } catch (err) {
-      res.status(500).send("Sitemap error");
-    }
-  });
 
   app.get("/robots.txt", (req, res) => {
     res.set("Content-Type", "text/plain");
