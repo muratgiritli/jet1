@@ -144,7 +144,7 @@ export async function registerRoutes(
 
   app.get("/sitemap.xml", async (_req, res) => {
     try {
-      const SITE = "https://jetgopet.com";
+      const SITE = "https://www.jetgo.shop";
       const today = new Date().toISOString().split("T")[0];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
@@ -165,7 +165,7 @@ export async function registerRoutes(
 
   app.get("/sitemap-main.xml", async (_req, res) => {
     try {
-      const SITE = "https://jetgopet.com";
+      const SITE = "https://www.jetgo.shop";
       const staticPages = [
         { url: "/", priority: "1.0", changefreq: "daily" },
         { url: "/kategori", priority: "0.9", changefreq: "weekly" },
@@ -211,7 +211,7 @@ export async function registerRoutes(
 
   app.get("/sitemap-products.xml", async (_req, res) => {
     try {
-      const SITE = "https://jetgopet.com";
+      const SITE = "https://www.jetgo.shop";
       const allProducts = await storage.getAllProducts();
       const activeProducts = allProducts.filter((p: any) => p.isActive && p.stock > 0 && p.price > 0);
       const today = new Date().toISOString().split("T")[0];
@@ -235,7 +235,7 @@ export async function registerRoutes(
   app.get("/api/export/xlsx", async (_req, res) => {
     try {
       const XLSX = await import("xlsx");
-      const SITE = "https://jetgopet.com";
+      const SITE = "https://www.jetgo.shop";
       const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen" };
 
       const { rows } = await sharedPool.query(`
@@ -284,7 +284,7 @@ export async function registerRoutes(
 
   app.get("/api/export/yml", async (_req, res) => {
     try {
-      const SITE = "https://jetgopet.com";
+      const SITE = "https://www.jetgo.shop";
       const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen" };
 
       const { rows } = await sharedPool.query(`
@@ -308,7 +308,7 @@ export async function registerRoutes(
 
       const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-      let yml = `<?xml version="1.0" encoding="UTF-8"?>\n<yml_catalog date="${new Date().toISOString().split("T")[0]}">\n  <shop>\n    <name>JETGO Pet Shop</name>\n    <company>Sizpa İnternet Tic. Ltd. Şti.</company>\n    <url>https://jetgopet.com</url>\n    <currencies>\n      <currency id="TRY" rate="1"/>\n    </currencies>\n    <categories>\n`;
+      let yml = `<?xml version="1.0" encoding="UTF-8"?>\n<yml_catalog date="${new Date().toISOString().split("T")[0]}">\n  <shop>\n    <name>JETGO Pet Shop</name>\n    <company>Sizpa İnternet Tic. Ltd. Şti.</company>\n    <url>https://www.jetgo.shop</url>\n    <currencies>\n      <currency id="TRY" rate="1"/>\n    </currencies>\n    <categories>\n`;
 
       for (const [, cat] of categories) {
         yml += `      <category id="${cat.id}">${esc(cat.subcat)} (${ANIMAL_MAP[cat.animal] || cat.animal})</category>\n`;
@@ -486,7 +486,7 @@ export async function registerRoutes(
 
   app.get("/robots.txt", (req, res) => {
     res.set("Content-Type", "text/plain");
-    res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /odeme\nDisallow: /giris\nDisallow: /hesabim\nDisallow: /siparis-takip\n\nSitemap: https://jetgopet.com/sitemap.xml\n`);
+    res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /odeme\nDisallow: /giris\nDisallow: /hesabim\nDisallow: /siparis-takip\n\nSitemap: https://www.jetgo.shop/sitemap.xml\n`);
   });
 
   app.get("/api/products", async (req, res) => {

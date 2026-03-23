@@ -6,4 +6,4 @@ Disallow: /giris
 Disallow: /hesabim
 Disallow: /siparis-takip
 
-Sitemap: https://jetgopet.com/sitemap.xml
+Sitemap: https://www.jetgo.shop/sitemap.xml
