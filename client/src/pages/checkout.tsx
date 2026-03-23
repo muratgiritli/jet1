@@ -861,7 +861,7 @@ export default function Checkout() {
                             </Button>
                           </div>
                           <span className="text-sm font-bold shrink-0 min-w-[70px] text-right" data-testid={`text-checkout-linetotal-${product.id}`}>
-                            {Math.round(qty * product.price * 0.95)} TL
+                            {(qty * product.price * 0.95).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                           </span>
                         </motion.div>
                       ))}
@@ -885,7 +885,7 @@ export default function Checkout() {
                         <span className="text-sm font-medium">Kapıda Nakit</span>
                         <span className="flex-1" />
                         <Badge variant="secondary" className="no-default-hover-elevate shrink-0">
-                          {Math.round(displayTotal)} TL
+                          {subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">Kampanya siparislerinde sadece kapida nakit odeme gecerlidir.</p>
@@ -910,11 +910,11 @@ export default function Checkout() {
                           )}
                           {!opt.disc && <span className="flex-1" />}
                           <Badge
-                            variant={opt.disc > 0 ? "default" : "secondary"}
+                            variant="secondary"
                             className="no-default-hover-elevate shrink-0"
                             data-testid={`badge-payment-tag-${opt.id}`}
                           >
-                            {opt.disc > 0 ? `${Math.round(displayTotal * (1 - opt.disc))} TL` : opt.id === "taksit" ? opt.tag : `${Math.round(displayTotal)} TL`}
+                            {opt.id === "taksit" ? opt.tag : `${subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`}
                           </Badge>
                         </label>
                       );
@@ -1266,7 +1266,7 @@ export default function Checkout() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between gap-3 flex-wrap">
                       <span className="text-muted-foreground">Ara Toplam</span>
-                      <span className="font-medium" data-testid="text-subtotal">{Math.round(subtotal)} TL</span>
+                      <span className="font-medium" data-testid="text-subtotal">{subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                     </div>
                     {effectiveDiscount > 0 && (
                       <div className="flex justify-between gap-3 text-chart-2 flex-wrap">
@@ -1311,7 +1311,7 @@ export default function Checkout() {
                     <span className="text-lg font-bold">Genel Toplam</span>
                     {paymentId === "taksit" && selectedInstallment ? (() => {
                       const rate = installmentRates.find((r) => r.months === selectedInstallment);
-                      if (!rate) return <span className="text-2xl font-extrabold text-primary" data-testid="text-total">{Math.round(displayTotal)} TL</span>;
+                      if (!rate) return <span className="text-2xl font-extrabold text-primary" data-testid="text-total">{displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>;
                       const totalWithRate = displayTotal * (1 + rate.rate / 100);
                       return (
                         <div className="text-right" data-testid="text-total">
@@ -1323,7 +1323,7 @@ export default function Checkout() {
                       );
                     })() : (
                       <span className="text-2xl font-extrabold text-primary" data-testid="text-total">
-                        {Math.round(displayTotal)} TL
+                        {displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                       </span>
                     )}
                   </div>
