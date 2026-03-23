@@ -1,0 +1,163 @@
+1. ANA STRATEJİ: “LOCAL + TOPICAL AUTHORITY”
+
+Senin sektör:
+👉 Petshop + kapıya teslim + Samsun
+
+Google’da kazanmanın yolu:
+
+❌ 1000 tane boş sayfa
+✅ 100 tane güçlü + bağlı sayfa
+
+🧠 2. SİTE MİMARİSİ (ALTIN MODEL)
+🏠 ANA SAYFA
+
+👉 jetgopet.com
+
+İçerik:
+
+“Samsun Kapıya Teslim Petshop”
+Hızlı teslimat
+En çok satılan ürünler
+bölgeler link
+📍 2.1 ANA LANDING (EN KRİTİK SAYFA)
+
+👉 /samsun-petshop
+
+İçerik:
+
+Samsun genel hizmet
+teslimat süresi
+mahalle listesi
+Google map embed
+1000+ kelime
+📍 2.2 İLÇE SAYFALARI (CORE)
+
+👉 /atakum-petshop
+👉 /ilkadim-petshop
+👉 /canik-petshop
+
+İçerik:
+
+bölge özel açıklama
+mahalleler
+teslimat süresi
+ürünler
+
+👉 800–1200 kelime
+
+📍 2.3 MAHALLE BLOĞU (TEK SAYFA)
+
+❌ 50 mahalle = 50 sayfa YAPMA
+
+👉 DOĞRU:
+
+👉 /atakum-mahalleler
+
+İçinde:
+
+Atakum tüm mahalleler
+her mahalleye anchor link
+🛒 2.4 ÜRÜN KATEGORİ SAYFALARI
+
+👉 /kedi-mamasi
+👉 /kopek-mamasi
+👉 /kedi-kumu
+👉 /pet-aksesuar
+
+İçerik:
+
+marka karşılaştırma
+fiyatlar
+öneriler
+🧬 2.5 BLOG / AUTHORITY SAYFALARI (EN KRİTİK)
+
+👉 /kedi-mamasi-en-iyi-markalar
+👉 /kedi-kumu-en-iyi
+👉 /kopek-mamasi-fiyatlari
+
+👉 Google’a şunu gösterir:
+
+“Bu site uzman”
+
+🔥 3. 1000 SAYFA PLANI (SPAM OLMADAN)
+🧩 MODEL: CLUSTER SEO
+🔷 1. CORE SAYFALAR (10 adet)
+samsun-petshop
+atakum-petshop
+ilkadim-petshop
+canik-petshop
+kedi-mamasi
+kopek-mamasi
+kedi-kumu
+petshop-delivery
+vb.
+🔷 2. BLOG CLUSTER (300 SAYFA)
+
+Örnek:
+
+en iyi kedi maması 2026
+kedi kumu karşılaştırma
+ucuz kedi maması
+kedi neden kusar
+köpek mama önerileri
+
+👉 bunlar trafik çeker
+
+🔷 3. LONG-TAIL SAYFALAR (600 SAYFA)
+
+Ama akıllı şekilde:
+
+👉 ❌ yanlış:
+
+atakum ucuz mama
+atakum mama fiyat
+
+👉 ✅ doğru:
+
+“Samsun’da en uygun kedi maması nereden alınır”
+“Atakum petshop fiyat karşılaştırma”
+🔷 4. LOKAL SAYFALAR (100 SAYFA)
+
+Ama tek tek değil:
+
+👉 ❌ yanlış:
+50 mahalle = 50 sayfa
+
+👉 ✅ doğru:
+
+mahalle blokları
+içerikte geçirme
+⚡ 4. SAYFA FORMÜLÜ (HER SAYFA İÇİN)
+
+Her sayfa:
+
+🧱 STRUCTURE:
+H1 başlık
+2–3 paragraf
+liste (ürün / hizmet)
+FAQ (çok önemli)
+iç link
+CTA (sipariş ver)
+🔗 5. İÇ LİNK SİSTEMİ (EN KRİTİK)
+
+Her sayfa:
+
+👉 3–5 link:
+
+kategoriye
+ana sayfaya
+blog sayfasına
+ÖRNEK:
+
+👉 atakum-petshop sayfası:
+
+kedi maması → link
+köpek maması → link
+samsun petshop → link
+🚀 6. INDEX ALDIRMA SİSTEMİ
+
+Yeni sayfa:
+
+sitemap’e ekle
+ana sayfadan link ver
+1 blogdan link ver
