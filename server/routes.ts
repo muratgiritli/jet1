@@ -194,9 +194,16 @@ export async function registerRoutes(
       }
 
       const categories = await storage.getAllBrandCategories();
+      const seenCategories = new Set<string>();
       for (const cat of categories) {
-        xml += `  <url>\n    <loc>${SITE}/kategori/${cat.animal}/${cat.subcategory}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
-        xml += `  <url>\n    <loc>${SITE}/siparis/${cat.animal}/${cat.subcategory}/${cat.slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+        const catKey = `${cat.animal}/${cat.subcategory}`;
+        if (!seenCategories.has(catKey)) {
+          seenCategories.add(catKey);
+          xml += `  <url>\n    <loc>${SITE}/kategori/${cat.animal}/${cat.subcategory}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+        }
+        if (cat.slug) {
+          xml += `  <url>\n    <loc>${SITE}/siparis/${cat.animal}/${cat.subcategory}/${cat.slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+        }
       }
 
       xml += `</urlset>`;
