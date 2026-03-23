@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,8 +13,8 @@ import { apiRequest } from "@/lib/queryClient";
 type Step = "phone" | "otp" | "register";
 
 export default function AuthPage() {
-  const isRegisterTab = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("tab") === "register";
-  const [step, setStep] = useState<Step>("phone");
+  const searchStr = useSearch();
+  const isRegisterTab = new URLSearchParams(searchStr).get("tab") === "register";
   const [phone, setPhone] = useState("");
   const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
   const [name, setName] = useState("");
