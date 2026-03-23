@@ -27,6 +27,7 @@ export default function AuthPage() {
   const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [step, setStep] = useState<Step>("phone");
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isExistingUser, setIsExistingUser] = useState(false);
   const [countdown, setCountdown] = useState(0);
