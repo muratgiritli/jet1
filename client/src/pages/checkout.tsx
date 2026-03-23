@@ -434,7 +434,7 @@ export default function Checkout() {
       const orderItems = selectedProducts.map(({ product, qty }) => ({
         productId: product.id,
         name: product.name,
-        price: product.price,
+        price: Math.round(product.price * 0.95 * 100) / 100,
         quantity: qty,
         img: product.img || undefined,
       }));
@@ -500,7 +500,7 @@ export default function Checkout() {
       if (customerLocation) msg += `*Konum:* https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}\n`;
       if (customerName.trim() || customerPhone.trim()) msg += `\n`;
       selectedProducts.forEach(({ product, qty }) => {
-        msg += `${qty}x ${product.name} — ${Math.round(qty * product.price)} TL\n`;
+        msg += `${qty}x ${product.name} — ${Math.round(qty * product.price * 0.95)} TL\n`;
       });
       msg += `\n*Ara Toplam:* ${Math.round(subtotal)} TL`;
       if (effectiveDiscount > 0) msg += `\n*İndirim (${pay.tag}):* -${Math.round(effectiveDiscount)} TL`;
@@ -836,7 +836,7 @@ export default function Checkout() {
                               {product.name}
                             </p>
                             <p className="text-xs text-muted-foreground" data-testid={`text-checkout-unit-${product.id}`}>
-                              {product.price} TL / adet
+                              {(product.price * 0.95).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL / adet
                             </p>
                           </div>
                           <div className="flex items-center gap-1">
@@ -861,7 +861,7 @@ export default function Checkout() {
                             </Button>
                           </div>
                           <span className="text-sm font-bold shrink-0 min-w-[70px] text-right" data-testid={`text-checkout-linetotal-${product.id}`}>
-                            {Math.round(qty * product.price)} TL
+                            {Math.round(qty * product.price * 0.95)} TL
                           </span>
                         </motion.div>
                       ))}

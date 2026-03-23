@@ -79,7 +79,7 @@ export default function FloatingCartBar() {
                 <div className="flex flex-col">
                   <span className="text-[10px] text-muted-foreground" data-testid="text-float-count">{itemCount} ürün</span>
                   <span className="text-base font-extrabold text-primary" data-testid="text-float-total">
-                    {Math.round(subtotal * 0.95)} TL
+                    {Math.round(subtotal)} TL
                   </span>
                 </div>
               </div>
@@ -110,7 +110,7 @@ export default function FloatingCartBar() {
                 <div className="flex flex-col">
                   <span className="text-[10px] text-muted-foreground">{itemCount} ürün</span>
                   <span className="text-base font-extrabold text-primary">
-                    {Math.round(subtotal * 0.95)} TL
+                    {Math.round(subtotal)} TL
                   </span>
                 </div>
               </div>
