@@ -43,7 +43,7 @@ function InstallBanner() {
   };
 
   return (
-    <div className="hidden md:block bg-gradient-to-r from-[#5a2d6e] to-[#7c4dff] text-white relative z-[10000]">
+    <div className="md:hidden bg-gradient-to-r from-[#5a2d6e] to-[#7c4dff] text-white relative z-[10000]">
       <div className="max-w-6xl mx-auto px-4 py-1.5 flex items-center justify-center gap-3">
         <Download className="w-4 h-4 shrink-0 animate-bounce" />
         <span className="text-xs font-medium">
