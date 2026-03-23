@@ -954,10 +954,10 @@ export default function Checkout() {
                               <span className="text-sm font-medium">Tek Çekim</span>
                             </span>
                             <span className="text-sm text-center font-medium">
-                              {(subtotal * 1.05).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                              {(subtotal * 1.10).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                             </span>
                             <span className="text-sm text-right font-bold">
-                              {(subtotal * 1.05).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                              {(subtotal * 1.10).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                             </span>
                           </label>
 
