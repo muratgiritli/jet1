@@ -151,6 +151,7 @@ export async function registerRoutes(
       xml += `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
       xml += `  <sitemap>\n    <loc>${SITE}/sitemap-main.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
       xml += `  <sitemap>\n    <loc>${SITE}/sitemap-products.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
+      xml += `  <sitemap>\n    <loc>${SITE}/sitemap-seo.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
 
       xml += `</sitemapindex>`;
 
