@@ -141,42 +141,6 @@ export async function registerRoutes(
   await seedDatabase();
   await ensureAdminExists();
 
-  const SEO_PAGES_DATA: { slug: string; district: string }[] = [
-    { slug: "samsun-petshop", district: "Samsun" },
-    { slug: "atakum-petshop", district: "Atakum" },
-    { slug: "yeni-mahalle-petshop", district: "Atakum" },
-    { slug: "denizevleri-petshop", district: "Atakum" },
-    { slug: "guzelyali-petshop", district: "Atakum" },
-    { slug: "kurupelit-petshop", district: "Atakum" },
-    { slug: "atakent-petshop", district: "Atakum" },
-    { slug: "incesu-petshop", district: "Atakum" },
-    { slug: "balac-petshop", district: "Atakum" },
-    { slug: "cakirlar-petshop", district: "Atakum" },
-    { slug: "mimar-sinan-petshop", district: "Atakum" },
-    { slug: "korfez-petshop", district: "Atakum" },
-    { slug: "soguksu-petshop", district: "Atakum" },
-    { slug: "taflan-petshop", district: "Atakum" },
-    { slug: "ilkadim-kadikoy-petshop", district: "İlkadım" },
-    { slug: "ilkadim-rasathane-petshop", district: "İlkadım" },
-    { slug: "ilkadim-kilicdede-petshop", district: "İlkadım" },
-    { slug: "ilkadim-kalkanci-petshop", district: "İlkadım" },
-    { slug: "ilkadim-baruthane-petshop", district: "İlkadım" },
-    { slug: "ilkadim-ulugazi-petshop", district: "İlkadım" },
-    { slug: "canik-karsiyaka-petshop", district: "Canik" },
-    { slug: "canik-gaziosmanpasa-petshop", district: "Canik" },
-    { slug: "canik-yenimahalle-petshop", district: "Canik" },
-    { slug: "canik-kuzeyyildizi-petshop", district: "Canik" },
-    { slug: "tekkekoy-19mayis-petshop", district: "Tekkeköy" },
-    { slug: "tekkekoy-sanayi-petshop", district: "Tekkeköy" },
-  ];
-
-  const DISTRICT_SITEMAP_SLUGS: Record<string, string> = {
-    "atakum": "Atakum",
-    "ilkadim": "İlkadım",
-    "canik": "Canik",
-    "tekkekoy": "Tekkeköy",
-    "samsun": "Samsun",
-  };
 
   app.get("/sitemap.xml", async (_req, res) => {
     try {
@@ -187,10 +151,6 @@ export async function registerRoutes(
       xml += `<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
       xml += `  <sitemap>\n    <loc>${SITE}/sitemap-main.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
       xml += `  <sitemap>\n    <loc>${SITE}/sitemap-products.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
-
-      for (const key of Object.keys(DISTRICT_SITEMAP_SLUGS)) {
-        xml += `  <sitemap>\n    <loc>${SITE}/sitemap-${key}.xml</loc>\n    <lastmod>${today}</lastmod>\n  </sitemap>\n`;
-      }
 
       xml += `</sitemapindex>`;
 
@@ -270,29 +230,6 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/sitemap-:district.xml", (req, res) => {
-    try {
-      const districtSlug = req.params.district;
-      const districtName = DISTRICT_SITEMAP_SLUGS[districtSlug];
-      if (!districtName) return res.status(404).send("Not found");
-
-      const SITE = "https://jetgopet.com";
-      const today = new Date().toISOString().split("T")[0];
-      const pages = SEO_PAGES_DATA.filter(p => p.district === districtName);
-
-      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
-      for (const p of pages) {
-        xml += `  <url>\n    <loc>${SITE}/${p.slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
-      }
-      xml += `</urlset>`;
-
-      res.set("Content-Type", "application/xml");
-      res.set("Cache-Control", "public, max-age=3600");
-      res.send(xml);
-    } catch (err) {
-      res.status(500).send("Sitemap error");
-    }
-  });
 
   app.get("/api/export/xlsx", async (_req, res) => {
     try {
