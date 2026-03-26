@@ -20,16 +20,16 @@ const HERO_SLIDES = [
     badges: true,
   },
   {
+    title: "Her Siparişte\n%5 Para Puan 🎁",
+    subtitle: "Alışveriş yaptıkça kazan, sonraki siparişinde kullan",
+    gradient: "from-indigo-500 via-violet-500 to-purple-400",
+    href: "/giris",
+  },
+  {
     title: "Büyük\nKampanya 🎉",
     subtitle: "Mama Çeşitleri + ekstra ürün fırsatları",
     gradient: "from-purple-600 via-violet-500 to-fuchsia-400",
     href: "/kampanya",
-  },
-  {
-    title: "Yeni Üyelere\nÖzel Fırsat ✨",
-    subtitle: "İlk siparişte %5 para puan kazan",
-    gradient: "from-emerald-500 via-teal-500 to-cyan-400",
-    href: "/giris",
   },
 ];
 
