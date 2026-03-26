@@ -822,7 +822,10 @@ export async function registerRoutes(
 
   app.post("/api/orders", async (req, res) => {
     const parsed = createOrderSchema.safeParse(req.body);
-    if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
+    if (!parsed.success) {
+      const fieldErrors = parsed.error.errors.map(e => e.message).join(", ");
+      return res.status(400).json({ message: fieldErrors || "Geçersiz sipariş verisi", errors: parsed.error.errors });
+    }
     const { usedPoints, neighborhoodId, ...orderData } = parsed.data;
 
     if (neighborhoodId) {

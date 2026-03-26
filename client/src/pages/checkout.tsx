@@ -419,6 +419,14 @@ export default function Checkout() {
       setShowAuthModal(true);
       return;
     }
+    if (!customerName.trim()) {
+      setOrderError("Lütfen ad soyad bilginizi girin.");
+      return;
+    }
+    if (!customerPhone.trim()) {
+      setOrderError("Lütfen telefon numaranızı girin.");
+      return;
+    }
     if (hasCampaignItems && !campaignValid) {
       setOrderError("Kampanyadan yararlanmak için sepete en az 1 ana ürün ve 1 ek ürün eklemeniz gerekmektedir.");
       return;
@@ -548,11 +556,11 @@ export default function Checkout() {
   };
 
   useEffect(() => {
-    if (pendingOrderAfterAuth && isLoggedIn && !showAuthModal) {
+    if (pendingOrderAfterAuth && isLoggedIn && !showAuthModal && customerName.trim()) {
       setPendingOrderAfterAuth(false);
       setTimeout(() => handleOrder(), 300);
     }
-  }, [pendingOrderAfterAuth, isLoggedIn, showAuthModal]);
+  }, [pendingOrderAfterAuth, isLoggedIn, showAuthModal, customerName]);
 
   return (
     <div className="min-h-screen bg-background pb-16 md:pb-0">
