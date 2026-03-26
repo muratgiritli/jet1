@@ -56,6 +56,7 @@ const IletisimPage = lazy(() => import("@/pages/static-pages").then(m => ({ defa
 const TeslimatIadePage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.TeslimatIadePage })));
 const GizlilikSozlesmesiPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.GizlilikSozlesmesiPage })));
 const MesafeliSatisSozlesmesiPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.MesafeliSatisSozlesmesiPage })));
+const DemoLanding = lazy(() => import("@/pages/demo-landing"));
 const SeoPage = lazy(() => import("@/pages/seo-pages"));
 
 function PageLoader() {
@@ -83,6 +84,7 @@ function Router() {
         <Route path="/favoriler" component={FavoritesPage} />
         <Route path="/giris" component={AuthPage} />
         <Route path="/hesabim" component={ProfilePage} />
+        <Route path="/demo" component={DemoLanding} />
         <Route path="/kampanya" component={CampaignPage} />
         <Route path="/sss" component={SSSPage} />
         <Route path="/kvkk" component={KVKKPage} />
@@ -105,15 +107,16 @@ function Router() {
 function AppShell() {
   const [location] = useLocation();
   const isAdmin = location.startsWith("/admin");
+  const isDemo = location === "/demo";
 
   return (
     <>
-      {!isAdmin && <InstallBanner />}
-      {!isAdmin && <Header />}
+      {!isAdmin && !isDemo && <InstallBanner />}
+      {!isAdmin && !isDemo && <Header />}
       <ErrorBoundary><Router /></ErrorBoundary>
-      {!isAdmin && location === "/" && <Footer />}
-      {!isAdmin && <FloatingCartBar />}
-      {!isAdmin && <BottomTabBar />}
+      {!isAdmin && !isDemo && location === "/" && <Footer />}
+      {!isAdmin && !isDemo && <FloatingCartBar />}
+      {!isAdmin && !isDemo && <BottomTabBar />}
     </>
   );
 }
