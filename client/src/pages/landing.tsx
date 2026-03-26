@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import {
   Truck, CreditCard, Banknote, Smartphone,
   ArrowRight, ChevronRight, Star, Clock, Shield,
-  Gift, MapPin, Phone, Mail
+  Gift, MapPin, Phone, Mail, BookOpen
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import SEO, { LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD, SITE_DOMAIN } from "@/components/SEO";
@@ -355,6 +355,79 @@ function MobileFooter() {
   );
 }
 
+const BRANDS = [
+  { name: "Royal Canin", color: "#C8102E", letter: "RC" },
+  { name: "Hill's", color: "#003DA5", letter: "H" },
+  { name: "N&D", color: "#2D5A27", letter: "N&D" },
+  { name: "Pro Plan", color: "#1C1C1C", letter: "PP" },
+  { name: "Reflex", color: "#FF6B00", letter: "R" },
+  { name: "Profine", color: "#00613C", letter: "PF" },
+  { name: "Pronature", color: "#6B3480", letter: "PN" },
+  { name: "Brit", color: "#E31E24", letter: "B" },
+  { name: "Acana", color: "#8B4513", letter: "AC" },
+  { name: "Orijen", color: "#1A3C5E", letter: "OR" },
+];
+
+function BrandSlider() {
+  return (
+    <div data-testid="section-brands">
+      <h3 className="text-base md:text-xl font-extrabold text-gray-900 mb-3 md:mb-4" data-testid="text-brands-heading">Markalarımız</h3>
+      <div className="flex gap-3 overflow-x-auto pb-2 scrollbar-hide">
+        {BRANDS.map((brand) => (
+          <div
+            key={brand.name}
+            className="flex flex-col items-center gap-1.5 shrink-0 group"
+            data-testid={`brand-${brand.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
+          >
+            <div
+              className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 group-hover:shadow-md transition-shadow bg-white"
+            >
+              <span
+                className="text-lg md:text-xl font-extrabold"
+                style={{ color: brand.color }}
+              >
+                {brand.letter}
+              </span>
+            </div>
+            <span className="text-[10px] md:text-xs font-semibold text-gray-600 text-center w-16 md:w-20 truncate">{brand.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function BlogPreview() {
+  return (
+    <div data-testid="section-blog-preview">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-base md:text-xl font-extrabold text-gray-900" data-testid="text-blog-heading">Pet Bakım Rehberi</h3>
+        <Link href="/blog" className="text-xs md:text-sm text-orange-500 font-semibold flex items-center gap-0.5" data-testid="link-all-blog">
+          Tümü <ChevronRight className="w-3.5 h-3.5" />
+        </Link>
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        {[
+          { title: "Kedi Maması Nasıl Seçilir?", slug: "kedi-mamasi-nasil-secilir", category: "Kedi Bakımı", color: "bg-purple-100 text-purple-700" },
+          { title: "Köpek Maması Seçim Rehberi", slug: "kopek-mamasi-secim-rehberi", category: "Köpek Bakımı", color: "bg-amber-100 text-amber-700" },
+          { title: "Kedi Kumu Seçim Rehberi", slug: "kedi-kumu-secim-rehberi", category: "Kedi Bakımı", color: "bg-purple-100 text-purple-700" },
+        ].map((post) => (
+          <Link key={post.slug} href={`/blog/${post.slug}`}>
+            <div className="bg-white rounded-xl border border-gray-100 p-3 md:p-4 hover:shadow-md transition-shadow cursor-pointer group" data-testid={`blog-preview-${post.slug}`}>
+              <span className={`text-[9px] md:text-[10px] font-bold px-2 py-0.5 rounded-full ${post.color}`}>{post.category}</span>
+              <h4 className="text-sm font-bold mt-2 group-hover:text-[#6B3480] transition-colors">{post.title}</h4>
+              <div className="flex items-center gap-1 mt-2 text-[10px] text-gray-400">
+                <BookOpen className="w-3 h-3" />
+                <span>Rehberi Oku →</span>
+              </div>
+            </div>
+          </Link>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function RegionLinks() {
   const regions = [
     { name: "Samsun Pet Shop", href: "/samsun-petshop", desc: "Kapıya teslim hizmet" },
@@ -458,6 +531,14 @@ export default function Landing() {
 
         <div className="mt-5 md:mt-10">
           <CategoryGrid />
+        </div>
+
+        <div className="mt-5 md:mt-8">
+          <BrandSlider />
+        </div>
+
+        <div className="mt-5 md:mt-8">
+          <BlogPreview />
         </div>
 
         <div className="mt-5 md:mt-8">

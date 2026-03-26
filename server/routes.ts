@@ -277,7 +277,16 @@ export async function registerRoutes(
         { url: "/samsun-evcil-hayvan-magazasi", priority: "0.7", changefreq: "weekly" },
         { url: "/samsun-kedi-mamasi-fiyatlari", priority: "0.7", changefreq: "weekly" },
       ];
-      const seoSlugs = [...coreSlugs, ...mahalleSlugs, ...keywordSlugs];
+      const blogSlugs = [
+        { url: "/blog", priority: "0.8", changefreq: "weekly" },
+        { url: "/blog/kedi-mamasi-nasil-secilir", priority: "0.7", changefreq: "monthly" },
+        { url: "/blog/kopek-mamasi-secim-rehberi", priority: "0.7", changefreq: "monthly" },
+        { url: "/blog/kedi-kumu-secim-rehberi", priority: "0.7", changefreq: "monthly" },
+        { url: "/blog/evcil-hayvan-beslenme-hatalari", priority: "0.7", changefreq: "monthly" },
+        { url: "/blog/kedi-bakim-ipuclari", priority: "0.7", changefreq: "monthly" },
+        { url: "/blog/samsun-evcil-hayvan-gezilecek-yerler", priority: "0.6", changefreq: "monthly" },
+      ];
+      const seoSlugs = [...coreSlugs, ...mahalleSlugs, ...keywordSlugs, ...blogSlugs];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
       for (const page of seoSlugs) {

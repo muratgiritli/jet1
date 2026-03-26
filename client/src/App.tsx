@@ -58,6 +58,8 @@ const GizlilikSozlesmesiPage = lazy(() => import("@/pages/static-pages").then(m 
 const MesafeliSatisSozlesmesiPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.MesafeliSatisSozlesmesiPage })));
 const DemoLanding = lazy(() => import("@/pages/demo-landing"));
 const SeoPage = lazy(() => import("@/pages/seo-pages"));
+const BlogListRoute = lazy(() => import("@/pages/blog").then(m => ({ default: m.BlogListRoute })));
+const BlogPostRoute = lazy(() => import("@/pages/blog").then(m => ({ default: m.BlogPostRoute })));
 
 function PageLoader() {
   return (
@@ -86,6 +88,8 @@ function Router() {
         <Route path="/hesabim" component={ProfilePage} />
         <Route path="/demo" component={DemoLanding} />
         <Route path="/kampanya" component={CampaignPage} />
+        <Route path="/blog/:slug" component={BlogPostRoute} />
+        <Route path="/blog" component={BlogListRoute} />
         <Route path="/sss" component={SSSPage} />
         <Route path="/kvkk" component={KVKKPage} />
         <Route path="/gizlilik" component={GizlilikPage} />
