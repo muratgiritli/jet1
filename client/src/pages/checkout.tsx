@@ -368,7 +368,7 @@ export default function Checkout() {
     queryKey: ["/api/delivery-neighborhoods"],
   });
 
-  const districts = [...new Set(neighborhoods.map((n: any) => n.district))].sort();
+  const districts = [...new Set(neighborhoods.map((n: any) => n.district))].filter((d: string) => d === "Atakum").sort();
   const filteredNeighborhoods = selectedDistrict
     ? neighborhoods.filter((n: any) => n.district === selectedDistrict).sort((a: any, b: any) => a.name.localeCompare(b.name, 'tr'))
     : [];
