@@ -437,10 +437,6 @@ export default function Landing() {
           <CategoryGrid />
         </div>
 
-        <div className="mt-5 md:mt-8">
-          <RegionLinks />
-        </div>
-
         <div className="mt-5 md:mt-8 md:grid md:grid-cols-2 md:gap-6">
           <TrustBadges />
           <div className="mt-5 md:mt-0">
