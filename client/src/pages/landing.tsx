@@ -11,6 +11,20 @@ import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
 import catBird from "@/assets/images/cat-bird.webp";
 import catRabbit from "@/assets/images/cat-rabbit.webp";
+import brandRoyalCanin from "@/assets/images/brands/royal-canin.webp";
+import brandHills from "@/assets/images/brands/hills.webp";
+import brandNd from "@/assets/images/brands/nd.webp";
+import brandProPlan from "@/assets/images/brands/pro-plan.webp";
+import brandReflex from "@/assets/images/brands/reflex.webp";
+import brandProfine from "@/assets/images/brands/profine.webp";
+import brandPronature from "@/assets/images/brands/pronature.webp";
+import brandBrit from "@/assets/images/brands/brit.webp";
+import brandAcana from "@/assets/images/brands/acana.webp";
+import brandOrijen from "@/assets/images/brands/orijen.webp";
+import brandReflexPlus from "@/assets/images/brands/reflex-plus.webp";
+import brandProchoice from "@/assets/images/brands/prochoice.webp";
+import brandGoody from "@/assets/images/brands/goody.webp";
+import brandBonus from "@/assets/images/brands/bonus.webp";
 
 const HERO_SLIDES = [
   {
@@ -356,16 +370,20 @@ function MobileFooter() {
 }
 
 const BRANDS = [
-  { name: "Royal Canin", color: "#C8102E", letter: "RC" },
-  { name: "Hill's", color: "#003DA5", letter: "H" },
-  { name: "N&D", color: "#2D5A27", letter: "N&D" },
-  { name: "Pro Plan", color: "#1C1C1C", letter: "PP" },
-  { name: "Reflex", color: "#FF6B00", letter: "R" },
-  { name: "Profine", color: "#00613C", letter: "PF" },
-  { name: "Pronature", color: "#6B3480", letter: "PN" },
-  { name: "Brit", color: "#E31E24", letter: "B" },
-  { name: "Acana", color: "#8B4513", letter: "AC" },
-  { name: "Orijen", color: "#1A3C5E", letter: "OR" },
+  { name: "Royal Canin", img: brandRoyalCanin },
+  { name: "Hill's", img: brandHills },
+  { name: "N&D", img: brandNd },
+  { name: "Pro Plan", img: brandProPlan },
+  { name: "Reflex", img: brandReflex },
+  { name: "Reflex Plus", img: brandReflexPlus },
+  { name: "Brit", img: brandBrit },
+  { name: "Acana", img: brandAcana },
+  { name: "Orijen", img: brandOrijen },
+  { name: "ProChoice", img: brandProchoice },
+  { name: "Profine", img: brandProfine },
+  { name: "Pronature", img: brandPronature },
+  { name: "Goody", img: brandGoody },
+  { name: "Bonus", img: brandBonus },
 ];
 
 function BrandSlider() {
@@ -379,15 +397,13 @@ function BrandSlider() {
             className="flex flex-col items-center gap-1.5 shrink-0 group"
             data-testid={`brand-${brand.name.toLowerCase().replace(/[^a-z0-9]/g, '-')}`}
           >
-            <div
-              className="w-16 h-16 md:w-20 md:h-20 rounded-2xl flex items-center justify-center shadow-sm border border-gray-100 group-hover:shadow-md transition-shadow bg-white"
-            >
-              <span
-                className="text-lg md:text-xl font-extrabold"
-                style={{ color: brand.color }}
-              >
-                {brand.letter}
-              </span>
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl overflow-hidden shadow-sm border border-gray-100 group-hover:shadow-md transition-shadow bg-white flex items-center justify-center p-1.5">
+              <img
+                src={brand.img}
+                alt={`${brand.name} - Samsun pet shop`}
+                className="w-full h-full object-contain"
+                loading="lazy"
+              />
             </div>
             <span className="text-[10px] md:text-xs font-semibold text-gray-600 text-center w-16 md:w-20 truncate">{brand.name}</span>
           </div>
