@@ -83,7 +83,7 @@ export default function InstallBanner() {
           data-testid="btn-install-app"
         >
           <Download className="w-3.5 h-3.5" />
-          Yükle
+          Uygulamayı İndir
         </button>
         <button
           type="button"
