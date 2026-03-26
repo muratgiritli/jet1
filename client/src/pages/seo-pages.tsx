@@ -9,8 +9,11 @@ import NotFound from "@/pages/not-found";
 function SeoPageContent({ page }: { page: SeoPageData }) {
   const breadcrumbs = [
     { name: "Ana Sayfa", url: SITE_DOMAIN },
-    ...(page.type === "district" || page.type === "mahalle-block"
+    ...(page.type === "district" || page.type === "mahalle-block" || page.type === "mahalle"
       ? [{ name: "Samsun Pet Shop", url: `${SITE_DOMAIN}/samsun-petshop` }]
+      : []),
+    ...(page.type === "mahalle" && page.parentDistrict
+      ? [{ name: `${page.parentDistrict === "atakum" ? "Atakum" : page.parentDistrict === "ilkadim" ? "İlkadım" : "Canik"} Pet Shop`, url: `${SITE_DOMAIN}/${page.parentDistrict}-petshop` }]
       : []),
     { name: page.title, url: `${SITE_DOMAIN}/${page.slug}` },
   ];
@@ -35,12 +38,20 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
         <div className="max-w-4xl mx-auto px-4">
           <nav className="flex items-center gap-1 text-xs text-white/70 mb-4 flex-wrap" data-testid="breadcrumb">
             <Link href="/" className="hover:text-white">Ana Sayfa</Link>
-            {page.type === "district" || page.type === "mahalle-block" ? (
+            {(page.type === "district" || page.type === "mahalle-block" || page.type === "mahalle") && (
               <>
                 <ChevronRight className="w-3 h-3" />
                 <Link href="/samsun-petshop" className="hover:text-white">Samsun Pet Shop</Link>
               </>
-            ) : null}
+            )}
+            {page.type === "mahalle" && page.parentDistrict && (
+              <>
+                <ChevronRight className="w-3 h-3" />
+                <Link href={`/${page.parentDistrict}-petshop`} className="hover:text-white">
+                  {page.parentDistrict === "atakum" ? "Atakum" : page.parentDistrict === "ilkadim" ? "İlkadım" : "Canik"} Pet Shop
+                </Link>
+              </>
+            )}
             <ChevronRight className="w-3 h-3" />
             <span className="text-white">{page.title}</span>
           </nav>
@@ -78,7 +89,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
         {page.features && page.features.length > 0 && (
           <section>
             <h2 className="text-xl font-bold mb-4" data-testid="seo-h2-features">
-              {page.type === "blog" ? "Marka Detayları" : page.type === "category" ? "Markalar ve Ürünler" : "Hizmetlerimiz"}
+              {page.type === "blog" ? "Marka Detayları" : page.type === "category" ? "Markalar ve Ürünler" : page.type === "mahalle" ? "Teslimat Avantajları" : page.type === "keyword" ? "Neden JETGO?" : "Hizmetlerimiz"}
             </h2>
             <div className="grid gap-3">
               {page.features.map((f, i) => (

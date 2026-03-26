@@ -243,7 +243,7 @@ export async function registerRoutes(
     try {
       const SITE = "https://www.jetgo.shop";
       const today = new Date().toISOString().split("T")[0];
-      const seoSlugs = [
+      const coreSlugs = [
         { url: "/samsun-petshop", priority: "0.9", changefreq: "weekly" },
         { url: "/atakum-petshop", priority: "0.8", changefreq: "weekly" },
         { url: "/ilkadim-petshop", priority: "0.8", changefreq: "weekly" },
@@ -257,6 +257,27 @@ export async function registerRoutes(
         { url: "/kedi-kumu-en-iyi", priority: "0.7", changefreq: "monthly" },
         { url: "/kopek-mamasi-fiyatlari", priority: "0.7", changefreq: "monthly" },
       ];
+      const atakumMahalleler = ["denizevleri","guzelyali","kurupelit","atakent","incesu","mimar-sinan","korfez","yeni-mahalle","altinkum","balac","cakirlar","soguksu","taflan","cobanli","buyukoyumca"];
+      const ilkadimMahalleler = ["kadikoy","rasathane","kilicdede","baruthane","kalkanci","ulugazi","derecik","adalet","ciftlik"];
+      const canikMahalleler = ["karsiyaka","gaziosmanpasa","canik-yenimahalle","kuzeyyildizi"];
+      const mahalleSlugs = [
+        ...atakumMahalleler.map(m => ({ url: `/atakum-${m}-petshop`, priority: "0.6", changefreq: "monthly" })),
+        ...ilkadimMahalleler.map(m => ({ url: `/ilkadim-${m}-petshop`, priority: "0.6", changefreq: "monthly" })),
+        ...canikMahalleler.map(m => ({ url: `/canik-${m}-petshop`, priority: "0.6", changefreq: "monthly" })),
+      ];
+      const keywordSlugs = [
+        { url: "/en-yakin-petshop-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/kapiya-teslim-petshop-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/online-petshop-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/acil-kedi-mamasi-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/kopek-mamasi-hizli-teslim-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/petshop-delivery-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/mama-siparis-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/kedi-kumu-kapiya-teslim-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/samsun-evcil-hayvan-magazasi", priority: "0.7", changefreq: "weekly" },
+        { url: "/samsun-kedi-mamasi-fiyatlari", priority: "0.7", changefreq: "weekly" },
+      ];
+      const seoSlugs = [...coreSlugs, ...mahalleSlugs, ...keywordSlugs];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
       for (const page of seoSlugs) {

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
-import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD } from "@/components/SEO";
+import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 
 interface Subcategory {
   id: number;
@@ -105,14 +105,18 @@ export default function CategoryPage() {
   return (
     <div className={`min-h-screen flex flex-col pb-16 md:pb-0 bg-gradient-to-b ${animalMeta.bgGradient}`}>
       <SEO
-        title={`${animalMeta.title} Maması Samsun - ${animalMeta.title} Ürünleri Fiyatları | JETGO Pet Shop`}
-        description={`Samsun ${animalMeta.title.toLowerCase()} maması, ${animalMeta.title.toLowerCase()} bakım ürünleri ve aksesuar çeşitleri en uygun fiyatlarla. Samsun içi aynı gün teslimat, kapıda ödeme. ${animalMeta.title} maması online sipariş.`}
+        title={`${animalMeta.title} Maması Samsun - Aynı Gün Kapıya Teslim ${animalMeta.title} Ürünleri | JETGO Pet Shop`}
+        description={`Samsun'da ${animalMeta.title.toLowerCase()} maması aynı gün kapıya teslim. ${animalMeta.title} maması, bakım ürünleri ve aksesuar çeşitleri en uygun fiyatlarla. 1 saatte teslimat, kapıda nakit/POS ödeme. Online sipariş JETGO.`}
         canonical={`${SITE_DOMAIN}/kategori/${animalSlug}`}
-        jsonLd={BREADCRUMB_JSONLD([
-          { name: "Ana Sayfa", url: SITE_DOMAIN },
-          { name: "Kategoriler", url: `${SITE_DOMAIN}/kategori` },
-          { name: animalMeta.title, url: `${SITE_DOMAIN}/kategori/${animalSlug}` },
-        ])}
+        keywords={`${animalMeta.title.toLowerCase()} maması samsun, ${animalMeta.title.toLowerCase()} maması atakum, ${animalMeta.title.toLowerCase()} ürünleri samsun, ${animalMeta.title.toLowerCase()} maması kapıya teslim, samsun petshop ${animalMeta.title.toLowerCase()}`}
+        jsonLd={[
+          BREADCRUMB_JSONLD([
+            { name: "Ana Sayfa", url: SITE_DOMAIN },
+            { name: "Kategoriler", url: `${SITE_DOMAIN}/kategori` },
+            { name: `${animalMeta.title} Ürünleri Samsun`, url: `${SITE_DOMAIN}/kategori/${animalSlug}` },
+          ]),
+          LOCAL_BUSINESS_JSONLD,
+        ]}
       />
 
       <main className="flex-1 max-w-2xl mx-auto px-4 w-full py-6">
@@ -122,14 +126,14 @@ export default function CategoryPage() {
           className="text-center mb-6"
         >
           <span className="text-4xl md:text-5xl block mb-2">{animalMeta.emoji}</span>
-          <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight" data-testid="text-category-title">
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight" data-testid="text-category-title">
             <span className="text-foreground">{animalMeta.title} </span>
             <span className={`bg-gradient-to-r ${animalMeta.gradient} bg-clip-text text-transparent`}>
-              Kategorileri
+              Ürünleri Samsun
             </span>
-          </h2>
+          </h1>
           <p className="text-xs text-muted-foreground mt-1 tracking-wide" data-testid="text-category-subtitle">
-            Bir kategori seçerek ürünleri keşfedin
+            Samsun'da aynı gün kapıya teslim - Kategori seçerek ürünleri keşfedin
           </p>
         </motion.div>
 

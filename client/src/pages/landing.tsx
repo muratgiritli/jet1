@@ -64,9 +64,9 @@ function HeroCarousel() {
         style={{ minHeight: slide.badges ? 220 : 160 }}
       >
         <div className="relative z-10 max-w-2xl">
-          <h2 className="text-2xl md:text-4xl lg:text-5xl font-black text-white whitespace-pre-line leading-tight drop-shadow-sm">
+          <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-white whitespace-pre-line leading-tight drop-shadow-sm">
             {slide.title}
-          </h2>
+          </h1>
           <p className="text-white/90 text-sm md:text-lg mt-2 md:mt-3 font-medium">{slide.subtitle}</p>
           {slide.badges && (
             <div className="flex flex-wrap gap-1.5 md:gap-2 mt-3 md:mt-4">

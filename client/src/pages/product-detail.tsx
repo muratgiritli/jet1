@@ -18,7 +18,7 @@ import ImageZoom from "@/components/ImageZoom";
 import ProductImage from "@/components/ProductImage";
 import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
 import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
-import SEO, { SITE_DOMAIN, PRODUCT_JSONLD, BREADCRUMB_JSONLD } from "@/components/SEO";
+import SEO, { SITE_DOMAIN, PRODUCT_JSONLD, BREADCRUMB_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 
 type ProductDetailData = {
   product: Product;
@@ -314,7 +314,12 @@ export default function ProductDetailPage() {
         },
       },
     };
-    return { title, description, canonical, ogImage: p.img || undefined, jsonLd };
+    const breadcrumbLd = BREADCRUMB_JSONLD([
+      { name: "Ana Sayfa", url: SITE_DOMAIN },
+      ...(catName ? [{ name: catName, url: `${SITE_DOMAIN}/kategori` }] : []),
+      { name: p.name, url: canonical },
+    ]);
+    return { title, description, canonical, ogImage: p.img || undefined, jsonLd: [jsonLd, breadcrumbLd, LOCAL_BUSINESS_JSONLD] };
   }, [resolvedData]);
 
   useEffect(() => {
@@ -384,11 +389,11 @@ export default function ProductDetailPage() {
       <main className="flex-1 max-w-2xl mx-auto px-4 w-full py-6 pb-28 md:pb-8">
         <div>
           <div className="flex flex-col md:flex-row gap-6">
-              <ImageZoom src={product.img || ""} alt={product.name} className="md:w-1/2 w-full">
+              <ImageZoom src={product.img || ""} alt={`${product.name} - Samsun JETGO Pet Shop`} className="md:w-1/2 w-full">
                 <div className="aspect-square flex items-center justify-center rounded-lg overflow-hidden bg-muted/30 relative" data-testid="img-product-detail">
                   <ProductImage
                     src={product.img}
-                    alt={product.name}
+                    alt={`${product.name} - Samsun kapıya teslim`}
                     className="w-full h-full object-contain"
                     data-testid="img-product"
                   />

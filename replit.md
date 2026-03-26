@@ -17,7 +17,7 @@ The application features a modern web architecture:
 - **Pet Care Tools**: An "Akıllı Mama Hesaplama" (Smart Food Calculator) helps users determine pet food needs and set reorder reminders.
 - **Campaign System**: Features a dedicated campaign page and checkout mode for special product bundles, with server-side validation.
 - **Delivery Management**: Includes selectable delivery time slots and neighborhood-based delivery pricing, allowing administrators to define custom minimum order values, shipping fees, and free shipping thresholds per area.
-- **SEO**: Comprehensive SEO implementation including custom per-page metadata, sitemaps, robots.txt, structured data (Schema.org for FAQ, Product, etc.), and 12 dedicated SEO landing pages following a local and topical authority strategy.
+- **SEO**: Comprehensive Local SEO implementation including custom per-page metadata, sitemaps, robots.txt, structured data (Schema.org for LocalBusiness, Product, FAQ, BreadcrumbList, WebSite). 40+ dedicated SEO pages covering: core city page, 3 district pages (Atakum/İlkadım/Canik), mahalle-block page, 28 individual neighborhood pages, 4 category pages, 3 blog/comparison pages, and 10 keyword-targeted pages. All pages follow a local SEO + topical authority strategy. Programmatic mahalle page generation using `generateMahallePage()` in `seo-data.ts`. H1 tags properly set on landing, category, and SEO pages. Product images have local keyword alt text.
 - **UI/UX**: Utilizes a clean, modern design with a responsive interface optimized for mobile. Key UI elements include a floating cart bar, a fixed bottom navigation bar, and a global header with search and navigation.
 
 ## External Dependencies
