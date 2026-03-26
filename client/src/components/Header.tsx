@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, User, LogIn, UserPlus, Download, X } from "lucide-react";
+import { ArrowLeft, User, LogIn, UserPlus } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
@@ -12,62 +11,6 @@ const NAV_ITEMS = [
   { name: "Kemirgen", href: "/kategori/kemirgen" },
 ];
 
-function InstallBanner() {
-  const [dismissed, setDismissed] = useState(() => {
-    try { return sessionStorage.getItem("install-banner-dismissed") === "1"; } catch { return false; }
-  });
-  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-
-  useEffect(() => {
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-    };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
-  }, []);
-
-  if (dismissed) return null;
-
-  const handleInstall = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt();
-      await deferredPrompt.userChoice;
-      setDeferredPrompt(null);
-    }
-  };
-
-  const handleDismiss = () => {
-    setDismissed(true);
-    try { sessionStorage.setItem("install-banner-dismissed", "1"); } catch {}
-  };
-
-  return (
-    <div className="md:hidden bg-gradient-to-r from-[#5a2d6e] to-[#7c4dff] text-white relative z-[10000]">
-      <div className="max-w-6xl mx-auto px-4 py-1.5 flex items-center justify-center gap-3">
-        <Download className="w-4 h-4 shrink-0 animate-bounce" />
-        <span className="text-xs font-medium">
-          JETGO'yu masaüstüne yükleyin — hızlı erişim, anlık bildirim!
-        </span>
-        <button
-          onClick={handleInstall}
-          className="px-3 py-0.5 bg-white text-[#6B3480] text-xs font-bold rounded-full hover:bg-white/90 transition-colors"
-          data-testid="btn-install-app"
-        >
-          Uygulamayı İndir
-        </button>
-        <button
-          onClick={handleDismiss}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/60 hover:text-white transition-colors"
-          data-testid="btn-dismiss-install"
-        >
-          <X className="w-3.5 h-3.5" />
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export default function Header() {
   const [location] = useLocation();
   const { isLoggedIn, customer } = useCustomer();
@@ -76,7 +19,6 @@ export default function Header() {
 
   return (
     <>
-      <InstallBanner />
       <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
         <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
