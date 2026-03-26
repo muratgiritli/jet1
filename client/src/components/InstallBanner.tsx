@@ -69,12 +69,6 @@ export default function InstallBanner() {
         className="md:hidden flex items-center gap-2 px-3 py-2 bg-gray-100 border-b border-gray-200"
         data-testid="install-banner"
       >
-        <img
-          src="/logo-jetgo.webp"
-          alt="JETGO"
-          className="w-10 h-10 rounded-lg flex-shrink-0"
-          data-testid="img-install-logo"
-        />
         <div className="flex-1 min-w-0">
           <p className="text-sm font-bold text-gray-900 leading-tight" data-testid="text-install-title">
             JETGO Pet Shop
