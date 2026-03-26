@@ -140,7 +140,7 @@ export default function CategoryPage() {
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3">
             {[1,2,3,4].map(i => (
-              <div key={i} className="rounded-2xl h-[100px] bg-white/60 animate-pulse" />
+              <div key={i} className="rounded-2xl h-[110px] bg-white/60 animate-pulse" />
             ))}
           </div>
         ) : (
@@ -161,7 +161,7 @@ export default function CategoryPage() {
                 >
                   <Link href={href}>
                     <div
-                      className="group cursor-pointer rounded-2xl p-4 min-h-[100px] flex flex-col justify-between relative overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
+                      className="group cursor-pointer rounded-2xl p-4 h-[110px] flex flex-col justify-between relative overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
                       style={{ backgroundColor: sub.color }}
                       data-testid={`btn-subcategory-${sub.slug}`}
                     >
