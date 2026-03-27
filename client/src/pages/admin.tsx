@@ -563,6 +563,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [nhSortOrder, setNhSortOrder] = useState("0");
   const [nhDistrictFilter, setNhDistrictFilter] = useState<string>("all");
   const [activeSection, setActiveSection] = useState<string>("yonetim");
+  const [yonetimSub, setYonetimSub] = useState<string | null>(null);
 
   const bulkPriceUpdateMutation = useMutation({
     mutationFn: async ({ productIds, percentage }: { productIds: number[]; percentage: number }) => {
@@ -1106,7 +1107,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           ].map(tab => (
             <button
               key={tab.key}
-              onClick={() => setActiveSection(tab.key)}
+              onClick={() => { setActiveSection(tab.key); setYonetimSub(null); }}
               className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
                 activeSection === tab.key
                   ? "text-white shadow-sm"
@@ -1131,7 +1132,48 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "bildirim" && <NotificationsSection />}
         {activeSection === "banner" && <BannersSection />}
         {activeSection === "raporlama" && <ReportsSection />}
-        {activeSection === "yonetim" && <><section>
+        {activeSection === "yonetim" && <>
+          {!yonetimSub && (
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3" data-testid="yonetim-buttons">
+              {[
+                { key: "kampanya", label: "Kampanya Yönetimi", icon: <Tag className="w-6 h-6" />, color: "text-purple-600" },
+                { key: "siparisler", label: "Sipariş Yönetimi", icon: <ShoppingBag className="w-6 h-6" />, color: "text-blue-600" },
+                { key: "mahalleler", label: "Mahalle Yönetimi", icon: <MapPin className="w-6 h-6" />, color: "text-green-600" },
+                { key: "kategoriler", label: "Kategoriler", icon: <Package className="w-6 h-6" />, color: "text-orange-600" },
+                { key: "altkategoriler", label: "Alt Kategori Yönetimi", icon: <ChevronRight className="w-6 h-6" />, color: "text-indigo-600" },
+                { key: "stokbildirimleri", label: "Stok Bildirimleri", icon: <Bell className="w-6 h-6" />, color: "text-red-600" },
+                { key: "parapuan", label: "Para Puan Yönetimi", icon: <Star className="w-6 h-6" />, color: "text-amber-600" },
+                { key: "urunler", label: "Ürünler", icon: <Package className="w-6 h-6" />, color: "text-cyan-600" },
+                { key: "crosssell", label: "Sıklıkla Birlikte Alınan", icon: <ShoppingBag className="w-6 h-6" />, color: "text-pink-600" },
+                { key: "taksit", label: "Taksit Oranları", icon: <CreditCard className="w-6 h-6" />, color: "text-emerald-600" },
+                { key: "kediturustats", label: "Kedi Türü İstatistikleri", icon: <BarChart3 className="w-6 h-6" />, color: "text-violet-600" },
+                { key: "hatirlatmalar", label: "Tekrar Sipariş Hatırlatmaları", icon: <Clock className="w-6 h-6" />, color: "text-teal-600" },
+              ].map(item => (
+                <button
+                  key={item.key}
+                  onClick={() => setYonetimSub(item.key)}
+                  className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md hover:border-purple-200 transition-all text-center"
+                  data-testid={`btn-yonetim-${item.key}`}
+                >
+                  <div className={`${item.color}`}>{item.icon}</div>
+                  <span className="text-xs font-semibold text-gray-700 leading-tight">{item.label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {yonetimSub && (
+            <button
+              onClick={() => setYonetimSub(null)}
+              className="flex items-center gap-1.5 mb-4 text-sm font-medium text-purple-700 hover:text-purple-900 transition-colors"
+              data-testid="btn-yonetim-back"
+            >
+              <ChevronRight className="w-4 h-4 rotate-180" />
+              Yönetim Menüsüne Dön
+            </button>
+          )}
+
+          {yonetimSub === "kampanya" && <section>
           <button
             onClick={() => setCampaignExpanded(!campaignExpanded)}
             className="flex items-center gap-2 mb-4 w-full text-left"
@@ -1228,9 +1270,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               })}
             </div>
           )}
-        </section>
+        </section>}
 
-        <section>
+        {yonetimSub === "siparisler" && <section>
           <button
             onClick={() => setOrdersExpanded(!ordersExpanded)}
             className="flex items-center gap-2 mb-4 w-full text-left"
@@ -1443,7 +1485,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             );
           })()}
           </>}
-        </section>
+        </section>}
 
         <Dialog open={!!phoneHistoryDialog} onOpenChange={(open) => { if (!open) setPhoneHistoryDialog(null); }}>
           <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
@@ -1702,7 +1744,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </DialogContent>
         </Dialog>
 
-        <section>
+        {yonetimSub === "mahalleler" && <section>
           <button
             onClick={() => setNeighborhoodExpanded(!neighborhoodExpanded)}
             className="flex items-center gap-2 mb-4 w-full text-left"
@@ -1955,9 +1997,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               )}
             </div>
           )}
-        </section>
+        </section>}
 
-        <section>
+        {yonetimSub === "kategoriler" && <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
             <h2 className="text-lg font-bold" data-testid="text-section-categories">Kategoriler</h2>
             <Dialog open={categoryDialogOpen} onOpenChange={setCategoryDialogOpen}>
@@ -2055,9 +2097,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               );
             })}
           </div>
-        </section>
+        </section>}
 
-        <section className="mb-6" data-testid="section-subcategory-management">
+        {yonetimSub === "altkategoriler" && <section className="mb-6" data-testid="section-subcategory-management">
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-lg font-bold" data-testid="text-subcategory-title">Alt Kategori Yönetimi</h3>
             <Dialog open={subcategoryDialogOpen} onOpenChange={setSubcategoryDialogOpen}>
@@ -2124,9 +2166,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               );
             })}
           </div>
-        </section>
+        </section>}
 
-        {sktWarningProducts.length > 0 && (
+        {yonetimSub === "stokbildirimleri" && sktWarningProducts.length > 0 && (
           <section className="mb-6" data-testid="section-skt-warnings">
             <Card className="border-2" style={{ borderColor: "#ff9800" }}>
               <CardContent className="p-4">
@@ -2216,7 +2258,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </section>
         )}
 
-        <section className="mb-6" data-testid="section-stock-alerts">
+        {yonetimSub === "stokbildirimleri" && <section className="mb-6" data-testid="section-stock-alerts">
           <h2 className="text-lg font-bold mb-4" data-testid="text-section-stock-alerts">
             <Bell className="w-5 h-5 inline-block mr-2" />
             Stok Bildirimleri
@@ -2283,9 +2325,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               ))}
             </div>
           )}
-        </section>
+        </section>}
 
-        <section className="mb-6" data-testid="section-loyalty-points">
+        {yonetimSub === "parapuan" && <section className="mb-6" data-testid="section-loyalty-points">
           <h2 className="text-lg font-bold mb-4" data-testid="text-section-loyalty">
             <Star className="w-5 h-5 inline-block mr-2" />
             Para Puan Yönetimi
@@ -2363,9 +2405,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               )}
             </CardContent>
           </Card>
-        </section>
+        </section>}
 
-        <section>
+        {yonetimSub === "urunler" && <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
             <div className="flex items-center gap-3 flex-wrap">
               <h2 className="text-lg font-bold" data-testid="text-section-products">
@@ -2761,7 +2803,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               })}
             </div>
           )}
-        </section>
+        </section>}
 
         <Dialog open={editDialogOpen} onOpenChange={(open) => {
           setEditDialogOpen(open);
@@ -2866,7 +2908,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </Dialog>
         )}
 
-        <section>
+        {yonetimSub === "crosssell" && <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
             <h2 className="text-lg font-bold" data-testid="text-section-cross-sell">Sıklıkla Birlikte Alınan Ürünler</h2>
             <Dialog open={crossSellDialogOpen} onOpenChange={(open) => {
@@ -3074,7 +3116,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               ))
             )}
           </div>
-        </section>
+        </section>}
 
         <Dialog open={addItemDialogOpen} onOpenChange={(open) => {
           setAddItemDialogOpen(open);
@@ -3185,7 +3227,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </DialogContent>
         </Dialog>
 
-        <section>
+        {yonetimSub === "taksit" && <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
             <h2 className="text-lg font-bold" data-testid="text-section-installment-rates">
               Taksit Oranları
@@ -3340,9 +3382,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </div>
             </CardContent>
           </Card>
-        </section>
+        </section>}
 
-        <section>
+        {yonetimSub === "kediturustats" && <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
             <h2 className="text-lg font-bold" data-testid="text-section-breed-stats">Kedi Türü İstatistikleri</h2>
           </div>
@@ -3470,9 +3512,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               )}
             </CardContent>
           </Card>
-        </section>
+        </section>}
 
-        <ReorderRemindersSection />
+        {yonetimSub === "hatirlatmalar" && <ReorderRemindersSection />}
         </>}
       </main>
     </div>
