@@ -361,6 +361,7 @@ export default function Checkout() {
   const [orderNote, setOrderNote] = useState("");
   const [deliverySlot, setDeliverySlot] = useState("hemen");
   const [pendingOrderAfterAuth, setPendingOrderAfterAuth] = useState(false);
+  const [hasElevator, setHasElevator] = useState<"var" | "yok" | "">(""); 
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponResult, setCouponResult] = useState<{ valid: boolean; message: string; discountAmount?: number; discountType?: string; discountValue?: number } | null>(null);
@@ -576,6 +577,7 @@ export default function Checkout() {
       msg += `\n*Teslimat:* ${effectiveShipping === 0 ? "Ücretsiz" : effectiveShipping + " TL"}`;
       msg += `\n*Genel Toplam:* ${Math.round(finalTotal)} TL`;
       msg += `\n*Ödeme:* ${payMethod}`;
+      if (hasElevator) msg += `\n*Asansör:* ${hasElevator === "var" ? "Var" : "Yok (Bina girişine teslim)"}`;
       if (orderNote.trim()) msg += `\n*Sipariş Notu:* ${orderNote.trim()}`;
       if (hasCampaignItems) msg += `\n*Kampanya Siparişi*`;
       if (!hasCampaignItems && pay.id === "taksit" && selectedInstallment) {
@@ -1147,6 +1149,30 @@ export default function Checkout() {
                       )}
                     </div>
                   )}
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Asansör</label>
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setHasElevator("var")}
+                        className={`flex-1 h-10 rounded-lg text-sm font-medium border-2 transition-all ${hasElevator === "var" ? "border-primary bg-primary/10 text-primary" : "border-muted bg-muted/30 text-muted-foreground"}`}
+                        data-testid="btn-elevator-var"
+                      >
+                        Var
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setHasElevator("yok")}
+                        className={`flex-1 h-10 rounded-lg text-sm font-medium border-2 transition-all ${hasElevator === "yok" ? "border-orange-500 bg-orange-50 text-orange-600" : "border-muted bg-muted/30 text-muted-foreground"}`}
+                        data-testid="btn-elevator-yok"
+                      >
+                        Yok
+                      </button>
+                    </div>
+                    {hasElevator === "yok" && (
+                      <p className="text-xs text-orange-600 font-medium mt-1.5" data-testid="text-elevator-note">Siparişiniz bina girişine teslim edilir</p>
+                    )}
+                  </div>
                   {customerLocation ? (
                     <div className="flex items-center gap-3 p-3 rounded-lg border border-green-200 bg-green-50" data-testid="location-added">
                       <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
