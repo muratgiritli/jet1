@@ -358,52 +358,70 @@ function WhyJetgo() {
 
 function MobileFooter() {
   return (
-    <section className="hidden" data-testid="section-mobile-footer">
-      <div className="bg-gray-50 rounded-xl border border-gray-200/80 p-4 space-y-3">
+    <section className="md:hidden" data-testid="section-mobile-footer">
+      <div className="bg-gray-900 rounded-xl p-4 space-y-4 text-gray-300">
         <div>
-          <h4 className="text-xs font-bold text-gray-700 mb-2">Müşteri Hizmetleri</h4>
+          <h4 className="text-xs font-bold text-white mb-1">Müşteri Hizmetleri</h4>
+          <p className="text-[10px] text-gray-400 mb-2">Sorularınız için bize ulaşın</p>
           <div className="grid grid-cols-2 gap-1.5">
             {[
-              { label: "SSS", href: "/sss" },
+              { label: "Sıkça Sorulan Sorular", href: "/sss" },
               { label: "İşlem Rehberi", href: "/islem-rehberi" },
-              { label: "Teslimat ve İade", href: "/teslimat-iade" },
-              { label: "Hakkımızda", href: "/hakkimizda" },
-              { label: "İletişim", href: "/iletisim" },
+              { label: "Teslimat ve İade Şartları", href: "/teslimat-iade" },
             ].map((l) => (
-              <Link key={l.href} href={l.href} className="text-[11px] text-gray-500 py-0.5 cursor-pointer" data-testid={`mobile-footer-${l.href.slice(1)}`}>
+              <Link key={l.href} href={l.href} className="text-[11px] text-gray-400 hover:text-white py-0.5 cursor-pointer transition-colors" data-testid={`mobile-footer-${l.href.slice(1)}`}>
                 {l.label}
               </Link>
             ))}
           </div>
         </div>
-        <div>
-          <h4 className="text-xs font-bold text-gray-700 mb-2">Yasal</h4>
-          <div className="grid grid-cols-2 gap-1.5">
+
+        <div className="border-t border-gray-700 pt-3">
+          <Link href="/hakkimizda" className="text-xs font-bold text-white mb-1 block hover:underline" data-testid="mobile-footer-hakkimizda">Hakkımızda</Link>
+          <p className="text-[10px] text-gray-400 leading-relaxed">
+            Samsun'da evcil hayvan ürünleri, hızlı teslimat ve uygun fiyatlarla yanınızdayız.
+          </p>
+          <p className="text-[10px] text-gray-500 font-medium mt-1">Sizpa İnternet Tic. Ltd. Şti.</p>
+        </div>
+
+        <div className="border-t border-gray-700 pt-3">
+          <Link href="/iletisim" className="text-xs font-bold text-white mb-2 block hover:underline" data-testid="mobile-footer-iletisim">İletişim</Link>
+          <div className="space-y-2">
+            <div className="flex items-start gap-2">
+              <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-500" />
+              <span className="text-[10px] text-gray-400 leading-relaxed">Yenimahalle Atatürk 3. Kısım Blv. No:113/A, Atakum, Samsun</span>
+            </div>
+            <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[11px] text-green-400 hover:text-green-300 transition-colors" data-testid="mobile-footer-whatsapp">
+              <SiWhatsapp className="w-3.5 h-3.5" />
+              WhatsApp ile ulaşın
+            </a>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-700 pt-3">
+          <h4 className="text-[10px] font-bold text-gray-500 mb-1.5">Yasal</h4>
+          <div className="flex flex-wrap gap-x-3 gap-y-1">
             {[
               { label: "KVKK", href: "/kvkk" },
-              { label: "Gizlilik Politikası", href: "/gizlilik" },
-              { label: "Gizlilik Sözleşmesi", href: "/gizlilik-sozlesmesi" },
+              { label: "Gizlilik", href: "/gizlilik" },
               { label: "Kullanım Koşulları", href: "/kullanim-kosullari" },
               { label: "Çerez Politikası", href: "/cerez-politikasi" },
               { label: "Mesafeli Satış Söz.", href: "/mesafeli-satis" },
             ].map((l) => (
-              <Link key={l.href} href={l.href} className="text-[11px] text-gray-500 py-0.5 cursor-pointer" data-testid={`mobile-footer-${l.href.slice(1)}`}>
+              <Link key={l.href} href={l.href} className="text-[10px] text-gray-500 hover:text-white py-0.5 cursor-pointer transition-colors" data-testid={`mobile-footer-${l.href.slice(1)}`}>
                 {l.label}
               </Link>
             ))}
           </div>
         </div>
-        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
+
+        <div className="border-t border-gray-700 pt-3 flex items-center justify-between">
           <div className="flex items-center gap-1.5" data-testid="mobile-ssl-badge">
-            <Shield className="w-3.5 h-3.5 text-green-600" />
-            <span className="text-[10px] text-green-700 font-semibold">SSL Güvenli</span>
+            <Shield className="w-3 h-3 text-green-500" />
+            <span className="text-[9px] text-green-400 font-semibold">SSL Güvenli</span>
           </div>
-          <div className="flex items-center gap-2 text-gray-400">
-            <span className="text-[10px] font-bold" style={{ color: "#1a1f71" }}>VISA</span>
-            <span className="text-[10px] font-bold" style={{ color: "#eb001b" }}>master<span style={{ color: "#f79e1b" }}>card</span></span>
-          </div>
+          <p className="text-[9px] text-gray-500">© {new Date().getFullYear()} Sizpa İnternet Tic. Ltd. Şti.</p>
         </div>
-        <p className="text-[9px] text-gray-400 text-center">© {new Date().getFullYear()} Sizpa İnternet Tic. Ltd. Şti.</p>
       </div>
     </section>
   );

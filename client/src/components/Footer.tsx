@@ -61,7 +61,7 @@ export default function Footer() {
           <div>
             <Link href="/hakkimizda" className="text-white font-bold text-lg mb-4 block hover:underline" data-testid="footer-hakkimizda">Hakkımızda</Link>
             <p className="text-sm leading-relaxed text-gray-400 mb-3">
-              Sizpa İnternet Tic. Ltd. Şti. olarak Samsun'da evcil hayvan ürünleri alanında hizmet vermekteyiz. Kaliteli ürünler, uygun fiyatlar ve hızlı teslimat ile her zaman yanınızdayız.
+              Samsun'da evcil hayvan ürünleri, hızlı teslimat ve uygun fiyatlarla yanınızdayız.
             </p>
             <p className="text-xs text-gray-500 font-medium">Sizpa İnternet Tic. Ltd. Şti.</p>
           </div>
