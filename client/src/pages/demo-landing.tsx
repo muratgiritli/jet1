@@ -168,7 +168,7 @@ export default function DemoLanding() {
             { icon: Smartphone, label: "Kapıda\nQR", color: "#0284c7", bg: "bg-sky-50" },
             { icon: CreditCard, label: "Kapıda\nPOS", color: "#7c3aed", bg: "bg-purple-50" },
             { icon: Banknote, label: "Kapıda\nNakit", color: "#059669", bg: "bg-emerald-50" },
-            { icon: CreditCard, label: "Kredi\nTaksit", color: "#ea580c", bg: "bg-orange-50" },
+            { icon: CreditCard, label: "Kapıda\n12 Taksit", color: "#ea580c", bg: "bg-orange-50" },
           ].map((p, i) => (
             <div key={i} className={`${p.bg} rounded-xl p-2.5 flex flex-col items-center gap-1.5 active:scale-90 transition-transform`}>
               <div className="w-8 h-8 rounded-full flex items-center justify-center" style={{ backgroundColor: p.color + "12" }}>
