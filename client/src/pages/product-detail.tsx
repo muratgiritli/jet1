@@ -399,15 +399,6 @@ export default function ProductDetailPage() {
                     className="w-full h-full object-contain"
                     data-testid="img-product"
                   />
-                  {product.skt && (
-                    <Badge
-                      variant="secondary"
-                      className="absolute top-2 left-2 no-default-hover-elevate no-default-active-elevate"
-                      data-testid="badge-skt"
-                    >
-                      SKT: {product.skt}
-                    </Badge>
-                  )}
                   {discount > 0 && (
                     <Badge
                       className="absolute top-2 right-2 no-default-hover-elevate no-default-active-elevate"
@@ -481,20 +472,19 @@ export default function ProductDetailPage() {
               )}
 
 
-              {product.skt && (
-                <p className="text-sm font-semibold" style={{ color: "#e65100" }} data-testid="text-skt-detail">
-                  SKT: {product.skt}
-                </p>
-              )}
-
               {!isCampaignMode && category && shouldShowFastDelivery(category.animal, category.subcategory) && (
                 <FastDeliveryBanner />
               )}
 
-              <div className="flex items-baseline gap-3 mt-1 flex-wrap">
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
                 <span className="text-2xl font-extrabold text-black dark:text-white" data-testid="text-pesin-price">
                   {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                 </span>
+                {product.skt && (
+                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid="text-skt-detail">
+                    S.K.T: {product.skt}
+                  </span>
+                )}
               </div>
 
               {!isCampaignMode && (

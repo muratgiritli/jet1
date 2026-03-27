@@ -114,14 +114,14 @@ export default function ProfilePage() {
           </Button>
         </div>
 
-        <div className="md:hidden flex gap-2 overflow-x-auto pb-3 mb-4 scrollbar-hide" data-testid="tabs-profile">
+        <div className="md:hidden grid grid-cols-3 gap-2 pb-3 mb-4" data-testid="tabs-profile">
           {TABS.map((tab) => {
             const isActive = activeTab === tab.key;
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all border ${
+                className={`flex items-center justify-center gap-1 px-2 py-2.5 rounded-xl text-[11px] font-semibold transition-all border text-center ${
                   isActive
                     ? "text-white border-transparent shadow-lg shadow-purple-200"
                     : "bg-white border-gray-100 text-gray-600 hover:border-purple-200 hover:text-purple-700 shadow-sm"
