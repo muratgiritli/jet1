@@ -957,6 +957,30 @@ export default function Landing() {
           <VeterinerSection />
         </div>
 
+        <div className="mt-6 md:hidden" data-testid="section-start-shopping">
+          <Link href="/kategori">
+            <div
+              className="relative overflow-hidden rounded-2xl p-5 cursor-pointer shadow-lg transition-transform active:scale-[0.97]"
+              style={{ background: "linear-gradient(135deg, #6B3480 0%, #9B59B6 50%, #6B3480 100%)" }}
+            >
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-2 left-4 text-5xl">🐾</div>
+                <div className="absolute bottom-1 right-6 text-4xl">🛒</div>
+                <div className="absolute top-3 right-16 text-3xl">✨</div>
+              </div>
+              <div className="relative flex items-center justify-between">
+                <div>
+                  <p className="text-lg font-extrabold text-white tracking-tight">Alışverişe Başla</p>
+                  <p className="text-[12px] text-white/80 mt-1">900+ ürün, aynı gün teslimat</p>
+                </div>
+                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                  <ArrowRight className="w-6 h-6 text-white" />
+                </div>
+              </div>
+            </div>
+          </Link>
+        </div>
+
         <div className="mt-5 mb-4 md:mb-8">
           <MobileFooter />
         </div>
