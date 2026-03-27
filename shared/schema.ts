@@ -55,6 +55,7 @@ export const products = pgTable("products", {
   brandCategoryId: integer("brand_category_id").notNull(),
   isActive: boolean("is_active").notNull().default(true),
   stock: integer("stock").notNull().default(10),
+  barcode: text("barcode"),
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
@@ -157,6 +158,8 @@ export const customers = pgTable("customers", {
   email: text("email"),
   notifyStock: boolean("notify_stock").notNull().default(true),
   notifyCampaign: boolean("notify_campaign").notNull().default(true),
+  isBlacklisted: boolean("is_blacklisted").notNull().default(false),
+  blacklistReason: text("blacklist_reason"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -195,9 +198,14 @@ export const petProfiles = pgTable("pet_profiles", {
   breed: text("breed"),
   age: integer("age"),
   weight: real("weight"),
+  birthday: text("birthday"),
+  photoData: text("photo_data"),
+  favoriteFoodId: integer("favorite_food_id"),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const insertPetProfileSchema = createInsertSchema(petProfiles).omit({ id: true });
+export const insertPetProfileSchema = createInsertSchema(petProfiles).omit({ id: true, createdAt: true });
 export type InsertPetProfile = z.infer<typeof insertPetProfileSchema>;
 export type PetProfile = typeof petProfiles.$inferSelect;
 
@@ -311,3 +319,91 @@ export const coupons = pgTable("coupons", {
 export const insertCouponSchema = createInsertSchema(coupons).omit({ id: true, createdAt: true, usedCount: true });
 export type InsertCoupon = z.infer<typeof insertCouponSchema>;
 export type Coupon = typeof coupons.$inferSelect;
+
+export const virtualPets = pgTable("virtual_pets", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  petType: text("pet_type").notNull().default("kedi"),
+  petName: text("pet_name").notNull().default("Minnoş"),
+  level: integer("level").notNull().default(1),
+  experience: integer("experience").notNull().default(0),
+  totalFeedings: integer("total_feedings").notNull().default(0),
+  lastFeedDate: text("last_feed_date"),
+  streak: integer("streak").notNull().default(0),
+  earnedPoints: real("earned_points").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type VirtualPet = typeof virtualPets.$inferSelect;
+
+export const petContestEntries = pgTable("pet_contest_entries", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  petName: text("pet_name").notNull(),
+  petType: text("pet_type").notNull().default("kedi"),
+  photoData: text("photo_data").notNull(),
+  description: text("description"),
+  votes: integer("votes").notNull().default(0),
+  weekNumber: text("week_number").notNull(),
+  isWinner: boolean("is_winner").notNull().default(false),
+  customerName: text("customer_name"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export type PetContestEntry = typeof petContestEntries.$inferSelect;
+
+export const petContestVotes = pgTable("pet_contest_votes", {
+  id: serial("id").primaryKey(),
+  entryId: integer("entry_id").notNull(),
+  voterIp: text("voter_ip").notNull(),
+  customerId: integer("customer_id"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const petHealthRecords = pgTable("pet_health_records", {
+  id: serial("id").primaryKey(),
+  petProfileId: integer("pet_profile_id").notNull(),
+  recordType: text("record_type").notNull(),
+  title: text("title").notNull(),
+  date: text("date").notNull(),
+  notes: text("notes"),
+  nextDate: text("next_date"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export type PetHealthRecord = typeof petHealthRecords.$inferSelect;
+
+export const petWeightLog = pgTable("pet_weight_log", {
+  id: serial("id").primaryKey(),
+  petProfileId: integer("pet_profile_id").notNull(),
+  weight: real("weight").notNull(),
+  date: text("date").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export type PetWeightLog = typeof petWeightLog.$inferSelect;
+
+export const petPhotos = pgTable("pet_photos", {
+  id: serial("id").primaryKey(),
+  petProfileId: integer("pet_profile_id").notNull(),
+  photoData: text("photo_data").notNull(),
+  caption: text("caption"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export type PetPhoto = typeof petPhotos.$inferSelect;
+
+export const lostFoundPosts = pgTable("lost_found_posts", {
+  id: serial("id").primaryKey(),
+  customerId: integer("customer_id").notNull(),
+  postType: text("post_type").notNull(),
+  petName: text("pet_name").notNull(),
+  petType: text("pet_type").notNull(),
+  breed: text("breed"),
+  color: text("color"),
+  lastSeenLocation: text("last_seen_location"),
+  description: text("description").notNull(),
+  contactPhone: text("contact_phone").notNull(),
+  photoData: text("photo_data"),
+  isResolved: boolean("is_resolved").notNull().default(false),
+  customerName: text("customer_name"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export type LostFoundPost = typeof lostFoundPosts.$inferSelect;

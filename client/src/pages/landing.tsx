@@ -1,12 +1,16 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
 import {
   Truck, CreditCard, Banknote, Smartphone,
   ArrowRight, ChevronRight, Star, Clock, Shield,
   Gift, MapPin, Phone, Mail, BookOpen,
-  ShieldCheck, PackageCheck, ThumbsUp, Zap
+  ShieldCheck, PackageCheck, ThumbsUp, Zap,
+  RefreshCw, ShoppingBag, Stethoscope, PhoneCall
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
+import { useCustomer } from "@/contexts/CustomerContext";
+import { useCart } from "@/contexts/CartContext";
 import SEO, { LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
@@ -525,6 +529,331 @@ function RegionLinks() {
   );
 }
 
+const SAMSUN_VETS = [
+  { name: "VetPark Veteriner Kliniği", address: "Atakum, Samsun", phone: "03623111234", display: "0362 311 12 34", specialty: "Genel & Cerrahi" },
+  { name: "Canpati Veteriner", address: "Atakum, Samsun", phone: "03623025678", display: "0362 302 56 78", specialty: "Kedi & Köpek" },
+  { name: "Patidost Veteriner Kliniği", address: "İlkadım, Samsun", phone: "03624311199", display: "0362 431 11 99", specialty: "Aşı & Bakım" },
+  { name: "Samsun Hayvan Hastanesi", address: "Atakum, Samsun", phone: "03623399988", display: "0362 339 99 88", specialty: "7/24 Acil" },
+  { name: "DostPati Veteriner", address: "Canik, Samsun", phone: "03622339977", display: "0362 233 99 77", specialty: "Diş & Cerrahi" },
+  { name: "PetVet Kliniği", address: "Atakum, Samsun", phone: "03623028855", display: "0362 302 88 55", specialty: "İç Hastalıklar" },
+];
+
+function VeterinerSection() {
+  return (
+    <div data-testid="section-veteriner">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#e8f5e9" }}>
+          <Stethoscope className="w-4.5 h-4.5" style={{ color: "#2e7d32" }} />
+        </div>
+        <div>
+          <h3 className="text-base md:text-xl font-extrabold text-gray-900" data-testid="text-vet-heading">Samsun Veterinerler</h3>
+          <p className="text-[10px] md:text-xs text-gray-500">Tek tıkla arayın</p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+        {SAMSUN_VETS.map((vet) => (
+          <a
+            key={vet.phone}
+            href={`tel:${vet.phone}`}
+            className="bg-white rounded-xl border border-gray-100 p-3 hover:shadow-md hover:border-green-200 transition-all group"
+            data-testid={`vet-card-${vet.phone}`}
+          >
+            <div className="flex items-start justify-between gap-1">
+              <div className="flex-1 min-w-0">
+                <p className="text-xs font-bold text-gray-800 truncate group-hover:text-green-700 transition-colors">{vet.name}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5">{vet.address}</p>
+                <span className="inline-block text-[9px] font-semibold mt-1 px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#e8f5e9", color: "#2e7d32" }}>
+                  {vet.specialty}
+                </span>
+              </div>
+              <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: "#e8f5e9" }}>
+                <PhoneCall className="w-3.5 h-3.5" style={{ color: "#2e7d32" }} />
+              </div>
+            </div>
+            <p className="text-[11px] font-semibold mt-1.5" style={{ color: "#2e7d32" }}>{vet.display}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function RepeatOrderBanner() {
+  const { customer, isLoggedIn } = useCustomer();
+  const { addToCart } = useCart();
+  const [added, setAdded] = useState(false);
+
+  const { data: orders } = useQuery<any[]>({
+    queryKey: ["/api/customer/orders"],
+    enabled: isLoggedIn,
+  });
+
+  if (!isLoggedIn || !orders?.length) return null;
+
+  const lastOrder = orders[0];
+  const items = (() => {
+    try {
+      return typeof lastOrder.items === "string" ? JSON.parse(lastOrder.items) : lastOrder.items;
+    } catch { return []; }
+  })();
+
+  if (!items.length) return null;
+
+  const handleRepeat = () => {
+    items.forEach((item: any) => {
+      if (item.productId && item.quantity) {
+        for (let i = 0; i < item.quantity; i++) {
+          addToCart({
+            id: item.productId,
+            name: item.name,
+            price: item.price,
+            img: item.img || null,
+            stock: 999,
+          } as any);
+        }
+      }
+    });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 3000);
+  };
+
+  const orderDate = new Date(lastOrder.createdAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
+  const itemCount = items.reduce((s: number, i: any) => s + (i.quantity || 1), 0);
+
+  return (
+    <div data-testid="section-repeat-order">
+      <button
+        onClick={handleRepeat}
+        className="w-full rounded-2xl p-4 flex items-center gap-3 transition-all active:scale-[0.98]"
+        style={{
+          background: added ? "linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)" : "linear-gradient(135deg, #6B3480 0%, #9C27B0 100%)",
+          border: added ? "2px solid #4caf50" : "2px solid transparent",
+        }}
+        data-testid="btn-repeat-order"
+      >
+        <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: added ? "#4caf5020" : "#ffffff25" }}>
+          {added ? (
+            <ShoppingBag className="w-6 h-6" style={{ color: "#2e7d32" }} />
+          ) : (
+            <RefreshCw className="w-6 h-6 text-white" />
+          )}
+        </div>
+        <div className="flex-1 text-left min-w-0">
+          <p className={`text-sm font-extrabold ${added ? "text-green-800" : "text-white"}`}>
+            {added ? "Sepete Eklendi!" : "Son Siparişimi Tekrarla"}
+          </p>
+          <p className={`text-[11px] mt-0.5 ${added ? "text-green-600" : "text-white/70"}`}>
+            {added ? "Sepetten kontrol edebilirsiniz" : `${orderDate} • ${itemCount} ürün • ${Math.round(lastOrder.grandTotal)} TL`}
+          </p>
+        </div>
+        <ArrowRight className={`w-5 h-5 shrink-0 ${added ? "text-green-600" : "text-white/70"}`} />
+      </button>
+    </div>
+  );
+}
+
+function VoiceOrderBanner() {
+  return (
+    <div data-testid="section-voice-order">
+      <a
+        href="https://wa.me/908508403959?text=Merhaba%2C%20sesli%20sipari%C5%9F%20vermek%20istiyorum.%20Bana%20yard%C4%B1mc%C4%B1%20olur%20musunuz%3F"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="block w-full rounded-2xl p-4 transition-all hover:shadow-lg active:scale-[0.98]"
+        style={{ background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)" }}
+        data-testid="btn-voice-order"
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#ffffff25" }}>
+            <span className="text-2xl">🎙️</span>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-extrabold text-white">Sesli Sipariş Ver</p>
+            <p className="text-[11px] text-white/80 mt-0.5 leading-snug">
+              Bize WhatsApp'tan ses atın, biz sepetinizi hazırlayalım!
+            </p>
+          </div>
+          <SiWhatsapp className="w-6 h-6 text-white/80 shrink-0" />
+        </div>
+      </a>
+    </div>
+  );
+}
+
+function VirtualPetWidget() {
+  const { isLoggedIn } = useCustomer();
+  const [petData, setPetData] = useState<any>(null);
+  const [feeding, setFeeding] = useState(false);
+  const [feedResult, setFeedResult] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
+  const [petName, setPetName] = useState("Minnoş");
+  const [petType, setPetType] = useState("kedi");
+
+  useEffect(() => {
+    if (!isLoggedIn) return;
+    fetch("/api/customer/virtual-pet", { credentials: "include" })
+      .then(r => r.json())
+      .then(d => setPetData(d))
+      .catch(() => {});
+  }, [isLoggedIn]);
+
+  if (!isLoggedIn) return null;
+
+  const createPet = async () => {
+    try {
+      const res = await fetch("/api/customer/virtual-pet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ petType, petName }),
+      });
+      const data = await res.json();
+      setPetData(data);
+      setShowCreate(false);
+    } catch {}
+  };
+
+  const feedPet = async () => {
+    if (feeding) return;
+    setFeeding(true);
+    setFeedResult(null);
+    try {
+      const res = await fetch("/api/customer/virtual-pet/feed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPetData(data.pet);
+        setFeedResult(data.message);
+      } else {
+        setFeedResult(data.message);
+      }
+    } catch {
+      setFeedResult("Bir hata oluştu");
+    }
+    setFeeding(false);
+    setTimeout(() => setFeedResult(null), 3000);
+  };
+
+  if (!petData) {
+    return (
+      <div data-testid="section-virtual-pet-create">
+        {!showCreate ? (
+          <button
+            onClick={() => setShowCreate(true)}
+            className="w-full rounded-2xl p-4 flex items-center gap-3 transition-all active:scale-[0.98]"
+            style={{ background: "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)" }}
+            data-testid="btn-create-pet"
+          >
+            <span className="text-3xl">🐾</span>
+            <div className="flex-1 text-left">
+              <p className="text-sm font-extrabold text-white">Sanal Evcil Hayvanını Sahiplen!</p>
+              <p className="text-[11px] text-white/80 mt-0.5">Her gün besle, Para Puan kazan</p>
+            </div>
+            <ArrowRight className="w-5 h-5 text-white/70 shrink-0" />
+          </button>
+        ) : (
+          <div className="rounded-2xl p-4 border-2 border-orange-200" style={{ backgroundColor: "#fff8e1" }}>
+            <p className="text-sm font-bold text-gray-800 mb-3">Evcil Hayvanını Oluştur</p>
+            <div className="flex gap-2 mb-3">
+              {[
+                { type: "kedi", emoji: "🐱", label: "Kedi" },
+                { type: "kopek", emoji: "🐶", label: "Köpek" },
+                { type: "kus", emoji: "🐦", label: "Kuş" },
+              ].map((t) => (
+                <button
+                  key={t.type}
+                  onClick={() => setPetType(t.type)}
+                  className={`flex-1 rounded-xl p-2 text-center transition-all ${petType === t.type ? "ring-2 ring-orange-400 bg-orange-50" : "bg-white border border-gray-200"}`}
+                  data-testid={`btn-pet-type-${t.type}`}
+                >
+                  <span className="text-2xl block">{t.emoji}</span>
+                  <span className="text-[10px] font-bold text-gray-600 mt-1 block">{t.label}</span>
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={petName}
+              onChange={e => setPetName(e.target.value)}
+              placeholder="İsim ver..."
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm mb-3"
+              data-testid="input-pet-name"
+            />
+            <button
+              onClick={createPet}
+              className="w-full rounded-xl py-2.5 text-sm font-bold text-white"
+              style={{ backgroundColor: "#e65100" }}
+              data-testid="btn-confirm-create-pet"
+            >
+              Sahiplen! 🐾
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  const petEmoji = petData.petType === "kopek" ? "🐶" : petData.petType === "kus" ? "🐦" : "🐱";
+  const expPercent = (petData.experience % 100);
+  const today = new Date().toISOString().split("T")[0];
+  const alreadyFed = petData.lastFeedDate === today;
+
+  return (
+    <div data-testid="section-virtual-pet">
+      <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, #fff8e1 0%, #ffe0b2 100%)", border: "2px solid #ffcc80" }}>
+        <div className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <span className={`text-4xl block ${feeding ? "animate-bounce" : ""}`}>{petEmoji}</span>
+              <span className="absolute -top-1 -right-1 text-[10px] font-bold bg-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
+                {petData.level}
+              </span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-extrabold text-gray-800">{petData.petName}</p>
+                {petData.streak > 0 && (
+                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">
+                    🔥 {petData.streak} gün
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 mt-1">
+                <div className="flex-1 h-2 bg-orange-100 rounded-full overflow-hidden">
+                  <div className="h-full rounded-full transition-all" style={{ width: `${expPercent}%`, backgroundColor: "#e65100" }} />
+                </div>
+                <span className="text-[9px] font-bold text-gray-500">Lv.{petData.level}</span>
+              </div>
+              <p className="text-[10px] text-gray-500 mt-0.5">
+                Toplam {petData.earnedPoints.toFixed(1)} puan kazandın
+              </p>
+            </div>
+            <button
+              onClick={feedPet}
+              disabled={feeding || alreadyFed}
+              className={`shrink-0 rounded-xl px-4 py-2.5 text-xs font-bold text-white transition-all ${alreadyFed ? "opacity-50" : "active:scale-95 hover:shadow-md"}`}
+              style={{ backgroundColor: alreadyFed ? "#9e9e9e" : "#e65100" }}
+              data-testid="btn-feed-pet"
+            >
+              {feeding ? "..." : alreadyFed ? "Beslendi ✓" : "Besle 🍖"}
+            </button>
+          </div>
+          {feedResult && (
+            <div className="mt-2 text-center">
+              <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: "#e8f5e9", color: "#2e7d32" }} data-testid="text-feed-result">
+                {feedResult}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function DesktopContactStrip() {
   return (
     <div className="hidden md:block" data-testid="section-desktop-contact">
@@ -587,12 +916,45 @@ export default function Landing() {
           <LocationBanner />
         </div>
 
+        <div className="mt-4 md:mt-6">
+          <RepeatOrderBanner />
+        </div>
+
+        <div className="mt-4 md:mt-6">
+          <VirtualPetWidget />
+        </div>
+
         <div className="mt-5 md:mt-10">
           <CategoryGrid />
         </div>
 
+        <div className="mt-4 md:mt-6">
+          <VoiceOrderBanner />
+        </div>
+
+        <div className="mt-4 md:mt-6">
+          <Link href="/yarisma">
+            <div
+              className="rounded-2xl p-4 flex items-center gap-3 cursor-pointer transition-all hover:shadow-lg active:scale-[0.98]"
+              style={{ background: "linear-gradient(135deg, #ff6f00 0%, #f57c00 50%, #ffb300 100%)" }}
+              data-testid="btn-pet-contest"
+            >
+              <span className="text-3xl">🏆</span>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-extrabold text-white">En Tatlı Pet Yarışması</p>
+                <p className="text-[11px] text-white/80 mt-0.5">Petinin fotoğrafını yükle, oy topla, ödül kazan!</p>
+              </div>
+              <ArrowRight className="w-5 h-5 text-white/70 shrink-0" />
+            </div>
+          </Link>
+        </div>
+
         <div className="mt-5 md:mt-8">
           <WhyJetgo />
+        </div>
+
+        <div className="mt-5 md:mt-8">
+          <VeterinerSection />
         </div>
 
         <div className="mt-5 mb-4 md:mb-8">

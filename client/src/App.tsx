@@ -44,6 +44,10 @@ const AuthPage = lazy(() => import("@/pages/auth"));
 const ProfilePage = lazy(() => import("@/pages/profile"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 const CampaignPage = lazy(() => import("@/pages/campaign"));
+const PetContestPage = lazy(() => import("@/pages/pet-contest"));
+const PetDashboardPage = lazy(() => import("@/pages/pet-dashboard"));
+const LostFoundPage = lazy(() => import("@/pages/lost-found"));
+const PatiBlogPage = lazy(() => import("@/pages/pati-blog"));
 
 const SSSPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.SSSPage })));
 const KVKKPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.KVKKPage })));
@@ -88,6 +92,10 @@ function Router() {
         <Route path="/hesabim" component={ProfilePage} />
         <Route path="/demo" component={DemoLanding} />
         <Route path="/kampanya" component={CampaignPage} />
+        <Route path="/yarisma" component={PetContestPage} />
+        <Route path="/ozel-patiler" component={PetDashboardPage} />
+        <Route path="/kayip-ilan" component={LostFoundPage} />
+        <Route path="/pati-blog" component={PatiBlogPage} />
         <Route path="/blog/:slug" component={BlogPostRoute} />
         <Route path="/blog" component={BlogListRoute} />
         <Route path="/sss" component={SSSPage} />

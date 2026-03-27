@@ -3,8 +3,8 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { storage, pool as sharedPool, db } from "./storage";
 import { seedDatabase } from "./seed";
-import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders, virtualPets, petContestEntries, petContestVotes } from "@shared/schema";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import session from "express-session";
@@ -14,6 +14,37 @@ import multer from "multer";
 import OpenAI from "openai";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+function parseSkt(skt: string): Date | null {
+  if (skt.includes("/")) {
+    const parts = skt.split("/");
+    if (parts.length === 2) {
+      const month = parseInt(parts[0]);
+      const year = parseInt(parts[1]);
+      if (!isNaN(month) && !isNaN(year) && month >= 1 && month <= 12) {
+        return new Date(year, month, 0);
+      }
+    }
+  }
+  if (skt.includes(".")) {
+    const parts = skt.split(".");
+    if (parts.length === 3) {
+      const month = parseInt(parts[1]);
+      const year = parseInt(parts[2]);
+      if (!isNaN(month) && !isNaN(year) && month >= 1 && month <= 12) {
+        return new Date(year, month, 0);
+      }
+    }
+    if (parts.length === 2) {
+      const month = parseInt(parts[0]);
+      const year = parseInt(parts[1]);
+      if (!isNaN(month) && !isNaN(year) && month >= 1 && month <= 12) {
+        return new Date(year, month, 0);
+      }
+    }
+  }
+  return null;
+}
 
 const otpStore = new Map<string, { code: string; expiresAt: number; attempts: number }>();
 const otpSendCount = new Map<string, { count: number; resetAt: number }>();
@@ -853,6 +884,10 @@ export async function registerRoutes(
     if (!customerId) {
       return res.status(401).json({ message: "Sipariş vermek için giriş yapmalısınız." });
     }
+    const customerCheck = await sharedPool.query("SELECT is_blacklisted FROM customers WHERE id = $1", [customerId]);
+    if (customerCheck.rows[0]?.is_blacklisted) {
+      return res.status(403).json({ message: "Hesabınız askıya alınmıştır. Sipariş veremezsiniz. Lütfen müşteri hizmetleri ile iletişime geçin." });
+    }
     const ip = req.ip || "unknown";
     if (rateLimit(`order:${ip}`, 20, 60 * 60 * 1000)) {
       return res.status(429).json({ message: "Çok fazla sipariş denemesi. Lütfen bekleyin." });
@@ -863,6 +898,22 @@ export async function registerRoutes(
       return res.status(400).json({ message: fieldErrors || "Geçersiz sipariş verisi", errors: parsed.error.errors });
     }
     const { usedPoints, neighborhoodId, couponCode, ...orderData } = parsed.data;
+
+    const allCampaignItems = await sharedPool.query("SELECT product_id, item_type FROM campaign_items WHERE is_active = true");
+    const campaignMap = new Map<number, string>();
+    for (const row of allCampaignItems.rows) {
+      campaignMap.set(row.product_id, row.item_type);
+    }
+
+    let campaignMainCount = 0;
+    let campaignExtraCount = 0;
+    for (const item of orderData.items) {
+      const pid = parseInt(String(item.productId));
+      const type = campaignMap.get(pid);
+      if (type === "main") campaignMainCount += item.quantity;
+      if (type === "extra") campaignExtraCount += item.quantity;
+    }
+    const isCampaignOrder = campaignMainCount > 0 || campaignExtraCount > 0;
 
     let couponDiscount = 0;
     let appliedCoupon: any = null;
@@ -895,22 +946,6 @@ export async function registerRoutes(
         orderData.grandTotal = orderData.subtotal - orderData.discount + orderData.shipping;
       }
     }
-
-    const allCampaignItems = await sharedPool.query("SELECT product_id, item_type FROM campaign_items WHERE is_active = true");
-    const campaignMap = new Map<number, string>();
-    for (const row of allCampaignItems.rows) {
-      campaignMap.set(row.product_id, row.item_type);
-    }
-
-    let campaignMainCount = 0;
-    let campaignExtraCount = 0;
-    for (const item of orderData.items) {
-      const pid = parseInt(String(item.productId));
-      const type = campaignMap.get(pid);
-      if (type === "main") campaignMainCount += item.quantity;
-      if (type === "extra") campaignExtraCount += item.quantity;
-    }
-    const isCampaignOrder = campaignMainCount > 0 || campaignExtraCount > 0;
 
     const KEDI_KUMU_MAX = 2;
     const kediKumuProductIds = new Set<number>();
@@ -960,6 +995,13 @@ export async function registerRoutes(
     for (const item of orderData.items) {
       const productId = parseInt(String(item.productId));
       if (!isNaN(productId)) {
+        const prod = allProds.find(p => p.id === productId);
+        if (prod && prod.skt) {
+          const sktDate = parseSkt(prod.skt);
+          if (sktDate && sktDate < new Date()) {
+            return res.status(400).json({ message: `${item.name} ürününün son kullanma tarihi geçmiş. Sipariş verilemez.` });
+          }
+        }
         const ok = await storage.decrementStock(productId, item.quantity);
         if (!ok) {
           return res.status(400).json({ message: `Stok yetersiz: ${item.name}` });
@@ -1927,18 +1969,56 @@ export async function registerRoutes(
     }
   });
 
+  app.post("/api/admin/blacklist/:customerId", requireAdmin, async (req, res) => {
+    const customerId = parseInt(req.params.customerId);
+    const { reason } = req.body;
+    await sharedPool.query("UPDATE customers SET is_blacklisted = true, blacklist_reason = $1 WHERE id = $2", [reason || "Belirtilmemiş", customerId]);
+    res.json({ success: true });
+  });
+
+  app.post("/api/admin/unblacklist/:customerId", requireAdmin, async (req, res) => {
+    const customerId = parseInt(req.params.customerId);
+    await sharedPool.query("UPDATE customers SET is_blacklisted = false, blacklist_reason = NULL WHERE id = $1", [customerId]);
+    res.json({ success: true });
+  });
+
+  app.get("/api/admin/blacklisted-customers", requireAdmin, async (_req, res) => {
+    const result = await sharedPool.query("SELECT * FROM customers WHERE is_blacklisted = true ORDER BY name");
+    res.json(result.rows);
+  });
+
   app.get("/api/admin/reports", requireAdmin, async (_req, res) => {
     try {
       const allOrders = await storage.getAllOrders();
       const allProducts = await storage.getAllProducts();
       const allCustomers = await storage.getAllCustomers();
+      const categories = await storage.getBrandCategories();
+      const catMap = new Map(categories.map(c => [c.id, c]));
 
       const paymentMethods: Record<string, { count: number; total: number }> = {};
-      const categoryRevenue: Record<string, number> = {};
-      const customerRanking: Record<string, { phone: string; name: string; total: number; count: number }> = {};
+      const customerRanking: Record<string, { phone: string; name: string; total: number; count: number; cancelCount: number }> = {};
+
+      const now = new Date();
+      const todayStr = now.toISOString().slice(0, 10);
+      const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const dailyCiro: Record<string, number> = {};
+      const weeklyCiroByMethod: Record<string, number> = {};
+      let dailyTotal = 0;
+      let weeklyTotal = 0;
+
+      const productSales: Record<number, { name: string; quantity: number; revenue: number; cost: number }> = {};
 
       for (const order of allOrders) {
+        if (order.customerPhone) {
+          const key = order.customerPhone;
+          if (!customerRanking[key]) customerRanking[key] = { phone: key, name: order.customerName || "", total: 0, count: 0, cancelCount: 0 };
+          if (order.status === "iptal") {
+            customerRanking[key].cancelCount++;
+          }
+        }
+
         if (order.status === "iptal") continue;
+
         const method = order.paymentMethod || "Bilinmiyor";
         if (!paymentMethods[method]) paymentMethods[method] = { count: 0, total: 0 };
         paymentMethods[method].count++;
@@ -1946,16 +2026,62 @@ export async function registerRoutes(
 
         if (order.customerPhone) {
           const key = order.customerPhone;
-          if (!customerRanking[key]) customerRanking[key] = { phone: key, name: order.customerName || "", total: 0, count: 0 };
           customerRanking[key].total += order.grandTotal || 0;
           customerRanking[key].count++;
         }
+
+        const orderDate = new Date(order.createdAt);
+        const orderDateStr = orderDate.toISOString().slice(0, 10);
+        if (orderDateStr === todayStr) {
+          dailyTotal += order.grandTotal || 0;
+          dailyCiro[method] = (dailyCiro[method] || 0) + (order.grandTotal || 0);
+        }
+        if (orderDate >= weekAgo) {
+          weeklyTotal += order.grandTotal || 0;
+          weeklyCiroByMethod[method] = (weeklyCiroByMethod[method] || 0) + (order.grandTotal || 0);
+        }
+
+        const items = order.items as any[];
+        if (items) {
+          for (const item of items) {
+            const pid = parseInt(String(item.productId));
+            if (!productSales[pid]) productSales[pid] = { name: item.name || "", quantity: 0, revenue: 0, cost: 0 };
+            productSales[pid].quantity += item.quantity || 1;
+            productSales[pid].revenue += (item.price || 0) * (item.quantity || 1);
+          }
+        }
       }
+
+      for (const [pid, ps] of Object.entries(productSales)) {
+        const product = allProducts.find(p => p.id === parseInt(pid));
+        if (product && product.originalPrice) {
+          ps.cost = product.originalPrice * ps.quantity;
+        } else if (product) {
+          ps.cost = product.price * 0.7 * ps.quantity;
+        }
+      }
+
+      const bestSellers = Object.entries(productSales)
+        .map(([pid, data]) => ({
+          productId: parseInt(pid),
+          name: data.name,
+          quantity: data.quantity,
+          revenue: Math.round(data.revenue * 100) / 100,
+          profit: Math.round((data.revenue - data.cost) * 100) / 100,
+          marginPercent: data.revenue > 0 ? Math.round(((data.revenue - data.cost) / data.revenue) * 100) : 0,
+        }))
+        .sort((a, b) => b.profit - a.profit)
+        .slice(0, 20);
 
       const topCustomers = Object.values(customerRanking)
         .sort((a, b) => b.total - a.total)
         .slice(0, 15)
         .map(c => ({ ...c, total: Math.round(c.total * 100) / 100 }));
+
+      const problemCustomers = Object.values(customerRanking)
+        .filter(c => c.cancelCount >= 2)
+        .sort((a, b) => b.cancelCount - a.cancelCount)
+        .slice(0, 10);
 
       const statusCounts: Record<string, number> = {};
       for (const order of allOrders) {
@@ -1983,12 +2109,34 @@ export async function registerRoutes(
         }
       }
 
+      const heatmapData = Object.entries(neighborhoodStats)
+        .map(([name, data]) => {
+          const maxCount = Math.max(...Object.values(neighborhoodStats).map(n => n.count), 1);
+          return {
+            name,
+            count: data.count,
+            total: Math.round(data.total * 100) / 100,
+            intensity: Math.round((data.count / maxCount) * 100),
+          };
+        })
+        .sort((a, b) => b.count - a.count);
+
       res.json({
         paymentMethods: Object.entries(paymentMethods).map(([method, data]) => ({
           method, ...data, total: Math.round(data.total * 100) / 100,
         })),
         topCustomers,
+        problemCustomers,
+        bestSellers,
         statusCounts,
+        dailyCiro: {
+          total: Math.round(dailyTotal * 100) / 100,
+          byMethod: Object.entries(dailyCiro).map(([method, total]) => ({ method, total: Math.round(total * 100) / 100 })),
+        },
+        weeklyCiro: {
+          total: Math.round(weeklyTotal * 100) / 100,
+          byMethod: Object.entries(weeklyCiroByMethod).map(([method, total]) => ({ method, total: Math.round(total * 100) / 100 })),
+        },
         monthlyData: Object.entries(monthlyData).map(([month, data]) => ({
           month, revenue: Math.round(data.revenue * 100) / 100, orders: data.orders,
         })).sort((a, b) => a.month.localeCompare(b.month)),
@@ -1998,6 +2146,7 @@ export async function registerRoutes(
         neighborhoodStats: Object.entries(neighborhoodStats)
           .map(([name, data]) => ({ name, count: data.count, total: Math.round(data.total * 100) / 100 }))
           .sort((a, b) => b.total - a.total),
+        heatmapData,
       });
     } catch (err) {
       res.status(500).json({ message: "Reports error" });
@@ -2100,6 +2249,423 @@ export async function registerRoutes(
     const id = parseInt(req.params.id);
     await storage.deleteCoupon(id);
     res.json({ message: "Silindi" });
+  });
+
+  app.get("/api/customer/virtual-pet", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const [pet] = await db.select().from(virtualPets).where(eq(virtualPets.customerId, customerId));
+    if (!pet) return res.json(null);
+    res.json(pet);
+  });
+
+  app.post("/api/customer/virtual-pet", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const { petType, petName } = req.body;
+    const [existing] = await db.select().from(virtualPets).where(eq(virtualPets.customerId, customerId));
+    if (existing) return res.json(existing);
+    const [pet] = await db.insert(virtualPets).values({
+      customerId,
+      petType: petType || "kedi",
+      petName: petName || "Minnoş",
+    }).returning();
+    res.json(pet);
+  });
+
+  app.post("/api/customer/virtual-pet/feed", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const [pet] = await db.select().from(virtualPets).where(eq(virtualPets.customerId, customerId));
+    if (!pet) return res.status(404).json({ message: "Sanal evcil hayvan bulunamadı" });
+
+    const today = new Date().toISOString().split("T")[0];
+    if (pet.lastFeedDate === today) {
+      return res.status(400).json({ message: "Bugün zaten besledin!", pet });
+    }
+
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+    const newStreak = pet.lastFeedDate === yesterday ? pet.streak + 1 : 1;
+    const feedPoints = Math.min(1 + Math.floor(newStreak / 3), 5);
+    const newExp = pet.experience + 10 + (newStreak * 2);
+    const newLevel = Math.floor(newExp / 100) + 1;
+
+    const [updated] = await db.update(virtualPets)
+      .set({
+        lastFeedDate: today,
+        streak: newStreak,
+        totalFeedings: pet.totalFeedings + 1,
+        experience: newExp,
+        level: newLevel,
+        earnedPoints: pet.earnedPoints + feedPoints,
+      })
+      .where(eq(virtualPets.id, pet.id))
+      .returning();
+
+    const customer = await storage.getCustomer(customerId);
+    if (customer) {
+      const currentPoints = await storage.getLoyaltyBalance(customer.phone);
+      await storage.addLoyaltyPoints(customer.phone, feedPoints, `Sanal pet besleme (Gün ${newStreak})`);
+    }
+
+    res.json({ pet: updated, pointsEarned: feedPoints, message: `+${feedPoints} Para Puan kazandın!` });
+  });
+
+  app.get("/api/firsat-urunleri", async (_req, res) => {
+    const allProducts = await storage.getAllProducts();
+    const now = new Date();
+    const threeMonthsLater = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
+    const firsatProducts = allProducts.filter(p => {
+      if (!p.skt || !p.isActive || p.stock <= 0) return false;
+      const sktDate = parseSkt(p.skt);
+      if (!sktDate) return false;
+      return sktDate > now && sktDate <= threeMonthsLater;
+    });
+    res.json(firsatProducts);
+  });
+
+  app.get("/api/skt-alerts", requireAdmin, async (_req, res) => {
+    const allProducts = await storage.getAllProducts();
+    const now = new Date();
+    const threeMonthsLater = new Date(now.getFullYear(), now.getMonth() + 3, now.getDate());
+    const expired: any[] = [];
+    const expiringSoon: any[] = [];
+    for (const p of allProducts) {
+      if (!p.skt || !p.isActive) continue;
+      const sktDate = parseSkt(p.skt);
+      if (!sktDate) continue;
+      if (sktDate < now) {
+        expired.push({ ...p, sktDate: sktDate.toISOString(), status: "expired" });
+      } else if (sktDate <= threeMonthsLater) {
+        expiringSoon.push({ ...p, sktDate: sktDate.toISOString(), status: "expiring" });
+      }
+    }
+    res.json({ expired, expiringSoon });
+  });
+
+  app.get("/api/admin/product-by-barcode/:barcode", requireAdmin, async (req, res) => {
+    const barcode = req.params.barcode;
+    const result = await sharedPool.query("SELECT * FROM products WHERE barcode = $1 LIMIT 1", [barcode]);
+    if (result.rows.length === 0) return res.status(404).json({ message: "Barkod bulunamadı" });
+    res.json(result.rows[0]);
+  });
+
+  app.patch("/api/admin/product-quick-update/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const { stock, skt, barcode } = req.body;
+    const updates: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+    if (stock !== undefined) { updates.push(`stock = $${idx++}`); values.push(stock); }
+    if (skt !== undefined) { updates.push(`skt = $${idx++}`); values.push(skt); }
+    if (barcode !== undefined) { updates.push(`barcode = $${idx++}`); values.push(barcode); }
+    if (updates.length === 0) return res.status(400).json({ message: "Güncellenecek alan yok" });
+    values.push(id);
+    await sharedPool.query(`UPDATE products SET ${updates.join(", ")} WHERE id = $${idx}`, values);
+    const result = await sharedPool.query("SELECT * FROM products WHERE id = $1", [id]);
+    res.json(result.rows[0]);
+  });
+
+  app.get("/api/customer/pet-profiles", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const result = await sharedPool.query("SELECT * FROM pet_profiles WHERE customer_id = $1 ORDER BY created_at", [customerId]);
+    res.json(result.rows);
+  });
+
+  app.post("/api/customer/pet-profiles", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const { name, type, breed, birthday, weight, photoData, notes } = req.body;
+    if (!name || !type) return res.status(400).json({ message: "İsim ve tür gerekli" });
+    const result = await sharedPool.query(
+      "INSERT INTO pet_profiles (customer_id, name, type, breed, birthday, weight, photo_data, notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",
+      [customerId, name, type, breed || null, birthday || null, weight || null, photoData || null, notes || null]
+    );
+    res.json(result.rows[0]);
+  });
+
+  app.patch("/api/customer/pet-profiles/:id", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const id = parseInt(req.params.id);
+    const { name, breed, birthday, weight, photoData, notes, favoriteFoodId } = req.body;
+    await sharedPool.query(
+      "UPDATE pet_profiles SET name=COALESCE($1,name), breed=COALESCE($2,breed), birthday=COALESCE($3,birthday), weight=COALESCE($4,weight), photo_data=COALESCE($5,photo_data), notes=COALESCE($6,notes), favorite_food_id=COALESCE($7,favorite_food_id) WHERE id=$8 AND customer_id=$9",
+      [name, breed, birthday, weight, photoData, notes, favoriteFoodId, id, customerId]
+    );
+    const result = await sharedPool.query("SELECT * FROM pet_profiles WHERE id=$1 AND customer_id=$2", [id, customerId]);
+    res.json(result.rows[0]);
+  });
+
+  app.delete("/api/customer/pet-profiles/:id", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const id = parseInt(req.params.id);
+    await sharedPool.query("DELETE FROM pet_photos WHERE pet_profile_id=$1", [id]);
+    await sharedPool.query("DELETE FROM pet_weight_log WHERE pet_profile_id=$1", [id]);
+    await sharedPool.query("DELETE FROM pet_health_records WHERE pet_profile_id=$1", [id]);
+    await sharedPool.query("DELETE FROM pet_profiles WHERE id=$1 AND customer_id=$2", [id, customerId]);
+    res.json({ success: true });
+  });
+
+  app.get("/api/customer/pet-profiles/:id/health", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const id = parseInt(req.params.id);
+    const pet = await sharedPool.query("SELECT id FROM pet_profiles WHERE id=$1 AND customer_id=$2", [id, customerId]);
+    if (pet.rows.length === 0) return res.status(404).json({ message: "Pet bulunamadı" });
+    const result = await sharedPool.query("SELECT * FROM pet_health_records WHERE pet_profile_id=$1 ORDER BY date DESC", [id]);
+    res.json(result.rows);
+  });
+
+  async function verifyPetOwnership(petId: number, customerId: number): Promise<boolean> {
+    const pet = await sharedPool.query("SELECT id FROM pet_profiles WHERE id=$1 AND customer_id=$2", [petId, customerId]);
+    return pet.rows.length > 0;
+  }
+
+  app.post("/api/customer/pet-profiles/:id/health", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const petId = parseInt(req.params.id);
+    if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
+    const { recordType, title, date, notes, nextDate } = req.body;
+    if (!recordType || !title || !date) return res.status(400).json({ message: "Tür, başlık ve tarih gerekli" });
+    const result = await sharedPool.query(
+      "INSERT INTO pet_health_records (pet_profile_id, record_type, title, date, notes, next_date) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *",
+      [petId, recordType, title, date, notes || null, nextDate || null]
+    );
+    res.json(result.rows[0]);
+  });
+
+  app.delete("/api/customer/pet-health/:id", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const recordId = parseInt(req.params.id);
+    const check = await sharedPool.query(
+      "SELECT phr.id FROM pet_health_records phr JOIN pet_profiles pp ON pp.id = phr.pet_profile_id WHERE phr.id=$1 AND pp.customer_id=$2",
+      [recordId, customerId]
+    );
+    if (check.rows.length === 0) return res.status(403).json({ message: "Erişim reddedildi" });
+    await sharedPool.query("DELETE FROM pet_health_records WHERE id=$1", [recordId]);
+    res.json({ success: true });
+  });
+
+  app.get("/api/customer/pet-profiles/:id/weight", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const petId = parseInt(req.params.id);
+    if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
+    const result = await sharedPool.query("SELECT * FROM pet_weight_log WHERE pet_profile_id=$1 ORDER BY date DESC", [petId]);
+    res.json(result.rows);
+  });
+
+  app.post("/api/customer/pet-profiles/:id/weight", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const petId = parseInt(req.params.id);
+    if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
+    const { weight, date } = req.body;
+    if (!weight || !date) return res.status(400).json({ message: "Kilo ve tarih gerekli" });
+    const result = await sharedPool.query(
+      "INSERT INTO pet_weight_log (pet_profile_id, weight, date) VALUES ($1,$2,$3) RETURNING *",
+      [petId, weight, date]
+    );
+    res.json(result.rows[0]);
+  });
+
+  app.get("/api/customer/pet-profiles/:id/photos", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const petId = parseInt(req.params.id);
+    if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
+    const result = await sharedPool.query("SELECT * FROM pet_photos WHERE pet_profile_id=$1 ORDER BY created_at DESC", [petId]);
+    res.json(result.rows);
+  });
+
+  app.post("/api/customer/pet-profiles/:id/photos", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const petId = parseInt(req.params.id);
+    if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
+    const { photoData, caption } = req.body;
+    if (!photoData) return res.status(400).json({ message: "Fotoğraf gerekli" });
+    if (photoData.length > 4 * 1024 * 1024) return res.status(400).json({ message: "Dosya çok büyük (maks 3MB)" });
+    const result = await sharedPool.query(
+      "INSERT INTO pet_photos (pet_profile_id, photo_data, caption) VALUES ($1,$2,$3) RETURNING *",
+      [petId, photoData, caption || null]
+    );
+    res.json(result.rows[0]);
+  });
+
+  app.delete("/api/customer/pet-photos/:id", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const photoId = parseInt(req.params.id);
+    const check = await sharedPool.query(
+      "SELECT pp2.id FROM pet_photos pp2 JOIN pet_profiles pp ON pp.id = pp2.pet_profile_id WHERE pp2.id=$1 AND pp.customer_id=$2",
+      [photoId, customerId]
+    );
+    if (check.rows.length === 0) return res.status(403).json({ message: "Erişim reddedildi" });
+    await sharedPool.query("DELETE FROM pet_photos WHERE id=$1", [photoId]);
+    res.json({ success: true });
+  });
+
+  app.get("/api/lost-found", async (_req, res) => {
+    const result = await sharedPool.query("SELECT * FROM lost_found_posts WHERE is_resolved = false ORDER BY created_at DESC LIMIT 50");
+    res.json(result.rows);
+  });
+
+  app.post("/api/lost-found", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const { postType, petName, petType, breed, color, lastSeenLocation, description, contactPhone, photoData } = req.body;
+    if (!postType || !petName || !petType || !description || !contactPhone) {
+      return res.status(400).json({ message: "Zorunlu alanları doldurun" });
+    }
+    const customer = await sharedPool.query("SELECT name FROM customers WHERE id=$1", [customerId]);
+    const result = await sharedPool.query(
+      "INSERT INTO lost_found_posts (customer_id, post_type, pet_name, pet_type, breed, color, last_seen_location, description, contact_phone, photo_data, customer_name) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING *",
+      [customerId, postType, petName, petType, breed || null, color || null, lastSeenLocation || null, description, contactPhone, photoData || null, customer.rows[0]?.name || ""]
+    );
+    res.json(result.rows[0]);
+  });
+
+  app.patch("/api/lost-found/:id/resolve", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    await sharedPool.query("UPDATE lost_found_posts SET is_resolved = true WHERE id=$1 AND customer_id=$2", [parseInt(req.params.id), customerId]);
+    res.json({ success: true });
+  });
+
+  app.get("/api/customer/purchase-history", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const customer = await sharedPool.query("SELECT phone FROM customers WHERE id=$1", [customerId]);
+    if (customer.rows.length === 0) return res.json([]);
+    const orders = await sharedPool.query("SELECT items, created_at FROM orders WHERE customer_phone=$1 AND status != 'iptal' ORDER BY created_at DESC", [customer.rows[0].phone]);
+    const purchasedProducts: Record<number, { name: string; lastDate: string; count: number }> = {};
+    for (const order of orders.rows) {
+      const items = order.items as any[];
+      if (!items) continue;
+      for (const item of items) {
+        const pid = parseInt(String(item.productId));
+        if (!purchasedProducts[pid]) {
+          purchasedProducts[pid] = { name: item.name, lastDate: order.created_at, count: 0 };
+        }
+        purchasedProducts[pid].count += item.quantity || 1;
+      }
+    }
+    res.json(Object.entries(purchasedProducts).map(([id, data]) => ({ productId: parseInt(id), ...data })));
+  });
+
+  app.post("/api/voice-order", async (req, res) => {
+    const { name, phone, note } = req.body;
+    if (!phone || phone.length < 7) return res.status(400).json({ message: "Telefon numarası gerekli" });
+    res.json({ message: "Sesli sipariş talebiniz alındı. En kısa sürede sizi arayacağız!" });
+  });
+
+  function getCurrentWeek() {
+    const now = new Date();
+    const start = new Date(now.getFullYear(), 0, 1);
+    const diff = now.getTime() - start.getTime();
+    const week = Math.ceil((diff / 86400000 + start.getDay() + 1) / 7);
+    return `${now.getFullYear()}-W${String(week).padStart(2, "0")}`;
+  }
+
+  app.get("/api/pet-contest", async (_req, res) => {
+    const currentWeek = getCurrentWeek();
+    const entries = await db.select().from(petContestEntries)
+      .where(eq(petContestEntries.weekNumber, currentWeek))
+      .orderBy(desc(petContestEntries.votes));
+    res.json({ week: currentWeek, entries: entries.map(e => ({ ...e, photoData: e.photoData.substring(0, 100) + "..." })) });
+  });
+
+  app.get("/api/pet-contest/photo/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    const [entry] = await db.select().from(petContestEntries).where(eq(petContestEntries.id, id));
+    if (!entry) return res.status(404).json({ message: "Bulunamadı" });
+    const match = entry.photoData.match(/^data:([^;]+);base64,(.+)$/);
+    if (match) {
+      res.setHeader("Content-Type", match[1]);
+      res.setHeader("Cache-Control", "public, max-age=86400");
+      res.send(Buffer.from(match[2], "base64"));
+    } else {
+      res.status(400).json({ message: "Geçersiz fotoğraf" });
+    }
+  });
+
+  app.get("/api/pet-contest/winner", async (_req, res) => {
+    const currentWeek = getCurrentWeek();
+    const now = new Date();
+    const lastWeekDate = new Date(now.getTime() - 7 * 86400000);
+    const lastStart = new Date(lastWeekDate.getFullYear(), 0, 1);
+    const lastDiff = lastWeekDate.getTime() - lastStart.getTime();
+    const lastWeekNum = Math.ceil((lastDiff / 86400000 + lastStart.getDay() + 1) / 7);
+    const lastWeek = `${lastWeekDate.getFullYear()}-W${String(lastWeekNum).padStart(2, "0")}`;
+
+    const winners = await db.select().from(petContestEntries)
+      .where(and(eq(petContestEntries.weekNumber, lastWeek), eq(petContestEntries.isWinner, true)));
+    
+    if (winners.length === 0) {
+      const topEntries = await db.select().from(petContestEntries)
+        .where(eq(petContestEntries.weekNumber, lastWeek))
+        .orderBy(desc(petContestEntries.votes))
+        .limit(1);
+      if (topEntries.length > 0 && topEntries[0].votes > 0) {
+        await db.update(petContestEntries)
+          .set({ isWinner: true })
+          .where(eq(petContestEntries.id, topEntries[0].id));
+        return res.json({ winner: { ...topEntries[0], isWinner: true, photoData: undefined }, week: lastWeek });
+      }
+    }
+
+    if (winners.length > 0) {
+      return res.json({ winner: { ...winners[0], photoData: undefined }, week: lastWeek });
+    }
+    res.json({ winner: null, week: lastWeek });
+  });
+
+  app.post("/api/pet-contest", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const { petName, petType, photo, description } = req.body;
+    if (!petName || !photo) return res.status(400).json({ message: "Pet adı ve fotoğraf gerekli" });
+
+    const currentWeek = getCurrentWeek();
+    const existing = await db.select().from(petContestEntries)
+      .where(and(eq(petContestEntries.customerId, customerId), eq(petContestEntries.weekNumber, currentWeek)));
+    if (existing.length > 0) return res.status(400).json({ message: "Bu hafta zaten katıldınız!" });
+
+    const customer = await storage.getCustomer(customerId);
+    const [entry] = await db.insert(petContestEntries).values({
+      customerId,
+      petName,
+      petType: petType || "kedi",
+      photoData: photo,
+      description: description || null,
+      weekNumber: currentWeek,
+      customerName: customer?.name || null,
+    }).returning();
+
+    res.json({ ...entry, photoData: undefined });
+  });
+
+  app.post("/api/pet-contest/:id/vote", async (req, res) => {
+    const entryId = parseInt(req.params.id);
+    const voterIp = req.ip || req.headers["x-forwarded-for"]?.toString() || "unknown";
+    const customerId = (req as any).session?.customerId || null;
+
+    const currentWeek = getCurrentWeek();
+    const [entry] = await db.select().from(petContestEntries).where(eq(petContestEntries.id, entryId));
+    if (!entry || entry.weekNumber !== currentWeek) return res.status(400).json({ message: "Bu yarışma sona erdi" });
+
+    const existingVotes = await db.select().from(petContestVotes)
+      .where(and(eq(petContestVotes.entryId, entryId), eq(petContestVotes.voterIp, voterIp)));
+    if (existingVotes.length > 0) return res.status(400).json({ message: "Bu pet için zaten oy verdiniz!" });
+
+    await db.insert(petContestVotes).values({ entryId, voterIp, customerId });
+    await db.update(petContestEntries)
+      .set({ votes: sql`${petContestEntries.votes} + 1` })
+      .where(eq(petContestEntries.id, entryId));
+
+    res.json({ message: "Oyunuz kaydedildi!" });
   });
 
   return httpServer;

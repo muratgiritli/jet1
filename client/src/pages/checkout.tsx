@@ -362,6 +362,7 @@ export default function Checkout() {
   const [deliverySlot, setDeliverySlot] = useState("hemen");
   const [pendingOrderAfterAuth, setPendingOrderAfterAuth] = useState(false);
   const [hasElevator, setHasElevator] = useState<"var" | "yok" | "">(""); 
+  const [donationAmount, setDonationAmount] = useState(0); 
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponResult, setCouponResult] = useState<{ valid: boolean; message: string; discountAmount?: number; discountType?: string; discountValue?: number } | null>(null);
@@ -398,7 +399,7 @@ export default function Checkout() {
   const effectiveMinReached = hasCampaignItems ? minReached : nhMinReached;
 
   const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
-  const displayTotal = pointsDiscount > 0 ? Math.max(0, effectiveGrandTotal - pointsDiscount) : effectiveGrandTotal;
+  const displayTotal = (pointsDiscount > 0 ? Math.max(0, effectiveGrandTotal - pointsDiscount) : effectiveGrandTotal) + donationAmount;
 
   const handleApplyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
@@ -510,7 +511,7 @@ export default function Checkout() {
 
       const payMethod = hasCampaignItems ? "Kapıda Nakit" : pay.name;
       const pointsUsed = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
-      const finalTotal = pointsUsed > 0 ? Math.max(0, effectiveGrandTotal - pointsUsed) : effectiveGrandTotal;
+      const finalTotal = (pointsUsed > 0 ? Math.max(0, effectiveGrandTotal - pointsUsed) : effectiveGrandTotal) + donationAmount;
 
       const orderPayload: Record<string, unknown> = {
         items: orderItems,
@@ -531,6 +532,7 @@ export default function Checkout() {
         usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
         neighborhoodId: activeNeighborhood ? activeNeighborhood.id : undefined,
         couponCode: appliedCoupon ? appliedCoupon.code : undefined,
+        donationAmount: donationAmount > 0 ? donationAmount : undefined,
         customerNote: orderNote.trim() || undefined,
         deliverySlot: deliverySlot || undefined,
       };
@@ -585,6 +587,7 @@ export default function Checkout() {
       msg += `\n*Teslimat:* ${effectiveShipping === 0 ? "Ücretsiz" : effectiveShipping + " TL"}`;
       msg += `\n*Genel Toplam:* ${Math.round(finalTotal)} TL`;
       msg += `\n*Ödeme:* ${payMethod}`;
+      if (donationAmount > 0) msg += `\n*🐾 Askıda Mama Bağışı:* ${donationAmount} TL`;
       if (hasElevator) msg += `\n*Asansör:* ${hasElevator === "var" ? "Var" : "Yok (Bina girişine teslim)"}`;
       if (orderNote.trim()) msg += `\n*Sipariş Notu:* ${orderNote.trim()}`;
       if (hasCampaignItems) msg += `\n*Kampanya Siparişi*`;
@@ -1396,6 +1399,39 @@ export default function Checkout() {
                         )}
                       </span>
                     </div>
+
+                    <div
+                      className="mt-3 rounded-xl p-3 cursor-pointer transition-all"
+                      style={{
+                        backgroundColor: donationAmount > 0 ? "#fff8e1" : "#f9fafb",
+                        border: donationAmount > 0 ? "2px solid #ffb300" : "1px solid #e5e7eb",
+                      }}
+                      onClick={() => setDonationAmount(donationAmount > 0 ? 0 : 10)}
+                      data-testid="btn-donation-toggle"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${donationAmount > 0 ? "border-amber-500 bg-amber-500" : "border-gray-300"}`}>
+                          {donationAmount > 0 && <Check className="w-3.5 h-3.5 text-white" />}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-base">🐾</span>
+                            <span className="text-sm font-bold" style={{ color: "#e65100" }}>Askıda Mama</span>
+                            <span className="text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>+10 TL</span>
+                          </div>
+                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
+                            Sokak hayvanları için barınak ve besleme noktalarına mama bağışla
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {donationAmount > 0 && (
+                      <div className="flex justify-between gap-3 flex-wrap mt-2">
+                        <span className="text-muted-foreground flex items-center gap-1">🐾 Askıda Mama</span>
+                        <span className="font-medium" style={{ color: "#e65100" }} data-testid="text-donation">+{donationAmount} TL</span>
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t flex-wrap">

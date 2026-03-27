@@ -61,6 +61,9 @@ import {
   BarChart3,
   Send,
   ChevronUp,
+  ScanLine,
+  Camera,
+  Save,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1079,23 +1082,23 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   return (
     <div className="min-h-screen bg-muted/30">
       <header className="sticky top-0 z-[9999] border-b bg-background">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-extrabold tracking-tight" data-testid="text-admin-header">
+        <div className="max-w-5xl mx-auto px-3 sm:px-4 py-2 sm:py-3 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight" data-testid="text-admin-header">
               <span style={{ color: "#6B3480" }}>JET</span>
               <span className="text-foreground">55</span>
-              <span className="text-sm font-normal text-muted-foreground ml-2">Admin</span>
+              <span className="text-xs sm:text-sm font-normal text-muted-foreground ml-1 sm:ml-2">Admin</span>
             </h1>
           </div>
-          <Button variant="outline" onClick={() => logoutMutation.mutate()} data-testid="btn-admin-logout">
+          <Button variant="outline" size="sm" onClick={() => logoutMutation.mutate()} data-testid="btn-admin-logout">
             <LogOut className="w-4 h-4" />
-            Çıkış
+            <span className="hidden sm:inline ml-1">Çıkış</span>
           </Button>
         </div>
       </header>
 
-      <div className="border-b bg-background/95 backdrop-blur sticky top-[57px] z-[9998]">
-        <div className="max-w-5xl mx-auto px-4 py-2 flex gap-1.5 overflow-x-auto no-scrollbar">
+      <div className="border-b bg-background/95 backdrop-blur sticky top-[49px] sm:top-[57px] z-[9998]">
+        <div className="max-w-5xl mx-auto px-2 sm:px-4 py-1.5 sm:py-2 flex gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar" style={{ WebkitOverflowScrolling: "touch" }}>
           {[
             { key: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-3.5 h-3.5" /> },
             { key: "yonetim", label: "Yönetim", icon: <Package className="w-3.5 h-3.5" /> },
@@ -1104,6 +1107,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "bildirim", label: "Bildirim", icon: <Bell className="w-3.5 h-3.5" /> },
             { key: "banner", label: "Banner", icon: <ImageLucide className="w-3.5 h-3.5" /> },
             { key: "raporlama", label: "Raporlama", icon: <BarChart3 className="w-3.5 h-3.5" /> },
+            { key: "stoksayim", label: "Stok Sayım", icon: <ScanLine className="w-3.5 h-3.5" /> },
           ].map(tab => (
             <button
               key={tab.key}
@@ -1132,6 +1136,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "bildirim" && <NotificationsSection />}
         {activeSection === "banner" && <BannersSection />}
         {activeSection === "raporlama" && <ReportsSection />}
+        {activeSection === "stoksayim" && <StokSayimSection />}
         {activeSection === "yonetim" && <>
           {!yonetimSub && (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3" data-testid="yonetim-buttons">
@@ -3829,21 +3834,54 @@ function CustomersSection() {
 
 function NotificationsSection() {
   const { data: customers = [] } = useQuery<any[]>({ queryKey: ["/api/admin/customers"] });
+  const { data: orders = [] } = useQuery<any[]>({ queryKey: ["/api/admin/orders"] });
+  const { data: allProducts = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
+  const { data: categories = [] } = useQuery<BrandCategory[]>({ queryKey: ["/api/brand-categories"] });
   const [message, setMessage] = useState("");
   const [selectedPhones, setSelectedPhones] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<{ sent: number; failed: number } | null>(null);
+  const [segment, setSegment] = useState<string>("all");
   const { toast } = useToast();
 
-  const campaignCustomers = customers;
+  const catMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
+
+  const segmentedCustomers = useMemo(() => {
+    if (segment === "all") return customers;
+    if (segment === "blacklisted") return customers.filter((c: any) => c.is_blacklisted || c.isBlacklisted);
+
+    const animalFilter = segment;
+    const customerPhonesWithAnimal = new Set<string>();
+    for (const order of orders) {
+      if (order.status === "iptal") continue;
+      const items = order.items as any[];
+      if (!items) continue;
+      for (const item of items) {
+        const product = allProducts.find(p => p.id === parseInt(String(item.productId)));
+        if (product) {
+          const cat = catMap.get(product.brandCategoryId);
+          if (cat && cat.animal === animalFilter && order.customerPhone) {
+            customerPhonesWithAnimal.add(order.customerPhone);
+          }
+        }
+      }
+    }
+    return customers.filter((c: any) => customerPhonesWithAnimal.has(c.phone));
+  }, [segment, customers, orders, allProducts, catMap]);
+
+  const handleSegmentChange = (val: string) => {
+    setSegment(val);
+    setSelectedPhones([]);
+    setSelectAll(false);
+  };
 
   const handleToggleAll = () => {
     if (selectAll) {
       setSelectedPhones([]);
       setSelectAll(false);
     } else {
-      setSelectedPhones(campaignCustomers.map(c => c.phone));
+      setSelectedPhones(segmentedCustomers.map((c: any) => c.phone));
       setSelectAll(true);
     }
   };
@@ -3864,11 +3902,53 @@ function NotificationsSection() {
     }
   };
 
+  const quickTemplates = [
+    { label: "Yeni Ürün", text: "JETGO'da yeni ürünler geldi! Hemen inceleyin: jetgo.shop" },
+    { label: "Kampanya", text: "JETGO'da büyük kampanya başladı! Kaçırmayın: jetgo.shop" },
+    { label: "Kargo Ücretsiz", text: "Bugüne özel kargo bedava! Sipariş verin: jetgo.shop" },
+  ];
+
   return (
     <div className="space-y-4" data-testid="section-notifications">
       <Card>
         <CardHeader className="pb-2"><CardTitle className="text-sm">Toplu SMS Gönder</CardTitle></CardHeader>
         <CardContent className="p-3 space-y-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground mb-1 block">Hedef Kitle</label>
+            <div className="flex flex-wrap gap-1.5">
+              {[
+                { key: "all", label: "Tümü" },
+                { key: "kedi", label: "🐱 Kedi Sahipleri" },
+                { key: "kopek", label: "🐶 Köpek Sahipleri" },
+                { key: "kus", label: "🐦 Kuş Sahipleri" },
+                { key: "kemirgen", label: "🐹 Kemirgen Sahipleri" },
+                { key: "balik", label: "🐠 Balık Sahipleri" },
+              ].map(s => (
+                <button
+                  key={s.key}
+                  onClick={() => handleSegmentChange(s.key)}
+                  className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+                    segment === s.key ? "text-white" : "bg-muted/60 text-muted-foreground hover:bg-muted"
+                  }`}
+                  style={segment === s.key ? { backgroundColor: "#6B3480" } : {}}
+                  data-testid={`btn-segment-${s.key}`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">{segmentedCustomers.length} müşteri bu segmentte</p>
+          </div>
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Hazır Şablonlar</label>
+            <div className="flex flex-wrap gap-1.5 mt-1">
+              {quickTemplates.map(t => (
+                <button key={t.label} onClick={() => setMessage(t.text)} className="px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-md hover:bg-blue-100 transition-colors" data-testid={`btn-template-${t.label}`}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <div>
             <label className="text-xs font-medium text-muted-foreground">Mesaj ({message.length}/300)</label>
             <textarea className="w-full border rounded-md p-2 text-sm mt-1 min-h-[80px] resize-none" maxLength={300} value={message} onChange={e => setMessage(e.target.value)} placeholder="Kampanya mesajınızı yazın..." data-testid="input-sms-message" />
@@ -3876,13 +3956,13 @@ function NotificationsSection() {
           <div className="flex items-center justify-between">
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input type="checkbox" checked={selectAll} onChange={handleToggleAll} className="rounded" />
-              Tüm müşteriler ({campaignCustomers.length})
+              Tüm {segment !== "all" ? "filtrelenen" : ""} müşteriler ({segmentedCustomers.length})
             </label>
             <Badge variant="secondary">{selectedPhones.length} seçili</Badge>
           </div>
           {!selectAll && (
             <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-1">
-              {campaignCustomers.map(c => (
+              {segmentedCustomers.map((c: any) => (
                 <label key={c.id} className="flex items-center gap-2 text-xs cursor-pointer">
                   <input
                     type="checkbox"
@@ -4199,78 +4279,454 @@ function CouponsSection() {
   );
 }
 
+function StokSayimSection() {
+  const [barcodeInput, setBarcodeInput] = useState("");
+  const [foundProduct, setFoundProduct] = useState<any>(null);
+  const [searching, setSearching] = useState(false);
+  const [editStock, setEditStock] = useState("");
+  const [editSkt, setEditSkt] = useState("");
+  const [editBarcode, setEditBarcode] = useState("");
+  const [scanLog, setScanLog] = useState<Array<{ id: number; name: string; stock: number; skt: string; time: string }>>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const { data: allProducts = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
+  const { toast } = useToast();
+
+  const filteredProducts = useMemo(() => {
+    if (!searchQuery.trim()) return [];
+    const q = searchQuery.toLowerCase();
+    return allProducts.filter(p => p.name.toLowerCase().includes(q) || (p.barcode && p.barcode.includes(q))).slice(0, 10);
+  }, [searchQuery, allProducts]);
+
+  const handleBarcodeSearch = async (code?: string) => {
+    const barcode = code || barcodeInput.trim();
+    if (!barcode) return;
+    setSearching(true);
+    try {
+      const res = await fetch(`/api/admin/product-by-barcode/${encodeURIComponent(barcode)}`, { credentials: "include" });
+      if (res.ok) {
+        const product = await res.json();
+        setFoundProduct(product);
+        setEditStock(String(product.stock));
+        setEditSkt(product.skt || "");
+        setEditBarcode(product.barcode || "");
+      } else {
+        toast({ title: "Barkod bulunamadı", description: "Bu barkoda ait ürün yok. Ürün adıyla arayın.", variant: "destructive" });
+        setFoundProduct(null);
+      }
+    } catch {
+      toast({ title: "Arama hatası", variant: "destructive" });
+    } finally {
+      setSearching(false);
+      setBarcodeInput("");
+    }
+  };
+
+  const selectProductDirect = (product: Product) => {
+    setFoundProduct(product);
+    setEditStock(String(product.stock));
+    setEditSkt(product.skt || "");
+    setEditBarcode(product.barcode || "");
+    setSearchQuery("");
+  };
+
+  const handleUpdate = async () => {
+    if (!foundProduct) return;
+    try {
+      const res = await apiRequest("PATCH", `/api/admin/product-quick-update/${foundProduct.id}`, {
+        stock: parseInt(editStock),
+        skt: editSkt || null,
+        barcode: editBarcode || null,
+      });
+      const updated = await res.json();
+      setScanLog(prev => [{
+        id: updated.id,
+        name: updated.name || foundProduct.name,
+        stock: parseInt(editStock),
+        skt: editSkt,
+        time: new Date().toLocaleTimeString("tr-TR"),
+      }, ...prev].slice(0, 50));
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Güncellendi", description: `${foundProduct.name} — Stok: ${editStock}, SKT: ${editSkt || "—"}` });
+      setFoundProduct(null);
+    } catch {
+      toast({ title: "Güncelleme hatası", variant: "destructive" });
+    }
+  };
+
+  return (
+    <div className="space-y-4" data-testid="section-stoksayim">
+      <Card className="border-blue-200">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2"><ScanLine className="w-4 h-4 text-blue-600" /> Barkod ile Ürün Bul</CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 space-y-3">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Barkod okutun veya girin..."
+              value={barcodeInput}
+              onChange={e => setBarcodeInput(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && handleBarcodeSearch()}
+              autoFocus
+              className="flex-1 text-lg font-mono"
+              data-testid="input-barcode"
+            />
+            <Button onClick={() => handleBarcodeSearch()} disabled={searching || !barcodeInput.trim()} style={{ backgroundColor: "#6B3480" }} data-testid="btn-barcode-search">
+              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+            </Button>
+          </div>
+          <div className="relative">
+            <Input
+              placeholder="Veya ürün adıyla arayın..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              className="text-sm"
+              data-testid="input-product-search"
+            />
+            {filteredProducts.length > 0 && (
+              <div className="absolute z-50 top-full left-0 right-0 bg-white border rounded-md shadow-lg max-h-48 overflow-y-auto mt-1">
+                {filteredProducts.map(p => (
+                  <button key={p.id} onClick={() => selectProductDirect(p)} className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 flex justify-between items-center" data-testid={`search-result-${p.id}`}>
+                    <span className="truncate flex-1">{p.name}</span>
+                    <div className="flex gap-2 text-xs text-muted-foreground ml-2">
+                      <span>Stok: {p.stock}</span>
+                      {p.barcode && <span className="font-mono">{p.barcode}</span>}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {foundProduct && (
+        <Card className="border-green-200">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Package className="w-4 h-4 text-green-600" />
+              {foundProduct.name}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <Label className="text-xs">Stok Adedi</Label>
+                <Input type="number" value={editStock} onChange={e => setEditStock(e.target.value)} className="mt-1 text-lg font-bold" data-testid="input-edit-stock" />
+              </div>
+              <div>
+                <Label className="text-xs">SKT (AA/YYYY)</Label>
+                <Input value={editSkt} onChange={e => setEditSkt(e.target.value)} placeholder="05/2027" className="mt-1" data-testid="input-edit-skt" />
+              </div>
+              <div>
+                <Label className="text-xs">Barkod</Label>
+                <Input value={editBarcode} onChange={e => setEditBarcode(e.target.value)} placeholder="8690000000000" className="mt-1 font-mono" data-testid="input-edit-barcode" />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleUpdate} className="flex-1" style={{ backgroundColor: "#6B3480" }} data-testid="btn-save-product">
+                <Save className="w-4 h-4 mr-2" /> Kaydet
+              </Button>
+              <Button variant="outline" onClick={() => setFoundProduct(null)} data-testid="btn-cancel-edit">
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {scanLog.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Clock className="w-4 h-4" /> Sayım Geçmişi ({scanLog.length})</CardTitle></CardHeader>
+          <CardContent className="p-3">
+            <div className="space-y-1">
+              {scanLog.map((log, i) => (
+                <div key={`${log.id}-${i}`} className="flex items-center justify-between text-xs p-1.5 rounded bg-muted/30">
+                  <span className="truncate flex-1 font-medium">{log.name}</span>
+                  <div className="flex gap-2 text-muted-foreground ml-2">
+                    <span>Stok: <strong className="text-foreground">{log.stock}</strong></span>
+                    {log.skt && <span>SKT: <strong className="text-foreground">{log.skt}</strong></span>}
+                    <span>{log.time}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
 function ReportsSection() {
   const { data: reports, isLoading } = useQuery<any>({ queryKey: ["/api/admin/reports"] });
+  const [reportTab, setReportTab] = useState<string>("genel");
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>;
   if (!reports) return null;
 
+  const reportTabs = [
+    { key: "genel", label: "Genel" },
+    { key: "ciro", label: "Ciro" },
+    { key: "bestsellers", label: "En Çok Satanlar" },
+    { key: "heatmap", label: "Isı Haritası" },
+    { key: "blacklist", label: "Kara Liste" },
+  ];
+
   return (
     <div className="space-y-4" data-testid="section-reports">
-      <div className="grid grid-cols-3 gap-3">
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Toplam Müşteri</p><p className="text-xl font-bold text-blue-600">{reports.totalCustomers}</p></CardContent></Card>
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Aktif Ürün</p><p className="text-xl font-bold text-green-600">{reports.totalProducts}</p></CardContent></Card>
-        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Toplam Sipariş</p><p className="text-xl font-bold text-purple-600">{reports.totalOrders}</p></CardContent></Card>
+      <div className="flex flex-wrap gap-1.5">
+        {reportTabs.map(t => (
+          <button key={t.key} onClick={() => setReportTab(t.key)} className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${reportTab === t.key ? "text-white" : "bg-muted/60 text-muted-foreground hover:bg-muted"}`} style={reportTab === t.key ? { backgroundColor: "#6B3480" } : {}} data-testid={`btn-report-${t.key}`}>{t.label}</button>
+        ))}
       </div>
 
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Ödeme Yöntemleri</CardTitle></CardHeader>
-        <CardContent className="p-3">
-          <div className="space-y-2">
-            {reports.paymentMethods?.map((pm: any) => (
-              <div key={pm.method} className="flex items-center justify-between text-sm">
-                <span>{pm.method}</span>
-                <div className="flex gap-3 text-xs text-muted-foreground">
-                  <span>{pm.count} sipariş</span>
-                  <span className="font-semibold text-foreground">{pm.total.toLocaleString("tr-TR")} ₺</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">Sipariş Durumları</CardTitle></CardHeader>
-        <CardContent className="p-3">
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-            {Object.entries(reports.statusCounts || {}).map(([status, count]) => (
-              <div key={status} className="text-center p-2 rounded-md bg-muted/50">
-                <p className="text-lg font-bold">{count as number}</p>
-                <p className="text-xs text-muted-foreground capitalize">{status}</p>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader className="pb-2"><CardTitle className="text-sm">En İyi 15 Müşteri</CardTitle></CardHeader>
-        <CardContent className="p-3">
-          <div className="space-y-2">
-            {reports.topCustomers?.map((c: any, i: number) => (
-              <div key={c.phone} className="flex items-center gap-2 text-sm">
-                <span className="w-5 text-muted-foreground font-mono text-xs">{i + 1}.</span>
-                <span className="flex-1 truncate">{c.name || c.phone}</span>
-                <span className="text-xs text-muted-foreground">{c.count} sipariş</span>
-                <span className="font-semibold text-xs">{c.total.toLocaleString("tr-TR")} ₺</span>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {reports.monthlyData?.length > 0 && (
+      {reportTab === "genel" && <>
+        <div className="grid grid-cols-3 gap-3">
+          <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Toplam Müşteri</p><p className="text-xl font-bold text-blue-600">{reports.totalCustomers}</p></CardContent></Card>
+          <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Aktif Ürün</p><p className="text-xl font-bold text-green-600">{reports.totalProducts}</p></CardContent></Card>
+          <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Toplam Sipariş</p><p className="text-xl font-bold text-purple-600">{reports.totalOrders}</p></CardContent></Card>
+        </div>
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Aylık Ciro</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Ödeme Yöntemleri</CardTitle></CardHeader>
           <CardContent className="p-3">
             <div className="space-y-2">
-              {reports.monthlyData.map((m: any) => (
-                <div key={m.month} className="flex items-center justify-between text-sm">
-                  <span>{m.month}</span>
-                  <div className="flex gap-3 text-xs">
-                    <span className="text-muted-foreground">{m.orders} sipariş</span>
-                    <span className="font-semibold">{m.revenue.toLocaleString("tr-TR")} ₺</span>
+              {reports.paymentMethods?.map((pm: any) => (
+                <div key={pm.method} className="flex items-center justify-between text-sm">
+                  <span>{pm.method}</span>
+                  <div className="flex gap-3 text-xs text-muted-foreground">
+                    <span>{pm.count} sipariş</span>
+                    <span className="font-semibold text-foreground">{pm.total.toLocaleString("tr-TR")} ₺</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Sipariş Durumları</CardTitle></CardHeader>
+          <CardContent className="p-3">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+              {Object.entries(reports.statusCounts || {}).map(([status, count]) => (
+                <div key={status} className="text-center p-2 rounded-md bg-muted/50">
+                  <p className="text-lg font-bold">{count as number}</p>
+                  <p className="text-xs text-muted-foreground capitalize">{status}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">En İyi 15 Müşteri</CardTitle></CardHeader>
+          <CardContent className="p-3">
+            <div className="space-y-2">
+              {reports.topCustomers?.map((c: any, i: number) => (
+                <div key={c.phone} className="flex items-center gap-2 text-sm">
+                  <span className="w-5 text-muted-foreground font-mono text-xs">{i + 1}.</span>
+                  <span className="flex-1 truncate">{c.name || c.phone}</span>
+                  <span className="text-xs text-muted-foreground">{c.count} sipariş</span>
+                  <span className="font-semibold text-xs">{c.total.toLocaleString("tr-TR")} ₺</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </>}
+
+      {reportTab === "ciro" && <>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <Card className="border-green-200">
+            <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><TrendingUp className="w-4 h-4 text-green-600" /> Bugünkü Ciro</CardTitle></CardHeader>
+            <CardContent className="p-3">
+              <p className="text-2xl font-bold text-green-600">{reports.dailyCiro?.total?.toLocaleString("tr-TR")} ₺</p>
+              <div className="mt-2 space-y-1">
+                {reports.dailyCiro?.byMethod?.map((m: any) => (
+                  <div key={m.method} className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">{m.method}</span>
+                    <span className="font-semibold">{m.total.toLocaleString("tr-TR")} ₺</span>
+                  </div>
+                ))}
+                {(!reports.dailyCiro?.byMethod || reports.dailyCiro.byMethod.length === 0) && <p className="text-xs text-muted-foreground">Bugün henüz sipariş yok</p>}
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-blue-200">
+            <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Calendar className="w-4 h-4 text-blue-600" /> Haftalık Ciro</CardTitle></CardHeader>
+            <CardContent className="p-3">
+              <p className="text-2xl font-bold text-blue-600">{reports.weeklyCiro?.total?.toLocaleString("tr-TR")} ₺</p>
+              <div className="mt-2 space-y-1">
+                {reports.weeklyCiro?.byMethod?.map((m: any) => (
+                  <div key={m.method} className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">{m.method}</span>
+                    <span className="font-semibold">{m.total.toLocaleString("tr-TR")} ₺</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        {reports.monthlyData?.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Aylık Ciro Trendi</CardTitle></CardHeader>
+            <CardContent className="p-3">
+              <div className="space-y-2">
+                {reports.monthlyData.map((m: any) => {
+                  const maxRev = Math.max(...reports.monthlyData.map((d: any) => d.revenue), 1);
+                  const pct = (m.revenue / maxRev) * 100;
+                  return (
+                    <div key={m.month}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="font-medium">{m.month}</span>
+                        <div className="flex gap-3 text-xs">
+                          <span className="text-muted-foreground">{m.orders} sipariş</span>
+                          <span className="font-semibold">{m.revenue.toLocaleString("tr-TR")} ₺</span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-2">
+                        <div className="h-2 rounded-full bg-blue-500 transition-all" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </>}
+
+      {reportTab === "bestsellers" && <>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Star className="w-4 h-4 text-yellow-500" /> En Çok Kar Ettiren 20 Ürün</CardTitle></CardHeader>
+          <CardContent className="p-3">
+            <div className="space-y-2">
+              <div className="grid grid-cols-12 gap-1 text-[10px] font-semibold text-muted-foreground border-b pb-1">
+                <span className="col-span-1">#</span>
+                <span className="col-span-4">Ürün</span>
+                <span className="col-span-2 text-right">Adet</span>
+                <span className="col-span-2 text-right">Ciro</span>
+                <span className="col-span-2 text-right">Kar</span>
+                <span className="col-span-1 text-right">%</span>
+              </div>
+              {reports.bestSellers?.map((p: any, i: number) => (
+                <div key={p.productId} className="grid grid-cols-12 gap-1 text-xs items-center" data-testid={`bestseller-${i}`}>
+                  <span className="col-span-1 text-muted-foreground font-mono">{i + 1}.</span>
+                  <span className="col-span-4 truncate font-medium">{p.name}</span>
+                  <span className="col-span-2 text-right">{p.quantity}</span>
+                  <span className="col-span-2 text-right">{p.revenue.toLocaleString("tr-TR")} ₺</span>
+                  <span className="col-span-2 text-right font-semibold text-green-600">{p.profit.toLocaleString("tr-TR")} ₺</span>
+                  <span className={`col-span-1 text-right font-bold ${p.marginPercent >= 30 ? "text-green-600" : p.marginPercent >= 15 ? "text-yellow-600" : "text-red-600"}`}>{p.marginPercent}%</span>
+                </div>
+              ))}
+              {(!reports.bestSellers || reports.bestSellers.length === 0) && <p className="text-xs text-muted-foreground text-center py-4">Henüz satış verisi yok</p>}
+            </div>
+          </CardContent>
+        </Card>
+      </>}
+
+      {reportTab === "heatmap" && <>
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><MapPin className="w-4 h-4 text-red-500" /> Sipariş Isı Haritası</CardTitle></CardHeader>
+          <CardContent className="p-3">
+            <p className="text-xs text-muted-foreground mb-3">Renk yoğunluğu sipariş sayısıyla orantılıdır. En çok sipariş alan mahalle en koyu renktedir.</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {reports.heatmapData?.map((n: any) => {
+                const r = Math.round(107 + (1 - n.intensity / 100) * 148);
+                const g = Math.round(52 + (1 - n.intensity / 100) * 203);
+                const b = Math.round(128 + (1 - n.intensity / 100) * 127);
+                const textColor = n.intensity > 50 ? "#fff" : "#333";
+                return (
+                  <div key={n.name} className="rounded-lg p-3 text-center transition-transform hover:scale-105" style={{ backgroundColor: `rgb(${r},${g},${b})`, color: textColor }} data-testid={`heatmap-${n.name}`}>
+                    <p className="text-xs font-bold truncate">{n.name.replace(" Mah.", "").replace(" Mahallesi", "")}</p>
+                    <p className="text-lg font-bold">{n.count}</p>
+                    <p className="text-[10px] opacity-80">sipariş</p>
+                    <p className="text-[10px] font-semibold">{n.total.toLocaleString("tr-TR")} ₺</p>
+                  </div>
+                );
+              })}
+              {(!reports.heatmapData || reports.heatmapData.length === 0) && <p className="text-xs text-muted-foreground col-span-full text-center py-4">Henüz mahalle verisi yok</p>}
+            </div>
+          </CardContent>
+        </Card>
+        {reports.neighborhoodStats?.length > 0 && (
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-sm">Mahalle Detay Listesi</CardTitle></CardHeader>
+            <CardContent className="p-3">
+              <div className="space-y-2">
+                {reports.neighborhoodStats.map((n: any, i: number) => {
+                  const maxTotal = reports.neighborhoodStats[0]?.total || 1;
+                  const pct = (n.total / maxTotal) * 100;
+                  return (
+                    <div key={n.name} data-testid={`neighborhood-stat-${i}`}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="truncate flex-1 font-medium">{n.name}</span>
+                        <div className="flex gap-3 text-xs ml-2">
+                          <span className="text-muted-foreground">{n.count} sipariş</span>
+                          <span className="font-semibold">{n.total.toLocaleString("tr-TR")} ₺</span>
+                        </div>
+                      </div>
+                      <div className="w-full bg-gray-100 rounded-full h-1.5">
+                        <div className="h-1.5 rounded-full bg-purple-500" style={{ width: `${pct}%` }} />
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </>}
+
+      {reportTab === "blacklist" && <BlacklistSection reports={reports} />}
+    </div>
+  );
+}
+
+function BlacklistSection({ reports }: { reports: any }) {
+  const { data: customers = [], refetch } = useQuery<any[]>({ queryKey: ["/api/admin/customers"] });
+  const { data: blacklisted = [], refetch: refetchBl } = useQuery<any[]>({ queryKey: ["/api/admin/blacklisted-customers"] });
+  const [reason, setReason] = useState("");
+  const [selectedCustomerId, setSelectedCustomerId] = useState<number | null>(null);
+  const { toast } = useToast();
+
+  const blacklistMutation = useMutation({
+    mutationFn: async ({ customerId, reason }: { customerId: number; reason: string }) => {
+      await apiRequest("POST", `/api/admin/blacklist/${customerId}`, { reason });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/blacklisted-customers"] });
+      setSelectedCustomerId(null);
+      setReason("");
+      toast({ title: "Kara listeye eklendi" });
+    },
+  });
+
+  const unblacklistMutation = useMutation({
+    mutationFn: async (customerId: number) => {
+      await apiRequest("POST", `/api/admin/unblacklist/${customerId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/blacklisted-customers"] });
+      toast({ title: "Kara listeden çıkarıldı" });
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      {reports.problemCustomers?.length > 0 && (
+        <Card className="border-orange-200">
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-orange-500" /> Sorunlu Müşteriler (2+ İptal)</CardTitle></CardHeader>
+          <CardContent className="p-3">
+            <div className="space-y-2">
+              {reports.problemCustomers.map((c: any) => (
+                <div key={c.phone} className="flex items-center justify-between text-sm p-2 rounded-md bg-orange-50">
+                  <div>
+                    <span className="font-medium">{c.name || c.phone}</span>
+                    <span className="text-xs text-muted-foreground ml-2">{c.phone}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="destructive" className="text-[10px]">{c.cancelCount} iptal</Badge>
+                    <span className="text-xs">{c.count} sipariş</span>
                   </div>
                 </div>
               ))}
@@ -4279,33 +4735,43 @@ function ReportsSection() {
         </Card>
       )}
 
-      {reports.neighborhoodStats?.length > 0 && (
-        <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><MapPin className="w-4 h-4" /> Mahalle Bazlı Sipariş Raporu</CardTitle></CardHeader>
-          <CardContent className="p-3">
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-red-500" /> Kara Liste</CardTitle></CardHeader>
+        <CardContent className="p-3 space-y-3">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Select value={selectedCustomerId?.toString() || ""} onValueChange={v => setSelectedCustomerId(parseInt(v))}>
+              <SelectTrigger className="flex-1 text-xs"><SelectValue placeholder="Müşteri seçin..." /></SelectTrigger>
+              <SelectContent>
+                {customers.filter((c: any) => !c.is_blacklisted && !c.isBlacklisted).map((c: any) => (
+                  <SelectItem key={c.id} value={c.id.toString()}>{c.name} ({c.phone})</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Input placeholder="Sebep..." value={reason} onChange={e => setReason(e.target.value)} className="flex-1 text-xs" data-testid="input-blacklist-reason" />
+            <Button size="sm" variant="destructive" disabled={!selectedCustomerId || blacklistMutation.isPending} onClick={() => selectedCustomerId && blacklistMutation.mutate({ customerId: selectedCustomerId, reason })} data-testid="btn-add-blacklist">
+              Engelle
+            </Button>
+          </div>
+
+          {blacklisted.length > 0 ? (
             <div className="space-y-2">
-              {reports.neighborhoodStats.map((n: any, i: number) => {
-                const maxTotal = reports.neighborhoodStats[0]?.total || 1;
-                const pct = (n.total / maxTotal) * 100;
-                return (
-                  <div key={n.name} data-testid={`neighborhood-stat-${i}`}>
-                    <div className="flex items-center justify-between text-sm mb-1">
-                      <span className="truncate flex-1 font-medium">{n.name}</span>
-                      <div className="flex gap-3 text-xs ml-2">
-                        <span className="text-muted-foreground">{n.count} sipariş</span>
-                        <span className="font-semibold">{n.total.toLocaleString("tr-TR")} ₺</span>
-                      </div>
-                    </div>
-                    <div className="w-full bg-gray-100 rounded-full h-1.5">
-                      <div className="h-1.5 rounded-full bg-purple-500" style={{ width: `${pct}%` }} />
-                    </div>
+              {blacklisted.map((c: any) => (
+                <div key={c.id} className="flex items-center justify-between p-2 rounded-md bg-red-50 border border-red-100">
+                  <div>
+                    <p className="text-sm font-medium">{c.name}</p>
+                    <p className="text-xs text-muted-foreground">{c.phone} — {c.blacklist_reason || c.blacklistReason}</p>
                   </div>
-                );
-              })}
+                  <Button size="sm" variant="outline" onClick={() => unblacklistMutation.mutate(c.id)} disabled={unblacklistMutation.isPending} data-testid={`btn-unblacklist-${c.id}`}>
+                    Kaldır
+                  </Button>
+                </div>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-      )}
+          ) : (
+            <p className="text-xs text-muted-foreground text-center py-3">Kara listede kimse yok</p>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

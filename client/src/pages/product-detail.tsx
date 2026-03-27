@@ -840,6 +840,93 @@ export default function ProductDetailPage() {
           </div>
         )}
 
+        {category && (() => {
+          const month = new Date().getMonth();
+          const animal = category.animal;
+          const sub = category.subcategory;
+          
+          type Tip = { icon: string; title: string; desc: string; categories: string[]; color: string; bg: string };
+          const tips: Tip[] = [];
+
+          if (animal === "kedi") {
+            if (month >= 2 && month <= 4) {
+              tips.push({ icon: "🌸", title: "Bahar Tüy Dökümü Sezonu", desc: "Bahar geldi, tüy dökümü artabilir. Malt macunu veya tüy bakım ürünü eklemek ister misin?", categories: ["malt-vitamin", "bakim-saglik"], color: "#e91e63", bg: "#fce4ec" });
+            }
+            if (month >= 5 && month <= 7) {
+              tips.push({ icon: "☀️", title: "Yaz Sıcağında Beslenme", desc: "Sıcaklarda iştah düşer. Yaş mama veya su çeşmesi eklemeyi düşün!", categories: ["yas-mama", "bakim-saglik"], color: "#ff6f00", bg: "#fff3e0" });
+            }
+            if (month >= 8 && month <= 10) {
+              tips.push({ icon: "🍂", title: "Sonbahar Bağışıklık Desteği", desc: "Mevsim geçişinde bağışıklık düşer. Vitamin takviyesi eklemeyi düşün!", categories: ["malt-vitamin", "bakim-saglik"], color: "#e65100", bg: "#fff3e0" });
+            }
+            if (month >= 11 || month <= 1) {
+              tips.push({ icon: "❄️", title: "Kış Enerji Desteği", desc: "Soğuklarda enerji ihtiyacı artar. Yüksek proteinli ödül mama ekle!", categories: ["odul", "yas-mama"], color: "#1565c0", bg: "#e3f2fd" });
+            }
+            if (sub === "kedi-mamasi" || sub === "acik-mama") {
+              tips.push({ icon: "🧹", title: "Kum Zamanı mı?", desc: "Mama yanında kedi kumunuz da bitmiş olabilir! Kum eklemeyi unutmayın.", categories: ["kedi-kumu"], color: "#6B3480", bg: "#f3e5f5" });
+            }
+            if (sub === "kedi-kumu") {
+              tips.push({ icon: "🍖", title: "Ödül Zamanı!", desc: "Temiz kumuyla birlikte bir ödül mama da hediye edin!", categories: ["odul", "malt-vitamin"], color: "#e65100", bg: "#fff3e0" });
+            }
+          }
+          
+          if (animal === "kopek") {
+            if (month >= 2 && month <= 4) {
+              tips.push({ icon: "🌸", title: "Bahar Aktivite Sezonu", desc: "Dışarı çıkma zamanı! Tasma, oyuncak veya ödül mama da eklemeyi düşün.", categories: ["kopek-odul", "kopek-aksesuar"], color: "#e91e63", bg: "#fce4ec" });
+            }
+            if (month >= 5 && month <= 7) {
+              tips.push({ icon: "☀️", title: "Yaz Sıcağı Uyarısı", desc: "Bol su ve hafif atıştırmalıklar önemli. Konserve mama deneyin!", categories: ["kopek-konserve", "kopek-bakim"], color: "#ff6f00", bg: "#fff3e0" });
+            }
+            if (month >= 8 && month <= 10) {
+              tips.push({ icon: "🍂", title: "Sonbahar Bakımı", desc: "Tüy bakımı ve cilt sağlığı için bakım ürünleri zamanı!", categories: ["kopek-bakim", "kopek-odul"], color: "#e65100", bg: "#fff3e0" });
+            }
+            if (month >= 11 || month <= 1) {
+              tips.push({ icon: "❄️", title: "Kış Beslenmesi", desc: "Soğukta kalori ihtiyacı artar. Enerji takviyeli ödüller düşünün!", categories: ["kopek-odul", "kopek-konserve"], color: "#1565c0", bg: "#e3f2fd" });
+            }
+          }
+
+          if (tips.length === 0) return null;
+
+          return (
+            <div className="mt-8" data-testid="section-seasonal-tips">
+              <h3 className="text-sm font-extrabold mb-3 flex items-center gap-2" data-testid="text-seasonal-heading">
+                <span className="text-base">💡</span>
+                Uzman Önerisi
+              </h3>
+              <div className="space-y-2">
+                {tips.slice(0, 2).map((tip, i) => (
+                  <div
+                    key={i}
+                    className="rounded-xl p-3 border"
+                    style={{ backgroundColor: tip.bg, borderColor: tip.color + "30" }}
+                    data-testid={`seasonal-tip-${i}`}
+                  >
+                    <div className="flex items-start gap-2.5">
+                      <span className="text-xl shrink-0">{tip.icon}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs font-bold" style={{ color: tip.color }}>{tip.title}</p>
+                        <p className="text-[11px] text-gray-600 mt-0.5 leading-relaxed">{tip.desc}</p>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          {tip.categories.map((catSlug) => (
+                            <Link key={catSlug} href={`/kategori/${animal}/${catSlug}/${catSlug}`}>
+                              <span
+                                className="inline-flex items-center gap-0.5 text-[10px] font-bold px-2 py-1 rounded-full cursor-pointer transition-all hover:opacity-80"
+                                style={{ backgroundColor: tip.color + "15", color: tip.color }}
+                                data-testid={`btn-seasonal-cat-${catSlug}`}
+                              >
+                                Göz at →
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
+
         <ProductReviews productId={product.id} />
 
         {recentlyViewed.length > 0 && (
