@@ -43,14 +43,6 @@ function ProductCard({ product, quantity, onUpdate }: { product: Product; quanti
               loading="lazy"
               data-testid={`img-acik-product-${pid}`}
             />
-            {product.skt && (
-              <Badge
-                variant="secondary"
-                className="absolute top-1 left-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
-              >
-                SKT: {product.skt}
-              </Badge>
-            )}
             {discount > 0 && (
               <Badge
                 className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
@@ -72,6 +64,11 @@ function ProductCard({ product, quantity, onUpdate }: { product: Product; quanti
           <span className="text-sm font-bold text-foreground" data-testid={`text-acik-price-${pid}`}>
             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
+          {product.skt && (
+            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+              S.K.T: {product.skt}
+            </span>
+          )}
         </div>
         <div className="flex items-center gap-2" data-testid={`qty-control-${pid}`}>
           <Button

@@ -95,13 +95,20 @@ function ProductCard({
         <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${product.id}`}>
           {product.name}
         </p>
-        <div className="flex items-center gap-1 flex-wrap justify-center">
-          <span className="text-sm font-bold text-foreground" data-testid={`text-price-${product.id}`}>
-            {product.price} TL
-          </span>
-          {product.originalPrice && product.originalPrice > product.price && (
-            <span className="text-[10px] text-muted-foreground line-through" data-testid={`text-original-price-${product.id}`}>
-              {product.originalPrice} TL
+        <div className="flex flex-col items-center gap-0.5">
+          <div className="flex items-center gap-1 flex-wrap justify-center">
+            <span className="text-sm font-bold text-foreground" data-testid={`text-price-${product.id}`}>
+              {product.price} TL
+            </span>
+            {product.originalPrice && product.originalPrice > product.price && (
+              <span className="text-[10px] text-muted-foreground line-through" data-testid={`text-original-price-${product.id}`}>
+                {product.originalPrice} TL
+              </span>
+            )}
+          </div>
+          {product.skt && (
+            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid={`badge-skt-${product.id}`}>
+              S.K.T: {product.skt}
             </span>
           )}
         </div>

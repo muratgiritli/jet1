@@ -68,13 +68,20 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
             {item.name}
           </h3>
         </Link>
-        <div className="flex items-baseline gap-1.5">
-          <span className="text-base font-bold text-primary" data-testid={`text-price-${item.product_id}`}>
-            {item.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-          </span>
-          {item.original_price && item.original_price > item.price && (
-            <span className="text-[10px] text-gray-400 line-through">
-              {item.original_price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-baseline gap-1.5">
+            <span className="text-base font-bold text-primary" data-testid={`text-price-${item.product_id}`}>
+              {item.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+            </span>
+            {item.original_price && item.original_price > item.price && (
+              <span className="text-[10px] text-gray-400 line-through">
+                {item.original_price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+              </span>
+            )}
+          </div>
+          {item.skt && (
+            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 w-fit">
+              S.K.T: {item.skt}
             </span>
           )}
         </div>
