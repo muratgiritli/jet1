@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Link, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
@@ -11,9 +11,11 @@ import {
   User, Phone, MapPin, LogOut, Loader2, Check, Edit2,
   Package, Heart, Home, PawPrint, Bell,
   Plus, Trash2, Star, ChevronRight,
-  ShoppingCart
+  ShoppingCart, RefreshCw, Eye, TrendingUp, UserX,
+  AlertTriangle, Lock, ChevronDown, ChevronUp, BarChart3
 } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
+import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { productUrl, TESLIMAT_MAHALLELERI } from "@/lib/data";
@@ -21,16 +23,18 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Logo from "@/components/Logo";
 import ProductImage from "@/components/ProductImage";
 
-type TabKey = "profile" | "points" | "orders" | "favorites" | "addresses" | "pets" | "notifications";
+type TabKey = "profile" | "points" | "orders" | "favorites" | "addresses" | "pets" | "notifications" | "spending" | "security";
 
 const TABS: { key: TabKey; label: string; icon: any; emoji: string }[] = [
   { key: "profile", label: "Profilim", icon: User, emoji: "👤" },
   { key: "points", label: "Para Puanlarım", icon: Star, emoji: "⭐" },
   { key: "orders", label: "Siparişlerim", icon: Package, emoji: "📦" },
+  { key: "spending", label: "Harcama Özeti", icon: TrendingUp, emoji: "📊" },
   { key: "favorites", label: "Favorilerim", icon: Heart, emoji: "❤️" },
   { key: "addresses", label: "Adreslerim", icon: Home, emoji: "🏠" },
   { key: "pets", label: "Evcil Hayvanlarım", icon: PawPrint, emoji: "🐾" },
   { key: "notifications", label: "Bildirimler", icon: Bell, emoji: "🔔" },
+  { key: "security", label: "Güvenlik", icon: Lock, emoji: "🔒" },
 ];
 
 const STATUS_MAP: Record<string, { label: string; color: string }> = {
@@ -166,10 +170,12 @@ export default function ProfilePage() {
             {activeTab === "profile" && <ProfileSection customer={customer!} updateProfile={updateProfile} toast={toast} />}
             {activeTab === "points" && <LoyaltyPointsSection />}
             {activeTab === "orders" && <OrdersSection />}
+            {activeTab === "spending" && <SpendingSummarySection />}
             {activeTab === "favorites" && <FavoritesSection />}
             {activeTab === "addresses" && <AddressesSection />}
             {activeTab === "pets" && <PetsSection />}
             {activeTab === "notifications" && <NotificationsSection customer={customer!} refetch={refetch} toast={toast} />}
+            {activeTab === "security" && <SecuritySection customer={customer!} logout={logout} toast={toast} />}
           </div>
         </div>
       </div>
@@ -274,6 +280,48 @@ function OrdersSection() {
   const { data: orders, isLoading } = useQuery<any[]>({
     queryKey: ["/api/customer/orders"],
   });
+  const { data: allProducts } = useQuery<any[]>({ queryKey: ["/api/products"] });
+  const { updateQty } = useCart();
+  const { toast } = useToast();
+  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [, setLocation] = useLocation();
+
+  const PAYMENT_LABELS: Record<string, string> = {
+    credit_card: "Kredi Kartı",
+    cash: "Kapıda Nakit",
+    eft: "EFT / Havale",
+    taksit: "Taksitli Kredi Kartı",
+  };
+
+  const handleReorder = (order: any) => {
+    if (!allProducts || allProducts.length === 0) {
+      toast({ title: "Ürünler yüklenemedi", variant: "destructive" });
+      return;
+    }
+    let addedCount = 0;
+    let unavailableCount = 0;
+    for (const item of order.items) {
+      const product = allProducts.find((p: any) => p.id === item.productId);
+      if (product && product.stock > 0) {
+        const qty = Math.min(item.quantity, product.stock);
+        for (let i = 0; i < qty; i++) {
+          updateQty(String(product.id), 1);
+        }
+        addedCount++;
+      } else {
+        unavailableCount++;
+      }
+    }
+    if (addedCount > 0) {
+      toast({
+        title: `${addedCount} ürün sepete eklendi`,
+        description: unavailableCount > 0 ? `${unavailableCount} ürün stokta yok` : undefined,
+      });
+      setLocation("/");
+    } else {
+      toast({ title: "Ürünler stokta yok", variant: "destructive" });
+    }
+  };
 
   if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
 
@@ -294,6 +342,7 @@ function OrdersSection() {
       {orders.map((order: any) => {
         const status = STATUS_MAP[order.status] || { label: order.status, color: "bg-gray-100 text-gray-700" };
         const date = new Date(order.createdAt);
+        const isExpanded = expandedId === order.id;
         return (
           <Card key={order.id} className="rounded-2xl border-gray-100 shadow-sm" data-testid={`card-order-${order.id}`}>
             <CardContent className="p-4">
@@ -307,17 +356,76 @@ function OrdersSection() {
                 </span>
               </div>
               <div className="space-y-1">
-                {order.items.slice(0, 3).map((item: any, i: number) => (
-                  <div key={i} className="flex justify-between text-xs">
-                    <span className="truncate flex-1">{item.quantity}x {item.name}</span>
-                    <span className="font-medium ml-2">{(item.price * item.quantity).toFixed(0)} TL</span>
-                  </div>
-                ))}
-                {order.items.length > 3 && <p className="text-xs text-muted-foreground">+{order.items.length - 3} ürün daha</p>}
+                {order.items.slice(0, isExpanded ? undefined : 3).map((item: any, i: number) => {
+                  const product = allProducts?.find((p: any) => p.id === item.productId);
+                  return (
+                    <div key={i} className="flex items-center gap-2 text-xs">
+                      {isExpanded && product?.img ? (
+                        <ProductImage src={product.img} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                      ) : isExpanded ? (
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
+                          <Package className="w-4 h-4 text-muted-foreground" />
+                        </div>
+                      ) : null}
+                      <span className="truncate flex-1">{item.quantity}x {item.name}</span>
+                      <span className="font-medium ml-2">{(item.price * item.quantity).toFixed(0)} TL</span>
+                    </div>
+                  );
+                })}
+                {!isExpanded && order.items.length > 3 && <p className="text-xs text-muted-foreground">+{order.items.length - 3} ürün daha</p>}
               </div>
+
+              {isExpanded && (
+                <div className="mt-3 pt-3 border-t space-y-2">
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div><span className="text-muted-foreground">Ara Toplam:</span> <span className="font-medium">{order.subtotal?.toFixed(0)} TL</span></div>
+                    <div><span className="text-muted-foreground">Teslimat:</span> <span className="font-medium">{order.shipping === 0 ? "Ücretsiz" : `${order.shipping?.toFixed(0)} TL`}</span></div>
+                    {order.discount > 0 && <div><span className="text-muted-foreground">İndirim:</span> <span className="font-medium text-green-600">-{order.discount?.toFixed(0)} TL</span></div>}
+                    <div><span className="text-muted-foreground">Ödeme:</span> <span className="font-medium">{PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod}</span></div>
+                  </div>
+                  {order.deliverySlot && (
+                    <div className="text-xs"><span className="text-muted-foreground">Teslimat Zamanı:</span> <span className="font-medium">
+                      {({
+                        hemen: "Hemen (En kısa sürede)",
+                        bugun_ogle: "Bugün 12:00-14:00",
+                        bugun_aksam: "Bugün 16:00-19:00",
+                        yarin_sabah: "Yarın Sabah 10:00-12:00",
+                      } as Record<string, string>)[order.deliverySlot] || order.deliverySlot}
+                    </span></div>
+                  )}
+                  {order.customerNote && (
+                    <div className="text-xs bg-yellow-50 rounded-lg p-2">
+                      <span className="text-muted-foreground">Not: </span>{order.customerNote}
+                    </div>
+                  )}
+                </div>
+              )}
+
               <div className="flex justify-between items-center mt-3 pt-2 border-t">
-                <span className="text-xs text-muted-foreground">{order.paymentMethod === "credit_card" ? "Kredi Kartı" : order.paymentMethod === "cash" ? "Kapıda Nakit" : order.paymentMethod}</span>
-                <span className="text-sm font-bold">{order.grandTotal.toFixed(0)} TL</span>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs text-muted-foreground"
+                    onClick={() => setExpandedId(isExpanded ? null : order.id)}
+                    data-testid={`btn-detail-${order.id}`}
+                  >
+                    <Eye className="w-3.5 h-3.5 mr-1" />
+                    {isExpanded ? "Gizle" : "Detay"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 px-2 text-xs"
+                    style={{ color: "#6B3480" }}
+                    onClick={() => handleReorder(order)}
+                    data-testid={`btn-reorder-${order.id}`}
+                  >
+                    <RefreshCw className="w-3.5 h-3.5 mr-1" />
+                    Tekrarla
+                  </Button>
+                </div>
+                <span className="text-sm font-bold">{order.grandTotal?.toFixed(0)} TL</span>
               </div>
             </CardContent>
           </Card>
@@ -839,6 +947,242 @@ function NotificationsSection({ customer, refetch, toast }: { customer: any; ref
   );
 }
 
+
+function SpendingSummarySection() {
+  const { data: orders, isLoading } = useQuery<any[]>({
+    queryKey: ["/api/customer/orders"],
+  });
+
+  if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+
+  if (!orders || orders.length === 0) {
+    return (
+      <div className="text-center py-12">
+        <BarChart3 className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />
+        <p className="text-muted-foreground text-sm">Henüz sipariş geçmişiniz yok</p>
+      </div>
+    );
+  }
+
+  const completedOrders = orders.filter((o: any) => o.status !== "iptal");
+  const totalSpent = completedOrders.reduce((sum: number, o: any) => sum + (o.grandTotal || 0), 0);
+  const totalOrders = completedOrders.length;
+  const avgOrder = totalOrders > 0 ? totalSpent / totalOrders : 0;
+
+  const monthlyData: Record<string, { total: number; count: number }> = {};
+  completedOrders.forEach((o: any) => {
+    const d = new Date(o.createdAt);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (!monthlyData[key]) monthlyData[key] = { total: 0, count: 0 };
+    monthlyData[key].total += o.grandTotal || 0;
+    monthlyData[key].count++;
+  });
+
+  const monthNames = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
+  const sortedMonths = Object.entries(monthlyData).sort((a, b) => b[0].localeCompare(a[0])).slice(0, 6).reverse();
+  const maxMonthTotal = Math.max(...sortedMonths.map(([, v]) => v.total), 1);
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-3 gap-3">
+        <Card className="rounded-2xl border-gray-100 shadow-sm">
+          <CardContent className="p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Toplam Harcama</p>
+            <p className="text-lg font-bold" style={{ color: "#6B3480" }} data-testid="text-total-spent">{totalSpent.toLocaleString("tr-TR", { maximumFractionDigits: 0 })} TL</p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl border-gray-100 shadow-sm">
+          <CardContent className="p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Sipariş Sayısı</p>
+            <p className="text-lg font-bold" style={{ color: "#6B3480" }} data-testid="text-total-orders">{totalOrders}</p>
+          </CardContent>
+        </Card>
+        <Card className="rounded-2xl border-gray-100 shadow-sm">
+          <CardContent className="p-4 text-center">
+            <p className="text-xs text-muted-foreground mb-1">Ort. Sipariş</p>
+            <p className="text-lg font-bold" style={{ color: "#6B3480" }} data-testid="text-avg-order">{avgOrder.toLocaleString("tr-TR", { maximumFractionDigits: 0 })} TL</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {sortedMonths.length > 0 && (
+        <Card className="rounded-2xl border-gray-100 shadow-sm">
+          <CardContent className="p-4">
+            <h3 className="font-semibold text-sm mb-4">Aylık Harcama</h3>
+            <div className="space-y-3">
+              {sortedMonths.map(([key, val]) => {
+                const [y, m] = key.split("-");
+                const monthLabel = monthNames[parseInt(m) - 1] + " " + y;
+                const pct = (val.total / maxMonthTotal) * 100;
+                return (
+                  <div key={key} data-testid={`spending-month-${key}`}>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="text-muted-foreground">{monthLabel}</span>
+                      <span className="font-semibold">{val.total.toLocaleString("tr-TR", { maximumFractionDigits: 0 })} TL ({val.count} sipariş)</span>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-2.5">
+                      <div className="h-2.5 rounded-full" style={{ width: `${pct}%`, background: "linear-gradient(135deg, #6B3480, #9b59b6)" }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function SecuritySection({ customer, logout, toast }: { customer: any; logout: () => Promise<void>; toast: any }) {
+  const [, setLocation] = useLocation();
+  const [currentPw, setCurrentPw] = useState("");
+  const [newPw, setNewPw] = useState("");
+  const [confirmPw, setConfirmPw] = useState("");
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [deletePassword, setDeletePassword] = useState("");
+
+  const changePwMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PATCH", "/api/customer/password", { currentPassword: currentPw, newPassword: newPw });
+    },
+    onSuccess: () => {
+      toast({ title: "Şifre başarıyla değiştirildi" });
+      setCurrentPw("");
+      setNewPw("");
+      setConfirmPw("");
+    },
+    onError: (err: any) => {
+      toast({ title: "Hata", description: err.message || "Şifre değiştirilemedi", variant: "destructive" });
+    },
+  });
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("DELETE", "/api/customer/account", { password: deletePassword });
+    },
+    onSuccess: async () => {
+      toast({ title: "Hesabınız silindi" });
+      await logout();
+      setLocation("/");
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Hesap silinemedi", variant: "destructive" });
+    },
+  });
+
+  const handleChangePw = () => {
+    if (!currentPw) {
+      toast({ title: "Mevcut şifreyi girin", variant: "destructive" });
+      return;
+    }
+    if (newPw.length < 4) {
+      toast({ title: "Yeni şifre en az 4 karakter olmalı", variant: "destructive" });
+      return;
+    }
+    if (newPw !== confirmPw) {
+      toast({ title: "Şifreler eşleşmiyor", variant: "destructive" });
+      return;
+    }
+    changePwMutation.mutate();
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card className="rounded-2xl border-gray-100 shadow-sm">
+        <CardContent className="p-5 space-y-4">
+          <h2 className="font-bold text-base flex items-center gap-2">
+            <Lock className="w-4 h-4" /> Şifre Değiştir
+          </h2>
+          <div className="space-y-3">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Mevcut Şifre</label>
+              <Input type="password" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} className="rounded-xl" data-testid="input-current-pw" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Yeni Şifre</label>
+              <Input type="password" value={newPw} onChange={(e) => setNewPw(e.target.value)} className="rounded-xl" data-testid="input-new-pw" />
+            </div>
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Yeni Şifre (Tekrar)</label>
+              <Input type="password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} className="rounded-xl" data-testid="input-confirm-pw" />
+            </div>
+            <Button
+              onClick={handleChangePw}
+              disabled={changePwMutation.isPending}
+              className="w-full rounded-xl"
+              style={{ background: "linear-gradient(135deg, #6B3480, #9b59b6)" }}
+              data-testid="btn-change-pw"
+            >
+              {changePwMutation.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
+              Şifreyi Değiştir
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="rounded-2xl border-red-100 shadow-sm">
+        <CardContent className="p-5 space-y-4">
+          <h2 className="font-bold text-base text-red-600 flex items-center gap-2">
+            <UserX className="w-4 h-4" /> Hesabı Sil
+          </h2>
+          <p className="text-xs text-muted-foreground">
+            KVKK kapsamında hesabınızı kalıcı olarak silebilirsiniz. Bu işlem geri alınamaz. Tüm kişisel verileriniz, adresleriniz, evcil hayvan bilgileriniz ve para puanlarınız silinir.
+          </p>
+          {!showDeleteConfirm ? (
+            <Button
+              variant="outline"
+              className="w-full border-red-200 text-red-600 hover:bg-red-50 rounded-xl"
+              onClick={() => setShowDeleteConfirm(true)}
+              data-testid="btn-show-delete-account"
+            >
+              <AlertTriangle className="w-4 h-4 mr-1" /> Hesabımı Sil
+            </Button>
+          ) : (
+            <div className="space-y-3 bg-red-50 rounded-xl p-4">
+              <p className="text-xs text-red-700 font-medium">Güvenlik doğrulaması: Mevcut şifrenizi ve onay metnini girin.</p>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-red-700">Mevcut Şifre</label>
+                <Input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  placeholder="Şifreniz"
+                  className="rounded-xl border-red-200"
+                  data-testid="input-delete-password"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-xs font-medium text-red-700">Onay: "HESABIMI SİL" yazın</label>
+                <Input
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder='HESABIMI SİL'
+                  className="rounded-xl border-red-200"
+                  data-testid="input-delete-confirm"
+                />
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="destructive"
+                  className="flex-1 rounded-xl"
+                  disabled={deleteConfirmText !== "HESABIMI SİL" || !deletePassword || deleteAccountMutation.isPending}
+                  onClick={() => deleteAccountMutation.mutate()}
+                  data-testid="btn-confirm-delete-account"
+                >
+                  {deleteAccountMutation.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Trash2 className="w-4 h-4 mr-1" />}
+                  Kalıcı Olarak Sil
+                </Button>
+                <Button variant="outline" className="rounded-xl" onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(""); setDeletePassword(""); }}>Vazgeç</Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
 
 function LoyaltyPointsSection() {
   const { data, isLoading } = useQuery<{ balance: number; history: any[] }>({

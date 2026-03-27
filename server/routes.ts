@@ -1,9 +1,10 @@
 import crypto from "crypto";
 import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
-import { storage, pool as sharedPool } from "./storage";
+import { storage, pool as sharedPool, db } from "./storage";
 import { seedDatabase } from "./seed";
-import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema } from "@shared/schema";
+import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders } from "@shared/schema";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import session from "express-session";
@@ -1182,6 +1183,22 @@ export async function registerRoutes(
     res.json({ message: "Şifre başarıyla değiştirildi" });
   });
 
+  app.delete("/api/customer/account", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const { password } = req.body;
+    if (!password) return res.status(400).json({ message: "Şifre gerekli" });
+    const customer = await storage.getCustomer(customerId);
+    if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
+    const valid = await bcrypt.compare(password, customer.password);
+    if (!valid) return res.status(400).json({ message: "Şifre hatalı" });
+    await db.update(orders)
+      .set({ customerName: "Silinmiş Kullanıcı", customerAddress: null, customerPhone: "000" })
+      .where(eq(orders.customerPhone, customer.phone));
+    await storage.deleteCustomerAccount(customerId);
+    req.session.destroy(() => {});
+    res.json({ message: "Hesabınız başarıyla silindi" });
+  });
+
   app.patch("/api/customer/preferences", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
     const { notifyStock, notifyCampaign } = req.body;
@@ -1945,12 +1962,24 @@ export async function registerRoutes(
       }
 
       const monthlyData: Record<string, { revenue: number; orders: number }> = {};
+      const neighborhoodStats: Record<string, { count: number; total: number }> = {};
       for (const order of allOrders) {
         if (order.status === "iptal") continue;
         const month = new Date(order.createdAt).toISOString().slice(0, 7);
         if (!monthlyData[month]) monthlyData[month] = { revenue: 0, orders: 0 };
         monthlyData[month].revenue += order.grandTotal || 0;
         monthlyData[month].orders++;
+
+        if (order.customerAddress) {
+          const addr = order.customerAddress;
+          const mahalleParts = addr.split(",");
+          let mahalle = mahalleParts[0]?.trim();
+          if (mahalle && mahalle.toLowerCase().includes("mah")) {
+            if (!neighborhoodStats[mahalle]) neighborhoodStats[mahalle] = { count: 0, total: 0 };
+            neighborhoodStats[mahalle].count++;
+            neighborhoodStats[mahalle].total += order.grandTotal || 0;
+          }
+        }
       }
 
       res.json({
@@ -1965,6 +1994,9 @@ export async function registerRoutes(
         totalCustomers: allCustomers.length,
         totalProducts: allProducts.filter(p => p.isActive).length,
         totalOrders: allOrders.length,
+        neighborhoodStats: Object.entries(neighborhoodStats)
+          .map(([name, data]) => ({ name, count: data.count, total: Math.round(data.total * 100) / 100 }))
+          .sort((a, b) => b.total - a.total),
       });
     } catch (err) {
       res.status(500).json({ message: "Reports error" });

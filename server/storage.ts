@@ -139,6 +139,8 @@ export interface IStorage {
   updateCoupon(id: number, data: Partial<InsertCoupon>): Promise<Coupon | undefined>;
   deleteCoupon(id: number): Promise<void>;
   incrementCouponUsage(id: number): Promise<void>;
+
+  deleteCustomerAccount(customerId: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -584,6 +586,14 @@ export class DatabaseStorage implements IStorage {
 
   async incrementCouponUsage(id: number): Promise<void> {
     await db.update(coupons).set({ usedCount: sql`${coupons.usedCount} + 1` }).where(eq(coupons.id, id));
+  }
+
+  async deleteCustomerAccount(customerId: number): Promise<void> {
+    await db.delete(customerFavorites).where(eq(customerFavorites.customerId, customerId));
+    await db.delete(customerAddresses).where(eq(customerAddresses.customerId, customerId));
+    await db.delete(petProfiles).where(eq(petProfiles.customerId, customerId));
+    await db.delete(loyaltyPoints).where(eq(loyaltyPoints.customerId, customerId));
+    await db.delete(customers).where(eq(customers.id, customerId));
   }
 }
 

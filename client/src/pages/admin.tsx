@@ -1098,6 +1098,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           {[
             { key: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-3.5 h-3.5" /> },
             { key: "yonetim", label: "Yönetim", icon: <Package className="w-3.5 h-3.5" /> },
+            { key: "kuponlar", label: "Kuponlar", icon: <Tag className="w-3.5 h-3.5" /> },
             { key: "musteriler", label: "Müşteri", icon: <Users className="w-3.5 h-3.5" /> },
             { key: "bildirim", label: "Bildirim", icon: <Bell className="w-3.5 h-3.5" /> },
             { key: "banner", label: "Banner", icon: <ImageLucide className="w-3.5 h-3.5" /> },
@@ -1125,6 +1126,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
         {activeSection === "dashboard" && <DashboardSection />}
+        {activeSection === "kuponlar" && <CouponsSection />}
         {activeSection === "musteriler" && <CustomersSection />}
         {activeSection === "bildirim" && <NotificationsSection />}
         {activeSection === "banner" && <BannersSection />}
@@ -3953,6 +3955,208 @@ function BannersSection() {
   );
 }
 
+function CouponsSection() {
+  const { data: coupons, isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/coupons"] });
+  const { toast } = useToast();
+  const [showForm, setShowForm] = useState(false);
+  const [editId, setEditId] = useState<number | null>(null);
+  const [code, setCode] = useState("");
+  const [discountType, setDiscountType] = useState("fixed");
+  const [discountValue, setDiscountValue] = useState("");
+  const [minOrderAmount, setMinOrderAmount] = useState("");
+  const [maxUses, setMaxUses] = useState("");
+  const [expiresAt, setExpiresAt] = useState("");
+  const [isActive, setIsActive] = useState(true);
+
+  const resetForm = () => {
+    setShowForm(false);
+    setEditId(null);
+    setCode("");
+    setDiscountType("fixed");
+    setDiscountValue("");
+    setMinOrderAmount("");
+    setMaxUses("");
+    setExpiresAt("");
+    setIsActive(true);
+  };
+
+  const startEdit = (coupon: any) => {
+    setEditId(coupon.id);
+    setCode(coupon.code);
+    setDiscountType(coupon.discountType);
+    setDiscountValue(String(coupon.discountValue));
+    setMinOrderAmount(String(coupon.minOrderAmount));
+    setMaxUses(coupon.maxUses ? String(coupon.maxUses) : "");
+    setExpiresAt(coupon.expiresAt ? new Date(coupon.expiresAt).toISOString().split("T")[0] : "");
+    setIsActive(coupon.isActive);
+    setShowForm(true);
+  };
+
+  const createMutation = useMutation({
+    mutationFn: async (data: any) => {
+      if (editId) {
+        await apiRequest("PATCH", `/api/admin/coupons/${editId}`, data);
+      } else {
+        await apiRequest("POST", "/api/admin/coupons", data);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/coupons"] });
+      toast({ title: editId ? "Kupon güncellendi" : "Kupon oluşturuldu" });
+      resetForm();
+    },
+    onError: (err: any) => {
+      toast({ title: "Hata", description: err.message, variant: "destructive" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/coupons/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/coupons"] });
+      toast({ title: "Kupon silindi" });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Kupon silinemedi", variant: "destructive" });
+    },
+  });
+
+  const toggleActiveMutation = useMutation({
+    mutationFn: async ({ id, active }: { id: number; active: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/coupons/${id}`, { isActive: active });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/coupons"] });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Kupon güncellenemedi", variant: "destructive" });
+    },
+  });
+
+  const handleSave = () => {
+    if (!code.trim() || !discountValue) {
+      toast({ title: "Kupon kodu ve indirim değeri gerekli", variant: "destructive" });
+      return;
+    }
+    createMutation.mutate({
+      code: code.trim().toUpperCase(),
+      discountType,
+      discountValue: Number(discountValue),
+      minOrderAmount: Number(minOrderAmount) || 0,
+      maxUses: maxUses ? Number(maxUses) : null,
+      expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+      isActive,
+    });
+  };
+
+  if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+
+  return (
+    <section>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2">
+          <Tag className="w-5 h-5 text-purple-600" />
+          <h2 className="text-lg font-bold">Kupon Yönetimi</h2>
+        </div>
+        {!showForm && (
+          <Button size="sm" onClick={() => { resetForm(); setShowForm(true); }} data-testid="btn-add-coupon">
+            <Plus className="w-4 h-4 mr-1" /> Yeni Kupon
+          </Button>
+        )}
+      </div>
+
+      {showForm && (
+        <Card className="mb-4">
+          <CardContent className="p-4 space-y-3">
+            <h3 className="font-semibold text-sm">{editId ? "Kuponu Düzenle" : "Yeni Kupon"}</h3>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Kupon Kodu</Label>
+                <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Ör: YENI2024" data-testid="input-coupon-code" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">İndirim Tipi</Label>
+                <Select value={discountType} onValueChange={setDiscountType}>
+                  <SelectTrigger data-testid="select-coupon-type"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">Sabit (TL)</SelectItem>
+                    <SelectItem value="percentage">Yüzde (%)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">İndirim Değeri {discountType === "fixed" ? "(TL)" : "(%)"}</Label>
+                <Input type="number" value={discountValue} onChange={(e) => setDiscountValue(e.target.value)} placeholder="50" data-testid="input-coupon-value" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Min. Sipariş Tutarı (TL)</Label>
+                <Input type="number" value={minOrderAmount} onChange={(e) => setMinOrderAmount(e.target.value)} placeholder="0" data-testid="input-coupon-min" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Max Kullanım (boş=sınırsız)</Label>
+                <Input type="number" value={maxUses} onChange={(e) => setMaxUses(e.target.value)} placeholder="Sınırsız" data-testid="input-coupon-max" />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Son Kullanım Tarihi</Label>
+                <Input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} data-testid="input-coupon-expiry" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" checked={isActive} onChange={(e) => setIsActive(e.target.checked)} id="coupon-active" data-testid="check-coupon-active" />
+              <label htmlFor="coupon-active" className="text-sm">Aktif</label>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={handleSave} disabled={createMutation.isPending} className="flex-1" data-testid="btn-save-coupon">
+                {createMutation.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Check className="w-4 h-4 mr-1" />}
+                {editId ? "Güncelle" : "Oluştur"}
+              </Button>
+              <Button variant="outline" onClick={resetForm}>Vazgeç</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <div className="space-y-3">
+        {coupons && coupons.length > 0 ? coupons.map((coupon: any) => (
+          <Card key={coupon.id} className="rounded-xl" data-testid={`card-coupon-${coupon.id}`}>
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between mb-2">
+                <div className="flex items-center gap-2">
+                  <code className="text-sm font-bold bg-purple-50 text-purple-700 px-2 py-0.5 rounded">{coupon.code}</code>
+                  <Badge variant={coupon.isActive ? "default" : "secondary"} className="text-xs">
+                    {coupon.isActive ? "Aktif" : "Pasif"}
+                  </Badge>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => toggleActiveMutation.mutate({ id: coupon.id, active: !coupon.isActive })} data-testid={`btn-toggle-coupon-${coupon.id}`}>
+                    {coupon.isActive ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => startEdit(coupon)} data-testid={`btn-edit-coupon-${coupon.id}`}>
+                    <Pencil className="w-4 h-4 text-muted-foreground" />
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500" onClick={() => deleteMutation.mutate(coupon.id)} data-testid={`btn-delete-coupon-${coupon.id}`}>
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground">
+                <div>İndirim: <span className="font-medium text-foreground">{coupon.discountType === "percentage" ? `%${coupon.discountValue}` : `${coupon.discountValue} TL`}</span></div>
+                <div>Min. Sipariş: <span className="font-medium text-foreground">{coupon.minOrderAmount} TL</span></div>
+                <div>Kullanım: <span className="font-medium text-foreground">{coupon.usedCount}{coupon.maxUses ? `/${coupon.maxUses}` : " (sınırsız)"}</span></div>
+                <div>Son Tarih: <span className="font-medium text-foreground">{coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString("tr-TR") : "Yok"}</span></div>
+              </div>
+            </CardContent>
+          </Card>
+        )) : (
+          <div className="text-center py-8 text-muted-foreground text-sm">Henüz kupon oluşturulmamış</div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function ReportsSection() {
   const { data: reports, isLoading } = useQuery<any>({ queryKey: ["/api/admin/reports"] });
 
@@ -4028,6 +4232,34 @@ function ReportsSection() {
                   </div>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {reports.neighborhoodStats?.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><MapPin className="w-4 h-4" /> Mahalle Bazlı Sipariş Raporu</CardTitle></CardHeader>
+          <CardContent className="p-3">
+            <div className="space-y-2">
+              {reports.neighborhoodStats.map((n: any, i: number) => {
+                const maxTotal = reports.neighborhoodStats[0]?.total || 1;
+                const pct = (n.total / maxTotal) * 100;
+                return (
+                  <div key={n.name} data-testid={`neighborhood-stat-${i}`}>
+                    <div className="flex items-center justify-between text-sm mb-1">
+                      <span className="truncate flex-1 font-medium">{n.name}</span>
+                      <div className="flex gap-3 text-xs ml-2">
+                        <span className="text-muted-foreground">{n.count} sipariş</span>
+                        <span className="font-semibold">{n.total.toLocaleString("tr-TR")} ₺</span>
+                      </div>
+                    </div>
+                    <div className="w-full bg-gray-100 rounded-full h-1.5">
+                      <div className="h-1.5 rounded-full bg-purple-500" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
