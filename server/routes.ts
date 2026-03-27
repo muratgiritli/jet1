@@ -17,6 +17,24 @@ const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 
 const otpStore = new Map<string, { code: string; expiresAt: number; attempts: number }>();
 const otpSendCount = new Map<string, { count: number; resetAt: number }>();
 
+const apiRateLimits = new Map<string, { count: number; resetAt: number }>();
+function rateLimit(key: string, maxRequests: number, windowMs: number): boolean {
+  const now = Date.now();
+  const entry = apiRateLimits.get(key);
+  if (!entry || entry.resetAt <= now) {
+    apiRateLimits.set(key, { count: 1, resetAt: now + windowMs });
+    return false;
+  }
+  entry.count++;
+  return entry.count > maxRequests;
+}
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of apiRateLimits) {
+    if (val.resetAt <= now) apiRateLimits.delete(key);
+  }
+}, 60000);
+
 function generateOTP(): string {
   return crypto.randomInt(100000, 1000000).toString();
 }
@@ -141,6 +159,14 @@ export async function registerRoutes(
   await seedDatabase();
   await ensureAdminExists();
 
+  app.use((_req, res, next) => {
+    res.setHeader("X-Content-Type-Options", "nosniff");
+    res.setHeader("X-Frame-Options", "SAMEORIGIN");
+    res.setHeader("X-XSS-Protection", "1; mode=block");
+    res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
+    res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)");
+    next();
+  });
 
   app.get("/sitemap.xml", async (_req, res) => {
     try {
@@ -821,6 +847,14 @@ export async function registerRoutes(
   });
 
   app.post("/api/orders", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) {
+      return res.status(401).json({ message: "Sipariş vermek için giriş yapmalısınız." });
+    }
+    const ip = req.ip || "unknown";
+    if (rateLimit(`order:${ip}`, 20, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla sipariş denemesi. Lütfen bekleyin." });
+    }
     const parsed = createOrderSchema.safeParse(req.body);
     if (!parsed.success) {
       const fieldErrors = parsed.error.errors.map(e => e.message).join(", ");
@@ -887,7 +921,6 @@ export async function registerRoutes(
       orderData.grandTotal = orderData.subtotal + orderData.shipping;
     }
 
-    const customerId = (req.session as any)?.customerId;
     let pointsToUse = 0;
 
     if (!isCampaignOrder && customerId && usedPoints && usedPoints > 0) {
@@ -950,6 +983,10 @@ export async function registerRoutes(
   });
 
   app.post("/api/otp/send", async (req, res) => {
+    const ip = req.ip || "unknown";
+    if (rateLimit(`otp:${ip}`, 10, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
     const { phone } = req.body;
     if (!phone) return res.status(400).json({ message: "Telefon numarası gerekli" });
     const normalized = phone.replace(/\D/g, "");
@@ -1657,6 +1694,242 @@ export async function registerRoutes(
       res.json({ ok: true });
     } catch (err) {
       res.status(500).json({ message: "Delivery neighborhood delete error" });
+    }
+  });
+
+  app.get("/api/admin/dashboard-stats", requireAdmin, async (_req, res) => {
+    try {
+      const allOrders = await storage.getAllOrders();
+      const allProducts = await storage.getAllProducts();
+      const allCustomers = await storage.getAllCustomers();
+      const now = new Date();
+      const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const weekStart = new Date(todayStart);
+      weekStart.setDate(weekStart.getDate() - 7);
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+
+      const todayOrders = allOrders.filter(o => new Date(o.createdAt) >= todayStart);
+      const weekOrders = allOrders.filter(o => new Date(o.createdAt) >= weekStart);
+      const monthOrders = allOrders.filter(o => new Date(o.createdAt) >= monthStart);
+
+      const sum = (arr: typeof allOrders) => arr.reduce((s, o) => s + (o.grandTotal || 0), 0);
+      const completed = (arr: typeof allOrders) => arr.filter(o => o.status === "tamamlandi");
+      const pending = (arr: typeof allOrders) => arr.filter(o => o.status === "yeni" || o.status === "onaylandi" || o.status === "hazirlaniyor");
+
+      const lowStockProducts = allProducts.filter(p => p.stock <= 3 && p.isActive);
+
+      const productSales: Record<number, { name: string; qty: number; revenue: number }> = {};
+      for (const order of allOrders) {
+        if (order.status === "iptal") continue;
+        for (const item of order.items as any[]) {
+          const pid = Number(item.productId);
+          if (!productSales[pid]) productSales[pid] = { name: item.name, qty: 0, revenue: 0 };
+          productSales[pid].qty += item.quantity;
+          productSales[pid].revenue += item.price * item.quantity;
+        }
+      }
+      const topProducts = Object.entries(productSales)
+        .map(([id, d]) => ({ id: Number(id), ...d }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10);
+
+      const last30 = Array.from({ length: 30 }, (_, i) => {
+        const d = new Date(todayStart);
+        d.setDate(d.getDate() - (29 - i));
+        return d;
+      });
+      const dailyRevenue = last30.map(day => {
+        const nextDay = new Date(day);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const dayOrders = allOrders.filter(o => {
+          const t = new Date(o.createdAt);
+          return t >= day && t < nextDay && o.status !== "iptal";
+        });
+        return { date: day.toISOString().split("T")[0], revenue: sum(dayOrders), count: dayOrders.length };
+      });
+
+      res.json({
+        today: { orders: todayOrders.length, revenue: Math.round(sum(todayOrders) * 100) / 100 },
+        week: { orders: weekOrders.length, revenue: Math.round(sum(weekOrders) * 100) / 100 },
+        month: { orders: monthOrders.length, revenue: Math.round(sum(monthOrders) * 100) / 100 },
+        total: { orders: allOrders.length, revenue: Math.round(sum(allOrders) * 100) / 100, customers: allCustomers.length, products: allProducts.filter(p => p.isActive).length },
+        pending: pending(allOrders).length,
+        completed: completed(allOrders).length,
+        lowStockProducts,
+        topProducts,
+        dailyRevenue,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Dashboard stats error" });
+    }
+  });
+
+  app.get("/api/admin/customers", requireAdmin, async (_req, res) => {
+    try {
+      const allCustomers = await storage.getAllCustomers();
+      const allOrders = await storage.getAllOrders();
+      const result = allCustomers.map(c => {
+        const customerOrders = allOrders.filter(o => o.customerPhone === c.phone);
+        const totalSpent = customerOrders.reduce((s, o) => s + (o.grandTotal || 0), 0);
+        return {
+          id: c.id, phone: c.phone, name: c.name, address: c.address,
+          createdAt: c.createdAt,
+          orderCount: customerOrders.length,
+          totalSpent: Math.round(totalSpent * 100) / 100,
+          lastOrder: customerOrders.length > 0 ? customerOrders[0].createdAt : null,
+        };
+      });
+      res.json(result);
+    } catch (err) {
+      res.status(500).json({ message: "Customers fetch error" });
+    }
+  });
+
+  app.patch("/api/admin/customers/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const { name, address } = req.body;
+      const updates: any = {};
+      if (name !== undefined) updates.name = name;
+      if (address !== undefined) updates.address = address;
+      const updated = await storage.updateCustomer(id, updates);
+      if (!updated) return res.status(404).json({ message: "Müşteri bulunamadı" });
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ message: "Customer update error" });
+    }
+  });
+
+  app.post("/api/admin/send-sms", requireAdmin, async (req, res) => {
+    try {
+      const { phones, message } = req.body;
+      if (!phones || !Array.isArray(phones) || phones.length === 0 || !message) {
+        return res.status(400).json({ message: "Telefon listesi ve mesaj gerekli" });
+      }
+      if (message.length > 300) {
+        return res.status(400).json({ message: "Mesaj en fazla 300 karakter olabilir" });
+      }
+      let sent = 0, failed = 0;
+      for (const phone of phones.slice(0, 100)) {
+        const ok = await sendSmsViaNetgsm(phone, message);
+        if (ok) sent++;
+        else failed++;
+        await new Promise(r => setTimeout(r, 200));
+      }
+      res.json({ sent, failed, total: phones.length });
+    } catch (err) {
+      res.status(500).json({ message: "SMS gönderim hatası" });
+    }
+  });
+
+  app.get("/api/admin/banners", requireAdmin, async (_req, res) => {
+    try {
+      const all = await storage.getAllBanners();
+      res.json(all);
+    } catch (err) {
+      res.status(500).json({ message: "Banners fetch error" });
+    }
+  });
+
+  app.post("/api/admin/banners", requireAdmin, upload.single("image"), async (req, res) => {
+    try {
+      const { title, linkUrl, sortOrder } = req.body;
+      if (!title) return res.status(400).json({ message: "Başlık gerekli" });
+      let imageData: string | undefined;
+      if (req.file) {
+        imageData = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+      }
+      const banner = await storage.createBanner({ title, linkUrl: linkUrl || null, imageData: imageData || null, sortOrder: parseInt(sortOrder || "0"), isActive: true });
+      res.json(banner);
+    } catch (err) {
+      res.status(500).json({ message: "Banner oluşturma hatası" });
+    }
+  });
+
+  app.patch("/api/admin/banners/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const updates: any = {};
+      if (req.body.title !== undefined) updates.title = req.body.title;
+      if (req.body.linkUrl !== undefined) updates.linkUrl = req.body.linkUrl;
+      if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
+      if (req.body.sortOrder !== undefined) updates.sortOrder = parseInt(req.body.sortOrder);
+      const updated = await storage.updateBanner(id, updates);
+      if (!updated) return res.status(404).json({ message: "Banner bulunamadı" });
+      res.json(updated);
+    } catch (err) {
+      res.status(500).json({ message: "Banner güncelleme hatası" });
+    }
+  });
+
+  app.delete("/api/admin/banners/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteBanner(parseInt(req.params.id));
+      res.json({ ok: true });
+    } catch (err) {
+      res.status(500).json({ message: "Banner silme hatası" });
+    }
+  });
+
+  app.get("/api/admin/reports", requireAdmin, async (_req, res) => {
+    try {
+      const allOrders = await storage.getAllOrders();
+      const allProducts = await storage.getAllProducts();
+      const allCustomers = await storage.getAllCustomers();
+
+      const paymentMethods: Record<string, { count: number; total: number }> = {};
+      const categoryRevenue: Record<string, number> = {};
+      const customerRanking: Record<string, { phone: string; name: string; total: number; count: number }> = {};
+
+      for (const order of allOrders) {
+        if (order.status === "iptal") continue;
+        const method = order.paymentMethod || "Bilinmiyor";
+        if (!paymentMethods[method]) paymentMethods[method] = { count: 0, total: 0 };
+        paymentMethods[method].count++;
+        paymentMethods[method].total += order.grandTotal || 0;
+
+        if (order.customerPhone) {
+          const key = order.customerPhone;
+          if (!customerRanking[key]) customerRanking[key] = { phone: key, name: order.customerName || "", total: 0, count: 0 };
+          customerRanking[key].total += order.grandTotal || 0;
+          customerRanking[key].count++;
+        }
+      }
+
+      const topCustomers = Object.values(customerRanking)
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 15)
+        .map(c => ({ ...c, total: Math.round(c.total * 100) / 100 }));
+
+      const statusCounts: Record<string, number> = {};
+      for (const order of allOrders) {
+        statusCounts[order.status] = (statusCounts[order.status] || 0) + 1;
+      }
+
+      const monthlyData: Record<string, { revenue: number; orders: number }> = {};
+      for (const order of allOrders) {
+        if (order.status === "iptal") continue;
+        const month = new Date(order.createdAt).toISOString().slice(0, 7);
+        if (!monthlyData[month]) monthlyData[month] = { revenue: 0, orders: 0 };
+        monthlyData[month].revenue += order.grandTotal || 0;
+        monthlyData[month].orders++;
+      }
+
+      res.json({
+        paymentMethods: Object.entries(paymentMethods).map(([method, data]) => ({
+          method, ...data, total: Math.round(data.total * 100) / 100,
+        })),
+        topCustomers,
+        statusCounts,
+        monthlyData: Object.entries(monthlyData).map(([month, data]) => ({
+          month, revenue: Math.round(data.revenue * 100) / 100, orders: data.orders,
+        })).sort((a, b) => a.month.localeCompare(b.month)),
+        totalCustomers: allCustomers.length,
+        totalProducts: allProducts.filter(p => p.isActive).length,
+        totalOrders: allOrders.length,
+      });
+    } catch (err) {
+      res.status(500).json({ message: "Reports error" });
     }
   });
 

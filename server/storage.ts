@@ -19,7 +19,8 @@ import {
   type LoyaltyPoint, type InsertLoyaltyPoint,
   type ReorderReminder, type InsertReorderReminder,
   type DeliveryNeighborhood, type InsertDeliveryNeighborhood,
-  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders, deliveryNeighborhoods,
+  type Banner, type InsertBanner,
+  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders, deliveryNeighborhoods, banners,
 } from "@shared/schema";
 
 export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
@@ -122,6 +123,14 @@ export interface IStorage {
   createDeliveryNeighborhood(data: InsertDeliveryNeighborhood): Promise<DeliveryNeighborhood>;
   updateDeliveryNeighborhood(id: number, data: Partial<InsertDeliveryNeighborhood>): Promise<DeliveryNeighborhood | undefined>;
   deleteDeliveryNeighborhood(id: number): Promise<void>;
+
+  getAllCustomers(): Promise<Customer[]>;
+
+  getAllBanners(): Promise<Banner[]>;
+  getActiveBanners(): Promise<Banner[]>;
+  createBanner(data: InsertBanner): Promise<Banner>;
+  updateBanner(id: number, data: Partial<InsertBanner>): Promise<Banner | undefined>;
+  deleteBanner(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -513,6 +522,32 @@ export class DatabaseStorage implements IStorage {
 
   async deleteDeliveryNeighborhood(id: number): Promise<void> {
     await db.delete(deliveryNeighborhoods).where(eq(deliveryNeighborhoods.id, id));
+  }
+
+  async getAllCustomers(): Promise<Customer[]> {
+    return db.select().from(customers).orderBy(desc(customers.createdAt));
+  }
+
+  async getAllBanners(): Promise<Banner[]> {
+    return db.select().from(banners).orderBy(banners.sortOrder);
+  }
+
+  async getActiveBanners(): Promise<Banner[]> {
+    return db.select().from(banners).where(eq(banners.isActive, true)).orderBy(banners.sortOrder);
+  }
+
+  async createBanner(data: InsertBanner): Promise<Banner> {
+    const [banner] = await db.insert(banners).values(data).returning();
+    return banner;
+  }
+
+  async updateBanner(id: number, data: Partial<InsertBanner>): Promise<Banner | undefined> {
+    const [updated] = await db.update(banners).set(data).where(eq(banners.id, id)).returning();
+    return updated;
+  }
+
+  async deleteBanner(id: number): Promise<void> {
+    await db.delete(banners).where(eq(banners.id, id));
   }
 }
 

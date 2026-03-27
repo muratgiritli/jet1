@@ -279,3 +279,17 @@ export const campaignItems = pgTable("campaign_items", {
 export const insertCampaignItemSchema = createInsertSchema(campaignItems).omit({ id: true });
 export type InsertCampaignItem = z.infer<typeof insertCampaignItemSchema>;
 export type CampaignItem = typeof campaignItems.$inferSelect;
+
+export const banners = pgTable("banners", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  imageData: text("image_data"),
+  linkUrl: text("link_url"),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const insertBannerSchema = createInsertSchema(banners).omit({ id: true, createdAt: true });
+export type InsertBanner = z.infer<typeof insertBannerSchema>;
+export type Banner = typeof banners.$inferSelect;

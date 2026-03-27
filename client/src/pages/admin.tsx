@@ -53,6 +53,14 @@ import {
   ImageIcon,
   Upload,
   Tag,
+  LayoutDashboard,
+  Users,
+  MessageSquare,
+  FileText,
+  Image as ImageLucide,
+  BarChart3,
+  Send,
+  ChevronUp,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -554,6 +562,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [nhFreeShipLimit, setNhFreeShipLimit] = useState("2000");
   const [nhSortOrder, setNhSortOrder] = useState("0");
   const [nhDistrictFilter, setNhDistrictFilter] = useState<string>("all");
+  const [activeSection, setActiveSection] = useState<string>("yonetim");
 
   const bulkPriceUpdateMutation = useMutation({
     mutationFn: async ({ productIds, percentage }: { productIds: number[]; percentage: number }) => {
@@ -1084,10 +1093,43 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </div>
       </header>
 
+      <div className="border-b bg-background/95 backdrop-blur sticky top-[57px] z-[9998]">
+        <div className="max-w-5xl mx-auto px-4 py-2 flex gap-1.5 overflow-x-auto no-scrollbar">
+          {[
+            { key: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-3.5 h-3.5" /> },
+            { key: "yonetim", label: "Yönetim", icon: <Package className="w-3.5 h-3.5" /> },
+            { key: "musteriler", label: "Müşteri", icon: <Users className="w-3.5 h-3.5" /> },
+            { key: "bildirim", label: "Bildirim", icon: <Bell className="w-3.5 h-3.5" /> },
+            { key: "banner", label: "Banner", icon: <ImageLucide className="w-3.5 h-3.5" /> },
+            { key: "raporlama", label: "Raporlama", icon: <BarChart3 className="w-3.5 h-3.5" /> },
+          ].map(tab => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveSection(tab.key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-colors ${
+                activeSection === tab.key
+                  ? "text-white shadow-sm"
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted"
+              }`}
+              style={activeSection === tab.key ? { backgroundColor: "#6B3480" } : {}}
+              data-testid={`btn-section-${tab.key}`}
+            >
+              {tab.icon}
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       <BackNavigation />
 
       <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        <section>
+        {activeSection === "dashboard" && <DashboardSection />}
+        {activeSection === "musteriler" && <CustomersSection />}
+        {activeSection === "bildirim" && <NotificationsSection />}
+        {activeSection === "banner" && <BannersSection />}
+        {activeSection === "raporlama" && <ReportsSection />}
+        {activeSection === "yonetim" && <><section>
           <button
             onClick={() => setCampaignExpanded(!campaignExpanded)}
             className="flex items-center gap-2 mb-4 w-full text-left"
@@ -3429,6 +3471,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </section>
 
         <ReorderRemindersSection />
+        </>}
       </main>
     </div>
   );
@@ -3591,6 +3634,405 @@ function ReorderRemindersSection() {
         </CardContent>
       </Card>
     </section>
+  );
+}
+
+function DashboardSection() {
+  const { data: stats, isLoading } = useQuery<any>({ queryKey: ["/api/admin/dashboard-stats"] });
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+  if (!stats) return null;
+
+  return (
+    <div className="space-y-6" data-testid="section-dashboard">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: "Bugün", value: `${stats.today.revenue.toLocaleString("tr-TR")} ₺`, sub: `${stats.today.orders} sipariş`, color: "#6B3480" },
+          { label: "Bu Hafta", value: `${stats.week.revenue.toLocaleString("tr-TR")} ₺`, sub: `${stats.week.orders} sipariş`, color: "#2563eb" },
+          { label: "Bu Ay", value: `${stats.month.revenue.toLocaleString("tr-TR")} ₺`, sub: `${stats.month.orders} sipariş`, color: "#16a34a" },
+          { label: "Toplam", value: `${stats.total.revenue.toLocaleString("tr-TR")} ₺`, sub: `${stats.total.orders} sipariş`, color: "#ea580c" },
+        ].map((s, i) => (
+          <Card key={i}>
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+              <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
+              <p className="text-xs text-muted-foreground">{s.sub}</p>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Bekleyen Sipariş</p><p className="text-2xl font-bold text-amber-600">{stats.pending}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Tamamlanan</p><p className="text-2xl font-bold text-green-600">{stats.completed}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Toplam Müşteri</p><p className="text-2xl font-bold text-blue-600">{stats.total.customers}</p></CardContent></Card>
+        <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Aktif Ürün</p><p className="text-2xl font-bold text-purple-600">{stats.total.products}</p></CardContent></Card>
+      </div>
+      {stats.topProducts?.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">En Çok Satan 10 Ürün</CardTitle></CardHeader>
+          <CardContent className="p-3">
+            <div className="space-y-2">
+              {stats.topProducts.map((p: any, i: number) => (
+                <div key={p.id} className="flex items-center gap-2 text-sm">
+                  <span className="w-5 text-muted-foreground font-mono text-xs">{i + 1}.</span>
+                  <span className="flex-1 truncate">{p.name}</span>
+                  <span className="text-muted-foreground text-xs">{p.qty} adet</span>
+                  <span className="font-semibold text-xs">{p.revenue.toLocaleString("tr-TR")} ₺</span>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+      {stats.lowStockProducts?.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" />Düşük Stok ({stats.lowStockProducts.length})</CardTitle></CardHeader>
+          <CardContent className="p-3">
+            <div className="space-y-1">
+              {stats.lowStockProducts.slice(0, 20).map((p: any) => (
+                <div key={p.id} className="flex items-center gap-2 text-sm">
+                  <span className="flex-1 truncate">{p.name}</span>
+                  <Badge variant={p.stock === 0 ? "destructive" : "secondary"} className="text-xs">{p.stock} adet</Badge>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function CustomersSection() {
+  const { data: customers = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/customers"] });
+  const [search, setSearch] = useState("");
+  const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editAddress, setEditAddress] = useState("");
+  const { toast } = useToast();
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, name, address }: { id: number; name: string; address: string }) => {
+      await apiRequest("PATCH", `/api/admin/customers/${id}`, { name, address });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
+      setEditingCustomer(null);
+      toast({ title: "Müşteri güncellendi" });
+    },
+  });
+
+  const filtered = customers.filter(c =>
+    c.name?.toLowerCase().includes(search.toLowerCase()) ||
+    c.phone?.includes(search)
+  );
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+
+  return (
+    <div className="space-y-4" data-testid="section-customers">
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input placeholder="Ad veya telefon ara..." value={search} onChange={e => setSearch(e.target.value)} className="pl-9 h-9" data-testid="input-customer-search" />
+        </div>
+        <Badge variant="secondary">{filtered.length} müşteri</Badge>
+      </div>
+      <div className="space-y-2">
+        {filtered.slice(0, 50).map(c => (
+          <Card key={c.id}>
+            <CardContent className="p-3">
+              {editingCustomer?.id === c.id ? (
+                <div className="space-y-2">
+                  <Input value={editName} onChange={e => setEditName(e.target.value)} placeholder="Ad Soyad" className="h-8 text-sm" />
+                  <Input value={editAddress} onChange={e => setEditAddress(e.target.value)} placeholder="Adres" className="h-8 text-sm" />
+                  <div className="flex gap-2">
+                    <Button size="sm" onClick={() => updateMutation.mutate({ id: c.id, name: editName, address: editAddress })} disabled={updateMutation.isPending}>Kaydet</Button>
+                    <Button size="sm" variant="outline" onClick={() => setEditingCustomer(null)}>İptal</Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-start justify-between gap-2">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="font-semibold text-sm">{c.name}</p>
+                      <a href={`tel:${c.phone}`} className="text-xs text-muted-foreground">{c.phone}</a>
+                    </div>
+                    {c.address && <p className="text-xs text-muted-foreground truncate mt-0.5">{c.address}</p>}
+                    <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
+                      <span>{c.orderCount} sipariş</span>
+                      <span>{c.totalSpent.toLocaleString("tr-TR")} ₺</span>
+                      {c.createdAt && <span>Kayıt: {new Date(c.createdAt).toLocaleDateString("tr-TR")}</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-1 shrink-0">
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditingCustomer(c); setEditName(c.name); setEditAddress(c.address || ""); }}>
+                      <Pencil className="w-3.5 h-3.5" />
+                    </Button>
+                    <a href={`https://wa.me/90${c.phone}`} target="_blank" rel="noopener noreferrer">
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-600"><SiWhatsapp className="w-3.5 h-3.5" /></Button>
+                    </a>
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function NotificationsSection() {
+  const { data: customers = [] } = useQuery<any[]>({ queryKey: ["/api/admin/customers"] });
+  const [message, setMessage] = useState("");
+  const [selectedPhones, setSelectedPhones] = useState<string[]>([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<{ sent: number; failed: number } | null>(null);
+  const { toast } = useToast();
+
+  const campaignCustomers = customers;
+
+  const handleToggleAll = () => {
+    if (selectAll) {
+      setSelectedPhones([]);
+      setSelectAll(false);
+    } else {
+      setSelectedPhones(campaignCustomers.map(c => c.phone));
+      setSelectAll(true);
+    }
+  };
+
+  const handleSend = async () => {
+    if (!message.trim() || selectedPhones.length === 0) return;
+    setSending(true);
+    setResult(null);
+    try {
+      const res = await apiRequest("POST", "/api/admin/send-sms", { phones: selectedPhones, message: message.trim() });
+      const data = await res.json();
+      setResult(data);
+      toast({ title: `${data.sent} SMS gönderildi`, description: data.failed > 0 ? `${data.failed} başarısız` : undefined });
+    } catch {
+      toast({ title: "SMS gönderilemedi", variant: "destructive" });
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="space-y-4" data-testid="section-notifications">
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Toplu SMS Gönder</CardTitle></CardHeader>
+        <CardContent className="p-3 space-y-3">
+          <div>
+            <label className="text-xs font-medium text-muted-foreground">Mesaj ({message.length}/300)</label>
+            <textarea className="w-full border rounded-md p-2 text-sm mt-1 min-h-[80px] resize-none" maxLength={300} value={message} onChange={e => setMessage(e.target.value)} placeholder="Kampanya mesajınızı yazın..." data-testid="input-sms-message" />
+          </div>
+          <div className="flex items-center justify-between">
+            <label className="flex items-center gap-2 text-sm cursor-pointer">
+              <input type="checkbox" checked={selectAll} onChange={handleToggleAll} className="rounded" />
+              Tüm müşteriler ({campaignCustomers.length})
+            </label>
+            <Badge variant="secondary">{selectedPhones.length} seçili</Badge>
+          </div>
+          {!selectAll && (
+            <div className="max-h-40 overflow-y-auto border rounded-md p-2 space-y-1">
+              {campaignCustomers.map(c => (
+                <label key={c.id} className="flex items-center gap-2 text-xs cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectedPhones.includes(c.phone)}
+                    onChange={e => {
+                      if (e.target.checked) setSelectedPhones(prev => [...prev, c.phone]);
+                      else setSelectedPhones(prev => prev.filter(p => p !== c.phone));
+                    }}
+                    className="rounded"
+                  />
+                  {c.name} ({c.phone})
+                </label>
+              ))}
+            </div>
+          )}
+          <Button onClick={handleSend} disabled={sending || !message.trim() || selectedPhones.length === 0} className="w-full" style={{ backgroundColor: "#6B3480" }} data-testid="btn-send-sms">
+            {sending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
+            {sending ? "Gönderiliyor..." : `${selectedPhones.length} kişiye SMS Gönder`}
+          </Button>
+          {result && (
+            <div className="p-2 rounded-md bg-green-50 border border-green-200 text-sm">
+              <Check className="w-4 h-4 inline text-green-600 mr-1" />
+              {result.sent} başarılı{result.failed > 0 ? `, ${result.failed} başarısız` : ""}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function BannersSection() {
+  const { data: allBanners = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/banners"] });
+  const [title, setTitle] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [sortOrder, setSortOrder] = useState("0");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const { toast } = useToast();
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("linkUrl", linkUrl);
+      formData.append("sortOrder", sortOrder);
+      if (imageFile) formData.append("image", imageFile);
+      const res = await fetch("/api/admin/banners", { method: "POST", body: formData, credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
+      setTitle(""); setLinkUrl(""); setSortOrder("0"); setImageFile(null);
+      toast({ title: "Banner eklendi" });
+    },
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/banners/${id}`, { isActive });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/admin/banners/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
+      toast({ title: "Banner silindi" });
+    },
+  });
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+
+  return (
+    <div className="space-y-4" data-testid="section-banners">
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Yeni Banner Ekle</CardTitle></CardHeader>
+        <CardContent className="p-3 space-y-2">
+          <Input placeholder="Banner başlığı" value={title} onChange={e => setTitle(e.target.value)} className="h-8 text-sm" data-testid="input-banner-title" />
+          <Input placeholder="Link URL (opsiyonel)" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} className="h-8 text-sm" />
+          <div className="flex gap-2">
+            <Input type="number" placeholder="Sıra" value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="h-8 text-sm w-20" />
+            <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="text-xs flex-1" />
+          </div>
+          <Button size="sm" onClick={() => createMutation.mutate()} disabled={!title.trim() || createMutation.isPending}>
+            <Plus className="w-3.5 h-3.5 mr-1" />Ekle
+          </Button>
+        </CardContent>
+      </Card>
+      <div className="space-y-2">
+        {allBanners.map(b => (
+          <Card key={b.id}>
+            <CardContent className="p-3 flex items-center gap-3">
+              {b.imageData && <img src={b.imageData} alt={b.title} className="w-16 h-10 object-cover rounded" />}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{b.title}</p>
+                {b.linkUrl && <p className="text-xs text-muted-foreground truncate">{b.linkUrl}</p>}
+              </div>
+              <Badge variant={b.isActive ? "default" : "secondary"} className="cursor-pointer text-xs" onClick={() => toggleMutation.mutate({ id: b.id, isActive: !b.isActive })}>
+                {b.isActive ? "Aktif" : "Pasif"}
+              </Badge>
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500" onClick={() => deleteMutation.mutate(b.id)}>
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+        {allBanners.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Henüz banner eklenmemiş</p>}
+      </div>
+    </div>
+  );
+}
+
+function ReportsSection() {
+  const { data: reports, isLoading } = useQuery<any>({ queryKey: ["/api/admin/reports"] });
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+  if (!reports) return null;
+
+  return (
+    <div className="space-y-4" data-testid="section-reports">
+      <div className="grid grid-cols-3 gap-3">
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Toplam Müşteri</p><p className="text-xl font-bold text-blue-600">{reports.totalCustomers}</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Aktif Ürün</p><p className="text-xl font-bold text-green-600">{reports.totalProducts}</p></CardContent></Card>
+        <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Toplam Sipariş</p><p className="text-xl font-bold text-purple-600">{reports.totalOrders}</p></CardContent></Card>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Ödeme Yöntemleri</CardTitle></CardHeader>
+        <CardContent className="p-3">
+          <div className="space-y-2">
+            {reports.paymentMethods?.map((pm: any) => (
+              <div key={pm.method} className="flex items-center justify-between text-sm">
+                <span>{pm.method}</span>
+                <div className="flex gap-3 text-xs text-muted-foreground">
+                  <span>{pm.count} sipariş</span>
+                  <span className="font-semibold text-foreground">{pm.total.toLocaleString("tr-TR")} ₺</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Sipariş Durumları</CardTitle></CardHeader>
+        <CardContent className="p-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+            {Object.entries(reports.statusCounts || {}).map(([status, count]) => (
+              <div key={status} className="text-center p-2 rounded-md bg-muted/50">
+                <p className="text-lg font-bold">{count as number}</p>
+                <p className="text-xs text-muted-foreground capitalize">{status}</p>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">En İyi 15 Müşteri</CardTitle></CardHeader>
+        <CardContent className="p-3">
+          <div className="space-y-2">
+            {reports.topCustomers?.map((c: any, i: number) => (
+              <div key={c.phone} className="flex items-center gap-2 text-sm">
+                <span className="w-5 text-muted-foreground font-mono text-xs">{i + 1}.</span>
+                <span className="flex-1 truncate">{c.name || c.phone}</span>
+                <span className="text-xs text-muted-foreground">{c.count} sipariş</span>
+                <span className="font-semibold text-xs">{c.total.toLocaleString("tr-TR")} ₺</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {reports.monthlyData?.length > 0 && (
+        <Card>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Aylık Ciro</CardTitle></CardHeader>
+          <CardContent className="p-3">
+            <div className="space-y-2">
+              {reports.monthlyData.map((m: any) => (
+                <div key={m.month} className="flex items-center justify-between text-sm">
+                  <span>{m.month}</span>
+                  <div className="flex gap-3 text-xs">
+                    <span className="text-muted-foreground">{m.orders} sipariş</span>
+                    <span className="font-semibold">{m.revenue.toLocaleString("tr-TR")} ₺</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
   );
 }
 
