@@ -81,38 +81,38 @@ function HeroCarousel() {
   const content = (
     <div className="relative overflow-hidden rounded-2xl" data-testid="hero-carousel">
       <div
-        className={`bg-gradient-to-br ${slide.gradient} p-5 md:p-8 lg:p-10 transition-all duration-700`}
-        style={{ minHeight: 220 }}
+        className={`bg-gradient-to-br ${slide.gradient} p-5 md:p-8 lg:p-10 transition-all duration-700 flex flex-col justify-center`}
+        style={{ height: 200, minHeight: 200, maxHeight: 200 }}
       >
         <div className="relative z-10 max-w-2xl">
-          <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-white whitespace-pre-line leading-tight drop-shadow-sm">
+          <h1 className="text-xl md:text-3xl lg:text-4xl font-black text-white whitespace-pre-line leading-tight drop-shadow-sm">
             {slide.title}
           </h1>
-          <p className="text-white/90 text-sm md:text-lg mt-2 md:mt-3 font-medium">{slide.subtitle}</p>
+          <p className="text-white/90 text-xs md:text-base mt-1.5 md:mt-2 font-medium line-clamp-2">{slide.subtitle}</p>
           {slide.badges && (
-            <div className="flex flex-wrap gap-1.5 md:gap-2 mt-3 md:mt-4">
-              <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white text-[11px] md:text-xs font-bold px-2.5 md:px-3 py-1.5 rounded-full border border-white/25">
-                <Truck className="w-3 h-3 md:w-3.5 md:h-3.5" /> Aynı Gün Teslimat
+            <div className="flex flex-wrap gap-1 md:gap-1.5 mt-2 md:mt-3">
+              <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white text-[10px] md:text-xs font-bold px-2 md:px-2.5 py-1 rounded-full border border-white/25">
+                <Truck className="w-3 h-3" /> Aynı Gün Teslimat
               </span>
-              <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white text-[11px] md:text-xs font-bold px-2.5 md:px-3 py-1.5 rounded-full border border-white/25">
-                <CreditCard className="w-3 h-3 md:w-3.5 md:h-3.5" /> Kapıda Ödeme
+              <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white text-[10px] md:text-xs font-bold px-2 md:px-2.5 py-1 rounded-full border border-white/25">
+                <CreditCard className="w-3 h-3" /> Kapıda Ödeme
               </span>
-              <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white text-[11px] md:text-xs font-bold px-2.5 md:px-3 py-1.5 rounded-full border border-white/25">
-                <MapPin className="w-3 h-3 md:w-3.5 md:h-3.5" /> Atakum İçi Aktif
+              <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white text-[10px] md:text-xs font-bold px-2 md:px-2.5 py-1 rounded-full border border-white/25">
+                <MapPin className="w-3 h-3" /> Atakum İçi Aktif
               </span>
             </div>
           )}
           {!slide.badges && (
-            <span className="mt-3 md:mt-5 bg-white/20 backdrop-blur-md text-white text-xs md:text-sm font-bold px-4 md:px-6 py-2 md:py-2.5 rounded-full border border-white/30 inline-flex items-center gap-1.5">
-              Hemen Keşfet <ArrowRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
+            <span className="mt-2 md:mt-3 bg-white/20 backdrop-blur-md text-white text-[11px] md:text-sm font-bold px-3 md:px-5 py-1.5 md:py-2 rounded-full border border-white/30 inline-flex items-center gap-1.5">
+              Hemen Keşfet <ArrowRight className="w-3 h-3 md:w-4 md:h-4" />
             </span>
           )}
         </div>
-        <div className="absolute right-3 md:right-8 bottom-2 md:bottom-4 opacity-20 text-8xl md:text-[120px] select-none pointer-events-none">
+        <div className="absolute right-3 md:right-8 bottom-2 md:bottom-4 opacity-20 text-7xl md:text-[100px] select-none pointer-events-none">
           🐾
         </div>
       </div>
-      <div className="absolute bottom-2 md:bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2">
+      <div className="absolute bottom-2 md:bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5 md:gap-2">
         {HERO_SLIDES.map((_, i) => (
           <button
             key={i}
@@ -593,14 +593,6 @@ export default function Landing() {
 
         <div className="mt-5 md:mt-8">
           <WhyJetgo />
-        </div>
-
-        <div className="mt-5 md:mt-8">
-          <BrandSlider />
-        </div>
-
-        <div className="mt-5 md:mt-8">
-          <BlogPreview />
         </div>
 
         <div className="mt-5 mb-4 md:mb-8">
