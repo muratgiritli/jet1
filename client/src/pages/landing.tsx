@@ -3,7 +3,8 @@ import { Link } from "wouter";
 import {
   Truck, CreditCard, Banknote, Smartphone,
   ArrowRight, ChevronRight, Star, Clock, Shield,
-  Gift, MapPin, Phone, Mail, BookOpen
+  Gift, MapPin, Phone, Mail, BookOpen,
+  ShieldCheck, PackageCheck, ThumbsUp, Zap
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import SEO, { LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD, SITE_DOMAIN } from "@/components/SEO";
@@ -28,9 +29,15 @@ import brandBonus from "@/assets/images/brands/bonus.webp";
 
 const HERO_SLIDES = [
   {
-    title: "60 Dakikada\nKapında Petshop 🐾",
-    subtitle: "Samsun Atakum'da evcil dostun için her şey, bir tıkla kapında",
+    title: "İnternetten Bekleme\nJetgo'dan 1 Saatte Gelsin 🚀",
+    subtitle: "Orijinal ürün – kapıda kontrol – anında teslim",
     gradient: "from-orange-500 via-amber-500 to-yellow-400",
+    badges: true,
+  },
+  {
+    title: "Jetgo\nGüvenli Alışveriş 🛡️",
+    subtitle: "%100 orijinal ürün · Kapıda kontrol et · Beğenmezsen alma",
+    gradient: "from-emerald-500 via-teal-500 to-cyan-400",
     badges: true,
   },
   {
@@ -292,25 +299,58 @@ function LocationBanner() {
 function TrustBadges() {
   return (
     <div data-testid="section-trust">
-      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 p-3.5 md:p-6">
-        <div className="grid grid-cols-3 gap-3 md:gap-6">
+      <div className="rounded-xl overflow-hidden border border-emerald-200" style={{ background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #a7f3d0 100%)" }}>
+        <div className="px-3.5 pt-3 pb-1 md:px-6 md:pt-4">
+          <div className="flex items-center gap-2 mb-0.5">
+            <ShieldCheck className="w-5 h-5 text-emerald-600" />
+            <h3 className="text-sm md:text-lg font-extrabold text-emerald-800">Jetgo Güvenli Alışveriş</h3>
+          </div>
+          <p className="text-[10px] md:text-xs text-emerald-600/80 ml-7">Güvenle sipariş ver, kapıda kontrol et</p>
+        </div>
+        <div className="grid grid-cols-3 gap-2 p-3 md:p-5">
           {[
-            { icon: Clock, label: "Hızlı Teslimat", sub: "1 saat içinde", color: "#f59e0b" },
-            { icon: Shield, label: "Güvenli Alışveriş", sub: "256-bit SSL", color: "#10b981" },
-            { icon: Star, label: "Müşteri Memnuniyeti", sub: "4.9 puan", color: "#6366f1" },
+            { icon: ShieldCheck, label: "%100 Orijinal", sub: "Garanti", color: "#059669" },
+            { icon: PackageCheck, label: "Kapıda Kontrol", sub: "Aç & İncele", color: "#0d9488" },
+            { icon: ThumbsUp, label: "Beğenmezsen", sub: "Alma", color: "#0891b2" },
           ].map((b, i) => (
-            <div key={i} className="flex flex-col items-center gap-1.5 md:gap-2 text-center">
+            <div key={i} className="flex flex-col items-center gap-1 md:gap-1.5 text-center bg-white/70 rounded-xl p-2.5 md:p-3 backdrop-blur-sm">
               <div
-                className="w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center"
+                className="w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center"
                 style={{ backgroundColor: b.color + "15" }}
               >
                 <b.icon className="w-4 h-4 md:w-5 md:h-5" style={{ color: b.color }} />
               </div>
               <span className="text-[10px] md:text-sm font-bold text-gray-800">{b.label}</span>
-              <span className="text-[9px] md:text-xs text-gray-400">{b.sub}</span>
+              <span className="text-[9px] md:text-xs text-emerald-600 font-medium">{b.sub}</span>
             </div>
           ))}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function WhyJetgo() {
+  return (
+    <div data-testid="section-why-jetgo">
+      <h3 className="text-base md:text-xl font-extrabold text-gray-900 mb-3 md:mb-4">Neden Jetgo?</h3>
+      <div className="space-y-2.5 md:space-y-3">
+        {[
+          { icon: Zap, title: "1 Saatte Kapında", desc: "Sipariş ver, 60 dakikada kapına gelsin. İnternetten günlerce bekleme!", color: "#f59e0b", bg: "from-amber-50 to-orange-50", border: "border-amber-200" },
+          { icon: Truck, title: "Eve Teslim", desc: "Ağır çuvalları sen taşıma, biz getirelim. Uğraş yok, rahat alışveriş.", color: "#6B3480", bg: "from-purple-50 to-fuchsia-50", border: "border-purple-200" },
+          { icon: PackageCheck, title: "Kapıda Kontrol Et", desc: "Ürünü kapıda aç, kontrol et. Beğenmezsen alma, hiç risk yok.", color: "#10b981", bg: "from-emerald-50 to-teal-50", border: "border-emerald-200" },
+          { icon: CreditCard, title: "Kapıda 12 Taksit", desc: "Kredi kartına kapıda 12 taksit. Nakit, POS, QR - istediğin şekilde öde.", color: "#2563eb", bg: "from-blue-50 to-indigo-50", border: "border-blue-200" },
+        ].map((item, i) => (
+          <div key={i} className={`bg-gradient-to-r ${item.bg} rounded-xl p-3 md:p-4 flex items-center gap-3 border ${item.border}`} data-testid={`why-jetgo-${i}`}>
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: item.color + "15" }}>
+              <item.icon className="w-5 h-5 md:w-6 md:h-6" style={{ color: item.color }} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-xs md:text-sm font-bold text-gray-800">{item.title}</p>
+              <p className="text-[10px] md:text-xs text-gray-500 mt-0.5 leading-relaxed">{item.desc}</p>
+            </div>
+          </div>
+        ))}
       </div>
     </div>
   );
@@ -541,6 +581,10 @@ export default function Landing() {
           <QuickActions />
         </div>
 
+        <div className="mt-4 md:mt-6">
+          <TrustBadges />
+        </div>
+
         <div className="mt-4 md:mt-8">
           <LocationBanner />
         </div>
@@ -550,15 +594,15 @@ export default function Landing() {
         </div>
 
         <div className="mt-5 md:mt-8">
+          <WhyJetgo />
+        </div>
+
+        <div className="mt-5 md:mt-8">
           <BrandSlider />
         </div>
 
         <div className="mt-5 md:mt-8">
           <BlogPreview />
-        </div>
-
-        <div className="mt-5 md:mt-8">
-          <TrustBadges />
         </div>
 
         <div className="mt-5 mb-4 md:mb-8">

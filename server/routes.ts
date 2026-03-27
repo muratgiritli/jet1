@@ -979,6 +979,14 @@ export async function registerRoutes(
     if (!status) return res.status(400).json({ message: "Status required" });
     const order = await storage.updateOrderStatus(id, status);
     if (!order) return res.status(404).json({ message: "Order not found" });
+
+    if (status === "tamamlandi" && order.customerPhone) {
+      const smsMessage = `Siparissiniz teslim edildi. Jetgo ile alisveris yaptiginiz icin tesekkurler! Bir sonraki siparissinizde 50 TL indirim icin JETGO50 kodunu kullanin. jetgo.shop`;
+      sendSmsViaNetgsm(order.customerPhone, smsMessage).catch(err => {
+        console.error("Post-delivery SMS error:", err);
+      });
+    }
+
     res.json(order);
   });
 
