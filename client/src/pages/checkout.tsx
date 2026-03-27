@@ -361,6 +361,10 @@ export default function Checkout() {
   const [orderNote, setOrderNote] = useState("");
   const [deliverySlot, setDeliverySlot] = useState("hemen");
   const [pendingOrderAfterAuth, setPendingOrderAfterAuth] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
+  const [couponResult, setCouponResult] = useState<{ valid: boolean; message: string; discountAmount?: number; discountType?: string; discountValue?: number } | null>(null);
+  const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>("");
 
@@ -387,12 +391,41 @@ export default function Checkout() {
   const campaignGrandTotal = hasCampaignItems ? (subtotal + campaignShipping) : normalGrandTotal;
 
   const effectiveShipping = hasCampaignItems ? campaignShipping : nhShipping;
-  const effectiveDiscount = hasCampaignItems ? campaignDiscount : discount;
-  const effectiveGrandTotal = hasCampaignItems ? campaignGrandTotal : normalGrandTotal;
+  const couponDiscountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
+  const effectiveDiscount = (hasCampaignItems ? campaignDiscount : discount) + couponDiscountAmount;
+  const effectiveGrandTotal = Math.max(0, (hasCampaignItems ? campaignGrandTotal : normalGrandTotal) - couponDiscountAmount);
   const effectiveMinReached = hasCampaignItems ? minReached : nhMinReached;
 
   const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
   const displayTotal = pointsDiscount > 0 ? Math.max(0, effectiveGrandTotal - pointsDiscount) : effectiveGrandTotal;
+
+  const handleApplyCoupon = async () => {
+    const code = couponCode.trim().toUpperCase();
+    if (!code) return;
+    setCouponLoading(true);
+    setCouponResult(null);
+    try {
+      const res = await apiRequest("POST", "/api/coupons/validate", { code, subtotal });
+      const data = await res.json();
+      setCouponResult(data);
+      if (data.valid) {
+        setAppliedCoupon({ code, discountAmount: data.discountAmount });
+      } else {
+        setAppliedCoupon(null);
+      }
+    } catch {
+      setCouponResult({ valid: false, message: "Kupon doğrulanamadı" });
+      setAppliedCoupon(null);
+    } finally {
+      setCouponLoading(false);
+    }
+  };
+
+  const removeCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponResult(null);
+    setCouponCode("");
+  };
 
   const handleShareLocation = () => {
     if (!navigator.geolocation) {
@@ -402,8 +435,35 @@ export default function Checkout() {
     setLocationLoading(true);
     setLocationError("");
     navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCustomerLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        setCustomerLocation({ lat: latitude, lng: longitude });
+        try {
+          const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=tr&addressdetails=1`, {
+            headers: { "User-Agent": "JETGO-PetShop/1.0" },
+          });
+          if (resp.ok) {
+            const geo = await resp.json();
+            const addr = geo.address || {};
+            const road = addr.road || addr.pedestrian || addr.street || "";
+            const houseNumber = addr.house_number || "";
+            if (road && !customerCadde) setCustomerCadde(road);
+            if (houseNumber && !customerBinaNo) setCustomerBinaNo(houseNumber);
+            const suburb = addr.suburb || addr.neighbourhood || addr.quarter || "";
+            if (suburb && neighborhoods.length > 0) {
+              const match = neighborhoods.find((n) =>
+                n.name.toLowerCase() === suburb.toLowerCase() ||
+                suburb.toLowerCase().includes(n.name.toLowerCase()) ||
+                n.name.toLowerCase().includes(suburb.toLowerCase())
+              );
+              if (match) {
+                setSelectedDistrict(match.district);
+                setSelectedNeighborhood(String(match.id));
+              }
+            }
+            toast({ title: "Konum bilgisi alındı", description: road ? `${road} ${houseNumber}`.trim() : "Adres alanlarını kontrol edin" });
+          }
+        } catch {}
         setLocationLoading(false);
       },
       () => {
@@ -469,6 +529,7 @@ export default function Checkout() {
         ].filter(Boolean).join(", "),
         usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
         neighborhoodId: activeNeighborhood ? activeNeighborhood.id : undefined,
+        couponCode: appliedCoupon ? appliedCoupon.code : undefined,
         customerNote: orderNote.trim() || undefined,
         deliverySlot: deliverySlot || undefined,
       };

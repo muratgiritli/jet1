@@ -840,6 +840,7 @@ export async function registerRoutes(
     customerAddress: z.string().optional(),
     usedPoints: z.number().optional(),
     neighborhoodId: z.number().optional(),
+    couponCode: z.string().optional(),
     installmentMonths: z.number().optional(),
     installmentRate: z.number().optional(),
     installmentMonthly: z.number().optional(),
@@ -860,7 +861,27 @@ export async function registerRoutes(
       const fieldErrors = parsed.error.errors.map(e => e.message).join(", ");
       return res.status(400).json({ message: fieldErrors || "Geçersiz sipariş verisi", errors: parsed.error.errors });
     }
-    const { usedPoints, neighborhoodId, ...orderData } = parsed.data;
+    const { usedPoints, neighborhoodId, couponCode, ...orderData } = parsed.data;
+
+    let couponDiscount = 0;
+    let appliedCoupon: any = null;
+    if (couponCode && !isCampaignOrder) {
+      const coupon = await storage.getCouponByCode(couponCode);
+      if (coupon && coupon.isActive) {
+        const now = new Date();
+        const notExpired = !coupon.expiresAt || new Date(coupon.expiresAt) > now;
+        const notMaxed = !coupon.maxUses || coupon.usedCount < coupon.maxUses;
+        const minMet = orderData.subtotal >= coupon.minOrderAmount;
+        if (notExpired && notMaxed && minMet) {
+          appliedCoupon = coupon;
+          if (coupon.discountType === "percentage") {
+            couponDiscount = Math.round(orderData.subtotal * (coupon.discountValue / 100) * 100) / 100;
+          } else {
+            couponDiscount = coupon.discountValue;
+          }
+        }
+      }
+    }
 
     if (neighborhoodId) {
       const neighborhoods = await storage.getActiveDeliveryNeighborhoods();
@@ -921,6 +942,11 @@ export async function registerRoutes(
       orderData.grandTotal = orderData.subtotal + orderData.shipping;
     }
 
+    if (!isCampaignOrder && couponDiscount > 0) {
+      orderData.discount = (orderData.discount || 0) + couponDiscount;
+      orderData.grandTotal = Math.max(0, orderData.subtotal - orderData.discount + orderData.shipping);
+    }
+
     let pointsToUse = 0;
 
     if (!isCampaignOrder && customerId && usedPoints && usedPoints > 0) {
@@ -941,6 +967,10 @@ export async function registerRoutes(
     }
 
     const order = await storage.createOrder(orderData);
+
+    if (appliedCoupon) {
+      await storage.incrementCouponUsage(appliedCoupon.id);
+    }
 
     if (customerId) {
       if (!isCampaignOrder && pointsToUse > 0) {
@@ -1972,6 +2002,71 @@ export async function registerRoutes(
       console.error("Pet AI error:", error?.message || error);
       res.status(500).json({ error: "Yapay zeka şu an meşgul, lütfen tekrar deneyin." });
     }
+  });
+
+  app.post("/api/coupons/validate", async (req, res) => {
+    const { code, subtotal } = req.body;
+    if (!code) return res.status(400).json({ valid: false, message: "Kupon kodu gerekli" });
+    const coupon = await storage.getCouponByCode(code);
+    if (!coupon || !coupon.isActive) return res.json({ valid: false, message: "Geçersiz kupon kodu" });
+    const now = new Date();
+    if (coupon.expiresAt && new Date(coupon.expiresAt) < now) return res.json({ valid: false, message: "Kupon kodunun süresi dolmuş" });
+    if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) return res.json({ valid: false, message: "Kupon kullanım limiti dolmuş" });
+    if (subtotal && subtotal < coupon.minOrderAmount) return res.json({ valid: false, message: `Minimum sipariş tutarı: ${coupon.minOrderAmount} TL` });
+    let discountAmount = 0;
+    if (coupon.discountType === "percentage") {
+      discountAmount = Math.round((subtotal || 0) * (coupon.discountValue / 100) * 100) / 100;
+    } else {
+      discountAmount = coupon.discountValue;
+    }
+    res.json({
+      valid: true,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      discountAmount,
+      minOrderAmount: coupon.minOrderAmount,
+      message: coupon.discountType === "percentage" ? `%${coupon.discountValue} indirim uygulandı` : `${coupon.discountValue} TL indirim uygulandı`,
+    });
+  });
+
+  app.get("/api/admin/coupons", requireAdmin, async (_req, res) => {
+    const all = await storage.getAllCoupons();
+    res.json(all);
+  });
+
+  app.post("/api/admin/coupons", requireAdmin, async (req, res) => {
+    const schema = z.object({
+      code: z.string().min(3),
+      discountType: z.enum(["percentage", "fixed"]),
+      discountValue: z.number().positive(),
+      minOrderAmount: z.number().min(0).optional(),
+      maxUses: z.number().positive().optional().nullable(),
+      isActive: z.boolean().optional(),
+      expiresAt: z.string().optional().nullable(),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri" });
+    const data: any = { ...parsed.data };
+    if (data.expiresAt) data.expiresAt = new Date(data.expiresAt);
+    else data.expiresAt = null;
+    const coupon = await storage.createCoupon(data);
+    res.status(201).json(coupon);
+  });
+
+  app.patch("/api/admin/coupons/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const data: any = { ...req.body };
+    if (data.expiresAt) data.expiresAt = new Date(data.expiresAt);
+    else if (data.expiresAt === null) data.expiresAt = null;
+    const updated = await storage.updateCoupon(id, data);
+    if (!updated) return res.status(404).json({ message: "Kupon bulunamadı" });
+    res.json(updated);
+  });
+
+  app.delete("/api/admin/coupons/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteCoupon(id);
+    res.json({ message: "Silindi" });
   });
 
   return httpServer;

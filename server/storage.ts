@@ -20,7 +20,8 @@ import {
   type ReorderReminder, type InsertReorderReminder,
   type DeliveryNeighborhood, type InsertDeliveryNeighborhood,
   type Banner, type InsertBanner,
-  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders, deliveryNeighborhoods, banners,
+  type Coupon, type InsertCoupon,
+  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders, deliveryNeighborhoods, banners, coupons,
 } from "@shared/schema";
 
 export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
@@ -131,6 +132,13 @@ export interface IStorage {
   createBanner(data: InsertBanner): Promise<Banner>;
   updateBanner(id: number, data: Partial<InsertBanner>): Promise<Banner | undefined>;
   deleteBanner(id: number): Promise<void>;
+
+  getCouponByCode(code: string): Promise<Coupon | undefined>;
+  getAllCoupons(): Promise<Coupon[]>;
+  createCoupon(data: InsertCoupon): Promise<Coupon>;
+  updateCoupon(id: number, data: Partial<InsertCoupon>): Promise<Coupon | undefined>;
+  deleteCoupon(id: number): Promise<void>;
+  incrementCouponUsage(id: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -548,6 +556,34 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBanner(id: number): Promise<void> {
     await db.delete(banners).where(eq(banners.id, id));
+  }
+
+  async getCouponByCode(code: string): Promise<Coupon | undefined> {
+    const [coupon] = await db.select().from(coupons).where(eq(coupons.code, code.toUpperCase()));
+    return coupon;
+  }
+
+  async getAllCoupons(): Promise<Coupon[]> {
+    return db.select().from(coupons).orderBy(desc(coupons.createdAt));
+  }
+
+  async createCoupon(data: InsertCoupon): Promise<Coupon> {
+    const [coupon] = await db.insert(coupons).values({ ...data, code: data.code.toUpperCase() }).returning();
+    return coupon;
+  }
+
+  async updateCoupon(id: number, data: Partial<InsertCoupon>): Promise<Coupon | undefined> {
+    if (data.code) data.code = data.code.toUpperCase();
+    const [updated] = await db.update(coupons).set(data).where(eq(coupons.id, id)).returning();
+    return updated;
+  }
+
+  async deleteCoupon(id: number): Promise<void> {
+    await db.delete(coupons).where(eq(coupons.id, id));
+  }
+
+  async incrementCouponUsage(id: number): Promise<void> {
+    await db.update(coupons).set({ usedCount: sql`${coupons.usedCount} + 1` }).where(eq(coupons.id, id));
   }
 }
 
