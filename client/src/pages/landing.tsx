@@ -82,7 +82,7 @@ function HeroCarousel() {
     <div className="relative overflow-hidden rounded-2xl" data-testid="hero-carousel">
       <div
         className={`bg-gradient-to-br ${slide.gradient} p-5 md:p-8 lg:p-10 transition-all duration-700`}
-        style={{ minHeight: slide.badges ? 220 : 160 }}
+        style={{ minHeight: 220 }}
       >
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-2xl md:text-4xl lg:text-5xl font-black text-white whitespace-pre-line leading-tight drop-shadow-sm">
@@ -361,15 +361,18 @@ function MobileFooter() {
     <section className="md:hidden" data-testid="section-mobile-footer">
       <div className="bg-gray-900 rounded-xl p-4 space-y-4 text-gray-300">
         <div>
-          <h4 className="text-xs font-bold text-white mb-1">Müşteri Hizmetleri</h4>
-          <p className="text-[10px] text-gray-400 mb-2">Sorularınız için bize ulaşın</p>
-          <div className="grid grid-cols-2 gap-1.5">
+          <h4 className="text-sm font-bold text-white mb-2.5 flex items-center gap-2">
+            <Phone className="w-4 h-4 text-orange-400" />
+            Müşteri Hizmetleri
+          </h4>
+          <div className="space-y-1.5">
             {[
               { label: "Sıkça Sorulan Sorular", href: "/sss" },
               { label: "İşlem Rehberi", href: "/islem-rehberi" },
               { label: "Teslimat ve İade Şartları", href: "/teslimat-iade" },
             ].map((l) => (
-              <Link key={l.href} href={l.href} className="text-[11px] text-gray-400 hover:text-white py-0.5 cursor-pointer transition-colors" data-testid={`mobile-footer-${l.href.slice(1)}`}>
+              <Link key={l.href} href={l.href} className="flex items-center gap-2 text-[12px] text-gray-300 hover:text-white py-1 cursor-pointer transition-colors" data-testid={`mobile-footer-${l.href.slice(1)}`}>
+                <ChevronRight className="w-3 h-3 text-gray-500" />
                 {l.label}
               </Link>
             ))}
@@ -377,41 +380,18 @@ function MobileFooter() {
         </div>
 
         <div className="border-t border-gray-700 pt-3">
-          <Link href="/hakkimizda" className="text-xs font-bold text-white mb-1 block hover:underline" data-testid="mobile-footer-hakkimizda">Hakkımızda</Link>
-          <p className="text-[10px] text-gray-400 leading-relaxed">
-            Samsun'da evcil hayvan ürünleri, hızlı teslimat ve uygun fiyatlarla yanınızdayız.
-          </p>
-          <p className="text-[10px] text-gray-500 font-medium mt-1">Sizpa İnternet Tic. Ltd. Şti.</p>
-        </div>
-
-        <div className="border-t border-gray-700 pt-3">
-          <Link href="/iletisim" className="text-xs font-bold text-white mb-2 block hover:underline" data-testid="mobile-footer-iletisim">İletişim</Link>
+          <Link href="/iletisim" className="text-sm font-bold text-white mb-2.5 flex items-center gap-2 hover:underline" data-testid="mobile-footer-iletisim">
+            <MapPin className="w-4 h-4 text-emerald-400" />
+            İletişim
+          </Link>
           <div className="space-y-2">
-            <div className="flex items-start gap-2">
-              <MapPin className="w-3.5 h-3.5 mt-0.5 shrink-0 text-gray-500" />
-              <span className="text-[10px] text-gray-400 leading-relaxed">Yenimahalle Atatürk 3. Kısım Blv. No:113/A, Atakum, Samsun</span>
+            <div className="flex items-start gap-2 ml-6">
+              <span className="text-[11px] text-gray-400 leading-relaxed">Yenimahalle Atatürk 3. Kısım Blv. No:113/A, Atakum, Samsun</span>
             </div>
-            <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-[11px] text-green-400 hover:text-green-300 transition-colors" data-testid="mobile-footer-whatsapp">
+            <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 ml-6 text-[12px] text-green-400 hover:text-green-300 transition-colors" data-testid="mobile-footer-whatsapp">
               <SiWhatsapp className="w-3.5 h-3.5" />
               WhatsApp ile ulaşın
             </a>
-          </div>
-        </div>
-
-        <div className="border-t border-gray-700 pt-3">
-          <h4 className="text-[10px] font-bold text-gray-500 mb-1.5">Yasal</h4>
-          <div className="flex flex-wrap gap-x-3 gap-y-1">
-            {[
-              { label: "KVKK", href: "/kvkk" },
-              { label: "Gizlilik", href: "/gizlilik" },
-              { label: "Kullanım Koşulları", href: "/kullanim-kosullari" },
-              { label: "Çerez Politikası", href: "/cerez-politikasi" },
-              { label: "Mesafeli Satış Söz.", href: "/mesafeli-satis" },
-            ].map((l) => (
-              <Link key={l.href} href={l.href} className="text-[10px] text-gray-500 hover:text-white py-0.5 cursor-pointer transition-colors" data-testid={`mobile-footer-${l.href.slice(1)}`}>
-                {l.label}
-              </Link>
-            ))}
           </div>
         </div>
 

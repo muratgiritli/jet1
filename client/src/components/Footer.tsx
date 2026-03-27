@@ -2,31 +2,23 @@ import { Link } from "wouter";
 import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info, Truck, Lock, ShieldCheck, ScrollText } from "lucide-react";
 import { SiWhatsapp, SiInstagram, SiFacebook } from "react-icons/si";
 
-const FOOTER_LINKS_COL1 = [
+const FOOTER_LINKS = [
   { label: "Sıkça Sorulan Sorular", href: "/sss", icon: HelpCircle },
   { label: "İşlem Rehberi", href: "/islem-rehberi", icon: Info },
   { label: "Teslimat ve İade Şartları", href: "/teslimat-iade", icon: Truck },
   { label: "Mesafeli Satış Sözleşmesi", href: "/mesafeli-satis", icon: ScrollText },
 ];
 
-const FOOTER_LINKS_COL2 = [
-  { label: "Kişisel Verilerin Korunması", href: "/kvkk", icon: Shield },
-  { label: "Gizlilik Politikası", href: "/gizlilik", icon: FileText },
-  { label: "Gizlilik Sözleşmesi", href: "/gizlilik-sozlesmesi", icon: Lock },
-  { label: "Kullanım Koşulları", href: "/kullanim-kosullari", icon: BookOpen },
-  { label: "Çerez Politikası", href: "/cerez-politikasi", icon: Cookie },
-];
-
 export default function Footer() {
   return (
     <footer className="hidden md:block bg-gray-900 text-gray-300 mt-8" data-testid="footer-desktop">
       <div className="max-w-6xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 gap-12">
           <div>
             <h3 className="text-white font-bold text-lg mb-1">Müşteri Hizmetleri</h3>
             <p className="text-gray-400 text-sm mb-4">Sorularınız için bize ulaşın</p>
             <ul className="space-y-2">
-              {FOOTER_LINKS_COL1.map((link) => {
+              {FOOTER_LINKS.map((link) => {
                 const Icon = link.icon;
                 return (
                   <li key={link.href}>
@@ -38,32 +30,6 @@ export default function Footer() {
                 );
               })}
             </ul>
-          </div>
-
-          <div>
-            <h3 className="text-white font-bold text-lg mb-1">Yasal</h3>
-            <p className="text-gray-400 text-sm mb-4">Sözleşme ve politikalar</p>
-            <ul className="space-y-2">
-              {FOOTER_LINKS_COL2.map((link) => {
-                const Icon = link.icon;
-                return (
-                  <li key={link.href}>
-                    <Link href={link.href} className="flex items-center gap-2 text-sm hover:text-white transition-colors" data-testid={`footer-link-${link.href.slice(1)}`}>
-                      <Icon className="w-4 h-4 flex-shrink-0" />
-                      {link.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-
-          <div>
-            <Link href="/hakkimizda" className="text-white font-bold text-lg mb-4 block hover:underline" data-testid="footer-hakkimizda">Hakkımızda</Link>
-            <p className="text-sm leading-relaxed text-gray-400 mb-3">
-              Samsun'da evcil hayvan ürünleri, hızlı teslimat ve uygun fiyatlarla yanınızdayız.
-            </p>
-            <p className="text-xs text-gray-500 font-medium">Sizpa İnternet Tic. Ltd. Şti.</p>
           </div>
 
           <div>
