@@ -1155,18 +1155,19 @@ export async function registerRoutes(
     if (!customerId) return res.status(401).json({ message: "Giriş yapılmamış" });
     const customer = await storage.getCustomer(customerId);
     if (!customer) return res.status(401).json({ message: "Giriş yapılmamış" });
-    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, email: customer.email, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
   });
 
   app.patch("/api/customer/profile", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
-    const { name, address } = req.body;
-    const updateData: Record<string, string> = {};
+    const { name, address, email } = req.body;
+    const updateData: Record<string, any> = {};
     if (name) updateData.name = name.trim();
     if (address !== undefined) updateData.address = address.trim();
+    if (email !== undefined) updateData.email = email ? email.trim() : null;
     const customer = await storage.updateCustomer(customerId, updateData);
     if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
-    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, email: customer.email, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
   });
 
   app.patch("/api/customer/password", requireCustomer, async (req, res) => {

@@ -549,6 +549,14 @@ export default function Checkout() {
 
       await apiRequest("POST", "/api/orders", orderPayload);
 
+      if (typeof window !== "undefined" && (window as any).gtag) {
+        (window as any).gtag("event", "conversion", {
+          send_to: "AW-XXXXXXXXXX/CONVERSION_LABEL",
+          value: grandTotal,
+          currency: "TRY",
+        });
+      }
+
       const builtAddress = [
         customerCadde.trim(),
         customerBinaNo.trim() ? `No: ${customerBinaNo.trim()}` : "",

@@ -154,6 +154,7 @@ export const customers = pgTable("customers", {
   password: text("password").notNull(),
   name: text("name").notNull(),
   address: text("address"),
+  email: text("email"),
   notifyStock: boolean("notify_stock").notNull().default(true),
   notifyCampaign: boolean("notify_campaign").notNull().default(true),
   createdAt: timestamp("created_at").notNull().defaultNow(),

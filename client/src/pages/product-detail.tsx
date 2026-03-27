@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link, useRoute, useSearch } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory, CrossSellSection, BreedStat, InstallmentRate } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -20,6 +20,7 @@ import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
 import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import SEO, { SITE_DOMAIN, PRODUCT_JSONLD, BREADCRUMB_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import ProductReviews from "@/components/ProductReviews";
+import { SiWhatsapp, SiFacebook, SiX } from "react-icons/si";
 
 type ProductDetailData = {
   product: Product;
@@ -429,6 +430,50 @@ export default function ProductDetailPage() {
                 {product.name}
               </h1>
 
+              <div className="flex items-center gap-2" data-testid="social-share-buttons">
+                <span className="text-xs text-muted-foreground font-medium">Paylaş:</span>
+                <a
+                  href={`https://wa.me/?text=${encodeURIComponent(product.name + " - JETGO Pet Shop\nhttps://www.jetgo.shop" + window.location.pathname)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+                  style={{ backgroundColor: "#25d366" }}
+                  data-testid="btn-share-whatsapp"
+                >
+                  <SiWhatsapp className="w-3.5 h-3.5 text-white" />
+                </a>
+                <a
+                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent("https://www.jetgo.shop" + window.location.pathname)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+                  style={{ backgroundColor: "#1877f2" }}
+                  data-testid="btn-share-facebook"
+                >
+                  <SiFacebook className="w-3.5 h-3.5 text-white" />
+                </a>
+                <a
+                  href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(product.name + " - JETGO Pet Shop")}&url=${encodeURIComponent("https://www.jetgo.shop" + window.location.pathname)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-7 h-7 rounded-full flex items-center justify-center transition-colors"
+                  style={{ backgroundColor: "#000" }}
+                  data-testid="btn-share-twitter"
+                >
+                  <SiX className="w-3.5 h-3.5 text-white" />
+                </a>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText("https://www.jetgo.shop" + window.location.pathname);
+                    toast({ title: "Link kopyalandı!" });
+                  }}
+                  className="w-7 h-7 rounded-full flex items-center justify-center bg-gray-200 hover:bg-gray-300 transition-colors"
+                  data-testid="btn-share-copy"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-gray-600" />
+                </button>
+              </div>
+
               {category && (
                 <p className="text-sm text-muted-foreground" data-testid="text-brand-name">
                   {category.brandName}
@@ -589,6 +634,13 @@ export default function ProductDetailPage() {
                   </div>
                 </DialogContent>
               </Dialog>
+
+              {product.stock > 0 && product.stock <= 3 && (
+                <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg animate-pulse" style={{ backgroundColor: "#fff3e0" }} data-testid="text-low-stock-warning">
+                  <AlertTriangle className="w-4 h-4" style={{ color: "#e65100" }} />
+                  <span className="text-sm font-bold" style={{ color: "#e65100" }}>Son {product.stock} adet kaldı!</span>
+                </div>
+              )}
 
               {product.stock === 0 ? (
                 <div className="mt-2 space-y-2">

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   User, Phone, MapPin, LogOut, Loader2, Check, Edit2,
   Package, Heart, Home, PawPrint, Bell,
-  Plus, Trash2, Star, ChevronRight,
+  Plus, Trash2, Star, ChevronRight, Mail,
   ShoppingCart, RefreshCw, Eye, TrendingUp, UserX,
   AlertTriangle, Lock, ChevronDown, ChevronUp, BarChart3
 } from "lucide-react";
@@ -187,11 +187,13 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
   const [editing, setEditing] = useState(false);
   const [editName, setEditName] = useState("");
   const [editAddress, setEditAddress] = useState("");
+  const [editEmail, setEditEmail] = useState("");
   const [saving, setSaving] = useState(false);
 
   const startEdit = () => {
     setEditName(customer.name || "");
     setEditAddress(customer.address || "");
+    setEditEmail(customer.email || "");
     setEditing(true);
   };
 
@@ -200,9 +202,13 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
       toast({ title: "Hata", description: "Ad soyad boş bırakılamaz", variant: "destructive" });
       return;
     }
+    if (editEmail.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editEmail.trim())) {
+      toast({ title: "Hata", description: "Geçerli bir e-posta adresi girin", variant: "destructive" });
+      return;
+    }
     setSaving(true);
     try {
-      await updateProfile({ name: editName.trim(), address: editAddress.trim() });
+      await updateProfile({ name: editName.trim(), address: editAddress.trim(), email: editEmail.trim() || null });
       setEditing(false);
       toast({ title: "Bilgiler güncellendi" });
     } catch {
@@ -241,6 +247,13 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
+                <Mail className="w-3.5 h-3.5" /> E-posta
+              </label>
+              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="ornek@mail.com" type="email" className="rounded-xl" data-testid="input-profile-email" />
+              <p className="text-[10px] text-muted-foreground">Fatura ve sipariş bilgilendirmesi için kullanılır</p>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
                 <MapPin className="w-3.5 h-3.5" /> Adres
               </label>
               <Textarea value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Teslimat adresiniz" rows={3} className="rounded-xl" data-testid="input-profile-address" />
@@ -260,6 +273,14 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
                 <User className="w-3.5 h-3.5" /> Ad Soyad
               </label>
               <p className="text-sm font-semibold" data-testid="text-profile-name">{customer.name}</p>
+            </div>
+            <div className="space-y-1.5 bg-gray-50 rounded-xl p-3">
+              <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
+                <Mail className="w-3.5 h-3.5" /> E-posta
+              </label>
+              <p className="text-sm" data-testid="text-profile-email">
+                {customer.email || <span className="text-muted-foreground italic">Henüz e-posta eklenmemiş</span>}
+              </p>
             </div>
             <div className="space-y-1.5 bg-gray-50 rounded-xl p-3">
               <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
