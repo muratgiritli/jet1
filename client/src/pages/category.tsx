@@ -106,7 +106,7 @@ export default function CategoryPage() {
     <div className={`min-h-screen flex flex-col pb-16 md:pb-0 bg-gradient-to-b ${animalMeta.bgGradient}`}>
       <SEO
         title={`${animalMeta.title} Maması Samsun - Aynı Gün Kapıya Teslim ${animalMeta.title} Ürünleri | JETGO Pet Shop`}
-        description={`Samsun'da ${animalMeta.title.toLowerCase()} maması aynı gün kapıya teslim. ${animalMeta.title} maması, bakım ürünleri ve aksesuar çeşitleri en uygun fiyatlarla. 1 saatte teslimat, kapıda nakit/POS ödeme. Online sipariş JETGO.`}
+        description={`Samsun'da ${animalMeta.title.toLowerCase()} maması aynı gün kapıya teslim. ${animalMeta.title} maması, bakım ürünleri ve aksesuar çeşitleri en uygun fiyatlarla. Aynı gün teslimat, kapıda nakit/POS ödeme. Online sipariş JETGO.`}
         canonical={`${SITE_DOMAIN}/kategori/${animalSlug}`}
         keywords={`${animalMeta.title.toLowerCase()} maması samsun, ${animalMeta.title.toLowerCase()} maması atakum, ${animalMeta.title.toLowerCase()} ürünleri samsun, ${animalMeta.title.toLowerCase()} maması kapıya teslim, samsun petshop ${animalMeta.title.toLowerCase()}`}
         jsonLd={[

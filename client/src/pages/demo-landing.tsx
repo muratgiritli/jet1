@@ -87,7 +87,7 @@ export default function DemoLanding() {
 
           <div className="flex gap-2 mb-6">
             {[
-              { icon: Truck, text: "1 Saat", color: "text-orange-500", bg: "bg-orange-500/8" },
+              { icon: Truck, text: "Aynı Gün", color: "text-orange-500", bg: "bg-orange-500/8" },
               { icon: CreditCard, text: "Kapıda Ödeme", color: "text-emerald-600", bg: "bg-emerald-500/8" },
               { icon: MapPin, text: "Atakum Aktif", color: "text-blue-500", bg: "bg-blue-500/8" },
             ].map((b, i) => (
@@ -108,7 +108,7 @@ export default function DemoLanding() {
       <section className="px-4 -mt-6 relative z-20 mb-6">
         <div className="bg-white rounded-2xl shadow-sm border border-slate-100 p-1 flex gap-1">
           {[
-            { icon: Clock, label: "1 Saat\nTeslimat", color: "text-orange-500" },
+            { icon: Clock, label: "Aynı Gün\nTeslimat", color: "text-orange-500" },
             { icon: Package, label: "900+\nÜrün", color: "text-blue-500" },
             { icon: CreditCard, label: "Kapıda\nÖdeme", color: "text-emerald-500" },
             { icon: Gift, label: "Para\nPuan", color: "text-purple-500" },
@@ -187,7 +187,7 @@ export default function DemoLanding() {
           </div>
           <div className="divide-y divide-slate-100">
             {[
-              { icon: Truck, title: "1 Saat Teslimat", desc: "Siparişin anında kapında", color: "text-orange-500", bg: "bg-orange-50" },
+              { icon: Truck, title: "Aynı Gün Teslimat", desc: "Siparişin aynı gün kapında", color: "text-orange-500", bg: "bg-orange-50" },
               { icon: Shield, title: "Güvenli Alışveriş", desc: "256-bit SSL koruması", color: "text-emerald-500", bg: "bg-emerald-50" },
               { icon: Star, title: "4.9 Müşteri Puanı", desc: "Binlerce mutlu müşteri", color: "text-amber-500", bg: "bg-amber-50" },
             ].map((t, i) => (

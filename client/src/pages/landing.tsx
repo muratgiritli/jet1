@@ -29,7 +29,7 @@ import brandBonus from "@/assets/images/brands/bonus.webp";
 
 const HERO_SLIDES = [
   {
-    title: "İnternetten Bekleme\nJetgo'dan 1 Saatte Gelsin 🚀",
+    title: "İnternetten Bekleme\nJetgo'dan Aynı Gün Gelsin 🚀",
     subtitle: "Orijinal ürün – kapıda kontrol – anında teslim",
     gradient: "from-orange-500 via-amber-500 to-yellow-400",
     badges: true,
@@ -92,7 +92,7 @@ function HeroCarousel() {
           {slide.badges && (
             <div className="flex flex-wrap gap-1.5 md:gap-2 mt-3 md:mt-4">
               <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white text-[11px] md:text-xs font-bold px-2.5 md:px-3 py-1.5 rounded-full border border-white/25">
-                <Truck className="w-3 h-3 md:w-3.5 md:h-3.5" /> 1 Saat Teslimat
+                <Truck className="w-3 h-3 md:w-3.5 md:h-3.5" /> Aynı Gün Teslimat
               </span>
               <span className="inline-flex items-center gap-1 bg-white/20 backdrop-blur-sm text-white text-[11px] md:text-xs font-bold px-2.5 md:px-3 py-1.5 rounded-full border border-white/25">
                 <CreditCard className="w-3 h-3 md:w-3.5 md:h-3.5" /> Kapıda Ödeme
@@ -288,7 +288,7 @@ function LocationBanner() {
             <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
             <p className="text-[10px] md:text-xs font-bold text-emerald-600 uppercase tracking-wide">Teslimat Aktif</p>
           </div>
-          <p className="text-xs md:text-sm font-bold text-emerald-800">Samsun Atakum'da 60 dk teslimat</p>
+          <p className="text-xs md:text-sm font-bold text-emerald-800">Samsun Atakum'da aynı gün teslimat</p>
           <p className="text-[10px] md:text-xs text-emerald-600/70 mt-0.5">Kapıda nakit, POS ve QR ödeme</p>
         </div>
       </div>
@@ -336,7 +336,7 @@ function WhyJetgo() {
       <h3 className="text-base md:text-xl font-extrabold text-gray-900 mb-3 md:mb-4">Neden Jetgo?</h3>
       <div className="space-y-2.5 md:space-y-3">
         {[
-          { icon: Zap, title: "1 Saatte Kapında", desc: "Sipariş ver, 60 dakikada kapına gelsin. İnternetten günlerce bekleme!", color: "#f59e0b", bg: "from-amber-50 to-orange-50", border: "border-amber-200" },
+          { icon: Zap, title: "Aynı Gün Kapında", desc: "Sipariş ver, aynı gün kapına gelsin. İnternetten günlerce bekleme!", color: "#f59e0b", bg: "from-amber-50 to-orange-50", border: "border-amber-200" },
           { icon: Truck, title: "Eve Teslim", desc: "Ağır çuvalları sen taşıma, biz getirelim. Uğraş yok, rahat alışveriş.", color: "#6B3480", bg: "from-purple-50 to-fuchsia-50", border: "border-purple-200" },
           { icon: PackageCheck, title: "Kapıda Kontrol Et", desc: "Ürünü kapıda aç, kontrol et. Beğenmezsen alma, hiç risk yok.", color: "#10b981", bg: "from-emerald-50 to-teal-50", border: "border-emerald-200" },
           { icon: CreditCard, title: "Kapıda 12 Taksit", desc: "Kredi kartına kapıda 12 taksit. Nakit, POS, QR - istediğin şekilde öde.", color: "#2563eb", bg: "from-blue-50 to-indigo-50", border: "border-blue-200" },

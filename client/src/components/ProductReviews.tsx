@@ -23,14 +23,14 @@ const DELIVERY_COMMENTS = [
   "Sipariş verdikten 40 dakika sonra kapıdaydı, inanılmaz hızlılar!",
   "45 dakikada elime ulaştı, internetten günlerce beklemekten kurtuldum.",
   "Yarım saat bile sürmedi, hemen geldi! Böyle hız görmedim.",
-  "1 saatte kapıma kadar getirdiler, süper hızlı teslimat.",
+  "Aynı gün kapıma kadar getirdiler, süper hızlı teslimat.",
   "WhatsApp'tan sipariş verdim, 50 dakikada kapıdaydı. Harika!",
   "Atakum'a 35 dakikada getirdiler, şok oldum bu kadar hızlı olacağını düşünmemiştim.",
   "Denizevleri'ne 40 dakikada geldi, artık internetten sipariş vermiyorum.",
   "Güzelyalı'ya 45 dakikada teslim ettiler. Mağazaya gitmeye gerek kalmıyor.",
   "Kurupelit'e 50 dakikada getirdiler, beklentimin çok üzerinde hız.",
   "Sipariş verdim, henüz oturup çayımı içemeden kapı çaldı. 30 dakika bile sürmedi!",
-  "1 saat demişlerdi ama 40 dakikada geldi. Gerçekten çok hızlılar.",
+  "Aynı gün teslim dediler, gerçekten de birkaç saat içinde geldi. Çok hızlılar.",
 ];
 
 const PAYMENT_COMMENTS = [
@@ -48,7 +48,7 @@ const PAYMENT_COMMENTS = [
 const PRODUCT_COMMENTS = [
   "Ürün orijinal geldi, kapıda kontrol ettim. Tam beklediğim gibi.",
   "Fiyatı piyasaya göre çok uygun, 40 dakikada kapıya kadar getirdiler.",
-  "Her zaman buradan alıyorum, her seferinde 1 saat içinde geliyor. Tavsiye ederim.",
+  "Her zaman buradan alıyorum, her seferinde aynı gün geliyor. Tavsiye ederim.",
   "Kedim çok sevdi, iştahla yiyor. 45 dakikada kapıdaydı mama.",
   "Köpeğim bu mamayı çok beğeniyor, hem hızlı geldi hem kaliteli.",
   "Son kullanma tarihi çok uzak geldi, taze ürün. 35 dakikada teslim aldım.",
@@ -63,7 +63,7 @@ const PRODUCT_COMMENTS = [
 const SERVICE_COMMENTS = [
   "WhatsApp'tan yazdım, 5 dakikada cevap verdiler, 40 dakikada ürün kapıdaydı.",
   "JETGO'yu keşfettiğim için çok mutluyum, internetten sipariş beklemeye son!",
-  "Pet shop'a gitmeye gerek kalmıyor, her şey 1 saat içinde kapıya geliyor.",
+  "Pet shop'a gitmeye gerek kalmıyor, her şey aynı gün kapıya geliyor.",
   "Ürün çeşitliliği çok iyi, her marka var. Kapıda nakit ödedim, çok kolay.",
   "Samsun'da böyle bir hizmet olması harika. Hızlı geldi, kapıda kontrol ettim.",
   "Komşuma da söyledim, o da sipariş verdi. QR ile ödeme yaptı, çok beğendi.",
