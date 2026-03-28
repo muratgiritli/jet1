@@ -648,7 +648,7 @@ function VoiceOrderBanner() {
   return (
     <div data-testid="section-voice-order">
       <a
-        href="https://wa.me/908508403959?text=Merhaba%2C%20sesli%20sipari%C5%9F%20vermek%20istiyorum.%20Bana%20yard%C4%B1mc%C4%B1%20olur%20musunuz%3F"
+        href="https://wa.me/908508403959?text=Siz%20buraya%20sipari%C5%9Finizi%20sesli%20veya%20yaz%C4%B1l%C4%B1%20olarak%20bildirin.%20En%20k%C4%B1sa%20zamanda%20mesai%20saatleri%20i%C3%A7inde%20size%20d%C3%B6n%C3%BC%C5%9F%20yap%C4%B1lacakt%C4%B1r."
         target="_blank"
         rel="noopener noreferrer"
         className="block w-full rounded-2xl p-4 transition-all hover:shadow-lg active:scale-[0.98]"
