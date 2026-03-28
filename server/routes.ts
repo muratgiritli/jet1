@@ -191,14 +191,27 @@ export async function registerRoutes(
   await seedDatabase();
   await ensureAdminExists();
 
-  app.use((_req, res, next) => {
+  app.use((req, res, next) => {
     res.setHeader("X-Content-Type-Options", "nosniff");
     res.setHeader("X-Frame-Options", "SAMEORIGIN");
     res.setHeader("X-XSS-Protection", "1; mode=block");
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)");
     res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
-    res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.google-analytics.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self';");
+    res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.googleadservices.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.google-analytics.com https://www.google.com https://googleads.g.doubleclick.net https://www.googleadservices.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self';");
+
+    if (req.path.startsWith("/api/")) {
+      const ip = req.ip || "unknown";
+      if (req.method === "POST") {
+        if (rateLimit(`global:post:${ip}`, 60, 60 * 1000)) {
+          return res.status(429).json({ message: "Çok fazla istek. Lütfen bekleyin." });
+        }
+      }
+      if (rateLimit(`global:all:${ip}`, 300, 60 * 1000)) {
+        return res.status(429).json({ message: "Çok fazla istek. Lütfen bekleyin." });
+      }
+    }
+
     next();
   });
 
@@ -1347,6 +1360,10 @@ export async function registerRoutes(
   });
 
   app.post("/api/reorder-reminders", async (req, res) => {
+    const ip = req.ip || "unknown";
+    if (rateLimit(`reminder:${ip}`, 10, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
     const parsed = createReminderSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Eksik veya hatalı bilgi", errors: parsed.error.errors });
     const { estimatedDays, ...rest } = parsed.data;
@@ -2582,9 +2599,19 @@ export async function registerRoutes(
   app.post("/api/lost-found", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const ip = req.ip || "unknown";
+    if (rateLimit(`lostfound:${ip}`, 5, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla ilan. Lütfen daha sonra tekrar deneyin." });
+    }
     const { postType, petName, petType, breed, color, lastSeenLocation, description, contactPhone, photoData } = req.body;
     if (!postType || !petName || !petType || !description || !contactPhone) {
       return res.status(400).json({ message: "Zorunlu alanları doldurun" });
+    }
+    if (photoData && (typeof photoData !== "string" || photoData.length > 5 * 1024 * 1024)) {
+      return res.status(400).json({ message: "Fotoğraf boyutu çok büyük (max 4MB)" });
+    }
+    if (typeof description !== "string" || description.length > 1000) {
+      return res.status(400).json({ message: "Açıklama çok uzun" });
     }
     const customer = await sharedPool.query("SELECT name FROM customers WHERE id=$1", [customerId]);
     const result = await sharedPool.query(
@@ -2623,8 +2650,14 @@ export async function registerRoutes(
   });
 
   app.post("/api/voice-order", async (req, res) => {
+    const ip = req.ip || "unknown";
+    if (rateLimit(`voiceorder:${ip}`, 3, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
     const { name, phone, note } = req.body;
-    if (!phone || phone.length < 7) return res.status(400).json({ message: "Telefon numarası gerekli" });
+    if (!phone || typeof phone !== "string" || phone.length < 7 || phone.length > 20) return res.status(400).json({ message: "Telefon numarası gerekli" });
+    if (name && typeof name === "string" && name.length > 100) return res.status(400).json({ message: "İsim çok uzun" });
+    if (note && typeof note === "string" && note.length > 500) return res.status(400).json({ message: "Not çok uzun" });
     res.json({ message: "Sesli sipariş talebiniz alındı. En kısa sürede sizi arayacağız!" });
   });
 
@@ -2693,6 +2726,9 @@ export async function registerRoutes(
     const customerId = (req as any).customerId;
     const { petName, petType, photo, description } = req.body;
     if (!petName || !photo) return res.status(400).json({ message: "Pet adı ve fotoğraf gerekli" });
+    if (typeof photo !== "string" || photo.length > 5 * 1024 * 1024) return res.status(400).json({ message: "Fotoğraf boyutu çok büyük (max 4MB)" });
+    if (typeof petName !== "string" || petName.length > 100) return res.status(400).json({ message: "Pet adı çok uzun" });
+    if (description && typeof description === "string" && description.length > 500) return res.status(400).json({ message: "Açıklama çok uzun" });
 
     const currentWeek = getCurrentWeek();
     const existing = await db.select().from(petContestEntries)
@@ -2714,6 +2750,10 @@ export async function registerRoutes(
   });
 
   app.post("/api/pet-contest/:id/vote", async (req, res) => {
+    const ip = req.ip || "unknown";
+    if (rateLimit(`vote:${ip}`, 30, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla oy. Lütfen daha sonra tekrar deneyin." });
+    }
     const entryId = parseInt(req.params.id);
     const voterIp = req.ip || req.headers["x-forwarded-for"]?.toString() || "unknown";
     const customerId = (req as any).session?.customerId || null;
