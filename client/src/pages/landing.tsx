@@ -692,16 +692,20 @@ function VirtualPetWidget() {
   if (!isLoggedIn) return null;
 
   const createPet = async () => {
+    if (!petName.trim()) return;
     try {
       const res = await fetch("/api/customer/virtual-pet", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
-        body: JSON.stringify({ petType, petName }),
+        body: JSON.stringify({ petType, petName: petName.trim() }),
       });
+      if (!res.ok) return;
       const data = await res.json();
-      setPetData(data);
-      setShowCreate(false);
+      if (data && data.id) {
+        setPetData(data);
+        setShowCreate(false);
+      }
     } catch {}
   };
 
@@ -748,7 +752,8 @@ function VirtualPetWidget() {
           </button>
         ) : (
           <div className="rounded-2xl p-4 border-2 border-orange-200" style={{ backgroundColor: "#fff8e1" }}>
-            <p className="text-sm font-bold text-gray-800 mb-3">Evcil Hayvanını Oluştur</p>
+            <p className="text-sm font-bold text-gray-800 mb-2">Sanal Evcil Hayvanını Sahiplen!</p>
+            <p className="text-[11px] text-gray-500 mb-3 leading-relaxed">Hayvan seç, isim ver ve sahiplen. Her gün besleyerek Para Puan kazan! Seri beslemelerde bonus puan artar, seviye atla.</p>
             <div className="flex gap-2 mb-3">
               {[
                 { type: "kedi", emoji: "🐱", label: "Kedi" },
@@ -769,9 +774,10 @@ function VirtualPetWidget() {
             <input
               type="text"
               value={petName}
-              onChange={e => setPetName(e.target.value)}
+              onChange={e => setPetName(e.target.value.slice(0, 20))}
               placeholder="İsim ver..."
               className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm mb-3"
+              maxLength={20}
               data-testid="input-pet-name"
             />
             <button

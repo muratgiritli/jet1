@@ -2342,53 +2342,63 @@ export async function registerRoutes(
   });
 
   app.post("/api/customer/virtual-pet", requireCustomer, async (req, res) => {
-    const customerId = (req as any).customerId;
-    const { petType, petName } = req.body;
-    const [existing] = await db.select().from(virtualPets).where(eq(virtualPets.customerId, customerId));
-    if (existing) return res.json(existing);
-    const [pet] = await db.insert(virtualPets).values({
-      customerId,
-      petType: petType || "kedi",
-      petName: petName || "Minnoş",
-    }).returning();
-    res.json(pet);
+    try {
+      const customerId = (req as any).customerId;
+      const { petType, petName } = req.body;
+      const validTypes = ["kedi", "kopek", "kus"];
+      const safePetType = validTypes.includes(petType) ? petType : "kedi";
+      const safePetName = (petName || "Minnoş").toString().trim().slice(0, 20) || "Minnoş";
+      const [existing] = await db.select().from(virtualPets).where(eq(virtualPets.customerId, customerId));
+      if (existing) return res.json(existing);
+      const [pet] = await db.insert(virtualPets).values({
+        customerId,
+        petType: safePetType,
+        petName: safePetName,
+      }).returning();
+      res.json(pet);
+    } catch (e) {
+      res.status(500).json({ message: "Sanal hayvan oluşturulamadı" });
+    }
   });
 
   app.post("/api/customer/virtual-pet/feed", requireCustomer, async (req, res) => {
-    const customerId = (req as any).customerId;
-    const [pet] = await db.select().from(virtualPets).where(eq(virtualPets.customerId, customerId));
-    if (!pet) return res.status(404).json({ message: "Sanal evcil hayvan bulunamadı" });
+    try {
+      const customerId = (req as any).customerId;
+      const [pet] = await db.select().from(virtualPets).where(eq(virtualPets.customerId, customerId));
+      if (!pet) return res.status(404).json({ message: "Önce bir sanal hayvan sahiplen!" });
 
-    const today = new Date().toISOString().split("T")[0];
-    if (pet.lastFeedDate === today) {
-      return res.status(400).json({ message: "Bugün zaten besledin!", pet });
+      const today = new Date().toISOString().split("T")[0];
+      if (pet.lastFeedDate === today) {
+        return res.status(400).json({ message: "Bugün zaten besledin! Yarın tekrar gel.", pet });
+      }
+
+      const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+      const newStreak = pet.lastFeedDate === yesterday ? pet.streak + 1 : 1;
+      const feedPoints = Math.min(1 + Math.floor(newStreak / 3), 5);
+      const newExp = pet.experience + 10 + (newStreak * 2);
+      const newLevel = Math.floor(newExp / 100) + 1;
+
+      const [updated] = await db.update(virtualPets)
+        .set({
+          lastFeedDate: today,
+          streak: newStreak,
+          totalFeedings: pet.totalFeedings + 1,
+          experience: newExp,
+          level: newLevel,
+          earnedPoints: pet.earnedPoints + feedPoints,
+        })
+        .where(eq(virtualPets.id, pet.id))
+        .returning();
+
+      const customer = await storage.getCustomer(customerId);
+      if (customer) {
+        await storage.addLoyaltyPoints(customer.phone, feedPoints, `Sanal pet besleme (Gün ${newStreak})`);
+      }
+
+      res.json({ pet: updated, pointsEarned: feedPoints, message: `+${feedPoints} Para Puan kazandın!` });
+    } catch (e) {
+      res.status(500).json({ message: "Besleme sırasında bir hata oluştu" });
     }
-
-    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
-    const newStreak = pet.lastFeedDate === yesterday ? pet.streak + 1 : 1;
-    const feedPoints = Math.min(1 + Math.floor(newStreak / 3), 5);
-    const newExp = pet.experience + 10 + (newStreak * 2);
-    const newLevel = Math.floor(newExp / 100) + 1;
-
-    const [updated] = await db.update(virtualPets)
-      .set({
-        lastFeedDate: today,
-        streak: newStreak,
-        totalFeedings: pet.totalFeedings + 1,
-        experience: newExp,
-        level: newLevel,
-        earnedPoints: pet.earnedPoints + feedPoints,
-      })
-      .where(eq(virtualPets.id, pet.id))
-      .returning();
-
-    const customer = await storage.getCustomer(customerId);
-    if (customer) {
-      const currentPoints = await storage.getLoyaltyBalance(customer.phone);
-      await storage.addLoyaltyPoints(customer.phone, feedPoints, `Sanal pet besleme (Gün ${newStreak})`);
-    }
-
-    res.json({ pet: updated, pointsEarned: feedPoints, message: `+${feedPoints} Para Puan kazandın!` });
   });
 
   app.get("/api/firsat-urunleri", async (_req, res) => {
