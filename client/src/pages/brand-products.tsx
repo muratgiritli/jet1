@@ -441,7 +441,9 @@ function InlineSubcategories({
 }
 
 export default function BrandProductsPage() {
-  const [, params] = useRoute("/siparis/:animal/:subcategory/:brand");
+  const [, siparisParams] = useRoute("/siparis/:animal/:subcategory/:brand");
+  const [, kategoriParams] = useRoute("/kategori/:animal/:subcategory/:brand");
+  const params = siparisParams || kategoriParams;
   const animal = params?.animal || "";
   const subcategory = params?.subcategory || "";
   const brandSlug = params?.brand || "";

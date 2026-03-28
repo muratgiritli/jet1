@@ -82,6 +82,7 @@ function Router() {
         <Route path="/acik-mama/:animal" component={AcikMamaPage} />
         <Route path="/urun/:id/:slug?" component={ProductDetailPage} />
         <Route path="/siparis/:animal/:subcategory/:brand" component={BrandProductsPage} />
+        <Route path="/kategori/:animal/:subcategory/:brand" component={BrandProductsPage} />
         <Route path="/kategori/:animal/:subcategory" component={BrandsPage} />
         <Route path="/kategori/:animal" component={CategoryPage} />
         <Route path="/odeme" component={Checkout} />

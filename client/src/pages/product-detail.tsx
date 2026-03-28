@@ -325,6 +325,10 @@ export default function ProductDetailPage() {
   }, [resolvedData]);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [productId]);
+
+  useEffect(() => {
     if (resolvedData?.product) {
       const p = resolvedData.product;
       addRecentlyViewed({ id: p.id, name: p.name, price: p.price, img: p.img });
