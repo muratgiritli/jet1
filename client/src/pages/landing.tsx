@@ -924,10 +924,6 @@ export default function Landing() {
           <QuickActions />
         </div>
 
-        <div className="mt-4 md:mt-6">
-          <TrustBadges />
-        </div>
-
         <div className="mt-4 md:mt-8">
           <LocationBanner />
         </div>
@@ -963,6 +959,10 @@ export default function Landing() {
               <ArrowRight className="w-5 h-5 text-white/70 shrink-0" />
             </div>
           </Link>
+        </div>
+
+        <div className="mt-4 md:mt-6">
+          <TrustBadges />
         </div>
 
         <div className="mt-5 md:mt-8">
