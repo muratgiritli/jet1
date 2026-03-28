@@ -321,19 +321,21 @@ function OrdersSection() {
     }
     let addedCount = 0;
     let unavailableCount = 0;
+    const itemsToAdd: { id: string; qty: number }[] = [];
     for (const item of order.items) {
       const product = allProducts.find((p: any) => p.id === item.productId);
       if (product && product.stock > 0) {
-        const qty = Math.min(item.quantity, product.stock);
-        for (let i = 0; i < qty; i++) {
-          updateQty(String(product.id), 1);
-        }
+        const qty = Math.min(item.quantity || 1, product.stock);
+        itemsToAdd.push({ id: String(product.id), qty });
         addedCount++;
       } else {
         unavailableCount++;
       }
     }
     if (addedCount > 0) {
+      for (const item of itemsToAdd) {
+        updateQty(item.id, item.qty);
+      }
       toast({
         title: `${addedCount} ürün sepete eklendi`,
         description: unavailableCount > 0 ? `${unavailableCount} ürün stokta yok` : undefined,
