@@ -9,7 +9,7 @@ I prefer iterative development with clear communication on significant changes. 
 ## System Architecture
 The application features a modern web architecture:
 - **Frontend**: Developed with React and TypeScript, leveraging `shadcn/ui` components, Tailwind CSS for styling, and `framer-motion` for smooth animations.
-- **Backend**: Implemented using Express, providing a robust API layer. Authentication is session-based, secured with `bcryptjs` for password hashing and `express-session` with `connect-pg-simple` for session management. SMS OTP for customer authentication is handled via NetGSM.
+- **Backend**: Implemented using Express, providing a robust API layer. Authentication is session-based, secured with `bcryptjs` for password hashing and `express-session` with `connect-pg-simple` for session management. SMS OTP for customer authentication is handled via NetGSM. Trusted device system: after successful OTP verification, a device token is stored in localStorage and DB (`trusted_devices` table). Same browser + same phone number skips OTP for 30 days, auto-renewing on each login.
 - **Database**: PostgreSQL is used as the primary data store, managed with Drizzle ORM. It stores all critical data including products, categories, orders, customer profiles, loyalty points, and delivery configurations.
 - **Product Images**: Stored as base64 within the PostgreSQL database (`product_images` table) for high availability and easy deployment. Images are processed (auto-downloaded from URLs, converted to WebP, resized to 800x800 with 80% quality) upon upload via the admin panel.
 - **Dynamic Content**: All product and category listings are dynamically fetched from the database via API, ensuring up-to-date content without static file modifications.

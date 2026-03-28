@@ -1068,10 +1068,35 @@ export async function registerRoutes(
     if (rateLimit(`otp:${ip}`, 10, 60 * 60 * 1000)) {
       return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
     }
-    const { phone } = req.body;
+    const { phone, deviceToken } = req.body;
     if (!phone) return res.status(400).json({ message: "Telefon numarası gerekli" });
     const normalized = phone.replace(/\D/g, "");
     if (normalized.length < 10) return res.status(400).json({ message: "Geçerli bir telefon numarası girin" });
+
+    if (deviceToken && typeof deviceToken === "string" && deviceToken.length > 20) {
+      try {
+        const result = await sharedPool.query(
+          "SELECT td.customer_id, td.id FROM trusted_devices td WHERE td.phone = $1 AND td.device_token = $2 AND td.expires_at > NOW()",
+          [normalized, deviceToken]
+        );
+        if (result.rows.length > 0) {
+          const customerId = result.rows[0].customer_id;
+          const customer = await storage.getCustomer(customerId);
+          if (customer && customer.phone === normalized) {
+            (req.session as any).customerId = customer.id;
+            await sharedPool.query(
+              "UPDATE trusted_devices SET created_at = NOW(), expires_at = NOW() + INTERVAL '30 days' WHERE id = $1",
+              [result.rows[0].id]
+            );
+            return res.json({
+              message: "Güvenilir cihaz ile giriş yapıldı",
+              trustedLogin: true,
+              customer: { id: customer.id, phone: customer.phone, name: customer.name, address: customer.address }
+            });
+          }
+        }
+      } catch (e) {}
+    }
 
     const sendTrack = otpSendCount.get(normalized);
     if (sendTrack && sendTrack.resetAt > Date.now() && sendTrack.count >= 5) {
@@ -1139,7 +1164,20 @@ export async function registerRoutes(
     }
 
     (req.session as any).customerId = customer.id;
-    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
+
+    let newDeviceToken: string | undefined;
+    try {
+      const token = crypto.randomBytes(48).toString("hex");
+      const ua = req.headers["user-agent"] || "";
+      await sharedPool.query(
+        "INSERT INTO trusted_devices (customer_id, phone, device_token, user_agent, expires_at) VALUES ($1, $2, $3, $4, NOW() + INTERVAL '30 days')",
+        [customer.id, normalized, token, ua]
+      );
+      newDeviceToken = token;
+      await sharedPool.query("DELETE FROM trusted_devices WHERE expires_at < NOW()");
+    } catch (e) {}
+
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, deviceToken: newDeviceToken });
   });
 
   app.post("/api/customer/register", async (req, res) => {

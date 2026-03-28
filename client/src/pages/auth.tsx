@@ -67,8 +67,18 @@ export default function AuthPage() {
     setFormErrors({});
     setLoading(true);
     try {
-      const res = await apiRequest("POST", "/api/otp/send", { phone: normalized });
+      let deviceToken: string | undefined;
+      try {
+        const tokens = JSON.parse(localStorage.getItem("jetgo_trusted_devices") || "{}");
+        deviceToken = tokens[normalized];
+      } catch {}
+      const res = await apiRequest("POST", "/api/otp/send", { phone: normalized, deviceToken });
       const data = await res.json();
+      if (data.trustedLogin && data.customer) {
+        setLocation(new URLSearchParams(window.location.search).get("redirect") || "/");
+        window.location.reload();
+        return;
+      }
       setIsExistingUser(data.isExisting);
       setStep("otp");
       setCountdown(180);

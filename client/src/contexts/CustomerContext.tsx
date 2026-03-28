@@ -79,6 +79,13 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   const loginWithOtp = useCallback(async (phone: string, code: string, name?: string, address?: string) => {
     const res = await apiRequest("POST", "/api/otp/verify", { phone, code, name, address });
     const data = await res.json();
+    if (data.deviceToken) {
+      try {
+        const tokens = JSON.parse(localStorage.getItem("jetgo_trusted_devices") || "{}");
+        tokens[phone] = data.deviceToken;
+        localStorage.setItem("jetgo_trusted_devices", JSON.stringify(tokens));
+      } catch {}
+    }
     setCustomer(data);
     setTimeout(syncLocalFavorites, 500);
   }, [syncLocalFavorites]);

@@ -205,8 +205,17 @@ export default function Checkout() {
     setAuthErrors({});
     setAuthLoading(true);
     try {
-      const res = await apiRequest("POST", "/api/otp/send", { phone: normalized });
+      let deviceToken: string | undefined;
+      try {
+        const tokens = JSON.parse(localStorage.getItem("jetgo_trusted_devices") || "{}");
+        deviceToken = tokens[normalized];
+      } catch {}
+      const res = await apiRequest("POST", "/api/otp/send", { phone: normalized, deviceToken });
       const data = await res.json();
+      if (data.trustedLogin && data.customer) {
+        window.location.reload();
+        return;
+      }
       setAuthIsExisting(data.isExisting);
       setAuthStep("otp");
       setAuthCountdown(180);
