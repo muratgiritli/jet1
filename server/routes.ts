@@ -197,6 +197,8 @@ export async function registerRoutes(
     res.setHeader("X-XSS-Protection", "1; mode=block");
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     res.setHeader("Permissions-Policy", "camera=(), microphone=(), geolocation=(self)");
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.google-analytics.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self';");
     next();
   });
 
@@ -1181,6 +1183,10 @@ export async function registerRoutes(
   });
 
   app.post("/api/customer/register", async (req, res) => {
+    const ip = req.ip || "unknown";
+    if (rateLimit(`register:${ip}`, 5, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla kayıt denemesi. Lütfen daha sonra tekrar deneyin." });
+    }
     const { phone, password, name, address } = req.body;
     if (!phone || !password || !name) {
       return res.status(400).json({ message: "Telefon, şifre ve ad soyad gerekli" });
@@ -1203,11 +1209,18 @@ export async function registerRoutes(
   });
 
   app.post("/api/customer/login", async (req, res) => {
+    const ip = req.ip || "unknown";
+    if (rateLimit(`custlogin:${ip}`, 10, 15 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla giriş denemesi. 15 dakika bekleyin." });
+    }
     const { phone, password } = req.body;
     if (!phone || !password) {
       return res.status(400).json({ message: "Telefon ve şifre gerekli" });
     }
     const normalized = phone.replace(/\D/g, "");
+    if (rateLimit(`custlogin:phone:${normalized}`, 5, 15 * 60 * 1000)) {
+      return res.status(429).json({ message: "Bu numara için çok fazla deneme. 15 dakika bekleyin." });
+    }
     const customer = await storage.getCustomerByPhone(normalized);
     if (!customer) return res.status(401).json({ message: "Telefon numarası veya şifre hatalı" });
     const valid = await bcrypt.compare(password, customer.password);
@@ -1534,11 +1547,15 @@ export async function registerRoutes(
   });
 
   app.post("/api/stock-alerts", async (req, res) => {
+    const ip = req.ip || "unknown";
+    if (rateLimit(`stockalert:${ip}`, 10, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
     const schema = z.object({
       productId: z.number(),
-      customerName: z.string().min(1),
-      phone: z.string().min(7),
-      productName: z.string(),
+      customerName: z.string().min(1).max(100),
+      phone: z.string().min(7).max(20),
+      productName: z.string().max(300),
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
@@ -2197,10 +2214,17 @@ export async function registerRoutes(
   });
 
   app.post("/api/pet-ask", async (req: Request, res: Response) => {
+    const ip = req.ip || "unknown";
+    if (rateLimit(`petask:${ip}`, 5, 60 * 1000)) {
+      return res.status(429).json({ error: "Çok fazla soru. Lütfen biraz bekleyin." });
+    }
+    if (rateLimit(`petask:global`, 100, 60 * 60 * 1000)) {
+      return res.status(429).json({ error: "Sistem yoğun. Lütfen daha sonra tekrar deneyin." });
+    }
     try {
       const { question } = req.body;
-      if (!question || typeof question !== "string" || question.trim().length < 2) {
-        return res.status(400).json({ error: "Lütfen bir soru yazın" });
+      if (!question || typeof question !== "string" || question.trim().length < 2 || question.trim().length > 500) {
+        return res.status(400).json({ error: "Lütfen 2-500 karakter arası bir soru yazın" });
       }
 
       const completion = await petAI.chat.completions.create({
@@ -2225,8 +2249,12 @@ export async function registerRoutes(
   });
 
   app.post("/api/coupons/validate", async (req, res) => {
+    const ip = req.ip || "unknown";
+    if (rateLimit(`coupon:${ip}`, 15, 60 * 1000)) {
+      return res.status(429).json({ valid: false, message: "Çok fazla deneme. Lütfen bekleyin." });
+    }
     const { code, subtotal } = req.body;
-    if (!code) return res.status(400).json({ valid: false, message: "Kupon kodu gerekli" });
+    if (!code || typeof code !== "string" || code.length > 50) return res.status(400).json({ valid: false, message: "Kupon kodu gerekli" });
     const coupon = await storage.getCouponByCode(code);
     if (!coupon || !coupon.isActive) return res.json({ valid: false, message: "Geçersiz kupon kodu" });
     const now = new Date();

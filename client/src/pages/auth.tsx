@@ -133,8 +133,8 @@ export default function AuthPage() {
     setAutoVerifying(true);
     const normalized = phone.replace(/\D/g, "");
     try {
+      await loginWithOtp(normalized, code);
       if (isExistingUser) {
-        await loginWithOtp(normalized, code);
         const params = new URLSearchParams(window.location.search);
         setLocation(params.get("redirect") || "/");
       } else {
