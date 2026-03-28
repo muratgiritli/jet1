@@ -195,21 +195,21 @@ function OrderCounter() {
 function QuickActions() {
   return (
     <div data-testid="section-quick-actions">
-      <div className="grid grid-cols-4 gap-2 md:gap-4">
+      <div className="grid grid-cols-4 gap-1.5 md:gap-4">
         {QUICK_ACTIONS.map((a, i) => (
           <div
             key={i}
-            className={`${a.bg} rounded-xl p-2.5 md:p-4 flex flex-col items-center gap-1.5 md:gap-2 hover:shadow-md transition-shadow`}
+            className={`${a.bg} rounded-lg md:rounded-xl p-1.5 md:p-4 flex flex-col items-center gap-1 md:gap-2`}
             data-testid={`quick-action-${i}`}
           >
             <div
-              className="w-9 h-9 md:w-12 md:h-12 rounded-full flex items-center justify-center"
+              className="w-7 h-7 md:w-12 md:h-12 rounded-full flex items-center justify-center"
               style={{ backgroundColor: a.color + "15" }}
             >
-              <a.icon className="w-[18px] h-[18px] md:w-6 md:h-6" style={{ color: a.color }} />
+              <a.icon className="w-3.5 h-3.5 md:w-6 md:h-6" style={{ color: a.color }} />
             </div>
             <span
-              className="text-[10px] md:text-xs font-bold text-center leading-tight whitespace-pre-line"
+              className="text-[8px] md:text-xs font-bold text-center leading-tight whitespace-pre-line"
               style={{ color: a.color }}
             >
               {a.label}
