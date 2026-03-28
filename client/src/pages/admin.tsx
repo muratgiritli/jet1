@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -64,6 +64,7 @@ import {
   ScanLine,
   Camera,
   Save,
+  Settings,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1108,6 +1109,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "banner", label: "Banner", icon: <ImageLucide className="w-3.5 h-3.5" /> },
             { key: "raporlama", label: "Raporlama", icon: <BarChart3 className="w-3.5 h-3.5" /> },
             { key: "stoksayim", label: "Stok Sayım", icon: <ScanLine className="w-3.5 h-3.5" /> },
+            { key: "ayarlar", label: "Ayarlar", icon: <Settings className="w-3.5 h-3.5" /> },
           ].map(tab => (
             <button
               key={tab.key}
@@ -1137,6 +1139,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "banner" && <BannersSection />}
         {activeSection === "raporlama" && <ReportsSection />}
         {activeSection === "stoksayim" && <StokSayimSection />}
+        {activeSection === "ayarlar" && <SettingsSection />}
         {activeSection === "yonetim" && <>
           {!yonetimSub && (
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3" data-testid="yonetim-buttons">
@@ -4276,6 +4279,120 @@ function CouponsSection() {
         )}
       </div>
     </section>
+  );
+}
+
+function SettingsSection() {
+  const { toast } = useToast();
+  const { data: settings, isLoading } = useQuery<Record<string, string>>({
+    queryKey: ["/api/admin/settings"],
+  });
+
+  const [form, setForm] = useState({
+    pet_base_points: "",
+    pet_streak_divisor: "",
+    pet_max_points: "",
+    pet_base_exp: "",
+    pet_streak_exp_bonus: "",
+    loyalty_percent: "",
+  });
+
+  useEffect(() => {
+    if (settings) {
+      setForm({
+        pet_base_points: settings.pet_base_points || "1",
+        pet_streak_divisor: settings.pet_streak_divisor || "3",
+        pet_max_points: settings.pet_max_points || "5",
+        pet_base_exp: settings.pet_base_exp || "10",
+        pet_streak_exp_bonus: settings.pet_streak_exp_bonus || "2",
+        loyalty_percent: settings.loyalty_percent || "5",
+      });
+    }
+  }, [settings]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (data: Record<string, string>) => {
+      const res = await apiRequest("PATCH", "/api/admin/settings", data);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      toast({ title: "Ayarlar kaydedildi" });
+    },
+    onError: () => {
+      toast({ title: "Kaydetme hatası", variant: "destructive" });
+    },
+  });
+
+  const handleSave = () => {
+    saveMutation.mutate(form);
+  };
+
+  if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+
+  const fields = [
+    { key: "loyalty_percent", label: "Sipariş Para Puan Oranı (%)", desc: "Her siparişte toplam tutarın yüzde kaçı Para Puan olarak kazanılır", icon: "💰" },
+    { key: "pet_base_points", label: "Besleme Temel Puan", desc: "Her besleme için verilecek minimum puan", icon: "🐾" },
+    { key: "pet_streak_divisor", label: "Seri Bölen", desc: "Kaç günde bir bonus puan artar (ör: 3 = her 3 günde +1 puan)", icon: "🔥" },
+    { key: "pet_max_points", label: "Maksimum Günlük Puan", desc: "Bir beslemede kazanılabilecek en yüksek puan", icon: "⭐" },
+    { key: "pet_base_exp", label: "Besleme Temel XP", desc: "Her beslemede kazanılan deneyim puanı", icon: "📊" },
+    { key: "pet_streak_exp_bonus", label: "Seri XP Bonusu", desc: "Seri gün başına ek deneyim puanı (seri × bu değer)", icon: "✨" },
+  ];
+
+  return (
+    <div className="space-y-4" data-testid="section-ayarlar">
+      <h2 className="text-lg font-bold">Puan & Besleme Ayarları</h2>
+
+      <Card>
+        <CardContent className="pt-4 space-y-4">
+          {fields.map(f => (
+            <div key={f.key} className="flex items-start gap-3 pb-3 border-b last:border-b-0 last:pb-0">
+              <span className="text-xl mt-1">{f.icon}</span>
+              <div className="flex-1 min-w-0">
+                <Label className="text-sm font-bold">{f.label}</Label>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{f.desc}</p>
+              </div>
+              <Input
+                type="number"
+                min="0"
+                max="100"
+                step="1"
+                value={form[f.key as keyof typeof form]}
+                onChange={e => setForm(prev => ({ ...prev, [f.key]: e.target.value }))}
+                className="w-20 text-center font-bold"
+                data-testid={`input-setting-${f.key}`}
+              />
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-4">
+          <h3 className="text-sm font-bold mb-2">Puan Formülü Önizleme</h3>
+          <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">
+            <p><strong>Sipariş kazanımı:</strong> Toplam tutar × %{form.loyalty_percent || 5}</p>
+            <p><strong>Besleme puanı:</strong> {form.pet_base_points || 1} + (seri gün ÷ {form.pet_streak_divisor || 3}), maks {form.pet_max_points || 5}</p>
+            <p><strong>Deneyim:</strong> {form.pet_base_exp || 10} + (seri gün × {form.pet_streak_exp_bonus || 2})</p>
+            <div className="border-t pt-2 mt-2">
+              <p className="text-muted-foreground">Örnek: 500 TL sipariş = <strong>{Math.round(500 * (Number(form.loyalty_percent || 5) / 100))} puan</strong></p>
+              <p className="text-muted-foreground">Örnek: 10. gün besleme = <strong>{Math.min(Number(form.pet_base_points || 1) + Math.floor(10 / Math.max(Number(form.pet_streak_divisor || 3), 1)), Number(form.pet_max_points || 5))} puan</strong>, {Number(form.pet_base_exp || 10) + 10 * Number(form.pet_streak_exp_bonus || 2)} XP</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Button
+        onClick={handleSave}
+        disabled={saveMutation.isPending}
+        className="w-full"
+        style={{ backgroundColor: "#6B3480" }}
+        data-testid="btn-save-settings"
+      >
+        {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
+        Ayarları Kaydet
+      </Button>
+    </div>
   );
 }
 

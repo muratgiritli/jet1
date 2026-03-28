@@ -1041,19 +1041,57 @@ export async function registerRoutes(
         });
       }
       if (!isCampaignOrder) {
-        const earnedPoints = Math.round(parsed.data.subtotal * 0.05 * 100) / 100;
+        let loyaltyPct = 5;
+        try {
+          const lpResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'loyalty_percent'");
+          if (lpResult.rows.length > 0) loyaltyPct = Number(lpResult.rows[0].value) || 5;
+        } catch {}
+        const earnedPoints = Math.round(parsed.data.subtotal * (loyaltyPct / 100) * 100) / 100;
         if (earnedPoints > 0) {
           await storage.addLoyaltyPoints({
             customerId,
             orderId: order.id,
             amount: earnedPoints,
             type: "earned",
-            description: `Sipariş #${order.id} - %5 Para Puan kazanımı`,
+            description: `Sipariş #${order.id} - %${loyaltyPct} Para Puan kazanımı`,
           });
         }
       }
     }
     res.status(201).json(order);
+  });
+
+  app.get("/api/admin/settings", requireAdmin, async (_req, res) => {
+    try {
+      const result = await sharedPool.query("SELECT key, value FROM app_settings");
+      const settings: Record<string, string> = {};
+      for (const row of result.rows) settings[row.key] = row.value;
+      res.json(settings);
+    } catch {
+      res.json({});
+    }
+  });
+
+  app.patch("/api/admin/settings", requireAdmin, async (req, res) => {
+    try {
+      const updates = req.body;
+      const validKeys = ["pet_base_points", "pet_streak_divisor", "pet_max_points", "pet_base_exp", "pet_streak_exp_bonus", "loyalty_percent"];
+      for (const [key, value] of Object.entries(updates)) {
+        if (!validKeys.includes(key)) continue;
+        const numVal = Number(value);
+        if (isNaN(numVal) || numVal < 0 || numVal > 100) continue;
+        await sharedPool.query(
+          "INSERT INTO app_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()",
+          [key, String(numVal)]
+        );
+      }
+      const result = await sharedPool.query("SELECT key, value FROM app_settings");
+      const settings: Record<string, string> = {};
+      for (const row of result.rows) settings[row.key] = row.value;
+      res.json(settings);
+    } catch {
+      res.status(500).json({ message: "Ayarlar güncellenemedi" });
+    }
   });
 
   app.get("/api/admin/orders", requireAdmin, async (_req, res) => {
@@ -2372,10 +2410,19 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Bugün zaten besledin! Yarın tekrar gel.", pet });
       }
 
+      const settingsResult = await sharedPool.query("SELECT key, value FROM app_settings WHERE key IN ('pet_base_points', 'pet_streak_divisor', 'pet_max_points', 'pet_base_exp', 'pet_streak_exp_bonus')");
+      const s: Record<string, number> = {};
+      for (const row of settingsResult.rows) s[row.key] = Number(row.value);
+      const basePoints = s.pet_base_points ?? 1;
+      const streakDiv = s.pet_streak_divisor ?? 3;
+      const maxPoints = s.pet_max_points ?? 5;
+      const baseExp = s.pet_base_exp ?? 10;
+      const streakExpBonus = s.pet_streak_exp_bonus ?? 2;
+
       const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
       const newStreak = pet.lastFeedDate === yesterday ? pet.streak + 1 : 1;
-      const feedPoints = Math.min(1 + Math.floor(newStreak / 3), 5);
-      const newExp = pet.experience + 10 + (newStreak * 2);
+      const feedPoints = Math.min(basePoints + Math.floor(newStreak / Math.max(streakDiv, 1)), maxPoints);
+      const newExp = pet.experience + baseExp + (newStreak * streakExpBonus);
       const newLevel = Math.floor(newExp / 100) + 1;
 
       const [updated] = await db.update(virtualPets)
