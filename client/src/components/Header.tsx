@@ -50,8 +50,8 @@ export default function Header() {
                   <div className="w-8 h-8 rounded-full bg-white/15 backdrop-blur-sm flex items-center justify-center">
                     <User className="w-4 h-4" />
                   </div>
-                  <span className="hidden md:inline text-sm font-medium whitespace-nowrap">
-                    {customer?.name?.split(" ")[0] || "Hesabım"}
+                  <span className="text-[10px] md:text-sm font-medium whitespace-nowrap">
+                    Hesabım
                   </span>
                 </button>
               </Link>
