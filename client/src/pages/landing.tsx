@@ -279,7 +279,7 @@ function CategoryGrid() {
 
 function LocationBanner() {
   return (
-    <div data-testid="section-location">
+    <div data-testid="section-location" className="hidden md:block">
       <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-3 md:p-4 flex items-center gap-3 border border-emerald-100">
         <div className="relative shrink-0">
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-emerald-500 flex items-center justify-center">
@@ -898,15 +898,14 @@ export default function Landing() {
               className="relative overflow-hidden rounded-2xl p-4 cursor-pointer shadow-lg transition-transform active:scale-[0.97]"
               style={{ background: "linear-gradient(135deg, #6B3480 0%, #9B59B6 50%, #6B3480 100%)" }}
             >
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-2 left-4 text-5xl">🐾</div>
-                <div className="absolute bottom-1 right-6 text-4xl">🛒</div>
-                <div className="absolute top-3 right-16 text-3xl">✨</div>
-              </div>
               <div className="relative flex items-center justify-between">
                 <div>
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                    <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">Samsun Atakum Teslimat Aktif</span>
+                  </div>
                   <p className="text-base font-extrabold text-white tracking-tight">Alışverişe Başla</p>
-                  <p className="text-[11px] text-white/80 mt-0.5">900+ ürün, aynı gün teslimat</p>
+                  <p className="text-[11px] text-white/70 mt-0.5">900+ ürün · Aynı gün kapıda teslimat</p>
                 </div>
                 <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
                   <ArrowRight className="w-5 h-5 text-white" />
@@ -922,10 +921,6 @@ export default function Landing() {
 
         <div className="mt-4 md:mt-8">
           <QuickActions />
-        </div>
-
-        <div className="mt-4 md:mt-8">
-          <LocationBanner />
         </div>
 
         <div className="mt-4 md:mt-6">
