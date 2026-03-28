@@ -580,7 +580,7 @@ function VeterinerSection() {
 
 function RepeatOrderBanner() {
   const { customer, isLoggedIn } = useCustomer();
-  const { addToCart } = useCart();
+  const { updateQty } = useCart();
   const [added, setAdded] = useState(false);
 
   const { data: orders } = useQuery<any[]>({
@@ -602,15 +602,7 @@ function RepeatOrderBanner() {
   const handleRepeat = () => {
     items.forEach((item: any) => {
       if (item.productId && item.quantity) {
-        for (let i = 0; i < item.quantity; i++) {
-          addToCart({
-            id: item.productId,
-            name: item.name,
-            price: item.price,
-            img: item.img || null,
-            stock: 999,
-          } as any);
-        }
+        updateQty(String(item.productId), item.quantity);
       }
     });
     setAdded(true);
