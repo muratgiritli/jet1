@@ -799,6 +799,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [newBreedColor, setNewBreedColor] = useState("#e65100");
   const [newBreedSortOrder, setNewBreedSortOrder] = useState("0");
 
+  const [dogBreedStatsProductId, setDogBreedStatsProductId] = useState<number | null>(null);
+  const [newDogBreedName, setNewDogBreedName] = useState("");
+  const [newDogBreedPercentage, setNewDogBreedPercentage] = useState("");
+  const [newDogBreedColor, setNewDogBreedColor] = useState("#1565c0");
+  const [newDogBreedSortOrder, setNewDogBreedSortOrder] = useState("0");
+
   const { data: crossSellSections = [] } = useQuery<(CrossSellSection & { items: CrossSellItem[] })[]>({
     queryKey: ["/api/cross-sell-sections"],
   });
@@ -870,6 +876,33 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/breed-stats", breedStatsProductId] });
+    },
+  });
+
+  const { data: dogBreedStatsForProduct = [] } = useQuery<BreedStat[]>({
+    queryKey: ["/api/breed-stats", dogBreedStatsProductId],
+    enabled: !!dogBreedStatsProductId,
+  });
+
+  const addDogBreedStatMutation = useMutation({
+    mutationFn: async (data: { productId: number; breedName: string; percentage: number; color: string; sortOrder: number }) => {
+      await apiRequest("POST", "/api/admin/breed-stats", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/breed-stats", dogBreedStatsProductId] });
+      setNewDogBreedName("");
+      setNewDogBreedPercentage("");
+      setNewDogBreedColor("#1565c0");
+      setNewDogBreedSortOrder("0");
+    },
+  });
+
+  const deleteDogBreedStatMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/breed-stats/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/breed-stats", dogBreedStatsProductId] });
     },
   });
 
@@ -1155,6 +1188,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 { key: "crosssell", label: "Sıklıkla Birlikte Alınan", icon: <ShoppingBag className="w-6 h-6" />, color: "text-pink-600" },
                 { key: "taksit", label: "Taksit Oranları", icon: <CreditCard className="w-6 h-6" />, color: "text-emerald-600" },
                 { key: "kediturustats", label: "Kedi Türü İstatistikleri", icon: <BarChart3 className="w-6 h-6" />, color: "text-violet-600" },
+                { key: "kopekturustats", label: "Köpek Türü İstatistikleri", icon: <BarChart3 className="w-6 h-6" />, color: "text-blue-600" },
                 { key: "hatirlatmalar", label: "Tekrar Sipariş Hatırlatmaları", icon: <Clock className="w-6 h-6" />, color: "text-teal-600" },
               ].map(item => (
                 <button
@@ -3408,7 +3442,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <SelectValue placeholder="İstatistik eklemek istediğiniz ürünü seçin" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allProducts.map((p) => (
+                    {allProducts.filter(p => p.animal === "kedi").map((p) => (
                       <SelectItem key={p.id} value={String(p.id)} data-testid={`option-breed-product-${p.id}`}>
                         {p.name}
                       </SelectItem>
@@ -3514,6 +3548,136 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       data-testid="btn-add-breed-stat"
                     >
                       {addBreedStatMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "İstatistik Ekle"}
+                    </Button>
+                  </div>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </section>}
+
+        {yonetimSub === "kopekturustats" && <section>
+          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
+            <h2 className="text-lg font-bold" data-testid="text-section-dog-breed-stats">Köpek Türü İstatistikleri</h2>
+          </div>
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <div className="space-y-2">
+                <Label>Ürün Seçin</Label>
+                <Select
+                  value={dogBreedStatsProductId ? String(dogBreedStatsProductId) : ""}
+                  onValueChange={(val) => setDogBreedStatsProductId(parseInt(val))}
+                >
+                  <SelectTrigger data-testid="select-dog-breed-stats-product">
+                    <SelectValue placeholder="İstatistik eklemek istediğiniz köpek ürünü seçin" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {allProducts.filter(p => p.animal === "kopek").map((p) => (
+                      <SelectItem key={p.id} value={String(p.id)} data-testid={`option-dog-breed-product-${p.id}`}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {dogBreedStatsProductId && (
+                <>
+                  {dogBreedStatsForProduct.length > 0 && (
+                    <div className="space-y-2" data-testid="list-dog-breed-stats">
+                      <Label className="text-sm font-semibold">Mevcut İstatistikler</Label>
+                      {dogBreedStatsForProduct
+                        .sort((a, b) => a.sortOrder - b.sortOrder)
+                        .map((stat) => (
+                        <div key={stat.id} className="flex items-center gap-3 py-2 px-3 rounded-md bg-muted/30" data-testid={`row-admin-dog-breed-stat-${stat.id}`}>
+                          <div className="w-4 h-4 rounded-full shrink-0" style={{ backgroundColor: stat.color }} />
+                          <span className="text-sm font-medium flex-1">{stat.breedName}</span>
+                          <span className="text-sm font-bold">{stat.percentage}%</span>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-7 w-7"
+                            onClick={() => deleteDogBreedStatMutation.mutate(stat.id)}
+                            data-testid={`btn-delete-dog-breed-stat-${stat.id}`}
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="border-t pt-4 space-y-3">
+                    <Label className="text-sm font-semibold">Yeni İstatistik Ekle</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Köpek Türü</Label>
+                        <Input
+                          value={newDogBreedName}
+                          onChange={(e) => setNewDogBreedName(e.target.value)}
+                          placeholder="Golden Retriever"
+                          data-testid="input-dog-breed-name"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Yüzde (%)</Label>
+                        <Input
+                          type="number"
+                          min="1"
+                          max="100"
+                          value={newDogBreedPercentage}
+                          onChange={(e) => setNewDogBreedPercentage(e.target.value)}
+                          placeholder="28"
+                          data-testid="input-dog-breed-percentage"
+                        />
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="space-y-1">
+                        <Label className="text-xs">Renk</Label>
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="color"
+                            value={newDogBreedColor}
+                            onChange={(e) => setNewDogBreedColor(e.target.value)}
+                            className="w-8 h-8 rounded cursor-pointer border"
+                            data-testid="input-dog-breed-color"
+                          />
+                          <Input
+                            value={newDogBreedColor}
+                            onChange={(e) => setNewDogBreedColor(e.target.value)}
+                            placeholder="#1565c0"
+                            className="flex-1"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs">Sıralama</Label>
+                        <Input
+                          type="number"
+                          value={newDogBreedSortOrder}
+                          onChange={(e) => setNewDogBreedSortOrder(e.target.value)}
+                          data-testid="input-dog-breed-sort-order"
+                        />
+                      </div>
+                    </div>
+                    <Button
+                      className="w-full"
+                      disabled={!newDogBreedName || !newDogBreedPercentage || addDogBreedStatMutation.isPending}
+                      onClick={() => {
+                        if (dogBreedStatsProductId && newDogBreedName && newDogBreedPercentage) {
+                          addDogBreedStatMutation.mutate({
+                            productId: dogBreedStatsProductId,
+                            breedName: newDogBreedName,
+                            percentage: parseInt(newDogBreedPercentage),
+                            color: newDogBreedColor,
+                            sortOrder: parseInt(newDogBreedSortOrder) || 0,
+                          });
+                        }
+                      }}
+                      data-testid="btn-add-dog-breed-stat"
+                    >
+                      {addDogBreedStatMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "İstatistik Ekle"}
                     </Button>
                   </div>
                 </>
