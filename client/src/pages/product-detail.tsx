@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Link, useRoute, useSearch } from "wouter";
+import { Link, useRoute, useSearch, useLocation } from "wouter";
 import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory, CrossSellSection, BreedStat, InstallmentRate } from "@shared/schema";
@@ -152,6 +152,7 @@ export default function ProductDetailPage() {
   const isCampaignMode = new URLSearchParams(searchStr).get("kampanya") === "1";
 
   const { basket, updateQty, grandTotal, itemCount } = useCart();
+  const [, setLocation] = useLocation();
 
   const staticProduct = useMemo(() => {
     if (isNumericId) return null;
@@ -629,27 +630,24 @@ export default function ProductDetailPage() {
                       SEPETE EKLE
                     </Button>
                     {isCampaignMode && hasExtraInCart && quantity > 0 && (
-                      <Link href="/odeme" className="w-full">
-                        <Button
+                      <Button
                           className="w-full"
                           style={{ backgroundColor: "#2e7d32" }}
                           data-testid="btn-campaign-go-cart"
+                          onClick={() => setLocation("/odeme")}
                         >
                           SEPETE GİT
                         </Button>
-                      </Link>
                     )}
                     {!isCampaignMode && (
-                      <Link href="/odeme" className="flex-1">
-                        <Button
+                      <Button
                           variant="outline"
-                          className="w-full"
-                          onClick={() => { if (quantity === 0) updateQty(pid, 1); }}
+                          className="w-full flex-1"
+                          onClick={() => { if (quantity === 0) updateQty(pid, 1); setLocation("/odeme"); }}
                           data-testid="btn-buy-now"
                         >
                           HEMEN AL
                         </Button>
-                      </Link>
                     )}
                   </div>
                 </div>

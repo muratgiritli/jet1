@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Link, useRoute } from "wouter";
+import { Link, useRoute, useLocation } from "wouter";
 import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, Eye, ShieldCheck } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
@@ -431,6 +431,7 @@ export default function BrandProductsPage() {
   const brandSlug = params?.brand || "";
 
   const { basket, updateQty, grandTotal, itemCount } = useCart();
+  const [, setLocation] = useLocation();
   const backUrl = subcategory === brandSlug ? `/kategori/${animal}` : `/kategori/${animal}/${subcategory}`;
 
   const { data, isLoading } = useQuery<{ category: BrandCategory; products: Product[] }>({
@@ -523,12 +524,10 @@ export default function BrandProductsPage() {
                   {Math.round(grandTotal)} TL
                 </span>
               </div>
-              <Link href="/odeme">
-                <Button variant="default" data-testid="btn-sticky-checkout">
+              <Button variant="default" data-testid="btn-sticky-checkout" onClick={() => setLocation("/odeme")}>
                   <ShoppingCart className="w-4 h-4" />
                   Siparişi Onayla
                 </Button>
-              </Link>
             </div>
           </motion.div>
         )}

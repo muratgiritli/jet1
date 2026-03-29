@@ -2,12 +2,12 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Link, useLocation } from "wouter";
+import { useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
 
 export default function FloatingCartBar() {
   const { itemCount, subtotal, hasCampaignItems, campaignExtraCount } = useCart();
-  const [location] = useLocation();
+  const [location, setLocation] = useLocation();
   const [showWarning, setShowWarning] = useState(false);
 
   const isCampaignPage = location === "/kampanya" || window.location.search.includes("kampanya=1");
@@ -22,6 +22,10 @@ export default function FloatingCartBar() {
       const el = document.getElementById("campaign-extras-section");
       if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
     }
+  };
+
+  const goToCart = () => {
+    setLocation("/odeme");
   };
 
   return (
@@ -83,19 +87,15 @@ export default function FloatingCartBar() {
                   </span>
                 </div>
               </div>
-              {needsExtra ? (
-                <Button variant="default" size="sm" onClick={handleCampaignBlock} data-testid="btn-float-go-cart">
-                  <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                  Sepete Git
-                </Button>
-              ) : (
-                <Link href="/odeme">
-                  <Button variant="default" size="sm" data-testid="btn-float-go-cart">
-                    <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                    Sepete Git
-                  </Button>
-                </Link>
-              )}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={needsExtra ? handleCampaignBlock : goToCart}
+                data-testid="btn-float-go-cart"
+              >
+                <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                Sepete Git
+              </Button>
             </div>
           </motion.div>
           <motion.div
@@ -114,19 +114,15 @@ export default function FloatingCartBar() {
                   </span>
                 </div>
               </div>
-              {needsExtra ? (
-                <Button variant="default" size="sm" onClick={handleCampaignBlock} data-testid="btn-float-go-cart-desktop">
-                  <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                  Sepete Git
-                </Button>
-              ) : (
-                <Link href="/odeme">
-                  <Button variant="default" size="sm" data-testid="btn-float-go-cart-desktop">
-                    <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                    Sepete Git
-                  </Button>
-                </Link>
-              )}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={needsExtra ? handleCampaignBlock : goToCart}
+                data-testid="btn-float-go-cart-desktop"
+              >
+                <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                Sepete Git
+              </Button>
             </div>
           </motion.div>
         </>

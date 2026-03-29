@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Link, useSearch } from "wouter";
+import { Link, useSearch, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
   ShoppingCart,
@@ -129,6 +129,7 @@ export default function Home() {
     grandTotal,
     itemCount,
   } = useCart();
+  const [, setLocation] = useLocation();
 
   const searchString = useSearch();
   const params = new URLSearchParams(searchString);
@@ -181,13 +182,11 @@ export default function Home() {
             </div>
           </div>
           {itemCount > 0 && (
-            <Link href="/odeme">
-              <Button variant="outline" data-testid="btn-go-to-cart">
+            <Button variant="outline" data-testid="btn-go-to-cart" onClick={() => setLocation("/odeme")}>
                 <ShoppingCart className="w-4 h-4" />
                 <span data-testid="text-cart-count">{itemCount} ürün</span>
                 <Badge variant="secondary" className="no-default-hover-elevate" data-testid="text-cart-total">{Math.round(grandTotal)} TL</Badge>
               </Button>
-            </Link>
           )}
         </div>
       </header>
@@ -255,15 +254,14 @@ export default function Home() {
                   {Math.round(grandTotal)} TL
                 </span>
               </div>
-              <Link href="/odeme">
-                <Button
+              <Button
                   variant="default"
                   data-testid="btn-sticky-checkout"
+                  onClick={() => setLocation("/odeme")}
                 >
                   <ShoppingCart className="w-4 h-4" />
                   Siparişi Onayla
                 </Button>
-              </Link>
             </div>
           </motion.div>
         )}
