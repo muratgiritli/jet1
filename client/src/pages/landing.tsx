@@ -6,11 +6,10 @@ import {
   ArrowRight, ChevronRight, Star, Clock, Shield,
   Gift, MapPin, Phone, Mail, BookOpen,
   ShieldCheck, PackageCheck, ThumbsUp, Zap,
-  RefreshCw, ShoppingBag, Stethoscope, PhoneCall
+  Stethoscope, PhoneCall
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCustomer } from "@/contexts/CustomerContext";
-import { useCart } from "@/contexts/CartContext";
 import SEO, { LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
@@ -578,72 +577,6 @@ function VeterinerSection() {
   );
 }
 
-function RepeatOrderBanner() {
-  const { customer, isLoggedIn } = useCustomer();
-  const { updateQty } = useCart();
-  const [added, setAdded] = useState(false);
-
-  const { data: orders } = useQuery<any[]>({
-    queryKey: ["/api/customer/orders"],
-    enabled: isLoggedIn,
-  });
-
-  if (!isLoggedIn || !orders?.length) return null;
-
-  const lastOrder = orders[0];
-  const items = (() => {
-    try {
-      return typeof lastOrder.items === "string" ? JSON.parse(lastOrder.items) : lastOrder.items;
-    } catch { return []; }
-  })();
-
-  if (!items.length) return null;
-
-  const handleRepeat = () => {
-    items.forEach((item: any) => {
-      if (item.productId && item.quantity) {
-        updateQty(String(item.productId), item.quantity);
-      }
-    });
-    setAdded(true);
-    setTimeout(() => setAdded(false), 3000);
-  };
-
-  const orderDate = new Date(lastOrder.createdAt).toLocaleDateString("tr-TR", { day: "numeric", month: "short" });
-  const itemCount = items.reduce((s: number, i: any) => s + (i.quantity || 1), 0);
-
-  return (
-    <div data-testid="section-repeat-order">
-      <button
-        onClick={handleRepeat}
-        className="w-full rounded-2xl p-4 flex items-center gap-3 transition-all active:scale-[0.98]"
-        style={{
-          background: added ? "linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%)" : "linear-gradient(135deg, #6B3480 0%, #9C27B0 100%)",
-          border: added ? "2px solid #4caf50" : "2px solid transparent",
-        }}
-        data-testid="btn-repeat-order"
-      >
-        <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: added ? "#4caf5020" : "#ffffff25" }}>
-          {added ? (
-            <ShoppingBag className="w-6 h-6" style={{ color: "#2e7d32" }} />
-          ) : (
-            <RefreshCw className="w-6 h-6 text-white" />
-          )}
-        </div>
-        <div className="flex-1 text-left min-w-0">
-          <p className={`text-sm font-extrabold ${added ? "text-green-800" : "text-white"}`}>
-            {added ? "Sepete Eklendi!" : "Son Siparişimi Tekrarla"}
-          </p>
-          <p className={`text-[11px] mt-0.5 ${added ? "text-green-600" : "text-white/70"}`}>
-            {added ? "Sepetten kontrol edebilirsiniz" : `${orderDate} • ${itemCount} ürün • ${Math.round(lastOrder.grandTotal)} TL`}
-          </p>
-        </div>
-        <ArrowRight className={`w-5 h-5 shrink-0 ${added ? "text-green-600" : "text-white/70"}`} />
-      </button>
-    </div>
-  );
-}
-
 function VoiceOrderBanner() {
   return (
     <div data-testid="section-voice-order">
@@ -752,9 +685,6 @@ export default function Landing() {
           <QuickActions />
         </div>
 
-        <div className="mt-4 md:mt-6">
-          <RepeatOrderBanner />
-        </div>
 
 
         <div className="mt-5 md:mt-10">
