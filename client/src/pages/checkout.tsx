@@ -119,6 +119,10 @@ export default function Checkout() {
     enabled: isLoggedIn,
   });
 
+  const { data: neighborhoods = [] } = useQuery<DeliveryNeighborhood[]>({
+    queryKey: ["/api/delivery-neighborhoods"],
+  });
+
   const [showAddressPicker, setShowAddressPicker] = useState(false);
   const [addressInitialized, setAddressInitialized] = useState(false);
 
@@ -416,11 +420,7 @@ export default function Checkout() {
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>("");
 
-  const { data: neighborhoods = [] } = useQuery<DeliveryNeighborhood[]>({
-    queryKey: ["/api/delivery-neighborhoods"],
-  });
-
-  const districts = [...new Set(neighborhoods.map((n: any) => n.district))].filter((d: string) => d === "Atakum").sort();
+  const districts = Array.from(new Set(neighborhoods.map((n: any) => n.district))).filter((d: string) => d === "Atakum").sort();
   const filteredNeighborhoods = selectedDistrict
     ? neighborhoods.filter((n: any) => n.district === selectedDistrict).sort((a: any, b: any) => a.name.localeCompare(b.name, 'tr'))
     : [];
