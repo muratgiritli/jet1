@@ -45,7 +45,7 @@ import {
 } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useCustomer } from "@/contexts/CustomerContext";
 import type { InstallmentRate, DeliveryNeighborhood } from "@shared/schema";
 import {

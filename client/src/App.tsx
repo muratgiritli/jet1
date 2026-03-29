@@ -13,9 +13,10 @@ import Footer from "@/components/Footer";
 import InstallBanner from "@/components/InstallBanner";
 import Landing from "@/pages/landing";
 
-class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean }> {
-  state = { hasError: false };
-  static getDerivedStateFromError() { return { hasError: true }; }
+class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; errorMsg: string }> {
+  state = { hasError: false, errorMsg: "" };
+  static getDerivedStateFromError(error: Error) { return { hasError: true, errorMsg: error?.message || "" }; }
+  componentDidCatch(error: Error) { console.error("ErrorBoundary caught:", error); }
   render() {
     if (this.state.hasError) {
       return (
