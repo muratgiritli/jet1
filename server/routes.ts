@@ -1482,13 +1482,20 @@ export async function registerRoutes(
 
   app.post("/api/customer/addresses", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
-    const schema = z.object({ label: z.string().min(1), address: z.string().min(1), isDefault: z.boolean().optional() });
+    const schema = z.object({ label: z.string().min(1), address: z.string().min(1), isDefault: z.boolean().optional(), neighborhoodId: z.number().optional(), district: z.string().optional() });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri" });
     if (parsed.data.isDefault) {
       await storage.setDefaultAddress(-1, customerId);
     }
-    const addr = await storage.createCustomerAddress({ customerId, label: parsed.data.label, address: parsed.data.address, isDefault: parsed.data.isDefault || false });
+    const addr = await storage.createCustomerAddress({
+      customerId,
+      label: parsed.data.label,
+      address: parsed.data.address,
+      isDefault: parsed.data.isDefault || false,
+      neighborhoodId: parsed.data.neighborhoodId || null,
+      district: parsed.data.district || null,
+    });
     if (parsed.data.isDefault) {
       await storage.setDefaultAddress(addr.id, customerId);
     }

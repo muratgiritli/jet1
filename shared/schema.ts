@@ -184,6 +184,8 @@ export const customerAddresses = pgTable("customer_addresses", {
   label: text("label").notNull(),
   address: text("address").notNull(),
   isDefault: boolean("is_default").notNull().default(false),
+  neighborhoodId: integer("neighborhood_id"),
+  district: text("district"),
 });
 
 export const insertCustomerAddressSchema = createInsertSchema(customerAddresses).omit({ id: true });

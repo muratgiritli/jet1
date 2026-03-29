@@ -695,6 +695,7 @@ function AddressesSection() {
                     {addr.isDefault && <Badge variant="secondary" className="text-xs">Varsayılan</Badge>}
                   </div>
                   <p className="text-sm text-muted-foreground">{addr.address}</p>
+                  {addr.district && <p className="text-xs text-muted-foreground mt-0.5">{addr.district} / Samsun</p>}
                 </div>
                 <div className="flex items-center gap-1">
                   {!addr.isDefault && (

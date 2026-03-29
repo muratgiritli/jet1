@@ -138,7 +138,7 @@ export default function Checkout() {
         }
         return { cadde, binaNo: bNo, apartmanAdi: apt, kat: kt, daireNo: dNo };
       };
-      const defaultAddr = savedAddresses.find((a: any) => a.isDefault);
+      const defaultAddr = savedAddresses.find((a: any) => a.isDefault) || savedAddresses[0];
       const addrStr = defaultAddr?.address || customer.address || "";
       if (addrStr) {
         const parsed = parseAddress(addrStr);
@@ -147,6 +147,12 @@ export default function Checkout() {
         setCustomerApartmanAdi(parsed.apartmanAdi);
         setCustomerKat(parsed.kat);
         setCustomerDaireNo(parsed.daireNo);
+        if (defaultAddr?.district) {
+          setSelectedDistrict(defaultAddr.district);
+        }
+        if (defaultAddr?.neighborhoodId) {
+          setSelectedNeighborhood(String(defaultAddr.neighborhoodId));
+        }
         setAddressInitialized(true);
       } else if (savedAddresses.length > 0) {
         setAddressInitialized(true);
@@ -575,9 +581,22 @@ export default function Checkout() {
         customerKat.trim() ? `Kat: ${customerKat.trim()}` : "",
         customerDaireNo.trim() ? `Daire: ${customerDaireNo.trim()}` : "",
       ].filter(Boolean).join(", ");
-      if (isLoggedIn && builtAddress && (!customer?.address || customer.address !== builtAddress)) {
+      if (isLoggedIn && builtAddress) {
         try {
           await updateProfile({ address: builtAddress });
+        } catch {}
+        try {
+          const existingMatch = savedAddresses.find((a: any) => a.address === builtAddress);
+          if (!existingMatch) {
+            await apiRequest("POST", "/api/customer/addresses", {
+              label: activeNeighborhood ? activeNeighborhood.name : "Ev",
+              address: builtAddress,
+              isDefault: savedAddresses.length === 0,
+              neighborhoodId: activeNeighborhood ? activeNeighborhood.id : undefined,
+              district: selectedDistrict || undefined,
+            });
+            queryClient.invalidateQueries({ queryKey: ["/api/customer/addresses"] });
+          }
         } catch {}
       }
 
