@@ -672,186 +672,6 @@ function VoiceOrderBanner() {
   );
 }
 
-function VirtualPetWidget() {
-  const { isLoggedIn } = useCustomer();
-  const [petData, setPetData] = useState<any>(null);
-  const [feeding, setFeeding] = useState(false);
-  const [feedResult, setFeedResult] = useState<string | null>(null);
-  const [showCreate, setShowCreate] = useState(false);
-  const [petName, setPetName] = useState("Minnoş");
-  const [petType, setPetType] = useState("kedi");
-
-  useEffect(() => {
-    if (!isLoggedIn) return;
-    fetch("/api/customer/virtual-pet", { credentials: "include" })
-      .then(r => r.json())
-      .then(d => setPetData(d))
-      .catch(() => {});
-  }, [isLoggedIn]);
-
-  if (!isLoggedIn) return null;
-
-  const createPet = async () => {
-    if (!petName.trim()) return;
-    try {
-      const res = await fetch("/api/customer/virtual-pet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ petType, petName: petName.trim() }),
-      });
-      if (!res.ok) return;
-      const data = await res.json();
-      if (data && data.id) {
-        setPetData(data);
-        setShowCreate(false);
-      }
-    } catch {}
-  };
-
-  const feedPet = async () => {
-    if (feeding) return;
-    setFeeding(true);
-    setFeedResult(null);
-    try {
-      const res = await fetch("/api/customer/virtual-pet/feed", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setPetData(data.pet);
-        setFeedResult(data.message);
-      } else {
-        setFeedResult(data.message);
-      }
-    } catch {
-      setFeedResult("Bir hata oluştu");
-    }
-    setFeeding(false);
-    setTimeout(() => setFeedResult(null), 3000);
-  };
-
-  if (!petData) {
-    return (
-      <div data-testid="section-virtual-pet-create">
-        {!showCreate ? (
-          <button
-            onClick={() => setShowCreate(true)}
-            className="w-full rounded-2xl p-4 flex items-center gap-3 transition-all active:scale-[0.98]"
-            style={{ background: "linear-gradient(135deg, #ff9800 0%, #f57c00 100%)" }}
-            data-testid="btn-create-pet"
-          >
-            <span className="text-3xl">🐾</span>
-            <div className="flex-1 text-left">
-              <p className="text-sm font-extrabold text-white">Sanal Evcil Hayvanını Sahiplen!</p>
-              <p className="text-[11px] text-white/80 mt-0.5">Her gün besle, Para Puan kazan</p>
-            </div>
-            <ArrowRight className="w-5 h-5 text-white/70 shrink-0" />
-          </button>
-        ) : (
-          <div className="rounded-2xl p-4 border-2 border-orange-200" style={{ backgroundColor: "#fff8e1" }}>
-            <p className="text-sm font-bold text-gray-800 mb-2">Sanal Evcil Hayvanını Sahiplen!</p>
-            <p className="text-[11px] text-gray-500 mb-3 leading-relaxed">Hayvan seç, isim ver ve sahiplen. Her gün besleyerek Para Puan kazan! Seri beslemelerde bonus puan artar, seviye atla.</p>
-            <div className="flex gap-2 mb-3">
-              {[
-                { type: "kedi", emoji: "🐱", label: "Kedi" },
-                { type: "kopek", emoji: "🐶", label: "Köpek" },
-                { type: "kus", emoji: "🐦", label: "Kuş" },
-              ].map((t) => (
-                <button
-                  key={t.type}
-                  onClick={() => setPetType(t.type)}
-                  className={`flex-1 rounded-xl p-2 text-center transition-all ${petType === t.type ? "ring-2 ring-orange-400 bg-orange-50" : "bg-white border border-gray-200"}`}
-                  data-testid={`btn-pet-type-${t.type}`}
-                >
-                  <span className="text-2xl block">{t.emoji}</span>
-                  <span className="text-[10px] font-bold text-gray-600 mt-1 block">{t.label}</span>
-                </button>
-              ))}
-            </div>
-            <input
-              type="text"
-              value={petName}
-              onChange={e => setPetName(e.target.value.slice(0, 20))}
-              placeholder="İsim ver..."
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm mb-3"
-              maxLength={20}
-              data-testid="input-pet-name"
-            />
-            <button
-              onClick={createPet}
-              className="w-full rounded-xl py-2.5 text-sm font-bold text-white"
-              style={{ backgroundColor: "#e65100" }}
-              data-testid="btn-confirm-create-pet"
-            >
-              Sahiplen! 🐾
-            </button>
-          </div>
-        )}
-      </div>
-    );
-  }
-
-  const petEmoji = petData.petType === "kopek" ? "🐶" : petData.petType === "kus" ? "🐦" : "🐱";
-  const expPercent = (petData.experience % 100);
-  const today = new Date().toISOString().split("T")[0];
-  const alreadyFed = petData.lastFeedDate === today;
-
-  return (
-    <div data-testid="section-virtual-pet">
-      <div className="rounded-2xl overflow-hidden" style={{ background: "linear-gradient(135deg, #fff8e1 0%, #ffe0b2 100%)", border: "2px solid #ffcc80" }}>
-        <div className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="relative">
-              <span className={`text-4xl block ${feeding ? "animate-bounce" : ""}`}>{petEmoji}</span>
-              <span className="absolute -top-1 -right-1 text-[10px] font-bold bg-orange-500 text-white rounded-full w-5 h-5 flex items-center justify-center">
-                {petData.level}
-              </span>
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
-                <p className="text-sm font-extrabold text-gray-800">{petData.petName}</p>
-                {petData.streak > 0 && (
-                  <span className="text-[9px] font-bold px-1.5 py-0.5 rounded-full bg-red-100 text-red-600">
-                    🔥 {petData.streak} gün
-                  </span>
-                )}
-              </div>
-              <div className="flex items-center gap-2 mt-1">
-                <div className="flex-1 h-2 bg-orange-100 rounded-full overflow-hidden">
-                  <div className="h-full rounded-full transition-all" style={{ width: `${expPercent}%`, backgroundColor: "#e65100" }} />
-                </div>
-                <span className="text-[9px] font-bold text-gray-500">Lv.{petData.level}</span>
-              </div>
-              <p className="text-[10px] text-gray-500 mt-0.5">
-                Toplam {petData.earnedPoints.toFixed(1)} puan kazandın
-              </p>
-            </div>
-            <button
-              onClick={feedPet}
-              disabled={feeding || alreadyFed}
-              className={`shrink-0 rounded-xl px-4 py-2.5 text-xs font-bold text-white transition-all ${alreadyFed ? "opacity-50" : "active:scale-95 hover:shadow-md"}`}
-              style={{ backgroundColor: alreadyFed ? "#9e9e9e" : "#e65100" }}
-              data-testid="btn-feed-pet"
-            >
-              {feeding ? "..." : alreadyFed ? "Beslendi ✓" : "Besle 🍖"}
-            </button>
-          </div>
-          {feedResult && (
-            <div className="mt-2 text-center">
-              <span className="text-xs font-bold px-3 py-1 rounded-full" style={{ backgroundColor: "#e8f5e9", color: "#2e7d32" }} data-testid="text-feed-result">
-                {feedResult}
-              </span>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function DesktopContactStrip() {
   return (
     <div className="hidden md:block" data-testid="section-desktop-contact">
@@ -882,6 +702,7 @@ function DesktopContactStrip() {
 }
 
 export default function Landing() {
+  const { isLoggedIn } = useCustomer();
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
       <SEO
@@ -898,6 +719,7 @@ export default function Landing() {
           <HeroCarousel />
         </div>
 
+        {!isLoggedIn && (
         <div className="mt-3 md:hidden" data-testid="section-start-shopping">
           <Link href="/kategori">
             <div
@@ -920,6 +742,7 @@ export default function Landing() {
             </div>
           </Link>
         </div>
+        )}
 
         <div className="mt-4 md:mt-8">
           <OrderCounter />
@@ -933,9 +756,6 @@ export default function Landing() {
           <RepeatOrderBanner />
         </div>
 
-        <div className="mt-4 md:mt-6">
-          <VirtualPetWidget />
-        </div>
 
         <div className="mt-5 md:mt-10">
           <CategoryGrid />
