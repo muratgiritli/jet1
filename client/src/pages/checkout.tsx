@@ -1158,134 +1158,174 @@ export default function Checkout() {
               </Card>
             </section>
 
-            <section className="mt-6">
-              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-location">
-                <MapPin className="w-4 h-4 inline mr-1.5 -mt-0.5" />
-                Konum Bilgisi
-              </h2>
-              <Card>
-                <CardContent className="p-4 space-y-4">
-                  {neighborhoods.length > 0 && (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-sm font-medium mb-1.5 block">İlçe Seçin</label>
-                        <SSelect value={selectedDistrict} onValueChange={(val) => {
-                          setSelectedDistrict(val);
-                          setSelectedNeighborhood("");
-                        }}>
-                          <SelectTrigger className="w-full" data-testid="select-district">
-                            <SelectValue placeholder="İlçe seçiniz..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {districts.map((d) => (
-                              <SelectItem key={d} value={d} data-testid={`district-${d}`}>
-                                {d}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </SSelect>
+            {isLoggedIn && addressInitialized && activeNeighborhood && customerCadde ? (
+              <section className="mt-6">
+                <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-location">
+                  <MapPin className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+                  Teslimat Bilgisi
+                </h2>
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="w-4 h-4 text-green-600" />
+                        <span className="text-sm font-medium">{activeNeighborhood.name}, {selectedDistrict}</span>
                       </div>
-                      {selectedDistrict && (
+                      <button
+                        type="button"
+                        onClick={() => setAddressInitialized(false)}
+                        className="text-xs text-primary underline"
+                        data-testid="btn-change-location"
+                      >
+                        Değiştir
+                      </button>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
+                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                        <span className="text-blue-700 dark:text-blue-300">
+                          Min. Sipariş: <strong>{activeNeighborhood.minOrder} TL</strong>
+                        </span>
+                        <span className="text-blue-700 dark:text-blue-300">
+                          Teslimat: <strong>{activeNeighborhood.shippingFee} TL</strong>
+                        </span>
+                        <span className="text-blue-700 dark:text-blue-300">
+                          Ücretsiz Teslimat: <strong>{(activeNeighborhood as any).freeShippingLimit} TL+</strong>
+                        </span>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </section>
+            ) : (
+              <section className="mt-6">
+                <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-location">
+                  <MapPin className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+                  Konum Bilgisi
+                </h2>
+                <Card>
+                  <CardContent className="p-4 space-y-4">
+                    {neighborhoods.length > 0 && (
+                      <div className="space-y-3">
                         <div>
-                          <label className="text-sm font-medium mb-1.5 block">Mahalle Seçin</label>
-                          <SSelect value={selectedNeighborhood} onValueChange={setSelectedNeighborhood}>
-                            <SelectTrigger className="w-full" data-testid="select-neighborhood">
-                              <SelectValue placeholder="Mahalle seçiniz..." />
+                          <label className="text-sm font-medium mb-1.5 block">İlçe Seçin</label>
+                          <SSelect value={selectedDistrict} onValueChange={(val) => {
+                            setSelectedDistrict(val);
+                            setSelectedNeighborhood("");
+                          }}>
+                            <SelectTrigger className="w-full" data-testid="select-district">
+                              <SelectValue placeholder="İlçe seçiniz..." />
                             </SelectTrigger>
                             <SelectContent>
-                              {filteredNeighborhoods.map((n) => (
-                                <SelectItem key={n.id} value={String(n.id)} data-testid={`neighborhood-${n.id}`}>
-                                  {n.name}
+                              {districts.map((d) => (
+                                <SelectItem key={d} value={d} data-testid={`district-${d}`}>
+                                  {d}
                                 </SelectItem>
                               ))}
                             </SelectContent>
                           </SSelect>
                         </div>
-                      )}
-                      {activeNeighborhood && (
-                        <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
-                          <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                            <span className="text-blue-700 dark:text-blue-300">
-                              Min. Sipariş: <strong>{activeNeighborhood.minOrder} TL</strong>
-                            </span>
-                            <span className="text-blue-700 dark:text-blue-300">
-                              Teslimat: <strong>{activeNeighborhood.shippingFee} TL</strong>
-                            </span>
-                            <span className="text-blue-700 dark:text-blue-300">
-                              Ücretsiz Teslimat: <strong>{(activeNeighborhood as any).freeShippingLimit} TL+</strong>
-                            </span>
+                        {selectedDistrict && (
+                          <div>
+                            <label className="text-sm font-medium mb-1.5 block">Mahalle Seçin</label>
+                            <SSelect value={selectedNeighborhood} onValueChange={setSelectedNeighborhood}>
+                              <SelectTrigger className="w-full" data-testid="select-neighborhood">
+                                <SelectValue placeholder="Mahalle seçiniz..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {filteredNeighborhoods.map((n) => (
+                                  <SelectItem key={n.id} value={String(n.id)} data-testid={`neighborhood-${n.id}`}>
+                                    {n.name}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </SSelect>
                           </div>
-                        </div>
+                        )}
+                        {activeNeighborhood && (
+                          <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                              <span className="text-blue-700 dark:text-blue-300">
+                                Min. Sipariş: <strong>{activeNeighborhood.minOrder} TL</strong>
+                              </span>
+                              <span className="text-blue-700 dark:text-blue-300">
+                                Teslimat: <strong>{activeNeighborhood.shippingFee} TL</strong>
+                              </span>
+                              <span className="text-blue-700 dark:text-blue-300">
+                                Ücretsiz Teslimat: <strong>{(activeNeighborhood as any).freeShippingLimit} TL+</strong>
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <div>
+                      <label className="text-sm font-medium mb-2 block">Asansör</label>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setHasElevator("var")}
+                          className={`flex-1 h-10 rounded-lg text-sm font-medium border-2 transition-all ${hasElevator === "var" ? "border-primary bg-primary/10 text-primary" : "border-muted bg-muted/30 text-muted-foreground"}`}
+                          data-testid="btn-elevator-var"
+                        >
+                          Var
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setHasElevator("yok")}
+                          className={`flex-1 h-10 rounded-lg text-sm font-medium border-2 transition-all ${hasElevator === "yok" ? "border-orange-500 bg-orange-50 text-orange-600" : "border-muted bg-muted/30 text-muted-foreground"}`}
+                          data-testid="btn-elevator-yok"
+                        >
+                          Yok
+                        </button>
+                      </div>
+                      {hasElevator === "yok" && (
+                        <p className="text-xs text-orange-600 font-medium mt-1.5" data-testid="text-elevator-note">Siparişiniz bina girişine teslim edilir</p>
                       )}
                     </div>
-                  )}
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Asansör</label>
-                    <div className="flex gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setHasElevator("var")}
-                        className={`flex-1 h-10 rounded-lg text-sm font-medium border-2 transition-all ${hasElevator === "var" ? "border-primary bg-primary/10 text-primary" : "border-muted bg-muted/30 text-muted-foreground"}`}
-                        data-testid="btn-elevator-var"
-                      >
-                        Var
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setHasElevator("yok")}
-                        className={`flex-1 h-10 rounded-lg text-sm font-medium border-2 transition-all ${hasElevator === "yok" ? "border-orange-500 bg-orange-50 text-orange-600" : "border-muted bg-muted/30 text-muted-foreground"}`}
-                        data-testid="btn-elevator-yok"
-                      >
-                        Yok
-                      </button>
-                    </div>
-                    {hasElevator === "yok" && (
-                      <p className="text-xs text-orange-600 font-medium mt-1.5" data-testid="text-elevator-note">Siparişiniz bina girişine teslim edilir</p>
-                    )}
-                  </div>
-                  {customerLocation ? (
-                    <div className="flex items-center gap-3 p-3 rounded-lg border border-green-200 bg-green-50" data-testid="location-added">
-                      <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-green-800">Konum eklendi</p>
-                        <a
-                          href={`https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-green-600 underline"
+                    {customerLocation ? (
+                      <div className="flex items-center gap-3 p-3 rounded-lg border border-green-200 bg-green-50" data-testid="location-added">
+                        <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-green-800">Konum eklendi</p>
+                          <a
+                            href={`https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-green-600 underline"
+                          >
+                            Haritada Gör
+                          </a>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCustomerLocation(null)}
+                          className="text-muted-foreground hover:text-red-500 transition-colors"
+                          data-testid="btn-remove-location"
                         >
-                          Haritada Gör
-                        </a>
+                          <X className="w-4 h-4" />
+                        </button>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setCustomerLocation(null)}
-                        className="text-muted-foreground hover:text-red-500 transition-colors"
-                        data-testid="btn-remove-location"
-                      >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div>
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="w-full h-12 font-medium border-dashed border-2"
-                        onClick={handleShareLocation}
-                        disabled={locationLoading}
-                        data-testid="btn-add-location"
-                      >
-                        {locationLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Navigation className="w-5 h-5 mr-2" />}
-                        {locationLoading ? "Konum alınıyor..." : "Konum Ekle"}
-                      </Button>
-                      <p className="text-xs text-muted-foreground text-center mt-2">Teslimat için konumunuzu paylaşın</p>
-                      {locationError && <p className="text-xs text-red-500 text-center mt-1">{locationError}</p>}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </section>
+                    ) : (
+                      <div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="w-full h-12 font-medium border-dashed border-2"
+                          onClick={handleShareLocation}
+                          disabled={locationLoading}
+                          data-testid="btn-add-location"
+                        >
+                          {locationLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Navigation className="w-5 h-5 mr-2" />}
+                          {locationLoading ? "Konum alınıyor..." : "Konum Ekle"}
+                        </Button>
+                        <p className="text-xs text-muted-foreground text-center mt-2">Teslimat için konumunuzu paylaşın</p>
+                        {locationError && <p className="text-xs text-red-500 text-center mt-1">{locationError}</p>}
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </section>
+            )}
 
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-note">
