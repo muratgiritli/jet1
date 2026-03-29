@@ -629,13 +629,6 @@ export default function ProductDetailPage() {
                 </DialogContent>
               </Dialog>
 
-              {product.stock > 0 && product.stock <= 3 && (
-                <div className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg animate-pulse" style={{ backgroundColor: "#fff3e0" }} data-testid="text-low-stock-warning">
-                  <AlertTriangle className="w-4 h-4" style={{ color: "#e65100" }} />
-                  <span className="text-sm font-bold" style={{ color: "#e65100" }}>Son {product.stock} adet kaldı!</span>
-                </div>
-              )}
-
               {product.stock === 0 ? (
                 <div className="mt-2 space-y-2">
                   {stockAlertSent ? (

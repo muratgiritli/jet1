@@ -135,15 +135,6 @@ function BrandProductCard({
                     %{discount}
                   </Badge>
                 )}
-                {product.stock > 0 && product.stock <= 3 && (
-                  <Badge
-                    className="absolute bottom-1 left-1 text-[10px] font-bold no-default-hover-elevate no-default-active-elevate animate-pulse"
-                    style={{ backgroundColor: "#ff6f00", color: "#fff" }}
-                    data-testid={`badge-low-stock-${pid}`}
-                  >
-                    Son {product.stock} adet!
-                  </Badge>
-                )}
                 <FavoriteButton
                   product={{ id: pid, name: product.name, price: product.price, img: product.img || null }}
                   className="absolute bottom-1 right-1 shadow-sm"
@@ -170,15 +161,6 @@ function BrandProductCard({
                     data-testid={`badge-discount-${pid}`}
                   >
                     %{discount}
-                  </Badge>
-                )}
-                {product.stock > 0 && product.stock <= 3 && (
-                  <Badge
-                    className="absolute bottom-1 left-1 text-[10px] font-bold no-default-hover-elevate no-default-active-elevate animate-pulse"
-                    style={{ backgroundColor: "#ff6f00", color: "#fff" }}
-                    data-testid={`badge-low-stock-${pid}`}
-                  >
-                    Son {product.stock} adet!
                   </Badge>
                 )}
               </div>
