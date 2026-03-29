@@ -123,7 +123,7 @@ export default function Checkout() {
   const [addressInitialized, setAddressInitialized] = useState(false);
 
   useEffect(() => {
-    if (isLoggedIn && customer && !addressInitialized) {
+    if (isLoggedIn && customer && !addressInitialized && neighborhoods.length > 0) {
       setCustomerPhone(customer.phone);
       setCustomerName(customer.name);
       const parseAddress = (addr: string) => {
@@ -147,12 +147,43 @@ export default function Checkout() {
         setCustomerApartmanAdi(parsed.apartmanAdi);
         setCustomerKat(parsed.kat);
         setCustomerDaireNo(parsed.daireNo);
-        if (defaultAddr?.district) {
-          setSelectedDistrict(defaultAddr.district);
-        }
+
+        let districtSet = false;
+        let nhSet = false;
+
         if (defaultAddr?.neighborhoodId) {
-          setSelectedNeighborhood(String(defaultAddr.neighborhoodId));
+          const nh = neighborhoods.find((n: any) => n.id === defaultAddr.neighborhoodId);
+          if (nh) {
+            setSelectedDistrict(nh.district);
+            setSelectedNeighborhood(String(nh.id));
+            districtSet = true;
+            nhSet = true;
+          }
         }
+
+        if (!nhSet && addrStr) {
+          const addrLower = addrStr.toLowerCase();
+          const matchedNh = neighborhoods.find((n: any) => {
+            const nhName = n.name.toLowerCase();
+            return addrLower.includes(nhName) ||
+              addrLower.includes(nhName.replace(" mahallesi", "")) ||
+              addrLower.includes(nhName.replace(" mah.", ""));
+          });
+          if (matchedNh) {
+            setSelectedDistrict(matchedNh.district);
+            setSelectedNeighborhood(String(matchedNh.id));
+            districtSet = true;
+          }
+        }
+
+        if (!districtSet) {
+          if (defaultAddr?.district) {
+            setSelectedDistrict(defaultAddr.district);
+          } else {
+            setSelectedDistrict("Atakum");
+          }
+        }
+
         setAddressInitialized(true);
       } else if (savedAddresses.length > 0) {
         setAddressInitialized(true);
@@ -160,7 +191,7 @@ export default function Checkout() {
       setIsReturningCustomer(true);
       setLookupDone(true);
     }
-  }, [isLoggedIn, customer, savedAddresses, addressInitialized]);
+  }, [isLoggedIn, customer, savedAddresses, addressInitialized, neighborhoods]);
 
 
   const formatAuthPhone = (val: string) => {
