@@ -1,4 +1,4 @@
-const CACHE_NAME = 'jet55-v1';
+const CACHE_NAME = 'jetgo-v2';
 const OFFLINE_URL = '/';
 
 self.addEventListener('install', (event) => {
@@ -22,7 +22,18 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   if (event.request.mode === 'navigate') {
     event.respondWith(
-      fetch(event.request).catch(() => caches.match(OFFLINE_URL))
+      fetch(event.request)
+        .then((response) => {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(OFFLINE_URL, clone));
+          return response;
+        })
+        .catch(() => caches.match(OFFLINE_URL))
     );
+    return;
   }
+
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
+  );
 });
