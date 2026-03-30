@@ -662,6 +662,8 @@ export default function Checkout() {
       }
       if (pay.id === "eft") msg += CONFIG.bankInfo;
 
+      msg += `\n\n📋 *Siparişlerinizi ve hesabınızı görüntüleyin:*\nhttps://www.jetgo.shop/hesabim`;
+
       const url = `https://wa.me/${CONFIG.phone.replace("+", "")}?text=${encodeURIComponent(msg)}`;
       window.open(url, "_blank");
 
