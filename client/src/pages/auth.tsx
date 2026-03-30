@@ -32,10 +32,17 @@ export default function AuthPage() {
   const [isExistingUser, setIsExistingUser] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [autoVerifying, setAutoVerifying] = useState(false);
-  const { loginWithOtp } = useCustomer();
+  const { loginWithOtp, isLoggedIn } = useCustomer();
   const [, setLocation] = useLocation();
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const verifyingRef = useRef(false);
+
+  useEffect(() => {
+    if (isLoggedIn) {
+      const params = new URLSearchParams(searchStr);
+      setLocation(params.get("redirect") || "/hesabim");
+    }
+  }, [isLoggedIn]);
 
   useEffect(() => {
     if (countdown <= 0) return;
