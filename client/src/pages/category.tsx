@@ -1,6 +1,5 @@
 import { Link, useRoute, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 
 import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
@@ -120,11 +119,7 @@ export default function CategoryPage() {
       />
 
       <main className="flex-1 max-w-2xl mx-auto px-4 w-full py-6">
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-6"
-        >
+        <div className="text-center mb-6">
           <span className="text-4xl md:text-5xl block mb-2">{animalMeta.emoji}</span>
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight" data-testid="text-category-title">
             <span className="text-foreground">{animalMeta.title} </span>
@@ -135,7 +130,7 @@ export default function CategoryPage() {
           <p className="text-xs text-muted-foreground mt-1 tracking-wide" data-testid="text-category-subtitle">
             Samsun'da aynı gün kapıya teslim - Kategori seçerek ürünleri keşfedin
           </p>
-        </motion.div>
+        </div>
 
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3">
@@ -153,12 +148,7 @@ export default function CategoryPage() {
               const icon = SUBCATEGORY_ICONS[sub.slug] || "📦";
 
               return (
-                <motion.div
-                  key={sub.id}
-                  initial={{ opacity: 0, y: 15 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.3, delay: 0.05 * i }}
-                >
+                <div key={sub.id}>
                   <Link href={href}>
                     <div
                       className="group cursor-pointer rounded-2xl p-4 h-[110px] flex flex-col justify-between relative overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
@@ -184,7 +174,7 @@ export default function CategoryPage() {
                       </div>
                     </div>
                   </Link>
-                </motion.div>
+                </div>
               );
             })}
           </div>

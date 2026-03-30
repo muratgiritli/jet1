@@ -1,5 +1,4 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -309,25 +308,18 @@ function InlineSubcategories({
 
   const selectedSc = subcategories.find((sc) => sc.slug === selectedSlug);
 
-  const { data: allBrandCategories } = useQuery<BrandCategory[]>({
-    queryKey: ["/api/brand-categories"],
-    enabled: !!selectedSc?.hasBrands,
-  });
-
-  const { data: allDbProducts } = useQuery<Product[]>({
-    queryKey: ["/api/products"],
+  const { data: subcatProducts } = useQuery<Product[]>({
+    queryKey: ["/api/subcategory-products", animal, selectedSc?.slug],
+    queryFn: () => fetch(`/api/subcategory-products/${animal}/${selectedSc!.slug}`).then(r => r.json()),
     enabled: !!selectedSc?.hasBrands,
   });
 
   const inlineProducts = useMemo(() => {
     if (!selectedSc) return [];
 
-    if (selectedSc.hasBrands && allBrandCategories && allDbProducts) {
-      const matchingCatIds = allBrandCategories
-        .filter((bc) => bc.animal === animal && bc.subcategory === selectedSc.slug)
-        .map((bc) => bc.id);
-      return allDbProducts
-        .filter((p) => p.isActive && p.brandCategoryId && matchingCatIds.includes(p.brandCategoryId))
+    if (selectedSc.hasBrands && subcatProducts) {
+      return subcatProducts
+        .filter((p) => p.isActive)
         .map((p) => ({
           id: String(p.id),
           name: p.name,
@@ -344,7 +336,7 @@ function InlineSubcategories({
     }
 
     return [];
-  }, [selectedSc, allBrandCategories, allDbProducts, animal]);
+  }, [selectedSc, subcatProducts, animal]);
 
   return (
     <section className="mt-8" data-testid="section-other-categories" ref={sectionRef}>
@@ -375,49 +367,36 @@ function InlineSubcategories({
         ))}
       </div>
 
-      <AnimatePresence mode="wait">
-        {selectedSlug && inlineProducts.length > 0 && (
-          <motion.div
-            ref={productsRef}
-            key={selectedSlug}
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            transition={{ duration: 0.3 }}
-            className="mt-4 overflow-hidden"
-            data-testid="section-inline-products"
-          >
-            <p className="text-xs text-muted-foreground text-center mb-3" data-testid="text-inline-count">
-              {inlineProducts.length} ürün
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              {inlineProducts.map((product) => (
-                <div key={product.id}>
-                  <InlineSubcategoryProductCard
-                    product={product}
-                    quantity={basket[product.id] || 0}
-                    onUpdate={updateQty}
-                    showDetailLink={!!selectedSc?.hasBrands}
-                  />
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
-        {selectedSlug && inlineProducts.length === 0 && !selectedSc?.hasBrands && !selectedSc?.staticCategory && (
-          <motion.div
-            key="empty"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="mt-4 text-center"
-          >
-            <p className="text-sm text-muted-foreground" data-testid="text-no-inline-products">
-              Bu kategoride henüz ürün bulunmuyor
-            </p>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {selectedSlug && inlineProducts.length > 0 && (
+        <div
+          ref={productsRef}
+          className="mt-4"
+          data-testid="section-inline-products"
+        >
+          <p className="text-xs text-muted-foreground text-center mb-3" data-testid="text-inline-count">
+            {inlineProducts.length} ürün
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {inlineProducts.map((product) => (
+              <div key={product.id}>
+                <InlineSubcategoryProductCard
+                  product={product}
+                  quantity={basket[product.id] || 0}
+                  onUpdate={updateQty}
+                  showDetailLink={!!selectedSc?.hasBrands}
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {selectedSlug && inlineProducts.length === 0 && !selectedSc?.hasBrands && !selectedSc?.staticCategory && (
+        <div className="mt-4 text-center">
+          <p className="text-sm text-muted-foreground" data-testid="text-no-inline-products">
+            Bu kategoride henüz ürün bulunmuyor
+          </p>
+        </div>
+      )}
     </section>
   );
 }
@@ -509,29 +488,22 @@ export default function BrandProductsPage() {
 
       </main>
 
-      <AnimatePresence>
-        {itemCount > 0 && (
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t p-3"
-          >
-            <div className="max-w-lg mx-auto flex items-center justify-between gap-3 flex-wrap">
-              <div className="flex flex-col">
-                <span className="text-xs text-muted-foreground" data-testid="text-sticky-count">{itemCount} ürün</span>
-                <span className="text-lg font-extrabold text-primary" data-testid="text-sticky-total">
-                  {Math.round(grandTotal)} TL
-                </span>
-              </div>
-              <Button variant="default" data-testid="btn-sticky-checkout" onClick={() => setLocation("/odeme")}>
-                  <ShoppingCart className="w-4 h-4" />
-                  Siparişi Onayla
-                </Button>
+      {itemCount > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-lg border-t p-3">
+          <div className="max-w-lg mx-auto flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex flex-col">
+              <span className="text-xs text-muted-foreground" data-testid="text-sticky-count">{itemCount} ürün</span>
+              <span className="text-lg font-extrabold text-primary" data-testid="text-sticky-total">
+                {Math.round(grandTotal)} TL
+              </span>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <Button variant="default" data-testid="btn-sticky-checkout" onClick={() => setLocation("/odeme")}>
+                <ShoppingCart className="w-4 h-4" />
+                Siparişi Onayla
+              </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

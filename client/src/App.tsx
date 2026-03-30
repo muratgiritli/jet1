@@ -11,7 +11,7 @@ import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import InstallBanner from "@/components/InstallBanner";
-import Landing from "@/pages/landing";
+const Landing = lazy(() => import("@/pages/landing"));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; errorMsg: string }> {
   state = { hasError: false, errorMsg: "" };

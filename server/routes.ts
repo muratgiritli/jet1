@@ -562,12 +562,14 @@ export async function registerRoutes(
 
   app.get("/api/subcategories", async (req, res) => {
     const subs = await storage.getAllSubcategories();
+    res.setHeader("Cache-Control", "public, max-age=120, stale-while-revalidate=600");
     if (req.query.all === "true") return res.json(subs);
     res.json(subs.filter(s => s.isActive));
   });
 
   app.get("/api/subcategories/:animal", async (req, res) => {
     const subs = await storage.getSubcategoriesByAnimal(req.params.animal);
+    res.setHeader("Cache-Control", "public, max-age=120, stale-while-revalidate=600");
     if (req.query.all === "true") return res.json(subs);
     res.json(subs.filter(s => s.isActive));
   });
@@ -597,6 +599,7 @@ export async function registerRoutes(
 
   app.get("/api/brand-categories", async (_req, res) => {
     const categories = await storage.getAllBrandCategories();
+    res.setHeader("Cache-Control", "public, max-age=120, stale-while-revalidate=600");
     res.json(categories);
   });
 
@@ -626,6 +629,22 @@ export async function registerRoutes(
     res.json({ category, products: prods.filter(p => p.isActive) });
   });
 
+  app.get("/api/subcategory-products/:animal/:subcategorySlug", async (req, res) => {
+    const { animal } = req.params;
+    const subcategorySlug = SUBCATEGORY_SLUG_MAP[req.params.subcategorySlug] || req.params.subcategorySlug;
+    const allBrandCats = await storage.getAllBrandCategories();
+    const matchingCatIds = allBrandCats
+      .filter((bc) => bc.animal === animal && bc.subcategory === subcategorySlug)
+      .map((bc) => bc.id);
+    if (matchingCatIds.length === 0) return res.json([]);
+    const allProducts = await storage.getAllProducts();
+    const filtered = allProducts.filter(
+      (p) => p.isActive && p.brandCategoryId && matchingCatIds.includes(p.brandCategoryId)
+    );
+    res.setHeader("Cache-Control", "public, max-age=120, stale-while-revalidate=600");
+    res.json(filtered);
+  });
+
 
   app.get("/robots.txt", (req, res) => {
     res.set("Content-Type", "text/plain");
@@ -636,6 +655,11 @@ export async function registerRoutes(
     const allProducts = await storage.getAllProducts();
     const isAdmin = !!(req.session as any)?.userId;
     const showAll = req.query.all === "true" && isAdmin;
+    if (showAll) {
+      res.setHeader("Cache-Control", "private, no-store");
+    } else {
+      res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    }
     res.json(showAll ? allProducts : allProducts.filter(p => p.isActive));
   });
 
