@@ -179,10 +179,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (kediKumuIdsRef.current.has(id) && next > KEDI_KUMU_MAX_QTY) {
         next = KEDI_KUMU_MAX_QTY;
       }
-      const stock = stockMapRef.current.get(id) ?? 0;
-      if (delta > 0 && next > stock) {
+      const stockVal = stockMapRef.current.get(id);
+      if (delta > 0 && stockVal !== undefined && next > stockVal) {
         blocked = true;
-        next = stock;
+        next = stockVal;
         if (next === current) return prev;
       }
       let updated: BasketItems;
