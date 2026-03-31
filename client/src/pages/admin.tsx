@@ -65,6 +65,7 @@ import {
   Camera,
   Save,
   Settings,
+  LogIn,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -3922,6 +3923,7 @@ function DashboardSection() {
 function CustomersSection() {
   const { data: customers = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/customers"] });
   const [search, setSearch] = useState("");
+  const [expandedId, setExpandedId] = useState<number | null>(null);
   const [editingCustomer, setEditingCustomer] = useState<any | null>(null);
   const [editName, setEditName] = useState("");
   const [editAddress, setEditAddress] = useState("");
@@ -3951,6 +3953,17 @@ function CustomersSection() {
     },
   });
 
+  const impersonateMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("POST", `/api/admin/impersonate/${id}`);
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      toast({ title: `${data.name} hesabına geçildi` });
+      window.open("/hesabim", "_blank");
+    },
+  });
+
   const filtered = customers.filter(c =>
     c.name?.toLowerCase().includes(search.toLowerCase()) ||
     c.phone?.includes(search)
@@ -3968,7 +3981,9 @@ function CustomersSection() {
         <Badge variant="secondary">{filtered.length} müşteri</Badge>
       </div>
       <div className="space-y-2">
-        {filtered.slice(0, 50).map(c => (
+        {filtered.slice(0, 50).map(c => {
+          const isExpanded = expandedId === c.id;
+          return (
           <Card key={c.id}>
             <CardContent className="p-3">
               {editingCustomer?.id === c.id ? (
@@ -3981,35 +3996,128 @@ function CustomersSection() {
                   </div>
                 </div>
               ) : (
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className="font-semibold text-sm">{c.name}</p>
-                      <a href={`tel:${c.phone}`} className="text-xs text-muted-foreground">{c.phone}</a>
+                <>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 cursor-pointer flex-1" onClick={() => setExpandedId(isExpanded ? null : c.id)} data-testid={`btn-expand-customer-${c.id}`}>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm" style={{ color: "#e65100" }}>{c.name}</p>
+                        <ChevronDown className={`w-3.5 h-3.5 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                        {c.isBlacklisted && <Badge variant="destructive" className="text-[10px] px-1 py-0">Kara Liste</Badge>}
+                      </div>
+                      <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
+                        <span>{c.orderCount} sipariş</span>
+                        <span>{c.totalSpent.toLocaleString("tr-TR")} ₺</span>
+                      </div>
                     </div>
-                    {c.address && <p className="text-xs text-muted-foreground truncate mt-0.5">{c.address}</p>}
-                    <div className="flex gap-3 mt-1 text-xs text-muted-foreground">
-                      <span>{c.orderCount} sipariş</span>
-                      <span>{c.totalSpent.toLocaleString("tr-TR")} ₺</span>
-                      {c.createdAt && <span>Kayıt: {new Date(c.createdAt).toLocaleDateString("tr-TR")}</span>}
+                    <div className="flex gap-1 shrink-0">
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditingCustomer(c); setEditName(c.name); setEditAddress(c.address || ""); }} data-testid={`btn-edit-customer-${c.id}`}>
+                        <Pencil className="w-3.5 h-3.5" />
+                      </Button>
+                      <a href={`https://wa.me/90${c.phone}`} target="_blank" rel="noopener noreferrer">
+                        <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-600"><SiWhatsapp className="w-3.5 h-3.5" /></Button>
+                      </a>
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-700" onClick={() => setDeleteConfirmId(c.id)} data-testid={`btn-delete-customer-${c.id}`}>
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-1 shrink-0">
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditingCustomer(c); setEditName(c.name); setEditAddress(c.address || ""); }} data-testid={`btn-edit-customer-${c.id}`}>
-                      <Pencil className="w-3.5 h-3.5" />
-                    </Button>
-                    <a href={`https://wa.me/90${c.phone}`} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-600"><SiWhatsapp className="w-3.5 h-3.5" /></Button>
-                    </a>
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-700" onClick={() => setDeleteConfirmId(c.id)} data-testid={`btn-delete-customer-${c.id}`}>
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </Button>
-                  </div>
-                </div>
+
+                  {isExpanded && (
+                    <div className="mt-3 pt-3 border-t space-y-3" data-testid={`detail-customer-${c.id}`}>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div className="flex items-center gap-1.5">
+                          <User className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="font-medium">Ad Soyad:</span>
+                        </div>
+                        <span>{c.name}</span>
+                        <div className="flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="font-medium">Telefon:</span>
+                        </div>
+                        <a href={`tel:${c.phone}`} className="text-blue-600">{c.phone}</a>
+                        {c.email && (
+                          <>
+                            <div className="flex items-center gap-1.5">
+                              <span className="font-medium ml-5">E-posta:</span>
+                            </div>
+                            <span>{c.email}</span>
+                          </>
+                        )}
+                        <div className="flex items-center gap-1.5">
+                          <MapPin className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="font-medium">Adres:</span>
+                        </div>
+                        <span className="break-words">{c.address || "—"}</span>
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
+                          <span className="font-medium">Kayıt:</span>
+                        </div>
+                        <span>{c.createdAt ? new Date(c.createdAt).toLocaleDateString("tr-TR") : "—"}</span>
+                      </div>
+
+                      {c.addresses && c.addresses.length > 0 && (
+                        <div>
+                          <p className="text-xs font-semibold text-muted-foreground uppercase mb-1">Kayıtlı Adresler</p>
+                          <div className="space-y-1">
+                            {c.addresses.map((a: any) => (
+                              <div key={a.id} className="text-xs bg-gray-50 rounded p-2">
+                                <span className="font-medium">{a.label}:</span> {a.address}
+                                {a.district && <span className="text-muted-foreground"> ({a.district})</span>}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div>
+                        <div className="flex items-center justify-between mb-1">
+                          <p className="text-xs font-semibold text-muted-foreground uppercase">Siparişler ({c.orderCount})</p>
+                          <span className="text-xs font-bold" style={{ color: "#e65100" }}>{c.totalSpent.toLocaleString("tr-TR")} ₺</span>
+                        </div>
+                        {c.orders && c.orders.length > 0 ? (
+                          <div className="space-y-1 max-h-48 overflow-y-auto">
+                            {c.orders.map((o: any) => (
+                              <div key={o.id} className="text-xs bg-gray-50 rounded p-2 flex items-center justify-between gap-2">
+                                <div>
+                                  <span className="font-medium">#{o.id}</span>
+                                  <span className="text-muted-foreground ml-1.5">{new Date(o.createdAt).toLocaleDateString("tr-TR")}</span>
+                                  <span className="text-muted-foreground ml-1.5">{o.itemCount} ürün</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Badge variant={o.status === "delivered" ? "default" : o.status === "cancelled" ? "destructive" : "secondary"} className="text-[10px] px-1.5 py-0">
+                                    {o.status === "pending" ? "Bekliyor" : o.status === "delivered" ? "Teslim" : o.status === "cancelled" ? "İptal" : o.status}
+                                  </Badge>
+                                  <span className="font-bold">{o.grandTotal?.toLocaleString("tr-TR")} ₺</span>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-xs text-muted-foreground">Henüz sipariş yok</p>
+                        )}
+                      </div>
+
+                      <div className="pt-2 border-t">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full text-xs gap-1.5"
+                          onClick={() => impersonateMutation.mutate(c.id)}
+                          disabled={impersonateMutation.isPending}
+                          data-testid={`btn-impersonate-customer-${c.id}`}
+                        >
+                          {impersonateMutation.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LogIn className="w-3.5 h-3.5" />}
+                          Üye Hesabına Geç
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </CardContent>
           </Card>
-        ))}
+          );
+        })}
       </div>
       <Dialog open={deleteConfirmId !== null} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null); }}>
         <DialogContent className="max-w-[340px]">

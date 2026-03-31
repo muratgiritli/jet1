@@ -2035,15 +2035,34 @@ export async function registerRoutes(
     try {
       const allCustomers = await storage.getAllCustomers();
       const allOrders = await storage.getAllOrders();
+      const allAddresses = await sharedPool.query("SELECT * FROM customer_addresses ORDER BY id DESC");
+      const addressMap = new Map<number, any[]>();
+      for (const a of allAddresses.rows) {
+        const list = addressMap.get(a.customer_id) || [];
+        list.push(a);
+        addressMap.set(a.customer_id, list);
+      }
       const result = allCustomers.map(c => {
         const customerOrders = allOrders.filter(o => o.customerPhone === c.phone);
         const totalSpent = customerOrders.reduce((s, o) => s + (o.grandTotal || 0), 0);
         return {
           id: c.id, phone: c.phone, name: c.name, address: c.address,
+          email: c.email,
           createdAt: c.createdAt,
+          isBlacklisted: c.isBlacklisted,
+          blacklistReason: c.blacklistReason,
           orderCount: customerOrders.length,
           totalSpent: Math.round(totalSpent * 100) / 100,
           lastOrder: customerOrders.length > 0 ? customerOrders[0].createdAt : null,
+          addresses: (addressMap.get(c.id) || []).map(a => ({ id: a.id, label: a.label, address: a.address, district: a.district })),
+          orders: customerOrders.slice(0, 20).map(o => ({
+            id: o.id,
+            createdAt: o.createdAt,
+            grandTotal: o.grandTotal,
+            status: o.status,
+            itemCount: Array.isArray(o.items) ? o.items.length : 0,
+            paymentMethod: o.paymentMethod,
+          })),
         };
       });
       res.json(result);
@@ -2064,6 +2083,20 @@ export async function registerRoutes(
       res.json(updated);
     } catch (err) {
       res.status(500).json({ message: "Customer update error" });
+    }
+  });
+
+  app.post("/api/admin/impersonate/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Geçersiz müşteri ID" });
+      const customer = await storage.getCustomer(id);
+      if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
+      (req.session as any).customerId = customer.id;
+      (req.session as any).adminImpersonating = true;
+      res.json({ success: true, phone: customer.phone, name: customer.name });
+    } catch (err) {
+      res.status(500).json({ message: "Impersonation error" });
     }
   });
 
