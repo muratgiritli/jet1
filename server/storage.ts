@@ -1,6 +1,6 @@
 import { drizzle } from "drizzle-orm/node-postgres";
 import pg from "pg";
-import { eq, desc, ilike, or, and, gte, sql } from "drizzle-orm";
+import { eq, desc, ilike, or, and, gte, sql, inArray } from "drizzle-orm";
 import {
   type User, type InsertUser,
   type Subcategory, type InsertSubcategory,
@@ -48,6 +48,7 @@ export interface IStorage {
   getProductsByBrandCategory(brandCategoryId: number): Promise<Product[]>;
   getAllProducts(): Promise<Product[]>;
   getProduct(id: number): Promise<Product | undefined>;
+  getProductsByIds(ids: number[]): Promise<Product[]>;
   createProduct(data: InsertProduct): Promise<Product>;
   updateProduct(id: number, data: Partial<InsertProduct>): Promise<Product | undefined>;
   deleteProduct(id: number): Promise<void>;
@@ -227,6 +228,11 @@ export class DatabaseStorage implements IStorage {
   async getProduct(id: number): Promise<Product | undefined> {
     const [product] = await db.select().from(products).where(eq(products.id, id));
     return product;
+  }
+
+  async getProductsByIds(ids: number[]): Promise<Product[]> {
+    if (ids.length === 0) return [];
+    return db.select().from(products).where(inArray(products.id, ids));
   }
 
   async createProduct(data: InsertProduct): Promise<Product> {

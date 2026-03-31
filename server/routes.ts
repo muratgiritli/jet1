@@ -1456,8 +1456,26 @@ export async function registerRoutes(
     const customer = await storage.getCustomer(customerId);
     if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
     const customerOrders = await storage.getOrdersByPhone(customer.phone);
+    const productIds = new Set<number>();
+    for (const o of customerOrders) {
+      if (Array.isArray(o.items)) {
+        for (const item of o.items as any[]) {
+          if (item.productId) productIds.add(item.productId);
+        }
+      }
+    }
+    const productMap = new Map<number, { img: string | null; stock: number }>();
+    const bulkProducts = await storage.getProductsByIds([...productIds]);
+    for (const p of bulkProducts) {
+      productMap.set(p.id, { img: p.img, stock: p.stock });
+    }
     res.json(customerOrders.map(o => ({
-      id: o.id, items: o.items, subtotal: o.subtotal, shipping: o.shipping, discount: o.discount,
+      id: o.id,
+      items: Array.isArray(o.items) ? (o.items as any[]).map((item: any) => {
+        const pData = productMap.get(item.productId);
+        return { ...item, img: pData?.img || null, currentStock: pData?.stock ?? 0 };
+      }) : o.items,
+      subtotal: o.subtotal, shipping: o.shipping, discount: o.discount,
       grandTotal: o.grandTotal, status: o.status, paymentMethod: o.paymentMethod, createdAt: o.createdAt,
       customerNote: o.customerNote, deliverySlot: o.deliverySlot,
     })));
@@ -1467,6 +1485,18 @@ export async function registerRoutes(
     const customerId = (req as any).customerId;
     const favoriteIds = await storage.getCustomerFavoriteIds(customerId);
     res.json(favoriteIds);
+  });
+
+  app.get("/api/customer/favorites/details", requireCustomer, async (req, res) => {
+    const customerId = (req as any).customerId;
+    const favoriteIds = await storage.getCustomerFavoriteIds(customerId);
+    if (favoriteIds.length === 0) return res.json([]);
+    const bulkProducts = await storage.getProductsByIds(favoriteIds);
+    res.json(
+      bulkProducts
+        .filter(p => p.isActive)
+        .map(p => ({ id: p.id, name: p.name, price: p.price, img: p.img, stock: p.stock }))
+    );
   });
 
   app.post("/api/customer/favorites", requireCustomer, async (req, res) => {

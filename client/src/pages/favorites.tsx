@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
 import { Heart, ShoppingCart, Plus, Minus, Trash2 } from "lucide-react";
 import SEO from "@/components/SEO";
 import { Button } from "@/components/ui/button";
@@ -52,13 +51,8 @@ export default function FavoritesPage() {
   const { basket, updateQty } = useCart();
   const { isLoggedIn } = useCustomer();
 
-  const { data: serverFavIds } = useQuery<number[]>({
-    queryKey: ["/api/customer/favorites"],
-    enabled: isLoggedIn,
-  });
-
-  const { data: allProducts } = useQuery<any[]>({
-    queryKey: ["/api/products"],
+  const { data: serverFavDetails } = useQuery<any[]>({
+    queryKey: ["/api/customer/favorites/details"],
     enabled: isLoggedIn,
   });
 
@@ -68,6 +62,7 @@ export default function FavoritesPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/customer/favorites"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/customer/favorites/details"] });
     },
   });
 
@@ -86,8 +81,8 @@ export default function FavoritesPage() {
     if (product) toggleFavorite(product);
   };
 
-  const serverFavorites: FavoriteProduct[] = isLoggedIn && serverFavIds && allProducts
-    ? allProducts.filter(p => serverFavIds.includes(p.id)).map(p => ({
+  const serverFavorites: FavoriteProduct[] = isLoggedIn && serverFavDetails
+    ? serverFavDetails.map(p => ({
         id: String(p.id),
         name: p.name,
         price: p.price,
@@ -122,18 +117,10 @@ export default function FavoritesPage() {
           </div>
         ) : (
           <div className="space-y-2">
-            <AnimatePresence mode="popLayout">
               {favorites.map((product) => {
                 const qty = basket[product.id] || 0;
                 return (
-                  <motion.div
-                    key={product.id}
-                    layout
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
+                  <div key={product.id}>
                     <Card data-testid={`card-fav-${product.id}`}>
                       <CardContent className="p-3 flex items-center gap-3">
                         <Link href={productUrl(Number(product.id), product.name)}>
@@ -201,10 +188,9 @@ export default function FavoritesPage() {
                         </Button>
                       </CardContent>
                     </Card>
-                  </motion.div>
+                  </div>
                 );
               })}
-            </AnimatePresence>
           </div>
         )}
       </div>

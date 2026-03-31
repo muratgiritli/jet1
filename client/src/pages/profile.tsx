@@ -300,7 +300,6 @@ function OrdersSection() {
   const { data: orders, isLoading } = useQuery<any[]>({
     queryKey: ["/api/customer/orders"],
   });
-  const { data: allProducts } = useQuery<any[]>({ queryKey: ["/api/products"] });
   const { updateQty } = useCart();
   const { toast } = useToast();
   const [expandedId, setExpandedId] = useState<number | null>(null);
@@ -314,18 +313,13 @@ function OrdersSection() {
   };
 
   const handleReorder = (order: any) => {
-    if (!allProducts || allProducts.length === 0) {
-      toast({ title: "Ürünler yüklenemedi", variant: "destructive" });
-      return;
-    }
     let addedCount = 0;
     let unavailableCount = 0;
     const itemsToAdd: { id: string; qty: number }[] = [];
     for (const item of order.items) {
-      const product = allProducts.find((p: any) => p.id === item.productId);
-      if (product && product.stock > 0) {
-        const qty = Math.min(item.quantity || 1, product.stock);
-        itemsToAdd.push({ id: String(product.id), qty });
+      if (item.currentStock > 0) {
+        const qty = Math.min(item.quantity || 1, item.currentStock);
+        itemsToAdd.push({ id: String(item.productId), qty });
         addedCount++;
       } else {
         unavailableCount++;
@@ -379,11 +373,10 @@ function OrdersSection() {
               </div>
               <div className="space-y-1">
                 {order.items.slice(0, isExpanded ? undefined : 3).map((item: any, i: number) => {
-                  const product = allProducts?.find((p: any) => p.id === item.productId);
                   return (
                     <div key={i} className="flex items-center gap-2 text-xs">
-                      {isExpanded && product?.img ? (
-                        <ProductImage src={product.img} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                      {isExpanded && item.img ? (
+                        <ProductImage src={item.img} alt={item.name} className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
                       ) : isExpanded ? (
                         <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center flex-shrink-0">
                           <Package className="w-4 h-4 text-muted-foreground" />
@@ -458,12 +451,8 @@ function OrdersSection() {
 }
 
 function FavoritesSection() {
-  const { data: favoriteIds, isLoading } = useQuery<number[]>({
-    queryKey: ["/api/customer/favorites"],
-  });
-
-  const { data: allProducts } = useQuery<any[]>({
-    queryKey: ["/api/products"],
+  const { data: favoriteProducts, isLoading } = useQuery<any[]>({
+    queryKey: ["/api/customer/favorites/details"],
   });
 
   const removeMutation = useMutation({
@@ -472,14 +461,13 @@ function FavoritesSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/customer/favorites"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/customer/favorites/details"] });
     },
   });
 
   if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
 
-  const favoriteProducts = allProducts?.filter(p => favoriteIds?.includes(p.id)) || [];
-
-  if (favoriteProducts.length === 0) {
+  if (!favoriteProducts || favoriteProducts.length === 0) {
     return (
       <div className="text-center py-12">
         <Heart className="w-12 h-12 text-muted-foreground/30 mx-auto mb-3" />

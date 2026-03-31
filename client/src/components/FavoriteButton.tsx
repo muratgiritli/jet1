@@ -57,6 +57,7 @@ export default function FavoriteButton({ product, size = "sm", className = "" }:
           await apiRequest("DELETE", `/api/customer/favorites/${product.id}`);
         }
         queryClient.invalidateQueries({ queryKey: ["/api/customer/favorites"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/customer/favorites/details"] });
       } catch {}
       toast({
         description: newState ? "Favorilere eklendi" : "Favorilerden cikarildi",

@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -633,6 +632,8 @@ export default function Checkout() {
 
       clearCart();
 
+      queryClient.invalidateQueries({ queryKey: ["/api/customer/orders"] });
+
       if (isLoggedIn) {
         setLocation("/hesabim?tab=orders");
       } else {
@@ -668,19 +669,12 @@ export default function Checkout() {
         description="JETGO Pet Shop sepetiniz. Kapıda nakit, kredi kartı, havale/EFT ile ödeme. Samsun içi aynı gün teslimat."
         noindex
       />
-      <AnimatePresence>
-        {showAuthModal && !isLoggedIn && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+      {showAuthModal && !isLoggedIn && (
+          <div
             className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center"
           >
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-            <motion.div
-              initial={{ y: 100, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 100, opacity: 0 }}
+            <div
               className="relative w-full max-w-md bg-background rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto"
               data-testid="modal-auth"
             >
@@ -900,10 +894,9 @@ export default function Checkout() {
                   </>
                 )}
               </div>
-            </motion.div>
-          </motion.div>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
 
       <main className="max-w-2xl mx-auto px-4 pb-8">
         {selectedProducts.length === 0 ? (
@@ -927,13 +920,9 @@ export default function Checkout() {
               <Card>
                 <CardContent className="p-4">
                   <div className="space-y-3" data-testid="list-checkout-items">
-                    <AnimatePresence>
-                      {selectedProducts.map(({ product, qty }) => (
-                        <motion.div
+                    {selectedProducts.map(({ product, qty }) => (
+                        <div
                           key={product.id}
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
                           className="flex items-center gap-3 py-2 border-b border-dashed last:border-0 flex-wrap"
                           data-testid={`row-checkout-item-${product.id}`}
                         >
@@ -969,9 +958,8 @@ export default function Checkout() {
                           <span className="text-sm font-bold shrink-0 min-w-[70px] text-right" data-testid={`text-checkout-linetotal-${product.id}`}>
                             {(qty * product.price).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                           </span>
-                        </motion.div>
+                        </div>
                       ))}
-                    </AnimatePresence>
                   </div>
                 </CardContent>
               </Card>
@@ -1024,10 +1012,7 @@ export default function Checkout() {
                   )}
 
                   {paymentId === "taksit" && installmentRates.length > 0 && (
-                    <motion.div
-                      initial={{ opacity: 0, height: 0 }}
-                      animate={{ opacity: 1, height: "auto" }}
-                      exit={{ opacity: 0, height: 0 }}
+                    <div
                       className="mt-4 pt-4 border-t overflow-hidden"
                       data-testid="section-installments"
                     >
@@ -1118,7 +1103,7 @@ export default function Checkout() {
                           </div>
                         );
                       })()}
-                    </motion.div>
+                    </div>
                   )}
                 </CardContent>
               </Card>

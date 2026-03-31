@@ -95,6 +95,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     setCustomer(null);
     queryClient.removeQueries({ queryKey: ["/api/customer/orders"] });
     queryClient.removeQueries({ queryKey: ["/api/customer/favorites"] });
+    queryClient.removeQueries({ queryKey: ["/api/customer/favorites/details"] });
     queryClient.removeQueries({ queryKey: ["/api/customer/addresses"] });
     queryClient.removeQueries({ queryKey: ["/api/customer/pets"] });
   }, []);
