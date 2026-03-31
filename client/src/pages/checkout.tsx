@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link, useLocation } from "wouter";
 import {
   ShoppingCart,
@@ -32,6 +33,7 @@ import {
   Lock,
   ShieldCheck,
   ShoppingBag,
+  Gift,
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import {
@@ -292,7 +294,8 @@ export default function Checkout() {
   const [orderNote, setOrderNote] = useState("");
   const [deliverySlot, setDeliverySlot] = useState("hemen");
   const [pendingOrderAfterAuth, setPendingOrderAfterAuth] = useState(false);
-  const [donationAmount, setDonationAmount] = useState(0); 
+  const [donationAmount, setDonationAmount] = useState(0);
+  const [showPointsDialog, setShowPointsDialog] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponResult, setCouponResult] = useState<{ valid: boolean; message: string; discountAmount?: number; discountType?: string; discountValue?: number } | null>(null);
@@ -710,6 +713,67 @@ export default function Checkout() {
               </Card>
             </section>
 
+
+            {!hasCampaignItems && (
+              <section className="mt-6">
+                <Card>
+                  <CardContent className="p-4">
+                    <div
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                      style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}
+                    >
+                      <Gift className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
+                      <span style={{ color: "#bf360c" }} data-testid="text-checkout-points-earn">
+                        Bu siparişi verdiğinizde{" "}
+                        <strong>{(subtotal * 0.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
+                        değerinde Para Puan kazanacaksınız.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowPointsDialog(true)}
+                      className="text-xs font-medium underline mt-2 ml-1"
+                      style={{ color: "#e65100" }}
+                      data-testid="btn-checkout-points-info"
+                    >
+                      Para Puan nedir?
+                    </button>
+                  </CardContent>
+                </Card>
+              </section>
+            )}
+
+            <Dialog open={showPointsDialog} onOpenChange={setShowPointsDialog}>
+              <DialogContent className="max-w-md">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Gift className="w-5 h-5" style={{ color: "#e65100" }} />
+                    Para Puan Nedir?
+                  </DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3 text-sm text-gray-700">
+                  <p>
+                    <strong>Para Puan</strong>, JETGO Pet Shop'ta yaptığınız her alışverişte kazandığınız sadakat puanıdır.
+                  </p>
+                  <div className="rounded-lg p-3" style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}>
+                    <p className="font-semibold" style={{ color: "#e65100" }}>Nasıl Kazanılır?</p>
+                    <p className="mt-1">Her siparişinizde toplam tutarın <strong>%5'i</strong> kadar Para Puan kazanırsınız. Örneğin 1.000 TL'lik alışverişte <strong>50 TL</strong> Para Puan!</p>
+                  </div>
+                  <div className="rounded-lg p-3" style={{ backgroundColor: "#e8f5e9", border: "1px solid #c8e6c9" }}>
+                    <p className="font-semibold" style={{ color: "#2e7d32" }}>Nasıl Kullanılır?</p>
+                    <p className="mt-1">Biriken puanlarınız bir sonraki siparişinizde otomatik olarak indirim olarak uygulanır. Sepetinizde Para Puan bakiyeniz görünür.</p>
+                  </div>
+                  <div className="rounded-lg p-3 bg-gray-50 border border-gray-200">
+                    <p className="font-semibold text-gray-800">Önemli Bilgiler</p>
+                    <ul className="mt-1 space-y-1 list-disc list-inside text-gray-600">
+                      <li>Para Puan kazanmak için üye girişi yapmanız gerekir.</li>
+                      <li>Puanlarınız hesabınızda birikir ve istediğiniz zaman kullanabilirsiniz.</li>
+                      <li>Kampanyalı ürünlerde Para Puan geçerli değildir.</li>
+                    </ul>
+                  </div>
+                </div>
+              </DialogContent>
+            </Dialog>
 
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-payment">
