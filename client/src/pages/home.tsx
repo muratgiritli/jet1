@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductImage from "@/components/ProductImage";
 import { Card, CardContent } from "@/components/ui/card";
@@ -37,32 +38,44 @@ function QuantityControl({
 }: {
   productId: string;
   quantity: number;
-  onUpdate: (id: string, delta: number) => void;
+  onUpdate: (id: string, delta: number) => boolean;
 }) {
+  const [showStockWarn, setShowStockWarn] = useState(false);
   return (
-    <div className="flex items-center gap-0" data-testid={`qty-control-${productId}`}>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onUpdate(productId, -1)}
-        data-testid={`btn-minus-${productId}`}
-      >
-        <Minus />
-      </Button>
-      <div
-        className="flex items-center justify-center font-bold text-primary w-8 text-sm"
-        data-testid={`text-qty-${productId}`}
-      >
-        {quantity}
+    <div className="flex flex-col items-center gap-0.5">
+      <div className="flex items-center gap-0" data-testid={`qty-control-${productId}`}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => onUpdate(productId, -1)}
+          data-testid={`btn-minus-${productId}`}
+        >
+          <Minus />
+        </Button>
+        <div
+          className="flex items-center justify-center font-bold text-primary w-8 text-sm"
+          data-testid={`text-qty-${productId}`}
+        >
+          {quantity}
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            const blocked = onUpdate(productId, 1);
+            if (blocked) {
+              setShowStockWarn(true);
+              setTimeout(() => setShowStockWarn(false), 3000);
+            }
+          }}
+          data-testid={`btn-plus-${productId}`}
+        >
+          <Plus />
+        </Button>
       </div>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => onUpdate(productId, 1)}
-        data-testid={`btn-plus-${productId}`}
-      >
-        <Plus />
-      </Button>
+      {showStockWarn && (
+        <span className="text-[10px] text-red-600 font-medium" data-testid="text-stock-limit-warning">Stok kalmadı!</span>
+      )}
     </div>
   );
 }

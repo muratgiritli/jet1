@@ -28,7 +28,7 @@ interface CartContextType {
   basket: BasketItems;
   paymentId: string;
   setPaymentId: (id: string) => void;
-  updateQty: (id: string, delta: number) => void;
+  updateQty: (id: string, delta: number) => boolean;
   clearCart: () => void;
   subtotal: number;
   selectedProducts: { product: CartProduct; qty: number }[];
@@ -46,6 +46,7 @@ interface CartContextType {
   campaignMainInCart: string | null;
   campaignData: CampaignItemInfo[];
   isKediKumu: (id: string) => boolean;
+  getProductStock: (id: string) => number;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -144,7 +145,18 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [dbProducts]);
   const isKediKumu = useCallback((id: string) => kediKumuIdsRef.current.has(id), []);
 
-  const updateQty = useCallback((id: string, delta: number) => {
+  const stockMapRef = useRef<Map<string, number>>(new Map());
+  useMemo(() => {
+    const m = new Map<string, number>();
+    for (const p of dbProducts) m.set(String(p.id), p.stock ?? 0);
+    stockMapRef.current = m;
+    return m;
+  }, [dbProducts]);
+
+  const getProductStock = useCallback((id: string) => stockMapRef.current.get(id) ?? 0, []);
+
+  const updateQty = useCallback((id: string, delta: number): boolean => {
+    let blocked = false;
     setBasket((prev) => {
       const current = prev[id] || 0;
       let next = current + delta;
@@ -160,6 +172,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (kediKumuIdsRef.current.has(id) && next > KEDI_KUMU_MAX_QTY) {
         next = KEDI_KUMU_MAX_QTY;
       }
+      const stock = stockMapRef.current.get(id) ?? 0;
+      if (delta > 0 && next > stock) {
+        blocked = true;
+        next = stock;
+        if (next === current) return prev;
+      }
       let updated: BasketItems;
       if (next <= 0) {
         const copy = { ...prev };
@@ -171,6 +189,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       saveBasket(updated);
       return updated;
     });
+    return blocked;
   }, []);
 
   const clearCart = useCallback(() => {
@@ -264,8 +283,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       campaignMainInCart,
       campaignData,
       isKediKumu,
+      getProductStock,
     }),
-    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu]
+    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

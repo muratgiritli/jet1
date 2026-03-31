@@ -270,6 +270,7 @@ export default function Checkout() {
     const timer = setTimeout(() => lookupCustomer(customerPhone), 500);
     return () => clearTimeout(timer);
   }, [customerPhone, lookupCustomer, isLoggedIn]);
+  const [stockWarning, setStockWarning] = useState("");
   const {
     paymentId,
     setPaymentId,
@@ -697,7 +698,13 @@ export default function Checkout() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => updateQty(String(product.id), 1)}
+                              onClick={() => {
+                                const blocked = updateQty(String(product.id), 1);
+                                if (blocked) {
+                                  setStockWarning(product.name);
+                                  setTimeout(() => setStockWarning(""), 3000);
+                                }
+                              }}
                               data-testid={`btn-checkout-plus-${product.id}`}
                             >
                               <Plus />
@@ -709,6 +716,14 @@ export default function Checkout() {
                         </div>
                       ))}
                   </div>
+                  {stockWarning && (
+                    <div className="mt-3 p-2.5 rounded-lg bg-red-50 border border-red-200 flex items-center gap-2" data-testid="text-stock-warning">
+                      <span className="text-red-500 text-sm">⚠️</span>
+                      <span className="text-xs text-red-600 font-medium">
+                        <strong>{stockWarning}</strong> için stok kalmadı, daha fazla ekleyemezsiniz.
+                      </span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </section>
