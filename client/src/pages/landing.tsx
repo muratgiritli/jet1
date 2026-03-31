@@ -537,30 +537,9 @@ export default function Landing() {
           <HeroCarousel />
         </div>
 
-        {!isLoggedIn && (
-        <div className="mt-3 md:hidden" data-testid="section-start-shopping">
-          <Link href="/kategori">
-            <div
-              className="relative overflow-hidden rounded-2xl p-4 cursor-pointer shadow-lg transition-transform active:scale-[0.97]"
-              style={{ background: "linear-gradient(135deg, #6B3480 0%, #9B59B6 50%, #6B3480 100%)" }}
-            >
-              <div className="relative flex items-center justify-between">
-                <div>
-                  <div className="flex items-center gap-1.5 mb-1">
-                    <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                    <span className="text-[10px] font-bold text-emerald-300 uppercase tracking-wider">Samsun Atakum Teslimat Aktif</span>
-                  </div>
-                  <p className="text-base font-extrabold text-white tracking-tight">Alışverişe Başla</p>
-                  <p className="text-[11px] text-white/70 mt-0.5">900+ ürün · Aynı gün kapıda teslimat</p>
-                </div>
-                <div className="w-11 h-11 rounded-full bg-white/20 flex items-center justify-center">
-                  <ArrowRight className="w-5 h-5 text-white" />
-                </div>
-              </div>
-            </div>
-          </Link>
+        <div className="mt-4 md:mt-10">
+          <CategoryGrid />
         </div>
-        )}
 
         <div className="mt-3 md:mt-4">
           <QuickActions />
@@ -568,12 +547,6 @@ export default function Landing() {
 
         <div className="mt-4 md:mt-8">
           <OrderCounter />
-        </div>
-
-
-
-        <div className="mt-5 md:mt-10">
-          <CategoryGrid />
         </div>
 
 
