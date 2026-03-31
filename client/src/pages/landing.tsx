@@ -562,12 +562,12 @@ export default function Landing() {
         </div>
         )}
 
-        <div className="mt-4 md:mt-8">
-          <OrderCounter />
+        <div className="mt-3 md:mt-4">
+          <QuickActions />
         </div>
 
         <div className="mt-4 md:mt-8">
-          <QuickActions />
+          <OrderCounter />
         </div>
 
 
