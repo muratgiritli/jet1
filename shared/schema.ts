@@ -285,6 +285,7 @@ export const campaignItems = pgTable("campaign_items", {
   itemType: text("item_type").notNull().default("main"),
   sortOrder: integer("sort_order").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
+  parentProductId: integer("parent_product_id"),
 });
 
 export const insertCampaignItemSchema = createInsertSchema(campaignItems).omit({ id: true });

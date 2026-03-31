@@ -857,9 +857,11 @@ async function seedCampaignItems() {
       product_id INTEGER NOT NULL,
       item_type VARCHAR(10) NOT NULL DEFAULT 'main',
       sort_order INTEGER NOT NULL DEFAULT 0,
-      is_active BOOLEAN NOT NULL DEFAULT true
+      is_active BOOLEAN NOT NULL DEFAULT true,
+      parent_product_id INTEGER
     )
   `);
+  await pool.query(`ALTER TABLE campaign_items ADD COLUMN IF NOT EXISTS parent_product_id INTEGER`);
 
   const existing = await pool.query("SELECT COUNT(*) as cnt FROM campaign_items");
   if (parseInt(existing.rows[0].cnt) > 0) {

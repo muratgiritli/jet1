@@ -550,6 +550,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [campaignSortOrder, setCampaignSortOrder] = useState("1");
   const [campaignAddDialogOpen, setCampaignAddDialogOpen] = useState(false);
   const [campaignAddProductId, setCampaignAddProductId] = useState<number | null>(null);
+  const [campaignParentProductId, setCampaignParentProductId] = useState<number | null>(null);
+  const [extraSearchQuery, setExtraSearchQuery] = useState("");
   const [orderTab, setOrderTab] = useState<"gelen" | "giden" | "bekleyen">("gelen");
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
@@ -978,6 +980,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     item_type: string;
     sort_order: number;
     is_active: boolean;
+    parent_product_id: number | null;
     name: string;
     price: number;
     original_price: number | null;
@@ -992,7 +995,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   });
 
   const addCampaignItemMutation = useMutation({
-    mutationFn: async (data: { productId: number; itemType: string; sortOrder: number }) => {
+    mutationFn: async (data: { productId: number; itemType: string; sortOrder: number; parentProductId?: number | null }) => {
       await apiRequest("POST", "/api/admin/campaign-items", data);
     },
     onSuccess: () => {
@@ -1232,86 +1235,257 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
           {campaignExpanded && (
             <div className="space-y-5">
-              {(["main", "extra"] as const).map(type => {
-                const items = campaignItems.filter(i => i.item_type === type).sort((a, b) => a.sort_order - b.sort_order);
-                const activeCount = items.filter(i => i.is_active).length;
-                return (
-                  <div key={type} className="rounded-xl border bg-white overflow-hidden">
-                    <div className={`px-4 py-3 flex items-center gap-2 ${type === "main" ? "bg-purple-600 text-white" : "bg-green-600 text-white"}`}>
-                      {type === "main" ? <Tag className="w-4 h-4" /> : <Package className="w-4 h-4" />}
-                      <span className="font-bold">{type === "main" ? "Ana Ürünler" : "İlave Ürünler"}</span>
-                      <span className="ml-auto text-sm opacity-90">{activeCount} aktif / {items.length} toplam</span>
-                    </div>
-                    {items.length === 0 ? (
-                      <p className="text-sm text-gray-400 text-center py-6">Henüz ürün eklenmemiş</p>
-                    ) : (
-                      <div className="divide-y">
-                        {items.map((item, idx) => (
-                          <div
-                            key={item.id}
-                            className={`flex items-center gap-3 p-3 transition-all ${item.is_active ? "" : "opacity-40 bg-gray-50"}`}
-                            data-testid={`row-campaign-item-${item.id}`}
-                          >
-                            <span className="text-xs font-mono text-gray-400 w-6 text-center flex-shrink-0">{item.sort_order}</span>
-                            {item.img ? (
-                              <img src={item.img} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border" />
-                            ) : (
-                              <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
-                                <ImageIcon className="w-6 h-6 text-gray-300" />
-                              </div>
-                            )}
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold truncate" data-testid={`text-campaign-item-name-${item.id}`}>{item.name}</p>
-                              <div className="flex items-center gap-3 mt-1">
-                                <span className="text-sm font-bold text-purple-700">{item.price} TL</span>
-                                {item.original_price && item.original_price > item.price && (
-                                  <span className="text-xs text-gray-400 line-through">{item.original_price} TL</span>
-                                )}
-                                {item.stock <= 0 && (
-                                  <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">STOK YOK</span>
-                                )}
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2 flex-shrink-0">
-                              <button
-                                type="button"
-                                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
-                                  item.is_active
-                                    ? "bg-green-100 text-green-700 hover:bg-green-200"
-                                    : "bg-gray-100 text-gray-500 hover:bg-gray-200"
-                                }`}
-                                onClick={() => toggleCampaignItemMutation.mutate({ id: item.id, isActive: !item.is_active })}
-                                disabled={toggleCampaignItemMutation.isPending}
-                                data-testid={`btn-toggle-campaign-item-${item.id}`}
-                              >
-                                {item.is_active ? (
-                                  <><Eye className="w-3.5 h-3.5" /> Yayında</>
-                                ) : (
-                                  <><EyeOff className="w-3.5 h-3.5" /> Durduruldu</>
-                                )}
-                              </button>
-                              <button
-                                type="button"
-                                className="w-8 h-8 rounded-full flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
-                                onClick={() => {
-                                  if (confirm(`"${item.name}" kampanyadan silinsin mi?`)) {
-                                    removeCampaignItemMutation.mutate(item.id);
-                                  }
-                                }}
-                                disabled={removeCampaignItemMutation.isPending}
-                                data-testid={`btn-remove-campaign-item-${item.id}`}
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+              {(() => {
+                const mainItems = campaignItems.filter(i => i.item_type === "main").sort((a, b) => a.sort_order - b.sort_order);
+                if (mainItems.length === 0) {
+                  return <p className="text-sm text-gray-400 text-center py-6">Henüz ana ürün eklenmemiş</p>;
+                }
+                return mainItems.map(mainItem => {
+                  const extras = campaignItems
+                    .filter(i => i.item_type === "extra" && i.parent_product_id === mainItem.product_id)
+                    .sort((a, b) => a.sort_order - b.sort_order);
+                  return (
+                    <div key={mainItem.id} className="rounded-xl border bg-white overflow-hidden">
+                      <div className="bg-purple-600 text-white px-4 py-3 flex items-center gap-2">
+                        <Tag className="w-4 h-4" />
+                        <span className="font-bold">Ana Ürün</span>
+                        <span className="ml-auto text-sm opacity-90">{extras.length} sıklıkla alınan</span>
                       </div>
-                    )}
-                  </div>
-                );
-              })}
+                      <div
+                        className={`flex items-center gap-3 p-3 transition-all ${mainItem.is_active ? "" : "opacity-40 bg-gray-50"}`}
+                        data-testid={`row-campaign-item-${mainItem.id}`}
+                      >
+                        <span className="text-xs font-mono text-gray-400 w-6 text-center flex-shrink-0">{mainItem.sort_order}</span>
+                        {mainItem.img ? (
+                          <img src={mainItem.img} alt="" className="w-14 h-14 rounded-xl object-cover flex-shrink-0 border" />
+                        ) : (
+                          <div className="w-14 h-14 rounded-xl bg-gray-100 flex items-center justify-center flex-shrink-0">
+                            <ImageIcon className="w-6 h-6 text-gray-300" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-semibold truncate" data-testid={`text-campaign-item-name-${mainItem.id}`}>{mainItem.name}</p>
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-sm font-bold text-purple-700">{mainItem.price} TL</span>
+                            {mainItem.original_price && mainItem.original_price > mainItem.price && (
+                              <span className="text-xs text-gray-400 line-through">{mainItem.original_price} TL</span>
+                            )}
+                            {mainItem.stock <= 0 && (
+                              <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">STOK YOK</span>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <button
+                            type="button"
+                            className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${
+                              mainItem.is_active
+                                ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                            }`}
+                            onClick={() => toggleCampaignItemMutation.mutate({ id: mainItem.id, isActive: !mainItem.is_active })}
+                            disabled={toggleCampaignItemMutation.isPending}
+                            data-testid={`btn-toggle-campaign-item-${mainItem.id}`}
+                          >
+                            {mainItem.is_active ? (
+                              <><Eye className="w-3.5 h-3.5" /> Yayında</>
+                            ) : (
+                              <><EyeOff className="w-3.5 h-3.5" /> Durduruldu</>
+                            )}
+                          </button>
+                          <button
+                            type="button"
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                            onClick={() => {
+                              if (confirm(`"${mainItem.name}" kampanyadan silinsin mi?`)) {
+                                removeCampaignItemMutation.mutate(mainItem.id);
+                              }
+                            }}
+                            disabled={removeCampaignItemMutation.isPending}
+                            data-testid={`btn-remove-campaign-item-${mainItem.id}`}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {extras.length > 0 && (
+                        <div className="border-t">
+                          <div className="bg-green-50 px-4 py-2 flex items-center gap-2 border-b">
+                            <Package className="w-3.5 h-3.5 text-green-600" />
+                            <span className="text-xs font-bold text-green-700">SIKLIKLA ALINAN ÜRÜNLER</span>
+                          </div>
+                          <div className="divide-y">
+                            {extras.map(extra => (
+                              <div
+                                key={extra.id}
+                                className={`flex items-center gap-3 p-3 pl-8 transition-all ${extra.is_active ? "" : "opacity-40 bg-gray-50"}`}
+                                data-testid={`row-campaign-item-${extra.id}`}
+                              >
+                                <span className="text-xs font-mono text-gray-400 w-6 text-center flex-shrink-0">{extra.sort_order}</span>
+                                {extra.img ? (
+                                  <img src={extra.img} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0 border" />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                    <ImageIcon className="w-4 h-4 text-gray-300" />
+                                  </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-xs font-semibold truncate" data-testid={`text-campaign-item-name-${extra.id}`}>{extra.name}</p>
+                                  <span className="text-xs font-bold text-green-700">{extra.price} TL</span>
+                                </div>
+                                <div className="flex items-center gap-1 flex-shrink-0">
+                                  <button
+                                    type="button"
+                                    className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-[10px] font-bold transition-colors ${
+                                      extra.is_active
+                                        ? "bg-green-100 text-green-700 hover:bg-green-200"
+                                        : "bg-gray-100 text-gray-500 hover:bg-gray-200"
+                                    }`}
+                                    onClick={() => toggleCampaignItemMutation.mutate({ id: extra.id, isActive: !extra.is_active })}
+                                    disabled={toggleCampaignItemMutation.isPending}
+                                    data-testid={`btn-toggle-campaign-item-${extra.id}`}
+                                  >
+                                    {extra.is_active ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="w-7 h-7 rounded-full flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
+                                    onClick={() => {
+                                      if (confirm(`"${extra.name}" bu ana üründen kaldırılsın mı?`)) {
+                                        removeCampaignItemMutation.mutate(extra.id);
+                                      }
+                                    }}
+                                    disabled={removeCampaignItemMutation.isPending}
+                                    data-testid={`btn-remove-campaign-item-${extra.id}`}
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="border-t p-3">
+                        <button
+                          type="button"
+                          className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border-2 border-dashed border-green-300 text-green-600 hover:bg-green-50 hover:border-green-400 transition-colors text-sm font-medium"
+                          onClick={() => {
+                            setCampaignParentProductId(mainItem.product_id);
+                            setExtraSearchQuery("");
+                          }}
+                          data-testid={`btn-add-extra-${mainItem.product_id}`}
+                        >
+                          <Plus className="w-4 h-4" />
+                          Sıklıkla Alınan Ürün Ekle
+                        </button>
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
             </div>
+          )}
+
+          {campaignParentProductId && (
+            <Dialog open={true} onOpenChange={(open) => {
+              if (!open) { setCampaignParentProductId(null); setExtraSearchQuery(""); setCampaignSortOrder("1"); }
+            }}>
+              <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <Package className="w-5 h-5 text-green-600" />
+                    Sıklıkla Alınan Ürün Ekle
+                  </DialogTitle>
+                </DialogHeader>
+                {(() => {
+                  const parentProduct = allProducts.find(p => p.id === campaignParentProductId);
+                  const existingExtraIds = campaignItems
+                    .filter(i => i.item_type === "extra" && i.parent_product_id === campaignParentProductId)
+                    .map(i => i.product_id);
+                  const campaignMainIds = campaignItems.filter(i => i.item_type === "main").map(i => i.product_id);
+                  const availableProducts = allProducts.filter(p =>
+                    p.id !== campaignParentProductId &&
+                    p.isActive &&
+                    !existingExtraIds.includes(p.id) &&
+                    !campaignMainIds.includes(p.id) &&
+                    (extraSearchQuery === "" ||
+                      p.name.toLowerCase().includes(extraSearchQuery.toLowerCase()))
+                  );
+                  return (
+                    <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
+                      {parentProduct && (
+                        <div className="flex items-center gap-3 p-2 bg-purple-50 rounded-lg border border-purple-200">
+                          {parentProduct.img ? (
+                            <img src={parentProduct.img} alt="" className="w-10 h-10 rounded-lg object-cover border" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                              <ImageIcon className="w-4 h-4 text-gray-300" />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold truncate">{parentProduct.name}</p>
+                            <p className="text-[10px] text-purple-600">Ana Ürün</p>
+                          </div>
+                        </div>
+                      )}
+                      <Input
+                        placeholder="Ürün adı ara..."
+                        value={extraSearchQuery}
+                        onChange={(e) => setExtraSearchQuery(e.target.value)}
+                        data-testid="input-extra-search"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Label className="text-xs whitespace-nowrap">Sıra:</Label>
+                        <Input
+                          type="number"
+                          value={campaignSortOrder}
+                          onChange={(e) => setCampaignSortOrder(e.target.value)}
+                          className="w-20"
+                          data-testid="input-extra-sort-order"
+                        />
+                      </div>
+                      <div className="flex-1 overflow-y-auto divide-y border rounded-lg max-h-[40vh]">
+                        {availableProducts.length === 0 ? (
+                          <p className="text-sm text-gray-400 text-center py-4">Ürün bulunamadı</p>
+                        ) : (
+                          availableProducts.slice(0, 50).map(p => (
+                            <div
+                              key={p.id}
+                              className="flex items-center gap-3 p-2 hover:bg-green-50 transition-colors cursor-pointer"
+                              onClick={() => {
+                                addCampaignItemMutation.mutate({
+                                  productId: p.id,
+                                  itemType: "extra",
+                                  sortOrder: parseInt(campaignSortOrder) || 1,
+                                  parentProductId: campaignParentProductId,
+                                });
+                              }}
+                              data-testid={`btn-select-extra-${p.id}`}
+                            >
+                              {p.img ? (
+                                <img src={p.img} alt="" className="w-10 h-10 rounded-lg object-cover border flex-shrink-0" />
+                              ) : (
+                                <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                  <ImageIcon className="w-4 h-4 text-gray-300" />
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-xs font-semibold truncate">{p.name}</p>
+                                <p className="text-xs text-gray-500">{p.price} TL</p>
+                              </div>
+                              <Plus className="w-4 h-4 text-green-500 flex-shrink-0" />
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </DialogContent>
+            </Dialog>
           )}
         </section>}
 
@@ -2872,7 +3046,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
         {campaignAddDialogOpen && campaignAddProductId && (
           <Dialog open={true} onOpenChange={(open) => {
-            if (!open) { setCampaignAddDialogOpen(false); setCampaignAddProductId(null); setCampaignAddType("main"); setCampaignSortOrder("1"); }
+            if (!open) { setCampaignAddDialogOpen(false); setCampaignAddProductId(null); setCampaignAddType("main"); setCampaignSortOrder("1"); setCampaignParentProductId(null); }
           }}>
             <DialogContent>
               <DialogHeader>
@@ -2922,15 +3096,31 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         />
                       </div>
                     </div>
+                    {campaignAddType === "extra" && (
+                      <div>
+                        <Label className="text-sm font-medium mb-1.5 block">Bağlı Ana Ürün</Label>
+                        <Select value={campaignParentProductId ? String(campaignParentProductId) : ""} onValueChange={(v) => setCampaignParentProductId(v ? parseInt(v) : null)}>
+                          <SelectTrigger data-testid="trigger-campaign-parent">
+                            <SelectValue placeholder="Ana ürün seçin..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {campaignItems.filter(ci => ci.item_type === "main" && ci.is_active).map(ci => (
+                              <SelectItem key={ci.product_id} value={String(ci.product_id)}>{ci.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    )}
                     <Button
                       className="w-full"
                       style={{ backgroundColor: "#6B3480" }}
-                      disabled={addCampaignItemMutation.isPending}
+                      disabled={addCampaignItemMutation.isPending || (campaignAddType === "extra" && !campaignParentProductId)}
                       onClick={() => {
                         addCampaignItemMutation.mutate({
                           productId: p.id,
                           itemType: campaignAddType,
                           sortOrder: parseInt(campaignSortOrder) || 1,
+                          parentProductId: campaignAddType === "extra" ? campaignParentProductId : null,
                         });
                       }}
                       data-testid="btn-confirm-campaign-add"

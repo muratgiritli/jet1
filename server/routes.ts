@@ -1841,7 +1841,7 @@ export async function registerRoutes(
 
   app.post("/api/admin/campaign-items", requireAdmin, async (req, res) => {
     try {
-      const { productId, itemType, sortOrder } = req.body;
+      const { productId, itemType, sortOrder, parentProductId } = req.body;
       if (!productId || !itemType) return res.status(400).json({ message: "productId and itemType required" });
       const existing = await sharedPool.query(
         `SELECT id FROM campaign_items WHERE product_id = $1`, [productId]
@@ -1850,8 +1850,8 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Bu ürün zaten kampanyada" });
       }
       const { rows } = await sharedPool.query(
-        `INSERT INTO campaign_items (product_id, item_type, sort_order) VALUES ($1, $2, $3) RETURNING *`,
-        [productId, itemType, sortOrder || 0]
+        `INSERT INTO campaign_items (product_id, item_type, sort_order, parent_product_id) VALUES ($1, $2, $3, $4) RETURNING *`,
+        [productId, itemType, sortOrder || 0, parentProductId || null]
       );
       res.json(rows[0]);
     } catch (err) {

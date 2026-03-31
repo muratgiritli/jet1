@@ -246,6 +246,7 @@ export default function ProductDetailPage() {
     id: number;
     product_id: number;
     item_type: string;
+    parent_product_id: number | null;
     name: string;
     price: number;
     original_price: number | null;
@@ -259,9 +260,10 @@ export default function ProductDetailPage() {
   });
 
   const campaignExtras = useMemo(() => {
-    if (!isCampaignMode) return [];
+    const product = resolvedData?.product;
+    if (!isCampaignMode || !product) return [];
     return campaignItems
-      .filter((i) => i.item_type === "extra")
+      .filter((i) => i.item_type === "extra" && i.parent_product_id === product.id)
       .map((i) => ({
         id: i.product_id,
         name: i.name,
@@ -274,7 +276,7 @@ export default function ProductDetailPage() {
         skt: null,
         originalImg: null,
       } as Product));
-  }, [isCampaignMode, campaignItems]);
+  }, [isCampaignMode, campaignItems, resolvedData]);
 
   useEffect(() => {
     for (const extra of campaignExtras) {
@@ -738,7 +740,7 @@ export default function ProductDetailPage() {
           <div className="mt-8" id="campaign-extras-section" data-testid="section-campaign-extras">
             <h3 className="text-base font-extrabold text-gray-800 mb-1 flex items-center gap-1.5">
               <Gift className="w-5 h-5" style={{ color: "#2e7d32" }} />
-              EKSTRA ÜRÜNLER
+              SIKLIKLA ALINAN ÜRÜNLER
             </h3>
             <div className="flex items-start gap-1.5 mb-3 p-2.5 rounded-lg" style={{ backgroundColor: "#fff3e0", border: "1px solid #ffe0b2" }} data-testid="campaign-extra-warning">
               <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#e65100" }} />
