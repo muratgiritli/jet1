@@ -24,13 +24,9 @@ import {
   Loader2,
   Search,
   MapPin,
-  CheckCircle2,
-  Home,
-  ChevronDown,
   X,
   LogIn,
   Star,
-  Navigation,
   Eye,
   EyeOff,
   Lock,
@@ -43,17 +39,10 @@ import {
   PAYMENT_OPTIONS,
 } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
-import { useToast } from "@/hooks/use-toast";
+
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useCustomer } from "@/contexts/CustomerContext";
-import type { InstallmentRate, DeliveryNeighborhood } from "@shared/schema";
-import {
-  Select as SSelect,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import type { InstallmentRate } from "@shared/schema";
 
 const paymentIcons: Record<string, typeof CreditCard> = {
   nakit: Banknote,
@@ -68,38 +57,24 @@ export default function Checkout() {
   const [orderLoading, setOrderLoading] = useState(false);
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
-  const [customerCadde, setCustomerCadde] = useState("");
-  const [customerBinaNo, setCustomerBinaNo] = useState("");
-  const [customerApartmanAdi, setCustomerApartmanAdi] = useState("");
-  const [customerKat, setCustomerKat] = useState("");
-  const [customerDaireNo, setCustomerDaireNo] = useState("");
+  const [customerAddress, setCustomerAddress] = useState("");
   const [isReturningCustomer, setIsReturningCustomer] = useState(false);
   const [lookupDone, setLookupDone] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
   const [editingInfo, setEditingInfo] = useState(false);
   const [usePoints, setUsePoints] = useState(true);
-  const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [locationLoading, setLocationLoading] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authStep, setAuthStep] = useState<"phone" | "otp" | "register">("phone");
   const [authPhone, setAuthPhone] = useState("");
   const [authOtpCode, setAuthOtpCode] = useState(["", "", "", "", "", ""]);
   const [authName, setAuthName] = useState("");
-  const [authCadde, setAuthCadde] = useState("");
-  const [authBinaNo, setAuthBinaNo] = useState("");
-  const [authApartmanAdi, setAuthApartmanAdi] = useState("");
-  const [authKat, setAuthKat] = useState("");
-  const [authDaireNo, setAuthDaireNo] = useState("");
-  const [authLocation, setAuthLocation] = useState<{ lat: number; lng: number } | null>(null);
-  const [authLocationLoading, setAuthLocationLoading] = useState(false);
   const [authLoading, setAuthLoading] = useState(false);
   const [authIsExisting, setAuthIsExisting] = useState(false);
   const [authCountdown, setAuthCountdown] = useState(0);
   const [authErrors, setAuthErrors] = useState<Record<string, string>>({});
   const authOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const authVerifyingRef = useRef(false);
-  const { toast } = useToast();
   const { customer, isLoggedIn, loginWithOtp, updateProfile } = useCustomer();
 
   const { data: installmentRates = [] } = useQuery<InstallmentRate[]>({
@@ -118,83 +93,19 @@ export default function Checkout() {
     enabled: isLoggedIn,
   });
 
-  const { data: neighborhoods = [] } = useQuery<DeliveryNeighborhood[]>({
-    queryKey: ["/api/delivery-neighborhoods"],
-  });
-
-  const [showAddressPicker, setShowAddressPicker] = useState(false);
-  const [addressInitialized, setAddressInitialized] = useState(false);
-
   useEffect(() => {
-    if (isLoggedIn && customer && !addressInitialized && neighborhoods.length > 0) {
+    if (isLoggedIn && customer) {
       setCustomerPhone(customer.phone);
       setCustomerName(customer.name);
-      const parseAddress = (addr: string) => {
-        const parts = addr.split(",").map(p => p.trim());
-        let cadde = "", bNo = "", apt = "", kt = "", dNo = "";
-        for (const part of parts) {
-          if (part.startsWith("No:")) bNo = part.replace("No:", "").trim();
-          else if (part.startsWith("Kat:")) kt = part.replace("Kat:", "").trim();
-          else if (part.startsWith("Daire:")) dNo = part.replace("Daire:", "").trim();
-          else if (!cadde) cadde = part;
-          else if (cadde && !apt) apt = part;
-        }
-        return { cadde, binaNo: bNo, apartmanAdi: apt, kat: kt, daireNo: dNo };
-      };
       const defaultAddr = savedAddresses.find((a: any) => a.isDefault) || savedAddresses[0];
       const addrStr = defaultAddr?.address || customer.address || "";
       if (addrStr) {
-        const parsed = parseAddress(addrStr);
-        setCustomerCadde(parsed.cadde);
-        setCustomerBinaNo(parsed.binaNo);
-        setCustomerApartmanAdi(parsed.apartmanAdi);
-        setCustomerKat(parsed.kat);
-        setCustomerDaireNo(parsed.daireNo);
-
-        let districtSet = false;
-        let nhSet = false;
-
-        if (defaultAddr?.neighborhoodId) {
-          const nh = neighborhoods.find((n: any) => n.id === defaultAddr.neighborhoodId);
-          if (nh) {
-            setSelectedDistrict(nh.district);
-            setSelectedNeighborhood(String(nh.id));
-            districtSet = true;
-            nhSet = true;
-          }
-        }
-
-        if (!nhSet && addrStr) {
-          const addrLower = addrStr.toLowerCase();
-          const matchedNh = neighborhoods.find((n: any) => {
-            const nhName = n.name.toLowerCase();
-            return addrLower.includes(nhName) ||
-              addrLower.includes(nhName.replace(" mahallesi", "")) ||
-              addrLower.includes(nhName.replace(" mah.", ""));
-          });
-          if (matchedNh) {
-            setSelectedDistrict(matchedNh.district);
-            setSelectedNeighborhood(String(matchedNh.id));
-            districtSet = true;
-          }
-        }
-
-        if (!districtSet) {
-          if (defaultAddr?.district) {
-            setSelectedDistrict(defaultAddr.district);
-          } else {
-            setSelectedDistrict("Atakum");
-          }
-        }
-
-        setAddressInitialized(true);
-      } else if (savedAddresses.length > 0) {
-        setAddressInitialized(true);
+        setCustomerAddress(addrStr);
       }
       setIsReturningCustomer(true);
       setLookupDone(true);
     }
-  }, [isLoggedIn, customer, savedAddresses, addressInitialized, neighborhoods]);
+  }, [isLoggedIn, customer, savedAddresses]);
 
 
   const formatAuthPhone = (val: string) => {
@@ -208,26 +119,6 @@ export default function Checkout() {
   const handleAuthPhoneChange = (val: string) => {
     const digits = val.replace(/\D/g, "");
     if (digits.length <= 11) setAuthPhone(formatAuthPhone(digits));
-  };
-
-  const handleAuthLocation = () => {
-    if (!navigator.geolocation) {
-      setAuthErrors((p) => ({ ...p, location: "Tarayıcınız konum paylaşımını desteklemiyor" }));
-      return;
-    }
-    setAuthLocationLoading(true);
-    setAuthErrors((p) => ({ ...p, location: "" }));
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setAuthLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setAuthLocationLoading(false);
-      },
-      () => {
-        setAuthLocationLoading(false);
-        setAuthErrors((p) => ({ ...p, location: "Konum alınamadı. Lütfen konum izni verin." }));
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
   };
 
   useEffect(() => {
@@ -324,6 +215,8 @@ export default function Checkout() {
 
   const handleAuthVerifyOtp = () => doAuthVerify(authOtpCode.join(""));
 
+  const [authAddress, setAuthAddress] = useState("");
+
   const handleAuthRegister = async () => {
     const errors: Record<string, string> = {};
     if (!authName.trim()) errors.name = "Ad soyad girin";
@@ -332,18 +225,8 @@ export default function Checkout() {
     setAuthLoading(true);
     const normalized = authPhone.replace(/\D/g, "");
     const code = authOtpCode.join("");
-    const fullAddress = [
-      authCadde.trim(),
-      authBinaNo.trim() ? `No: ${authBinaNo.trim()}` : "",
-      authApartmanAdi.trim(),
-      authKat.trim() ? `Kat: ${authKat.trim()}` : "",
-      authDaireNo.trim() ? `Daire: ${authDaireNo.trim()}` : "",
-    ].filter(Boolean).join(", ");
     try {
-      await loginWithOtp(normalized, code, authName.trim(), fullAddress || undefined);
-      if (authLocation) {
-        setCustomerLocation(authLocation);
-      }
+      await loginWithOtp(normalized, code, authName.trim(), authAddress.trim() || undefined);
       setShowAuthModal(false);
       setPendingOrderAfterAuth(true);
     } catch (err: any) {
@@ -405,43 +288,30 @@ export default function Checkout() {
     campaignValid,
   } = useCart();
 
-  const [locationError, setLocationError] = useState("");
   const [orderError, setOrderError] = useState("");
   const [orderNote, setOrderNote] = useState("");
   const [deliverySlot, setDeliverySlot] = useState("hemen");
   const [pendingOrderAfterAuth, setPendingOrderAfterAuth] = useState(false);
-  const [hasElevator, setHasElevator] = useState<"var" | "yok" | "">(""); 
   const [donationAmount, setDonationAmount] = useState(0); 
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponResult, setCouponResult] = useState<{ valid: boolean; message: string; discountAmount?: number; discountType?: string; discountValue?: number } | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
-  const [selectedDistrict, setSelectedDistrict] = useState<string>("");
-  const [selectedNeighborhood, setSelectedNeighborhood] = useState<string>("");
 
-  const districts = Array.from(new Set(neighborhoods.map((n: any) => n.district))).filter((d: string) => d === "Atakum").sort();
-  const filteredNeighborhoods = selectedDistrict
-    ? neighborhoods.filter((n: any) => n.district === selectedDistrict).sort((a: any, b: any) => a.name.localeCompare(b.name, 'tr'))
-    : [];
-
-  const activeNeighborhood = neighborhoods.find((n) => String(n.id) === selectedNeighborhood);
-  const nhMinLimit = activeNeighborhood ? activeNeighborhood.minOrder : CONFIG.minLimit;
-  const nhShipFee = activeNeighborhood ? activeNeighborhood.shippingFee : CONFIG.shipFee;
-  const nhFreeShipLimit = activeNeighborhood ? activeNeighborhood.freeShippingLimit : CONFIG.shipLimit;
-  const nhShipping = subtotal >= nhFreeShipLimit ? 0 : nhShipFee;
-  const nhMinReached = subtotal >= nhMinLimit;
+  const stdShipping = subtotal >= CONFIG.shipLimit ? 0 : CONFIG.shipFee;
+  const stdMinReached = subtotal >= CONFIG.minLimit;
 
   const CAMPAIGN_SHIP_LIMIT = 4000;
-  const campaignShipping = hasCampaignItems ? (subtotal >= CAMPAIGN_SHIP_LIMIT ? 0 : CONFIG.shipFee) : nhShipping;
+  const campaignShipping = hasCampaignItems ? (subtotal >= CAMPAIGN_SHIP_LIMIT ? 0 : CONFIG.shipFee) : stdShipping;
   const campaignDiscount = hasCampaignItems ? 0 : discount;
-  const normalGrandTotal = subtotal - discount + nhShipping;
+  const normalGrandTotal = subtotal - discount + stdShipping;
   const campaignGrandTotal = hasCampaignItems ? (subtotal + campaignShipping) : normalGrandTotal;
 
-  const effectiveShipping = hasCampaignItems ? campaignShipping : nhShipping;
+  const effectiveShipping = hasCampaignItems ? campaignShipping : stdShipping;
   const couponDiscountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
   const effectiveDiscount = (hasCampaignItems ? campaignDiscount : discount) + couponDiscountAmount;
   const effectiveGrandTotal = Math.max(0, (hasCampaignItems ? campaignGrandTotal : normalGrandTotal) - couponDiscountAmount);
-  const effectiveMinReached = hasCampaignItems ? minReached : nhMinReached;
+  const effectiveMinReached = hasCampaignItems ? minReached : stdMinReached;
 
   const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
   const displayTotal = (pointsDiscount > 0 ? Math.max(0, effectiveGrandTotal - pointsDiscount) : effectiveGrandTotal) + donationAmount;
@@ -474,53 +344,6 @@ export default function Checkout() {
     setCouponCode("");
   };
 
-  const handleShareLocation = () => {
-    if (!navigator.geolocation) {
-      setLocationError("Tarayıcınız konum paylaşımını desteklemiyor");
-      return;
-    }
-    setLocationLoading(true);
-    setLocationError("");
-    navigator.geolocation.getCurrentPosition(
-      async (pos) => {
-        const { latitude, longitude } = pos.coords;
-        setCustomerLocation({ lat: latitude, lng: longitude });
-        try {
-          const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=tr&addressdetails=1`, {
-            headers: { "User-Agent": "JETGO-PetShop/1.0" },
-          });
-          if (resp.ok) {
-            const geo = await resp.json();
-            const addr = geo.address || {};
-            const road = addr.road || addr.pedestrian || addr.street || "";
-            const houseNumber = addr.house_number || "";
-            if (road && !customerCadde) setCustomerCadde(road);
-            if (houseNumber && !customerBinaNo) setCustomerBinaNo(houseNumber);
-            const suburb = addr.suburb || addr.neighbourhood || addr.quarter || "";
-            if (suburb && neighborhoods.length > 0) {
-              const match = neighborhoods.find((n) =>
-                n.name.toLowerCase() === suburb.toLowerCase() ||
-                suburb.toLowerCase().includes(n.name.toLowerCase()) ||
-                n.name.toLowerCase().includes(suburb.toLowerCase())
-              );
-              if (match) {
-                setSelectedDistrict(match.district);
-                setSelectedNeighborhood(String(match.id));
-              }
-            }
-            toast({ title: "Konum bilgisi alındı", description: road ? `${road} ${houseNumber}`.trim() : "Adres alanlarını kontrol edin" });
-          }
-        } catch {}
-        setLocationLoading(false);
-      },
-      () => {
-        setLocationLoading(false);
-        setLocationError("Konum alınamadı. Lütfen konum izni verin.");
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
-
   const handleOrder = async () => {
     if (!isLoggedIn) {
       setShowAuthModal(true);
@@ -532,6 +355,10 @@ export default function Checkout() {
     }
     if (!customerPhone.trim()) {
       setOrderError("Lütfen telefon numaranızı girin.");
+      return;
+    }
+    if (!customerAddress.trim()) {
+      setOrderError("Lütfen teslimat adresinizi girin.");
       return;
     }
     if (hasCampaignItems && !campaignValid) {
@@ -562,20 +389,13 @@ export default function Checkout() {
         items: orderItems,
         subtotal,
         shipping: effectiveShipping,
-        discount: effectiveDiscount,
+        discount: hasCampaignItems ? 0 : discount,
         grandTotal: finalTotal,
         paymentMethod: payMethod,
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
-        customerAddress: [
-          customerCadde.trim(),
-          customerBinaNo.trim() ? `No: ${customerBinaNo.trim()}` : "",
-          customerApartmanAdi.trim(),
-          customerKat.trim() ? `Kat: ${customerKat.trim()}` : "",
-          customerDaireNo.trim() ? `Daire: ${customerDaireNo.trim()}` : "",
-        ].filter(Boolean).join(", "),
+        customerAddress: customerAddress.trim(),
         usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
-        neighborhoodId: activeNeighborhood ? activeNeighborhood.id : undefined,
         couponCode: appliedCoupon ? appliedCoupon.code : undefined,
         donationAmount: donationAmount > 0 ? donationAmount : undefined,
         customerNote: orderNote.trim() || undefined,
@@ -604,26 +424,18 @@ export default function Checkout() {
         });
       }
 
-      const builtAddress = [
-        customerCadde.trim(),
-        customerBinaNo.trim() ? `No: ${customerBinaNo.trim()}` : "",
-        customerApartmanAdi.trim(),
-        customerKat.trim() ? `Kat: ${customerKat.trim()}` : "",
-        customerDaireNo.trim() ? `Daire: ${customerDaireNo.trim()}` : "",
-      ].filter(Boolean).join(", ");
-      if (isLoggedIn && builtAddress) {
+      const trimmedAddress = customerAddress.trim();
+      if (isLoggedIn && trimmedAddress) {
         try {
-          await updateProfile({ address: builtAddress });
+          await updateProfile({ address: trimmedAddress });
         } catch {}
         try {
-          const existingMatch = savedAddresses.find((a: any) => a.address === builtAddress);
+          const existingMatch = savedAddresses.find((a: any) => a.address === trimmedAddress);
           if (!existingMatch) {
             await apiRequest("POST", "/api/customer/addresses", {
-              label: activeNeighborhood ? activeNeighborhood.name : "Ev",
-              address: builtAddress,
+              label: "Ev",
+              address: trimmedAddress,
               isDefault: savedAddresses.length === 0,
-              neighborhoodId: activeNeighborhood ? activeNeighborhood.id : undefined,
-              district: selectedDistrict || undefined,
             });
             queryClient.invalidateQueries({ queryKey: ["/api/customer/addresses"] });
           }
@@ -799,83 +611,16 @@ export default function Checkout() {
                       {authErrors.name && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.name}</p>}
                     </div>
                     <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Cadde / Sokak</label>
-                      <Input
-                        value={authCadde}
-                        onChange={(e) => setAuthCadde(e.target.value)}
-                        placeholder="Cadde veya sokak adı"
-                        className="h-10"
-                        data-testid="input-auth-cadde"
+                      <label className="text-xs font-medium text-muted-foreground">Adres</label>
+                      <Textarea
+                        placeholder="Mahalle, cadde, bina no, kat, daire no..."
+                        value={authAddress}
+                        onChange={(e) => setAuthAddress(e.target.value)}
+                        className="resize-none"
+                        rows={3}
+                        maxLength={500}
+                        data-testid="input-auth-address"
                       />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">Bina No</label>
-                        <Input
-                          value={authBinaNo}
-                          onChange={(e) => setAuthBinaNo(e.target.value)}
-                          placeholder="Bina no"
-                          className="h-10"
-                          data-testid="input-auth-bina-no"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">Apartman Adı</label>
-                        <Input
-                          value={authApartmanAdi}
-                          onChange={(e) => setAuthApartmanAdi(e.target.value)}
-                          placeholder="Apartman adı"
-                          className="h-10"
-                          data-testid="input-auth-apartman"
-                        />
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">Kat</label>
-                        <Input
-                          value={authKat}
-                          onChange={(e) => setAuthKat(e.target.value)}
-                          placeholder="Kat"
-                          className="h-10"
-                          data-testid="input-auth-kat"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium text-muted-foreground">Daire No</label>
-                        <Input
-                          value={authDaireNo}
-                          onChange={(e) => setAuthDaireNo(e.target.value)}
-                          placeholder="Daire no"
-                          className="h-10"
-                          data-testid="input-auth-daire"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      {authLocation ? (
-                        <div className="flex items-center gap-2 p-2 rounded-lg border border-green-200 bg-green-50">
-                          <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                          <span className="text-xs text-green-700">Konum alındı</span>
-                          <button type="button" onClick={() => setAuthLocation(null)} className="ml-auto text-muted-foreground">
-                            <X className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          className="w-full"
-                          onClick={handleAuthLocation}
-                          disabled={authLocationLoading}
-                          data-testid="btn-auth-location"
-                        >
-                          {authLocationLoading ? <Loader2 className="w-4 h-4 mr-1.5 animate-spin" /> : <Navigation className="w-4 h-4 mr-1.5" />}
-                          {authLocationLoading ? "Konum alınıyor..." : "Konum Ekle"}
-                        </Button>
-                      )}
-                      {authErrors.location && <p className="text-[11px] text-red-500 mt-1">{authErrors.location}</p>}
                     </div>
                     {authErrors.general && <p className="text-[11px] text-red-500 text-center">{authErrors.general}</p>}
                     <Button
@@ -1109,174 +854,26 @@ export default function Checkout() {
               </Card>
             </section>
 
-            {isLoggedIn && addressInitialized && activeNeighborhood && customerCadde ? (
-              <section className="mt-6">
-                <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-location">
-                  <MapPin className="w-4 h-4 inline mr-1.5 -mt-0.5" />
-                  Teslimat Bilgisi
-                </h2>
-                <Card>
-                  <CardContent className="p-4 space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-green-600" />
-                        <span className="text-sm font-medium">{activeNeighborhood.name}, {selectedDistrict}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setAddressInitialized(false)}
-                        className="text-xs text-primary underline"
-                        data-testid="btn-change-location"
-                      >
-                        Değiştir
-                      </button>
-                    </div>
-                    <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
-                      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                        <span className="text-blue-700 dark:text-blue-300">
-                          Min. Sipariş: <strong>{activeNeighborhood.minOrder} TL</strong>
-                        </span>
-                        <span className="text-blue-700 dark:text-blue-300">
-                          Teslimat: <strong>{activeNeighborhood.shippingFee} TL</strong>
-                        </span>
-                        <span className="text-blue-700 dark:text-blue-300">
-                          Ücretsiz Teslimat: <strong>{(activeNeighborhood as any).freeShippingLimit} TL+</strong>
-                        </span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </section>
-            ) : (
-              <section className="mt-6">
-                <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-location">
-                  <MapPin className="w-4 h-4 inline mr-1.5 -mt-0.5" />
-                  Konum Bilgisi
-                </h2>
-                <Card>
-                  <CardContent className="p-4 space-y-4">
-                    {neighborhoods.length > 0 && (
-                      <div className="space-y-3">
-                        <div>
-                          <label className="text-sm font-medium mb-1.5 block">İlçe Seçin</label>
-                          <SSelect value={selectedDistrict} onValueChange={(val) => {
-                            setSelectedDistrict(val);
-                            setSelectedNeighborhood("");
-                          }}>
-                            <SelectTrigger className="w-full" data-testid="select-district">
-                              <SelectValue placeholder="İlçe seçiniz..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {districts.map((d) => (
-                                <SelectItem key={d} value={d} data-testid={`district-${d}`}>
-                                  {d}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </SSelect>
-                        </div>
-                        {selectedDistrict && (
-                          <div>
-                            <label className="text-sm font-medium mb-1.5 block">Mahalle Seçin</label>
-                            <SSelect value={selectedNeighborhood} onValueChange={setSelectedNeighborhood}>
-                              <SelectTrigger className="w-full" data-testid="select-neighborhood">
-                                <SelectValue placeholder="Mahalle seçiniz..." />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {filteredNeighborhoods.map((n) => (
-                                  <SelectItem key={n.id} value={String(n.id)} data-testid={`neighborhood-${n.id}`}>
-                                    {n.name}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </SSelect>
-                          </div>
-                        )}
-                        {activeNeighborhood && (
-                          <div className="p-2.5 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-100 dark:border-blue-900">
-                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                              <span className="text-blue-700 dark:text-blue-300">
-                                Min. Sipariş: <strong>{activeNeighborhood.minOrder} TL</strong>
-                              </span>
-                              <span className="text-blue-700 dark:text-blue-300">
-                                Teslimat: <strong>{activeNeighborhood.shippingFee} TL</strong>
-                              </span>
-                              <span className="text-blue-700 dark:text-blue-300">
-                                Ücretsiz Teslimat: <strong>{(activeNeighborhood as any).freeShippingLimit} TL+</strong>
-                              </span>
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <div>
-                      <label className="text-sm font-medium mb-2 block">Asansör</label>
-                      <div className="flex gap-2">
-                        <button
-                          type="button"
-                          onClick={() => setHasElevator("var")}
-                          className={`flex-1 h-10 rounded-lg text-sm font-medium border-2 transition-all ${hasElevator === "var" ? "border-primary bg-primary/10 text-primary" : "border-muted bg-muted/30 text-muted-foreground"}`}
-                          data-testid="btn-elevator-var"
-                        >
-                          Var
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setHasElevator("yok")}
-                          className={`flex-1 h-10 rounded-lg text-sm font-medium border-2 transition-all ${hasElevator === "yok" ? "border-orange-500 bg-orange-50 text-orange-600" : "border-muted bg-muted/30 text-muted-foreground"}`}
-                          data-testid="btn-elevator-yok"
-                        >
-                          Yok
-                        </button>
-                      </div>
-                      {hasElevator === "yok" && (
-                        <p className="text-xs text-orange-600 font-medium mt-1.5" data-testid="text-elevator-note">Siparişiniz bina girişine teslim edilir</p>
-                      )}
-                    </div>
-                    {customerLocation ? (
-                      <div className="flex items-center gap-3 p-3 rounded-lg border border-green-200 bg-green-50" data-testid="location-added">
-                        <CheckCircle2 className="w-5 h-5 text-green-600 shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-green-800">Konum eklendi</p>
-                          <a
-                            href={`https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-green-600 underline"
-                          >
-                            Haritada Gör
-                          </a>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setCustomerLocation(null)}
-                          className="text-muted-foreground hover:text-red-500 transition-colors"
-                          data-testid="btn-remove-location"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <div>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="w-full h-12 font-medium border-dashed border-2"
-                          onClick={handleShareLocation}
-                          disabled={locationLoading}
-                          data-testid="btn-add-location"
-                        >
-                          {locationLoading ? <Loader2 className="w-5 h-5 mr-2 animate-spin" /> : <Navigation className="w-5 h-5 mr-2" />}
-                          {locationLoading ? "Konum alınıyor..." : "Konum Ekle"}
-                        </Button>
-                        <p className="text-xs text-muted-foreground text-center mt-2">Teslimat için konumunuzu paylaşın</p>
-                        {locationError && <p className="text-xs text-red-500 text-center mt-1">{locationError}</p>}
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </section>
-            )}
+            <section className="mt-6">
+              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-address">
+                <MapPin className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+                Teslimat Adresi
+              </h2>
+              <Card>
+                <CardContent className="p-4">
+                  <Textarea
+                    placeholder="Mahalle, cadde, bina no, kat, daire no..."
+                    value={customerAddress}
+                    onChange={(e) => setCustomerAddress(e.target.value)}
+                    className="resize-none"
+                    rows={3}
+                    maxLength={500}
+                    data-testid="input-customer-address"
+                  />
+                  <p className="text-xs text-muted-foreground text-right mt-1">{customerAddress.length}/500</p>
+                </CardContent>
+              </Card>
+            </section>
 
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-note">
@@ -1313,21 +910,21 @@ export default function Checkout() {
                         <span className="text-sm font-medium" data-testid="text-min-label">Minimum Sipariş</span>
                       </div>
                       <span className="text-xs font-bold text-muted-foreground" data-testid="text-min-progress">
-                        {Math.round(subtotal)}/{nhMinLimit} TL
+                        {Math.round(subtotal)}/{CONFIG.minLimit} TL
                       </span>
                     </div>
                     <Progress
-                      value={Math.min((subtotal / nhMinLimit) * 100, 100)}
+                      value={Math.min((subtotal / CONFIG.minLimit) * 100, 100)}
                       className="h-2 [&>div]:bg-amber-500 dark:[&>div]:bg-amber-400"
                       data-testid="bar-min"
                     />
                     <p className="text-xs font-medium mt-1.5 text-muted-foreground" data-testid="text-min-hint">
-                      {subtotal >= nhMinLimit ? (
+                      {subtotal >= CONFIG.minLimit ? (
                         <span className="text-chart-2 flex items-center gap-1">
                           <Check className="w-3 h-3" /> Minimum tutar aşıldı
                         </span>
                       ) : (
-                        `Minimum sipariş için ${Math.round(nhMinLimit - subtotal)} TL daha ekleyin`
+                        `Minimum sipariş için ${Math.round(CONFIG.minLimit - subtotal)} TL daha ekleyin`
                       )}
                     </p>
                   </div>
@@ -1339,24 +936,24 @@ export default function Checkout() {
                         <span className="text-sm font-medium" data-testid="text-ship-label">Ücretsiz Teslimat</span>
                       </div>
                       <span className="text-xs font-bold text-muted-foreground" data-testid="text-ship-progress">
-                        {Math.round(subtotal)}/{nhFreeShipLimit} TL
+                        {Math.round(subtotal)}/{CONFIG.shipLimit} TL
                       </span>
                     </div>
                     <Progress
-                      value={Math.min((subtotal / nhFreeShipLimit) * 100, 100)}
+                      value={Math.min((subtotal / CONFIG.shipLimit) * 100, 100)}
                       className="h-2"
                       data-testid="bar-ship"
                     />
                     <p className="text-xs font-medium mt-1.5 text-muted-foreground" data-testid="text-ship-hint">
-                      {subtotal >= nhFreeShipLimit ? (
+                      {subtotal >= CONFIG.shipLimit ? (
                         <span className="text-chart-2 flex items-center gap-1">
                           <Check className="w-3 h-3" /> Ücretsiz teslimat kazandınız!
                         </span>
                       ) : (
-                        `Ücretsiz teslimat için ${Math.round(nhFreeShipLimit - subtotal)} TL daha ekleyin`
+                        `Ücretsiz teslimat için ${Math.round(CONFIG.shipLimit - subtotal)} TL daha ekleyin`
                       )}
                     </p>
-                    {subtotal < nhFreeShipLimit && (
+                    {subtotal < CONFIG.shipLimit && (
                       <Link href="/">
                         <Button
                           variant="outline"
@@ -1523,7 +1120,7 @@ export default function Checkout() {
 
                   {!effectiveMinReached && selectedProducts.length > 0 && (
                     <p className="text-xs text-center mt-2 text-muted-foreground" data-testid="text-min-warning">
-                      Minimum sipariş tutarı {nhMinLimit} TL'dir
+                      Minimum sipariş tutarı {CONFIG.minLimit} TL'dir
                     </p>
                   )}
 

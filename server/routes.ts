@@ -908,9 +908,8 @@ export async function registerRoutes(
     deliverySlot: z.enum(["hemen", "bugun_ogle", "bugun_aksam", "yarin_sabah"]).optional(),
     customerPhone: z.string().min(7, "Telefon numarası gerekli"),
     customerName: z.string().min(1, "Ad soyad gerekli"),
-    customerAddress: z.string().optional(),
+    customerAddress: z.string().min(1, "Adres gerekli"),
     usedPoints: z.number().optional(),
-    neighborhoodId: z.number().optional(),
     couponCode: z.string().optional(),
     installmentMonths: z.number().optional(),
     installmentRate: z.number().optional(),
@@ -936,7 +935,7 @@ export async function registerRoutes(
       const fieldErrors = parsed.error.errors.map(e => e.message).join(", ");
       return res.status(400).json({ message: fieldErrors || "Geçersiz sipariş verisi", errors: parsed.error.errors });
     }
-    const { usedPoints, neighborhoodId, couponCode, ...orderData } = parsed.data;
+    const { usedPoints, couponCode, ...orderData } = parsed.data;
 
     const allCampaignItems = await sharedPool.query("SELECT product_id, item_type FROM campaign_items WHERE is_active = true");
     const campaignMap = new Map<number, string>();
@@ -974,16 +973,15 @@ export async function registerRoutes(
       }
     }
 
-    if (neighborhoodId) {
-      const neighborhoods = await storage.getActiveDeliveryNeighborhoods();
-      const nh = neighborhoods.find(n => n.id === neighborhoodId);
-      if (nh) {
-        if (orderData.subtotal < nh.minOrder) {
-          return res.status(400).json({ message: `Bu mahalle için minimum sipariş tutarı ${nh.minOrder} TL'dir.` });
-        }
-        orderData.shipping = orderData.subtotal >= nh.freeShippingLimit ? 0 : nh.shippingFee;
-        orderData.grandTotal = orderData.subtotal - orderData.discount + orderData.shipping;
-      }
+    const STANDARD_MIN_ORDER = 700;
+    const STANDARD_FREE_SHIP_LIMIT = 1500;
+    const STANDARD_SHIP_FEE = 89;
+    if (!isCampaignOrder && orderData.subtotal < STANDARD_MIN_ORDER) {
+      return res.status(400).json({ message: `Minimum sipariş tutarı ${STANDARD_MIN_ORDER} TL'dir.` });
+    }
+    if (!isCampaignOrder) {
+      orderData.shipping = orderData.subtotal >= STANDARD_FREE_SHIP_LIMIT ? 0 : STANDARD_SHIP_FEE;
+      orderData.grandTotal = orderData.subtotal - orderData.discount + orderData.shipping;
     }
 
     const KEDI_KUMU_MAX = 2;
