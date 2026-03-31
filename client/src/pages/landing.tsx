@@ -5,7 +5,7 @@ import {
   Truck, CreditCard, Banknote, Smartphone,
   ArrowRight, ChevronRight, Star, Clock, Shield,
   Gift, MapPin, Phone, Mail, BookOpen,
-  ShieldCheck, PackageCheck, ThumbsUp, Zap,
+  PackageCheck, Zap,
   Stethoscope, PhoneCall
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
@@ -38,12 +38,6 @@ const HERO_SLIDES = [
     badges: true,
   },
   {
-    title: "Jetgo\nGüvenli Alışveriş 🛡️",
-    subtitle: "%100 orijinal ürün · Kapıda kontrol et · Beğenmezsen alma",
-    gradient: "from-emerald-500 via-teal-500 to-cyan-400",
-    badges: true,
-  },
-  {
     title: "Her Siparişte\n%5 Para Puan 🎁",
     subtitle: "Alışveriş yaptıkça kazan, sonraki siparişinde kullan",
     gradient: "from-indigo-500 via-violet-500 to-purple-400",
@@ -68,7 +62,7 @@ const QUICK_ACTIONS = [
   { icon: Smartphone, label: "Kapıda\nQR", color: "#0284c7", bg: "bg-sky-50" },
   { icon: CreditCard, label: "Kapıda\nPos", color: "#7c3aed", bg: "bg-purple-50" },
   { icon: Banknote, label: "Kapıda\nNakit", color: "#059669", bg: "bg-emerald-50" },
-  { icon: CreditCard, label: "Kredi Kartına\nKapıda 12 Taksit", color: "#ff6f00", bg: "bg-orange-50" },
+  { icon: CreditCard, label: "Kredi Kartına\n12 Taksit", color: "#ff6f00", bg: "bg-orange-50" },
 ];
 
 function HeroCarousel() {
@@ -299,40 +293,6 @@ function LocationBanner() {
   );
 }
 
-function TrustBadges() {
-  return (
-    <div data-testid="section-trust">
-      <div className="rounded-xl overflow-hidden border border-emerald-200" style={{ background: "linear-gradient(135deg, #ecfdf5 0%, #d1fae5 50%, #a7f3d0 100%)" }}>
-        <div className="px-3.5 pt-3 pb-1 md:px-6 md:pt-4">
-          <div className="flex items-center gap-2 mb-0.5">
-            <ShieldCheck className="w-5 h-5 text-emerald-600" />
-            <h3 className="text-sm md:text-lg font-extrabold text-emerald-800">Jetgo Güvenli Alışveriş</h3>
-          </div>
-          <p className="text-[10px] md:text-xs text-emerald-600/80 ml-7">Güvenle sipariş ver, kapıda kontrol et</p>
-        </div>
-        <div className="grid grid-cols-3 gap-2 p-3 md:p-5">
-          {[
-            { icon: ShieldCheck, label: "%100 Orijinal", sub: "Garanti", color: "#059669" },
-            { icon: PackageCheck, label: "Kapıda Kontrol", sub: "Aç & İncele", color: "#0d9488" },
-            { icon: ThumbsUp, label: "Beğenmezsen", sub: "Alma", color: "#0891b2" },
-          ].map((b, i) => (
-            <div key={i} className="flex flex-col items-center gap-1 md:gap-1.5 text-center bg-white/70 rounded-xl p-2.5 md:p-3 backdrop-blur-sm">
-              <div
-                className="w-9 h-9 md:w-11 md:h-11 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: b.color + "15" }}
-              >
-                <b.icon className="w-4 h-4 md:w-5 md:h-5" style={{ color: b.color }} />
-              </div>
-              <span className="text-[10px] md:text-sm font-bold text-gray-800">{b.label}</span>
-              <span className="text-[9px] md:text-xs text-emerald-600 font-medium">{b.sub}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function WhyJetgo() {
   return (
     <div data-testid="section-why-jetgo">
@@ -341,8 +301,8 @@ function WhyJetgo() {
         {[
           { icon: Zap, title: "Aynı Gün Kapında", desc: "Sipariş ver, aynı gün kapına gelsin. İnternetten günlerce bekleme!", color: "#f59e0b", bg: "from-amber-50 to-orange-50", border: "border-amber-200" },
           { icon: Truck, title: "Eve Teslim", desc: "Ağır çuvalları sen taşıma, biz getirelim. Uğraş yok, rahat alışveriş.", color: "#6B3480", bg: "from-purple-50 to-fuchsia-50", border: "border-purple-200" },
-          { icon: PackageCheck, title: "Kapıda Kontrol Et", desc: "Ürünü kapıda aç, kontrol et. Beğenmezsen alma, hiç risk yok.", color: "#10b981", bg: "from-emerald-50 to-teal-50", border: "border-emerald-200" },
-          { icon: CreditCard, title: "Kapıda 12 Taksit", desc: "Kredi kartına kapıda 12 taksit. Nakit, POS, QR - istediğin şekilde öde.", color: "#2563eb", bg: "from-blue-50 to-indigo-50", border: "border-blue-200" },
+          { icon: PackageCheck, title: "Kapıda Kontrol Et", desc: "Ürünü kapıda aç, kontrol et. Memnun kalmazsan iade garantisi.", color: "#10b981", bg: "from-emerald-50 to-teal-50", border: "border-emerald-200" },
+          { icon: CreditCard, title: "Kredi Kartına 12 Taksit", desc: "Kredi kartına 12 taksit imkanı. Nakit, POS, QR - istediğin şekilde öde.", color: "#2563eb", bg: "from-blue-50 to-indigo-50", border: "border-blue-200" },
         ].map((item, i) => (
           <div key={i} className={`bg-gradient-to-r ${item.bg} rounded-xl p-3 md:p-4 flex items-center gap-3 border ${item.border}`} data-testid={`why-jetgo-${i}`}>
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: item.color + "15" }}>
@@ -577,33 +537,6 @@ function VeterinerSection() {
   );
 }
 
-function VoiceOrderBanner() {
-  return (
-    <div data-testid="section-voice-order">
-      <a
-        href="https://wa.me/908508403959?text=Siz%20buraya%20sipari%C5%9Finizi%20sesli%20veya%20yaz%C4%B1l%C4%B1%20olarak%20bildirin.%20En%20k%C4%B1sa%20zamanda%20mesai%20saatleri%20i%C3%A7inde%20size%20d%C3%B6n%C3%BC%C5%9F%20yap%C4%B1lacakt%C4%B1r."
-        target="_blank"
-        rel="noopener noreferrer"
-        className="block w-full rounded-2xl p-4 transition-all hover:shadow-lg active:scale-[0.98]"
-        style={{ background: "linear-gradient(135deg, #25D366 0%, #128C7E 100%)" }}
-        data-testid="btn-voice-order"
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: "#ffffff25" }}>
-            <span className="text-2xl">🎙️</span>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-extrabold text-white">Sesli Sipariş Ver</p>
-            <p className="text-[11px] text-white/80 mt-0.5 leading-snug">
-              Bize WhatsApp'tan ses atın, biz sepetinizi hazırlayalım!
-            </p>
-          </div>
-          <SiWhatsapp className="w-6 h-6 text-white/80 shrink-0" />
-        </div>
-      </a>
-    </div>
-  );
-}
 
 function DesktopContactStrip() {
   return (
@@ -691,30 +624,6 @@ export default function Landing() {
           <CategoryGrid />
         </div>
 
-        <div className="mt-4 md:mt-6">
-          <VoiceOrderBanner />
-        </div>
-
-        <div className="mt-4 md:mt-6">
-          <Link href="/yarisma">
-            <div
-              className="rounded-2xl p-4 flex items-center gap-3 cursor-pointer transition-all hover:shadow-lg active:scale-[0.98]"
-              style={{ background: "linear-gradient(135deg, #ff6f00 0%, #f57c00 50%, #ffb300 100%)" }}
-              data-testid="btn-pet-contest"
-            >
-              <span className="text-3xl">🏆</span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-extrabold text-white">En Tatlı Pet Yarışması</p>
-                <p className="text-[11px] text-white/80 mt-0.5">Petinin fotoğrafını yükle, oy topla, ödül kazan!</p>
-              </div>
-              <ArrowRight className="w-5 h-5 text-white/70 shrink-0" />
-            </div>
-          </Link>
-        </div>
-
-        <div className="mt-4 md:mt-6">
-          <TrustBadges />
-        </div>
 
         <div className="mt-5 md:mt-8">
           <WhyJetgo />

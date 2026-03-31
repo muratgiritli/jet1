@@ -36,8 +36,8 @@ import {
   EyeOff,
   Lock,
   ShieldCheck,
+  ShoppingBag,
 } from "lucide-react";
-import { SiWhatsapp } from "react-icons/si";
 import SEO from "@/components/SEO";
 import {
   CONFIG,
@@ -630,42 +630,6 @@ export default function Checkout() {
           }
         } catch {}
       }
-
-      let msg = `*JETGO Sipariş*\n\n`;
-      if (customerName.trim()) msg += `*Ad Soyad:* ${customerName.trim()}\n`;
-      if (customerPhone.trim()) msg += `*Telefon:* ${customerPhone.trim()}\n`;
-      if (builtAddress) msg += `*Adres:* ${builtAddress}\n`;
-      if (activeNeighborhood) msg += `*Mahalle:* ${activeNeighborhood.name}\n`;
-      if (customerLocation) msg += `*Konum:* https://www.google.com/maps?q=${customerLocation.lat},${customerLocation.lng}\n`;
-      if (customerName.trim() || customerPhone.trim()) msg += `\n`;
-      selectedProducts.forEach(({ product, qty }) => {
-        msg += `${qty}x ${product.name} — ${(qty * product.price).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL\n`;
-      });
-      msg += `\n*Ara Toplam:* ${(subtotal - effectiveDiscount).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`;
-      if (pointsUsed > 0) msg += `\n*Para Puan İndirimi:* -${pointsUsed.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`;
-      msg += `\n*Teslimat:* ${effectiveShipping === 0 ? "Ücretsiz" : effectiveShipping + " TL"}`;
-      msg += `\n*Genel Toplam:* ${Math.round(finalTotal)} TL`;
-      msg += `\n*Ödeme:* ${payMethod}`;
-      if (donationAmount > 0) msg += `\n*🐾 Askıda Mama Bağışı:* ${donationAmount} TL`;
-      if (hasElevator) msg += `\n*Asansör:* ${hasElevator === "var" ? "Var" : "Yok (Bina girişine teslim)"}`;
-      if (orderNote.trim()) msg += `\n*Sipariş Notu:* ${orderNote.trim()}`;
-      if (hasCampaignItems) msg += `\n*Kampanya Siparişi*`;
-      if (!hasCampaignItems && pay.id === "taksit" && selectedInstallment) {
-        const instRate = installmentRates.find((r) => r.months === selectedInstallment);
-        if (instRate) {
-          const instTotal = finalTotal * (1 + instRate.rate / 100);
-          const monthly = instTotal / instRate.months;
-          msg += `\n*Taksit:* ${selectedInstallment} Taksit`;
-          msg += `\n*Aylık Ödeme:* ${monthly.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`;
-          msg += `\n*Taksitli Toplam:* ${instTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`;
-        }
-      }
-      if (pay.id === "eft") msg += CONFIG.bankInfo;
-
-      msg += `\n\n📋 *Siparişlerinizi ve hesabınızı görüntüleyin:*\nhttps://www.jetgo.shop/giris?redirect=%2Fhesabim%3Ftab%3Dorders`;
-
-      const url = `https://wa.me/${CONFIG.phone.replace("+", "")}?text=${encodeURIComponent(msg)}`;
-      window.open(url, "_blank");
 
       clearCart();
 
@@ -1562,9 +1526,9 @@ export default function Checkout() {
                     size="lg"
                     disabled={!effectiveMinReached || selectedProducts.length === 0 || orderLoading || (hasCampaignItems && !campaignValid)}
                     onClick={handleOrder}
-                    data-testid="btn-order-whatsapp"
+                    data-testid="btn-order-submit"
                   >
-                    {orderLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <SiWhatsapp className="w-5 h-5" />}
+                    {orderLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShoppingBag className="w-5 h-5" />}
                     {orderLoading ? "Kaydediliyor..." : "Siparişi Ver"}
                   </Button>
 
