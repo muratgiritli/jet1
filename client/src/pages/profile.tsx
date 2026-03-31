@@ -81,7 +81,6 @@ export default function ProfilePage() {
 
   const handleLogout = async () => {
     await logout();
-    toast({ title: "Çıkış yapıldı" });
     setLocation("/");
   };
 
