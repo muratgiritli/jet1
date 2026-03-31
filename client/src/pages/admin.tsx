@@ -794,6 +794,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [csNewAnimal, setCsNewAnimal] = useState("all");
   const [csNewSub, setCsNewSub] = useState("all");
   const [csNewBrand, setCsNewBrand] = useState("all");
+  const [quickCrossSellProductId, setQuickCrossSellProductId] = useState<number | null>(null);
+  const [quickCrossSellSearch, setQuickCrossSellSearch] = useState("");
 
   const [breedStatsDialogOpen, setBreedStatsDialogOpen] = useState(false);
   const [breedStatsProductId, setBreedStatsProductId] = useState<number | null>(null);
@@ -852,7 +854,32 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/cross-sell-sections"] });
+      if (quickCrossSellProductId) {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/product-cross-sell", quickCrossSellProductId] });
+      }
     },
+  });
+
+  const quickCrossSellMutation = useMutation({
+    mutationFn: async (data: { forProductId: number; addProductId: number }) => {
+      await apiRequest("POST", "/api/admin/quick-cross-sell", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cross-sell-sections"] });
+      if (quickCrossSellProductId) {
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/product-cross-sell", quickCrossSellProductId] });
+      }
+    },
+  });
+
+  const { data: currentProductCrossSellItems = [] } = useQuery<{ id: number; productId: number; product: Product }[]>({
+    queryKey: ["/api/admin/product-cross-sell", quickCrossSellProductId],
+    queryFn: async () => {
+      if (!quickCrossSellProductId) return [];
+      const res = await fetch(`/api/admin/product-cross-sell/${quickCrossSellProductId}`, { credentials: "include" });
+      return res.json();
+    },
+    enabled: !!quickCrossSellProductId,
   });
 
   const { data: breedStatsForProduct = [] } = useQuery<BreedStat[]>({
@@ -2957,6 +2984,21 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          title="Sıklıkla Alınan Ürün Ekle"
+                          className="border-green-300 text-green-600 hover:bg-green-50"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setQuickCrossSellProductId(product.id);
+                            setQuickCrossSellSearch("");
+                          }}
+                          data-testid={`btn-cross-sell-${product.id}`}
+                        >
+                          <Package className="w-4 h-4" />
+                        </Button>
                         {(() => {
                           const ci = campaignItems.find(c => c.product_id === product.id);
                           return ci ? (
@@ -3134,6 +3176,121 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </>
                       )}
                     </Button>
+                  </div>
+                );
+              })()}
+            </DialogContent>
+          </Dialog>
+        )}
+
+        {quickCrossSellProductId && (
+          <Dialog open={true} onOpenChange={(open) => {
+            if (!open) { setQuickCrossSellProductId(null); setQuickCrossSellSearch(""); }
+          }}>
+            <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Package className="w-5 h-5 text-green-600" />
+                  Sıklıkla Birlikte Alınan Ürünler
+                </DialogTitle>
+              </DialogHeader>
+              {(() => {
+                const mainProduct = allProducts.find(p => p.id === quickCrossSellProductId);
+                const existingIds = currentProductCrossSellItems.map(i => i.productId);
+                const availableProducts = allProducts.filter(p =>
+                  p.id !== quickCrossSellProductId &&
+                  p.isActive &&
+                  !existingIds.includes(p.id) &&
+                  (quickCrossSellSearch === "" ||
+                    p.name.toLowerCase().includes(quickCrossSellSearch.toLowerCase()))
+                );
+                return (
+                  <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
+                    {mainProduct && (
+                      <div className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                        {mainProduct.img ? (
+                          <img src={mainProduct.img} alt="" className="w-10 h-10 rounded-lg object-cover border" />
+                        ) : (
+                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                            <ImageIcon className="w-4 h-4 text-gray-300" />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <p className="text-xs font-bold truncate">{mainProduct.name}</p>
+                          <p className="text-[10px] text-blue-600">{mainProduct.price} TL</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {currentProductCrossSellItems.length > 0 && (
+                      <div className="border rounded-lg overflow-hidden">
+                        <div className="bg-green-50 px-3 py-1.5 border-b">
+                          <span className="text-xs font-bold text-green-700">MEVCUT ÜRÜNLER ({currentProductCrossSellItems.length})</span>
+                        </div>
+                        <div className="divide-y max-h-[20vh] overflow-y-auto">
+                          {currentProductCrossSellItems.map(item => (
+                            <div key={item.id} className="flex items-center gap-2 p-2">
+                              {item.product?.img ? (
+                                <img src={item.product.img} alt="" className="w-8 h-8 rounded object-cover border flex-shrink-0" />
+                              ) : (
+                                <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                  <ImageIcon className="w-3 h-3 text-gray-300" />
+                                </div>
+                              )}
+                              <p className="text-xs font-medium truncate flex-1">{item.product?.name}</p>
+                              <button
+                                type="button"
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0"
+                                onClick={() => removeItemMutation.mutate(item.id)}
+                                disabled={removeItemMutation.isPending}
+                                data-testid={`btn-remove-cross-sell-item-${item.id}`}
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <Input
+                      placeholder="Eklenecek ürünü ara..."
+                      value={quickCrossSellSearch}
+                      onChange={(e) => setQuickCrossSellSearch(e.target.value)}
+                      data-testid="input-quick-cross-sell-search"
+                    />
+                    <div className="flex-1 overflow-y-auto divide-y border rounded-lg max-h-[30vh]">
+                      {availableProducts.length === 0 ? (
+                        <p className="text-sm text-gray-400 text-center py-4">Ürün bulunamadı</p>
+                      ) : (
+                        availableProducts.slice(0, 50).map(p => (
+                          <div
+                            key={p.id}
+                            className="flex items-center gap-3 p-2 hover:bg-green-50 transition-colors cursor-pointer"
+                            onClick={() => {
+                              quickCrossSellMutation.mutate({
+                                forProductId: quickCrossSellProductId!,
+                                addProductId: p.id,
+                              });
+                            }}
+                            data-testid={`btn-add-cross-sell-item-${p.id}`}
+                          >
+                            {p.img ? (
+                              <img src={p.img} alt="" className="w-10 h-10 rounded-lg object-cover border flex-shrink-0" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                <ImageIcon className="w-4 h-4 text-gray-300" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold truncate">{p.name}</p>
+                              <p className="text-xs text-gray-500">{p.price} TL</p>
+                            </div>
+                            <Plus className="w-4 h-4 text-green-500 flex-shrink-0" />
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 );
               })()}

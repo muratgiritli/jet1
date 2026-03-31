@@ -907,6 +907,55 @@ export async function registerRoutes(
     res.json({ message: "Deleted" });
   });
 
+  app.post("/api/admin/quick-cross-sell", requireAdmin, async (req, res) => {
+    try {
+      const { forProductId, addProductId } = req.body;
+      if (!forProductId || !addProductId) return res.status(400).json({ message: "forProductId and addProductId required" });
+      const allSections = await storage.getAllCrossSellSections();
+      let section = allSections.find(s => s.forProductId === forProductId);
+      if (!section) {
+        section = await storage.createCrossSellSection({
+          title: "Sıklıkla Birlikte Alınan",
+          forProductId,
+          forAnimal: null,
+          sortOrder: 0,
+          isActive: true,
+        });
+      }
+      const existingItems = await storage.getCrossSellItemsBySection(section.id);
+      if (existingItems.some(i => i.productId === addProductId)) {
+        return res.status(400).json({ message: "Bu ürün zaten ekli" });
+      }
+      const item = await storage.addCrossSellItem({
+        sectionId: section.id,
+        productId: addProductId,
+        sortOrder: existingItems.length + 1,
+      });
+      res.status(201).json(item);
+    } catch (err) {
+      res.status(500).json({ message: "Cross-sell ekleme hatası" });
+    }
+  });
+
+  app.get("/api/admin/product-cross-sell/:productId", requireAdmin, async (req, res) => {
+    try {
+      const pid = parseInt(req.params.productId);
+      const allSections = await storage.getAllCrossSellSections();
+      const section = allSections.find(s => s.forProductId === pid);
+      if (!section) return res.json([]);
+      const items = await storage.getCrossSellItemsBySection(section.id);
+      const itemsWithProducts = await Promise.all(
+        items.sort((a, b) => a.sortOrder - b.sortOrder).map(async (item) => {
+          const p = await storage.getProduct(item.productId);
+          return p ? { ...item, product: p } : null;
+        })
+      );
+      res.json(itemsWithProducts.filter(Boolean));
+    } catch (err) {
+      res.status(500).json({ message: "Cross-sell fetch error" });
+    }
+  });
+
   const createOrderSchema = z.object({
     items: z.array(orderItemSchema).min(1),
     subtotal: z.number(),
