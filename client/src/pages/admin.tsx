@@ -3856,17 +3856,42 @@ function ReorderRemindersSection() {
 
 function DashboardSection() {
   const { data: stats, isLoading } = useQuery<any>({ queryKey: ["/api/admin/dashboard-stats"] });
+  const [segmentTab, setSegmentTab] = useState<"vip" | "dormant" | "risky">("vip");
+  const [smsTarget, setSmsTarget] = useState<{ phone: string; name: string } | null>(null);
+  const [smsText, setSmsText] = useState("");
+  const [smsSending, setSmsSending] = useState(false);
+  const { toast } = useToast();
+
+  const sendSingleSms = async () => {
+    if (!smsTarget || !smsText.trim()) return;
+    setSmsSending(true);
+    try {
+      await apiRequest("POST", "/api/admin/send-sms", { phones: [smsTarget.phone], message: smsText });
+      toast({ title: "SMS gönderildi" });
+      setSmsTarget(null);
+      setSmsText("");
+    } catch { toast({ title: "SMS gönderilemedi", variant: "destructive" }); }
+    setSmsSending(false);
+  };
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>;
   if (!stats) return null;
 
+  const pctChange = (curr: number, prev: number) => {
+    if (prev === 0) return curr > 0 ? 100 : 0;
+    return Math.round(((curr - prev) / prev) * 100);
+  };
+  const todayVsYesterday = pctChange(stats.today.revenue, stats.yesterday?.revenue || 0);
+  const weekVsPrev = pctChange(stats.week.revenue, stats.prevWeek?.revenue || 0);
+  const seg = stats.segments || {};
+
   return (
-    <div className="space-y-6" data-testid="section-dashboard">
+    <div className="space-y-5" data-testid="section-dashboard">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
-          { label: "Bugün", value: `${stats.today.revenue.toLocaleString("tr-TR")} ₺`, sub: `${stats.today.orders} sipariş`, color: "#6B3480" },
-          { label: "Bu Hafta", value: `${stats.week.revenue.toLocaleString("tr-TR")} ₺`, sub: `${stats.week.orders} sipariş`, color: "#2563eb" },
-          { label: "Bu Ay", value: `${stats.month.revenue.toLocaleString("tr-TR")} ₺`, sub: `${stats.month.orders} sipariş`, color: "#16a34a" },
+          { label: "Bugün", value: `${stats.today.revenue.toLocaleString("tr-TR")} ₺`, sub: `${stats.today.orders} sipariş`, color: "#6B3480", avg: stats.today.avgBasket, change: todayVsYesterday, changeLabel: "düne göre" },
+          { label: "Bu Hafta", value: `${stats.week.revenue.toLocaleString("tr-TR")} ₺`, sub: `${stats.week.orders} sipariş`, color: "#2563eb", avg: stats.week.avgBasket, change: weekVsPrev, changeLabel: "önceki haftaya göre" },
+          { label: "Bu Ay", value: `${stats.month.revenue.toLocaleString("tr-TR")} ₺`, sub: `${stats.month.orders} sipariş`, color: "#16a34a", avg: stats.month.avgBasket },
           { label: "Toplam", value: `${stats.total.revenue.toLocaleString("tr-TR")} ₺`, sub: `${stats.total.orders} sipariş`, color: "#ea580c" },
         ].map((s, i) => (
           <Card key={i}>
@@ -3874,16 +3899,132 @@ function DashboardSection() {
               <p className="text-xs text-muted-foreground">{s.label}</p>
               <p className="text-lg font-bold" style={{ color: s.color }}>{s.value}</p>
               <p className="text-xs text-muted-foreground">{s.sub}</p>
+              {s.avg !== undefined && s.avg > 0 && (
+                <p className="text-[10px] text-muted-foreground mt-0.5">Ort. sepet: {s.avg.toLocaleString("tr-TR")} ₺</p>
+              )}
+              {s.change !== undefined && (
+                <p className={`text-[10px] font-medium mt-0.5 ${s.change >= 0 ? "text-green-600" : "text-red-500"}`}>
+                  {s.change >= 0 ? "↑" : "↓"} %{Math.abs(s.change)} {s.changeLabel}
+                </p>
+              )}
             </CardContent>
           </Card>
         ))}
       </div>
+
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Bekleyen Sipariş</p><p className="text-2xl font-bold text-amber-600">{stats.pending}</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Tamamlanan</p><p className="text-2xl font-bold text-green-600">{stats.completed}</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Toplam Müşteri</p><p className="text-2xl font-bold text-blue-600">{stats.total.customers}</p></CardContent></Card>
         <Card><CardContent className="p-3"><p className="text-xs text-muted-foreground">Aktif Ürün</p><p className="text-2xl font-bold text-purple-600">{stats.total.products}</p></CardContent></Card>
       </div>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2"><Users className="w-4 h-4" /> Müşteri Segmentasyonu</CardTitle>
+        </CardHeader>
+        <CardContent className="p-3">
+          <div className="flex gap-2 mb-3">
+            {([
+              { key: "vip" as const, label: "VIP", count: seg.vipCount || 0, color: "bg-amber-100 text-amber-800", activeColor: "bg-amber-500 text-white" },
+              { key: "dormant" as const, label: "Pasif", count: seg.dormantCount || 0, color: "bg-blue-100 text-blue-800", activeColor: "bg-blue-500 text-white" },
+              { key: "risky" as const, label: "Riskli", count: seg.riskyCount || 0, color: "bg-red-100 text-red-800", activeColor: "bg-red-500 text-white" },
+            ]).map(t => (
+              <button
+                key={t.key}
+                onClick={() => setSegmentTab(t.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${segmentTab === t.key ? t.activeColor : t.color}`}
+                data-testid={`btn-segment-${t.key}`}
+              >
+                {t.label} ({t.count})
+              </button>
+            ))}
+          </div>
+
+          {segmentTab === "vip" && (
+            <div className="space-y-1.5" data-testid="segment-vip-list">
+              <p className="text-[10px] text-muted-foreground mb-1">3.000 ₺ üstü harcama yapan müşteriler</p>
+              {(seg.vip || []).length === 0 && <p className="text-xs text-muted-foreground">Henüz VIP müşteri yok</p>}
+              {(seg.vip || []).map((c: any) => (
+                <div key={c.id} className="flex items-center gap-2 text-xs bg-amber-50 rounded p-2">
+                  <Star className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                  <span className="font-medium flex-1 truncate">{c.name}</span>
+                  <span className="text-muted-foreground">{c.count} sipariş</span>
+                  <span className="font-bold text-amber-700">{c.total.toLocaleString("tr-TR")} ₺</span>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {segmentTab === "dormant" && (
+            <div className="space-y-1.5" data-testid="segment-dormant-list">
+              <p className="text-[10px] text-muted-foreground mb-1">30+ gündür sipariş vermeyen müşteriler</p>
+              {(seg.dormant || []).length === 0 && <p className="text-xs text-muted-foreground">Tüm müşteriler aktif!</p>}
+              {(seg.dormant || []).map((c: any) => (
+                <div key={c.id} className="flex items-center gap-2 text-xs bg-blue-50 rounded p-2">
+                  <Clock className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-medium truncate block">{c.name}</span>
+                    <span className="text-muted-foreground text-[10px]">
+                      {c.daysSince !== null ? `${c.daysSince} gündür sipariş yok` : "Hiç sipariş vermedi"}
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-6 px-2 text-[10px] text-blue-600 shrink-0"
+                    onClick={() => { setSmsTarget({ phone: c.phone, name: c.name }); setSmsText(`Merhaba ${c.name}, sizi özledik! 🐾 JETGO'da yeni ürünler sizi bekliyor. Hemen sipariş verin, kapınıza getirelim! jetgo.shop`); }}
+                    data-testid={`btn-remind-${c.id}`}
+                  >
+                    <Send className="w-3 h-3 mr-0.5" /> SMS
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {segmentTab === "risky" && (
+            <div className="space-y-1.5" data-testid="segment-risky-list">
+              <p className="text-[10px] text-muted-foreground mb-1">2+ sipariş iptali olan müşteriler</p>
+              {(seg.risky || []).length === 0 && <p className="text-xs text-muted-foreground">Riskli müşteri yok</p>}
+              {(seg.risky || []).map((c: any) => (
+                <div key={c.id} className="flex items-center gap-2 text-xs bg-red-50 rounded p-2">
+                  <AlertTriangle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                  <span className="font-medium flex-1 truncate">{c.name}</span>
+                  <Badge variant="destructive" className="text-[10px] px-1.5 py-0">{c.cancellations} iptal</Badge>
+                  <span className="text-muted-foreground">{c.total.toLocaleString("tr-TR")} ₺</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={smsTarget !== null} onOpenChange={(open) => { if (!open) setSmsTarget(null); }}>
+        <DialogContent className="max-w-[360px]">
+          <DialogHeader>
+            <DialogTitle className="text-sm">Hatırlatma SMS Gönder</DialogTitle>
+          </DialogHeader>
+          {smsTarget && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground"><strong>{smsTarget.name}</strong> ({smsTarget.phone})</p>
+              <textarea
+                className="w-full border rounded-lg p-2.5 text-sm min-h-[80px] resize-none"
+                value={smsText}
+                onChange={e => setSmsText(e.target.value)}
+                data-testid="input-reminder-sms"
+              />
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={() => setSmsTarget(null)}>İptal</Button>
+                <Button size="sm" onClick={sendSingleSms} disabled={smsSending || !smsText.trim()} data-testid="btn-send-reminder-sms">
+                  {smsSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Send className="w-3.5 h-3.5 mr-1" /> Gönder</>}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       {stats.topProducts?.length > 0 && (
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">En Çok Satan 10 Ürün</CardTitle></CardHeader>

@@ -2015,16 +2015,70 @@ export async function registerRoutes(
         return { date: day.toISOString().split("T")[0], revenue: sum(dayOrders), count: dayOrders.length };
       });
 
+      const avg = (arr: typeof allOrders) => arr.length > 0 ? sum(arr) / arr.length : 0;
+
+      const yesterdayStart = new Date(todayStart);
+      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+      const yesterdayOrders = allOrders.filter(o => { const t = new Date(o.createdAt); return t >= yesterdayStart && t < todayStart; });
+      const prevWeekStart = new Date(weekStart);
+      prevWeekStart.setDate(prevWeekStart.getDate() - 7);
+      const prevWeekOrders = allOrders.filter(o => { const t = new Date(o.createdAt); return t >= prevWeekStart && t < weekStart; });
+
+      const customerOrderMap: Record<string, { phone: string; name: string; id: number; total: number; count: number; lastDate: Date | null }> = {};
+      for (const c of allCustomers) {
+        customerOrderMap[c.phone] = { phone: c.phone, name: c.name, id: c.id, total: 0, count: 0, lastDate: null };
+      }
+      for (const o of allOrders) {
+        if (o.status === "iptal") continue;
+        const entry = customerOrderMap[o.customerPhone];
+        if (entry) {
+          entry.total += o.grandTotal || 0;
+          entry.count += 1;
+          const d = new Date(o.createdAt);
+          if (!entry.lastDate || d > entry.lastDate) entry.lastDate = d;
+        }
+      }
+      const custEntries = Object.values(customerOrderMap);
+      const vipThreshold = 3000;
+      const dormantDays = 30;
+      const nowMs = now.getTime();
+      const vipCustomers = custEntries.filter(c => c.total >= vipThreshold).sort((a, b) => b.total - a.total);
+      const dormantCustomers = custEntries.filter(c => {
+        if (!c.lastDate) return c.count === 0;
+        return (nowMs - c.lastDate.getTime()) / (1000 * 60 * 60 * 24) > dormantDays;
+      }).sort((a, b) => {
+        const aD = a.lastDate ? (nowMs - a.lastDate.getTime()) : Infinity;
+        const bD = b.lastDate ? (nowMs - b.lastDate.getTime()) : Infinity;
+        return bD - aD;
+      });
+      const riskyCustomers = (() => {
+        const cancelMap: Record<string, number> = {};
+        for (const o of allOrders) {
+          if (o.status === "iptal") cancelMap[o.customerPhone] = (cancelMap[o.customerPhone] || 0) + 1;
+        }
+        return custEntries.filter(c => (cancelMap[c.phone] || 0) >= 2).map(c => ({ ...c, cancellations: cancelMap[c.phone] || 0 }));
+      })();
+
       res.json({
-        today: { orders: todayOrders.length, revenue: Math.round(sum(todayOrders) * 100) / 100 },
-        week: { orders: weekOrders.length, revenue: Math.round(sum(weekOrders) * 100) / 100 },
-        month: { orders: monthOrders.length, revenue: Math.round(sum(monthOrders) * 100) / 100 },
+        today: { orders: todayOrders.length, revenue: Math.round(sum(todayOrders) * 100) / 100, avgBasket: Math.round(avg(todayOrders) * 100) / 100 },
+        yesterday: { orders: yesterdayOrders.length, revenue: Math.round(sum(yesterdayOrders) * 100) / 100 },
+        week: { orders: weekOrders.length, revenue: Math.round(sum(weekOrders) * 100) / 100, avgBasket: Math.round(avg(weekOrders) * 100) / 100 },
+        prevWeek: { orders: prevWeekOrders.length, revenue: Math.round(sum(prevWeekOrders) * 100) / 100 },
+        month: { orders: monthOrders.length, revenue: Math.round(sum(monthOrders) * 100) / 100, avgBasket: Math.round(avg(monthOrders) * 100) / 100 },
         total: { orders: allOrders.length, revenue: Math.round(sum(allOrders) * 100) / 100, customers: allCustomers.length, products: allProducts.filter(p => p.isActive).length },
         pending: pending(allOrders).length,
         completed: completed(allOrders).length,
         lowStockProducts,
         topProducts,
         dailyRevenue,
+        segments: {
+          vip: vipCustomers.slice(0, 30).map(c => ({ id: c.id, name: c.name, phone: c.phone, total: Math.round(c.total), count: c.count, lastDate: c.lastDate })),
+          dormant: dormantCustomers.slice(0, 30).map(c => ({ id: c.id, name: c.name, phone: c.phone, total: Math.round(c.total), count: c.count, lastDate: c.lastDate, daysSince: c.lastDate ? Math.floor((nowMs - c.lastDate.getTime()) / (1000 * 60 * 60 * 24)) : null })),
+          risky: riskyCustomers.slice(0, 30).map(c => ({ id: c.id, name: c.name, phone: c.phone, total: Math.round(c.total), count: c.count, cancellations: c.cancellations })),
+          vipCount: vipCustomers.length,
+          dormantCount: dormantCustomers.length,
+          riskyCount: riskyCustomers.length,
+        },
       });
     } catch (err) {
       res.status(500).json({ message: "Dashboard stats error" });
