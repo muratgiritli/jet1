@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Plus, Minus, Tag, Gift, ArrowRight, Lock } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Tag, Gift, ArrowRight, Lock, AlertTriangle } from "lucide-react";
 import ProductImage from "@/components/ProductImage";
 import { useCart } from "@/contexts/CartContext";
 import { productUrl } from "@/lib/data";
@@ -29,9 +29,6 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
   const isMain = item.item_type === "main";
   const maxQty = isKediKumu(pid) ? 2 : 99;
   const isLockedMain = isMain && campaignMainInCart !== null && campaignMainInCart !== pid;
-  const discount = item.original_price
-    ? Math.round(((item.original_price - item.price) / item.original_price) * 100)
-    : 0;
 
   return (
     <div className={`bg-white rounded-xl shadow-sm border overflow-hidden ${isLockedMain ? "border-gray-200 opacity-60" : "border-gray-100"}`} data-testid={`campaign-product-${item.product_id}`}>
@@ -43,15 +40,6 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
             className="w-full h-full object-contain"
             loading="lazy"
           />
-          {discount > 0 && (
-            <Badge
-              className="absolute top-2 right-2 text-xs font-bold"
-              style={{ backgroundColor: "#e53935", color: "#fff" }}
-              data-testid={`badge-discount-${item.product_id}`}
-            >
-              %{discount}
-            </Badge>
-          )}
           {isMain && (
             <Badge
               className="absolute top-2 left-2 text-[10px] font-bold"
@@ -205,10 +193,16 @@ export default function CampaignPage() {
 
             {extraItems.length > 0 && (
               <section data-testid="section-extra-products">
-                <h2 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
-                  <Gift className="w-4 h-4" style={{ color: "#2e7d32" }} />
-                  Ek Ürünler
+                <h2 className="text-base font-extrabold text-gray-800 mb-1 flex items-center gap-1.5">
+                  <Gift className="w-5 h-5" style={{ color: "#2e7d32" }} />
+                  EKSTRA ÜRÜNLER
                 </h2>
+                <div className="flex items-start gap-1.5 mb-3 p-2.5 rounded-lg" style={{ backgroundColor: "#fff3e0", border: "1px solid #ffe0b2" }} data-testid="campaign-extra-warning">
+                  <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#e65100" }} />
+                  <p className="text-[11px] font-semibold" style={{ color: "#e65100" }}>
+                    Kampanyadan yararlanmak için aşağıdan en az 1 ürün satın almanız gerekmektedir.
+                  </p>
+                </div>
                 <div className="grid grid-cols-2 gap-3">
                   {extraItems.map((item) => (
                     <CampaignProductCard key={item.id} item={item} />
