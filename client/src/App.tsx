@@ -1,4 +1,4 @@
-import { lazy, Suspense, Component, type ReactNode } from "react";
+import { lazy, Suspense, Component, type ReactNode, useEffect } from "react";
 import { Switch, Route, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -31,11 +31,17 @@ class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boole
   }
 }
 
-const Checkout = lazy(() => import("@/pages/checkout"));
-const CategoryPage = lazy(() => import("@/pages/category"));
-const CategoriesOverview = lazy(() => import("@/pages/categories-overview"));
-const BrandsPage = lazy(() => import("@/pages/brands"));
-const BrandProductsPage = lazy(() => import("@/pages/brand-products"));
+const importCheckout = () => import("@/pages/checkout");
+const importCategory = () => import("@/pages/category");
+const importCategoriesOverview = () => import("@/pages/categories-overview");
+const importBrands = () => import("@/pages/brands");
+const importBrandProducts = () => import("@/pages/brand-products");
+
+const Checkout = lazy(importCheckout);
+const CategoryPage = lazy(importCategory);
+const CategoriesOverview = lazy(importCategoriesOverview);
+const BrandsPage = lazy(importBrands);
+const BrandProductsPage = lazy(importBrandProducts);
 const AdminPage = lazy(() => import("@/pages/admin"));
 const ProductDetailPage = lazy(() => import("@/pages/product-detail"));
 const AcikMamaPage = lazy(() => import("@/pages/acik-mama"));
@@ -122,6 +128,17 @@ function AppShell() {
   const [location] = useLocation();
   const isAdmin = location.startsWith("/admin");
   const isDemo = location === "/demo";
+
+  useEffect(() => {
+    if (location === "/") {
+      const t = setTimeout(() => {
+        importCategory();
+        importBrands();
+        importBrandProducts();
+      }, 2000);
+      return () => clearTimeout(t);
+    }
+  }, [location]);
 
   return (
     <>

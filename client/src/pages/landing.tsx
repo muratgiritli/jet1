@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 import {
   Truck, CreditCard, Banknote, Smartphone,
   ArrowRight, ChevronRight, Star, Clock, Shield,
@@ -253,18 +254,30 @@ function CategoryGrid() {
         </Link>
       </div>
       <div className="grid grid-cols-2 gap-2.5 md:gap-5" data-testid="grid-categories">
-        {CATEGORIES.map((cat) => (
-          <Link key={cat.name} href={cat.href}>
-            <div className="flex flex-col items-center gap-1.5 md:gap-2.5 cursor-pointer active:scale-95 hover:scale-105 transition-transform" data-testid={`card-category-${cat.name}`}>
-              <div className={`w-full aspect-square rounded-2xl md:rounded-3xl overflow-hidden bg-gradient-to-br ${cat.color} p-[3px] md:p-1`}>
-                <div className="w-full h-full rounded-[13px] md:rounded-[20px] overflow-hidden bg-white">
-                  <img src={cat.img} alt={cat.name} className="w-full h-full object-cover" loading="lazy" data-testid={`img-category-${cat.name}`} />
+        {CATEGORIES.map((cat) => {
+          const animal = cat.href.split("/").pop() || "";
+          const prefetchCategory = () => {
+            import("@/pages/category");
+            queryClient.prefetchQuery({ queryKey: ["/api/subcategories", animal], queryFn: () => fetch(`/api/subcategories/${animal}`).then(r => r.json()) });
+          };
+          return (
+            <Link key={cat.name} href={cat.href}>
+              <div
+                className="flex flex-col items-center gap-1.5 md:gap-2.5 cursor-pointer active:scale-95 hover:scale-105 transition-transform"
+                data-testid={`card-category-${cat.name}`}
+                onTouchStart={prefetchCategory}
+                onMouseEnter={prefetchCategory}
+              >
+                <div className={`w-full aspect-square rounded-2xl md:rounded-3xl overflow-hidden bg-gradient-to-br ${cat.color} p-[3px] md:p-1`}>
+                  <div className="w-full h-full rounded-[13px] md:rounded-[20px] overflow-hidden bg-white">
+                    <img src={cat.img} alt={cat.name} className="w-full h-full object-cover" loading="lazy" data-testid={`img-category-${cat.name}`} />
+                  </div>
                 </div>
+                <span className="text-xs md:text-base font-bold text-gray-800" data-testid={`text-category-name-${cat.name}`}>{cat.name}</span>
               </div>
-              <span className="text-xs md:text-base font-bold text-gray-800" data-testid={`text-category-name-${cat.name}`}>{cat.name}</span>
-            </div>
-          </Link>
-        ))}
+            </Link>
+          );
+        })}
       </div>
     </div>
   );
