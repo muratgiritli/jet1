@@ -744,28 +744,28 @@ export default function Checkout() {
             )}
 
             <Dialog open={showPointsDialog} onOpenChange={setShowPointsDialog}>
-              <DialogContent className="max-w-md">
+              <DialogContent className="max-w-[340px] sm:max-w-md p-4 sm:p-6">
                 <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2">
-                    <Gift className="w-5 h-5" style={{ color: "#e65100" }} />
+                  <DialogTitle className="flex items-center gap-2 text-base">
+                    <Gift className="w-4 h-4" style={{ color: "#e65100" }} />
                     Para Puan Nedir?
                   </DialogTitle>
                 </DialogHeader>
-                <div className="space-y-3 text-sm text-gray-700">
+                <div className="space-y-2.5 text-xs sm:text-sm text-gray-700">
                   <p>
                     <strong>Para Puan</strong>, JETGO Pet Shop'ta yaptığınız her alışverişte kazandığınız sadakat puanıdır.
                   </p>
-                  <div className="rounded-lg p-3" style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}>
-                    <p className="font-semibold" style={{ color: "#e65100" }}>Nasıl Kazanılır?</p>
-                    <p className="mt-1">Her siparişinizde toplam tutarın <strong>%5'i</strong> kadar Para Puan kazanırsınız. Örneğin 1.000 TL'lik alışverişte <strong>50 TL</strong> Para Puan!</p>
+                  <div className="rounded-lg p-2.5" style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}>
+                    <p className="font-semibold text-xs sm:text-sm" style={{ color: "#e65100" }}>Nasıl Kazanılır?</p>
+                    <p className="mt-0.5">Her siparişinizde toplam tutarın <strong>%5'i</strong> kadar Para Puan kazanırsınız. Örneğin 1.000 TL'lik alışverişte <strong>50 TL</strong> Para Puan!</p>
                   </div>
-                  <div className="rounded-lg p-3" style={{ backgroundColor: "#e8f5e9", border: "1px solid #c8e6c9" }}>
-                    <p className="font-semibold" style={{ color: "#2e7d32" }}>Nasıl Kullanılır?</p>
-                    <p className="mt-1">Biriken puanlarınız bir sonraki siparişinizde otomatik olarak indirim olarak uygulanır. Sepetinizde Para Puan bakiyeniz görünür.</p>
+                  <div className="rounded-lg p-2.5" style={{ backgroundColor: "#e8f5e9", border: "1px solid #c8e6c9" }}>
+                    <p className="font-semibold text-xs sm:text-sm" style={{ color: "#2e7d32" }}>Nasıl Kullanılır?</p>
+                    <p className="mt-0.5">Biriken puanlarınız bir sonraki siparişinizde otomatik olarak indirim olarak uygulanır.</p>
                   </div>
-                  <div className="rounded-lg p-3 bg-gray-50 border border-gray-200">
-                    <p className="font-semibold text-gray-800">Önemli Bilgiler</p>
-                    <ul className="mt-1 space-y-1 list-disc list-inside text-gray-600">
+                  <div className="rounded-lg p-2.5 bg-gray-50 border border-gray-200">
+                    <p className="font-semibold text-xs sm:text-sm text-gray-800">Önemli Bilgiler</p>
+                    <ul className="mt-0.5 space-y-0.5 list-disc list-inside text-gray-600">
                       <li>Para Puan kazanmak için üye girişi yapmanız gerekir.</li>
                       <li>Puanlarınız hesabınızda birikir ve istediğiniz zaman kullanabilirsiniz.</li>
                       <li>Kampanyalı ürünlerde Para Puan geçerli değildir.</li>
