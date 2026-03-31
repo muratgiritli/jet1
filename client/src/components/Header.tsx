@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { name: "Köpek", href: "/kategori/kopek" },
   { name: "Kuş", href: "/kategori/kus" },
   { name: "Kemirgen", href: "/kategori/kemirgen" },
+  { name: "Kampanya", href: "/kampanya", highlight: true },
 ];
 
 export default function Header() {
@@ -85,19 +86,25 @@ export default function Header() {
       <nav className="sticky top-[52px] z-[9998]" style={{ backgroundColor: "#7c4dff" }}>
         <div className="max-w-6xl mx-auto px-2">
           <ul className="flex items-center justify-center gap-0 md:gap-2 py-1.5 flex-wrap" data-testid="nav-categories">
-            {NAV_ITEMS.map((item) => (
-              <li key={item.name}>
-                <Link
-                  href={item.href}
-                  className={`px-4 md:px-6 py-1 md:py-1.5 text-sm md:text-base font-medium text-white/90 hover:text-white transition-colors rounded-lg hover:bg-white/10 ${
-                    location.startsWith(item.href) ? "text-white bg-white/15 font-semibold" : ""
-                  }`}
-                  data-testid={`nav-link-${item.name}`}
-                >
-                  {item.name}
-                </Link>
-              </li>
-            ))}
+            {NAV_ITEMS.map((item) => {
+              const isHighlight = "highlight" in item && item.highlight;
+              const isActive = location.startsWith(item.href);
+              return (
+                <li key={item.name}>
+                  <Link
+                    href={item.href}
+                    className={`px-4 md:px-6 py-1 md:py-1.5 text-sm md:text-base font-medium transition-colors rounded-lg ${
+                      isHighlight
+                        ? `font-bold animate-pulse ${isActive ? "bg-yellow-400 text-gray-900" : "bg-yellow-400 text-gray-900 hover:bg-yellow-300"}`
+                        : `text-white/90 hover:text-white hover:bg-white/10 ${isActive ? "text-white bg-white/15 font-semibold" : ""}`
+                    }`}
+                    data-testid={`nav-link-${item.name}`}
+                  >
+                    {item.name}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
         </div>
       </nav>
