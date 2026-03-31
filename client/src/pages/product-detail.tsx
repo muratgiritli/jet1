@@ -723,6 +723,16 @@ export default function ProductDetailPage() {
 
         {isCampaignMode && campaignExtras.length > 0 && (
           <div className="mt-8" id="campaign-extras-section" data-testid="section-campaign-extras">
+            <h3 className="text-base font-extrabold text-gray-800 mb-1 flex items-center gap-1.5">
+              <Gift className="w-5 h-5" style={{ color: "#2e7d32" }} />
+              EKSTRA ÜRÜNLER
+            </h3>
+            <div className="flex items-start gap-1.5 mb-3 p-2.5 rounded-lg" style={{ backgroundColor: "#fff3e0", border: "1px solid #ffe0b2" }} data-testid="campaign-extra-warning">
+              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#e65100" }} />
+              <p className="text-[11px] font-semibold" style={{ color: "#e65100" }}>
+                Kampanyadan yararlanmak için aşağıdan en az 1 ürün satın almanız gerekmektedir.
+              </p>
+            </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {campaignExtras.map((p) => (
                 <div key={p.id}>
