@@ -667,13 +667,10 @@ export async function registerRoutes(
     const showAll = req.query.all === "true" && isAdmin;
     if (showAll) {
       res.setHeader("Cache-Control", "private, no-store");
-      res.json(allProducts);
     } else {
-      const campaignRes = await sharedPool.query("SELECT product_id FROM campaign_items WHERE is_active = true");
-      const campaignIds = new Set(campaignRes.rows.map((r: any) => r.product_id));
       res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
-      res.json(allProducts.filter(p => p.isActive && !campaignIds.has(p.id)));
     }
+    res.json(showAll ? allProducts : allProducts.filter(p => p.isActive));
   });
 
   app.get("/api/products/search", async (req, res) => {

@@ -163,7 +163,7 @@ export default function ProductDetailPage() {
   const searchStr = useSearch();
   const isCampaignMode = new URLSearchParams(searchStr).get("kampanya") === "1";
 
-  const { basket, updateQty, grandTotal, itemCount } = useCart();
+  const { basket, updateQty, grandTotal, itemCount, updateStock } = useCart();
   const [, setLocation] = useLocation();
 
   const staticProduct = useMemo(() => {
@@ -235,6 +235,13 @@ export default function ProductDetailPage() {
 
   const resolvedData = isNumericId ? data : staticData;
 
+  useEffect(() => {
+    if (resolvedData?.product) {
+      const p = resolvedData.product;
+      updateStock(String(p.id), p.stock ?? 0);
+    }
+  }, [resolvedData, updateStock]);
+
   interface CampaignItem {
     id: number;
     product_id: number;
@@ -268,6 +275,12 @@ export default function ProductDetailPage() {
         originalImg: null,
       } as Product));
   }, [isCampaignMode, campaignItems]);
+
+  useEffect(() => {
+    for (const extra of campaignExtras) {
+      updateStock(String(extra.id), extra.stock ?? 0);
+    }
+  }, [campaignExtras, updateStock]);
 
   const [stockName, setStockName] = useState("");
   const [stockPhone, setStockPhone] = useState("");

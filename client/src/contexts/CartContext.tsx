@@ -47,6 +47,7 @@ interface CartContextType {
   campaignData: CampaignItemInfo[];
   isKediKumu: (id: string) => boolean;
   getProductStock: (id: string) => number;
+  updateStock: (id: string, stock: number) => void;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -81,6 +82,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const { data: dbProducts = [] } = useQuery<DbProduct[]>({
     queryKey: ["/api/products"],
+    staleTime: 2 * 60 * 1000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: campaignData = [] } = useQuery<CampaignItemInfo[]>({
@@ -154,6 +157,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
   }, [dbProducts]);
 
   const getProductStock = useCallback((id: string) => stockMapRef.current.get(id) ?? 0, []);
+
+  const updateStock = useCallback((id: string, stock: number) => {
+    stockMapRef.current.set(id, stock);
+  }, []);
 
   const updateQty = useCallback((id: string, delta: number): boolean => {
     let blocked = false;
@@ -284,8 +291,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       campaignData,
       isKediKumu,
       getProductStock,
+      updateStock,
     }),
-    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock]
+    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock, updateStock]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
