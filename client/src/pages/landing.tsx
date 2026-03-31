@@ -6,7 +6,7 @@ import {
   ArrowRight, ChevronRight, Star, Clock, Shield,
   Gift, MapPin, Phone, Mail, BookOpen,
   PackageCheck, Zap,
-  Stethoscope, PhoneCall
+  Stethoscope
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCustomer } from "@/contexts/CustomerContext";
@@ -78,8 +78,8 @@ function HeroCarousel() {
   const content = (
     <div className="relative overflow-hidden rounded-2xl" data-testid="hero-carousel">
       <div
-        className={`bg-gradient-to-br ${slide.gradient} p-5 md:p-8 lg:p-10 transition-all duration-700 flex flex-col justify-center`}
-        style={{ height: 200, minHeight: 200, maxHeight: 200 }}
+        className={`bg-gradient-to-br ${slide.gradient} p-4 md:p-6 lg:p-8 transition-all duration-700 flex flex-col justify-center`}
+        style={{ aspectRatio: "3/1" }}
       >
         <div className="relative z-10 max-w-2xl">
           <h1 className="text-xl md:text-3xl lg:text-4xl font-black text-white whitespace-pre-line leading-tight drop-shadow-sm">
@@ -488,54 +488,6 @@ function RegionLinks() {
   );
 }
 
-const SAMSUN_VETS = [
-  { name: "VetPark Veteriner Kliniği", address: "Atakum, Samsun", phone: "03623111234", display: "0362 311 12 34", specialty: "Genel & Cerrahi" },
-  { name: "Canpati Veteriner", address: "Atakum, Samsun", phone: "03623025678", display: "0362 302 56 78", specialty: "Kedi & Köpek" },
-  { name: "Patidost Veteriner Kliniği", address: "İlkadım, Samsun", phone: "03624311199", display: "0362 431 11 99", specialty: "Aşı & Bakım" },
-  { name: "Samsun Hayvan Hastanesi", address: "Atakum, Samsun", phone: "03623399988", display: "0362 339 99 88", specialty: "7/24 Acil" },
-  { name: "DostPati Veteriner", address: "Canik, Samsun", phone: "03622339977", display: "0362 233 99 77", specialty: "Diş & Cerrahi" },
-  { name: "PetVet Kliniği", address: "Atakum, Samsun", phone: "03623028855", display: "0362 302 88 55", specialty: "İç Hastalıklar" },
-];
-
-function VeterinerSection() {
-  return (
-    <div data-testid="section-veteriner">
-      <div className="flex items-center gap-2 mb-3">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#e8f5e9" }}>
-          <Stethoscope className="w-4.5 h-4.5" style={{ color: "#2e7d32" }} />
-        </div>
-        <div>
-          <h3 className="text-base md:text-xl font-extrabold text-gray-900" data-testid="text-vet-heading">Samsun Veterinerler</h3>
-          <p className="text-[10px] md:text-xs text-gray-500">Tek tıkla arayın</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-        {SAMSUN_VETS.map((vet) => (
-          <a
-            key={vet.phone}
-            href={`tel:${vet.phone}`}
-            className="bg-white rounded-xl border border-gray-100 p-3 hover:shadow-md hover:border-green-200 transition-all group"
-            data-testid={`vet-card-${vet.phone}`}
-          >
-            <div className="flex items-start justify-between gap-1">
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-bold text-gray-800 truncate group-hover:text-green-700 transition-colors">{vet.name}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5">{vet.address}</p>
-                <span className="inline-block text-[9px] font-semibold mt-1 px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#e8f5e9", color: "#2e7d32" }}>
-                  {vet.specialty}
-                </span>
-              </div>
-              <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0" style={{ backgroundColor: "#e8f5e9" }}>
-                <PhoneCall className="w-3.5 h-3.5" style={{ color: "#2e7d32" }} />
-              </div>
-            </div>
-            <p className="text-[11px] font-semibold mt-1.5" style={{ color: "#2e7d32" }}>{vet.display}</p>
-          </a>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 
 function DesktopContactStrip() {
@@ -627,10 +579,6 @@ export default function Landing() {
 
         <div className="mt-5 md:mt-8">
           <WhyJetgo />
-        </div>
-
-        <div className="mt-5 md:mt-8">
-          <VeterinerSection />
         </div>
 
         <div className="mt-5 mb-4 md:mb-8">
