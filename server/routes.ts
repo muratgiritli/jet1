@@ -609,7 +609,13 @@ export async function registerRoutes(
     if (!category) return res.status(404).json({ message: "Category not found" });
     const prods = await storage.getProductsByBrandCategory(id);
     const activeOnly = req.query.all !== "true";
-    res.json({ category, products: activeOnly ? prods.filter(p => p.isActive) : prods });
+    if (!activeOnly) {
+      res.json({ category, products: prods });
+    } else {
+      const campaignRes = await sharedPool.query("SELECT product_id FROM campaign_items WHERE is_active = true");
+      const campaignIds = new Set(campaignRes.rows.map((r: any) => r.product_id));
+      res.json({ category, products: prods.filter(p => p.isActive && !campaignIds.has(p.id)) });
+    }
   });
 
   const SUBCATEGORY_SLUG_MAP: Record<string, string> = {
@@ -626,7 +632,9 @@ export async function registerRoutes(
     const category = await storage.getBrandCategoryBySlug(animal, subcategory, brandSlug);
     if (!category) return res.status(404).json({ message: "Brand category not found" });
     const prods = await storage.getProductsByBrandCategory(category.id);
-    res.json({ category, products: prods.filter(p => p.isActive) });
+    const campaignRes = await sharedPool.query("SELECT product_id FROM campaign_items WHERE is_active = true");
+    const campaignIds = new Set(campaignRes.rows.map((r: any) => r.product_id));
+    res.json({ category, products: prods.filter(p => p.isActive && !campaignIds.has(p.id)) });
   });
 
   app.get("/api/subcategory-products/:animal/:subcategorySlug", async (req, res) => {
@@ -638,8 +646,10 @@ export async function registerRoutes(
       .map((bc) => bc.id);
     if (matchingCatIds.length === 0) return res.json([]);
     const allProducts = await storage.getAllProducts();
+    const campaignRes = await sharedPool.query("SELECT product_id FROM campaign_items WHERE is_active = true");
+    const campaignIds = new Set(campaignRes.rows.map((r: any) => r.product_id));
     const filtered = allProducts.filter(
-      (p) => p.isActive && p.brandCategoryId && matchingCatIds.includes(p.brandCategoryId)
+      (p) => p.isActive && p.brandCategoryId && matchingCatIds.includes(p.brandCategoryId) && !campaignIds.has(p.id)
     );
     res.setHeader("Cache-Control", "public, max-age=120, stale-while-revalidate=600");
     res.json(filtered);
@@ -657,10 +667,13 @@ export async function registerRoutes(
     const showAll = req.query.all === "true" && isAdmin;
     if (showAll) {
       res.setHeader("Cache-Control", "private, no-store");
+      res.json(allProducts);
     } else {
+      const campaignRes = await sharedPool.query("SELECT product_id FROM campaign_items WHERE is_active = true");
+      const campaignIds = new Set(campaignRes.rows.map((r: any) => r.product_id));
       res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+      res.json(allProducts.filter(p => p.isActive && !campaignIds.has(p.id)));
     }
-    res.json(showAll ? allProducts : allProducts.filter(p => p.isActive));
   });
 
   app.get("/api/products/search", async (req, res) => {
