@@ -3927,6 +3927,8 @@ function CustomersSection() {
   const [editAddress, setEditAddress] = useState("");
   const { toast } = useToast();
 
+  const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
+
   const updateMutation = useMutation({
     mutationFn: async ({ id, name, address }: { id: number; name: string; address: string }) => {
       await apiRequest("PATCH", `/api/admin/customers/${id}`, { name, address });
@@ -3935,6 +3937,17 @@ function CustomersSection() {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
       setEditingCustomer(null);
       toast({ title: "Müşteri güncellendi" });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/customers/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
+      setDeleteConfirmId(null);
+      toast({ title: "Müşteri silindi" });
     },
   });
 
@@ -3982,12 +3995,15 @@ function CustomersSection() {
                     </div>
                   </div>
                   <div className="flex gap-1 shrink-0">
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditingCustomer(c); setEditName(c.name); setEditAddress(c.address || ""); }}>
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={() => { setEditingCustomer(c); setEditName(c.name); setEditAddress(c.address || ""); }} data-testid={`btn-edit-customer-${c.id}`}>
                       <Pencil className="w-3.5 h-3.5" />
                     </Button>
                     <a href={`https://wa.me/90${c.phone}`} target="_blank" rel="noopener noreferrer">
                       <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-green-600"><SiWhatsapp className="w-3.5 h-3.5" /></Button>
                     </a>
+                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:text-red-700" onClick={() => setDeleteConfirmId(c.id)} data-testid={`btn-delete-customer-${c.id}`}>
+                      <Trash2 className="w-3.5 h-3.5" />
+                    </Button>
                   </div>
                 </div>
               )}
@@ -3995,6 +4011,22 @@ function CustomersSection() {
           </Card>
         ))}
       </div>
+      <Dialog open={deleteConfirmId !== null} onOpenChange={(open) => { if (!open) setDeleteConfirmId(null); }}>
+        <DialogContent className="max-w-[340px]">
+          <DialogHeader>
+            <DialogTitle>Üye Sil</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Bu müşteriyi silmek istediğinize emin misiniz? Tüm verileri (favoriler, adresler, puanlar, evcil hayvanlar) kalıcı olarak silinecektir.
+          </p>
+          <div className="flex gap-2 justify-end mt-2">
+            <Button variant="outline" size="sm" onClick={() => setDeleteConfirmId(null)} data-testid="btn-cancel-delete-customer">İptal</Button>
+            <Button variant="destructive" size="sm" onClick={() => { if (deleteConfirmId) deleteMutation.mutate(deleteConfirmId); }} disabled={deleteMutation.isPending} data-testid="btn-confirm-delete-customer">
+              {deleteMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sil"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

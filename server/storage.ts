@@ -597,8 +597,19 @@ export class DatabaseStorage implements IStorage {
   async deleteCustomerAccount(customerId: number): Promise<void> {
     await db.delete(customerFavorites).where(eq(customerFavorites.customerId, customerId));
     await db.delete(customerAddresses).where(eq(customerAddresses.customerId, customerId));
+    const petIds = await db.select({ id: petProfiles.id }).from(petProfiles).where(eq(petProfiles.customerId, customerId));
+    if (petIds.length > 0) {
+      const ids = petIds.map(p => p.id);
+      await pool.query(`DELETE FROM pet_health_records WHERE pet_profile_id = ANY($1)`, [ids]);
+      await pool.query(`DELETE FROM pet_weight_log WHERE pet_profile_id = ANY($1)`, [ids]);
+      await pool.query(`DELETE FROM pet_photos WHERE pet_profile_id = ANY($1)`, [ids]);
+    }
     await db.delete(petProfiles).where(eq(petProfiles.customerId, customerId));
     await db.delete(loyaltyPoints).where(eq(loyaltyPoints.customerId, customerId));
+    await pool.query(`DELETE FROM virtual_pets WHERE customer_id = $1`, [customerId]);
+    await pool.query(`DELETE FROM pet_contest_entries WHERE customer_id = $1`, [customerId]);
+    await pool.query(`DELETE FROM lost_found_posts WHERE customer_id = $1`, [customerId]);
+    await pool.query(`DELETE FROM trusted_devices WHERE customer_id = $1`, [customerId]);
     await db.delete(customers).where(eq(customers.id, customerId));
   }
 }

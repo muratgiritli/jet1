@@ -2067,6 +2067,17 @@ export async function registerRoutes(
     }
   });
 
+  app.delete("/api/admin/customers/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Geçersiz müşteri ID" });
+      await storage.deleteCustomerAccount(id);
+      res.json({ success: true });
+    } catch (err) {
+      res.status(500).json({ message: "Müşteri silme hatası" });
+    }
+  });
+
   app.post("/api/admin/send-sms", requireAdmin, async (req, res) => {
     try {
       const { phones, message } = req.body;
