@@ -348,19 +348,6 @@ function MobileFooter() {
         </div>
 
         <div className="border-t border-gray-700 pt-3">
-          <Link href="/kampanya" className="flex items-center gap-2 mb-3" data-testid="mobile-footer-kampanya">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: "linear-gradient(135deg, #6B3480, #9b59b6)" }}>
-              <Gift className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-white">Kampanya</p>
-              <p className="text-[10px] text-gray-400">Fırsatları kaçırma</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-gray-500 ml-auto" />
-          </Link>
-        </div>
-
-        <div className="border-t border-gray-700 pt-3">
           <Link href="/iletisim" className="text-sm font-bold text-white mb-2.5 flex items-center gap-2 hover:underline" data-testid="mobile-footer-iletisim">
             <MapPin className="w-4 h-4 text-emerald-400" />
             İletişim
@@ -656,15 +643,15 @@ export default function Landing() {
           <WhyJetgo />
         </div>
 
-        <div className="mt-5 md:mt-12">
+        <div className="hidden md:block mt-12">
           <BrandSlider />
         </div>
 
-        <div className="mt-5 md:mt-12">
+        <div className="hidden md:block mt-12">
           <BlogPreview />
         </div>
 
-        <div className="mt-5 md:mt-12">
+        <div className="hidden md:block mt-12">
           <RegionLinks />
         </div>
 
