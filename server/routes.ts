@@ -1287,7 +1287,10 @@ export async function registerRoutes(
     otpStore.delete(normalized);
 
     let customer = await storage.getCustomerByPhone(normalized);
+    let isNewUser = false;
+    let welcomeCouponCode: string | undefined;
     if (!customer) {
+      isNewUser = true;
       const dummyPass = await bcrypt.hash(Math.random().toString(36), 10);
       customer = await storage.createCustomer({
         phone: normalized,
@@ -1295,6 +1298,24 @@ export async function registerRoutes(
         name: (name || "").trim() || "Müşteri",
         address: (address || "").trim() || null,
       });
+      try {
+        const couponCode = "HG" + customer.id + crypto.randomBytes(3).toString("hex").toUpperCase();
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+        await storage.createCoupon({
+          code: couponCode,
+          discountType: "fixed",
+          discountValue: 100,
+          minOrderAmount: 500,
+          maxUses: 1,
+          isActive: true,
+          expiresAt,
+          customerId: customer.id,
+        });
+        welcomeCouponCode = couponCode;
+      } catch (e) {
+        console.error("Welcome coupon creation failed:", e);
+      }
     }
 
     (req.session as any).customerId = customer.id;
@@ -1311,7 +1332,7 @@ export async function registerRoutes(
       await sharedPool.query("DELETE FROM trusted_devices WHERE expires_at < NOW()");
     } catch (e) {}
 
-    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, deviceToken: newDeviceToken });
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, deviceToken: newDeviceToken, isNewUser, welcomeCouponCode });
   });
 
   app.post("/api/customer/register", async (req, res) => {
@@ -2531,6 +2552,12 @@ export async function registerRoutes(
     const now = new Date();
     if (coupon.expiresAt && new Date(coupon.expiresAt) < now) return res.json({ valid: false, message: "Kupon kodunun süresi dolmuş" });
     if (coupon.maxUses && coupon.usedCount >= coupon.maxUses) return res.json({ valid: false, message: "Kupon kullanım limiti dolmuş" });
+    if (coupon.customerId) {
+      const customerId = (req.session as any)?.customerId;
+      if (!customerId || customerId !== coupon.customerId) {
+        return res.json({ valid: false, message: "Bu kupon size ait değil" });
+      }
+    }
     if (subtotal && subtotal < coupon.minOrderAmount) return res.json({ valid: false, message: `Minimum sipariş tutarı: ${coupon.minOrderAmount} TL` });
     let discountAmount = 0;
     if (coupon.discountType === "percentage") {
