@@ -190,6 +190,7 @@ export default function ProductDetailPage() {
         originalPrice: staticProduct.originalPrice || null,
         img: staticProduct.img || null,
         skt: staticProduct.skt || null,
+        barcode: null,
         stock: 100,
         isActive: true,
         brandCategoryId: 0,
@@ -274,6 +275,7 @@ export default function ProductDetailPage() {
         isActive: true,
         brandCategoryId: 0,
         skt: null,
+        barcode: null,
         originalImg: null,
       } as Product));
   }, [isCampaignMode, campaignItems, resolvedData]);
@@ -471,6 +473,11 @@ export default function ProductDetailPage() {
                 {product.skt && (
                   <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid="text-skt-detail">
                     S.K.T: {product.skt}
+                  </span>
+                )}
+                {product.barcode && (
+                  <span className="text-[11px] font-medium font-mono px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-200" data-testid="text-barcode-detail">
+                    Barkod: {product.barcode}
                   </span>
                 )}
               </div>

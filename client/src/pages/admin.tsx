@@ -192,6 +192,7 @@ function ProductForm({
   const [skt, setSkt] = useState(product?.skt || "");
   const [img, setImg] = useState(product?.img || "");
   const [stock, setStock] = useState(product?.stock?.toString() ?? "10");
+  const [barcode, setBarcode] = useState(product?.barcode || "");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [brandCategoryId, setBrandCategoryId] = useState(
@@ -216,6 +217,7 @@ function ProductForm({
           img: img || null,
           brandCategoryId: parseInt(brandCategoryId),
           stock: parseInt(stock) || 0,
+          barcode: barcode.trim() || null,
         });
       }}
       className="space-y-4"
@@ -320,6 +322,10 @@ function ProductForm({
           <Label>Stok</Label>
           <Input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} data-testid="input-product-stock" />
         </div>
+      </div>
+      <div className="space-y-2">
+        <Label>Barkod Numarası</Label>
+        <Input value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="8690000000000" className="font-mono" data-testid="input-product-barcode" />
       </div>
       <div className="space-y-2">
         <Label>Ürün Görseli</Label>
@@ -2979,6 +2985,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           {product.skt && (
                             <span className="text-[10px] text-muted-foreground">
                               SKT: {product.skt}
+                            </span>
+                          )}
+                          {product.barcode && (
+                            <span className="text-[10px] text-muted-foreground font-mono" data-testid={`text-barcode-${product.id}`}>
+                              {product.barcode}
                             </span>
                           )}
                         </div>
