@@ -134,6 +134,27 @@ export default function AuthPage() {
     }
   };
 
+  useEffect(() => {
+    if (step !== "otp") return;
+    if (!("OTPCredential" in window)) return;
+    const ac = new AbortController();
+    (navigator as any).credentials.get({ otp: { transport: ["sms"] }, signal: ac.signal })
+      .then((otp: any) => {
+        if (otp?.code) {
+          const digits = otp.code.replace(/\D/g, "");
+          if (digits.length === 6) {
+            setOtpCode(digits.split(""));
+            if (!verifyingRef.current) {
+              verifyingRef.current = true;
+              setTimeout(() => autoVerify(digits), 150);
+            }
+          }
+        }
+      })
+      .catch(() => {});
+    return () => ac.abort();
+  }, [step]);
+
   const doVerify = async (code: string) => {
     setFormErrors({});
     setLoading(true);
@@ -291,6 +312,7 @@ export default function AuthPage() {
                         type="tel"
                         inputMode="numeric"
                         maxLength={1}
+                        autoComplete={i === 0 ? "one-time-code" : "off"}
                         className={`w-11 h-12 text-center text-lg font-bold ${formErrors.otp ? "border-red-400" : ""}`}
                         data-testid={`input-otp-${i}`}
                       />

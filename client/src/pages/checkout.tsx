@@ -192,6 +192,27 @@ export default function Checkout() {
     }
   };
 
+  useEffect(() => {
+    if (authStep !== "otp") return;
+    if (!("OTPCredential" in window)) return;
+    const ac = new AbortController();
+    (navigator as any).credentials.get({ otp: { transport: ["sms"] }, signal: ac.signal })
+      .then((otp: any) => {
+        if (otp?.code) {
+          const digits = otp.code.replace(/\D/g, "");
+          if (digits.length === 6) {
+            setAuthOtpCode(digits.split(""));
+            if (!authVerifyingRef.current) {
+              authVerifyingRef.current = true;
+              setTimeout(() => doAuthVerify(digits), 150);
+            }
+          }
+        }
+      })
+      .catch(() => {});
+    return () => ac.abort();
+  }, [authStep]);
+
   const doAuthVerify = async (code: string) => {
     if (code.length !== 6) { authVerifyingRef.current = false; return; }
     setAuthErrors({});
@@ -589,6 +610,7 @@ export default function Checkout() {
                             inputMode="numeric"
                             maxLength={1}
                             className={`w-10 h-12 text-center text-lg font-bold ${authErrors.otp ? "border-red-400" : ""}`}
+                            autoComplete={i === 0 ? "one-time-code" : "off"}
                             data-testid={`input-auth-otp-${i}`}
                           />
                         ))}

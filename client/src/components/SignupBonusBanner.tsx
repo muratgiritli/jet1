@@ -117,6 +117,28 @@ export default function SignupBonusBanner() {
     }
   };
 
+  useEffect(() => {
+    if (step !== "otp") return;
+    if (!("OTPCredential" in window)) return;
+    const ac = new AbortController();
+    (navigator as any).credentials.get({ otp: { transport: ["sms"] }, signal: ac.signal })
+      .then((otp: any) => {
+        if (otp?.code) {
+          const digits = otp.code.replace(/\D/g, "");
+          if (digits.length === 6) {
+            const newCode = digits.split("");
+            setOtpCode(newCode);
+            if (!verifyingRef.current) {
+              verifyingRef.current = true;
+              setTimeout(() => doVerify(digits), 150);
+            }
+          }
+        }
+      })
+      .catch(() => {});
+    return () => ac.abort();
+  }, [step]);
+
   const doVerify = async (code: string) => {
     if (code.length !== 6) { verifyingRef.current = false; return; }
     setError("");
@@ -348,6 +370,7 @@ export default function SignupBonusBanner() {
                 value={digit}
                 onChange={(e) => handleOtpChange(i, e.target.value)}
                 onKeyDown={(e) => handleOtpKeyDown(i, e)}
+                autoComplete={i === 0 ? "one-time-code" : "off"}
                 className="w-10 h-11 text-center text-lg font-bold text-gray-900 bg-white rounded-lg outline-none"
                 data-testid={`input-bonus-otp-${i}`}
               />

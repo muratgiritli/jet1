@@ -1245,7 +1245,7 @@ export async function registerRoutes(
     const code = generateOTP();
     otpStore.set(normalized, { code, expiresAt: Date.now() + 180000, attempts: 0 });
 
-    const message = `JETGO dogrulama kodunuz: ${code} (3 dakika gecerlidir)`;
+    const message = `JETGO dogrulama kodunuz: ${code} (3 dakika gecerlidir)\n\n@jetgo.shop #${code}`;
     const sent = await sendSmsViaNetgsm(normalized, message);
     if (!sent) {
       otpStore.delete(normalized);
