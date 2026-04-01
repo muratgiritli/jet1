@@ -1161,7 +1161,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
       <BackNavigation />
 
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+      <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
         {activeSection === "dashboard" && <DashboardSection />}
         {activeSection === "kuponlar" && <CouponsSection />}
         {activeSection === "musteriler" && <CustomersSection />}
@@ -1238,13 +1238,13 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     .sort((a, b) => a.sort_order - b.sort_order);
                   return (
                     <div key={mainItem.id} className="rounded-xl border bg-white overflow-hidden">
-                      <div className="bg-purple-600 text-white px-4 py-3 flex items-center gap-2">
+                      <div className="bg-purple-600 text-white px-3 sm:px-4 py-2 sm:py-3 flex items-center gap-2">
                         <Tag className="w-4 h-4" />
-                        <span className="font-bold">Ana Ürün</span>
-                        <span className="ml-auto text-sm opacity-90">{extras.length} sıklıkla alınan</span>
+                        <span className="font-bold text-sm sm:text-base">Ana Ürün</span>
+                        <span className="ml-auto text-xs sm:text-sm opacity-90">{extras.length} sıklıkla alınan</span>
                       </div>
                       <div
-                        className={`flex items-center gap-3 p-3 transition-all ${mainItem.is_active ? "" : "opacity-40 bg-gray-50"}`}
+                        className={`flex items-center gap-2 sm:gap-3 p-2 sm:p-3 transition-all ${mainItem.is_active ? "" : "opacity-40 bg-gray-50"}`}
                         data-testid={`row-campaign-item-${mainItem.id}`}
                       >
                         <span className="text-xs font-mono text-gray-400 w-6 text-center flex-shrink-0">{mainItem.sort_order}</span>
@@ -1496,19 +1496,19 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           </button>
 
           {ordersExpanded && <>
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-4">
-            <div className="flex gap-1 bg-muted/50 rounded-lg p-1" data-testid="tabs-order-filter">
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="flex gap-1 bg-muted/50 rounded-lg p-1 overflow-x-auto no-scrollbar" data-testid="tabs-order-filter">
               {([
-                { key: "gelen" as const, label: "Gelen Siparişler", statuses: ["yeni"] },
+                { key: "gelen" as const, label: "Gelen", statuses: ["yeni"] },
                 { key: "bekleyen" as const, label: "Bekleyen", statuses: ["onaylandi", "hazirlaniyor"] },
-                { key: "giden" as const, label: "Giden Siparişler", statuses: ["tamamlandi", "iptal"] },
+                { key: "giden" as const, label: "Giden", statuses: ["tamamlandi", "iptal"] },
               ]).map((tab) => {
                 const count = allOrders.filter((o) => tab.statuses.includes(o.status)).length;
                 return (
                   <button
                     key={tab.key}
                     onClick={() => setOrderTab(tab.key)}
-                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap ${orderTab === tab.key ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"}`}
+                    className={`flex-1 px-2 sm:px-3 py-1.5 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${orderTab === tab.key ? "bg-background shadow-sm text-primary" : "text-muted-foreground hover:text-foreground"}`}
                     data-testid={`tab-order-${tab.key}`}
                   >
                     {tab.label} ({count})
@@ -1516,13 +1516,13 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 );
               })}
             </div>
-            <div className="flex items-center gap-2 ml-auto flex-wrap">
-              <Calendar className="w-4 h-4 text-muted-foreground" />
+            <div className="flex items-center gap-2 flex-wrap">
+              <Calendar className="w-4 h-4 text-muted-foreground shrink-0" />
               <Input
                 type="date"
                 value={orderDateFrom}
                 onChange={(e) => setOrderDateFrom(e.target.value)}
-                className="w-auto"
+                className="flex-1 min-w-[130px] max-w-[160px]"
                 placeholder="Başlangıç"
                 data-testid="input-order-date-from"
               />
@@ -1531,7 +1531,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 type="date"
                 value={orderDateTo}
                 onChange={(e) => setOrderDateTo(e.target.value)}
-                className="w-auto"
+                className="flex-1 min-w-[130px] max-w-[160px]"
                 placeholder="Bitiş"
                 data-testid="input-order-date-to"
               />
@@ -1624,41 +1624,41 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </div>
                 {filteredOrders.map((order) => (
                   <Card key={order.id} data-testid={`card-order-${order.id}`}>
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between gap-3 flex-wrap">
-                        <div className="flex items-center gap-3 flex-wrap">
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <button
                             onClick={() => setOrderDetailDialog(order)}
-                            className="font-bold text-base text-primary hover:underline cursor-pointer"
+                            className="font-bold text-sm sm:text-base text-primary hover:underline cursor-pointer"
                             data-testid={`btn-order-detail-${order.id}`}
                           >
                             #{order.id}
                           </button>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Clock className="w-3.5 h-3.5" />
+                          <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
+                            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                             <span data-testid={`text-order-date-${order.id}`}>
                               {new Date(order.createdAt).toLocaleDateString("tr-TR")} {new Date(order.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
                             </span>
                           </div>
                           {order.customerName && (
-                            <span className="text-sm font-medium" data-testid={`text-order-customer-name-${order.id}`}>{order.customerName}</span>
+                            <span className="text-xs sm:text-sm font-medium" data-testid={`text-order-customer-name-${order.id}`}>{order.customerName}</span>
                           )}
                           {order.customerPhone && (
                             <button
                               onClick={() => setPhoneHistoryDialog(order.customerPhone)}
-                              className="text-sm text-primary hover:underline cursor-pointer"
+                              className="text-xs sm:text-sm text-primary hover:underline cursor-pointer"
                               data-testid={`btn-phone-history-${order.id}`}
                             >
                               {order.customerPhone}
                             </button>
                           )}
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-bold" data-testid={`text-order-grand-total-${order.id}`}>
+                        <div className="flex items-center gap-2 sm:gap-3">
+                          <span className="font-bold text-sm sm:text-base" data-testid={`text-order-grand-total-${order.id}`}>
                             {order.grandTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                           </span>
                           <Badge
-                            className="no-default-hover-elevate no-default-active-elevate"
+                            className="no-default-hover-elevate no-default-active-elevate text-[10px] sm:text-xs"
                             style={{ backgroundColor: statusColors[order.status] || "#9E9E9E", color: "#fff" }}
                             data-testid={`badge-order-status-${order.id}`}
                           >
@@ -1668,7 +1668,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             value={order.status}
                             onValueChange={(value) => updateOrderStatusMutation.mutate({ id: order.id, status: value })}
                           >
-                            <SelectTrigger className="w-[150px] h-8 text-sm" data-testid={`select-order-status-${order.id}`}>
+                            <SelectTrigger className="w-[120px] sm:w-[150px] h-7 sm:h-8 text-xs sm:text-sm" data-testid={`select-order-status-${order.id}`}>
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
@@ -2140,18 +2140,19 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         <div className="space-y-1.5">
                           {districtNhs.map((nh: any) => (
                             <Card key={nh.id} className={!nh.isActive ? "opacity-60" : ""} data-testid={`nh-card-${nh.id}`}>
-                              <CardContent className="p-3">
-                                <div className="flex items-center justify-between gap-2 flex-wrap">
-                                  <div className="flex items-center gap-2 flex-1 min-w-0">
-                                    <MapPin className="w-4 h-4 text-blue-600 shrink-0" />
-                                    <span className="font-medium text-sm truncate">{nh.name}</span>
-                                    {nh.distance && <Badge variant="outline" className="text-[10px] shrink-0">{nh.distance} km</Badge>}
+                              <CardContent className="p-2.5 sm:p-3">
+                                <div className="flex items-center justify-between gap-2">
+                                  <div className="flex items-center gap-1.5 sm:gap-2 flex-1 min-w-0">
+                                    <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 shrink-0" />
+                                    <span className="font-medium text-xs sm:text-sm truncate">{nh.name}</span>
+                                    {nh.distance && <Badge variant="outline" className="text-[10px] shrink-0 hidden sm:inline-flex">{nh.distance} km</Badge>}
                                     {!nh.isActive && <Badge variant="secondary" className="text-[10px]">Pasif</Badge>}
                                   </div>
-                                  <div className="flex items-center gap-1">
+                                  <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
                                     <Button
                                       variant="ghost"
                                       size="sm"
+                                      className="h-7 px-1.5 sm:px-3 text-[10px] sm:text-xs"
                                       onClick={() => updateNhMutation.mutate({ id: nh.id, isActive: !nh.isActive })}
                                       data-testid={`btn-toggle-nh-${nh.id}`}
                                     >
@@ -2617,16 +2618,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         </section>}
 
         {yonetimSub === "urunler" && <section>
-          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-            <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex flex-col gap-3 mb-4">
+            <div className="flex items-center justify-between gap-2">
               <h2 className="text-lg font-bold" data-testid="text-section-products">
                 Ürünler
                 <span className="text-sm font-normal text-muted-foreground ml-2">
                   ({filteredProducts.length})
                 </span>
               </h2>
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
               <Select value={selectedAnimalFilter} onValueChange={(val) => { setSelectedAnimalFilter(val); setSelectedSubcategoryFilter("all"); setSelectedBrandFilter("all"); }}>
-                <SelectTrigger className="w-[140px]" data-testid="select-filter-animal">
+                <SelectTrigger className="w-[120px] sm:w-[140px] h-8 text-xs sm:text-sm" data-testid="select-filter-animal">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -2638,7 +2641,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </Select>
               {selectedAnimalFilter !== "all" && (
                 <Select value={selectedSubcategoryFilter} onValueChange={(val) => { setSelectedSubcategoryFilter(val); setSelectedBrandFilter("all"); }}>
-                  <SelectTrigger className="w-[180px]" data-testid="select-filter-subcategory">
+                  <SelectTrigger className="w-[130px] sm:w-[180px] h-8 text-xs sm:text-sm" data-testid="select-filter-subcategory">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -2651,7 +2654,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               )}
               {filteredBrands.length > 0 && (
                 <Select value={selectedBrandFilter} onValueChange={setSelectedBrandFilter}>
-                  <SelectTrigger className="w-[180px]" data-testid="select-filter-brand">
+                  <SelectTrigger className="w-[130px] sm:w-[180px] h-8 text-xs sm:text-sm" data-testid="select-filter-brand">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -2684,7 +2687,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     Toplu Fiyat Güncelle
                   </Button>
                 </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col">
+                <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] flex flex-col">
                   <DialogHeader>
                     <DialogTitle>Toplu Fiyat Güncelleme</DialogTitle>
                     <p className="text-sm text-muted-foreground">
@@ -4801,7 +4804,7 @@ function CouponsSection() {
         <Card className="mb-4">
           <CardContent className="p-4 space-y-3">
             <h3 className="font-semibold text-sm">{editId ? "Kuponu Düzenle" : "Yeni Kupon"}</h3>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label className="text-xs">Kupon Kodu</Label>
                 <Input value={code} onChange={(e) => setCode(e.target.value.toUpperCase())} placeholder="Ör: YENI2024" data-testid="input-coupon-code" />
@@ -5162,9 +5165,9 @@ function StokSayimSection() {
           <CardContent className="p-3">
             <div className="space-y-1">
               {scanLog.map((log, i) => (
-                <div key={`${log.id}-${i}`} className="flex items-center justify-between text-xs p-1.5 rounded bg-muted/30">
-                  <span className="truncate flex-1 font-medium">{log.name}</span>
-                  <div className="flex gap-2 text-muted-foreground ml-2">
+                <div key={`${log.id}-${i}`} className="flex flex-col sm:flex-row sm:items-center justify-between text-xs p-1.5 rounded bg-muted/30 gap-0.5">
+                  <span className="truncate font-medium">{log.name}</span>
+                  <div className="flex gap-2 text-muted-foreground shrink-0">
                     <span>Stok: <strong className="text-foreground">{log.stock}</strong></span>
                     {log.skt && <span>SKT: <strong className="text-foreground">{log.skt}</strong></span>}
                     <span>{log.time}</span>
@@ -5203,10 +5206,10 @@ function ReportsSection() {
       </div>
 
       {reportTab === "genel" && <>
-        <div className="grid grid-cols-3 gap-3">
-          <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Toplam Müşteri</p><p className="text-xl font-bold text-blue-600">{reports.totalCustomers}</p></CardContent></Card>
-          <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Aktif Ürün</p><p className="text-xl font-bold text-green-600">{reports.totalProducts}</p></CardContent></Card>
-          <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Toplam Sipariş</p><p className="text-xl font-bold text-purple-600">{reports.totalOrders}</p></CardContent></Card>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Toplam Müşteri</p><p className="text-lg sm:text-xl font-bold text-blue-600">{reports.totalCustomers}</p></CardContent></Card>
+          <Card><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Aktif Ürün</p><p className="text-lg sm:text-xl font-bold text-green-600">{reports.totalProducts}</p></CardContent></Card>
+          <Card className="col-span-2 sm:col-span-1"><CardContent className="p-3 text-center"><p className="text-xs text-muted-foreground">Toplam Sipariş</p><p className="text-lg sm:text-xl font-bold text-purple-600">{reports.totalOrders}</p></CardContent></Card>
         </div>
         <Card>
           <CardHeader className="pb-2"><CardTitle className="text-sm">Ödeme Yöntemleri</CardTitle></CardHeader>
