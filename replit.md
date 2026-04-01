@@ -1,52 +1,52 @@
 # JETGO - Hızlı Sipariş
 
 ## Overview
-JETGO is a pet shop quick ordering application built with React/TypeScript, designed to streamline the pet product purchasing process. Customers can browse products, manage their cart, and place orders directly through the app (orders are saved to the database and visible in the user panel). The platform includes a dynamic admin panel for comprehensive product management and an AI-powered pet care Q&A chatbot to enhance the user experience. The business vision is to provide a highly accessible and user-friendly platform for pet owners, capitalizing on the growing pet care market by offering convenience, personalized services (like the food calculator and reorder reminders), and efficient delivery options.
+JETGO is a pet shop quick ordering application built with React/TypeScript, designed to streamline the pet product purchasing process. It allows customers to browse products, manage their cart, and place orders. The platform includes a dynamic admin panel for product management and an AI-powered pet care Q&A chatbot. The business vision is to provide an accessible and user-friendly platform for pet owners, offering convenience, personalized services (like the food calculator and reorder reminders), and efficient delivery options, capitalizing on the growing pet care market.
 
 ## User Preferences
 I prefer iterative development with clear communication on significant changes. Please ask before making major architectural modifications or adding new external dependencies. For code, I appreciate clean, maintainable TypeScript with a focus on functional components where appropriate. When explaining concepts, use straightforward language, avoiding overly technical jargon.
 
 ## System Architecture
-The application features a modern web architecture:
-- **Frontend**: Developed with React and TypeScript, leveraging `shadcn/ui` components, Tailwind CSS for styling, and `framer-motion` for smooth animations (removed from checkout, favorites, category, and brand-products pages for performance).
-- **Backend**: Implemented using Express, providing a robust API layer. Authentication is session-based, secured with `bcryptjs` for password hashing and `express-session` with `connect-pg-simple` for session management. SMS OTP for customer authentication is handled via NetGSM. Trusted device system: after successful OTP verification, a device token is stored in localStorage and DB (`trusted_devices` table). Same browser + same phone number skips OTP for 30 days, auto-renewing on each login.
-- **Database**: PostgreSQL is used as the primary data store, managed with Drizzle ORM. It stores all critical data including products, categories, orders, customer profiles, loyalty points, and delivery configurations.
-- **Product Images**: Stored as base64 within the PostgreSQL database (`product_images` table) for high availability and easy deployment. Images are processed (auto-downloaded from URLs, converted to WebP, resized to 800x800 with 80% quality) upon upload via the admin panel.
-- **Dynamic Content**: All product and category listings are dynamically fetched from the database via API, ensuring up-to-date content without static file modifications.
-- **Loyalty Program**: A "Para Puan" system allows customers to earn 5% loyalty points on purchases, redeemable on future orders.
-- **Pet Care Tools**: An "Akıllı Mama Hesaplama" (Smart Food Calculator) helps users determine pet food needs and set reorder reminders.
-- **Campaign System**: Features a dedicated campaign page and checkout mode for special product bundles, with server-side validation. Each main campaign product can have manually assigned "Sıklıkla Alınan Ürünler" (frequently bought together) extras via `parent_product_id` in `campaign_items` table. Admin panel shows main products as cards with nested extras and "Sıklıkla Alınan Ürün Ekle" button per main product. Product detail page filters extras by `parent_product_id` matching current product.
-- **Delivery Management**: Standard delivery pricing: 700 TL minimum order, 89 TL shipping fee, free shipping for orders 1500 TL+. Selectable delivery time slots. Checkout uses a single free-text address field (no neighborhood picker or geolocation). Backend enforces standard pricing server-side.
-- **SEO**: Comprehensive Local SEO implementation including custom per-page metadata, sitemaps, robots.txt, structured data (Schema.org for LocalBusiness, Product, FAQ, BreadcrumbList, WebSite, Article). 40+ dedicated SEO pages covering: core city page, 3 district pages (Atakum/İlkadım/Canik), mahalle-block page, 28 individual neighborhood pages, 4 category pages, 3 blog/comparison pages, and 10 keyword-targeted pages. All pages follow a local SEO + topical authority strategy. Programmatic mahalle page generation using `generateMahallePage()` in `seo-data.ts`. H1 tags properly set on landing, category, and SEO pages. Product images have local keyword alt text.
-- **Blog System**: Pet care blog at `/blog` with 6 articles (kedi maması rehberi, köpek maması rehberi, kedi kumu rehberi, beslenme hataları, kedi bakım ipuçları, Samsun gezi rehberi). Blog listing page with category filters, individual article pages with FAQ sections, related posts, and CTA banners. Article structured data (Schema.org Article) for SEO. Blog preview section on landing page. Blog data in `client/src/lib/blog-data.ts`, pages in `client/src/pages/blog.tsx`.
-- **Low Stock Alerts**: Product cards show animated "Son X adet!" orange badge when stock ≤ 3. Product detail page shows a warning banner for low-stock items.
-- **Product Reviews**: Deterministic review system (`client/src/components/ProductReviews.tsx`) generating 3-10 reviews per product based on product ID seed. Reviews feature mostly female Turkish name initials, 4-5 star ratings, dates within last month, and comments about delivery speed, payment options, and product quality. Includes "Yorum Yaz" form with interactive star rating and minimum 10-character validation.
-- **Coupon System**: Full coupon management with admin CRUD (Kuponlar tab), validation, and checkout integration. Supports fixed (TL) and percentage discounts, min order amounts, max usage limits, and expiry dates. JETGO50 seeded as default (50 TL off, min 500 TL). Coupons table has `customer_id` column for user-bound coupons (null = public, set = only that customer can use).
-- **Signup Bonus Banner**: Landing page shows a "Hemen Üye Ol, 100 TL Bonus" banner for non-logged-in users (`SignupBonusBanner.tsx`). Inline phone → OTP → name registration flow. New users automatically receive a personal 100 TL welcome coupon (code: HG{customerId}{random}, 30 days valid, min 500 TL order, customer-bound). Success state shows coupon code with copy option.
-- **Social Share**: Product detail pages include WhatsApp, Facebook, X (Twitter), and link copy share buttons below the product name.
-- **Google Ads Conversion Tracking**: gtag.js integrated in index.html with conversion event fired on successful order placement. Replace `AW-XXXXXXXXXX` and `CONVERSION_LABEL` placeholders with actual Google Ads IDs.
-- **User Panel (/hesabim)**: 9-tab profile with: Profilim (includes email field for invoice/notifications), Para Puanlarım, Siparişlerim (with order detail expansion, product images, and one-click reorder), Harcama Özeti (spending summary with monthly bar charts), Favorilerim, Adreslerim, Evcil Hayvanlarım, Bildirimler, Güvenlik (password change + KVKK-compliant account deletion). Profile page no longer fetches `/api/products` — orders API enriches items with product images/stock, favorites use `/api/customer/favorites/details` endpoint. `storage.getProductsByIds()` provides bulk DB fetch.
-- **Quick Cross-Sell**: Admin can assign "sıklıkla birlikte alınan ürünler" to ANY product (not just campaigns). Green Package icon on each product card opens a dialog to search & add cross-sell products. API: `POST /api/admin/quick-cross-sell` auto-creates `cross_sell_sections` per product. `GET /api/admin/product-cross-sell/:productId` returns assigned items. Product detail page shows these under "Bu ürünü alanlar bunları da aldı".
-- **Admin Panel**: Enhanced with 9-section tabbed navigation: Dashboard (real-time stats with avg basket per period, % change vs previous period for today/week, revenue charts, top products, low stock alerts, **Müşteri Segmentasyonu** panel with VIP/Pasif/Riskli tabs — VIP: 3000₺+ spenders, Pasif: 30+ days dormant with 1-click SMS reminder dialog, Riskli: 2+ cancellations), Yönetim (existing product/order/campaign management), Kuponlar (coupon CRUD - create/edit/delete/toggle active), Müşteri (expandable customer cards — click name to reveal full profile: name, phone, email, address, saved addresses, order history with status/total, registration date; delete customer with confirmation dialog; 1-click "Üye Hesabına Geç" impersonation to open customer's /hesabim in new tab for checking), Bildirim (segmented bulk SMS with animal-type targeting — e.g. send only to dog owners — plus quick templates), Banner (CRUD for promotional banners with image upload), Raporlama (5 sub-tabs: Genel, Ciro with daily/weekly/monthly breakdown by payment method, En Çok Satanlar with profit margin %, Isı Haritası for neighborhood order heatmap, Kara Liste for blacklist management with problem customer detection), Stok Sayım (barcode scanner + product name search for quick stock/SKT/barcode updates with session log), Ayarlar (Puan & Besleme settings UI — loyalty_percent, pet feeding points/XP config with live formula preview). Navigation uses sticky pill-shaped mobile-optimized buttons below header.
-- **Kara Liste (Blacklist)**: Admin can block customers from ordering. Customers table has `is_blacklisted` and `blacklist_reason` columns. Blocked customers get 403 error on order attempt. Auto-detection of problem customers (2+ cancellations) in reports.
-- **Stok Sayım Modu**: Admin tab for inventory counting — search by barcode or product name, update stock count, SKT date, and barcode in one screen. Products table has `barcode` column. Session scan log tracks all updates.
-- **SKT Validation**: Server-side expired SKT check blocks orders for products past their expiry date. `parseSkt()` helper handles "MM/YYYY" and "DD.MM.YYYY" formats. `/api/firsat-urunleri` endpoint returns near-expiry products (< 3 months).
-- **Askıda Mama**: Checkout page donation toggle allowing users to add 10 TL for street animal food donations to shelters/feeding stations. Included in order total, WhatsApp message, and order payload.
-- **Veteriner Entegrasyonu**: Landing page section above footer listing 6 Samsun veterinary clinics with one-click call buttons, specialties, and addresses.
-- **Birlikte Alınır (Seasonal Recommendations)**: Product detail pages show smart seasonal expert tips based on current month and product category. Tips include relevant category links for cross-selling (e.g., "Spring shedding season - add malt paste?").
-- **Son Siparişimi Tekrarla**: Prominent button on landing page for logged-in users to repeat their last order with one click. Shows order date, item count, and total.
-- **Sesli Sipariş**: WhatsApp-based voice ordering banner on landing page for elderly/accessibility-focused users. Links directly to WhatsApp with pre-filled message.
-- **Sanal Pet Besleme**: Gamification feature where logged-in users adopt a virtual pet (cat/dog/bird), feed it daily to earn Para Puan. Features streak system, leveling, and experience points. DB table: `virtual_pets`.
-- **En Tatlı Pet Yarışması** (`/yarisma`): Weekly photo contest where users upload pet photos, vote on entries, and the most-voted pet wins a prize. Features photo upload (base64), voting with IP-based duplicate prevention, weekly winner selection, and contest history. DB tables: `pet_contest_entries`, `pet_contest_votes`.
-- **Özel Patiler** (`/ozel-patiler`): Multi-pet dashboard with swipe navigation, 5 tabs per pet (Profil, Sağlık Karnesi with vaccine/parasite/checkup records, Beslenme with purchase history reorder, Fotoğraf Galerisi, Kilo Takibi with weight log chart). Full CRUD for pet profiles, health records, photos, and weight logs. DB tables: `pet_profiles` (extended with birthday, photo_data, notes, favorite_food_id), `pet_health_records`, `pet_weight_log`, `pet_photos`.
-- **Sahiplendirme & Kayıp İlan** (`/kayip-ilan`): Lost/found/adoption board. Users can post lost pets (with urgent red styling), found pets, or pets needing homes. Features photo upload, location, one-click call/WhatsApp contact, and owner-only resolve. DB table: `lost_found_posts`.
-- **Pati-Blog & Bilgi Bankası** (`/pati-blog`): Local pet care knowledge base with expandable articles. Categories: Samsun Yerel, Zehirli Maddeler, Yeni Başlayanlar, Bakım. 6 articles covering humid climate pet care, toxic plants/foods, first-time cat/dog owner guides, Samsun pet-friendly locations, dental care.
-- **Security Hardening**: Comprehensive DDoS/brute-force protection with multi-layer rate limiting: global (60 POST/min, 300 total/min per IP), per-endpoint limits (login, register, OTP, AI chatbot, coupon, contest votes, etc.). Security headers: HSTS, CSP (with Google Ads/Analytics whitelisting), X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, Referrer-Policy, Permissions-Policy. Input validation with max length limits on all user-facing fields. Base64 photo uploads capped at 4MB. Admin login has IP-based lockout after 5 failed attempts.
-- **UI/UX**: Utilizes a clean, modern design with a responsive interface optimized for mobile. Key UI elements include a floating cart bar, a fixed bottom navigation bar, and a global header with search and navigation.
+The application employs a modern web architecture:
+- **Frontend**: React and TypeScript, utilizing `shadcn/ui`, Tailwind CSS, and `framer-motion` for animations.
+- **Backend**: Express-based API with session-based authentication using `bcryptjs` and `express-session`. A trusted device system is implemented for OTP bypass for 30 days.
+- **Database**: PostgreSQL with Drizzle ORM for all application data, including products, orders, customer profiles, loyalty points, and delivery configurations.
+- **Product Images**: Stored as base64 in PostgreSQL, processed (WebP conversion, resizing) upon admin panel upload.
+- **Dynamic Content**: All product and category data are dynamically fetched from the database.
+- **Loyalty Program**: "Para Puan" system awarding 5% loyalty points on purchases.
+- **Pet Care Tools**: "Akıllı Mama Hesaplama" for food needs and reorder reminders.
+- **Campaign System**: Dedicated campaign page for product bundles with server-side validation and "frequently bought together" extras.
+- **Delivery Management**: Configurable delivery pricing and selectable time slots.
+- **SEO**: Comprehensive Local SEO including custom metadata, sitemaps, robots.txt, structured data (Schema.org), programmatic page generation, and keyword-optimized content.
+- **Blog System**: Pet care blog with category filters, articles, FAQ sections, and SEO optimization.
+- **Low Stock Alerts**: Visual alerts for products with limited stock.
+- **Product Reviews**: Deterministic review generation and a user review submission form.
+- **Coupon System**: Full CRUD for coupons in the admin panel, supporting various discount types and user-bound coupons.
+- **Signup Bonus**: New users receive a 100 TL welcome coupon, displayed via a banner and integrated into the registration flow.
+- **Checkout Coupon UI**: Integrated coupon application and display within the checkout process.
+- **Social Share**: Product detail pages include social media sharing options.
+- **User Panel (/hesabim)**: A multi-tab profile management area for users to view orders, loyalty points, addresses, pet profiles, and manage security settings.
+- **Quick Cross-Sell**: Admin-assigned "sıklıkla birlikte alınan ürünler" for any product, displayed on product detail pages.
+- **Admin Panel**: Extensive management features including a Dashboard with real-time stats and customer segmentation, product/order/campaign management, coupon CRUD, customer management (with impersonation), segmented bulk SMS, banner CRUD, detailed reporting, inventory counting (Stok Sayım), and settings for loyalty and pet feeding.
+- **Kara Liste (Blacklist)**: Admin feature to block problematic customers from ordering, with auto-detection based on cancellation history.
+- **Stok Sayım Modu**: Admin tool for efficient inventory updates via barcode or product name.
+- **SKT Validation**: Server-side validation to prevent orders of expired products, with an endpoint for near-expiry items.
+- **Askıda Mama**: Donation toggle at checkout for supporting street animals.
+- **Veteriner Entegrasyonu**: Landing page section listing local veterinary clinics.
+- **Birlikte Alınır (Seasonal Recommendations)**: Seasonal expert tips and cross-selling links on product detail pages.
+- **Son Siparişimi Tekrarla**: One-click reorder functionality for logged-in users.
+- **Sesli Sipariş**: WhatsApp-based voice ordering option for accessibility.
+- **Sanal Pet Besleme**: Gamified virtual pet adoption and feeding feature for earning loyalty points.
+- **En Tatlı Pet Yarışması**: Weekly pet photo contest with voting and winner selection.
+- **Özel Patiler**: Multi-pet dashboard for managing pet profiles, health records, feeding history, photos, and weight.
+- **Sahiplendirme & Kayıp İlan**: Lost/found/adoption board for pets.
+- **Pati-Blog & Bilgi Bankası**: Local pet care knowledge base with categorized articles.
+- **Security Hardening**: Multi-layer rate limiting, comprehensive security headers (HSTS, CSP, etc.), input validation, and admin-specific lockout mechanisms.
+- **UI/UX**: Clean, modern, and responsive design with intuitive navigation elements.
 
 ## External Dependencies
-- **OpenAI**: Integrated for the AI-powered pet care Q&A chatbot on the landing page.
-- **NetGSM**: Used for sending SMS OTPs for customer authentication.
-- **PostgreSQL**: The relational database management system for persistent data storage.
-- **Drizzle ORM**: Object-relational mapper for interacting with PostgreSQL.
-- **WhatsApp API**: Used for submitting customer orders.
+- **OpenAI**: AI-powered pet care Q&A chatbot.
+- **NetGSM**: SMS OTPs for customer authentication.
+- **PostgreSQL**: Primary database.
+- **Drizzle ORM**: Database interaction.
+- **WhatsApp API**: Submitting customer orders.

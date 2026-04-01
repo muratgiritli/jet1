@@ -13,6 +13,7 @@ import { SiWhatsapp } from "react-icons/si";
 import { useCustomer } from "@/contexts/CustomerContext";
 import SEO, { LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import SignupBonusBanner from "@/components/SignupBonusBanner";
+import WelcomeCouponBanner from "@/components/WelcomeCouponBanner";
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
 import catBird from "@/assets/images/cat-bird.webp";
@@ -550,6 +551,11 @@ export default function Landing() {
         {!isLoggedIn && (
           <div className="mt-2 md:mt-4">
             <SignupBonusBanner />
+          </div>
+        )}
+        {isLoggedIn && (
+          <div className="mt-2 md:mt-4">
+            <WelcomeCouponBanner />
           </div>
         )}
         <div className="mt-2 md:mt-6">

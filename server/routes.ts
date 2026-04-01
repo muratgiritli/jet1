@@ -1401,7 +1401,18 @@ export async function registerRoutes(
     if (!customerId) return res.status(401).json({ message: "Giriş yapılmamış" });
     const customer = await storage.getCustomer(customerId);
     if (!customer) return res.status(401).json({ message: "Giriş yapılmamış" });
-    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, email: customer.email, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
+    let welcomeCoupon: { code: string; discountValue: number; minOrderAmount: number; expiresAt: string | null } | undefined;
+    try {
+      const result = await sharedPool.query(
+        "SELECT code, discount_value, min_order_amount, expires_at FROM coupons WHERE customer_id = $1 AND is_active = true AND used_count < COALESCE(max_uses, 999999) AND (expires_at IS NULL OR expires_at > NOW()) LIMIT 1",
+        [customerId]
+      );
+      if (result.rows.length > 0) {
+        const c = result.rows[0];
+        welcomeCoupon = { code: c.code, discountValue: c.discount_value, minOrderAmount: c.min_order_amount, expiresAt: c.expires_at };
+      }
+    } catch {}
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, email: customer.email, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign, welcomeCoupon });
   });
 
   app.patch("/api/customer/profile", requireCustomer, async (req, res) => {

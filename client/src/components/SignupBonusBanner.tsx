@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { Gift, Phone, ArrowRight, Loader2, X, Check, PartyPopper } from "lucide-react";
+import { Gift, Phone, ArrowRight, Loader2, X, Check, PartyPopper, MapPin, Navigation, User } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { apiRequest } from "@/lib/queryClient";
+import { TESLIMAT_MAHALLELERI } from "@/lib/data";
 
-type BannerStep = "idle" | "phone" | "otp" | "name" | "success";
+type BannerStep = "idle" | "phone" | "otp" | "register" | "success";
 
 export default function SignupBonusBanner() {
   const { isLoggedIn } = useCustomer();
@@ -11,6 +12,13 @@ export default function SignupBonusBanner() {
   const [phone, setPhone] = useState("");
   const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
   const [name, setName] = useState("");
+  const [mahalle, setMahalle] = useState("");
+  const [cadde, setCadde] = useState("");
+  const [binaNo, setBinaNo] = useState("");
+  const [kat, setKat] = useState("");
+  const [daireNo, setDaireNo] = useState("");
+  const [locationLoading, setLocationLoading] = useState(false);
+  const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(0);
@@ -120,9 +128,9 @@ export default function SignupBonusBanner() {
       }
       if (data.isNewUser && data.welcomeCouponCode) {
         setWelcomeCoupon(data.welcomeCouponCode);
-        setStep("name");
+        setStep("register");
       } else if (data.isNewUser) {
-        setStep("name");
+        setStep("register");
       } else {
         window.location.reload();
       }
@@ -136,14 +144,45 @@ export default function SignupBonusBanner() {
     }
   };
 
+  const handleGetLocation = () => {
+    if (!navigator.geolocation) {
+      setError("Tarayıcınız konum paylaşımını desteklemiyor");
+      return;
+    }
+    setLocationLoading(true);
+    setError("");
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        setCustomerLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setLocationLoading(false);
+      },
+      () => {
+        setLocationLoading(false);
+        setError("Konum alınamadı. Lütfen konum izni verin.");
+      },
+      { enableHighAccuracy: true, timeout: 10000 }
+    );
+  };
+
   const handleRegister = async () => {
     if (!name.trim()) { setError("Ad soyad girin"); return; }
     setError("");
     setLoading(true);
+    const addressParts = [
+      mahalle,
+      cadde.trim(),
+      binaNo.trim() ? `No: ${binaNo.trim()}` : "",
+      kat.trim() ? `Kat: ${kat.trim()}` : "",
+      daireNo.trim() ? `Daire: ${daireNo.trim()}` : "",
+    ].filter(Boolean).join(", ");
     try {
-      await apiRequest("PATCH", "/api/customer/profile", { name: name.trim() });
+      await apiRequest("PATCH", "/api/customer/profile", {
+        name: name.trim(),
+        address: addressParts || undefined,
+      });
+      if (mahalle) localStorage.setItem("jet55_mahalle", mahalle);
       setStep("success");
-      setTimeout(() => window.location.reload(), 2500);
+      setTimeout(() => window.location.reload(), 3000);
     } catch (err: any) {
       let msg = "Bir hata oluştu";
       try { msg = JSON.parse(err.message.replace(/^\d+:\s*/, "")).message; } catch {}
@@ -164,12 +203,12 @@ export default function SignupBonusBanner() {
             <PartyPopper className="w-6 h-6" />
           </div>
           <div className="min-w-0">
-            <p className="font-bold text-base">Hoş Geldin! 🎉</p>
-            <p className="text-sm text-white/90">100 TL bonus kuponun hazır!</p>
+            <p className="font-bold text-base">Hos Geldin! 🎉</p>
+            <p className="text-sm text-white/90">100 TL bonus kuponun hazir!</p>
             {welcomeCoupon && (
-              <div className="mt-1.5 flex items-center gap-2">
+              <div className="mt-1.5 flex items-center gap-2 flex-wrap">
                 <span className="bg-white text-green-700 font-black text-sm px-3 py-1 rounded-lg tracking-wider" data-testid="text-welcome-coupon">{welcomeCoupon}</span>
-                <span className="text-xs text-white/80">Min. 500 TL | 30 gün geçerli</span>
+                <span className="text-xs text-white/80">Min. 500 TL | 30 gun gecerli</span>
               </div>
             )}
           </div>
@@ -191,8 +230,8 @@ export default function SignupBonusBanner() {
               <Gift className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-bold text-base leading-tight">Jetgo'ya hemen üye ol</p>
-              <p className="text-sm text-white/90 leading-tight">100 TL anında bonus sepetinde</p>
+              <p className="font-bold text-base leading-tight">Jetgo'ya hemen uye ol</p>
+              <p className="text-sm text-white/90 leading-tight">100 TL aninda bonus sepetinde</p>
             </div>
           </div>
           <button
@@ -200,7 +239,7 @@ export default function SignupBonusBanner() {
             className="w-full mt-1 bg-white text-blue-600 font-bold text-sm py-2.5 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
             data-testid="btn-start-signup"
           >
-            HEMEN ÜYE OL
+            HEMEN UYE OL
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -209,7 +248,7 @@ export default function SignupBonusBanner() {
       {step === "phone" && (
         <div className="px-4 py-4">
           <p className="font-bold text-sm mb-2 flex items-center gap-1.5">
-            <Phone className="w-4 h-4" /> Cep telefon numaranı gir
+            <Phone className="w-4 h-4" /> Cep telefon numarani gir
           </p>
           <div className="flex gap-2">
             <div className="flex-1 relative">
@@ -231,7 +270,7 @@ export default function SignupBonusBanner() {
               className="bg-yellow-400 text-gray-900 font-bold text-sm px-4 rounded-xl flex items-center gap-1 disabled:opacity-60 active:scale-[0.98] transition-transform flex-shrink-0"
               data-testid="btn-bonus-send-otp"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ArrowRight className="w-4 h-4" /> Gönder</>}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ArrowRight className="w-4 h-4" /> Gonder</>}
             </button>
           </div>
           {error && <p className="text-yellow-200 text-xs mt-1.5" data-testid="text-bonus-error">{error}</p>}
@@ -242,7 +281,7 @@ export default function SignupBonusBanner() {
         <div className="px-4 py-4">
           <p className="font-bold text-sm mb-1">SMS ile gelen 6 haneli kodu gir</p>
           <p className="text-xs text-white/70 mb-2">
-            {phone} numarasına gönderildi
+            {phone} numarasina gonderildi
             {countdown > 0 && <span className="ml-1">({Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")})</span>}
           </p>
           <div className="flex gap-1.5 justify-center mb-2">
@@ -263,38 +302,108 @@ export default function SignupBonusBanner() {
           </div>
           {loading && (
             <div className="flex items-center justify-center gap-2 text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" /> Doğrulanıyor...
+              <Loader2 className="w-4 h-4 animate-spin" /> Dogrulaniyor...
             </div>
           )}
           {error && <p className="text-yellow-200 text-xs text-center" data-testid="text-bonus-otp-error">{error}</p>}
         </div>
       )}
 
-      {step === "name" && (
+      {step === "register" && (
         <div className="px-4 py-4">
-          <p className="font-bold text-sm mb-2 flex items-center gap-1.5">
-            <Check className="w-4 h-4" /> Numara doğrulandı! Ad soyadınızı girin
+          <p className="font-bold text-sm mb-3 flex items-center gap-1.5">
+            <Check className="w-4 h-4" /> Numara dogrulandi! Bilgilerini tamamla
           </p>
-          <div className="flex gap-2">
+          <div className="space-y-2">
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ad Soyad *"
+                className="w-full pl-10 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                autoFocus
+                data-testid="input-bonus-name"
+              />
+            </div>
+
+            <div className="relative">
+              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <select
+                value={mahalle}
+                onChange={(e) => setMahalle(e.target.value)}
+                className="w-full pl-10 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none appearance-none bg-white"
+                data-testid="select-bonus-mahalle"
+              >
+                <option value="">Mahalle Secin</option>
+                {TESLIMAT_MAHALLELERI.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+
             <input
               type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ad Soyad"
-              className="flex-1 px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
-              autoFocus
-              data-testid="input-bonus-name"
+              value={cadde}
+              onChange={(e) => setCadde(e.target.value)}
+              placeholder="Cadde / Sokak"
+              className="w-full px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
+              data-testid="input-bonus-cadde"
             />
+
+            <div className="grid grid-cols-3 gap-2">
+              <input
+                type="text"
+                value={binaNo}
+                onChange={(e) => setBinaNo(e.target.value)}
+                placeholder="Bina No"
+                className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                data-testid="input-bonus-bina"
+              />
+              <input
+                type="text"
+                value={kat}
+                onChange={(e) => setKat(e.target.value)}
+                placeholder="Kat"
+                className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                data-testid="input-bonus-kat"
+              />
+              <input
+                type="text"
+                value={daireNo}
+                onChange={(e) => setDaireNo(e.target.value)}
+                placeholder="Daire No"
+                className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                data-testid="input-bonus-daire"
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={handleGetLocation}
+              disabled={locationLoading}
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium bg-white/20 hover:bg-white/30 transition-colors"
+              data-testid="btn-bonus-location"
+            >
+              {locationLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Navigation className="w-4 h-4" />
+              )}
+              {customerLocation ? "Konum Alindi ✓" : "Konumumu Ekle"}
+            </button>
+
             <button
               onClick={handleRegister}
               disabled={loading}
-              className="bg-yellow-400 text-gray-900 font-bold text-sm px-4 rounded-xl flex items-center gap-1 disabled:opacity-60 active:scale-[0.98] transition-transform flex-shrink-0"
+              className="w-full bg-yellow-400 text-gray-900 font-bold text-sm py-2.5 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.98] transition-transform"
               data-testid="btn-bonus-register"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Gift className="w-4 h-4" /> Kaydol</>}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Gift className="w-4 h-4" /> Kaydol ve 100 TL Kazan</>}
             </button>
           </div>
-          {error && <p className="text-yellow-200 text-xs mt-1.5" data-testid="text-bonus-name-error">{error}</p>}
+          {error && <p className="text-yellow-200 text-xs mt-1.5" data-testid="text-bonus-register-error">{error}</p>}
         </div>
       )}
     </div>

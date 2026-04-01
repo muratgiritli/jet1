@@ -1084,6 +1084,51 @@ export default function Checkout() {
             </section>
 
             <section className="mt-6">
+              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-coupon">
+                Kupon Kodu
+              </h2>
+              <Card>
+                <CardContent className="p-4">
+                  {appliedCoupon ? (
+                    <div className="flex items-center justify-between gap-3" data-testid="applied-coupon-info">
+                      <div className="flex items-center gap-2">
+                        <Gift className="w-4 h-4" style={{ color: "#2e7d32" }} />
+                        <span className="text-sm font-bold" style={{ color: "#2e7d32" }}>{appliedCoupon.code}</span>
+                        <span className="text-sm" style={{ color: "#2e7d32" }}>(-{appliedCoupon.discountAmount.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL)</span>
+                      </div>
+                      <button onClick={removeCoupon} className="text-xs text-red-500 font-medium" data-testid="btn-remove-coupon">Kaldır</button>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="flex gap-2">
+                        <input
+                          type="text"
+                          value={couponCode}
+                          onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
+                          placeholder="Kupon kodunuzu girin"
+                          maxLength={50}
+                          className="flex-1 px-3 py-2 text-sm border rounded-lg outline-none focus:border-primary"
+                          data-testid="input-coupon-code"
+                        />
+                        <button
+                          onClick={handleApplyCoupon}
+                          disabled={couponLoading || !couponCode.trim()}
+                          className="px-4 py-2 bg-primary text-primary-foreground text-sm font-bold rounded-lg disabled:opacity-50"
+                          data-testid="btn-apply-coupon"
+                        >
+                          {couponLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Uygula"}
+                        </button>
+                      </div>
+                      {couponResult && !couponResult.valid && (
+                        <p className="text-xs text-red-500 mt-1.5" data-testid="text-coupon-error">{couponResult.message}</p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </section>
+
+            <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-summary">
                 Sipariş Özeti
               </h2>
@@ -1113,6 +1158,17 @@ export default function Checkout() {
                             -{pointsDiscount.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                           </span>
                         )}
+                      </div>
+                    )}
+                    {appliedCoupon && (
+                      <div className="flex justify-between gap-3 flex-wrap">
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <Gift className="w-3.5 h-3.5" style={{ color: "#2e7d32" }} />
+                          Kupon ({appliedCoupon.code})
+                        </span>
+                        <span className="font-medium" style={{ color: "#2e7d32" }} data-testid="text-coupon-discount">
+                          -{appliedCoupon.discountAmount.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                        </span>
                       </div>
                     )}
                     <div className="flex justify-between gap-3 flex-wrap">
