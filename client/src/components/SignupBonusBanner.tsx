@@ -1,8 +1,13 @@
 import { useState, useEffect, useRef } from "react";
-import { Gift, Phone, ArrowRight, Loader2, X, Check, PartyPopper, MapPin, Navigation, User } from "lucide-react";
+import { Gift, Phone, ArrowRight, Loader2, X, Check, PartyPopper, MapPin, Navigation, User, Download } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { apiRequest } from "@/lib/queryClient";
 import { TESLIMAT_MAHALLELERI } from "@/lib/data";
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
 
 type BannerStep = "idle" | "phone" | "otp" | "register" | "success";
 
@@ -182,7 +187,7 @@ export default function SignupBonusBanner() {
       });
       if (mahalle) localStorage.setItem("jet55_mahalle", mahalle);
       setStep("success");
-      setTimeout(() => window.location.reload(), 3000);
+      setTimeout(() => window.location.reload(), 10000);
     } catch (err: any) {
       let msg = "Bir hata oluştu";
       try { msg = JSON.parse(err.message.replace(/^\d+:\s*/, "")).message; } catch {}
@@ -192,28 +197,92 @@ export default function SignupBonusBanner() {
     }
   };
 
+  const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
+  const [isIOS] = useState(() => /iPhone|iPad|iPod/i.test(navigator.userAgent));
+  const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const [isStandalone] = useState(() =>
+    window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone === true
+  );
+
+  useEffect(() => {
+    const handler = (e: Event) => {
+      e.preventDefault();
+      deferredPrompt.current = e as BeforeInstallPromptEvent;
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  const handleInstallApp = async () => {
+    if (isIOS) {
+      setShowIOSGuide(true);
+      return;
+    }
+    if (deferredPrompt.current) {
+      await deferredPrompt.current.prompt();
+      await deferredPrompt.current.userChoice;
+      deferredPrompt.current = null;
+    }
+  };
+
   if (step === "success") {
     return (
-      <div className="relative bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-4 rounded-2xl" data-testid="signup-bonus-success">
-        <button onClick={() => setDismissed(true)} className="absolute top-2 right-2 p-1 text-white/70 hover:text-white" data-testid="btn-dismiss-bonus">
-          <X className="w-4 h-4" />
-        </button>
-        <div className="flex items-center gap-3">
-          <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-            <PartyPopper className="w-6 h-6" />
+      <>
+        <div className="relative bg-gradient-to-r from-green-500 to-emerald-600 text-white px-4 py-4 rounded-2xl" data-testid="signup-bonus-success">
+          <button onClick={() => setDismissed(true)} className="absolute top-2 right-2 p-1 text-white/70 hover:text-white" data-testid="btn-dismiss-bonus">
+            <X className="w-4 h-4" />
+          </button>
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <PartyPopper className="w-6 h-6" />
+            </div>
+            <div className="min-w-0">
+              <p className="font-bold text-base">Hos Geldin! 🎉</p>
+              <p className="text-sm text-white/90">100 TL bonus ilk siparisine otomatik tanimlanacak!</p>
+            </div>
           </div>
-          <div className="min-w-0">
-            <p className="font-bold text-base">Hos Geldin! 🎉</p>
-            <p className="text-sm text-white/90">100 TL bonus kuponun hazir!</p>
-            {welcomeCoupon && (
-              <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-                <span className="bg-white text-green-700 font-black text-sm px-3 py-1 rounded-lg tracking-wider" data-testid="text-welcome-coupon">{welcomeCoupon}</span>
-                <span className="text-xs text-white/80">Min. 500 TL | 30 gun gecerli</span>
-              </div>
-            )}
-          </div>
+
+          {!isStandalone && (
+            <button
+              onClick={handleInstallApp}
+              className="w-full mt-3 bg-white/20 backdrop-blur-sm text-white font-bold text-sm py-3 rounded-xl flex items-center justify-center gap-2 border border-white/30 active:scale-[0.98] transition-transform"
+              data-testid="btn-install-after-signup"
+            >
+              <Download className="w-5 h-5" />
+              Uygulamayi Indir - Bonusun Aktif Olsun!
+            </button>
+          )}
         </div>
-      </div>
+
+        {showIOSGuide && (
+          <div
+            className="fixed inset-0 z-50 flex items-end justify-center bg-black/40"
+            onClick={() => setShowIOSGuide(false)}
+            data-testid="ios-install-guide-signup"
+          >
+            <div
+              className="w-full max-w-lg bg-white rounded-t-2xl px-5 py-6 space-y-3"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h4 className="text-base font-bold text-gray-900 text-center">Ana Ekrana Ekle</h4>
+              <div className="space-y-2 text-sm text-gray-700">
+                <p><span className="font-semibold">1.</span> Safari'de alt barda <span className="inline-block text-lg leading-none align-middle">⬆</span> (Paylas) butonuna dokunun</p>
+                <p><span className="font-semibold">2.</span> Asagi kaydirip <span className="font-semibold">"Ana Ekrana Ekle"</span> secenegini bulun</p>
+                <p><span className="font-semibold">3.</span> <span className="font-semibold">"Ekle"</span> butonuna dokunun</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowIOSGuide(false)}
+                className="w-full py-2.5 rounded-lg text-white text-sm font-bold"
+                style={{ backgroundColor: "#6B3480" }}
+                data-testid="btn-close-ios-guide-signup"
+              >
+                Anladim
+              </button>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 

@@ -320,6 +320,29 @@ export default function Checkout() {
   const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
   const displayTotal = (pointsDiscount > 0 ? Math.max(0, effectiveGrandTotal - pointsDiscount) : effectiveGrandTotal) + donationAmount;
 
+  const [autoApplyAttemptedSubtotal, setAutoApplyAttemptedSubtotal] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isLoggedIn || !customer?.welcomeCoupon || appliedCoupon || subtotal <= 0) return;
+    const wc = customer.welcomeCoupon;
+    const minAmount = wc.minOrderAmount || 0;
+    if (subtotal < minAmount) return;
+    if (autoApplyAttemptedSubtotal !== null && subtotal <= autoApplyAttemptedSubtotal) return;
+    setAutoApplyAttemptedSubtotal(subtotal);
+    const code = wc.code.trim().toUpperCase();
+    (async () => {
+      try {
+        const res = await apiRequest("POST", "/api/coupons/validate", { code, subtotal });
+        const data = await res.json();
+        if (data.valid) {
+          setCouponCode(code);
+          setAppliedCoupon({ code, discountAmount: data.discountAmount });
+          setCouponResult(data);
+        }
+      } catch {}
+    })();
+  }, [isLoggedIn, customer, subtotal, appliedCoupon, autoApplyAttemptedSubtotal]);
+
   const handleApplyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
     if (!code) return;
