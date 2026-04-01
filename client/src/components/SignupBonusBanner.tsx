@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Gift, Phone, ArrowRight, Loader2, X, Check, PartyPopper, MapPin, Navigation, User, Download } from "lucide-react";
+import { Gift, Phone, ArrowRight, Loader2, X, Check, PartyPopper, User, Download, Home, Building2 } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { apiRequest } from "@/lib/queryClient";
 import { TESLIMAT_MAHALLELERI } from "@/lib/data";
@@ -19,11 +19,12 @@ export default function SignupBonusBanner() {
   const [name, setName] = useState("");
   const [mahalle, setMahalle] = useState("");
   const [cadde, setCadde] = useState("");
-  const [binaNo, setBinaNo] = useState("");
-  const [kat, setKat] = useState("");
+  const [sokak, setSokak] = useState("");
+  const [kapiNo, setKapiNo] = useState("");
+  const [apartmanAdi, setApartmanAdi] = useState("");
+  const [katNo, setKatNo] = useState("");
   const [daireNo, setDaireNo] = useState("");
-  const [locationLoading, setLocationLoading] = useState(false);
-  const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
+  const [asansor, setAsansor] = useState<"var" | "yok" | "">("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(0);
@@ -149,36 +150,19 @@ export default function SignupBonusBanner() {
     }
   };
 
-  const handleGetLocation = () => {
-    if (!navigator.geolocation) {
-      setError("Tarayıcınız konum paylaşımını desteklemiyor");
-      return;
-    }
-    setLocationLoading(true);
-    setError("");
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        setCustomerLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        setLocationLoading(false);
-      },
-      () => {
-        setLocationLoading(false);
-        setError("Konum alınamadı. Lütfen konum izni verin.");
-      },
-      { enableHighAccuracy: true, timeout: 10000 }
-    );
-  };
-
   const handleRegister = async () => {
-    if (!name.trim()) { setError("Ad soyad girin"); return; }
+    if (!name.trim()) { setError("Adı soyadı girin"); return; }
     setError("");
     setLoading(true);
     const addressParts = [
       mahalle,
-      cadde.trim(),
-      binaNo.trim() ? `No: ${binaNo.trim()}` : "",
-      kat.trim() ? `Kat: ${kat.trim()}` : "",
+      cadde.trim() ? `Cadde: ${cadde.trim()}` : "",
+      sokak.trim() ? `Sokak: ${sokak.trim()}` : "",
+      kapiNo.trim() ? `Kapı No: ${kapiNo.trim()}` : "",
+      apartmanAdi.trim() ? `Apartman: ${apartmanAdi.trim()}` : "",
+      katNo.trim() ? `Kat: ${katNo.trim()}` : "",
       daireNo.trim() ? `Daire: ${daireNo.trim()}` : "",
+      asansor ? `Asansör: ${asansor === "var" ? "Var" : "Yok"}` : "",
     ].filter(Boolean).join(", ");
     try {
       await apiRequest("PATCH", "/api/customer/profile", {
@@ -237,8 +221,8 @@ export default function SignupBonusBanner() {
               <PartyPopper className="w-6 h-6" />
             </div>
             <div className="min-w-0">
-              <p className="font-bold text-base">Hos Geldin! 🎉</p>
-              <p className="text-sm text-white/90">100 TL bonus ilk siparisine otomatik tanimlanacak!</p>
+              <p className="font-bold text-base">Hoş Geldin! 🎉</p>
+              <p className="text-sm text-white/90">100 TL bonus ilk siparişine otomatik tanımlanacak!</p>
             </div>
           </div>
 
@@ -249,7 +233,7 @@ export default function SignupBonusBanner() {
               data-testid="btn-install-after-signup"
             >
               <Download className="w-5 h-5" />
-              Uygulamayi Indir - Bonusun Aktif Olsun!
+              Uygulamayı İndir - Bonusun Aktif Olsun!
             </button>
           )}
         </div>
@@ -266,8 +250,8 @@ export default function SignupBonusBanner() {
             >
               <h4 className="text-base font-bold text-gray-900 text-center">Ana Ekrana Ekle</h4>
               <div className="space-y-2 text-sm text-gray-700">
-                <p><span className="font-semibold">1.</span> Safari'de alt barda <span className="inline-block text-lg leading-none align-middle">⬆</span> (Paylas) butonuna dokunun</p>
-                <p><span className="font-semibold">2.</span> Asagi kaydirip <span className="font-semibold">"Ana Ekrana Ekle"</span> secenegini bulun</p>
+                <p><span className="font-semibold">1.</span> Safari'de alt barda <span className="inline-block text-lg leading-none align-middle">⬆</span> (Paylaş) butonuna dokunun</p>
+                <p><span className="font-semibold">2.</span> Aşağı kaydırıp <span className="font-semibold">"Ana Ekrana Ekle"</span> seçeneğini bulun</p>
                 <p><span className="font-semibold">3.</span> <span className="font-semibold">"Ekle"</span> butonuna dokunun</p>
               </div>
               <button
@@ -277,7 +261,7 @@ export default function SignupBonusBanner() {
                 style={{ backgroundColor: "#6B3480" }}
                 data-testid="btn-close-ios-guide-signup"
               >
-                Anladim
+                Anladım
               </button>
             </div>
           </div>
@@ -299,8 +283,8 @@ export default function SignupBonusBanner() {
               <Gift className="w-5 h-5" />
             </div>
             <div>
-              <p className="font-bold text-base leading-tight">Jetgo'ya hemen uye ol</p>
-              <p className="text-sm text-white/90 leading-tight">100 TL aninda bonus sepetinde</p>
+              <p className="font-bold text-base leading-tight">Jetgo'ya hemen üye ol</p>
+              <p className="text-sm text-white/90 leading-tight">100 TL anında bonus sepetinde</p>
             </div>
           </div>
           <button
@@ -308,7 +292,7 @@ export default function SignupBonusBanner() {
             className="w-full mt-1 bg-white text-blue-600 font-bold text-sm py-2.5 rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-transform"
             data-testid="btn-start-signup"
           >
-            HEMEN UYE OL
+            HEMEN ÜYE OL
             <ArrowRight className="w-4 h-4" />
           </button>
         </div>
@@ -317,7 +301,7 @@ export default function SignupBonusBanner() {
       {step === "phone" && (
         <div className="px-4 py-4">
           <p className="font-bold text-sm mb-2 flex items-center gap-1.5">
-            <Phone className="w-4 h-4" /> Cep telefon numarani gir
+            <Phone className="w-4 h-4" /> Cep telefon numaranı gir
           </p>
           <div className="flex gap-2">
             <div className="flex-1 relative">
@@ -339,7 +323,7 @@ export default function SignupBonusBanner() {
               className="bg-yellow-400 text-gray-900 font-bold text-sm px-4 rounded-xl flex items-center gap-1 disabled:opacity-60 active:scale-[0.98] transition-transform flex-shrink-0"
               data-testid="btn-bonus-send-otp"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ArrowRight className="w-4 h-4" /> Gonder</>}
+              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ArrowRight className="w-4 h-4" /> Gönder</>}
             </button>
           </div>
           {error && <p className="text-yellow-200 text-xs mt-1.5" data-testid="text-bonus-error">{error}</p>}
@@ -350,7 +334,7 @@ export default function SignupBonusBanner() {
         <div className="px-4 py-4">
           <p className="font-bold text-sm mb-1">SMS ile gelen 6 haneli kodu gir</p>
           <p className="text-xs text-white/70 mb-2">
-            {phone} numarasina gonderildi
+            {phone} numarasına gönderildi
             {countdown > 0 && <span className="ml-1">({Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")})</span>}
           </p>
           <div className="flex gap-1.5 justify-center mb-2">
@@ -371,7 +355,7 @@ export default function SignupBonusBanner() {
           </div>
           {loading && (
             <div className="flex items-center justify-center gap-2 text-sm">
-              <Loader2 className="w-4 h-4 animate-spin" /> Dogrulaniyor...
+              <Loader2 className="w-4 h-4 animate-spin" /> Doğrulanıyor...
             </div>
           )}
           {error && <p className="text-yellow-200 text-xs text-center" data-testid="text-bonus-otp-error">{error}</p>}
@@ -381,7 +365,7 @@ export default function SignupBonusBanner() {
       {step === "register" && (
         <div className="px-4 py-4">
           <p className="font-bold text-sm mb-3 flex items-center gap-1.5">
-            <Check className="w-4 h-4" /> Numara dogrulandi! Bilgilerini tamamla
+            <Check className="w-4 h-4" /> Numara doğrulandı! Bilgilerini tamamla
           </p>
           <div className="space-y-2">
             <div className="relative">
@@ -390,7 +374,7 @@ export default function SignupBonusBanner() {
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ad Soyad *"
+                placeholder="Adı Soyadı *"
                 className="w-full pl-10 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
                 autoFocus
                 data-testid="input-bonus-name"
@@ -398,43 +382,64 @@ export default function SignupBonusBanner() {
             </div>
 
             <div className="relative">
-              <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <select
                 value={mahalle}
                 onChange={(e) => setMahalle(e.target.value)}
                 className="w-full pl-10 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none appearance-none bg-white"
                 data-testid="select-bonus-mahalle"
               >
-                <option value="">Mahalle Secin</option>
+                <option value="">Mahalle Seçin</option>
                 {TESLIMAT_MAHALLELERI.map((m) => (
                   <option key={m} value={m}>{m}</option>
                 ))}
               </select>
             </div>
 
-            <input
-              type="text"
-              value={cadde}
-              onChange={(e) => setCadde(e.target.value)}
-              placeholder="Cadde / Sokak"
-              className="w-full px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
-              data-testid="input-bonus-cadde"
-            />
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="text"
+                value={cadde}
+                onChange={(e) => setCadde(e.target.value)}
+                placeholder="Cadde"
+                className="w-full px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                data-testid="input-bonus-cadde"
+              />
+              <input
+                type="text"
+                value={sokak}
+                onChange={(e) => setSokak(e.target.value)}
+                placeholder="Sokak"
+                className="w-full px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                data-testid="input-bonus-sokak"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <input
+                type="text"
+                value={kapiNo}
+                onChange={(e) => setKapiNo(e.target.value)}
+                placeholder="Kapı No"
+                className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                data-testid="input-bonus-kapi"
+              />
+              <input
+                type="text"
+                value={apartmanAdi}
+                onChange={(e) => setApartmanAdi(e.target.value)}
+                placeholder="Apartman Adı"
+                className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                data-testid="input-bonus-apartman"
+              />
+            </div>
 
             <div className="grid grid-cols-3 gap-2">
               <input
                 type="text"
-                value={binaNo}
-                onChange={(e) => setBinaNo(e.target.value)}
-                placeholder="Bina No"
-                className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                data-testid="input-bonus-bina"
-              />
-              <input
-                type="text"
-                value={kat}
-                onChange={(e) => setKat(e.target.value)}
-                placeholder="Kat"
+                value={katNo}
+                onChange={(e) => setKatNo(e.target.value)}
+                placeholder="Kat No"
                 className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
                 data-testid="input-bonus-kat"
               />
@@ -446,22 +451,17 @@ export default function SignupBonusBanner() {
                 className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
                 data-testid="input-bonus-daire"
               />
+              <select
+                value={asansor}
+                onChange={(e) => setAsansor(e.target.value as "var" | "yok" | "")}
+                className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none appearance-none bg-white"
+                data-testid="select-bonus-asansor"
+              >
+                <option value="">Asansör</option>
+                <option value="var">Var</option>
+                <option value="yok">Yok</option>
+              </select>
             </div>
-
-            <button
-              type="button"
-              onClick={handleGetLocation}
-              disabled={locationLoading}
-              className="w-full flex items-center justify-center gap-2 py-2 rounded-xl text-sm font-medium bg-white/20 hover:bg-white/30 transition-colors"
-              data-testid="btn-bonus-location"
-            >
-              {locationLoading ? (
-                <Loader2 className="w-4 h-4 animate-spin" />
-              ) : (
-                <Navigation className="w-4 h-4" />
-              )}
-              {customerLocation ? "Konum Alindi ✓" : "Konumumu Ekle"}
-            </button>
 
             <button
               onClick={handleRegister}

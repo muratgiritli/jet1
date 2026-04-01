@@ -1,6 +1,6 @@
 import { Link } from "wouter";
-import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info, Truck, Lock, ShieldCheck, ScrollText } from "lucide-react";
-import { SiWhatsapp, SiInstagram, SiFacebook } from "react-icons/si";
+import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info, Truck, Lock, ShieldCheck, ScrollText, Gift, ChevronRight } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 
 const FOOTER_LINKS = [
   { label: "Sıkça Sorulan Sorular", href: "/sss", icon: HelpCircle },
@@ -12,8 +12,8 @@ const FOOTER_LINKS = [
 export default function Footer() {
   return (
     <footer className="hidden md:block bg-gray-900 text-gray-300 mt-8" data-testid="footer-desktop">
-      <div className="max-w-6xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-2 gap-12">
+      <div className="max-w-7xl mx-auto px-6 py-10">
+        <div className="grid grid-cols-3 gap-12">
           <div>
             <h3 className="text-white font-bold text-lg mb-1">Müşteri Hizmetleri</h3>
             <p className="text-gray-400 text-sm mb-4">Sorularınız için bize ulaşın</p>
@@ -52,17 +52,24 @@ export default function Footer() {
                 </a>
               </li>
             </ul>
-            <div className="flex items-center gap-3 mt-5">
-              <a href="https://www.instagram.com/jetgo.pet" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-800 hover:bg-gradient-to-br hover:from-purple-600 hover:to-pink-500 flex items-center justify-center transition-all" data-testid="footer-instagram">
-                <SiInstagram className="w-4.5 h-4.5 text-gray-300" />
-              </a>
-              <a href="https://www.facebook.com/jetgo.pet" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-800 hover:bg-blue-600 flex items-center justify-center transition-all" data-testid="footer-facebook">
-                <SiFacebook className="w-4.5 h-4.5 text-gray-300" />
-              </a>
-              <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="w-9 h-9 rounded-full bg-gray-800 hover:bg-green-600 flex items-center justify-center transition-all" data-testid="footer-whatsapp-icon">
-                <SiWhatsapp className="w-4.5 h-4.5 text-gray-300" />
-              </a>
-            </div>
+          </div>
+
+          <div>
+            <h3 className="text-white font-bold text-lg mb-4">Kampanya</h3>
+            <Link href="/kampanya">
+              <div className="bg-gradient-to-br from-[#6B3480] to-[#9b59b6] rounded-xl p-4 hover:shadow-lg transition-shadow cursor-pointer group" data-testid="footer-campaign-link">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center shrink-0">
+                    <Gift className="w-5 h-5 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-bold">Kampanyalı Ürünler</p>
+                    <p className="text-white/60 text-xs mt-0.5">Ana mama + ek ürün fırsatları</p>
+                  </div>
+                  <ChevronRight className="w-5 h-5 text-white/50 group-hover:text-white transition-colors" />
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
 
