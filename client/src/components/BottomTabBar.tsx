@@ -1,4 +1,4 @@
-import { Home, Grid3X3, ShoppingCart, Package, User } from "lucide-react";
+import { Home, Grid3X3, ShoppingCart, Gift, User } from "lucide-react";
 import { useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
 import { useCustomer } from "@/contexts/CustomerContext";
@@ -15,7 +15,7 @@ export default function BottomTabBar() {
     { name: "Ana Sayfa", href: "/", icon: Home, testId: "tab-home" },
     { name: "Kategoriler", href: "/kategori", icon: Grid3X3, testId: "tab-categories" },
     { name: "Sepet", href: "/odeme", icon: ShoppingCart, testId: "tab-cart" },
-    { name: "Takip", href: "/siparis-takip", icon: Package, testId: "tab-tracking" },
+    { name: "Kampanya", href: "/kampanya", icon: Gift, testId: "tab-kampanya" },
     { name: isLoggedIn ? "Hesabım" : "Giriş", href: isLoggedIn ? "/hesabim" : "/giris", icon: User, testId: "tab-account" },
   ];
 
