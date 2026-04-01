@@ -44,14 +44,11 @@ import { useCart } from "@/contexts/CartContext";
 
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useCustomer } from "@/contexts/CustomerContext";
-import type { InstallmentRate } from "@shared/schema";
-
 const paymentIcons: Record<string, typeof CreditCard> = {
   nakit: Banknote,
   eft: Wallet,
   qr: QrCode,
   pos: CreditCard,
-  taksit: CreditCard,
 };
 
 export default function Checkout() {
@@ -63,7 +60,6 @@ export default function Checkout() {
   const [isReturningCustomer, setIsReturningCustomer] = useState(false);
   const [lookupDone, setLookupDone] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
-  const [selectedInstallment, setSelectedInstallment] = useState<number | null>(null);
   const [editingInfo, setEditingInfo] = useState(false);
   const [usePoints, setUsePoints] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -78,10 +74,6 @@ export default function Checkout() {
   const authOtpRefs = useRef<(HTMLInputElement | null)[]>([]);
   const authVerifyingRef = useRef(false);
   const { customer, isLoggedIn, loginWithOtp, updateProfile } = useCustomer();
-
-  const { data: installmentRates = [] } = useQuery<InstallmentRate[]>({
-    queryKey: ["/api/installment-rates"],
-  });
 
   const { data: loyaltyData } = useQuery<{ balance: number }>({
     queryKey: ["/api/customer/loyalty-points"],
@@ -449,18 +441,6 @@ export default function Checkout() {
         customerNote: orderNote.trim() || undefined,
         deliverySlot: deliverySlot || undefined,
       };
-
-      if (pay.id === "taksit" && selectedInstallment) {
-        const instRate = installmentRates.find((r) => r.months === selectedInstallment);
-        if (instRate) {
-          const instTotal = finalTotal * (1 + instRate.rate / 100);
-          const instMonthly = instTotal / instRate.months;
-          orderPayload.installmentMonths = instRate.months;
-          orderPayload.installmentRate = instRate.rate;
-          orderPayload.installmentMonthly = Math.round(instMonthly * 100) / 100;
-          orderPayload.installmentTotal = Math.round(instTotal * 100) / 100;
-        }
-      }
 
       await apiRequest("POST", "/api/orders", orderPayload);
 
@@ -854,7 +834,7 @@ export default function Checkout() {
                       <p className="text-xs text-muted-foreground mt-2">Kampanya siparislerinde sadece kapida nakit odeme gecerlidir.</p>
                     </div>
                   ) : (
-                  <RadioGroup value={paymentId} onValueChange={(val) => { setPaymentId(val); if (val !== "taksit") { setSelectedInstallment(null); } }} data-testid="radio-payment">
+                  <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
                     {PAYMENT_OPTIONS.map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
                       return (
@@ -872,7 +852,7 @@ export default function Checkout() {
                             className="no-default-hover-elevate shrink-0"
                             data-testid={`badge-payment-tag-${opt.id}`}
                           >
-                            {opt.id === "taksit" ? opt.tag : opt.disc < 0 ? `${(subtotal * (1 + Math.abs(opt.disc))).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL` : `${subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`}
+                            {opt.disc < 0 ? `${(subtotal * (1 + Math.abs(opt.disc))).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL` : `${subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`}
                           </Badge>
                         </label>
                       );
@@ -880,100 +860,6 @@ export default function Checkout() {
                   </RadioGroup>
                   )}
 
-                  {paymentId === "taksit" && installmentRates.length > 0 && (
-                    <div
-                      className="mt-4 pt-4 border-t overflow-hidden"
-                      data-testid="section-installments"
-                    >
-                      <p className="text-sm font-medium text-muted-foreground mb-3">Taksit seçeneğinizi belirleyin:</p>
-                      <RadioGroup
-                        value={selectedInstallment ? `taksit-${selectedInstallment}` : "tek-cekim"}
-                        onValueChange={(val) => {
-                          if (val === "tek-cekim") {
-                            setSelectedInstallment(null);
-                          } else {
-                            const months = parseInt(val.replace("taksit-", ""));
-                            setSelectedInstallment(months);
-                          }
-                        }}
-                        data-testid="radio-installments"
-                      >
-                        <div className="rounded-lg border" data-testid="table-installments">
-                          <div className="grid grid-cols-3 gap-0 text-xs font-bold text-muted-foreground uppercase tracking-wider bg-muted/50 p-3 rounded-t-lg">
-                            <span>Taksit</span>
-                            <span className="text-center">Aylık Ödeme</span>
-                            <span className="text-right">Toplam</span>
-                          </div>
-
-                          <label
-                            className={`grid grid-cols-3 gap-0 p-3 cursor-pointer transition-colors border-b ${selectedInstallment === null ? "bg-primary/5" : "hover:bg-muted/30"}`}
-                            data-testid="row-installment-tek"
-                          >
-                            <span className="flex items-center gap-2">
-                              <RadioGroupItem value="tek-cekim" />
-                              <span className="text-sm font-medium">Tek Çekim</span>
-                            </span>
-                            <span className="text-sm text-center font-medium">
-                              {(subtotal * 1.10).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                            </span>
-                            <span className="text-sm text-right font-bold">
-                              {(subtotal * 1.10).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                            </span>
-                          </label>
-
-                          {installmentRates
-                            .sort((a, b) => a.months - b.months)
-                            .map((rate) => {
-                              const totalWithRate = displayTotal * (1 + rate.rate / 100);
-                              const monthly = totalWithRate / rate.months;
-                              return (
-                                <label
-                                  key={rate.id}
-                                  className={`grid grid-cols-3 gap-0 p-3 cursor-pointer transition-colors border-b last:border-0 ${selectedInstallment === rate.months ? "bg-primary/5" : "hover:bg-muted/30"}`}
-                                  data-testid={`row-installment-${rate.months}`}
-                                >
-                                  <span className="flex items-center gap-2">
-                                    <RadioGroupItem value={`taksit-${rate.months}`} />
-                                    <span className="text-sm font-medium">{rate.months} Taksit</span>
-                                  </span>
-                                  <span className="text-sm text-center font-medium">
-                                    {monthly.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                                  </span>
-                                  <span className="text-sm text-right font-bold">
-                                    {totalWithRate.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                                  </span>
-                                </label>
-                              );
-                            })}
-                        </div>
-                      </RadioGroup>
-
-                      {selectedInstallment && (() => {
-                        const rate = installmentRates.find((r) => r.months === selectedInstallment);
-                        if (!rate) return null;
-                        const totalCharged = displayTotal * (1 + rate.rate / 100);
-                        const monthlyPayment = totalCharged / rate.months;
-                        return (
-                          <div className="mt-3 p-3 rounded-lg bg-primary/5 border border-primary/20" data-testid="text-selected-installment">
-                            <div className="grid grid-cols-3 gap-2 text-center">
-                              <div>
-                                <p className="text-xs text-muted-foreground mb-0.5">Taksit Sayısı</p>
-                                <p className="text-base font-bold text-primary">{selectedInstallment}</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground mb-0.5">Aylık Taksit</p>
-                                <p className="text-base font-bold text-primary">{monthlyPayment.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
-                              </div>
-                              <div>
-                                <p className="text-xs text-muted-foreground mb-0.5">Karttan Çekilecek</p>
-                                <p className="text-base font-bold text-primary">{totalCharged.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })()}
-                    </div>
-                  )}
                 </CardContent>
               </Card>
             </section>
@@ -1263,23 +1149,9 @@ export default function Checkout() {
 
                   <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t flex-wrap">
                     <span className="text-lg font-bold">Genel Toplam</span>
-                    {paymentId === "taksit" && selectedInstallment ? (() => {
-                      const rate = installmentRates.find((r) => r.months === selectedInstallment);
-                      if (!rate) return <span className="text-2xl font-extrabold text-primary" data-testid="text-total">{displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>;
-                      const totalWithRate = displayTotal * (1 + rate.rate / 100);
-                      return (
-                        <div className="text-right" data-testid="text-total">
-                          <span className="text-2xl font-extrabold text-primary">
-                            {totalWithRate.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                          </span>
-                          <p className="text-xs text-muted-foreground">{selectedInstallment} Taksit × {(totalWithRate / selectedInstallment).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
-                        </div>
-                      );
-                    })() : (
-                      <span className="text-2xl font-extrabold text-primary" data-testid="text-total">
-                        {displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                      </span>
-                    )}
+                    <span className="text-2xl font-extrabold text-primary" data-testid="text-total">
+                      {displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                    </span>
                   </div>
 
                   <Button

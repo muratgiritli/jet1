@@ -35,10 +35,10 @@ const DELIVERY_COMMENTS = [
 
 const PAYMENT_COMMENTS = [
   "Kapıda nakit ödedim, ekstra indirimli oldu. Çok pratik!",
-  "POS cihazıyla kapıda 6 taksit yaptırdım, süper kolaylık. Hiç sorun yaşamadım.",
+  "POS cihazıyla kapıda ödeme yaptım, süper kolaylık. Hiç sorun yaşamadım.",
   "QR kod ile ödeme yaptım, telefondan 2 saniyede hallettim. Çok modern!",
   "Nakit ödeme fiyatı gerçekten avantajlı, internetteki fiyatlardan bile ucuz.",
-  "Kapıda kredi kartıyla 12 taksit yaptırdım, büyük çuval mamayı rahatça aldım.",
+  "Kapıda kredi kartıyla ödeme yaptım, büyük çuval mamayı rahatça aldım.",
   "Para puan sistemi harika, her siparişte birikiyor. 150 TL puan kullandım bu sefer.",
   "Kapıda nakit ödedim, bozuk para bile verdiler. Çok profesyonel hizmet.",
   "QR kabul ediyorlar, nakit taşımama gerek kalmıyor. Mobil bankacılıktan ödedim.",

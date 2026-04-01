@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Link, useRoute, useSearch, useLocation } from "wouter";
 import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import type { Product, BrandCategory, CrossSellSection, BreedStat, InstallmentRate } from "@shared/schema";
+import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
@@ -291,7 +291,6 @@ export default function ProductDetailPage() {
   const [stockAlertSent, setStockAlertSent] = useState(false);
   const [stockAlertLoading, setStockAlertLoading] = useState(false);
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
-  const [taksitDialogOpen, setTaksitDialogOpen] = useState(false);
   const [paraPuanInfoOpen, setParaPuanInfoOpen] = useState(false);
   const [campaignWarning, setCampaignWarning] = useState(false);
 
@@ -300,10 +299,6 @@ export default function ProductDetailPage() {
     const extraIds = campaignExtras.map((e) => String(e.id));
     return extraIds.some((eid) => (basket[eid] || 0) > 0);
   }, [isCampaignMode, campaignExtras, basket]);
-
-  const { data: installmentRates = [] } = useQuery<InstallmentRate[]>({
-    queryKey: ["/api/installment-rates"],
-  });
 
   const { toast } = useToast();
 
@@ -519,74 +514,6 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
               )}
-
-              {!isCampaignMode && installmentRates.length > 0 && (() => {
-                const maxRate = installmentRates.reduce((a, b) => a.months > b.months ? a : b);
-                const totalWithRate = product.price * (1 + maxRate.rate / 100);
-                const monthly = Math.ceil(totalWithRate / maxRate.months);
-                return (
-                  <button
-                    type="button"
-                    onClick={() => setTaksitDialogOpen(true)}
-                    className="w-full flex items-center justify-between px-4 py-3 rounded-lg text-sm"
-                    style={{ backgroundColor: "#eef2ff", border: "1px solid #c7d2fe" }}
-                    data-testid="btn-taksit-banner"
-                  >
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="w-4 h-4 shrink-0" style={{ color: "#4f46e5" }} />
-                      <span className="font-medium" style={{ color: "#312e81" }}>
-                        {maxRate.months} Taksitle {monthly} TL/ay
-                      </span>
-                    </div>
-                    <span className="font-medium" style={{ color: "#4f46e5" }}>
-                      Taksit Seçenekleri
-                    </span>
-                  </button>
-                );
-              })()}
-
-              {!isCampaignMode && <Dialog open={taksitDialogOpen} onOpenChange={setTaksitDialogOpen}>
-                <DialogContent className="max-w-md">
-                  <DialogHeader>
-                    <DialogTitle className="flex items-center gap-2">
-                      <CreditCard className="w-5 h-5" />
-                      Taksit Seçenekleri
-                    </DialogTitle>
-                  </DialogHeader>
-                  <div className="rounded-lg border overflow-hidden">
-                    <div className="grid grid-cols-4 gap-0 text-xs font-bold text-muted-foreground uppercase tracking-wider bg-muted/50 p-3">
-                      <span>Dönem</span>
-                      <span className="text-center">Aylık Tutar</span>
-                      <span className="text-center">Vade Farkı</span>
-                      <span className="text-right">Toplam Tutar</span>
-                    </div>
-                    <div className="p-3 grid grid-cols-4 gap-0 border-b text-sm" data-testid="row-taksit-tek">
-                      <span className="font-medium">Tek Çekim</span>
-                      <span className="text-center">{product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
-                      <span className="text-center text-green-600 font-medium">ÜCRETSİZ</span>
-                      <span className="text-right font-bold">{product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
-                    </div>
-                    {installmentRates
-                      .sort((a, b) => a.months - b.months)
-                      .map((rate) => {
-                        const totalWithRate = product.price * (1 + rate.rate / 100);
-                        const monthly = totalWithRate / rate.months;
-                        const vadeFarki = totalWithRate - product.price;
-                        return (
-                          <div key={rate.id} className="p-3 grid grid-cols-4 gap-0 border-b last:border-0 text-sm" data-testid={`row-taksit-${rate.months}`}>
-                            <span className="font-medium">{rate.months}x ay</span>
-                            <span className="text-center">{monthly.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                            <span className="text-center">{vadeFarki > 0 ? `${vadeFarki.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL` : <span className="text-green-600 font-medium">ÜCRETSİZ</span>}</span>
-                            <span className="text-right font-bold">{totalWithRate.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                          </div>
-                        );
-                      })}
-                  </div>
-                  <p className="text-xs text-muted-foreground text-center mt-2">
-                    Taksit seçenekleri bilgi amaçlıdır. Ödeme sırasında taksit seçimi yapılacaktır.
-                  </p>
-                </DialogContent>
-              </Dialog>}
 
               <Dialog open={paraPuanInfoOpen} onOpenChange={setParaPuanInfoOpen}>
                 <DialogContent className="max-w-md">

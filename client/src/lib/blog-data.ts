@@ -55,7 +55,7 @@ export const BLOG_POSTS: BlogPost[] = [
           "Premium segment: Royal Canin, Hill's, N&D - En yüksek kalite, veteriner önerili markalar. Kg başı 300-600 TL.",
           "Orta segment: Pro Plan, Pronature, Profine - İyi kalite, makul fiyat. Kg başı 200-350 TL.",
           "Ekonomik premium: Reflex Plus, Pro Performance - Büyük paketlerde tasarruf. Kg başı 120-200 TL.",
-          "Her siparişte %5 para puan kazanarak bir sonraki alışverişinizde ekstra tasarruf sağlayabilirsiniz. JETGO'da taksitli ödeme imkanı da mevcuttur.",
+          "Her siparişte %5 para puan kazanarak bir sonraki alışverişinizde ekstra tasarruf sağlayabilirsiniz.",
         ],
       },
     ],

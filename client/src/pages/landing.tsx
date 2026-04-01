@@ -65,7 +65,6 @@ const QUICK_ACTIONS = [
   { icon: Smartphone, label: "Kapıda\nQR", color: "#0284c7", bg: "bg-sky-50" },
   { icon: CreditCard, label: "Kapıda\nPos", color: "#7c3aed", bg: "bg-purple-50" },
   { icon: Banknote, label: "Kapıda\nNakit", color: "#059669", bg: "bg-emerald-50" },
-  { icon: CreditCard, label: "Kredi Kartına\n12 Taksit", color: "#ff6f00", bg: "bg-orange-50" },
 ];
 
 function HeroCarousel() {
@@ -290,7 +289,6 @@ function WhyJetgo() {
     { icon: Zap, title: "Aynı Gün Kapında", desc: "Sipariş ver, aynı gün kapına gelsin. İnternetten günlerce bekleme!", color: "#f59e0b", bg: "from-amber-50 to-orange-50", border: "border-amber-200" },
     { icon: Truck, title: "Eve Teslim", desc: "Ağır çuvalları sen taşıma, biz getirelim. Uğraş yok, rahat alışveriş.", color: "#6B3480", bg: "from-purple-50 to-fuchsia-50", border: "border-purple-200" },
     { icon: PackageCheck, title: "Kapıda Kontrol Et", desc: "Ürünü kapıda aç, kontrol et. Memnun kalmazsan iade garantisi.", color: "#10b981", bg: "from-emerald-50 to-teal-50", border: "border-emerald-200" },
-    { icon: CreditCard, title: "Kredi Kartına 12 Taksit", desc: "Kredi kartına 12 taksit imkanı. Nakit, POS, QR - istediğin şekilde öde.", color: "#2563eb", bg: "from-blue-50 to-indigo-50", border: "border-blue-200" },
   ];
 
   return (

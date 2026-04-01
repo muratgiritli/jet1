@@ -309,7 +309,6 @@ function OrdersSection() {
     credit_card: "Kredi Kartı",
     cash: "Kapıda Nakit",
     eft: "EFT / Havale",
-    taksit: "Taksitli Kredi Kartı",
   };
 
   const handleReorder = (order: any) => {

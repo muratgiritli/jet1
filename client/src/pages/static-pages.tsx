@@ -76,11 +76,7 @@ export function SSSPage() {
     },
     {
       q: "Ödeme yöntemleri nelerdir?",
-      a: "Kapıda nakit ödeme (%5 indirimli), banka havalesi/EFT, kapıda POS cihazı ile kredi kartı/banka kartı (tek çekim veya taksitli), kapıda QR ödeme (mobil bankacılık) ve iyzico ile online kredi kartı taksitli ödeme (3, 4, 6, 9 ve 12 aya varan taksit imkanı, vade farkı uygulanır) seçenekleri mevcuttur."
-    },
-    {
-      q: "Taksitli ödeme nasıl yapılır?",
-      a: "Kredi kartı ile taksitli ödeme yapmak için ödeme sayfasında 'Kredi Kartı Taksit' seçeneğini tercih edin. 3, 4, 6, 9 ve 12 taksit seçenekleri mevcuttur. Taksit sayısına göre vade farkı uygulanır. Güncel taksit oranları ödeme sayfasında görüntülenmektedir."
+      a: "Kapıda nakit ödeme (%5 indirimli), banka havalesi/EFT, kapıda POS cihazı ile kredi kartı/banka kartı, kapıda QR ödeme (mobil bankacılık) seçenekleri mevcuttur."
     },
     {
       q: "Ürün iadesi yapabilir miyim?",
@@ -165,7 +161,7 @@ export function IslemRehberiPage() {
     { icon: Search, title: "Ürün Arayın", desc: "Ana sayfadaki arama çubuğunu kullanarak veya kategorilere (Köpek, Kedi, Kuş, Kemirgen) göz atarak istediğiniz ürünü bulun. Alt kategoriler ve markalar arasında kolayca gezinebilirsiniz." },
     { icon: ShoppingCart, title: "Sepete Ekleyin", desc: "Ürün sayfasında adet seçerek 'Sepete Ekle' butonuna tıklayın. İstediğiniz kadar ürün ekleyebilirsiniz. Sepet içeriğiniz sayfalar arasında geçiş yaptığınızda da korunur." },
     { icon: UserPlus, title: "Üye Olun veya Giriş Yapın", desc: "Sipariş verebilmek için telefon numaranız ve 4 haneli şifrenizle (doğum yılınız) giriş yapın veya yeni üyelik oluşturun. Üyelik sayesinde sipariş geçmişinizi takip edebilir ve para puan kazanabilirsiniz." },
-    { icon: CreditCard, title: "Ödeme Yöntemi Seçin", desc: "Kapıda nakit (%5 indirim), banka havalesi/EFT, kapıda POS ile kredi kartı, QR ödeme veya iyzico ile online taksitli kredi kartı (3-12 taksit) seçeneklerinden birini tercih edin." },
+    { icon: CreditCard, title: "Ödeme Yöntemi Seçin", desc: "Kapıda nakit (%5 indirim), banka havalesi/EFT, kapıda POS ile kredi kartı veya QR ödeme seçeneklerinden birini tercih edin." },
     { icon: ClipboardList, title: "Siparişi Onaylayın", desc: "Teslimat mahallenizi seçin, adres bilgilerinizi kontrol edin ve 'WhatsApp ile Sipariş Ver' butonuna tıklayarak siparişinizi gönderin. Sipariş detaylarınız otomatik olarak WhatsApp mesajına dönüştürülür." },
     { icon: Truck, title: "Teslimatı Bekleyin", desc: "Siparişiniz hazırlanır ve Samsun Atakum bölgesinde genellikle aynı gün veya ertesi gün kapınıza teslim edilir. Sipariş durumunuzu 'Takip' sekmesinden anlık olarak izleyebilirsiniz." },
   ];
@@ -353,7 +349,7 @@ export function MesafeliSatisSozlesmesiPage() {
       </Section>
 
       <Section title="Madde 3 – Sözleşme Konusu Ürün/Hizmet Bilgileri">
-        <p>Sipariş edilen ürünlerin cinsi, adedi, marka/modeli, rengi, KDV dahil satış fiyatı, ödeme şekli ve taksit bilgileri sipariş özeti sayfasında ve Alıcı'ya WhatsApp üzerinden iletilen sipariş mesajında belirtildiği şekildedir.</p>
+        <p>Sipariş edilen ürünlerin cinsi, adedi, marka/modeli, rengi, KDV dahil satış fiyatı ve ödeme şekli sipariş özeti sayfasında ve Alıcı'ya WhatsApp üzerinden iletilen sipariş mesajında belirtildiği şekildedir.</p>
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Ürün görselleri temsilidir; renk, boyut ve ambalaj farklılıkları olabilir.</li>
           <li>Ürün fiyatları KDV dahildir.</li>
@@ -390,9 +386,8 @@ export function MesafeliSatisSozlesmesiPage() {
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li><strong>Kapıda nakit ödeme:</strong> Sipariş tutarında %5 nakit ödeme indirimi uygulanır.</li>
           <li><strong>Banka havalesi / EFT:</strong> Sipariş onayından önce Satıcı'nın bildireceği banka hesabına ödeme yapılır.</li>
-          <li><strong>Kapıda POS cihazı ile kredi kartı / banka kartı:</strong> Teslimat sırasında tek çekim veya taksitli ödeme.</li>
+          <li><strong>Kapıda POS cihazı ile kredi kartı / banka kartı:</strong> Teslimat sırasında ödeme.</li>
           <li><strong>Kapıda QR ödeme:</strong> Mobil bankacılık uygulaması ile teslimat anında ödeme.</li>
-          <li><strong>Online kredi kartı taksit (iyzico):</strong> 3, 4, 6, 9 ve 12 aya varan taksit imkanı. Taksit sayısına göre vade farkı uygulanır. Güncel taksit oranları ödeme sayfasında görüntülenir.</li>
         </ul>
         <p className="mt-2">Kapıda nakit ödeme indirimi, diğer indirim ve kampanyalarla birleştirilebilir. Para Puan kullanımı tüm ödeme yöntemlerinde geçerlidir.</p>
       </Section>
@@ -586,7 +581,7 @@ export function GizlilikPage() {
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Üyelik bilgileri: Ad, soyad, telefon numarası, doğum yılı</li>
           <li>Teslimat bilgileri: Adres, mahalle, konum bilgisi</li>
-          <li>Sipariş bilgileri: Satın aldığınız ürünler, ödeme tercihi, taksit seçimi</li>
+          <li>Sipariş bilgileri: Satın aldığınız ürünler, ödeme tercihi</li>
           <li>İletişim bilgileri: WhatsApp mesajları, e-posta yazışmaları</li>
           <li>Evcil hayvan bilgileri: Pet adı, türü, ırkı, yaşı, kilosu (isteğe bağlı)</li>
         </ul>
@@ -713,7 +708,7 @@ export function GizlilikSozlesmesiPage() {
         <p className="mt-2"><strong>b) Müşteri İşlem Verileri:</strong></p>
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Sipariş geçmişi ve detayları</li>
-          <li>Ödeme yöntemi tercihleri ve taksit seçimleri</li>
+          <li>Ödeme yöntemi tercihleri</li>
           <li>Para Puan bakiyesi, kazanım ve harcama geçmişi</li>
           <li>Sepet içeriği ve favori ürünler</li>
           <li>Stok bildirim talepleri</li>
@@ -876,7 +871,7 @@ export function KullanimKosullariPage() {
           <li>Fiyatlar günceldir ancak stok durumuna, piyasa koşullarına ve döviz kurlarına göre değişiklik gösterebilir.</li>
           <li>Sipariş, WhatsApp üzerinden gönderildiğinde oluşturulmuş sayılır. Sipariş onayı Şirket tarafından verilir.</li>
           <li>Şirket, stok yetersizliği veya fiyat hatası durumunda siparişi iptal etme veya düzeltme hakkını saklı tutar.</li>
-          <li>Ödeme yöntemleri: Kapıda nakit (%5 indirim), banka havalesi/EFT, kapıda POS ile kart, kapıda QR ödeme, online kredi kartı taksit (iyzico).</li>
+          <li>Ödeme yöntemleri: Kapıda nakit (%5 indirim), banka havalesi/EFT, kapıda POS ile kart, kapıda QR ödeme.</li>
         </ul>
       </Section>
 
@@ -1077,7 +1072,7 @@ export function HakkimizdaPage() {
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li><strong>Uygun fiyat garantisi:</strong> Piyasanın en uygun fiyatlarıyla, kaliteden ödün vermeden hizmet veriyoruz.</li>
           <li><strong>Aynı gün teslimat:</strong> Samsun Atakum bölgesinde aynı gün veya ertesi gün kapınıza teslim.</li>
-          <li><strong>Çoklu ödeme seçeneği:</strong> Kapıda nakit (%5 indirim), kart, QR ödeme ve taksitli ödeme imkanı.</li>
+          <li><strong>Çoklu ödeme seçeneği:</strong> Kapıda nakit (%5 indirim), kart, QR ödeme imkanı.</li>
           <li><strong>Para Puan sistemi:</strong> Her alışverişte %5 para puan kazanın, sonraki alışverişlerinizde kullanın.</li>
           <li><strong>900+ ürün çeşidi:</strong> Evcil hayvanınızın tüm ihtiyaçları tek adreste.</li>
           <li><strong>Açık mama satışı:</strong> İstediğiniz kadar, istediğiniz markadan açık mama.</li>
@@ -1189,7 +1184,6 @@ export function IletisimPage() {
             <li>Banka havalesi / EFT</li>
             <li>Kapıda POS cihazı ile kredi kartı / banka kartı</li>
             <li>Kapıda QR ödeme (mobil bankacılık)</li>
-            <li>Online taksitli kredi kartı (iyzico ile 3-12 taksit)</li>
           </ul>
         </div>
       </div>

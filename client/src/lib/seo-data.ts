@@ -36,7 +36,7 @@ export const SEO_PAGES: SeoPageData[] = [
       "Atakum, İlkadım, Canik, Tekkeköy teslimat",
       "Para Puan ile kazanç",
       "Ücretsiz kargo seçeneği",
-      "Taksit imkanı",
+      "Kapıda POS ödeme",
     ],
     mahalleler: [
       "Atakum", "İlkadım", "Canik", "Tekkeköy",
@@ -47,7 +47,7 @@ export const SEO_PAGES: SeoPageData[] = [
     faq: [
       { q: "Samsun'da pet shop teslimat süresi ne kadar?", a: "Samsun merkez ilçelere (Atakum, İlkadım, Canik) aynı gün teslimat yapıyoruz. Siparişinizi sabah verirseniz akşama kadar elinizde olur." },
       { q: "Minimum sipariş tutarı nedir?", a: "Minimum sipariş tutarımız 700 TL'dir. 2.000 TL ve üzeri siparişlerde kargo ücretsizdir." },
-      { q: "Hangi ödeme yöntemlerini kabul ediyorsunuz?", a: "Kapıda nakit, kapıda kredi kartı, banka havalesi ve taksitli ödeme seçeneklerimiz mevcuttur." },
+      { q: "Hangi ödeme yöntemlerini kabul ediyorsunuz?", a: "Kapıda nakit, kapıda kredi kartı, banka havalesi ve QR ödeme seçeneklerimiz mevcuttur." },
       { q: "Hangi markaları satıyorsunuz?", a: "Royal Canin, Hill's, N&D, Pro Plan, Reflex, Profine, Gimcat ve daha birçok premium markayı satıyoruz." },
       { q: "Samsun'da hangi bölgelere teslimat yapıyorsunuz?", a: "Atakum, İlkadım, Canik ve Tekkeköy ilçelerinin tüm mahallelerine teslimat yapıyoruz." },
     ],
@@ -229,7 +229,7 @@ export const SEO_PAGES: SeoPageData[] = [
     intro: [
       "JETGO'da köpek maması çeşitlerimizle köpeğinizin beslenme ihtiyaçlarını karşılayın. Küçük ırk, orta ırk ve büyük ırk köpekler için özel formüle edilmiş mamaları uygun fiyatlarla sunuyoruz.",
       "Royal Canin, Hill's Science Plan, N&D, Pro Plan, Reflex ve Pro Performance gibi güvenilir markaları kapınıza getiriyoruz. Yavru köpek mamasından yetişkin köpek mamasına, hassas sindirimden kilo kontrolüne kadar her ihtiyaca uygun seçenek mevcut.",
-      "15 kg'lık büyük paketlerde ekonomik fiyatlar, taksit imkanı ve nakit ödemede ekstra avantaj sunuyoruz. Köpeğinizin sağlıklı beslenmesi için doğru mamayı seçmenize yardımcı oluyoruz.",
+      "15 kg'lık büyük paketlerde ekonomik fiyatlar ve nakit ödemede ekstra avantaj sunuyoruz. Köpeğinizin sağlıklı beslenmesi için doğru mamayı seçmenize yardımcı oluyoruz.",
     ],
     features: [
       "Royal Canin - Maxi, Mini, Medium (Yavru & Yetişkin)",
@@ -396,7 +396,7 @@ export const SEO_PAGES: SeoPageData[] = [
     intro: [
       "2026 yılında köpek maması fiyatları markaya, paket boyutuna ve içeriğe göre büyük farklılıklar göstermektedir. Bu rehberde en popüler köpek maması markalarının güncel fiyatlarını karşılaştırıyoruz.",
       "Premium markalardan ekonomik alternatiflere kadar, bütçenize ve köpeğinizin ihtiyaçlarına uygun mamayı bulmak için bu fiyat rehberini kullanabilirsiniz.",
-      "JETGO'da nakit ödemede ekstra avantajlı fiyatlar, taksit imkanı ve belirli tutar üzeri ücretsiz kargo sunuyoruz. Samsun'da en uygun köpek maması fiyatları için JETGO'yu tercih edin.",
+      "JETGO'da nakit ödemede ekstra avantajlı fiyatlar ve belirli tutar üzeri ücretsiz kargo sunuyoruz. Samsun'da en uygun köpek maması fiyatları için JETGO'yu tercih edin.",
     ],
     features: [
       "Royal Canin 15 kg: 4.200 - 4.700 TL arası (ırka göre değişir)",
@@ -410,7 +410,7 @@ export const SEO_PAGES: SeoPageData[] = [
     faq: [
       { q: "En ucuz köpek maması hangisi?", a: "Premium segmentte Reflex ve Pro Performance en uygun fiyatlı markalardır. 15-18 kg paketlerde kg başı 120-150 TL civarındadır." },
       { q: "Royal Canin köpek maması fiyatı ne kadar?", a: "Royal Canin 15 kg paketler 4.200-4.700 TL arasındadır. Irka ve yaşa göre fiyat değişir." },
-      { q: "Köpek mamasında taksit var mı?", a: "Evet, JETGO'da kredi kartına taksit imkanı sunuyoruz. Detaylar için ödeme sayfasını kontrol edin." },
+      { q: "Köpek maması ödeme yöntemleri neler?", a: "Kapıda nakit (%5 indirim), kapıda POS ile kredi kartı, QR ödeme ve banka havalesi seçenekleri mevcuttur." },
       { q: "Samsun'da en ucuz köpek maması nerede?", a: "JETGO Pet Shop, Samsun'da nakit ödemede en uygun fiyatları sunan kapıya teslim pet shop'tur." },
     ],
     internalLinks: [
@@ -557,17 +557,17 @@ const KEYWORD_PAGES: SeoPageData[] = [
     type: "keyword",
     title: "Kapıya Teslim Pet Shop Samsun",
     metaTitle: "Kapıya Teslim Pet Shop Samsun - Aynı Gün Teslimat | JETGO",
-    metaDescription: "Samsun'da kapıya teslim pet shop hizmeti. Kedi maması, köpek maması, kedi kumu aynı gün adresinize. Nakit, kredi kartı, taksitli ödeme. JETGO.",
+    metaDescription: "Samsun'da kapıya teslim pet shop hizmeti. Kedi maması, köpek maması, kedi kumu aynı gün adresinize. Nakit, kredi kartı, QR ödeme. JETGO.",
     keywords: "kapıya teslim petshop, petshop teslimat samsun, eve teslim pet shop, kapıya teslim kedi maması, kapıya teslim köpek maması",
     h1: "Samsun Kapıya Teslim Pet Shop",
     intro: [
       "JETGO, Samsun'un ilk kapıya teslim pet shop hizmetidir. Getir modeli ile evcil hayvan ürünlerinizi online sipariş verin, aynı gün kapınıza getirelim. Ağır mama ve kum çuvallarını taşıma derdi artık yok!",
       "Atakum, İlkadım ve Canik ilçelerinin tüm mahallelerine düzenli teslimat rotalarımız bulunmaktadır. Sabah verdiğiniz siparişler akşama kapınızda. Acil ihtiyaçlarınız için hızlandırılmış teslimat da mevcuttur.",
-      "Kapıda nakit, POS cihazı ile kredi kartı, taksitli ödeme ve QR kod ile ödeme seçenekleri sunuyoruz. Ödeme kolaylığı ile pet shop alışverişinizi kolaylaştırıyoruz.",
+      "Kapıda nakit, POS cihazı ile kredi kartı ve QR kod ile ödeme seçenekleri sunuyoruz. Ödeme kolaylığı ile pet shop alışverişinizi kolaylaştırıyoruz.",
     ],
     features: [
       "Aynı gün kapıya teslimat garantisi",
-      "Nakit, POS, QR, taksitli ödeme",
+      "Nakit, POS, QR ödeme",
       "900+ ürün çeşidi",
       "Royal Canin, Hill's, N&D, Pro Plan",
       "Her siparişte %5 para puan",
@@ -576,7 +576,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
     ],
     faq: [
       { q: "Kapıya teslim pet shop nasıl çalışır?", a: "jetgo.shop üzerinden ürünlerinizi sepete ekleyin, WhatsApp ile siparişinizi onaylayın. Aynı gün kurye ekibimiz siparişinizi kapınıza getirir." },
-      { q: "Kapıda hangi ödeme yöntemleri var?", a: "Kapıda nakit, kredi kartı (POS), taksitli ödeme ve QR kod ile ödeme yapabilirsiniz." },
+      { q: "Kapıda hangi ödeme yöntemleri var?", a: "Kapıda nakit, kredi kartı (POS) ve QR kod ile ödeme yapabilirsiniz." },
       { q: "Teslimat ne kadar sürer?", a: "Samsun merkez ilçelerine ortalama 1-3 saat içinde teslimat yapıyoruz. Yoğunluğa göre değişebilir." },
       { q: "Minimum sipariş tutarı var mı?", a: "Evet, minimum sipariş tutarı mahalle bazlı belirlenmektedir. Ortalama 700 TL'dir." },
     ],
@@ -659,7 +659,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
     intro: [
       "15 kiloluk köpek maması çuvallarını taşımak zor! JETGO ile Samsun'da köpek maması siparişinizi kapınıza teslim ediyoruz. Royal Canin, Hill's, N&D, Pro Plan, Reflex ve Pro Performance markalarını stokta tutuyoruz.",
       "Büyük ırk köpek sahipleri için ağır paketlerin kapıya teslimi büyük kolaylık. Yavru köpek mamasından yetişkin köpek mamasına, hassas sindirimden kilo kontrolüne her ihtiyaca uygun mama mevcut.",
-      "Nakit ödemede ekstra avantajlı fiyatlar sunuyoruz. Taksitli ödeme seçeneği ile büyük paket alışverişlerinizi bütçenize yayabilirsiniz. Her siparişte %5 para puan kazanın.",
+      "Nakit ödemede ekstra avantajlı fiyatlar sunuyoruz. Her siparişte %5 para puan kazanın.",
     ],
     faq: [
       { q: "15 kg köpek maması teslimat yapıyor musunuz?", a: "Evet, ağır paketler dahil tüm ürünlerimizi kapınıza teslim ediyoruz. Taşıma derdi yok!" },
@@ -710,7 +710,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
     intro: [
       "Samsun'da kedi ve köpek maması sipariş etmek artık çok kolay! JETGO ile Royal Canin, Hill's, N&D, Pro Plan, Reflex ve daha birçok premium marka mamayı online sipariş verin, aynı gün kapınıza teslim edelim.",
       "Yavru mama, yetişkin mama, kısırlaştırılmış mama, diyet mama, hassas sindirim maması - hangi türü ararsanız arayın, geniş ürün yelpazemizde bulabilirsiniz. Kuru mama, yaş mama ve ödül maması seçenekleri mevcut.",
-      "Nakit ödemede avantajlı fiyat, taksitli ödeme imkanı ve her siparişte %5 para puan kazanımı. Mama siparişinizi JETGO ile verin, hem tasarruf edin hem de kolaylıktan yararlanın.",
+      "Nakit ödemede avantajlı fiyat ve her siparişte %5 para puan kazanımı. Mama siparişinizi JETGO ile verin, hem tasarruf edin hem de kolaylıktan yararlanın.",
     ],
     faq: [
       { q: "Mama sipariş nasıl verilir?", a: "jetgo.shop adresinden ürünlerinizi sepete ekleyin, ardından WhatsApp ile siparişinizi tamamlayın." },
@@ -801,7 +801,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
     faq: [
       { q: "Samsun'da en ucuz kedi maması nerede?", a: "JETGO Pet Shop, nakit ödeme fiyatlarıyla Samsun'da en uygun kedi maması fiyatlarını sunmaktadır." },
       { q: "Kedi maması indirim var mı?", a: "Nakit ödemede ekstra avantajlı fiyat sunuyoruz. Ayrıca her siparişte %5 para puan kazanırsınız." },
-      { q: "Taksitle kedi maması alabilir miyim?", a: "Evet, kapıda POS cihazı ile taksitli ödeme yapabilirsiniz." },
+      { q: "Kedi maması ödeme yöntemleri neler?", a: "Kapıda nakit (%5 indirim), POS ile kredi kartı, QR ödeme ve banka havalesi seçenekleri mevcuttur." },
     ],
     internalLinks: [
       { text: "Kedi Maması Markaları", href: "/kedi-mamasi-en-iyi-markalar" },

@@ -70,7 +70,7 @@ import {
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order, BreedStat, StockAlert, InstallmentRate, Subcategory } from "@shared/schema";
+import type { Product, BrandCategory, CrossSellSection, CrossSellItem, Order, BreedStat, StockAlert, Subcategory } from "@shared/schema";
 
 const ANIMALS = [
   { id: "kedi", name: "Kedi", icon: Cat },
@@ -967,46 +967,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
   });
 
-  const { data: installmentRates = [] } = useQuery<InstallmentRate[]>({
-    queryKey: ["/api/admin/installment-rates"],
-  });
-
-  const [newInstMonths, setNewInstMonths] = useState("");
-  const [newInstRate, setNewInstRate] = useState("");
-  const [editingInstId, setEditingInstId] = useState<number | null>(null);
-  const [editInstMonths, setEditInstMonths] = useState("");
-  const [editInstRate, setEditInstRate] = useState("");
-
-  const createInstallmentMutation = useMutation({
-    mutationFn: async (data: { months: number; rate: number; sortOrder: number }) => {
-      await apiRequest("POST", "/api/admin/installment-rates", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/installment-rates"] });
-      setNewInstMonths("");
-      setNewInstRate("");
-    },
-  });
-
-  const updateInstallmentMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: { months?: number; rate?: number; isActive?: boolean } }) => {
-      await apiRequest("PATCH", `/api/admin/installment-rates/${id}`, data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/installment-rates"] });
-      setEditingInstId(null);
-    },
-  });
-
-  const deleteInstallmentMutation = useMutation({
-    mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/admin/installment-rates/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/installment-rates"] });
-    },
-  });
-
   interface CampaignItem {
     id: number;
     product_id: number;
@@ -1223,7 +1183,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 { key: "parapuan", label: "Para Puan Yönetimi", icon: <Star className="w-6 h-6" />, color: "text-amber-600" },
                 { key: "urunler", label: "Ürünler", icon: <Package className="w-6 h-6" />, color: "text-cyan-600" },
                 { key: "crosssell", label: "Sıklıkla Birlikte Alınan", icon: <ShoppingBag className="w-6 h-6" />, color: "text-pink-600" },
-                { key: "taksit", label: "Taksit Oranları", icon: <CreditCard className="w-6 h-6" />, color: "text-emerald-600" },
                 { key: "kediturustats", label: "Kedi Türü İstatistikleri", icon: <BarChart3 className="w-6 h-6" />, color: "text-violet-600" },
                 { key: "kopekturustats", label: "Köpek Türü İstatistikleri", icon: <BarChart3 className="w-6 h-6" />, color: "text-blue-600" },
                 { key: "hatirlatmalar", label: "Tekrar Sipariş Hatırlatmaları", icon: <Clock className="w-6 h-6" />, color: "text-teal-600" },
@@ -3627,163 +3586,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           </DialogContent>
         </Dialog>
-
-        {yonetimSub === "taksit" && <section>
-          <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-            <h2 className="text-lg font-bold" data-testid="text-section-installment-rates">
-              Taksit Oranları
-            </h2>
-          </div>
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              {installmentRates.length > 0 && (
-                <div className="space-y-2" data-testid="list-installment-rates">
-                  {installmentRates
-                    .sort((a, b) => a.months - b.months)
-                    .map((rate) => (
-                      <div
-                        key={rate.id}
-                        className="flex items-center gap-3 py-2 px-3 rounded-md bg-muted/30"
-                        data-testid={`row-installment-rate-${rate.id}`}
-                      >
-                        {editingInstId === rate.id ? (
-                          <>
-                            <Input
-                              type="number"
-                              value={editInstMonths}
-                              onChange={(e) => setEditInstMonths(e.target.value)}
-                              className="w-20 h-8"
-                              placeholder="Ay"
-                              data-testid="input-edit-inst-months"
-                            />
-                            <span className="text-sm text-muted-foreground">Taksit</span>
-                            <span className="text-sm text-muted-foreground">%</span>
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={editInstRate}
-                              onChange={(e) => setEditInstRate(e.target.value)}
-                              className="w-24 h-8"
-                              placeholder="Oran"
-                              data-testid="input-edit-inst-rate"
-                            />
-                            <div className="flex gap-1 ml-auto">
-                              <Button
-                                variant="default"
-                                size="sm"
-                                className="h-7"
-                                onClick={() => {
-                                  const m = parseInt(editInstMonths);
-                                  const r = parseFloat(editInstRate);
-                                  if (isNaN(m) || isNaN(r) || m < 1 || r < 0) return;
-                                  updateInstallmentMutation.mutate({
-                                    id: rate.id,
-                                    data: { months: m, rate: r },
-                                  });
-                                }}
-                                data-testid="btn-save-inst-edit"
-                              >
-                                Kaydet
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7"
-                                onClick={() => setEditingInstId(null)}
-                                data-testid="btn-cancel-inst-edit"
-                              >
-                                İptal
-                              </Button>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-sm font-bold w-16">{rate.months} Taksit</span>
-                            <span className="text-sm font-medium flex-1">%{rate.rate}</span>
-                            <Badge
-                              variant={rate.isActive ? "default" : "secondary"}
-                              className="no-default-hover-elevate cursor-pointer"
-                              onClick={() =>
-                                updateInstallmentMutation.mutate({
-                                  id: rate.id,
-                                  data: { isActive: !rate.isActive },
-                                })
-                              }
-                              data-testid={`badge-inst-active-${rate.id}`}
-                            >
-                              {rate.isActive ? "Aktif" : "Pasif"}
-                            </Badge>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7"
-                              onClick={() => {
-                                setEditingInstId(rate.id);
-                                setEditInstMonths(String(rate.months));
-                                setEditInstRate(String(rate.rate));
-                              }}
-                              data-testid={`btn-edit-inst-${rate.id}`}
-                            >
-                              <Pencil className="w-3 h-3" />
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="icon"
-                              className="h-7 w-7 text-destructive"
-                              onClick={() => deleteInstallmentMutation.mutate(rate.id)}
-                              data-testid={`btn-delete-inst-${rate.id}`}
-                            >
-                              <Trash2 className="w-3 h-3" />
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                    ))}
-                </div>
-              )}
-
-              <div className="flex items-center gap-2 pt-2 border-t flex-wrap">
-                <Input
-                  type="number"
-                  placeholder="Ay sayısı"
-                  value={newInstMonths}
-                  onChange={(e) => setNewInstMonths(e.target.value)}
-                  className="w-24"
-                  data-testid="input-new-inst-months"
-                />
-                <span className="text-sm text-muted-foreground">Taksit</span>
-                <span className="text-sm text-muted-foreground">%</span>
-                <Input
-                  type="number"
-                  step="0.01"
-                  placeholder="Oran"
-                  value={newInstRate}
-                  onChange={(e) => setNewInstRate(e.target.value)}
-                  className="w-24"
-                  data-testid="input-new-inst-rate"
-                />
-                <Button
-                  size="sm"
-                  disabled={!newInstMonths || !newInstRate || isNaN(parseInt(newInstMonths)) || isNaN(parseFloat(newInstRate)) || parseInt(newInstMonths) < 1 || parseFloat(newInstRate) < 0 || createInstallmentMutation.isPending}
-                  onClick={() => {
-                    const m = parseInt(newInstMonths);
-                    const r = parseFloat(newInstRate);
-                    if (isNaN(m) || isNaN(r) || m < 1 || r < 0) return;
-                    createInstallmentMutation.mutate({
-                      months: m,
-                      rate: r,
-                      sortOrder: installmentRates.length + 1,
-                    });
-                  }}
-                  data-testid="btn-add-installment"
-                >
-                  <Plus className="w-4 h-4" />
-                  Ekle
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </section>}
 
         {yonetimSub === "kediturustats" && <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
