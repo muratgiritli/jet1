@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -577,6 +577,63 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [nhDistrictFilter, setNhDistrictFilter] = useState<string>("all");
   const [activeSection, setActiveSection] = useState<string>("yonetim");
   const [yonetimSub, setYonetimSub] = useState<string | null>(null);
+  const [notificationEnabled, setNotificationEnabled] = useState(true);
+  const [newOrderAlert, setNewOrderAlert] = useState<{id: number; customerName: string; grandTotal: number; paymentMethod: string} | null>(null);
+  const lastKnownOrderIdRef = useRef<number>(0);
+  const audioContextRef = useRef<AudioContext | null>(null);
+
+  const playNotificationSound = useCallback(() => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = audioContextRef.current;
+      const now = ctx.currentTime;
+      for (let i = 0; i < 3; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(i === 1 ? 880 : 660, now + i * 0.3);
+        gain.gain.setValueAtTime(0.3, now + i * 0.3);
+        gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.3 + 0.25);
+        osc.start(now + i * 0.3);
+        osc.stop(now + i * 0.3 + 0.25);
+      }
+    } catch (e) {
+      console.error("Audio play error:", e);
+    }
+  }, []);
+
+  const baselineLoadedRef = useRef(false);
+
+  useEffect(() => {
+    if (!notificationEnabled) return;
+    const checkOrders = async () => {
+      try {
+        const res = await fetch("/api/admin/new-order-check", { credentials: "include" });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!baselineLoadedRef.current) {
+          lastKnownOrderIdRef.current = data.lastId || 0;
+          baselineLoadedRef.current = true;
+          return;
+        }
+        if (data.hasNew && data.lastId > lastKnownOrderIdRef.current) {
+          playNotificationSound();
+          setNewOrderAlert(data.latest);
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/dashboard-stats"] });
+          lastKnownOrderIdRef.current = data.lastId;
+          setTimeout(() => setNewOrderAlert(null), 15000);
+        }
+      } catch {}
+    };
+    checkOrders();
+    const interval = setInterval(checkOrders, 10000);
+    return () => clearInterval(interval);
+  }, [notificationEnabled, playNotificationSound]);
 
   const bulkPriceUpdateMutation = useMutation({
     mutationFn: async ({ productIds, percentage }: { productIds: number[]; percentage: number }) => {
@@ -1121,12 +1178,55 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <span className="text-xs sm:text-sm font-normal text-muted-foreground ml-1 sm:ml-2">Admin</span>
             </h1>
           </div>
-          <Button variant="outline" size="sm" onClick={() => logoutMutation.mutate()} data-testid="btn-admin-logout">
-            <LogOut className="w-4 h-4" />
-            <span className="hidden sm:inline ml-1">Çıkış</span>
-          </Button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setNotificationEnabled(prev => !prev)}
+              className={`relative p-1.5 rounded-full transition-colors ${notificationEnabled ? "text-green-600 bg-green-100" : "text-gray-400 bg-gray-100"}`}
+              title={notificationEnabled ? "Bildirimler açık" : "Bildirimler kapalı"}
+              data-testid="btn-toggle-notification"
+            >
+              <Bell className="w-4 h-4" />
+              {notificationEnabled && <span className="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
+            </button>
+            <Button variant="outline" size="sm" onClick={() => logoutMutation.mutate()} data-testid="btn-admin-logout">
+              <LogOut className="w-4 h-4" />
+              <span className="hidden sm:inline ml-1">Çıkış</span>
+            </Button>
+          </div>
         </div>
       </header>
+
+      {newOrderAlert && (
+        <div className="fixed top-16 left-1/2 -translate-x-1/2 z-[10000] animate-bounce" data-testid="new-order-alert">
+          <div className="bg-green-600 text-white px-6 py-3 rounded-xl shadow-2xl flex items-center gap-3 max-w-sm">
+            <div className="bg-white/20 rounded-full p-2">
+              <ShoppingBag className="w-6 h-6" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="font-bold text-sm">Yeni Sipariş #{newOrderAlert.id}</p>
+              <p className="text-xs opacity-90">{newOrderAlert.customerName}</p>
+              <p className="text-xs font-bold">{newOrderAlert.grandTotal.toLocaleString("tr-TR")} ₺ - {newOrderAlert.paymentMethod}</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setNewOrderAlert(null);
+                setActiveSection("yonetim");
+                setYonetimSub("siparisler");
+                setOrdersExpanded(true);
+              }}
+              className="bg-white/20 hover:bg-white/30 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors"
+              data-testid="btn-view-new-order"
+            >
+              Görüntüle
+            </button>
+            <button type="button" onClick={() => setNewOrderAlert(null)} className="text-white/70 hover:text-white" data-testid="btn-dismiss-alert">
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="border-b bg-background/95 backdrop-blur sticky top-[49px] sm:top-[57px] z-[9998]">
         <div className="max-w-5xl mx-auto px-2 sm:px-4 py-1.5 sm:py-2 flex gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar" style={{ WebkitOverflowScrolling: "touch" }}>
@@ -4903,6 +5003,8 @@ function SettingsSection() {
     pet_base_exp: "",
     pet_streak_exp_bonus: "",
     loyalty_percent: "",
+    admin_phone: "",
+    order_notification_sms: "1",
   });
 
   useEffect(() => {
@@ -4914,6 +5016,8 @@ function SettingsSection() {
         pet_base_exp: settings.pet_base_exp || "10",
         pet_streak_exp_bonus: settings.pet_streak_exp_bonus || "2",
         loyalty_percent: settings.loyalty_percent || "5",
+        admin_phone: settings.admin_phone || "",
+        order_notification_sms: settings.order_notification_sms ?? "1",
       });
     }
   }, [settings]);
@@ -4986,6 +5090,42 @@ function SettingsSection() {
               <p className="text-muted-foreground">Örnek: 500 TL sipariş = <strong>{Math.round(500 * (Number(form.loyalty_percent || 5) / 100))} puan</strong></p>
               <p className="text-muted-foreground">Örnek: 10. gün besleme = <strong>{Math.min(Number(form.pet_base_points || 1) + Math.floor(10 / Math.max(Number(form.pet_streak_divisor || 3), 1)), Number(form.pet_max_points || 5))} puan</strong>, {Number(form.pet_base_exp || 10) + 10 * Number(form.pet_streak_exp_bonus || 2)} XP</p>
             </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-4 space-y-4">
+          <h3 className="text-sm font-bold flex items-center gap-2">📱 Sipariş Bildirim Ayarları</h3>
+          <div className="flex items-start gap-3 pb-3 border-b">
+            <span className="text-xl mt-1">📞</span>
+            <div className="flex-1 min-w-0">
+              <Label className="text-sm font-bold">Admin Telefon Numarası</Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Yeni sipariş geldiğinde SMS bildirim alacak numara</p>
+            </div>
+            <Input
+              type="tel"
+              placeholder="5XXXXXXXXX"
+              value={form.admin_phone}
+              onChange={e => setForm(prev => ({ ...prev, admin_phone: e.target.value.replace(/\D/g, "").slice(0, 10) }))}
+              className="w-32 text-center font-bold"
+              data-testid="input-admin-phone"
+            />
+          </div>
+          <div className="flex items-start gap-3">
+            <span className="text-xl mt-1">✉️</span>
+            <div className="flex-1 min-w-0">
+              <Label className="text-sm font-bold">SMS Bildirimi</Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Yeni siparişlerde SMS bildirim gönderilsin mi?</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForm(prev => ({ ...prev, order_notification_sms: prev.order_notification_sms === "1" ? "0" : "1" }))}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.order_notification_sms === "1" ? "bg-green-500" : "bg-gray-300"}`}
+              data-testid="toggle-sms-notification"
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.order_notification_sms === "1" ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
           </div>
         </CardContent>
       </Card>

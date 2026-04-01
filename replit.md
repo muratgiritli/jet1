@@ -41,6 +41,7 @@ The application employs a modern web architecture:
 - **Özel Patiler**: Multi-pet dashboard for managing pet profiles, health records, feeding history, photos, and weight.
 - **Sahiplendirme & Kayıp İlan**: Lost/found/adoption board for pets.
 - **Pati-Blog & Bilgi Bankası**: Local pet care knowledge base with categorized articles.
+- **Order Notifications**: Real-time admin notifications for new orders — browser sound alerts (Web Audio API) + visual popup in admin panel with 10s polling, and SMS notification to admin phone via NetGSM. Admin phone number and SMS toggle configurable from admin settings panel (`app_settings` table: `admin_phone`, `order_notification_sms` keys).
 - **Security Hardening**: Multi-layer rate limiting, comprehensive security headers (HSTS, CSP, etc.), input validation, and admin-specific lockout mechanisms.
 - **UI/UX**: Clean, modern, and responsive design with intuitive navigation elements.
 

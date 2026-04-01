@@ -1139,7 +1139,46 @@ export async function registerRoutes(
         }
       }
     }
+    try {
+      const adminPhoneResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'admin_phone'");
+      const smsEnabledResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'order_notification_sms'");
+      const adminPhone = adminPhoneResult.rows[0]?.value;
+      const smsEnabled = smsEnabledResult.rows[0]?.value !== "0";
+      if (adminPhone && smsEnabled) {
+        const customerName = orderData.customerName || "Bilinmeyen";
+        const smsMsg = `YENI SIPARIS #${order.id}\n${customerName}\nTutar: ${orderData.grandTotal} TL\nOdeme: ${orderData.paymentMethod}\n${orderData.items.length} urun`;
+        sendSmsViaNetgsm(adminPhone, smsMsg).catch(err => {
+          console.error("Admin order notification SMS error:", err);
+        });
+      }
+    } catch (e) {
+      console.error("Admin notification error:", e);
+    }
+
     res.status(201).json(order);
+  });
+
+  app.get("/api/admin/new-order-check", requireAdmin, async (_req, res) => {
+    try {
+      const result = await sharedPool.query("SELECT id, customer_name, grand_total, payment_method, created_at FROM orders ORDER BY id DESC LIMIT 1");
+      const latestOrder = result.rows[0];
+      if (!latestOrder) return res.json({ hasNew: false, lastId: 0 });
+      const totalPending = await sharedPool.query("SELECT COUNT(*) as cnt FROM orders WHERE status = 'yeni'");
+      res.json({
+        hasNew: true,
+        lastId: latestOrder.id,
+        pendingCount: parseInt(totalPending.rows[0].cnt),
+        latest: {
+          id: latestOrder.id,
+          customerName: latestOrder.customer_name,
+          grandTotal: parseFloat(latestOrder.grand_total),
+          paymentMethod: latestOrder.payment_method,
+          createdAt: latestOrder.created_at,
+        }
+      });
+    } catch {
+      res.json({ hasNew: false, lastId: 0 });
+    }
   });
 
   app.get("/api/admin/settings", requireAdmin, async (_req, res) => {
@@ -1156,15 +1195,23 @@ export async function registerRoutes(
   app.patch("/api/admin/settings", requireAdmin, async (req, res) => {
     try {
       const updates = req.body;
-      const validKeys = ["pet_base_points", "pet_streak_divisor", "pet_max_points", "pet_base_exp", "pet_streak_exp_bonus", "loyalty_percent"];
+      const numericKeys = ["pet_base_points", "pet_streak_divisor", "pet_max_points", "pet_base_exp", "pet_streak_exp_bonus", "loyalty_percent"];
+      const textKeys = ["admin_phone", "order_notification_sms"];
       for (const [key, value] of Object.entries(updates)) {
-        if (!validKeys.includes(key)) continue;
-        const numVal = Number(value);
-        if (isNaN(numVal) || numVal < 0 || numVal > 100) continue;
-        await sharedPool.query(
-          "INSERT INTO app_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()",
-          [key, String(numVal)]
-        );
+        if (numericKeys.includes(key)) {
+          const numVal = Number(value);
+          if (isNaN(numVal) || numVal < 0 || numVal > 100) continue;
+          await sharedPool.query(
+            "INSERT INTO app_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()",
+            [key, String(numVal)]
+          );
+        } else if (textKeys.includes(key)) {
+          const strVal = String(value).trim();
+          await sharedPool.query(
+            "INSERT INTO app_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()",
+            [key, strVal]
+          );
+        }
       }
       const result = await sharedPool.query("SELECT key, value FROM app_settings");
       const settings: Record<string, string> = {};
