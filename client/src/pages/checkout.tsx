@@ -34,11 +34,16 @@ import {
   ShieldCheck,
   ShoppingBag,
   Gift,
+  Home,
+  User as UserIcon,
+  ArrowRight,
+  Phone as PhoneIcon,
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import {
   CONFIG,
   PAYMENT_OPTIONS,
+  TESLIMAT_MAHALLELERI,
 } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
 
@@ -230,7 +235,14 @@ export default function Checkout() {
 
   const handleAuthVerifyOtp = () => doAuthVerify(authOtpCode.join(""));
 
-  const [authAddress, setAuthAddress] = useState("");
+  const [authMahalle, setAuthMahalle] = useState("");
+  const [authCadde, setAuthCadde] = useState("");
+  const [authSokak, setAuthSokak] = useState("");
+  const [authKapiNo, setAuthKapiNo] = useState("");
+  const [authApartmanAdi, setAuthApartmanAdi] = useState("");
+  const [authKatNo, setAuthKatNo] = useState("");
+  const [authDaireNo, setAuthDaireNo] = useState("");
+  const [authAsansor, setAuthAsansor] = useState<"var" | "yok" | "">("");
 
   const handleAuthRegister = async () => {
     const errors: Record<string, string> = {};
@@ -240,8 +252,19 @@ export default function Checkout() {
     setAuthLoading(true);
     const normalized = authPhone.replace(/\D/g, "");
     const code = authOtpCode.join("");
+    const addressParts = [
+      authMahalle,
+      authCadde.trim() ? `Cadde: ${authCadde.trim()}` : "",
+      authSokak.trim() ? `Sokak: ${authSokak.trim()}` : "",
+      authKapiNo.trim() ? `Kapı No: ${authKapiNo.trim()}` : "",
+      authApartmanAdi.trim() ? `Apartman: ${authApartmanAdi.trim()}` : "",
+      authKatNo.trim() ? `Kat: ${authKatNo.trim()}` : "",
+      authDaireNo.trim() ? `Daire: ${authDaireNo.trim()}` : "",
+      authAsansor ? `Asansör: ${authAsansor === "var" ? "Var" : "Yok"}` : "",
+    ].filter(Boolean).join(", ");
     try {
-      await loginWithOtp(normalized, code, authName.trim(), authAddress.trim() || undefined);
+      await loginWithOtp(normalized, code, authName.trim(), addressParts || undefined);
+      if (authMahalle) localStorage.setItem("jet55_mahalle", authMahalle);
       setShowAuthModal(false);
       setPendingOrderAfterAuth(true);
     } catch (err: any) {
@@ -510,114 +533,102 @@ export default function Checkout() {
         noindex
       />
       {showAuthModal && !isLoggedIn && (
-          <div
-            className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center"
-          >
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-            <div
-              className="relative w-full max-w-md bg-background rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto"
-              data-testid="modal-auth"
-            >
-              <div className="sticky top-0 z-10 bg-background rounded-t-2xl border-b px-4 pt-4 pb-3">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-base font-bold" data-testid="text-auth-modal-title">
-                    {authStep === "phone" && "Giriş / Üye Ol"}
-                    {authStep === "otp" && "Doğrulama Kodu"}
-                    {authStep === "register" && "Bilgilerinizi Tamamlayın"}
-                  </h2>
-                  <button
-                    type="button"
-                    onClick={() => { setShowAuthModal(false); setAuthStep("phone"); setAuthErrors({}); }}
-                    className="p-1 rounded-full hover:bg-accent"
-                    data-testid="btn-close-auth-modal"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
+          <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center">
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowAuthModal(false); setAuthStep("phone"); setAuthErrors({}); }} />
+            <div className="relative w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-b from-blue-500 to-indigo-600 text-white" data-testid="modal-auth">
+              <button
+                type="button"
+                onClick={() => { setShowAuthModal(false); setAuthStep("phone"); setAuthErrors({}); }}
+                className="absolute top-3 right-3 z-10 p-1 text-white/70 hover:text-white"
+                data-testid="btn-close-auth-modal"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="px-5 pt-5 pb-2">
+                <div className="flex items-center gap-3 mb-1">
+                  <div className="w-11 h-11 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Gift className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <p className="font-bold text-lg leading-tight">Üye Ol & Bonus Kazan</p>
+                    <p className="text-sm text-white/90 leading-tight">100 TL anında bonus sepetinde!</p>
+                  </div>
                 </div>
               </div>
 
-              <div className="p-4 space-y-3">
+              <div className="px-5 pb-5 space-y-3">
                 {authStep === "phone" && (
                   <>
-                    <p className="text-xs text-muted-foreground text-center">Telefon numaranıza SMS ile doğrulama kodu göndereceğiz</p>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Telefon</label>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground font-medium shrink-0">+90</span>
-                        <Input
+                    <p className="text-sm font-bold flex items-center gap-1.5">
+                      <PhoneIcon className="w-4 h-4" /> Cep telefon numaranı gir
+                    </p>
+                    <div className="flex gap-2">
+                      <div className="flex-1 relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">+90</span>
+                        <input
                           type="tel"
-                          placeholder="5XX XXX XX XX"
+                          inputMode="numeric"
                           value={authPhone}
                           onChange={(e) => { handleAuthPhoneChange(e.target.value); setAuthErrors({}); }}
-                          className={`h-10 ${authErrors.phone ? "border-red-400" : ""}`}
-                          data-testid="input-auth-phone"
+                          placeholder="5XX XXX XX XX"
+                          className="w-full pl-12 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                          autoFocus
                           onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAuthSendOtp(); } }}
+                          data-testid="input-auth-phone"
                         />
                       </div>
-                      {authErrors.phone && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.phone}</p>}
+                      <button
+                        onClick={handleAuthSendOtp}
+                        disabled={authLoading}
+                        className="bg-yellow-400 text-gray-900 font-bold text-sm px-4 rounded-xl flex items-center gap-1 disabled:opacity-60 active:scale-[0.98] transition-transform flex-shrink-0"
+                        data-testid="btn-send-otp"
+                      >
+                        {authLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><ArrowRight className="w-4 h-4" /> Gönder</>}
+                      </button>
                     </div>
-                    <Button
-                      className="w-full h-11 font-semibold"
-                      style={{ backgroundColor: "#6B3480" }}
-                      onClick={handleAuthSendOtp}
-                      disabled={authLoading}
-                      data-testid="btn-send-otp"
-                    >
-                      {authLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      SMS Kodu Gönder
-                    </Button>
+                    {authErrors.phone && <p className="text-yellow-200 text-xs mt-1">{authErrors.phone}</p>}
+                    <p className="text-xs text-white/60 text-center mt-2">Mevcut üyeler giriş yaparak devam edebilir</p>
                   </>
                 )}
 
                 {authStep === "otp" && (
                   <>
-                    <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-50 border border-purple-100">
-                      <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0" />
-                      <span className="text-xs text-purple-700">+90 {authPhone} numarasına kod gönderildi</span>
+                    <p className="font-bold text-sm mb-1">SMS ile gelen 6 haneli kodu gir</p>
+                    <p className="text-xs text-white/70 mb-2">
+                      {authPhone} numarasına gönderildi
+                      {authCountdown > 0 && <span className="ml-1">({Math.floor(authCountdown / 60)}:{String(authCountdown % 60).padStart(2, "0")})</span>}
+                    </p>
+                    <div className="flex gap-1.5 justify-center mb-2">
+                      {authOtpCode.map((digit, i) => (
+                        <input
+                          key={i}
+                          ref={(el) => { authOtpRefs.current[i] = el; }}
+                          type="text"
+                          inputMode="numeric"
+                          maxLength={6}
+                          value={digit}
+                          onChange={(e) => handleAuthOtpChange(i, e.target.value)}
+                          onKeyDown={(e) => handleAuthOtpKeyDown(i, e)}
+                          onPaste={(e) => { e.preventDefault(); handleAuthOtpChange(0, e.clipboardData.getData("text").replace(/\D/g, "")); }}
+                          autoComplete={i === 0 ? "one-time-code" : "off"}
+                          className="w-10 h-11 text-center text-lg font-bold text-gray-900 bg-white rounded-lg outline-none"
+                          data-testid={`input-auth-otp-${i}`}
+                        />
+                      ))}
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground text-center block">Doğrulama Kodu</label>
-                      <div className="flex gap-2 justify-center">
-                        {authOtpCode.map((digit, i) => (
-                          <Input
-                            key={i}
-                            ref={(el) => { authOtpRefs.current[i] = el; }}
-                            value={digit}
-                            onChange={(e) => handleAuthOtpChange(i, e.target.value)}
-                            onKeyDown={(e) => handleAuthOtpKeyDown(i, e)}
-                            onPaste={(e) => { e.preventDefault(); handleAuthOtpChange(0, e.clipboardData.getData("text").replace(/\D/g, "")); }}
-                            type="tel"
-                            inputMode="numeric"
-                            maxLength={1}
-                            className={`w-10 h-12 text-center text-lg font-bold ${authErrors.otp ? "border-red-400" : ""}`}
-                            autoComplete={i === 0 ? "one-time-code" : "off"}
-                            data-testid={`input-auth-otp-${i}`}
-                          />
-                        ))}
+                    {authLoading && (
+                      <div className="flex items-center justify-center gap-2 text-sm">
+                        <Loader2 className="w-4 h-4 animate-spin" /> Doğrulanıyor...
                       </div>
-                      {authErrors.otp && <p className="text-[11px] text-red-500 text-center mt-1">{authErrors.otp}</p>}
-                    </div>
-                    {authCountdown > 0 && (
-                      <p className="text-xs text-center text-muted-foreground">
-                        Kod {Math.floor(authCountdown / 60)}:{(authCountdown % 60).toString().padStart(2, "0")} süre geçerli
-                      </p>
                     )}
-                    <Button
-                      className="w-full h-11 font-semibold"
-                      style={{ backgroundColor: "#6B3480" }}
-                      onClick={handleAuthVerifyOtp}
-                      disabled={authLoading || authOtpCode.join("").length !== 6}
-                      data-testid="btn-verify-otp"
-                    >
-                      {authLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      Doğrula
-                    </Button>
+                    {authErrors.otp && <p className="text-yellow-200 text-xs text-center">{authErrors.otp}</p>}
                     <div className="flex items-center justify-between">
-                      <button type="button" className="text-xs text-muted-foreground hover:underline" onClick={() => { setAuthStep("phone"); setAuthErrors({}); }} data-testid="btn-auth-back-phone">
+                      <button type="button" className="text-xs text-white/70 hover:text-white" onClick={() => { setAuthStep("phone"); setAuthErrors({}); }} data-testid="btn-auth-back-phone">
                         ← Numarayı Değiştir
                       </button>
                       {authCountdown <= 0 && (
-                        <button type="button" className="text-xs hover:underline" style={{ color: "#6B3480" }} onClick={handleAuthSendOtp} disabled={authLoading} data-testid="btn-auth-resend">
+                        <button type="button" className="text-xs text-yellow-300 hover:text-yellow-200" onClick={handleAuthSendOtp} disabled={authLoading} data-testid="btn-auth-resend">
                           Tekrar Gönder
                         </button>
                       )}
@@ -627,42 +638,117 @@ export default function Checkout() {
 
                 {authStep === "register" && (
                   <>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Ad Soyad</label>
-                      <Input
-                        type="text"
-                        placeholder="Ad Soyad"
-                        value={authName}
-                        onChange={(e) => { setAuthName(e.target.value); setAuthErrors((p) => ({ ...p, name: "" })); }}
-                        className={`h-10 ${authErrors.name ? "border-red-400" : ""}`}
-                        data-testid="input-auth-name"
-                      />
-                      {authErrors.name && <p className="text-[11px] text-red-500 mt-0.5">{authErrors.name}</p>}
+                    <p className="font-bold text-sm flex items-center gap-1.5">
+                      <Check className="w-4 h-4" /> Numara doğrulandı! Bilgilerini tamamla
+                    </p>
+                    <div className="space-y-2">
+                      <div className="relative">
+                        <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <input
+                          type="text"
+                          value={authName}
+                          onChange={(e) => { setAuthName(e.target.value); setAuthErrors((p) => ({ ...p, name: "" })); }}
+                          placeholder="Adı Soyadı *"
+                          className={`w-full pl-10 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none ${authErrors.name ? "ring-2 ring-red-400" : ""}`}
+                          autoFocus
+                          data-testid="input-auth-name"
+                        />
+                      </div>
+                      {authErrors.name && <p className="text-yellow-200 text-xs">{authErrors.name}</p>}
+
+                      <div className="relative">
+                        <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <select
+                          value={authMahalle}
+                          onChange={(e) => setAuthMahalle(e.target.value)}
+                          className="w-full pl-10 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none appearance-none bg-white"
+                          data-testid="select-auth-mahalle"
+                        >
+                          <option value="">Mahalle Seçin</option>
+                          {TESLIMAT_MAHALLELERI.map((m) => (
+                            <option key={m} value={m}>{m}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={authCadde}
+                          onChange={(e) => setAuthCadde(e.target.value)}
+                          placeholder="Cadde"
+                          className="w-full px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                          data-testid="input-auth-cadde"
+                        />
+                        <input
+                          type="text"
+                          value={authSokak}
+                          onChange={(e) => setAuthSokak(e.target.value)}
+                          placeholder="Sokak"
+                          className="w-full px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                          data-testid="input-auth-sokak"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <input
+                          type="text"
+                          value={authKapiNo}
+                          onChange={(e) => setAuthKapiNo(e.target.value)}
+                          placeholder="Kapı No"
+                          className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                          data-testid="input-auth-kapi"
+                        />
+                        <input
+                          type="text"
+                          value={authApartmanAdi}
+                          onChange={(e) => setAuthApartmanAdi(e.target.value)}
+                          placeholder="Apartman Adı"
+                          className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                          data-testid="input-auth-apartman"
+                        />
+                      </div>
+
+                      <div className="grid grid-cols-3 gap-2">
+                        <input
+                          type="text"
+                          value={authKatNo}
+                          onChange={(e) => setAuthKatNo(e.target.value)}
+                          placeholder="Kat No"
+                          className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                          data-testid="input-auth-kat"
+                        />
+                        <input
+                          type="text"
+                          value={authDaireNo}
+                          onChange={(e) => setAuthDaireNo(e.target.value)}
+                          placeholder="Daire No"
+                          className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
+                          data-testid="input-auth-daire"
+                        />
+                        <select
+                          value={authAsansor}
+                          onChange={(e) => setAuthAsansor(e.target.value as "var" | "yok" | "")}
+                          className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none appearance-none bg-white"
+                          data-testid="select-auth-asansor"
+                        >
+                          <option value="">Asansör</option>
+                          <option value="var">Var</option>
+                          <option value="yok">Yok</option>
+                        </select>
+                      </div>
+
+                      {authErrors.general && <p className="text-yellow-200 text-xs text-center">{authErrors.general}</p>}
+                      <button
+                        onClick={handleAuthRegister}
+                        disabled={authLoading}
+                        className="w-full bg-yellow-400 text-gray-900 font-bold text-sm py-2.5 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.98] transition-transform"
+                        data-testid="btn-auth-submit"
+                      >
+                        {authLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Gift className="w-4 h-4" /> Kaydol ve 100 TL Kazan</>}
+                      </button>
                     </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">Adres</label>
-                      <Textarea
-                        placeholder="Mahalle, cadde, bina no, kat, daire no..."
-                        value={authAddress}
-                        onChange={(e) => setAuthAddress(e.target.value)}
-                        className="resize-none"
-                        rows={3}
-                        maxLength={500}
-                        data-testid="input-auth-address"
-                      />
-                    </div>
-                    {authErrors.general && <p className="text-[11px] text-red-500 text-center">{authErrors.general}</p>}
-                    <Button
-                      className="w-full h-11 font-semibold"
-                      style={{ backgroundColor: "#6B3480" }}
-                      onClick={handleAuthRegister}
-                      disabled={authLoading}
-                      data-testid="btn-auth-submit"
-                    >
-                      {authLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-                      Üye Ol ve Devam Et
-                    </Button>
-                    <button type="button" className="text-xs text-muted-foreground hover:underline mx-auto block" onClick={() => { setAuthStep("phone"); setAuthErrors({}); }}>
+                    <button type="button" className="text-xs text-white/70 hover:text-white mx-auto block mt-2" onClick={() => { setAuthStep("phone"); setAuthErrors({}); }}>
                       ← Başa Dön
                     </button>
                   </>
