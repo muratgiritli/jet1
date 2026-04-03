@@ -114,7 +114,7 @@ export default function Footer() {
             </div>
 
             <p className="text-xs text-gray-500">JETGO - Samsun Pet Shop</p>
-            <p className="text-xs text-gray-500">Bu web sitesi, <a href="https://www.sizpa.net/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors underline">Sizpa Yazılım</a> tarafından tasarlanmış ve geliştirilmiştir.</p>
+            <p className="text-xs text-gray-500">Bu web sitesi, <a href="https://www.sizpa.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors underline">Sizpa Yazılım</a> tarafından tasarlanmış ve geliştirilmiştir.</p>
           </div>
         </div>
       </div>

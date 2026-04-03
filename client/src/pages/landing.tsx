@@ -544,7 +544,7 @@ function DesktopContactStrip() {
             </div>
             <div>
               <p className="text-sm font-bold text-gray-800">E-posta</p>
-              <a href="mailto:info@sizpa.net" className="text-sm text-gray-500 hover:text-blue-600 transition-colors">info@sizpa.net</a>
+              <a href="mailto:info@sizpa.com" className="text-sm text-gray-500 hover:text-blue-600 transition-colors">info@sizpa.com</a>
             </div>
           </div>
           <div className="flex items-center gap-4">
