@@ -198,12 +198,45 @@ function ProductForm({
   const [brandCategoryId, setBrandCategoryId] = useState(
     product?.brandCategoryId?.toString() || ""
   );
+  const [showNewBrand, setShowNewBrand] = useState(false);
+  const [newBrandName, setNewBrandName] = useState("");
+  const [newBrandLoading, setNewBrandLoading] = useState(false);
+  const { toast } = useToast();
 
   const availableSubcategories = subcategoriesByAnimal[selectedAnimal] || [];
 
   const filteredCategories = categories.filter(
     (c) => c.animal === selectedAnimal && c.subcategory === selectedSubcategory
   );
+
+  const handleAddNewBrand = async () => {
+    if (!newBrandName.trim() || !selectedAnimal || !selectedSubcategory) return;
+    setNewBrandLoading(true);
+    try {
+      const slug = newBrandName.trim().toLowerCase()
+        .replace(/ö/g,"o").replace(/ü/g,"u").replace(/ş/g,"s").replace(/ç/g,"c")
+        .replace(/ı/g,"i").replace(/ğ/g,"g").replace(/İ/g,"i").replace(/\s+/g, "-")
+        .replace(/[^a-z0-9-]/g, "");
+      const res = await apiRequest("POST", "/api/admin/brand-categories", {
+        brandName: newBrandName.trim(),
+        brandSlug: slug,
+        animal: selectedAnimal,
+        subcategory: selectedSubcategory,
+      });
+      const created = await res.json();
+      queryClient.invalidateQueries({ queryKey: ["/api/brand-categories"] });
+      setBrandCategoryId(String(created.id));
+      setNewBrandName("");
+      setShowNewBrand(false);
+      toast({ title: `"${created.brandName}" markası eklendi` });
+    } catch (err: any) {
+      let msg = "Marka eklenemedi";
+      try { msg = JSON.parse(err.message.replace(/^\d+:\s*/, "")).message; } catch {}
+      toast({ title: msg, variant: "destructive" });
+    } finally {
+      setNewBrandLoading(false);
+    }
+  };
 
   return (
     <form
@@ -274,29 +307,76 @@ function ProductForm({
         </div>
       </div>
 
-      {filteredCategories.length > 1 && (
+      {selectedSubcategory && (
         <div className="space-y-2">
-          <Label>Marka</Label>
-          <Select
-            value={brandCategoryId}
-            onValueChange={setBrandCategoryId}
-            disabled={!selectedSubcategory}
-          >
-            <SelectTrigger data-testid="select-brand-category">
-              <SelectValue placeholder="Marka seçin" />
-            </SelectTrigger>
-            <SelectContent>
-              {filteredCategories.map((c) => (
-                <SelectItem key={c.id} value={String(c.id)} data-testid={`option-category-${c.id}`}>
-                  {c.brandName}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="flex items-center justify-between">
+            <Label>Marka</Label>
+            {selectedAnimal && selectedSubcategory && !showNewBrand && (
+              <button
+                type="button"
+                onClick={() => setShowNewBrand(true)}
+                className="text-xs font-medium flex items-center gap-1 hover:underline"
+                style={{ color: "#6B3480" }}
+                data-testid="btn-add-new-brand"
+              >
+                <Plus className="w-3 h-3" /> Yeni Marka Ekle
+              </button>
+            )}
+          </div>
+          {filteredCategories.length > 0 && !showNewBrand && (
+            <Select
+              value={brandCategoryId}
+              onValueChange={setBrandCategoryId}
+            >
+              <SelectTrigger data-testid="select-brand-category">
+                <SelectValue placeholder="Marka seçin" />
+              </SelectTrigger>
+              <SelectContent>
+                {filteredCategories.map((c) => (
+                  <SelectItem key={c.id} value={String(c.id)} data-testid={`option-category-${c.id}`}>
+                    {c.brandName}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
+          {filteredCategories.length === 0 && !showNewBrand && (
+            <p className="text-xs text-amber-600">Bu alt kategoride henüz marka yok. Yeni marka ekleyebilirsiniz.</p>
+          )}
+          {showNewBrand && (
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <Input
+                  value={newBrandName}
+                  onChange={(e) => setNewBrandName(e.target.value)}
+                  placeholder="Marka adı girin"
+                  autoFocus
+                  onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleAddNewBrand(); } }}
+                  data-testid="input-new-brand-name"
+                />
+              </div>
+              <Button
+                type="button"
+                size="sm"
+                onClick={handleAddNewBrand}
+                disabled={newBrandLoading || !newBrandName.trim()}
+                style={{ backgroundColor: "#6B3480" }}
+                data-testid="btn-save-new-brand"
+              >
+                {newBrandLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => { setShowNewBrand(false); setNewBrandName(""); }}
+                data-testid="btn-cancel-new-brand"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
         </div>
-      )}
-      {selectedSubcategory && filteredCategories.length === 0 && (
-        <p className="text-xs text-red-500 text-sm">Bu alt kategoride henüz marka eklenmemiş</p>
       )}
 
       <div className="space-y-2">
