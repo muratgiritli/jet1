@@ -612,9 +612,7 @@ export async function registerRoutes(
     if (!activeOnly) {
       res.json({ category, products: prods });
     } else {
-      const campaignRes = await sharedPool.query("SELECT product_id FROM campaign_items WHERE is_active = true");
-      const campaignIds = new Set(campaignRes.rows.map((r: any) => r.product_id));
-      res.json({ category, products: prods.filter(p => p.isActive && !campaignIds.has(p.id)) });
+      res.json({ category, products: prods.filter(p => p.isActive) });
     }
   });
 
@@ -632,9 +630,7 @@ export async function registerRoutes(
     const category = await storage.getBrandCategoryBySlug(animal, subcategory, brandSlug);
     if (!category) return res.status(404).json({ message: "Brand category not found" });
     const prods = await storage.getProductsByBrandCategory(category.id);
-    const campaignRes = await sharedPool.query("SELECT product_id FROM campaign_items WHERE is_active = true");
-    const campaignIds = new Set(campaignRes.rows.map((r: any) => r.product_id));
-    res.json({ category, products: prods.filter(p => p.isActive && !campaignIds.has(p.id)) });
+    res.json({ category, products: prods.filter(p => p.isActive) });
   });
 
   app.get("/api/subcategory-products/:animal/:subcategorySlug", async (req, res) => {
@@ -646,10 +642,8 @@ export async function registerRoutes(
       .map((bc) => bc.id);
     if (matchingCatIds.length === 0) return res.json([]);
     const allProducts = await storage.getAllProducts();
-    const campaignRes = await sharedPool.query("SELECT product_id FROM campaign_items WHERE is_active = true");
-    const campaignIds = new Set(campaignRes.rows.map((r: any) => r.product_id));
     const filtered = allProducts.filter(
-      (p) => p.isActive && p.brandCategoryId && matchingCatIds.includes(p.brandCategoryId) && !campaignIds.has(p.id)
+      (p) => p.isActive && p.brandCategoryId && matchingCatIds.includes(p.brandCategoryId)
     );
     res.setHeader("Cache-Control", "public, max-age=120, stale-while-revalidate=600");
     res.json(filtered);
