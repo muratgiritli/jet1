@@ -84,7 +84,7 @@ export const LOCAL_BUSINESS_JSONLD = {
   "logo": `${SITE_DOMAIN}/favicon.webp`,
   "image": `${SITE_DOMAIN}/og-image.webp`,
   "telephone": "+908508403959",
-  "email": "info@sizpa.net",
+  "email": "info@sizpa.com",
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Atakum",
