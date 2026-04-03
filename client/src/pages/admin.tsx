@@ -167,6 +167,70 @@ function LoginForm({ onLogin }: { onLogin: () => void }) {
   );
 }
 
+function BrandTag({ brand, count, onDelete, onUpdate }: { brand: any; count: number; onDelete: () => void; onUpdate: (name: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [editName, setEditName] = useState(brand.brandName);
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1.5 bg-background rounded-md px-2 py-1 border border-blue-300" data-testid={`brand-tag-${brand.id}`}>
+        <Input
+          value={editName}
+          onChange={(e) => setEditName(e.target.value)}
+          className="h-6 text-xs w-28 px-1.5"
+          autoFocus
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && editName.trim()) { onUpdate(editName.trim()); setEditing(false); }
+            if (e.key === "Escape") { setEditName(brand.brandName); setEditing(false); }
+          }}
+          data-testid={`input-edit-brand-${brand.id}`}
+        />
+        <button
+          className="text-green-600 hover:text-green-700"
+          onClick={() => { if (editName.trim()) { onUpdate(editName.trim()); setEditing(false); } }}
+          data-testid={`btn-save-brand-${brand.id}`}
+        >
+          <Check className="w-3.5 h-3.5" />
+        </button>
+        <button
+          className="text-muted-foreground hover:text-foreground"
+          onClick={() => { setEditName(brand.brandName); setEditing(false); }}
+          data-testid={`btn-cancel-edit-brand-${brand.id}`}
+        >
+          <X className="w-3.5 h-3.5" />
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1.5 bg-background rounded-md px-2.5 py-1.5 border" data-testid={`brand-tag-${brand.id}`}>
+      <span className="text-xs font-medium">{brand.brandName}</span>
+      <Badge variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate">
+        {count}
+      </Badge>
+      <button
+        className="text-muted-foreground/50 hover:text-blue-600 ml-0.5"
+        onClick={() => setEditing(true)}
+        data-testid={`btn-edit-brand-${brand.id}`}
+      >
+        <Pencil className="w-3 h-3" />
+      </button>
+      <button
+        className="text-muted-foreground/50 hover:text-red-600"
+        onClick={() => {
+          if (confirm(`"${brand.brandName}" markası ve tüm ürünleri silinecek. Emin misiniz?`)) {
+            onDelete();
+          }
+        }}
+        data-testid={`btn-delete-category-${brand.id}`}
+      >
+        <Trash2 className="w-3 h-3" />
+      </button>
+    </div>
+  );
+}
+
 function ProductForm({
   categories,
   product,
@@ -892,6 +956,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/brand-categories"] });
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    },
+  });
+
+  const updateCategoryMutation = useMutation({
+    mutationFn: async ({ id, brandName }: { id: number; brandName: string }) => {
+      await apiRequest("PATCH", `/api/admin/brand-categories/${id}`, { brandName });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/brand-categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Marka güncellendi" });
     },
   });
 
@@ -2454,23 +2529,13 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 {brands.map((brand) => {
                                   const count = allProducts.filter((p) => p.brandCategoryId === brand.id).length;
                                   return (
-                                    <div key={brand.id} className="flex items-center gap-1.5 bg-background rounded-md px-2.5 py-1.5 border" data-testid={`brand-tag-${brand.id}`}>
-                                      <span className="text-xs font-medium">{brand.brandName}</span>
-                                      <Badge variant="secondary" className="text-[10px] no-default-hover-elevate no-default-active-elevate">
-                                        {count}
-                                      </Badge>
-                                      <button
-                                        className="text-muted-foreground/50 ml-0.5"
-                                        onClick={() => {
-                                          if (confirm(`"${brand.brandName}" markası ve tüm ürünleri silinecek. Emin misiniz?`)) {
-                                            deleteCategoryMutation.mutate(brand.id);
-                                          }
-                                        }}
-                                        data-testid={`btn-delete-category-${brand.id}`}
-                                      >
-                                        <Trash2 className="w-3 h-3" />
-                                      </button>
-                                    </div>
+                                    <BrandTag
+                                      key={brand.id}
+                                      brand={brand}
+                                      count={count}
+                                      onDelete={() => deleteCategoryMutation.mutate(brand.id)}
+                                      onUpdate={(newName) => updateCategoryMutation.mutate({ id: brand.id, brandName: newName })}
+                                    />
                                   );
                                 })}
                               </div>
