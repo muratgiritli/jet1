@@ -224,7 +224,7 @@ function ProductForm({
         subcategory: selectedSubcategory,
       });
       const created = await res.json();
-      queryClient.invalidateQueries({ queryKey: ["/api/brand-categories"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/brand-categories"] });
       setBrandCategoryId(String(created.id));
       setNewBrandName("");
       setShowNewBrand(false);
