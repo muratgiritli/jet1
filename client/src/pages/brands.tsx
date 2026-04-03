@@ -36,8 +36,21 @@ const BRAND_COLORS: Record<string, string> = {
   "dogs-favorite": "#795548",
 };
 
+const FALLBACK_COLORS = [
+  "#D32F2F", "#7B1FA2", "#303F9F", "#0288D1", "#00796B",
+  "#388E3C", "#F57C00", "#5D4037", "#455A64", "#C2185B",
+  "#512DA8", "#1976D2", "#0097A7", "#689F38", "#E64A19",
+  "#6D4C41", "#37474F", "#AD1457", "#283593", "#00695C",
+];
+
 function getBrandColor(slug: string): string {
-  return BRAND_COLORS[slug] || "#607D8B";
+  if (BRAND_COLORS[slug]) return BRAND_COLORS[slug];
+  let hash = 0;
+  for (let i = 0; i < slug.length; i++) {
+    hash = ((hash << 5) - hash) + slug.charCodeAt(i);
+    hash |= 0;
+  }
+  return FALLBACK_COLORS[Math.abs(hash) % FALLBACK_COLORS.length];
 }
 
 export default function BrandsPage() {

@@ -289,7 +289,9 @@ function ProductForm({
         subcategory: selectedSubcategory,
       });
       const created = await res.json();
-      await queryClient.refetchQueries({ queryKey: ["/api/brand-categories"] });
+      queryClient.setQueryData(["/api/brand-categories"], (old: any[]) =>
+        old ? [...old, created] : [created]
+      );
       setBrandCategoryId(String(created.id));
       setNewBrandName("");
       setShowNewBrand(false);
@@ -932,11 +934,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const createCategoryMutation = useMutation({
     mutationFn: async (data: any) => {
-      await apiRequest("POST", "/api/admin/brand-categories", data);
+      const res = await apiRequest("POST", "/api/admin/brand-categories", data);
+      return await res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/brand-categories"] });
+    onSuccess: (created: any) => {
+      queryClient.setQueryData(["/api/brand-categories"], (old: any[]) =>
+        old ? [...old, created] : [created]
+      );
       setCategoryDialogOpen(false);
+      toast({ title: `"${created.brandName}" markası eklendi` });
     },
   });
 
