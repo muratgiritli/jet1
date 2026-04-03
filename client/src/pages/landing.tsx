@@ -609,7 +609,7 @@ export default function Landing() {
           </div>
         )}
 
-        <div className="mt-2 md:mt-6">
+        <div className="hidden md:block mt-2 md:mt-6">
           <HeroCarousel />
         </div>
 
