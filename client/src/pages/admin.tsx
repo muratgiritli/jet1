@@ -187,14 +187,14 @@ function BrandTag({ brand, count, onDelete, onUpdate }: { brand: any; count: num
         />
         <button
           className="text-green-600 hover:text-green-700"
-          onClick={() => { if (editName.trim()) { onUpdate(editName.trim()); setEditing(false); } }}
+          onClick={(e) => { e.stopPropagation(); if (editName.trim()) { onUpdate(editName.trim()); setEditing(false); } }}
           data-testid={`btn-save-brand-${brand.id}`}
         >
           <Check className="w-3.5 h-3.5" />
         </button>
         <button
           className="text-muted-foreground hover:text-foreground"
-          onClick={() => { setEditName(brand.brandName); setEditing(false); }}
+          onClick={(e) => { e.stopPropagation(); setEditName(brand.brandName); setEditing(false); }}
           data-testid={`btn-cancel-edit-brand-${brand.id}`}
         >
           <X className="w-3.5 h-3.5" />
@@ -211,14 +211,15 @@ function BrandTag({ brand, count, onDelete, onUpdate }: { brand: any; count: num
       </Badge>
       <button
         className="text-muted-foreground/50 hover:text-blue-600 ml-0.5"
-        onClick={() => setEditing(true)}
+        onClick={(e) => { e.stopPropagation(); setEditing(true); }}
         data-testid={`btn-edit-brand-${brand.id}`}
       >
         <Pencil className="w-3 h-3" />
       </button>
       <button
         className="text-muted-foreground/50 hover:text-red-600"
-        onClick={() => {
+        onClick={(e) => {
+          e.stopPropagation();
           if (confirm(`"${brand.brandName}" markası ve tüm ürünleri silinecek. Emin misiniz?`)) {
             onDelete();
           }
@@ -952,21 +953,32 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: number) => {
       await apiRequest("DELETE", `/api/admin/brand-categories/${id}`);
+      return id;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/brand-categories"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    onSuccess: async (deletedId) => {
+      queryClient.setQueryData(["/api/brand-categories"], (old: any[]) =>
+        old ? old.filter((c: any) => c.id !== deletedId) : []
+      );
+      toast({ title: "Marka silindi" });
+    },
+    onError: () => {
+      toast({ title: "Marka silinemedi", variant: "destructive" });
     },
   });
 
   const updateCategoryMutation = useMutation({
     mutationFn: async ({ id, brandName }: { id: number; brandName: string }) => {
-      await apiRequest("PATCH", `/api/admin/brand-categories/${id}`, { brandName });
+      const res = await apiRequest("PATCH", `/api/admin/brand-categories/${id}`, { brandName });
+      return await res.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/brand-categories"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+    onSuccess: async (updated: any) => {
+      queryClient.setQueryData(["/api/brand-categories"], (old: any[]) =>
+        old ? old.map((c: any) => c.id === updated.id ? { ...c, brandName: updated.brandName } : c) : []
+      );
       toast({ title: "Marka güncellendi" });
+    },
+    onError: () => {
+      toast({ title: "Marka güncellenemedi", variant: "destructive" });
     },
   });
 
