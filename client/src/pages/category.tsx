@@ -140,7 +140,7 @@ export default function CategoryPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3" data-testid="grid-subcategories">
-            {subcategories.filter(sub => !(animalSlug === "kedi" && sub.slug === "malt-vitamin")).map((sub, i) => {
+            {subcategories.filter(sub => !(animalSlug === "kedi" && (sub.slug === "malt-vitamin" || sub.slug === "yas-mama"))).map((sub, i) => {
               const href = sub.hasBrands
                 ? (sub.slug === "acik-mama" ? `/acik-mama/${animalSlug}` : `/kategori/${animalSlug}/${sub.slug}`)
                 : `/siparis/${animalSlug}/${sub.slug}/${sub.slug}`;
