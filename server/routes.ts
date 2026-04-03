@@ -622,6 +622,7 @@ export async function registerRoutes(
     "kedi-konserve": "kedi-konserve",
     "malt-macun": "malt-macun",
     "malt-vitamin": "malt-vitamin",
+    "kopek-mamasi": "mama-markalari",
   };
 
   app.get("/api/brand-products/:animal/:subcategory/:brandSlug", async (req, res) => {

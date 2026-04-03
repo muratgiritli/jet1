@@ -49,6 +49,7 @@ const ANIMAL_META: Record<string, {
 const SUBCATEGORY_ICONS: Record<string, string> = {
   "mama-markalari": "🦴",
   "kedi-mamasi": "🐟",
+  "kopek-mamasi": "🐕",
   "acik-mama": "🥣",
   "kedi-kumu": "🪣",
   "yas-mama": "🥫",
@@ -140,7 +141,11 @@ export default function CategoryPage() {
           </div>
         ) : (
           <div className="grid grid-cols-2 gap-3" data-testid="grid-subcategories">
-            {subcategories.filter(sub => !(animalSlug === "kedi" && (sub.slug === "malt-vitamin" || sub.slug === "yas-mama"))).map((sub, i) => {
+            {subcategories.filter(sub => {
+              if (animalSlug === "kedi" && (sub.slug === "malt-vitamin" || sub.slug === "yas-mama")) return false;
+              if (animalSlug === "kopek" && sub.slug === "mama-markalari") return false;
+              return true;
+            }).map((sub, i) => {
               const href = sub.hasBrands
                 ? (sub.slug === "acik-mama" ? `/acik-mama/${animalSlug}` : `/kategori/${animalSlug}/${sub.slug}`)
                 : `/siparis/${animalSlug}/${sub.slug}/${sub.slug}`;

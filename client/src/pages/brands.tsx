@@ -12,8 +12,18 @@ interface BrandCategory {
 const SUBCATEGORY_TITLES: Record<string, string> = {
   "mama-markalari": "Mama Markaları",
   "kedi-mamasi": "Kedi Maması",
+  "kopek-mamasi": "Köpek Mamaları",
   "acik-mama": "Açık Mama",
   "yas-mama": "Yaş Mama",
+};
+
+const SUBCATEGORY_SLUG_MAP: Record<string, string> = {
+  "kedi-odulu": "odul",
+  "kedi-bakim-saglik": "bakim-saglik",
+  "kedi-konserve": "kedi-konserve",
+  "malt-macun": "malt-macun",
+  "malt-vitamin": "malt-vitamin",
+  "kopek-mamasi": "mama-markalari",
 };
 
 const BRAND_COLORS: Record<string, string> = {
@@ -62,8 +72,9 @@ export default function BrandsPage() {
     queryKey: ["/api/brand-categories"],
   });
 
+  const mappedSubSlug = SUBCATEGORY_SLUG_MAP[subSlug] || subSlug;
   const brands = allCategories.filter(
-    (c) => c.animal === animalSlug && c.subcategory === subSlug
+    (c) => c.animal === animalSlug && c.subcategory === mappedSubSlug
   );
 
   const animalLabel = animalSlug === "kopek" ? "Köpek" : animalSlug === "kedi" ? "Kedi" : animalSlug === "kus" ? "Kuş" : "Kemirgen";
