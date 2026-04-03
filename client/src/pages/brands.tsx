@@ -12,7 +12,7 @@ interface BrandCategory {
 const SUBCATEGORY_TITLES: Record<string, string> = {
   "mama-markalari": "Mama Markaları",
   "kedi-mamasi": "Kedi Maması",
-  "kopek-mamasi": "Köpek Mamaları",
+  "kopek-mamasi": "Köpek Maması",
   "acik-mama": "Açık Mama",
   "yas-mama": "Yaş Mama",
 };
