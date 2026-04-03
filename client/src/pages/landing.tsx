@@ -235,7 +235,7 @@ function CampaignBanner() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-white text-sm md:text-xl font-extrabold">Kampanyalı Ürünler</p>
-              <p className="text-white/70 text-[11px] md:text-base mt-0.5">Ana mama + ek ürün fırsatları</p>
+              <p className="text-yellow-300 text-[11px] md:text-base mt-0.5 font-bold">Alış fiyatına ürünler</p>
             </div>
             <ChevronRight className="w-5 h-5 md:w-7 md:h-7 text-white/60 shrink-0" />
           </div>
