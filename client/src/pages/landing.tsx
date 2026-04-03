@@ -613,6 +613,14 @@ export default function Landing() {
           <HeroCarousel />
         </div>
 
+        <div className="mt-3 md:mt-5">
+          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl px-4 py-3 md:px-8 md:py-4 text-center" data-testid="slogan-banner">
+            <p className="text-white font-extrabold text-base md:text-xl tracking-tight">
+              Jetgo ile siparişin <span className="text-yellow-300">1 saat</span> içinde kapına gelir!
+            </p>
+          </div>
+        </div>
+
         <div className="hidden md:block mt-8">
           <DesktopStatsBar />
         </div>

@@ -541,7 +541,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
     ],
     faq: [
       { q: "Samsun'da en yakın pet shop nerede?", a: "JETGO ile pet shop'a gitmenize gerek yok! Online sipariş verin, aynı gün kapınıza teslim edelim. Atakum, İlkadım ve Canik'e teslimat yapıyoruz." },
-      { q: "En yakın pet shop'a nasıl sipariş verilir?", a: "jetgo.shop adresinden veya WhatsApp üzerinden sipariş verebilirsiniz. Ürünlerinizi seçin, adresinizi belirtin, aynı gün teslim edelim." },
+      { q: "En yakın pet shop'a nasıl sipariş verilir?", a: "jetgo.pet adresinden veya WhatsApp üzerinden sipariş verebilirsiniz. Ürünlerinizi seçin, adresinizi belirtin, aynı gün teslim edelim." },
       { q: "Pet shop teslimat ücreti ne kadar?", a: "Teslimat ücreti mahallenize göre değişmektedir. Belirli tutar üzeri siparişlerde ücretsiz kargo seçeneği mevcuttur." },
     ],
     internalLinks: [
@@ -575,7 +575,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
       "WhatsApp ile anlık sipariş",
     ],
     faq: [
-      { q: "Kapıya teslim pet shop nasıl çalışır?", a: "jetgo.shop üzerinden ürünlerinizi sepete ekleyin, WhatsApp ile siparişinizi onaylayın. Aynı gün kurye ekibimiz siparişinizi kapınıza getirir." },
+      { q: "Kapıya teslim pet shop nasıl çalışır?", a: "jetgo.pet üzerinden ürünlerinizi sepete ekleyin, WhatsApp ile siparişinizi onaylayın. Aynı gün kurye ekibimiz siparişinizi kapınıza getirir." },
       { q: "Kapıda hangi ödeme yöntemleri var?", a: "Kapıda nakit, kredi kartı (POS) ve QR kod ile ödeme yapabilirsiniz." },
       { q: "Teslimat ne kadar sürer?", a: "Samsun merkez ilçelerine ortalama 1-3 saat içinde teslimat yapıyoruz. Yoğunluğa göre değişebilir." },
       { q: "Minimum sipariş tutarı var mı?", a: "Evet, minimum sipariş tutarı mahalle bazlı belirlenmektedir. Ortalama 700 TL'dir." },
@@ -611,7 +611,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
       "Favorilere ekleme ve hatırlatma",
     ],
     faq: [
-      { q: "Online pet shop'tan nasıl sipariş verilir?", a: "jetgo.shop adresine girin, ürünlerinizi sepete ekleyin ve WhatsApp üzerinden siparişinizi tamamlayın." },
+      { q: "Online pet shop'tan nasıl sipariş verilir?", a: "jetgo.pet adresine girin, ürünlerinizi sepete ekleyin ve WhatsApp üzerinden siparişinizi tamamlayın." },
       { q: "Online sipariş güvenli mi?", a: "Evet, ödeme kapıda yapılır. Nakit, POS veya QR kod ile güvenle ödeme yapabilirsiniz." },
       { q: "Online siparişte indirim var mı?", a: "Evet, nakit ödemede ekstra avantajlı fiyatlar sunuyoruz. Ayrıca her siparişte %5 para puan kazanırsınız." },
     ],
@@ -633,7 +633,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
     h1: "Acil Kedi Maması Teslimatı - Samsun",
     intro: [
       "Kedi maması bitti ve acil ihtiyacınız mı var? JETGO ile Samsun'da aynı gün kedi maması teslimatı yapıyoruz. Royal Canin, Hill's, N&D, Pro Plan ve Reflex kedi mamalarını hızla kapınıza getiriyoruz.",
-      "Kedinizin açlığını bekletmeyin! jetgo.shop üzerinden veya WhatsApp ile anında sipariş verin. Atakum, İlkadım ve Canik'e hızlandırılmış teslimat seçeneğimiz mevcuttur.",
+      "Kedinizin açlığını bekletmeyin! jetgo.pet üzerinden veya WhatsApp ile anında sipariş verin. Atakum, İlkadım ve Canik'e hızlandırılmış teslimat seçeneğimiz mevcuttur.",
       "Yavru kedi maması, yetişkin kedi maması, kısırlaştırılmış kedi maması - hangi türü ararsanız arayın, stoklarımızda hazır. Acil siparişleriniz için öncelikli teslimat yapıyoruz.",
     ],
     faq: [
@@ -713,7 +713,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
       "Nakit ödemede avantajlı fiyat ve her siparişte %5 para puan kazanımı. Mama siparişinizi JETGO ile verin, hem tasarruf edin hem de kolaylıktan yararlanın.",
     ],
     faq: [
-      { q: "Mama sipariş nasıl verilir?", a: "jetgo.shop adresinden ürünlerinizi sepete ekleyin, ardından WhatsApp ile siparişinizi tamamlayın." },
+      { q: "Mama sipariş nasıl verilir?", a: "jetgo.pet adresinden ürünlerinizi sepete ekleyin, ardından WhatsApp ile siparişinizi tamamlayın." },
       { q: "Mama siparişi aynı gün gelir mi?", a: "Evet, saat 17:00'ye kadar verilen mama siparişleri aynı gün teslim edilir." },
       { q: "En ucuz mama siparişi nereden verilir?", a: "JETGO'da nakit ödeme fiyatları piyasanın en uygun fiyatlarıdır. Ayrıca %5 para puan ile ekstra tasarruf sağlarsınız." },
     ],
