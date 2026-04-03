@@ -263,8 +263,11 @@ export default function ProductDetailPage() {
   const campaignExtras = useMemo(() => {
     const product = resolvedData?.product;
     if (!isCampaignMode || !product) return [];
-    return campaignItems
-      .filter((i) => i.item_type === "extra" && i.parent_product_id === product.id)
+    const specificExtras = campaignItems.filter((i) => i.item_type === "extra" && i.parent_product_id === product.id);
+    const extras = specificExtras.length > 0
+      ? specificExtras
+      : campaignItems.filter((i) => i.item_type === "extra" && !i.parent_product_id);
+    return extras
       .map((i) => ({
         id: i.product_id,
         name: i.name,

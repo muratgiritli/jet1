@@ -618,6 +618,9 @@ export default function Landing() {
             <p className="text-white font-extrabold text-base md:text-xl tracking-tight">
               Jetgo ile siparişin <span className="text-yellow-300">1 saat</span> içinde kapına gelir!
             </p>
+            <p className="text-white/80 text-[11px] md:text-sm mt-1 font-medium">
+              Atakum için her gün 10.00-19.00 arası
+            </p>
           </div>
         </div>
 
