@@ -5327,10 +5327,7 @@ function SettingsSection() {
 }
 
 function SktTakipSection() {
-  const [selectedMonth, setSelectedMonth] = useState(() => {
-    const now = new Date();
-    return `${String(now.getMonth() + 1).padStart(2, "0")}.${now.getFullYear()}`;
-  });
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
 
   const { data: products = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/products", "all"],
@@ -5340,32 +5337,52 @@ function SktTakipSection() {
     },
   });
 
+  const monthNames = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+
   const months = useMemo(() => {
     const set = new Set<string>();
     products.forEach((p: any) => {
-      if (p.skt) set.add(p.skt);
+      if (p.skt && typeof p.skt === "string" && p.skt.includes(".")) {
+        const clean = p.skt.replace(/\.+$/, "").trim();
+        if (/^\d{2}\.\d{4}$/.test(clean)) set.add(clean);
+      }
     });
-    const arr = Array.from(set).sort((a, b) => {
+    return Array.from(set).sort((a, b) => {
       const [ma, ya] = a.split(".").map(Number);
       const [mb, yb] = b.split(".").map(Number);
       return ya !== yb ? ya - yb : ma - mb;
     });
-    return arr;
   }, [products]);
 
+  useEffect(() => {
+    if (months.length > 0 && (!selectedMonth || !months.includes(selectedMonth))) {
+      setSelectedMonth(months[0]);
+    }
+  }, [months, selectedMonth]);
+
+  const activeMonth = selectedMonth || months[0] || "";
+
   const filtered = useMemo(() => {
+    if (!activeMonth) return [];
     return products
-      .filter((p: any) => p.skt === selectedMonth)
+      .filter((p: any) => {
+        if (!p.skt) return false;
+        const clean = p.skt.replace(/\.+$/, "").trim();
+        return clean === activeMonth;
+      })
       .sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "tr"));
-  }, [products, selectedMonth]);
+  }, [products, activeMonth]);
 
   const now = new Date();
-  const [selM, selY] = selectedMonth.split(".").map(Number);
-  const selDate = new Date(selY, selM - 1);
-  const diffMs = selDate.getTime() - now.getTime();
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  const isExpired = diffDays < 0;
-  const isNearExpiry = !isExpired && diffDays <= 90;
+  const getMonthStatus = (month: string) => {
+    if (!month) return { isExpired: true, isNearExpiry: false, diffDays: 0 };
+    const [m, y] = month.split(".").map(Number);
+    const d = new Date(y, m - 1);
+    const diff = Math.ceil((d.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return { isExpired: diff < 0, isNearExpiry: diff >= 0 && diff <= 90, diffDays: diff };
+  };
+
+  const { isExpired, isNearExpiry, diffDays } = getMonthStatus(activeMonth);
 
   return (
     <div className="space-y-4">
@@ -5374,30 +5391,36 @@ function SktTakipSection() {
           <Calendar className="w-5 h-5 text-orange-600" />
           SKT Takip
         </h2>
-        <select
-          value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
-          className="border rounded-lg px-3 py-2 text-sm font-medium bg-white focus:ring-2 focus:ring-orange-400 outline-none"
-          data-testid="select-skt-month"
-        >
-          {months.map((m) => {
-            const [mm, yy] = m.split(".");
-            const monthNames = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
-            const mDate = new Date(parseInt(yy), parseInt(mm) - 1);
-            const isPast = mDate < new Date(now.getFullYear(), now.getMonth());
-            return (
-              <option key={m} value={m}>
-                {monthNames[parseInt(mm) - 1]} {yy} {isPast ? "⚠️" : ""}
-              </option>
-            );
-          })}
-        </select>
-        <span className={`text-xs font-bold px-2 py-1 rounded-full ${
-          isExpired ? "bg-red-100 text-red-700" : isNearExpiry ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
-        }`}>
-          {isExpired ? "SÜRESİ DOLMUŞ" : isNearExpiry ? `${diffDays} gün kaldı` : `${diffDays} gün kaldı`}
-        </span>
-        <span className="text-sm text-gray-500 ml-auto">{filtered.length} ürün</span>
+        {months.length > 0 ? (
+          <select
+            value={activeMonth}
+            onChange={(e) => setSelectedMonth(e.target.value)}
+            className="border rounded-lg px-3 py-2 text-sm font-medium bg-white focus:ring-2 focus:ring-orange-400 outline-none min-w-[160px]"
+            data-testid="select-skt-month"
+          >
+            {months.map((m) => {
+              const [mm, yy] = m.split(".");
+              const st = getMonthStatus(m);
+              return (
+                <option key={m} value={m}>
+                  {monthNames[parseInt(mm) - 1]} {yy} {st.isExpired ? "⚠️ GEÇMİŞ" : st.isNearExpiry ? "⏰" : ""}
+                </option>
+              );
+            })}
+          </select>
+        ) : (
+          <span className="text-sm text-gray-400">Henüz SKT girilmiş ürün yok</span>
+        )}
+        {activeMonth && (
+          <>
+            <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+              isExpired ? "bg-red-100 text-red-700" : isNearExpiry ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+            }`}>
+              {isExpired ? "SÜRESİ DOLMUŞ" : `${diffDays} gün kaldı`}
+            </span>
+            <span className="text-sm text-gray-500 ml-auto">{filtered.length} ürün</span>
+          </>
+        )}
       </div>
 
       {isLoading ? (
@@ -5405,6 +5428,12 @@ function SktTakipSection() {
           {[1,2,3,4].map(i => (
             <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse" />
           ))}
+        </div>
+      ) : months.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">
+          <Calendar className="w-12 h-12 mx-auto mb-3 opacity-40" />
+          <p className="font-medium">Henüz hiçbir ürüne SKT girilmemiş</p>
+          <p className="text-xs mt-1">Ürünlere SKT ekledikçe burada görünecek</p>
         </div>
       ) : filtered.length === 0 ? (
         <div className="text-center py-12 text-gray-400">
@@ -5430,7 +5459,7 @@ function SktTakipSection() {
               )}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{p.name}</p>
-                <div className="flex items-center gap-2 mt-0.5">
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                   <span className="text-xs text-gray-500">Fiyat: {p.price} TL</span>
                   <span className="text-xs text-gray-500">Stok: {p.stock}</span>
                   <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
