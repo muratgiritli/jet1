@@ -5517,6 +5517,22 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
         if (!mounted) { cleanup(); return; }
         setReady(true);
 
+        const cropCanvas = document.createElement("canvas");
+        const cropCtx = cropCanvas.getContext("2d")!;
+
+        const cropFrame = () => {
+          const vw = video.videoWidth;
+          const vh = video.videoHeight;
+          const cw = Math.floor(vw * 0.7);
+          const ch = Math.floor(cw * 0.32);
+          const cx = Math.floor((vw - cw) / 2);
+          const cy = Math.floor((vh - ch) / 2);
+          cropCanvas.width = cw;
+          cropCanvas.height = ch;
+          cropCtx.drawImage(video, cx, cy, cw, ch, 0, 0, cw, ch);
+          return cropCanvas;
+        };
+
         const hasBD = typeof (window as any).BarcodeDetector !== "undefined";
         if (hasBD) {
           const detector = new (window as any).BarcodeDetector({
@@ -5525,7 +5541,8 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
           timerRef.current = setInterval(async () => {
             if (doneRef.current || !video || video.readyState < 2) return;
             try {
-              const results = await detector.detect(video);
+              const frame = cropFrame();
+              const results = await detector.detect(frame);
               if (results.length > 0 && !doneRef.current) {
                 doneRef.current = true;
                 setDetected(true);
@@ -5541,17 +5558,12 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
           tmpDiv.style.display = "none";
           document.body.appendChild(tmpDiv);
           const hqr = new Html5Qrcode(tmpDiv.id, { verbose: false });
-          const canvas = document.createElement("canvas");
 
           timerRef.current = setInterval(async () => {
             if (doneRef.current || !video || video.readyState < 2) return;
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            const ctx = canvas.getContext("2d");
-            if (!ctx) return;
-            ctx.drawImage(video, 0, 0);
+            cropFrame();
             try {
-              const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/jpeg", 0.8));
+              const blob = await new Promise<Blob | null>(r => cropCanvas.toBlob(r, "image/jpeg", 0.85));
               if (!blob || doneRef.current) return;
               const file = new File([blob], "f.jpg", { type: "image/jpeg" });
               const text = await hqr.scanFile(file, false);
@@ -5559,10 +5571,10 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
                 doneRef.current = true;
                 setDetected(true);
                 setDetectedCode(text);
-                setTimeout(() => { cleanup(); tmpDiv.remove(); onDetected(text); }, 700);
+                setTimeout(() => { cleanup(); tmpDiv.remove(); onDetected(text); }, 500);
               }
             } catch {}
-          }, 400);
+          }, 300);
         }
       } catch (err: any) {
         if (!mounted) return;
