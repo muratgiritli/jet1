@@ -5484,57 +5484,86 @@ function SktTakipSection() {
 }
 
 function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: string) => void; onClose: () => void }) {
-  const scannerRef = useRef<any>(null);
-  const closedRef = useRef(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const doneRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [detected, setDetected] = useState(false);
-  const [boxScale, setBoxScale] = useState(50);
-  const regionIdRef = useRef("qr-scanner-region-" + Date.now());
+  const [detectedCode, setDetectedCode] = useState("");
+  const [boxW, setBoxW] = useState(260);
+  const boxH = Math.floor(boxW * 0.32);
 
-  const getBoxSize = (scale: number) => {
-    const w = 180 + Math.floor((scale / 100) * 170);
-    return { width: w, height: Math.floor(w * 0.3) };
+  const cleanup = () => {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
   };
 
   useEffect(() => {
     let mounted = true;
-    const regionId = regionIdRef.current;
-
-    const containerEl = document.getElementById("scanner-container");
-    if (!containerEl) return;
-    const div = document.createElement("div");
-    div.id = regionId;
-    div.style.width = "100%";
-    div.style.height = "100%";
-    containerEl.appendChild(div);
 
     const start = async () => {
       try {
-        const { Html5Qrcode } = await import("html5-qrcode");
-        if (!mounted) return;
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } }
+        });
+        if (!mounted) { stream.getTracks().forEach(t => t.stop()); return; }
+        streamRef.current = stream;
+        const video = videoRef.current;
+        if (!video) return;
+        video.srcObject = stream;
+        await video.play();
+        if (!mounted) { cleanup(); return; }
+        setReady(true);
 
-        const scanner = new Html5Qrcode(regionId, { verbose: false });
-        scannerRef.current = scanner;
+        const hasBD = typeof (window as any).BarcodeDetector !== "undefined";
+        if (hasBD) {
+          const detector = new (window as any).BarcodeDetector({
+            formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "codabar", "itf", "qr_code"]
+          });
+          timerRef.current = setInterval(async () => {
+            if (doneRef.current || !video || video.readyState < 2) return;
+            try {
+              const results = await detector.detect(video);
+              if (results.length > 0 && !doneRef.current) {
+                doneRef.current = true;
+                setDetected(true);
+                setDetectedCode(results[0].rawValue);
+                setTimeout(() => { cleanup(); onDetected(results[0].rawValue); }, 700);
+              }
+            } catch {}
+          }, 250);
+        } else {
+          const { Html5Qrcode } = await import("html5-qrcode");
+          const tmpDiv = document.createElement("div");
+          tmpDiv.id = "hqr-tmp-" + Date.now();
+          tmpDiv.style.display = "none";
+          document.body.appendChild(tmpDiv);
+          const hqr = new Html5Qrcode(tmpDiv.id, { verbose: false });
+          const canvas = document.createElement("canvas");
 
-        const box = getBoxSize(50);
-
-        await scanner.start(
-          { facingMode: "environment" },
-          { fps: 15, qrbox: box, aspectRatio: 1.0, disableFlip: false },
-          (decodedText: string) => {
-            if (closedRef.current) return;
-            closedRef.current = true;
-            setDetected(true);
-            setTimeout(() => {
-              scanner.stop().catch(() => {});
-              scannerRef.current = null;
-              onDetected(decodedText);
-            }, 600);
-          },
-          () => {}
-        );
-        if (mounted) setReady(true);
+          timerRef.current = setInterval(async () => {
+            if (doneRef.current || !video || video.readyState < 2) return;
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return;
+            ctx.drawImage(video, 0, 0);
+            try {
+              const blob = await new Promise<Blob | null>(r => canvas.toBlob(r, "image/jpeg", 0.8));
+              if (!blob || doneRef.current) return;
+              const file = new File([blob], "f.jpg", { type: "image/jpeg" });
+              const text = await hqr.scanFile(file, false);
+              if (text && !doneRef.current) {
+                doneRef.current = true;
+                setDetected(true);
+                setDetectedCode(text);
+                setTimeout(() => { cleanup(); tmpDiv.remove(); onDetected(text); }, 700);
+              }
+            } catch {}
+          }, 400);
+        }
       } catch (err: any) {
         if (!mounted) return;
         setError(String(err));
@@ -5542,53 +5571,14 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
     };
 
     start();
-
-    return () => {
-      mounted = false;
-      if (scannerRef.current) {
-        try { scannerRef.current.stop().catch(() => {}); } catch {}
-        scannerRef.current = null;
-      }
-      try { div.remove(); } catch {}
-    };
+    return () => { mounted = false; cleanup(); };
   }, []);
 
-  const handleScaleChange = async (val: number) => {
-    setBoxScale(val);
-    if (!scannerRef.current) return;
-    const scanner = scannerRef.current;
-    const box = getBoxSize(val);
-    try {
-      const regionId = regionIdRef.current;
-      await scanner.stop();
-      await scanner.start(
-        { facingMode: "environment" },
-        { fps: 15, qrbox: box, aspectRatio: 1.0, disableFlip: false },
-        (decodedText: string) => {
-          if (closedRef.current) return;
-          closedRef.current = true;
-          setDetected(true);
-          setTimeout(() => {
-            scanner.stop().catch(() => {});
-            scannerRef.current = null;
-            onDetected(decodedText);
-          }, 600);
-        },
-        () => {}
-      );
-    } catch {}
-  };
-
   const handleClose = () => {
-    closedRef.current = true;
-    if (scannerRef.current) {
-      try { scannerRef.current.stop().catch(() => {}); } catch {}
-      scannerRef.current = null;
-    }
+    doneRef.current = true;
+    cleanup();
     onClose();
   };
-
-  const box = getBoxSize(boxScale);
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col" style={{ zIndex: 99999 }}>
@@ -5607,14 +5597,22 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
       </div>
 
       <div className="flex-1 relative overflow-hidden bg-black">
-        <div id="scanner-container" className="absolute inset-0" />
+        <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" playsInline muted autoPlay />
+
+        {ready && !detected && (
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div style={{ width: boxW, height: boxH, border: "3px solid #22c55e", borderRadius: 8, boxShadow: "0 0 0 9999px rgba(0,0,0,0.45)" }} />
+          </div>
+        )}
+
         {detected && (
-          <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 100003 }}>
-            <div className="absolute inset-0 bg-red-500/30 animate-pulse" />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="bg-red-500 text-white px-6 py-3 rounded-xl text-lg font-bold shadow-lg">
-                Barkod Okundu!
-              </div>
+          <div className="absolute inset-0 flex flex-col items-center justify-center" style={{ zIndex: 100003 }}>
+            <div className="absolute inset-0 bg-red-500/40" />
+            <div className="bg-red-600 text-white px-6 py-3 rounded-xl text-lg font-bold shadow-lg z-10">
+              Barkod Okundu!
+            </div>
+            <div className="bg-white/90 text-black px-4 py-2 rounded-lg mt-3 font-mono text-sm z-10">
+              {detectedCode}
             </div>
           </div>
         )}
@@ -5628,14 +5626,9 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
 
       {error && (
         <div className="p-4 bg-black" style={{ zIndex: 100002, position: "relative" }}>
-          <div className="bg-white rounded-xl p-4 text-left">
-            <pre className="text-xs text-gray-800 mb-3 whitespace-pre-wrap font-mono">{error}</pre>
-            <div
-              onPointerDown={handleClose}
-              className="py-2 bg-red-500 text-white rounded-lg text-sm font-medium cursor-pointer text-center"
-            >
-              Kapat
-            </div>
+          <div className="bg-white rounded-xl p-4 text-center">
+            <p className="text-sm text-red-600 mb-3">{error}</p>
+            <div onPointerDown={handleClose} className="py-2 bg-red-500 text-white rounded-lg text-sm font-medium cursor-pointer text-center">Kapat</div>
           </div>
         </div>
       )}
@@ -5644,18 +5637,10 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
         <div className="px-4 py-2 bg-black space-y-1">
           <div className="flex items-center gap-3">
             <span className="text-xs text-white/60 shrink-0">Çerçeve:</span>
-            <input
-              type="range"
-              min={0}
-              max={100}
-              value={boxScale}
-              onChange={(e) => handleScaleChange(Number(e.target.value))}
-              className="flex-1 h-1 accent-purple-500"
-              data-testid="slider-box-scale"
-            />
-            <span className="text-xs text-white/60 shrink-0">{box.width}x{box.height}</span>
+            <input type="range" min={150} max={350} value={boxW} onChange={(e) => setBoxW(Number(e.target.value))} className="flex-1 h-1 accent-green-500" data-testid="slider-box-scale" />
+            <span className="text-xs text-white/60 shrink-0 font-mono">{boxW}x{boxH}</span>
           </div>
-          <p className="text-center text-xs text-white/50">Barkodu çerçeveye hizalayın</p>
+          <p className="text-center text-xs text-white/50">Barkodu yeşil çerçeveye hizalayın</p>
         </div>
       )}
     </div>
