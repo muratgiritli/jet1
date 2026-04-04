@@ -5509,16 +5509,8 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
         const scanner = new Html5Qrcode(regionId, { verbose: false });
         scannerRef.current = scanner;
 
-        const cameras = await Html5Qrcode.getCameras();
-        if (!cameras || cameras.length === 0) {
-          setError("Kamera bulunamadı.");
-          return;
-        }
-
-        const backCamera = cameras.find(c => /back|rear|environment|arka/i.test(c.label)) || cameras[cameras.length - 1];
-
         await scanner.start(
-          backCamera.id,
+          { facingMode: "environment" },
           { fps: 10, qrbox: { width: 250, height: 120 } },
           (decodedText: string) => {
             if (closedRef.current) return;
