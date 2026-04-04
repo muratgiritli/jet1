@@ -5488,6 +5488,7 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
   const closedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [detected, setDetected] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -5498,7 +5499,7 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
     const div = document.createElement("div");
     div.id = regionId;
     div.style.width = "100%";
-    div.style.height = "400px";
+    div.style.height = "100%";
     containerEl.appendChild(div);
 
     const start = async () => {
@@ -5509,15 +5510,22 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
         const scanner = new Html5Qrcode(regionId, { verbose: false });
         scannerRef.current = scanner;
 
+        const screenW = window.innerWidth;
+        const boxW = Math.min(Math.floor(screenW * 0.85), 350);
+        const boxH = Math.floor(boxW * 0.35);
+
         await scanner.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 250, height: 120 } },
+          { fps: 15, qrbox: { width: boxW, height: boxH }, aspectRatio: 1.0, disableFlip: false },
           (decodedText: string) => {
             if (closedRef.current) return;
             closedRef.current = true;
-            scanner.stop().catch(() => {});
-            scannerRef.current = null;
-            onDetected(decodedText);
+            setDetected(true);
+            setTimeout(() => {
+              scanner.stop().catch(() => {});
+              scannerRef.current = null;
+              onDetected(decodedText);
+            }, 600);
           },
           () => {}
         );
@@ -5565,7 +5573,19 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
         </div>
       </div>
 
-      <div id="scanner-container" className="flex-1 overflow-hidden bg-black" style={{ minHeight: "400px" }} />
+      <div className="flex-1 relative overflow-hidden bg-black">
+        <div id="scanner-container" className="absolute inset-0" />
+        {detected && (
+          <div className="absolute inset-0 pointer-events-none" style={{ zIndex: 100003 }}>
+            <div className="absolute inset-0 bg-red-500/30 animate-pulse" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="bg-red-500 text-white px-6 py-3 rounded-xl text-lg font-bold shadow-lg">
+                Barkod Okundu!
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
 
       {!ready && !error && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none" style={{ zIndex: 99998 }}>
@@ -5587,8 +5607,8 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
         </div>
       )}
 
-      {ready && (
-        <p className="text-center text-xs text-white/70 py-2 bg-black">Barkodu çerçeveye hizalayın</p>
+      {ready && !detected && (
+        <p className="text-center text-xs text-white/70 py-2 bg-black">Barkodu dikdörtgen çerçeveye hizalayın</p>
       )}
     </div>
   );
