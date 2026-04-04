@@ -5483,6 +5483,63 @@ function SktTakipSection() {
   );
 }
 
+function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: string) => void; onClose: () => void }) {
+  const scannerRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let scanner: any = null;
+    let mounted = true;
+
+    (async () => {
+      try {
+        const { Html5Qrcode } = await import("html5-qrcode");
+        if (!mounted || !containerRef.current) return;
+        scanner = new Html5Qrcode("camera-scanner-region");
+        scannerRef.current = scanner;
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 280, height: 150 } },
+          (decodedText: string) => {
+            onDetected(decodedText);
+            scanner.stop().catch(() => {});
+          },
+          () => {}
+        );
+      } catch (err) {
+        console.error("Camera error:", err);
+      }
+    })();
+
+    return () => {
+      mounted = false;
+      if (scannerRef.current) {
+        scannerRef.current.stop().catch(() => {});
+      }
+    };
+  }, [onDetected]);
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <span className="text-sm font-bold flex items-center gap-2">
+            <Camera className="w-4 h-4 text-blue-600" />
+            Barkod Tara
+          </span>
+          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100" data-testid="btn-close-camera">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        <div ref={containerRef} className="relative">
+          <div id="camera-scanner-region" className="w-full" />
+        </div>
+        <p className="text-center text-xs text-gray-500 py-3">Barkodu kamera alanına tutun</p>
+      </div>
+    </div>
+  );
+}
+
 function StokSayimSection() {
   const [barcodeInput, setBarcodeInput] = useState("");
   const [foundProduct, setFoundProduct] = useState<any>(null);
@@ -5492,6 +5549,7 @@ function StokSayimSection() {
   const [editBarcode, setEditBarcode] = useState("");
   const [scanLog, setScanLog] = useState<Array<{ id: number; name: string; stock: number; skt: string; time: string }>>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [cameraOpen, setCameraOpen] = useState(false);
   const { data: allProducts = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
   const { toast } = useToast();
 
@@ -5577,7 +5635,25 @@ function StokSayimSection() {
             <Button onClick={() => handleBarcodeSearch()} disabled={searching || !barcodeInput.trim()} style={{ backgroundColor: "#6B3480" }} data-testid="btn-barcode-search">
               {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
             </Button>
+            <Button
+              onClick={() => setCameraOpen(true)}
+              variant="outline"
+              className="border-blue-300 text-blue-600 hover:bg-blue-50"
+              data-testid="btn-camera-scan"
+            >
+              <Camera className="w-4 h-4" />
+            </Button>
           </div>
+          {cameraOpen && (
+            <CameraBarcodeScanner
+              onDetected={(code) => {
+                setCameraOpen(false);
+                setBarcodeInput(code);
+                handleBarcodeSearch(code);
+              }}
+              onClose={() => setCameraOpen(false)}
+            />
+          )}
           <div className="relative">
             <Input
               placeholder="Veya ürün adıyla arayın..."
