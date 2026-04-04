@@ -5510,9 +5510,8 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
         const scanner = new Html5Qrcode(regionId, { verbose: false });
         scannerRef.current = scanner;
 
-        const screenW = window.innerWidth;
-        const boxW = Math.min(Math.floor(screenW * 0.85), 350);
-        const boxH = Math.floor(boxW * 0.35);
+        const boxW = 280;
+        const boxH = 100;
 
         await scanner.start(
           { facingMode: "environment" },
