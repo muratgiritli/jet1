@@ -5501,22 +5501,32 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
     div.style.height = "400px";
     containerEl.appendChild(div);
 
+    const log = (msg: string) => {
+      if (mounted) setError(prev => (prev ? prev + "\n" : "") + msg);
+    };
+
     const start = async () => {
       try {
+        log("1. Kütüphane yükleniyor...");
         const { Html5Qrcode } = await import("html5-qrcode");
         if (!mounted) return;
 
+        log("2. Scanner oluşturuluyor...");
         const scanner = new Html5Qrcode(regionId, { verbose: false });
         scannerRef.current = scanner;
 
+        log("3. Kameralar listeleniyor...");
         const cameras = await Html5Qrcode.getCameras();
+        log("4. Kamera sayısı: " + (cameras?.length || 0));
         if (!cameras || cameras.length === 0) {
-          setError("Kamera bulunamadı.");
+          log("HATA: Kamera bulunamadı!");
           return;
         }
 
         const backCamera = cameras.find(c => /back|rear|environment|arka/i.test(c.label)) || cameras[cameras.length - 1];
+        log("5. Seçilen kamera: " + backCamera.label + " (id: " + backCamera.id + ")");
 
+        log("6. Kamera başlatılıyor...");
         await scanner.start(
           backCamera.id,
           { fps: 10, qrbox: { width: 250, height: 120 } },
@@ -5529,10 +5539,13 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
           },
           () => {}
         );
-        if (mounted) setReady(true);
+        if (mounted) {
+          setReady(true);
+          setError(null);
+        }
       } catch (err: any) {
         if (!mounted) return;
-        setError(String(err));
+        log("HATA: " + String(err));
       }
     };
 
@@ -5582,12 +5595,12 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
       )}
 
       {error && (
-        <div className="p-4 bg-black">
-          <div className="bg-white rounded-xl p-4 text-center">
-            <p className="text-sm text-red-600 mb-3">{error}</p>
+        <div className="p-4 bg-black" style={{ zIndex: 100002, position: "relative" }}>
+          <div className="bg-white rounded-xl p-4 text-left">
+            <pre className="text-xs text-gray-800 mb-3 whitespace-pre-wrap font-mono">{error}</pre>
             <div
               onPointerDown={handleClose}
-              className="py-2 bg-gray-100 rounded-lg text-sm font-medium cursor-pointer"
+              className="py-2 bg-red-500 text-white rounded-lg text-sm font-medium cursor-pointer text-center"
             >
               Kapat
             </div>
