@@ -5501,32 +5501,22 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
     div.style.height = "400px";
     containerEl.appendChild(div);
 
-    const log = (msg: string) => {
-      if (mounted) setError(prev => (prev ? prev + "\n" : "") + msg);
-    };
-
     const start = async () => {
       try {
-        log("1. Kütüphane yükleniyor...");
         const { Html5Qrcode } = await import("html5-qrcode");
         if (!mounted) return;
 
-        log("2. Scanner oluşturuluyor...");
         const scanner = new Html5Qrcode(regionId, { verbose: false });
         scannerRef.current = scanner;
 
-        log("3. Kameralar listeleniyor...");
         const cameras = await Html5Qrcode.getCameras();
-        log("4. Kamera sayısı: " + (cameras?.length || 0));
         if (!cameras || cameras.length === 0) {
-          log("HATA: Kamera bulunamadı!");
+          setError("Kamera bulunamadı.");
           return;
         }
 
         const backCamera = cameras.find(c => /back|rear|environment|arka/i.test(c.label)) || cameras[cameras.length - 1];
-        log("5. Seçilen kamera: " + backCamera.label + " (id: " + backCamera.id + ")");
 
-        log("6. Kamera başlatılıyor...");
         await scanner.start(
           backCamera.id,
           { fps: 10, qrbox: { width: 250, height: 120 } },
@@ -5539,13 +5529,10 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
           },
           () => {}
         );
-        if (mounted) {
-          setReady(true);
-          setError(null);
-        }
+        if (mounted) setReady(true);
       } catch (err: any) {
         if (!mounted) return;
-        log("HATA: " + String(err));
+        setError(String(err));
       }
     };
 
