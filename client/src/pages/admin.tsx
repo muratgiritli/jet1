@@ -5489,10 +5489,17 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
   const [error, setError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [detected, setDetected] = useState(false);
+  const [boxScale, setBoxScale] = useState(50);
+  const regionIdRef = useRef("qr-scanner-region-" + Date.now());
+
+  const getBoxSize = (scale: number) => {
+    const w = 180 + Math.floor((scale / 100) * 170);
+    return { width: w, height: Math.floor(w * 0.3) };
+  };
 
   useEffect(() => {
     let mounted = true;
-    const regionId = "qr-scanner-region-" + Date.now();
+    const regionId = regionIdRef.current;
 
     const containerEl = document.getElementById("scanner-container");
     if (!containerEl) return;
@@ -5510,12 +5517,11 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
         const scanner = new Html5Qrcode(regionId, { verbose: false });
         scannerRef.current = scanner;
 
-        const boxW = 280;
-        const boxH = 100;
+        const box = getBoxSize(50);
 
         await scanner.start(
           { facingMode: "environment" },
-          { fps: 15, qrbox: { width: boxW, height: boxH }, aspectRatio: 1.0, disableFlip: false },
+          { fps: 15, qrbox: box, aspectRatio: 1.0, disableFlip: false },
           (decodedText: string) => {
             if (closedRef.current) return;
             closedRef.current = true;
@@ -5547,6 +5553,32 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
     };
   }, []);
 
+  const handleScaleChange = async (val: number) => {
+    setBoxScale(val);
+    if (!scannerRef.current) return;
+    const scanner = scannerRef.current;
+    const box = getBoxSize(val);
+    try {
+      const regionId = regionIdRef.current;
+      await scanner.stop();
+      await scanner.start(
+        { facingMode: "environment" },
+        { fps: 15, qrbox: box, aspectRatio: 1.0, disableFlip: false },
+        (decodedText: string) => {
+          if (closedRef.current) return;
+          closedRef.current = true;
+          setDetected(true);
+          setTimeout(() => {
+            scanner.stop().catch(() => {});
+            scannerRef.current = null;
+            onDetected(decodedText);
+          }, 600);
+        },
+        () => {}
+      );
+    } catch {}
+  };
+
   const handleClose = () => {
     closedRef.current = true;
     if (scannerRef.current) {
@@ -5555,6 +5587,8 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
     }
     onClose();
   };
+
+  const box = getBoxSize(boxScale);
 
   return (
     <div className="fixed inset-0 bg-black flex flex-col" style={{ zIndex: 99999 }}>
@@ -5607,7 +5641,22 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
       )}
 
       {ready && !detected && (
-        <p className="text-center text-xs text-white/70 py-2 bg-black">Barkodu dikdörtgen çerçeveye hizalayın</p>
+        <div className="px-4 py-2 bg-black space-y-1">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-white/60 shrink-0">Çerçeve:</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={boxScale}
+              onChange={(e) => handleScaleChange(Number(e.target.value))}
+              className="flex-1 h-1 accent-purple-500"
+              data-testid="slider-box-scale"
+            />
+            <span className="text-xs text-white/60 shrink-0">{box.width}x{box.height}</span>
+          </div>
+          <p className="text-center text-xs text-white/50">Barkodu çerçeveye hizalayın</p>
+        </div>
       )}
     </div>
   );
@@ -5632,10 +5681,13 @@ function StokSayimSection() {
     return allProducts.filter(p => p.name.toLowerCase().includes(q) || (p.barcode && p.barcode.includes(q))).slice(0, 10);
   }, [searchQuery, allProducts]);
 
+  const [lastScannedBarcode, setLastScannedBarcode] = useState<string | null>(null);
+
   const handleBarcodeSearch = async (code?: string) => {
     const barcode = code || barcodeInput.trim();
     if (!barcode) return;
     setSearching(true);
+    setLastScannedBarcode(barcode);
     try {
       const res = await fetch(`/api/admin/product-by-barcode/${encodeURIComponent(barcode)}`, { credentials: "include" });
       if (res.ok) {
@@ -5644,8 +5696,9 @@ function StokSayimSection() {
         setEditStock(String(product.stock));
         setEditSkt(product.skt || "");
         setEditBarcode(product.barcode || "");
+        setLastScannedBarcode(null);
       } else {
-        toast({ title: "Barkod bulunamadı", description: "Bu barkoda ait ürün yok. Ürün adıyla arayın.", variant: "destructive" });
+        toast({ title: "Barkod bulunamadı: " + barcode, description: "Ürünü isimle arayıp barkodu atayabilirsiniz.", variant: "destructive" });
         setFoundProduct(null);
       }
     } catch {
@@ -5660,8 +5713,12 @@ function StokSayimSection() {
     setFoundProduct(product);
     setEditStock(String(product.stock));
     setEditSkt(product.skt || "");
-    setEditBarcode(product.barcode || "");
+    setEditBarcode(lastScannedBarcode && !product.barcode ? lastScannedBarcode : (product.barcode || ""));
     setSearchQuery("");
+    if (lastScannedBarcode && !product.barcode) {
+      toast({ title: "Barkod atandı", description: `"${lastScannedBarcode}" barkodu bu ürüne atanacak. Kaydetmeyi unutmayın.` });
+    }
+    setLastScannedBarcode(null);
   };
 
   const handleUpdate = async () => {
@@ -5726,6 +5783,12 @@ function StokSayimSection() {
               }}
               onClose={() => setCameraOpen(false)}
             />
+          )}
+          {lastScannedBarcode && !foundProduct && (
+            <div className="bg-orange-50 border border-orange-200 rounded-lg p-3">
+              <p className="text-xs font-bold text-orange-700 mb-1">Barkod okundu: <span className="font-mono text-sm">{lastScannedBarcode}</span></p>
+              <p className="text-xs text-orange-600">Bu barkoda kayıtlı ürün yok. Aşağıdan ürünü isimle bulun, barkod otomatik atanacak.</p>
+            </div>
           )}
           <div className="relative">
             <Input
