@@ -5530,10 +5530,10 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
                 doneRef.current = true;
                 setDetected(true);
                 setDetectedCode(results[0].rawValue);
-                setTimeout(() => { cleanup(); onDetected(results[0].rawValue); }, 700);
+                setTimeout(() => { cleanup(); onDetected(results[0].rawValue); }, 500);
               }
             } catch {}
-          }, 250);
+          }, 100);
         } else {
           const { Html5Qrcode } = await import("html5-qrcode");
           const tmpDiv = document.createElement("div");
