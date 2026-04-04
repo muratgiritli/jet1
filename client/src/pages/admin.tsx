@@ -1415,6 +1415,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "banner", label: "Banner", icon: <ImageLucide className="w-3.5 h-3.5" /> },
             { key: "raporlama", label: "Raporlama", icon: <BarChart3 className="w-3.5 h-3.5" /> },
             { key: "stoksayim", label: "Stok Sayım", icon: <ScanLine className="w-3.5 h-3.5" /> },
+            { key: "skttakip", label: "SKT Takip", icon: <Calendar className="w-3.5 h-3.5" /> },
             { key: "ayarlar", label: "Ayarlar", icon: <Settings className="w-3.5 h-3.5" /> },
           ].map(tab => (
             <button
@@ -1445,6 +1446,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "banner" && <BannersSection />}
         {activeSection === "raporlama" && <ReportsSection />}
         {activeSection === "stoksayim" && <StokSayimSection />}
+        {activeSection === "skttakip" && <SktTakipSection />}
         {activeSection === "ayarlar" && <SettingsSection />}
         {activeSection === "yonetim" && <>
           {!yonetimSub && (
@@ -5320,6 +5322,130 @@ function SettingsSection() {
         {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
         Ayarları Kaydet
       </Button>
+    </div>
+  );
+}
+
+function SktTakipSection() {
+  const [selectedMonth, setSelectedMonth] = useState(() => {
+    const now = new Date();
+    return `${String(now.getMonth() + 1).padStart(2, "0")}.${now.getFullYear()}`;
+  });
+
+  const { data: products = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin/products"],
+  });
+
+  const months = useMemo(() => {
+    const set = new Set<string>();
+    products.forEach((p: any) => {
+      if (p.skt) set.add(p.skt);
+    });
+    const arr = Array.from(set).sort((a, b) => {
+      const [ma, ya] = a.split(".").map(Number);
+      const [mb, yb] = b.split(".").map(Number);
+      return ya !== yb ? ya - yb : ma - mb;
+    });
+    return arr;
+  }, [products]);
+
+  const filtered = useMemo(() => {
+    return products
+      .filter((p: any) => p.skt === selectedMonth)
+      .sort((a: any, b: any) => (a.name || "").localeCompare(b.name || "", "tr"));
+  }, [products, selectedMonth]);
+
+  const now = new Date();
+  const [selM, selY] = selectedMonth.split(".").map(Number);
+  const selDate = new Date(selY, selM - 1);
+  const diffMs = selDate.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const isExpired = diffDays < 0;
+  const isNearExpiry = !isExpired && diffDays <= 90;
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center gap-3 flex-wrap">
+        <h2 className="text-lg font-bold flex items-center gap-2" data-testid="text-skt-title">
+          <Calendar className="w-5 h-5 text-orange-600" />
+          SKT Takip
+        </h2>
+        <select
+          value={selectedMonth}
+          onChange={(e) => setSelectedMonth(e.target.value)}
+          className="border rounded-lg px-3 py-2 text-sm font-medium bg-white focus:ring-2 focus:ring-orange-400 outline-none"
+          data-testid="select-skt-month"
+        >
+          {months.map((m) => {
+            const [mm, yy] = m.split(".");
+            const monthNames = ["Ocak","Şubat","Mart","Nisan","Mayıs","Haziran","Temmuz","Ağustos","Eylül","Ekim","Kasım","Aralık"];
+            const mDate = new Date(parseInt(yy), parseInt(mm) - 1);
+            const isPast = mDate < new Date(now.getFullYear(), now.getMonth());
+            return (
+              <option key={m} value={m}>
+                {monthNames[parseInt(mm) - 1]} {yy} {isPast ? "⚠️" : ""}
+              </option>
+            );
+          })}
+        </select>
+        <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+          isExpired ? "bg-red-100 text-red-700" : isNearExpiry ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+        }`}>
+          {isExpired ? "SÜRESİ DOLMUŞ" : isNearExpiry ? `${diffDays} gün kaldı` : `${diffDays} gün kaldı`}
+        </span>
+        <span className="text-sm text-gray-500 ml-auto">{filtered.length} ürün</span>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          {[1,2,3,4].map(i => (
+            <div key={i} className="h-16 bg-gray-100 rounded-lg animate-pulse" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">
+          <Calendar className="w-12 h-12 mx-auto mb-3 opacity-40" />
+          <p className="font-medium">Bu ayda SKT'si olan ürün bulunamadı</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((p: any) => (
+            <div
+              key={p.id}
+              className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${
+                isExpired ? "bg-red-50 border-red-200" : isNearExpiry ? "bg-amber-50 border-amber-200" : "bg-white border-gray-100"
+              }`}
+              data-testid={`row-skt-product-${p.id}`}
+            >
+              {p.img ? (
+                <img src={p.img} alt="" className="w-12 h-12 rounded-lg object-cover flex-shrink-0 border" />
+              ) : (
+                <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                  <Package className="w-5 h-5 text-gray-300" />
+                </div>
+              )}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">{p.name}</p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <span className="text-xs text-gray-500">Fiyat: {p.price} TL</span>
+                  <span className="text-xs text-gray-500">Stok: {p.stock}</span>
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${
+                    isExpired ? "bg-red-100 text-red-700" : isNearExpiry ? "bg-amber-100 text-amber-700" : "bg-green-100 text-green-700"
+                  }`}>
+                    SKT: {p.skt}
+                  </span>
+                  {!p.isActive && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">PASİF</span>
+                  )}
+                </div>
+              </div>
+              {p.barcode && (
+                <span className="text-[10px] font-mono text-gray-400 flex-shrink-0">{p.barcode}</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
