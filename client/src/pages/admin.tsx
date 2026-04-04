@@ -5485,55 +5485,100 @@ function SktTakipSection() {
 
 function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: string) => void; onClose: () => void }) {
   const scannerRef = useRef<any>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const detectedRef = useRef(false);
+  const onDetectedRef = useRef(onDetected);
+  const onCloseRef = useRef(onClose);
+  onDetectedRef.current = onDetected;
+  onCloseRef.current = onClose;
+
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    let scanner: any = null;
     let mounted = true;
 
-    (async () => {
+    const initScanner = async () => {
       try {
         const { Html5Qrcode } = await import("html5-qrcode");
-        if (!mounted || !containerRef.current) return;
-        scanner = new Html5Qrcode("camera-scanner-region");
+        if (!mounted) return;
+
+        const scanner = new Html5Qrcode("camera-scanner-region", { verbose: false });
         scannerRef.current = scanner;
+
         await scanner.start(
           { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 280, height: 150 } },
+          {
+            fps: 15,
+            qrbox: { width: 280, height: 150 },
+            aspectRatio: 1.0,
+            formatsToSupport: [
+              0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
+            ],
+          },
           (decodedText: string) => {
-            onDetected(decodedText);
-            scanner.stop().catch(() => {});
+            if (detectedRef.current) return;
+            detectedRef.current = true;
+            scanner.stop().then(() => {
+              scannerRef.current = null;
+              onDetectedRef.current(decodedText);
+            }).catch(() => {
+              onDetectedRef.current(decodedText);
+            });
           },
           () => {}
         );
-      } catch (err) {
-        console.error("Camera error:", err);
+      } catch (err: any) {
+        if (!mounted) return;
+        if (err?.toString?.().includes("NotAllowedError") || err?.toString?.().includes("Permission")) {
+          setError("Kamera izni reddedildi. Tarayıcı ayarlarından kamera iznini açın.");
+        } else if (err?.toString?.().includes("NotFoundError")) {
+          setError("Kamera bulunamadı. Cihazınızda kamera olduğundan emin olun.");
+        } else {
+          setError("Kamera açılamadı. Lütfen tarayıcı ayarlarından kamera iznini kontrol edin.");
+        }
       }
-    })();
+    };
+
+    initScanner();
 
     return () => {
       mounted = false;
       if (scannerRef.current) {
         scannerRef.current.stop().catch(() => {});
+        scannerRef.current = null;
       }
     };
-  }, [onDetected]);
+  }, []);
+
+  const handleClose = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (scannerRef.current) {
+      scannerRef.current.stop().catch(() => {});
+      scannerRef.current = null;
+    }
+    onCloseRef.current();
+  };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex flex-col items-center justify-center p-4">
-      <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden">
+    <div className="fixed inset-0 z-[9999] bg-black/80 flex flex-col items-center justify-center p-4" onClick={handleClose}>
+      <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <span className="text-sm font-bold flex items-center gap-2">
             <Camera className="w-4 h-4 text-blue-600" />
             Barkod Tara
           </span>
-          <button onClick={onClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100" data-testid="btn-close-camera">
+          <button type="button" onClick={handleClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100" data-testid="btn-close-camera">
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div ref={containerRef} className="relative">
+        {error ? (
+          <div className="p-6 text-center">
+            <Camera className="w-10 h-10 mx-auto mb-3 text-red-400" />
+            <p className="text-sm text-red-600 font-medium">{error}</p>
+          </div>
+        ) : (
           <div id="camera-scanner-region" className="w-full" />
-        </div>
+        )}
         <p className="text-center text-xs text-gray-500 py-3">Barkodu kamera alanına tutun</p>
       </div>
     </div>
