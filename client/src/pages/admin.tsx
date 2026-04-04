@@ -5484,103 +5484,121 @@ function SktTakipSection() {
 }
 
 function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: string) => void; onClose: () => void }) {
-  const scannerRef = useRef<any>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const detectedRef = useRef(false);
-  const onDetectedRef = useRef(onDetected);
-  const onCloseRef = useRef(onClose);
-  onDetectedRef.current = onDetected;
-  onCloseRef.current = onClose;
-
+  const closedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
+  const [status, setStatus] = useState("Kamera açılıyor...");
 
   useEffect(() => {
     let mounted = true;
 
-    const initScanner = async () => {
+    const cleanup = () => {
+      if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+      if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+    };
+
+    const start = async () => {
       try {
-        const { Html5Qrcode } = await import("html5-qrcode");
-        if (!mounted) return;
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: "environment" }, width: { ideal: 640 }, height: { ideal: 480 } }
+        });
+        if (!mounted) { stream.getTracks().forEach(t => t.stop()); return; }
+        streamRef.current = stream;
+        const video = videoRef.current;
+        if (!video) return;
+        video.srcObject = stream;
+        await video.play();
+        if (!mounted) { cleanup(); return; }
+        setStatus("Barkodu çerçeveye hizalayın");
 
-        const scanner = new Html5Qrcode("camera-scanner-region", { verbose: false });
-        scannerRef.current = scanner;
+        const detector = new (window as any).BarcodeDetector({
+          formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "codabar", "itf"]
+        });
 
-        await scanner.start(
-          { facingMode: "environment" },
-          {
-            fps: 15,
-            qrbox: { width: 280, height: 150 },
-            aspectRatio: 1.0,
-            formatsToSupport: [
-              0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13
-            ],
-          },
-          (decodedText: string) => {
-            if (detectedRef.current) return;
-            detectedRef.current = true;
-            scanner.stop().then(() => {
-              scannerRef.current = null;
-              onDetectedRef.current(decodedText);
-            }).catch(() => {
-              onDetectedRef.current(decodedText);
-            });
-          },
-          () => {}
-        );
+        intervalRef.current = setInterval(async () => {
+          if (detectedRef.current || closedRef.current || !video || video.readyState < 2) return;
+          try {
+            const barcodes = await detector.detect(video);
+            if (barcodes.length > 0 && !detectedRef.current && !closedRef.current) {
+              detectedRef.current = true;
+              cleanup();
+              onDetected(barcodes[0].rawValue);
+            }
+          } catch {}
+        }, 300);
       } catch (err: any) {
         if (!mounted) return;
-        if (err?.toString?.().includes("NotAllowedError") || err?.toString?.().includes("Permission")) {
+        const msg = String(err);
+        if (msg.includes("NotAllowed") || msg.includes("Permission")) {
           setError("Kamera izni reddedildi. Tarayıcı ayarlarından kamera iznini açın.");
-        } else if (err?.toString?.().includes("NotFoundError")) {
-          setError("Kamera bulunamadı. Cihazınızda kamera olduğundan emin olun.");
+        } else if (msg.includes("NotFound") || msg.includes("Requested device not found")) {
+          setError("Kamera bulunamadı.");
         } else {
-          setError("Kamera açılamadı. Lütfen tarayıcı ayarlarından kamera iznini kontrol edin.");
+          setError("Kamera açılamadı: " + msg);
         }
       }
     };
 
-    initScanner();
-
-    return () => {
-      mounted = false;
-      if (scannerRef.current) {
-        scannerRef.current.stop().catch(() => {});
-        scannerRef.current = null;
-      }
-    };
+    start();
+    return () => { mounted = false; cleanup(); };
   }, []);
 
-  const handleClose = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (scannerRef.current) {
-      scannerRef.current.stop().catch(() => {});
-      scannerRef.current = null;
-    }
-    onCloseRef.current();
+  const handleClose = () => {
+    closedRef.current = true;
+    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
+    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+    onClose();
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] bg-black/80 flex flex-col items-center justify-center p-4" onClick={handleClose}>
-      <div className="bg-white rounded-2xl w-full max-w-sm overflow-hidden" onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <span className="text-sm font-bold flex items-center gap-2">
-            <Camera className="w-4 h-4 text-blue-600" />
-            Barkod Tara
-          </span>
-          <button type="button" onClick={handleClose} className="w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-100" data-testid="btn-close-camera">
-            <X className="w-5 h-5" />
-          </button>
+    <div
+      className="fixed inset-0 bg-black flex flex-col"
+      style={{ zIndex: 99999, touchAction: "none" }}
+    >
+      <div className="flex items-center justify-between px-4 py-3 bg-black shrink-0" style={{ zIndex: 100000 }}>
+        <span className="text-sm font-bold text-white flex items-center gap-2">
+          <Camera className="w-4 h-4" />
+          Barkod Tara
+        </span>
+        <div
+          role="button"
+          tabIndex={0}
+          onPointerDown={(e) => { e.stopPropagation(); handleClose(); }}
+          className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center cursor-pointer select-none"
+          style={{ zIndex: 100001, WebkitTapHighlightColor: "transparent" }}
+          data-testid="btn-close-camera"
+        >
+          <X className="w-6 h-6 text-white" />
         </div>
-        {error ? (
-          <div className="p-6 text-center">
-            <Camera className="w-10 h-10 mx-auto mb-3 text-red-400" />
-            <p className="text-sm text-red-600 font-medium">{error}</p>
-          </div>
-        ) : (
-          <div id="camera-scanner-region" className="w-full" />
-        )}
-        <p className="text-center text-xs text-gray-500 py-3">Barkodu kamera alanına tutun</p>
       </div>
+
+      {error ? (
+        <div className="flex-1 flex items-center justify-center p-6">
+          <div className="bg-white rounded-2xl p-6 text-center w-full max-w-sm">
+            <Camera className="w-10 h-10 mx-auto mb-3 text-red-400" />
+            <p className="text-sm text-red-600 font-medium mb-4">{error}</p>
+            <div
+              role="button"
+              tabIndex={0}
+              onPointerDown={handleClose}
+              className="w-full py-3 bg-gray-100 rounded-lg text-sm font-medium text-center cursor-pointer"
+            >
+              Kapat
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex-1 relative bg-black overflow-hidden">
+          <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" playsInline muted />
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className="w-72 h-36 border-2 border-green-400 rounded-lg" style={{ boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)" }} />
+          </div>
+          <p className="absolute bottom-6 left-0 right-0 text-center text-sm text-white font-medium">{status}</p>
+        </div>
+      )}
     </div>
   );
 }
