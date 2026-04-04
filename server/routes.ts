@@ -1933,13 +1933,19 @@ export async function registerRoutes(
   app.get("/api/campaign-items", async (req, res) => {
     try {
       const { rows } = await sharedPool.query(`
-        SELECT ci.*, p.name, p.price, p.original_price, p.img, p.stock, p.is_active, p.skt
+        SELECT ci.*, p.name, p.price, p.original_price, p.img, p.stock, p.is_active, p.skt,
+          CASE WHEN ci.campaign_price IS NOT NULL THEN ci.campaign_price ELSE p.price END AS display_price
         FROM campaign_items ci
         JOIN products p ON p.id = ci.product_id
         WHERE ci.is_active = true AND p.is_active = true
         ORDER BY ci.item_type, ci.sort_order
       `);
-      res.json(rows);
+      const mapped = rows.map(r => ({
+        ...r,
+        original_price: r.campaign_price ? r.price : r.original_price,
+        price: r.campaign_price ? parseFloat(r.campaign_price) : r.price,
+      }));
+      res.json(mapped);
     } catch (err) {
       res.status(500).json({ message: "Campaign items fetch error" });
     }
@@ -1949,11 +1955,11 @@ export async function registerRoutes(
     try {
       const pid = parseInt(req.params.productId);
       const { rows } = await sharedPool.query(
-        `SELECT item_type FROM campaign_items WHERE product_id = $1 AND is_active = true LIMIT 1`,
+        `SELECT item_type, campaign_price FROM campaign_items WHERE product_id = $1 AND is_active = true LIMIT 1`,
         [pid]
       );
       if (rows.length > 0) {
-        res.json({ isCampaign: true, itemType: rows[0].item_type });
+        res.json({ isCampaign: true, itemType: rows[0].item_type, campaignPrice: rows[0].campaign_price ? parseFloat(rows[0].campaign_price) : null });
       } else {
         res.json({ isCampaign: false });
       }
@@ -1964,7 +1970,7 @@ export async function registerRoutes(
 
   app.post("/api/admin/campaign-items", requireAdmin, async (req, res) => {
     try {
-      const { productId, itemType, sortOrder, parentProductId } = req.body;
+      const { productId, itemType, sortOrder, parentProductId, campaignPrice } = req.body;
       if (!productId || !itemType) return res.status(400).json({ message: "productId and itemType required" });
       const existing = await sharedPool.query(
         `SELECT id FROM campaign_items WHERE product_id = $1`, [productId]
@@ -1973,8 +1979,8 @@ export async function registerRoutes(
         return res.status(400).json({ message: "Bu ürün zaten kampanyada" });
       }
       const { rows } = await sharedPool.query(
-        `INSERT INTO campaign_items (product_id, item_type, sort_order, parent_product_id) VALUES ($1, $2, $3, $4) RETURNING *`,
-        [productId, itemType, sortOrder || 0, parentProductId || null]
+        `INSERT INTO campaign_items (product_id, item_type, sort_order, parent_product_id, campaign_price) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [productId, itemType, sortOrder || 0, parentProductId || null, campaignPrice || null]
       );
       res.json(rows[0]);
     } catch (err) {
@@ -1985,7 +1991,7 @@ export async function registerRoutes(
   app.get("/api/admin/campaign-items", requireAdmin, async (req, res) => {
     try {
       const { rows } = await sharedPool.query(`
-        SELECT ci.*, p.name, p.price, p.original_price, p.img, p.stock, p.is_active AS product_active, p.skt
+        SELECT ci.*, ci.campaign_price, p.name, p.price, p.original_price, p.img, p.stock, p.is_active AS product_active, p.skt
         FROM campaign_items ci
         JOIN products p ON p.id = ci.product_id
         ORDER BY ci.item_type, ci.sort_order
@@ -1999,13 +2005,14 @@ export async function registerRoutes(
   app.patch("/api/admin/campaign-items/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(req.params.id);
-      const { isActive, sortOrder, itemType } = req.body;
+      const { isActive, sortOrder, itemType, campaignPrice } = req.body;
       const sets: string[] = [];
       const vals: any[] = [];
       let idx = 1;
       if (typeof isActive === "boolean") { sets.push(`is_active = $${idx++}`); vals.push(isActive); }
       if (typeof sortOrder === "number") { sets.push(`sort_order = $${idx++}`); vals.push(sortOrder); }
       if (typeof itemType === "string") { sets.push(`item_type = $${idx++}`); vals.push(itemType); }
+      if (campaignPrice !== undefined) { sets.push(`campaign_price = $${idx++}`); vals.push(campaignPrice === "" || campaignPrice === null ? null : campaignPrice); }
       if (sets.length === 0) return res.status(400).json({ message: "No fields to update" });
       vals.push(id);
       const { rows } = await sharedPool.query(

@@ -20,6 +20,7 @@ type BasketItems = Record<string, number>;
 interface CampaignItemInfo {
   product_id: number;
   item_type: string;
+  campaign_price?: string | number | null;
 }
 
 export const KEDI_KUMU_MAX_QTY = 2;
@@ -129,16 +130,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [campaignData]);
 
+  const campaignPriceMap = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const ci of campaignData) {
+      if (ci.campaign_price) map.set(String(ci.product_id), parseFloat(String(ci.campaign_price)));
+    }
+    return map;
+  }, [campaignData]);
+
   const allProducts: CartProduct[] = useMemo(() => {
-    return dbProducts.map((p) => ({
-      id: String(p.id),
-      name: p.name,
-      price: p.price,
-      img: p.img,
-      skt: p.skt,
-      originalPrice: p.originalPrice,
-    }));
-  }, [dbProducts]);
+    return dbProducts.map((p) => {
+      const cp = campaignPriceMap.get(String(p.id));
+      return {
+        id: String(p.id),
+        name: p.name,
+        price: cp ?? p.price,
+        img: p.img,
+        skt: p.skt,
+        originalPrice: cp ? p.price : p.originalPrice,
+      };
+    });
+  }, [dbProducts, campaignPriceMap]);
 
   const kediKumuIdsRef = useRef<Set<string>>(new Set());
   const kediKumuIds = useMemo(() => {

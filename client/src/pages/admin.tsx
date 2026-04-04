@@ -1232,8 +1232,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   });
 
   const toggleCampaignItemMutation = useMutation({
-    mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
-      await apiRequest("PATCH", `/api/admin/campaign-items/${id}`, { isActive });
+    mutationFn: async ({ id, isActive, campaignPrice }: { id: number; isActive?: boolean; campaignPrice?: string | null }) => {
+      const body: any = {};
+      if (isActive !== undefined) body.isActive = isActive;
+      if (campaignPrice !== undefined) body.campaignPrice = campaignPrice;
+      await apiRequest("PATCH", `/api/admin/campaign-items/${id}`, body);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
@@ -1530,11 +1533,25 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         )}
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-semibold truncate" data-testid={`text-campaign-item-name-${mainItem.id}`}>{mainItem.name}</p>
-                          <div className="flex items-center gap-3 mt-1">
-                            <span className="text-sm font-bold text-purple-700">{mainItem.price} TL</span>
-                            {mainItem.original_price && mainItem.original_price > mainItem.price && (
-                              <span className="text-xs text-gray-400 line-through">{mainItem.original_price} TL</span>
-                            )}
+                          <div className="flex items-center gap-2 mt-1 flex-wrap">
+                            <span className="text-xs text-gray-500">Normal: {mainItem.price} TL</span>
+                            <div className="flex items-center gap-1">
+                              <span className="text-xs text-purple-600 font-bold">Kampanya:</span>
+                              <input
+                                type="number"
+                                step="0.01"
+                                placeholder="Fiyat"
+                                defaultValue={mainItem.campaign_price || ""}
+                                className="w-20 h-6 text-xs border rounded px-1.5 text-purple-700 font-bold focus:ring-1 focus:ring-purple-400 outline-none"
+                                data-testid={`input-campaign-price-${mainItem.id}`}
+                                onBlur={(e) => {
+                                  const val = e.target.value;
+                                  toggleCampaignItemMutation.mutate({ id: mainItem.id, campaignPrice: val === "" ? null : val });
+                                }}
+                                onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
+                              />
+                              <span className="text-xs text-purple-600 font-bold">TL</span>
+                            </div>
                             {mainItem.stock <= 0 && (
                               <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">STOK YOK</span>
                             )}

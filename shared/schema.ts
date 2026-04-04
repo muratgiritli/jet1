@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, real, serial, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, real, serial, boolean, timestamp, jsonb, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -286,6 +286,7 @@ export const campaignItems = pgTable("campaign_items", {
   sortOrder: integer("sort_order").notNull().default(0),
   isActive: boolean("is_active").notNull().default(true),
   parentProductId: integer("parent_product_id"),
+  campaignPrice: numeric("campaign_price"),
 });
 
 export const insertCampaignItemSchema = createInsertSchema(campaignItems).omit({ id: true });

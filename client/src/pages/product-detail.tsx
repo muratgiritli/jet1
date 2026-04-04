@@ -200,6 +200,11 @@ export default function ProductDetailPage() {
     } as ProductDetailData;
   }, [staticProduct]);
 
+  const { data: campaignCheck } = useQuery<{ isCampaign: boolean; campaignPrice?: number | null }>({
+    queryKey: ["/api/campaign-check", productId],
+    enabled: !!productId && isNumericId && isCampaignMode,
+  });
+
   const isKediMama = data?.category?.animal === "kedi" && (data?.category?.subcategory === "kedi-mamasi" || data?.category?.subcategory === "acik-mama");
   const isKediKumu = data?.category?.animal === "kedi" && data?.category?.subcategory === "kedi-kumu";
   const needsCrossSell = isKediMama || isKediKumu;
@@ -385,8 +390,11 @@ export default function ProductDetailPage() {
 
   const { product, category, crossSellSections, breedStats } = resolvedData;
   const pid = String(product.id);
-  const discount = product.originalPrice
-    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+  const campaignFiyat = isCampaignMode && campaignCheck?.campaignPrice ? campaignCheck.campaignPrice : null;
+  const displayPrice = campaignFiyat ?? product.price;
+  const displayOriginalPrice = campaignFiyat ? product.price : product.originalPrice;
+  const discount = displayOriginalPrice && displayOriginalPrice > displayPrice
+    ? Math.round(((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100)
     : 0;
   const quantity = basket[pid] || 0;
 
@@ -465,9 +473,17 @@ export default function ProductDetailPage() {
               )}
 
               <div className="flex items-center gap-3 mt-1 flex-wrap">
+                {campaignFiyat && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#6B3480", color: "#fff" }}>KAMPANYA FİYATI</span>
+                )}
                 <span className="text-2xl font-extrabold text-black dark:text-white" data-testid="text-pesin-price">
-                  {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                  {displayPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                 </span>
+                {displayOriginalPrice && displayOriginalPrice > displayPrice && (
+                  <span className="text-base text-gray-400 line-through">
+                    {displayOriginalPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                  </span>
+                )}
                 {product.skt && (
                   <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid="text-skt-detail">
                     S.K.T: {product.skt}
