@@ -5484,120 +5484,106 @@ function SktTakipSection() {
 }
 
 function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: string) => void; onClose: () => void }) {
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const detectedRef = useRef(false);
+  const scannerRef = useRef<any>(null);
   const closedRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
-  const [status, setStatus] = useState("Kamera açılıyor...");
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     let mounted = true;
-
-    const cleanup = () => {
-      if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-      if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
-    };
+    const regionId = "qr-scanner-full-region";
 
     const start = async () => {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" }, width: { ideal: 640 }, height: { ideal: 480 } }
-        });
-        if (!mounted) { stream.getTracks().forEach(t => t.stop()); return; }
-        streamRef.current = stream;
-        const video = videoRef.current;
-        if (!video) return;
-        video.srcObject = stream;
-        await video.play();
-        if (!mounted) { cleanup(); return; }
-        setStatus("Barkodu çerçeveye hizalayın");
+        const { Html5Qrcode } = await import("html5-qrcode");
+        if (!mounted) return;
 
-        const detector = new (window as any).BarcodeDetector({
-          formats: ["ean_13", "ean_8", "upc_a", "upc_e", "code_128", "code_39", "codabar", "itf"]
-        });
+        const el = document.getElementById(regionId);
+        if (!el) return;
 
-        intervalRef.current = setInterval(async () => {
-          if (detectedRef.current || closedRef.current || !video || video.readyState < 2) return;
-          try {
-            const barcodes = await detector.detect(video);
-            if (barcodes.length > 0 && !detectedRef.current && !closedRef.current) {
-              detectedRef.current = true;
-              cleanup();
-              onDetected(barcodes[0].rawValue);
-            }
-          } catch {}
-        }, 300);
+        const scanner = new Html5Qrcode(regionId, { verbose: false });
+        scannerRef.current = scanner;
+
+        await scanner.start(
+          { facingMode: "environment" },
+          { fps: 10, qrbox: { width: 250, height: 120 }, aspectRatio: 1.777 },
+          (decodedText: string) => {
+            if (closedRef.current) return;
+            closedRef.current = true;
+            scanner.stop().catch(() => {});
+            scannerRef.current = null;
+            onDetected(decodedText);
+          },
+          () => {}
+        );
+        if (mounted) setReady(true);
       } catch (err: any) {
         if (!mounted) return;
-        const msg = String(err);
-        if (msg.includes("NotAllowed") || msg.includes("Permission")) {
-          setError("Kamera izni reddedildi. Tarayıcı ayarlarından kamera iznini açın.");
-        } else if (msg.includes("NotFound") || msg.includes("Requested device not found")) {
-          setError("Kamera bulunamadı.");
-        } else {
-          setError("Kamera açılamadı: " + msg);
-        }
+        setError(String(err));
       }
     };
 
     start();
-    return () => { mounted = false; cleanup(); };
+
+    return () => {
+      mounted = false;
+      if (scannerRef.current) {
+        try { scannerRef.current.stop().catch(() => {}); } catch {}
+        scannerRef.current = null;
+      }
+    };
   }, []);
 
   const handleClose = () => {
     closedRef.current = true;
-    if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null; }
-    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
+    if (scannerRef.current) {
+      try { scannerRef.current.stop().catch(() => {}); } catch {}
+      scannerRef.current = null;
+    }
     onClose();
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black flex flex-col"
-      style={{ zIndex: 99999, touchAction: "none" }}
-    >
-      <div className="flex items-center justify-between px-4 py-3 bg-black shrink-0" style={{ zIndex: 100000 }}>
+    <div className="fixed inset-0 bg-black flex flex-col" style={{ zIndex: 99999 }}>
+      <div className="flex items-center justify-between px-4 py-3 shrink-0" style={{ zIndex: 100000, background: "#000" }}>
         <span className="text-sm font-bold text-white flex items-center gap-2">
-          <Camera className="w-4 h-4" />
-          Barkod Tara
+          <Camera className="w-4 h-4" /> Barkod Tara
         </span>
         <div
-          role="button"
-          tabIndex={0}
-          onPointerDown={(e) => { e.stopPropagation(); handleClose(); }}
-          className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center cursor-pointer select-none"
-          style={{ zIndex: 100001, WebkitTapHighlightColor: "transparent" }}
+          onPointerDown={(e) => { e.preventDefault(); e.stopPropagation(); handleClose(); }}
+          className="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center select-none"
+          style={{ zIndex: 100001, WebkitTapHighlightColor: "transparent", cursor: "pointer" }}
           data-testid="btn-close-camera"
         >
           <X className="w-6 h-6 text-white" />
         </div>
       </div>
 
-      {error ? (
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="bg-white rounded-2xl p-6 text-center w-full max-w-sm">
-            <Camera className="w-10 h-10 mx-auto mb-3 text-red-400" />
-            <p className="text-sm text-red-600 font-medium mb-4">{error}</p>
+      <div className="flex-1 relative overflow-hidden bg-black">
+        <div id="qr-scanner-full-region" className="w-full h-full" />
+        {!ready && !error && (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <Loader2 className="w-8 h-8 text-white animate-spin" />
+          </div>
+        )}
+      </div>
+
+      {error && (
+        <div className="p-4 bg-black">
+          <div className="bg-white rounded-xl p-4 text-center">
+            <p className="text-sm text-red-600 mb-3">{error}</p>
             <div
-              role="button"
-              tabIndex={0}
               onPointerDown={handleClose}
-              className="w-full py-3 bg-gray-100 rounded-lg text-sm font-medium text-center cursor-pointer"
+              className="py-2 bg-gray-100 rounded-lg text-sm font-medium cursor-pointer"
             >
               Kapat
             </div>
           </div>
         </div>
-      ) : (
-        <div className="flex-1 relative bg-black overflow-hidden">
-          <video ref={videoRef} className="absolute inset-0 w-full h-full object-cover" playsInline muted />
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="w-72 h-36 border-2 border-green-400 rounded-lg" style={{ boxShadow: "0 0 0 9999px rgba(0,0,0,0.5)" }} />
-          </div>
-          <p className="absolute bottom-6 left-0 right-0 text-center text-sm text-white font-medium">{status}</p>
-        </div>
+      )}
+
+      {ready && (
+        <p className="text-center text-xs text-white/70 py-2 bg-black">Barkodu çerçeveye hizalayın</p>
       )}
     </div>
   );
