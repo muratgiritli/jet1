@@ -5333,7 +5333,11 @@ function SktTakipSection() {
   });
 
   const { data: products = [], isLoading } = useQuery<any[]>({
-    queryKey: ["/api/admin/products"],
+    queryKey: ["/api/products", "all"],
+    queryFn: async () => {
+      const res = await fetch("/api/products?all=true", { credentials: "include" });
+      return res.json();
+    },
   });
 
   const months = useMemo(() => {
