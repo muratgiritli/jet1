@@ -5495,22 +5495,30 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
 
     const start = async () => {
       try {
-        const { Html5Qrcode } = await import("html5-qrcode");
+        const { Html5QrcodeScanner, Html5QrcodeScanType } = await import("html5-qrcode");
         if (!mounted) return;
 
         const el = document.getElementById(regionId);
         if (!el) return;
 
-        const scanner = new Html5Qrcode(regionId, { verbose: false });
+        const scanner = new Html5QrcodeScanner(
+          regionId,
+          {
+            fps: 10,
+            qrbox: { width: 250, height: 120 },
+            rememberLastUsedCamera: true,
+            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA],
+            showTorchButtonIfSupported: true,
+          },
+          false
+        );
         scannerRef.current = scanner;
 
-        await scanner.start(
-          { facingMode: "environment" },
-          { fps: 10, qrbox: { width: 250, height: 120 }, aspectRatio: 1.777 },
+        scanner.render(
           (decodedText: string) => {
             if (closedRef.current) return;
             closedRef.current = true;
-            scanner.stop().catch(() => {});
+            scanner.clear().catch(() => {});
             scannerRef.current = null;
             onDetected(decodedText);
           },
@@ -5528,7 +5536,7 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
     return () => {
       mounted = false;
       if (scannerRef.current) {
-        try { scannerRef.current.stop().catch(() => {}); } catch {}
+        try { scannerRef.current.clear().catch(() => {}); } catch {}
         scannerRef.current = null;
       }
     };
@@ -5537,7 +5545,7 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
   const handleClose = () => {
     closedRef.current = true;
     if (scannerRef.current) {
-      try { scannerRef.current.stop().catch(() => {}); } catch {}
+      try { scannerRef.current.clear().catch(() => {}); } catch {}
       scannerRef.current = null;
     }
     onClose();
@@ -5559,8 +5567,8 @@ function CameraBarcodeScanner({ onDetected, onClose }: { onDetected: (code: stri
         </div>
       </div>
 
-      <div className="flex-1 relative overflow-hidden bg-black">
-        <div id="qr-scanner-full-region" className="w-full h-full" />
+      <div className="flex-1 relative overflow-hidden bg-black" style={{ minHeight: "300px" }}>
+        <div id="qr-scanner-full-region" style={{ width: "100%", minHeight: "300px" }} />
         {!ready && !error && (
           <div className="absolute inset-0 flex items-center justify-center">
             <Loader2 className="w-8 h-8 text-white animate-spin" />
