@@ -559,8 +559,7 @@ async function seedCrossSellSections() {
 }
 
 const SUBCATEGORY_SEED_DATA = [
-  { animal: "kopek", slug: "kopek-mamasi", displayName: "Köpek\nMaması", color: "#FF5722", hasBrands: true, sortOrder: 0 },
-  { animal: "kopek", slug: "mama-markalari", displayName: "Köpek\nMaması", color: "#FF5722", hasBrands: true, sortOrder: 1 },
+  { animal: "kopek", slug: "mama-markalari", displayName: "Köpek\nMaması", color: "#FF5722", hasBrands: true, sortOrder: 0 },
   { animal: "kopek", slug: "acik-mama", displayName: "Açık Mama\nÇeşitleri", color: "#FF9800", hasBrands: true, sortOrder: 2 },
   { animal: "kopek", slug: "tuvalet-malzemeleri", displayName: "Tuvalet\nMalzemeleri", color: "#8BC34A", hasBrands: false, sortOrder: 3 },
   { animal: "kopek", slug: "yas-mama", displayName: "Yaş Mama\nÇeşitleri", color: "#E91E63", hasBrands: false, sortOrder: 4 },

@@ -863,12 +863,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       products = products.filter((p) => catIds.includes(p.brandCategoryId));
     }
     if (selectedSubcategoryFilter !== "all") {
-      const subMap: Record<string, string[]> = {
-        "kopek-mamasi": ["kopek-mamasi", "mama-markalari"],
-      };
-      const matchSlugs = subMap[selectedSubcategoryFilter] || [selectedSubcategoryFilter];
       const catIds = categories
-        .filter((c) => matchSlugs.includes(c.subcategory))
+        .filter((c) => c.subcategory === selectedSubcategoryFilter)
         .map((c) => c.id);
       products = products.filter((p) => catIds.includes(p.brandCategoryId));
     }
