@@ -258,6 +258,7 @@ function ProductForm({
   const [img, setImg] = useState(product?.img || "");
   const [stock, setStock] = useState(product?.stock?.toString() ?? "10");
   const [barcode, setBarcode] = useState(product?.barcode || "");
+  const [costPrice, setCostPrice] = useState(product?.costPrice?.toString() || "");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [brandCategoryId, setBrandCategoryId] = useState(
@@ -313,6 +314,7 @@ function ProductForm({
           name,
           price: parseFloat(price),
           originalPrice: originalPrice ? parseFloat(originalPrice) : null,
+          costPrice: costPrice ? parseFloat(costPrice) : null,
           skt: skt || null,
           img: img || null,
           brandCategoryId: parseInt(brandCategoryId),
@@ -450,14 +452,18 @@ function ProductForm({
         <Label>Ürün Adı</Label>
         <Input value={name} onChange={(e) => setName(e.target.value)} required data-testid="input-product-name" />
       </div>
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-3 gap-3">
         <div className="space-y-2">
-          <Label>Fiyat (TL)</Label>
+          <Label>Satış Fiyatı (TL)</Label>
           <Input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} required data-testid="input-product-price" />
         </div>
         <div className="space-y-2">
           <Label>Eski Fiyat (TL)</Label>
           <Input type="number" step="0.01" value={originalPrice} onChange={(e) => setOriginalPrice(e.target.value)} data-testid="input-product-original-price" />
+        </div>
+        <div className="space-y-2">
+          <Label>Alış Fiyatı (TL)</Label>
+          <Input type="number" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} placeholder="Maliyet" data-testid="input-product-cost-price" />
         </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -3184,6 +3190,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           <span className="text-sm font-bold text-foreground">
                             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                           </span>
+                          {product.costPrice != null && product.costPrice > 0 && (
+                            <span className="text-[10px] text-blue-600 font-medium">
+                              A: {product.costPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                              ({Math.round(((product.price - product.costPrice) / product.costPrice) * 100)}%)
+                            </span>
+                          )}
                           {product.originalPrice && product.originalPrice > product.price && (
                             <span className="text-xs text-muted-foreground line-through">
                               {product.originalPrice.toLocaleString("tr-TR")} TL

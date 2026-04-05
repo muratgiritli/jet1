@@ -56,6 +56,7 @@ export const products = pgTable("products", {
   isActive: boolean("is_active").notNull().default(true),
   stock: integer("stock").notNull().default(10),
   barcode: text("barcode"),
+  costPrice: real("cost_price"),
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });

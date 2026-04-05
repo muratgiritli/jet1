@@ -662,17 +662,18 @@ export async function registerRoutes(
     const showAll = req.query.all === "true" && isAdmin;
     if (showAll) {
       res.setHeader("Cache-Control", "private, no-store");
+      res.json(allProducts);
     } else {
       res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+      res.json(allProducts.filter(p => p.isActive).map(({ costPrice, ...rest }) => rest));
     }
-    res.json(showAll ? allProducts : allProducts.filter(p => p.isActive));
   });
 
   app.get("/api/products/search", async (req, res) => {
     const query = (req.query.q as string || "").trim();
     if (!query || query.length < 2) return res.json([]);
     const results = await storage.searchProducts(query);
-    res.json(results.filter(p => p.isActive).slice(0, 20));
+    res.json(results.filter(p => p.isActive).slice(0, 20).map(({ costPrice, ...rest }) => rest));
   });
 
   const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
