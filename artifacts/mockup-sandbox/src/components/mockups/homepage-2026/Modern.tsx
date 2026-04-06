@@ -1,399 +1,384 @@
-import { useState, useEffect } from "react";
-import {
-  Search, Truck, CreditCard, Banknote, Smartphone, Tag,
-  ArrowRight, ChevronRight, Star, Clock, Shield, Sparkles,
-  Heart, MessageCircle, PawPrint, Gift, Zap, MapPin
-} from "lucide-react";
+import { useState } from "react";
 
-const HERO_SLIDES = [
-  {
-    title: "Mama Bitti\nPanik Yok! 🐾",
-    subtitle: "Samsun'da 1 saatte kapına gelsin",
-    gradient: "from-orange-500 via-amber-500 to-yellow-400",
-    accent: "#ff6f00",
-  },
-  {
-    title: "Büyük\nKampanya 🎉",
-    subtitle: "Ana mama + ekstra ürün fırsatları",
-    gradient: "from-purple-600 via-violet-500 to-fuchsia-400",
-    accent: "#7c3aed",
-  },
-  {
-    title: "Yeni Üyelere\nÖzel Fırsat ✨",
-    subtitle: "İlk siparişte %5 para puan kazan",
-    gradient: "from-emerald-500 via-teal-500 to-cyan-400",
-    accent: "#059669",
-  },
+const NAV_ITEMS = ["Kedi", "Köpek", "Kuş", "Kemirgen", "Akvaryum"];
+
+const BRANDS = [
+  { name: "Royal Canin", color: "#E2001A" },
+  { name: "Pro Plan", color: "#003DA5" },
+  { name: "N&D", color: "#2E7D32" },
+  { name: "Hill's", color: "#1565C0" },
+  { name: "Reflex", color: "#F57C00" },
+  { name: "Felicia", color: "#7B1FA2" },
 ];
 
 const CATEGORIES = [
-  { name: "Köpek", emoji: "🐕", img: "/__mockup/images/cat-dog.webp", color: "from-amber-400 to-orange-500" },
-  { name: "Kedi", emoji: "🐱", img: "/__mockup/images/cat-cat.webp", color: "from-pink-400 to-rose-500" },
-  { name: "Kuş", emoji: "🐦", img: "/__mockup/images/cat-bird.webp", color: "from-sky-400 to-blue-500" },
-  { name: "Kemirgen", emoji: "🐹", img: "/__mockup/images/cat-rabbit.webp", color: "from-lime-400 to-green-500" },
+  { icon: "🐱", name: "Kedi Maması", count: 320, color: "#FF6B35", bg: "from-orange-50 to-orange-100" },
+  { icon: "🐶", name: "Köpek Maması", count: 280, color: "#2563EB", bg: "from-blue-50 to-blue-100" },
+  { icon: "🐦", name: "Kuş Yemi", count: 85, color: "#16A34A", bg: "from-green-50 to-green-100" },
+  { icon: "🐹", name: "Kemirgen", count: 60, color: "#9333EA", bg: "from-purple-50 to-purple-100" },
+  { icon: "🐠", name: "Akvaryum", count: 45, color: "#0891B2", bg: "from-cyan-50 to-cyan-100" },
+  { icon: "🧴", name: "Bakım & Sağlık", count: 150, color: "#DB2777", bg: "from-pink-50 to-pink-100" },
 ];
 
-const QUICK_ACTIONS = [
-  { icon: Truck, label: "1 Saatte\nTeslimat", color: "#ff6f00", bg: "bg-orange-50" },
-  { icon: CreditCard, label: "12 Ay\nTaksit", color: "#7c3aed", bg: "bg-purple-50" },
-  { icon: Banknote, label: "Kapıda\nÖdeme", color: "#059669", bg: "bg-emerald-50" },
-  { icon: Smartphone, label: "QR ile\nÖdeme", color: "#0284c7", bg: "bg-sky-50" },
+const PRODUCTS = [
+  { name: "Royal Canin Indoor 27 Kedi Maması 10 kg", price: 2890, oldPrice: 3450, brand: "Royal Canin", rating: 4.8, reviews: 124, img: "🐱", badge: "En Çok Satan" },
+  { name: "Pro Plan Somonlu Yetişkin Köpek Maması 14 kg", price: 3250, oldPrice: 3890, brand: "Pro Plan", rating: 4.7, reviews: 89, img: "🐶", badge: "İndirimli" },
+  { name: "N&D Tavuklu Kısırlaştırılmış Kedi Maması 10 kg", price: 3150, oldPrice: 3800, brand: "N&D", rating: 4.9, reviews: 156, img: "🐱", badge: "Yeni" },
+  { name: "Hill's Science Plan Kuzu Etli Köpek Maması 14 kg", price: 3680, oldPrice: 4200, brand: "Hill's", rating: 4.6, reviews: 67, img: "🐶", badge: null },
+  { name: "Reflex Plus Somonlu Kedi Maması 15 kg", price: 1890, oldPrice: 2350, brand: "Reflex", rating: 4.5, reviews: 203, img: "🐱", badge: "Fırsat" },
+  { name: "Felicia Kuzu Etli Köpek Maması 15 kg", price: 2450, oldPrice: 2890, brand: "Felicia", rating: 4.4, reviews: 78, img: "🐶", badge: null },
 ];
 
-const TRENDING = [
-  { name: "Royal Canin Fit 32 Kedi Maması 15 kg", price: "4.950", oldPrice: "5.507", img: "/__mockup/images/cat-cat.webp", discount: 10 },
-  { name: "N&D Tavuklu Köpek Maması 12 kg", price: "4.200", oldPrice: "4.900", img: "/__mockup/images/cat-dog.webp", discount: 14 },
-  { name: "Van Cat Karbonlu Kedi Kumu 10 Lt", price: "243", oldPrice: "326", img: "/__mockup/images/cat-cat.webp", discount: 25 },
-  { name: "Hill's Science Plan Kedi 7 kg", price: "4.899", oldPrice: "6.945", img: "/__mockup/images/cat-cat.webp", discount: 29 },
+const FEATURES = [
+  { icon: "🚀", title: "1 Saat Teslimat", desc: "Siparişiniz 1 saat içinde kapınızda" },
+  { icon: "💳", title: "Kapıda Ödeme", desc: "Nakit, kart veya QR ile ödeme" },
+  { icon: "🎁", title: "%5 Para Puan", desc: "Her alışverişte puan kazanın" },
+  { icon: "🔒", title: "Orijinal Ürün", desc: "Garantili orijinal ürünler" },
 ];
-
-function HeroCarousel() {
-  const [current, setCurrent] = useState(0);
-
-  useEffect(() => {
-    const t = setInterval(() => setCurrent((p) => (p + 1) % HERO_SLIDES.length), 4000);
-    return () => clearInterval(t);
-  }, []);
-
-  const slide = HERO_SLIDES[current];
-
-  return (
-    <div className="relative overflow-hidden rounded-2xl mx-3 mt-2">
-      <div
-        className={`bg-gradient-to-br ${slide.gradient} p-5 pb-6 transition-all duration-700`}
-        style={{ minHeight: 160 }}
-      >
-        <div className="relative z-10">
-          <h2 className="text-2xl font-black text-white whitespace-pre-line leading-tight drop-shadow-sm">
-            {slide.title}
-          </h2>
-          <p className="text-white/90 text-sm mt-2 font-medium">{slide.subtitle}</p>
-          <button className="mt-3 bg-white/20 backdrop-blur-md text-white text-xs font-bold px-4 py-2 rounded-full border border-white/30 flex items-center gap-1.5 active:scale-95 transition-transform">
-            Hemen Keşfet <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-        <div className="absolute right-3 bottom-2 opacity-20 text-8xl">
-          🐾
-        </div>
-      </div>
-      <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1.5">
-        {HERO_SLIDES.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrent(i)}
-            className={`h-1.5 rounded-full transition-all duration-300 ${
-              i === current ? "w-6 bg-white" : "w-1.5 bg-white/40"
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function SearchSection() {
-  return (
-    <div className="mx-3 mt-3">
-      <div className="relative">
-        <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-gray-400" />
-        <input
-          type="text"
-          placeholder="Ürün, marka veya kategori ara..."
-          className="w-full pl-10 pr-4 py-3 rounded-xl bg-gray-50 border border-gray-200/80 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-orange-400/40 focus:border-orange-300 transition-all"
-        />
-        <div className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-orange-500 text-white rounded-lg p-1.5">
-          <Sparkles className="w-3.5 h-3.5" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function QuickActions() {
-  return (
-    <div className="mx-3 mt-4">
-      <div className="grid grid-cols-4 gap-2">
-        {QUICK_ACTIONS.map((a, i) => (
-          <div
-            key={i}
-            className={`${a.bg} rounded-xl p-2.5 flex flex-col items-center gap-1.5 active:scale-95 transition-transform cursor-pointer`}
-          >
-            <div
-              className="w-9 h-9 rounded-full flex items-center justify-center"
-              style={{ backgroundColor: a.color + "15" }}
-            >
-              <a.icon className="w-4.5 h-4.5" style={{ color: a.color }} />
-            </div>
-            <span
-              className="text-[10px] font-bold text-center leading-tight whitespace-pre-line"
-              style={{ color: a.color }}
-            >
-              {a.label}
-            </span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function CampaignBanner() {
-  return (
-    <div className="mx-3 mt-4">
-      <div
-        className="relative overflow-hidden rounded-xl p-3.5 flex items-center gap-3 cursor-pointer active:scale-[0.98] transition-transform"
-        style={{ background: "linear-gradient(135deg, #6B3480 0%, #9b59b6 50%, #c39bd3 100%)" }}
-      >
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-white" />
-          <div className="absolute -left-4 -bottom-4 w-16 h-16 rounded-full bg-white" />
-        </div>
-        <div className="relative z-10 flex items-center gap-3 flex-1">
-          <div className="w-10 h-10 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shrink-0">
-            <Gift className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-white text-sm font-extrabold">Kampanyalı Ürünler</p>
-            <p className="text-white/70 text-[11px] mt-0.5">Ana mama + ek ürün fırsatları</p>
-          </div>
-          <ChevronRight className="w-5 h-5 text-white/60 shrink-0" />
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function CategoryGrid() {
-  return (
-    <div className="mx-3 mt-5">
-      <div className="flex items-center justify-between mb-3">
-        <h3 className="text-base font-extrabold text-gray-900">Kategoriler</h3>
-        <button className="text-xs text-orange-500 font-semibold flex items-center gap-0.5">
-          Tümü <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-      <div className="grid grid-cols-4 gap-2.5">
-        {CATEGORIES.map((cat) => (
-          <div key={cat.name} className="flex flex-col items-center gap-1.5 cursor-pointer active:scale-95 transition-transform">
-            <div className={`w-full aspect-square rounded-2xl overflow-hidden bg-gradient-to-br ${cat.color} p-[3px]`}>
-              <div className="w-full h-full rounded-[13px] overflow-hidden bg-white">
-                <img src={cat.img} alt={cat.name} className="w-full h-full object-cover" />
-              </div>
-            </div>
-            <span className="text-xs font-bold text-gray-800">{cat.name}</span>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TrendingProducts() {
-  return (
-    <div className="mt-5">
-      <div className="flex items-center justify-between mx-3 mb-3">
-        <div className="flex items-center gap-1.5">
-          <Zap className="w-4 h-4 text-orange-500" />
-          <h3 className="text-base font-extrabold text-gray-900">Popüler Ürünler</h3>
-        </div>
-        <button className="text-xs text-orange-500 font-semibold flex items-center gap-0.5">
-          Tümü <ChevronRight className="w-3.5 h-3.5" />
-        </button>
-      </div>
-      <div className="flex gap-3 overflow-x-auto px-3 pb-1 scrollbar-hide" style={{ scrollbarWidth: "none" }}>
-        {TRENDING.map((p, i) => (
-          <div key={i} className="min-w-[150px] max-w-[150px] bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden shrink-0 cursor-pointer active:scale-[0.97] transition-transform">
-            <div className="relative aspect-square bg-gray-50 p-2">
-              <img src={p.img} alt={p.name} className="w-full h-full object-cover rounded-lg" />
-              {p.discount > 0 && (
-                <span className="absolute top-1.5 right-1.5 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-md">
-                  %{p.discount}
-                </span>
-              )}
-              <button className="absolute top-1.5 left-1.5 w-7 h-7 rounded-full bg-white/80 backdrop-blur flex items-center justify-center shadow-sm">
-                <Heart className="w-3.5 h-3.5 text-gray-400" />
-              </button>
-            </div>
-            <div className="p-2.5">
-              <p className="text-[11px] font-semibold text-gray-800 line-clamp-2 leading-tight min-h-[28px]">
-                {p.name}
-              </p>
-              <div className="mt-1.5 flex items-baseline gap-1">
-                <span className="text-sm font-extrabold text-gray-900">{p.price} ₺</span>
-                {p.oldPrice && (
-                  <span className="text-[10px] text-gray-400 line-through">{p.oldPrice} ₺</span>
-                )}
-              </div>
-              <button className="w-full mt-2 bg-orange-500 text-white text-[11px] font-bold py-1.5 rounded-lg active:bg-orange-600 transition-colors flex items-center justify-center gap-1">
-                <PawPrint className="w-3 h-3" /> Sepete Ekle
-              </button>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function TrustBadges() {
-  return (
-    <div className="mx-3 mt-5">
-      <div className="bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-100 p-3.5">
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            { icon: Clock, label: "Hızlı Teslimat", sub: "1 saat içinde", color: "#f59e0b" },
-            { icon: Shield, label: "Güvenli Alışveriş", sub: "256-bit SSL", color: "#10b981" },
-            { icon: Star, label: "Müşteri Memnuniyeti", sub: "4.9 puan", color: "#6366f1" },
-          ].map((b, i) => (
-            <div key={i} className="flex flex-col items-center gap-1.5 text-center">
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center"
-                style={{ backgroundColor: b.color + "15" }}
-              >
-                <b.icon className="w-4 h-4" style={{ color: b.color }} />
-              </div>
-              <span className="text-[10px] font-bold text-gray-800">{b.label}</span>
-              <span className="text-[9px] text-gray-400">{b.sub}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function LocationBanner() {
-  return (
-    <div className="mx-3 mt-4">
-      <div className="bg-gradient-to-r from-emerald-50 to-teal-50 rounded-xl p-3 flex items-center gap-3 border border-emerald-100">
-        <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
-          <MapPin className="w-5 h-5 text-emerald-600" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-xs font-bold text-emerald-800">Samsun İçi Teslimat</p>
-          <p className="text-[10px] text-emerald-600/80 mt-0.5">Atakum, İlkadım, Canik bölgelerine teslimat</p>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function AIChatTeaser() {
-  return (
-    <div className="mx-3 mt-4">
-      <div className="relative bg-gradient-to-br from-blue-500 via-indigo-500 to-violet-500 rounded-xl p-4 overflow-hidden">
-        <div className="absolute right-0 top-0 w-24 h-24 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-        <div className="relative z-10 flex items-start gap-3">
-          <div className="w-11 h-11 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center shrink-0">
-            <MessageCircle className="w-5 h-5 text-white" />
-          </div>
-          <div className="flex-1">
-            <p className="text-white text-sm font-extrabold">Yapay Zeka Asistanı</p>
-            <p className="text-white/70 text-[11px] mt-0.5 leading-relaxed">Evcil hayvanınız hakkında sorularınızı cevaplayalım</p>
-            <button className="mt-2.5 bg-white/20 backdrop-blur text-white text-[11px] font-bold px-3 py-1.5 rounded-lg border border-white/20 flex items-center gap-1.5">
-              <Sparkles className="w-3 h-3" /> Soru Sor
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function MobileFooter() {
-  return (
-    <div className="mx-3 mt-5 mb-20">
-      <div className="bg-gray-50 rounded-xl border border-gray-200/80 p-4 space-y-3">
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            "SSS", "İletişim", "Hakkımızda", "Teslimat ve İade",
-            "KVKK", "Gizlilik", "Kullanım Koşulları", "Çerez Politikası"
-          ].map((l) => (
-            <span key={l} className="text-[11px] text-gray-500 py-0.5 cursor-pointer hover:text-gray-700 transition-colors">
-              {l}
-            </span>
-          ))}
-        </div>
-        <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-          <div className="flex items-center gap-1.5">
-            <Shield className="w-3.5 h-3.5 text-green-600" />
-            <span className="text-[10px] text-green-700 font-semibold">SSL Güvenli</span>
-          </div>
-          <div className="flex items-center gap-2 text-gray-400">
-            <span className="text-[10px] font-bold" style={{ color: "#1a1f71" }}>VISA</span>
-            <span className="text-[10px] font-bold" style={{ color: "#eb001b" }}>MC</span>
-          </div>
-        </div>
-        <p className="text-[9px] text-gray-400 text-center">© 2026 Sizpa İnternet Tic. Ltd. Şti.</p>
-      </div>
-    </div>
-  );
-}
-
-function BottomNav() {
-  const tabs = [
-    { icon: PawPrint, label: "Ana Sayfa", active: true },
-    { icon: Search, label: "Kategoriler", active: false },
-    { icon: Heart, label: "Favoriler", active: false },
-    { icon: Tag, label: "Sepet", active: false },
-    { icon: Truck, label: "Takip", active: false },
-  ];
-
-  return (
-    <div className="fixed bottom-0 left-0 right-0 bg-white/80 backdrop-blur-xl border-t border-gray-200/60 px-2 py-1 z-50">
-      <div className="flex justify-around max-w-md mx-auto">
-        {tabs.map((t, i) => (
-          <button key={i} className="flex flex-col items-center gap-0.5 py-1 px-2 min-w-[56px] cursor-pointer">
-            <div className={`p-1.5 rounded-xl transition-all ${t.active ? "bg-orange-500 shadow-lg shadow-orange-500/30" : ""}`}>
-              <t.icon className={`w-4.5 h-4.5 ${t.active ? "text-white" : "text-gray-400"}`} />
-            </div>
-            <span className={`text-[9px] font-bold ${t.active ? "text-orange-500" : "text-gray-400"}`}>
-              {t.label}
-            </span>
-          </button>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 export function Modern() {
+  const [hoveredProduct, setHoveredProduct] = useState<number | null>(null);
+  const [activeNav, setActiveNav] = useState<string | null>(null);
+
   return (
-    <div className="min-h-screen bg-white" style={{ maxWidth: 430 }}>
-      <div className="bg-white sticky top-0 z-40 border-b border-gray-100/80 backdrop-blur-xl">
-        <div className="flex items-center justify-between px-3 py-2.5">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center shadow-sm">
-              <Zap className="w-4 h-4 text-white" />
-            </div>
-            <div>
-              <h1 className="text-sm font-black text-gray-900 tracking-tight">JETGO</h1>
-              <p className="text-[9px] text-gray-400 font-medium -mt-0.5">Sen İste, Jet İle Gelsin</p>
-            </div>
+    <div className="min-h-screen bg-white" style={{ fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, sans-serif" }}>
+      <div className="bg-gradient-to-r from-gray-900 via-gray-800 to-gray-900 text-white text-sm">
+        <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
+          <div className="flex items-center gap-6">
+            <span className="flex items-center gap-1.5 text-gray-300">
+              <span>📍</span> Samsun / Atakum
+            </span>
+            <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+              <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></span>
+              Teslimat Aktif
+            </span>
           </div>
-          <div className="flex items-center gap-2">
-            <button className="w-9 h-9 rounded-xl bg-gray-50 flex items-center justify-center border border-gray-100">
-              <Heart className="w-4 h-4 text-gray-500" />
-            </button>
-            <button className="w-9 h-9 rounded-xl bg-orange-50 flex items-center justify-center border border-orange-100 relative">
-              <Tag className="w-4 h-4 text-orange-500" />
-              <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">2</span>
-            </button>
+          <div className="flex items-center gap-4 text-gray-300">
+            <span>📞 0850 123 45 67</span>
+            <span>•</span>
+            <span>Her gün 10:00 - 19:00</span>
           </div>
         </div>
       </div>
 
-      <SearchSection />
-      <HeroCarousel />
-      <QuickActions />
-      <CampaignBanner />
-      <CategoryGrid />
-      <TrendingProducts />
-      <LocationBanner />
-      <AIChatTeaser />
-      <TrustBadges />
-      <MobileFooter />
-      <BottomNav />
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-100 shadow-sm">
+        <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between gap-8">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-lg shadow-orange-200">
+              <span className="text-white text-lg font-black">J</span>
+            </div>
+            <div>
+              <span className="text-xl font-black tracking-tight bg-gradient-to-r from-orange-600 to-amber-600 bg-clip-text text-transparent">JETGO</span>
+              <p className="text-[10px] text-gray-400 -mt-0.5 font-medium tracking-widest uppercase">Pet Shop</p>
+            </div>
+          </div>
+
+          <nav className="flex items-center gap-1">
+            {NAV_ITEMS.map((item) => (
+              <button
+                key={item}
+                onMouseEnter={() => setActiveNav(item)}
+                onMouseLeave={() => setActiveNav(null)}
+                className="relative px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 rounded-lg transition-all duration-200"
+                style={activeNav === item ? { backgroundColor: "#FFF7ED", color: "#EA580C" } : {}}
+              >
+                {item}
+                {activeNav === item && (
+                  <span className="absolute bottom-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-orange-500 rounded-full" />
+                )}
+              </button>
+            ))}
+            <button className="px-5 py-2 text-sm font-bold text-white rounded-xl shadow-lg shadow-purple-200 transition-transform hover:scale-105"
+              style={{ background: "linear-gradient(135deg, #7C3AED, #6D28D9)" }}>
+              Kampanya
+            </button>
+          </nav>
+
+          <div className="flex-1 max-w-md relative">
+            <input
+              type="text"
+              placeholder="Ürün, marka veya kategori ara..."
+              className="w-full pl-11 pr-4 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-200 focus:border-orange-400 transition-all"
+            />
+            <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-gray-700 bg-gray-50 hover:bg-gray-100 rounded-xl transition-colors">
+              <span>👤</span> Giriş Yap
+            </button>
+            <button className="relative flex items-center gap-2 px-5 py-2.5 text-sm font-bold text-white rounded-xl shadow-lg shadow-orange-200 transition-transform hover:scale-105"
+              style={{ background: "linear-gradient(135deg, #F97316, #EA580C)" }}>
+              <span>🛒</span> Sepet
+              <span className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center shadow">3</span>
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <section className="relative overflow-hidden" style={{ background: "linear-gradient(135deg, #FFF7ED 0%, #FFFBEB 40%, #F0FDF4 100%)" }}>
+        <div className="absolute inset-0 overflow-hidden">
+          <div className="absolute -top-20 -right-20 w-96 h-96 bg-orange-200/30 rounded-full blur-3xl" />
+          <div className="absolute top-40 -left-20 w-80 h-80 bg-amber-200/20 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-40 w-64 h-64 bg-green-200/20 rounded-full blur-3xl" />
+        </div>
+        <div className="max-w-7xl mx-auto px-6 py-20 relative">
+          <div className="grid grid-cols-2 gap-16 items-center">
+            <div>
+              <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/80 backdrop-blur rounded-full text-sm font-medium text-orange-700 shadow-sm border border-orange-100 mb-6">
+                <span className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
+                Aynı gün teslimat aktif
+              </div>
+              <h1 className="text-6xl font-black text-gray-900 leading-[1.1] tracking-tight">
+                Evcil Dostunuz
+                <br />
+                İçin <span className="bg-gradient-to-r from-orange-500 to-amber-500 bg-clip-text text-transparent">En İyisi</span>
+              </h1>
+              <p className="mt-6 text-lg text-gray-500 leading-relaxed max-w-md">
+                900+ orijinal ürün, aynı gün teslimat. Evcil hayvanınızın ihtiyaçlarını bir tıkla karşılayın.
+              </p>
+              <div className="mt-8 flex items-center gap-4">
+                <button className="px-8 py-4 text-base font-bold text-white rounded-2xl shadow-xl shadow-orange-200 transition-all hover:shadow-2xl hover:shadow-orange-300 hover:-translate-y-0.5"
+                  style={{ background: "linear-gradient(135deg, #F97316, #EA580C)" }}>
+                  Alışverişe Başla →
+                </button>
+                <button className="px-8 py-4 text-base font-semibold text-gray-700 bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all hover:-translate-y-0.5">
+                  Kampanyaları Gör
+                </button>
+              </div>
+              <div className="mt-10 flex items-center gap-8">
+                {[
+                  { val: "900+", label: "Ürün" },
+                  { val: "1 Saat", label: "Teslimat" },
+                  { val: "4.8★", label: "Müşteri Puanı" },
+                ].map((s) => (
+                  <div key={s.label}>
+                    <p className="text-2xl font-black text-gray-900">{s.val}</p>
+                    <p className="text-sm text-gray-400">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="relative">
+              <div className="relative w-full aspect-square bg-gradient-to-br from-orange-100 to-amber-50 rounded-[3rem] flex items-center justify-center shadow-2xl shadow-orange-100/50 border border-orange-100/50">
+                <div className="text-[180px] leading-none">🐕</div>
+                <div className="absolute -bottom-4 -left-4 bg-white rounded-2xl p-4 shadow-xl border border-gray-100 flex items-center gap-3">
+                  <div className="w-12 h-12 bg-emerald-50 rounded-xl flex items-center justify-center text-2xl">✅</div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm">Orijinal Ürün</p>
+                    <p className="text-xs text-gray-400">Garantili & Güvenilir</p>
+                  </div>
+                </div>
+                <div className="absolute -top-4 -right-4 bg-white rounded-2xl p-4 shadow-xl border border-gray-100 flex items-center gap-3">
+                  <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-2xl">🚀</div>
+                  <div>
+                    <p className="font-bold text-gray-900 text-sm">1 Saat Teslimat</p>
+                    <p className="text-xs text-gray-400">Kapınıza kadar</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-y border-gray-100 bg-gray-50/50">
+        <div className="max-w-7xl mx-auto px-6 py-6">
+          <div className="grid grid-cols-4 gap-6">
+            {FEATURES.map((f) => (
+              <div key={f.title} className="flex items-center gap-4 p-4 bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <span className="text-3xl">{f.icon}</span>
+                <div>
+                  <p className="font-bold text-gray-900 text-sm">{f.title}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{f.desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="flex items-end justify-between mb-10">
+          <div>
+            <p className="text-sm font-bold text-orange-600 uppercase tracking-widest mb-2">Kategoriler</p>
+            <h2 className="text-3xl font-black text-gray-900">Ne Arıyorsunuz?</h2>
+          </div>
+          <button className="text-sm font-semibold text-orange-600 hover:text-orange-700 flex items-center gap-1">
+            Tümünü Gör →
+          </button>
+        </div>
+        <div className="grid grid-cols-6 gap-4">
+          {CATEGORIES.map((cat) => (
+            <div
+              key={cat.name}
+              className={`group relative p-6 rounded-2xl bg-gradient-to-br ${cat.bg} border border-gray-100 cursor-pointer transition-all duration-300 hover:shadow-lg hover:-translate-y-1`}
+            >
+              <span className="text-5xl block mb-4">{cat.icon}</span>
+              <p className="font-bold text-gray-900 text-sm">{cat.name}</p>
+              <p className="text-xs mt-1" style={{ color: cat.color }}>{cat.count} ürün</p>
+              <div className="absolute top-4 right-4 w-8 h-8 bg-white/80 rounded-lg flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm">
+                <span className="text-xs">→</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="bg-gray-50/50 py-16">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="flex items-end justify-between mb-10">
+            <div>
+              <p className="text-sm font-bold text-orange-600 uppercase tracking-widest mb-2">Popüler Ürünler</p>
+              <h2 className="text-3xl font-black text-gray-900">Çok Satanlar</h2>
+            </div>
+            <div className="flex items-center gap-2">
+              {["Tümü", "Kedi", "Köpek"].map((tab) => (
+                <button key={tab} className={`px-4 py-2 text-sm font-medium rounded-lg transition-all ${tab === "Tümü" ? "bg-orange-500 text-white shadow-md" : "bg-white text-gray-600 border border-gray-200 hover:bg-gray-50"}`}>
+                  {tab}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-6">
+            {PRODUCTS.map((p, i) => {
+              const discount = Math.round(((p.oldPrice - p.price) / p.oldPrice) * 100);
+              return (
+                <div
+                  key={i}
+                  onMouseEnter={() => setHoveredProduct(i)}
+                  onMouseLeave={() => setHoveredProduct(null)}
+                  className="group bg-white rounded-2xl border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1"
+                >
+                  <div className="relative p-8 bg-gradient-to-br from-gray-50 to-gray-100/50 flex items-center justify-center">
+                    <span className="text-8xl transition-transform duration-300 group-hover:scale-110">{p.img}</span>
+                    {p.badge && (
+                      <span className="absolute top-4 left-4 px-3 py-1 text-xs font-bold text-white rounded-lg shadow"
+                        style={{ background: p.badge === "En Çok Satan" ? "#F97316" : p.badge === "Yeni" ? "#16A34A" : p.badge === "İndirimli" ? "#EF4444" : "#7C3AED" }}>
+                        {p.badge}
+                      </span>
+                    )}
+                    <span className="absolute top-4 right-4 px-2 py-1 text-xs font-bold text-red-600 bg-red-50 rounded-lg border border-red-100">
+                      %{discount}
+                    </span>
+                    <div className={`absolute bottom-4 right-4 flex gap-2 transition-all duration-300 ${hoveredProduct === i ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"}`}>
+                      <button className="w-10 h-10 bg-white rounded-xl shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors border border-gray-100">
+                        ❤️
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-5">
+                    <p className="text-xs text-gray-400 font-medium mb-1">{p.brand}</p>
+                    <p className="font-semibold text-gray-900 text-sm leading-snug line-clamp-2 min-h-[2.5rem]">{p.name}</p>
+                    <div className="flex items-center gap-2 mt-2">
+                      <span className="text-yellow-500 text-sm">★</span>
+                      <span className="text-sm font-medium text-gray-700">{p.rating}</span>
+                      <span className="text-xs text-gray-400">({p.reviews})</span>
+                    </div>
+                    <div className="flex items-center justify-between mt-4">
+                      <div>
+                        <span className="text-xl font-black text-gray-900">{p.price.toLocaleString("tr-TR")} ₺</span>
+                        <span className="text-sm text-gray-400 line-through ml-2">{p.oldPrice.toLocaleString("tr-TR")} ₺</span>
+                      </div>
+                      <button className="w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-lg shadow-orange-200 transition-transform hover:scale-110"
+                        style={{ background: "linear-gradient(135deg, #F97316, #EA580C)" }}>
+                        +
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-6 py-16">
+        <div className="text-center mb-10">
+          <p className="text-sm font-bold text-orange-600 uppercase tracking-widest mb-2">Güvenilir Markalar</p>
+          <h2 className="text-3xl font-black text-gray-900">Popüler Markalar</h2>
+        </div>
+        <div className="grid grid-cols-6 gap-4">
+          {BRANDS.map((b) => (
+            <div key={b.name} className="group p-6 bg-white rounded-2xl border border-gray-100 text-center cursor-pointer transition-all hover:shadow-lg hover:-translate-y-1 hover:border-orange-200">
+              <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center text-white text-xl font-black mb-3 shadow-lg"
+                style={{ background: `linear-gradient(135deg, ${b.color}, ${b.color}dd)` }}>
+                {b.name.charAt(0)}
+              </div>
+              <p className="font-bold text-gray-900 text-sm">{b.name}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="max-w-7xl mx-auto px-6 pb-16">
+        <div className="relative overflow-hidden rounded-3xl p-12" style={{ background: "linear-gradient(135deg, #F97316 0%, #EA580C 50%, #DC2626 100%)" }}>
+          <div className="absolute inset-0 overflow-hidden">
+            <div className="absolute -top-20 -right-20 w-80 h-80 bg-white/10 rounded-full blur-2xl" />
+            <div className="absolute -bottom-20 -left-20 w-60 h-60 bg-white/10 rounded-full blur-2xl" />
+          </div>
+          <div className="relative grid grid-cols-2 items-center gap-12">
+            <div>
+              <h2 className="text-4xl font-black text-white leading-tight">
+                İlk Siparişine<br />
+                <span className="text-amber-200">100 ₺ İndirim!</span>
+              </h2>
+              <p className="mt-4 text-orange-100 text-lg">Hemen üye ol, hoş geldin kuponu senin olsun.</p>
+              <button className="mt-8 px-8 py-4 bg-white text-orange-600 font-bold rounded-2xl shadow-xl hover:shadow-2xl transition-all hover:-translate-y-0.5">
+                Hemen Üye Ol →
+              </button>
+            </div>
+            <div className="text-center">
+              <span className="text-[120px]">🎁</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer className="bg-gray-900 text-gray-400">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <div className="grid grid-cols-4 gap-12">
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center">
+                  <span className="text-white text-lg font-black">J</span>
+                </div>
+                <span className="text-xl font-black text-white">JETGO</span>
+              </div>
+              <p className="text-sm leading-relaxed">Samsun'un en hızlı pet shop teslimat servisi. Evcil dostlarınız için en iyisi.</p>
+            </div>
+            <div>
+              <p className="text-white font-bold text-sm mb-4">Hızlı Linkler</p>
+              {["Hakkımızda", "SSS", "Kargo Bilgileri", "İade Politikası"].map(l => (
+                <p key={l} className="text-sm py-1.5 hover:text-white cursor-pointer transition-colors">{l}</p>
+              ))}
+            </div>
+            <div>
+              <p className="text-white font-bold text-sm mb-4">Kategoriler</p>
+              {["Kedi Maması", "Köpek Maması", "Kuş Yemi", "Kemirgen", "Akvaryum"].map(l => (
+                <p key={l} className="text-sm py-1.5 hover:text-white cursor-pointer transition-colors">{l}</p>
+              ))}
+            </div>
+            <div>
+              <p className="text-white font-bold text-sm mb-4">İletişim</p>
+              <p className="text-sm py-1.5">📍 Atakum, Samsun</p>
+              <p className="text-sm py-1.5">📞 0850 123 45 67</p>
+              <p className="text-sm py-1.5">✉️ info@jetgo.pet</p>
+              <div className="flex gap-3 mt-4">
+                {["📘", "📸", "🐦"].map((s, i) => (
+                  <span key={i} className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center text-lg cursor-pointer hover:bg-gray-700 transition-colors">{s}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 mt-12 pt-8 flex items-center justify-between">
+            <p className="text-sm">© 2026 JETGO Pet Shop. Tüm hakları saklıdır.</p>
+            <p className="text-sm">Sizpa İnternet Tic. Ltd. Şti.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
