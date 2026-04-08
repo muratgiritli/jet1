@@ -29,7 +29,7 @@ interface CartContextType {
   basket: BasketItems;
   paymentId: string;
   setPaymentId: (id: string) => void;
-  updateQty: (id: string, delta: number) => boolean;
+  updateQty: (id: string, delta: number, fromCampaign?: boolean) => boolean;
   clearCart: () => void;
   subtotal: number;
   selectedProducts: { product: CartProduct; qty: number }[];
@@ -49,6 +49,7 @@ interface CartContextType {
   isKediKumu: (id: string) => boolean;
   getProductStock: (id: string) => number;
   updateStock: (id: string, stock: number) => void;
+  campaignCartIds: Set<string>;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -77,9 +78,29 @@ function saveBasket(b: BasketItems) {
   } catch {}
 }
 
+function loadCampaignCartIds(): Set<string> {
+  try {
+    const saved = localStorage.getItem("jet55_campaign_cart");
+    if (saved) return new Set(JSON.parse(saved));
+  } catch {}
+  return new Set();
+}
+
+function saveCampaignCartIds(s: Set<string>) {
+  try {
+    if (s.size === 0) {
+      localStorage.removeItem("jet55_campaign_cart");
+    } else {
+      localStorage.setItem("jet55_campaign_cart", JSON.stringify([...s]));
+    }
+  } catch {}
+}
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [basket, setBasket] = useState<BasketItems>(loadBasket);
   const [paymentId, setPaymentId] = useState("nakit");
+  const [campaignCartIds, setCampaignCartIds] = useState<Set<string>>(loadCampaignCartIds);
+  const campaignCartIdsRef = useRef<Set<string>>(campaignCartIds);
 
   const { data: dbProducts = [] } = useQuery<DbProduct[]>({
     queryKey: ["/api/products"],
@@ -140,9 +161,10 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const allProducts: CartProduct[] = useMemo(() => {
     return dbProducts.map((p) => {
-      const cp = campaignPriceMap.get(String(p.id));
+      const pid = String(p.id);
+      const cp = campaignCartIds.has(pid) ? campaignPriceMap.get(pid) : undefined;
       return {
-        id: String(p.id),
+        id: pid,
         name: p.name,
         price: cp ?? p.price,
         img: p.img,
@@ -150,7 +172,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         originalPrice: cp ? p.price : p.originalPrice,
       };
     });
-  }, [dbProducts, campaignPriceMap]);
+  }, [dbProducts, campaignPriceMap, campaignCartIds]);
 
   const kediKumuIdsRef = useRef<Set<string>>(new Set());
   const kediKumuIds = useMemo(() => {
@@ -174,16 +196,26 @@ export function CartProvider({ children }: { children: ReactNode }) {
     stockMapRef.current.set(id, stock);
   }, []);
 
-  const updateQty = useCallback((id: string, delta: number): boolean => {
+  const updateQty = useCallback((id: string, delta: number, fromCampaign?: boolean): boolean => {
     let blocked = false;
+    if (fromCampaign && delta > 0) {
+      setCampaignCartIds(prev => {
+        const next = new Set(prev);
+        next.add(id);
+        campaignCartIdsRef.current = next;
+        saveCampaignCartIds(next);
+        return next;
+      });
+    }
     setBasket((prev) => {
       const current = prev[id] || 0;
       let next = current + delta;
-      if (campaignMainIdsRef.current.has(id)) {
+      const isCampaignItem = campaignCartIdsRef.current.has(id);
+      if (isCampaignItem && campaignMainIdsRef.current.has(id)) {
         if (next > 1) next = 1;
         if (delta > 0 && current === 0) {
           const hasAnotherMain = Array.from(campaignMainIdsRef.current).some(
-            (mid) => mid !== id && (prev[mid] || 0) > 0
+            (mid) => mid !== id && (prev[mid] || 0) > 0 && campaignCartIdsRef.current.has(mid)
           );
           if (hasAnotherMain) return prev;
         }
@@ -202,6 +234,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const copy = { ...prev };
         delete copy[id];
         updated = copy;
+        setCampaignCartIds(prev2 => {
+          const next2 = new Set(prev2);
+          next2.delete(id);
+          campaignCartIdsRef.current = next2;
+          saveCampaignCartIds(next2);
+          return next2;
+        });
       } else {
         updated = { ...prev, [id]: next };
       }
@@ -214,6 +253,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const clearCart = useCallback(() => {
     setBasket({});
     saveBasket({});
+    setCampaignCartIds(new Set());
+    campaignCartIdsRef.current = new Set();
+    saveCampaignCartIds(new Set());
   }, []);
 
   const { subtotal, selectedProducts, shipping, discount, grandTotal, minReached } = useMemo(() => {
@@ -262,6 +304,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     let extraCount = 0;
     let mainInCart: string | null = null;
     for (const { product, qty } of selectedProducts) {
+      if (!campaignCartIds.has(product.id)) continue;
       const type = campaignSet.get(product.id);
       if (type === "main") {
         mainCount += qty;
@@ -277,7 +320,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       campaignValid: !hasCampaign || (mainCount >= 1 && extraCount >= 1),
       campaignMainInCart: mainInCart,
     };
-  }, [selectedProducts, campaignSet]);
+  }, [selectedProducts, campaignSet, campaignCartIds]);
 
   const value = useMemo(
     () => ({
@@ -304,8 +347,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       isKediKumu,
       getProductStock,
       updateStock,
+      campaignCartIds,
     }),
-    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock, updateStock]
+    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock, updateStock, campaignCartIds]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

@@ -589,14 +589,14 @@ export default function ProductDetailPage() {
                 <div className="flex flex-col gap-3 mt-2">
                   <div className="flex items-center gap-3 flex-wrap">
                     <span className="text-sm text-muted-foreground font-medium">ADET</span>
-                    <QuantityControl productId={pid} quantity={quantity} onUpdate={updateQty} />
+                    <QuantityControl productId={pid} quantity={quantity} onUpdate={isCampaignMode ? (id, delta) => updateQty(id, delta, true) : updateQty} />
                   </div>
                   <div className="flex gap-3 flex-wrap">
                     <Button
                       className={isCampaignMode ? "w-full" : "flex-1"}
                       style={{ backgroundColor: "#e65100" }}
                       onClick={() => {
-                        if (quantity === 0) updateQty(pid, 1);
+                        if (quantity === 0) updateQty(pid, 1, isCampaignMode);
                         if (isCampaignMode && !hasExtraInCart) {
                           setCampaignWarning(true);
                           setTimeout(() => {
@@ -707,7 +707,7 @@ export default function ProductDetailPage() {
                   <CrossSellProductCard
                     product={p}
                     quantity={basket[String(p.id)] || 0}
-                    onUpdate={updateQty}
+                    onUpdate={(id, delta) => updateQty(id, delta, true)}
                   />
                 </div>
               ))}
