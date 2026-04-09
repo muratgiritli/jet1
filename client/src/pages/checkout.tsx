@@ -540,17 +540,16 @@ export default function Checkout() {
           <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowAuthModal(false); setAuthStep("phone"); setAuthErrors({}); }} />
             <div className="relative w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-b from-blue-500 to-indigo-600 text-white" data-testid="modal-auth">
-              <button
-                type="button"
-                onClick={() => { setShowAuthModal(false); setAuthStep("phone"); setAuthErrors({}); }}
-                className="absolute top-3 right-3 z-10 p-1 text-white/70 hover:text-white"
-                data-testid="btn-close-auth-modal"
-              >
-                <X className="w-5 h-5" />
-              </button>
-
               <div className="px-5 pt-5 pb-2">
-                <div className="flex rounded-xl overflow-hidden mb-3 bg-white/10">
+                <div className="flex rounded-xl overflow-hidden mb-3 bg-white/10 relative">
+                  <button
+                    type="button"
+                    onClick={() => { setShowAuthModal(false); setAuthStep("phone"); setAuthErrors({}); }}
+                    className="absolute -top-1 -right-1 z-10 p-1 text-white/70 hover:text-white bg-gray-900/50 rounded-full"
+                    data-testid="btn-close-auth-modal"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => { setAuthMode("login"); setAuthStep("phone"); setAuthErrors({}); }}
