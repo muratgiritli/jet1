@@ -992,6 +992,10 @@ export async function registerRoutes(
     }
     const { usedPoints, couponCode, ...orderData } = parsed.data;
 
+    const clientCampaignIds = Array.isArray((req.body as any).campaignProductIds)
+      ? new Set((req.body as any).campaignProductIds.map((id: any) => parseInt(String(id))))
+      : null;
+
     const allCampaignItems = await sharedPool.query("SELECT product_id, item_type FROM campaign_items WHERE is_active = true");
     const campaignMap = new Map<number, string>();
     for (const row of allCampaignItems.rows) {
@@ -1002,11 +1006,12 @@ export async function registerRoutes(
     let campaignExtraCount = 0;
     for (const item of orderData.items) {
       const pid = parseInt(String(item.productId));
+      if (clientCampaignIds && !clientCampaignIds.has(pid)) continue;
       const type = campaignMap.get(pid);
       if (type === "main") campaignMainCount += item.quantity;
       if (type === "extra") campaignExtraCount += item.quantity;
     }
-    const isCampaignOrder = campaignMainCount > 0 || campaignExtraCount > 0;
+    const isCampaignOrder = clientCampaignIds !== null && (campaignMainCount > 0 || campaignExtraCount > 0);
 
     let couponDiscount = 0;
     let appliedCoupon: any = null;

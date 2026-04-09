@@ -329,6 +329,7 @@ export default function Checkout() {
     campaignMainCount,
     campaignExtraCount,
     campaignValid,
+    campaignCartIds,
   } = useCart();
 
   const [orderError, setOrderError] = useState("");
@@ -467,6 +468,7 @@ export default function Checkout() {
         donationAmount: donationAmount > 0 ? donationAmount : undefined,
         customerNote: orderNote.trim() || undefined,
         deliverySlot: deliverySlot || undefined,
+        campaignProductIds: hasCampaignItems ? Array.from(campaignCartIds) : undefined,
       };
 
       await apiRequest("POST", "/api/orders", orderPayload);
