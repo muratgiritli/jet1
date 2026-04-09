@@ -238,12 +238,16 @@ function ProductForm({
   onSave,
   isPending,
   subcategoriesByAnimal,
+  campaignInfo,
+  onCampaignPriceChange,
 }: {
   categories: BrandCategory[];
   product?: Product;
   onSave: (data: any) => void;
   isPending: boolean;
   subcategoriesByAnimal: Record<string, { slug: string; name: string }[]>;
+  campaignInfo?: { id: number; itemType: string; campaignPrice: string | null } | null;
+  onCampaignPriceChange?: (campaignItemId: number, price: string | null) => void;
 }) {
   const existingCat = product
     ? categories.find((c) => c.id === product.brandCategoryId)
@@ -466,6 +470,31 @@ function ProductForm({
           <Input type="number" step="0.01" value={costPrice} onChange={(e) => setCostPrice(e.target.value)} placeholder="Maliyet" data-testid="input-product-cost-price" />
         </div>
       </div>
+      {campaignInfo && (
+        <div className="rounded-lg p-3 space-y-2" style={{ backgroundColor: "#fff3e0", border: "1px solid #ffe0b2" }}>
+          <Label className="text-orange-800 font-bold flex items-center gap-1.5">
+            <Tag className="w-4 h-4" />
+            Kampanya Fiyatı (TL) — {campaignInfo.itemType === "main" ? "Ana Ürün" : "Ek Ürün"}
+          </Label>
+          <Input
+            type="number"
+            step="0.01"
+            defaultValue={campaignInfo.campaignPrice || ""}
+            onBlur={(e) => {
+              const val = e.target.value.trim();
+              onCampaignPriceChange?.(campaignInfo.id, val === "" ? null : val);
+            }}
+            placeholder="Kampanya fiyatı girin"
+            className="border-orange-300 focus:border-orange-500"
+            data-testid="input-campaign-price"
+          />
+          {campaignInfo.campaignPrice && price && (
+            <p className="text-xs text-orange-700">
+              İndirim: %{Math.round((1 - Number(campaignInfo.campaignPrice) / Number(price)) * 100)} — Normal: {Number(price).toLocaleString("tr-TR")} TL → Kampanya: {Number(campaignInfo.campaignPrice).toLocaleString("tr-TR")} TL
+            </p>
+          )}
+        </div>
+      )}
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-2">
           <Label>SKT</Label>
@@ -1215,6 +1244,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     sort_order: number;
     is_active: boolean;
     parent_product_id: number | null;
+    campaign_price: string | null;
     name: string;
     price: number;
     original_price: number | null;
@@ -3226,6 +3256,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               {product.originalPrice.toLocaleString("tr-TR")} TL
                             </span>
                           )}
+                          {(() => {
+                            const ci = campaignItems.find(c => c.product_id === product.id && c.is_active);
+                            if (!ci?.campaign_price) return null;
+                            return (
+                              <span className="text-[10px] font-bold" style={{ color: "#e65100" }}>
+                                K: {Number(ci.campaign_price).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                              </span>
+                            );
+                          })()}
                           {discount > 0 && (
                             <Badge
                               className="text-[10px] no-default-hover-elevate no-default-active-elevate"
@@ -3373,6 +3412,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 }
                 isPending={updateProductMutation.isPending}
                 subcategoriesByAnimal={subcategoriesByAnimal}
+                campaignInfo={(() => {
+                  const ci = campaignItems.find(c => c.product_id === editingProduct.id && c.is_active);
+                  if (!ci) return null;
+                  return { id: ci.id, itemType: ci.item_type, campaignPrice: ci.campaign_price };
+                })()}
+                onCampaignPriceChange={(ciId, val) => {
+                  toggleCampaignItemMutation.mutate({ id: ciId, campaignPrice: val });
+                }}
               />
             )}
           </DialogContent>
