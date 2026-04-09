@@ -697,6 +697,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [selectedAnimalFilter, setSelectedAnimalFilter] = useState<string>("all");
   const [selectedSubcategoryFilter, setSelectedSubcategoryFilter] = useState<string>("all");
   const [selectedBrandFilter, setSelectedBrandFilter] = useState<string>("all");
+  const [productSearchQuery, setProductSearchQuery] = useState("");
   const [expandedAnimals, setExpandedAnimals] = useState<Record<string, boolean>>({});
   const [bulkPriceDialogOpen, setBulkPriceDialogOpen] = useState(false);
   const [bulkPricePercent, setBulkPricePercent] = useState("");
@@ -856,6 +857,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const filteredProducts = useMemo(() => {
     let products = allProducts;
+    if (productSearchQuery.trim()) {
+      const q = productSearchQuery.trim().toLowerCase();
+      products = products.filter((p) => p.name.toLowerCase().includes(q));
+    }
     if (selectedAnimalFilter !== "all") {
       const catIds = categories
         .filter((c) => c.animal === selectedAnimalFilter)
@@ -875,7 +880,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       products = products.filter((p) => catIds.includes(p.brandCategoryId));
     }
     return products;
-  }, [allProducts, selectedAnimalFilter, selectedSubcategoryFilter, selectedBrandFilter, categories]);
+  }, [allProducts, selectedAnimalFilter, selectedSubcategoryFilter, selectedBrandFilter, categories, productSearchQuery]);
 
   const sktWarningProducts = useMemo(() => {
     const now = new Date();
@@ -2914,6 +2919,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   ({filteredProducts.length})
                 </span>
               </h2>
+            </div>
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+              <Input
+                placeholder="Ürün adı ile ara..."
+                value={productSearchQuery}
+                onChange={(e) => setProductSearchQuery(e.target.value)}
+                className="pl-8 h-9 text-sm"
+                data-testid="input-product-search"
+              />
+              {productSearchQuery && (
+                <button
+                  type="button"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => setProductSearchQuery("")}
+                  data-testid="btn-clear-product-search"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
             <div className="flex items-center gap-2 flex-wrap">
               <Select value={selectedAnimalFilter} onValueChange={(val) => { setSelectedAnimalFilter(val); setSelectedSubcategoryFilter("all"); setSelectedBrandFilter("all"); }}>
