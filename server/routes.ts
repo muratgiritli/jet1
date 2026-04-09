@@ -375,7 +375,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/export/xlsx", async (_req, res) => {
+  app.get("/api/export/xlsx", requireAdmin, async (_req, res) => {
     try {
       const XLSX = await import("xlsx");
       const SITE = "https://www.jetgo.pet";
@@ -425,7 +425,7 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/export/yml", async (_req, res) => {
+  app.get("/api/export/yml", requireAdmin, async (_req, res) => {
     try {
       const SITE = "https://www.jetgo.pet";
       const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen" };
@@ -758,13 +758,19 @@ export async function registerRoutes(
 
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
-    if (req.body.img && req.body.img.startsWith("http")) {
-      const imgPath = await downloadAndSaveImage(req.body.img, id);
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ürün ID" });
+    const allowedFields = ["name", "price", "originalPrice", "skt", "img", "originalImg", "brandCategoryId", "isActive", "stock", "barcode", "costPrice"];
+    const safeBody: Record<string, any> = {};
+    for (const key of allowedFields) {
+      if (req.body[key] !== undefined) safeBody[key] = req.body[key];
+    }
+    if (safeBody.img && typeof safeBody.img === "string" && safeBody.img.startsWith("http")) {
+      const imgPath = await downloadAndSaveImage(safeBody.img, id);
       if (imgPath) {
-        req.body.img = imgPath;
+        safeBody.img = imgPath;
       }
     }
-    const product = await storage.updateProduct(id, req.body);
+    const product = await storage.updateProduct(id, safeBody);
     if (!product) return res.status(404).json({ message: "Product not found" });
     res.json(product);
   });
