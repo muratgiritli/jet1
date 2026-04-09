@@ -197,7 +197,9 @@ export async function registerRoutes(
     res.setHeader("X-XSS-Protection", "1; mode=block");
     res.setHeader("Referrer-Policy", "strict-origin-when-cross-origin");
     res.setHeader("Permissions-Policy", "camera=(self), microphone=(), geolocation=(self)");
-    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
+    res.setHeader("X-Download-Options", "noopen");
+    res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
     res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.googleadservices.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.google-analytics.com https://www.google.com https://googleads.g.doubleclick.net https://www.googleadservices.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self';");
 
     if (req.path.startsWith("/api/")) {
@@ -967,11 +969,12 @@ export async function registerRoutes(
     paymentMethod: z.string(),
     customerNote: z.string().max(500).optional(),
     deliverySlot: z.enum(["hemen", "bugun_ogle", "bugun_aksam", "yarin_sabah"]).optional(),
-    customerPhone: z.string().min(7, "Telefon numarası gerekli"),
-    customerName: z.string().min(1, "Ad soyad gerekli"),
-    customerAddress: z.string().min(1, "Adres gerekli"),
+    customerPhone: z.string().min(7, "Telefon numarası gerekli").max(20, "Telefon numarası çok uzun"),
+    customerName: z.string().min(1, "Ad soyad gerekli").max(100, "Ad soyad çok uzun"),
+    customerAddress: z.string().min(1, "Adres gerekli").max(500, "Adres çok uzun"),
     usedPoints: z.number().optional(),
-    couponCode: z.string().optional(),
+    couponCode: z.string().max(50).optional(),
+    donationAmount: z.number().min(0).max(1000).optional(),
     installmentMonths: z.number().optional(),
     installmentRate: z.number().optional(),
     installmentMonthly: z.number().optional(),
@@ -1398,12 +1401,24 @@ export async function registerRoutes(
     if (!phone || !password || !name) {
       return res.status(400).json({ message: "Telefon, şifre ve ad soyad gerekli" });
     }
+    if (typeof phone !== "string" || typeof password !== "string" || typeof name !== "string") {
+      return res.status(400).json({ message: "Geçersiz veri tipi" });
+    }
     const normalized = phone.replace(/\D/g, "");
-    if (normalized.length < 10) {
+    if (normalized.length < 10 || normalized.length > 15) {
       return res.status(400).json({ message: "Geçerli bir telefon numarası girin" });
     }
-    if (password.length < 4) {
-      return res.status(400).json({ message: "Şifre en az 4 karakter olmalı" });
+    if (password.length < 6) {
+      return res.status(400).json({ message: "Şifre en az 6 karakter olmalı" });
+    }
+    if (password.length > 128) {
+      return res.status(400).json({ message: "Şifre çok uzun" });
+    }
+    if (name.trim().length < 2 || name.trim().length > 100) {
+      return res.status(400).json({ message: "Ad soyad 2-100 karakter arasında olmalı" });
+    }
+    if (address && (typeof address !== "string" || address.length > 500)) {
+      return res.status(400).json({ message: "Adres çok uzun (max 500 karakter)" });
     }
     const existing = await storage.getCustomerByPhone(normalized);
     if (existing) {
@@ -1473,9 +1488,24 @@ export async function registerRoutes(
     const customerId = (req as any).customerId;
     const { name, address, email } = req.body;
     const updateData: Record<string, any> = {};
-    if (name) updateData.name = name.trim();
-    if (address !== undefined) updateData.address = address.trim();
-    if (email !== undefined) updateData.email = email ? email.trim() : null;
+    if (name) {
+      if (typeof name !== "string" || name.trim().length < 2 || name.trim().length > 100) {
+        return res.status(400).json({ message: "Ad soyad 2-100 karakter arasında olmalı" });
+      }
+      updateData.name = name.trim();
+    }
+    if (address !== undefined) {
+      if (address && (typeof address !== "string" || address.length > 500)) {
+        return res.status(400).json({ message: "Adres çok uzun (max 500 karakter)" });
+      }
+      updateData.address = typeof address === "string" ? address.trim() : null;
+    }
+    if (email !== undefined) {
+      if (email && (typeof email !== "string" || email.length > 200 || (email.trim() && !email.includes("@")))) {
+        return res.status(400).json({ message: "Geçerli bir e-posta adresi girin" });
+      }
+      updateData.email = email ? email.trim() : null;
+    }
     const customer = await storage.updateCustomer(customerId, updateData);
     if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
     res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, email: customer.email, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
@@ -1485,7 +1515,8 @@ export async function registerRoutes(
     const customerId = (req as any).customerId;
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) return res.status(400).json({ message: "Mevcut ve yeni şifre gerekli" });
-    if (newPassword.length < 4) return res.status(400).json({ message: "Yeni şifre en az 4 karakter olmalı" });
+    if (typeof newPassword !== "string" || newPassword.length < 6) return res.status(400).json({ message: "Yeni şifre en az 6 karakter olmalı" });
+    if (newPassword.length > 128) return res.status(400).json({ message: "Şifre çok uzun" });
     const customer = await storage.getCustomer(customerId);
     if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
     const valid = await bcrypt.compare(currentPassword, customer.password);
@@ -2322,20 +2353,24 @@ export async function registerRoutes(
   app.post("/api/admin/send-sms", requireAdmin, async (req, res) => {
     try {
       const { phones, message } = req.body;
-      if (!phones || !Array.isArray(phones) || phones.length === 0 || !message) {
+      if (!phones || !Array.isArray(phones) || phones.length === 0 || !message || typeof message !== "string") {
         return res.status(400).json({ message: "Telefon listesi ve mesaj gerekli" });
       }
       if (message.length > 300) {
         return res.status(400).json({ message: "Mesaj en fazla 300 karakter olabilir" });
       }
+      const validPhones = phones
+        .filter((p: any) => typeof p === "string" && /^\d{10,15}$/.test(p.replace(/\D/g, "")))
+        .slice(0, 100);
+      if (validPhones.length === 0) return res.status(400).json({ message: "Geçerli telefon numarası bulunamadı" });
       let sent = 0, failed = 0;
-      for (const phone of phones.slice(0, 100)) {
+      for (const phone of validPhones) {
         const ok = await sendSmsViaNetgsm(phone, message);
         if (ok) sent++;
         else failed++;
         await new Promise(r => setTimeout(r, 200));
       }
-      res.json({ sent, failed, total: phones.length });
+      res.json({ sent, failed, total: validPhones.length });
     } catch (err) {
       res.status(500).json({ message: "SMS gönderim hatası" });
     }
