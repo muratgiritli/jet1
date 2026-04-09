@@ -599,10 +599,6 @@ export default function ProductDetailPage() {
                         if (quantity === 0) updateQty(pid, 1, isCampaignMode);
                         if (isCampaignMode && !hasExtraInCart) {
                           setCampaignWarning(true);
-                          setTimeout(() => {
-                            const el = document.getElementById("campaign-extras-section");
-                            if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-                          }, 200);
                         }
                       }}
                       data-testid="btn-add-to-cart"
