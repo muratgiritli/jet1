@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info, Truck, Lock, ShieldCheck, ScrollText, Gift, ChevronRight } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
+import kartLogoPath from "@assets/kart_1775765432584.png";
 
 const FOOTER_LINKS = [
   { label: "Sıkça Sorulan Sorular", href: "/sss", icon: HelpCircle },
@@ -131,10 +132,10 @@ export default function Footer() {
               </div>
 
               <img
-                src="/iyzico-band-white.png"
-                alt="iyzico ile öde - Visa, Mastercard, American Express, Troy"
-                className="h-5 object-contain"
-                data-testid="footer-iyzico-band"
+                src={kartLogoPath}
+                alt="Mastercard, Visa, American Express, Troy"
+                className="h-6 object-contain"
+                data-testid="footer-card-logos"
               />
             </div>
 
