@@ -9,16 +9,41 @@ const FOOTER_LINKS = [
   { label: "Mesafeli Satış Sözleşmesi", href: "/mesafeli-satis", icon: ScrollText },
 ];
 
+const LEGAL_LINKS = [
+  { label: "Gizlilik Politikası", href: "/gizlilik", icon: Shield },
+  { label: "Çerez Politikası", href: "/cerez-politikasi", icon: Cookie },
+  { label: "KVKK Sözleşmesi", href: "/kvkk", icon: Lock },
+  { label: "Hakkımızda", href: "/hakkimizda", icon: BookOpen },
+  { label: "İletişim", href: "/iletisim", icon: Mail },
+];
+
 export default function Footer() {
   return (
     <footer className="hidden md:block bg-gray-900 text-gray-300 mt-8" data-testid="footer-desktop">
       <div className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-3 gap-12">
+        <div className="grid grid-cols-4 gap-10">
           <div>
             <h3 className="text-white font-bold text-lg mb-1">Müşteri Hizmetleri</h3>
             <p className="text-gray-400 text-sm mb-4">Sorularınız için bize ulaşın</p>
             <ul className="space-y-2">
               {FOOTER_LINKS.map((link) => {
+                const Icon = link.icon;
+                return (
+                  <li key={link.href}>
+                    <Link href={link.href} className="flex items-center gap-2 text-sm hover:text-white transition-colors" data-testid={`footer-link-${link.href.slice(1)}`}>
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      {link.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="text-white font-bold text-lg mb-4">Kurumsal</h3>
+            <ul className="space-y-2">
+              {LEGAL_LINKS.map((link) => {
                 const Icon = link.icon;
                 return (
                   <li key={link.href}>
