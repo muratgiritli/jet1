@@ -221,6 +221,9 @@ export default function Checkout() {
         await loginWithOtp(normalized, code);
         setShowAuthModal(false);
         setPendingOrderAfterAuth(true);
+      } else if (authMode === "login") {
+        setAuthErrors({ otp: "Bu numara kayıtlı değil. Lütfen 'Yeni Üye Ol' sekmesinden kayıt olun." });
+        return;
       } else {
         setAuthStep("register");
       }
