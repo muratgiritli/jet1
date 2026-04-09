@@ -741,6 +741,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [campaignAddProductId, setCampaignAddProductId] = useState<number | null>(null);
   const [campaignParentProductId, setCampaignParentProductId] = useState<number | null>(null);
   const [extraSearchQuery, setExtraSearchQuery] = useState("");
+  const [extraAnimalFilter, setExtraAnimalFilter] = useState<string>("all");
+  const [extraSubcategoryFilter, setExtraSubcategoryFilter] = useState<string>("all");
   const [orderTab, setOrderTab] = useState<"gelen" | "giden" | "bekleyen">("gelen");
   const [orderDateFrom, setOrderDateFrom] = useState("");
   const [orderDateTo, setOrderDateTo] = useState("");
@@ -1716,7 +1718,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
           {campaignParentProductId && (
             <Dialog open={true} onOpenChange={(open) => {
-              if (!open) { setCampaignParentProductId(null); setExtraSearchQuery(""); setCampaignSortOrder("1"); }
+              if (!open) { setCampaignParentProductId(null); setExtraSearchQuery(""); setCampaignSortOrder("1"); setExtraAnimalFilter("all"); setExtraSubcategoryFilter("all"); }
             }}>
               <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
                 <DialogHeader>
@@ -1731,14 +1733,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     .filter(i => i.item_type === "extra" && i.parent_product_id === campaignParentProductId)
                     .map(i => i.product_id);
                   const campaignMainIds = campaignItems.filter(i => i.item_type === "main").map(i => i.product_id);
-                  const availableProducts = allProducts.filter(p =>
+                  const mamaSubcats = new Set(["kedi-mamasi", "mama-markalari", "acik-mama"]);
+                  const mamaCatIds = new Set(categories.filter(c => mamaSubcats.has(c.subcategory)).map(c => c.id));
+                  let availableProducts = allProducts.filter(p =>
                     p.id !== campaignParentProductId &&
                     p.isActive &&
                     !existingExtraIds.includes(p.id) &&
                     !campaignMainIds.includes(p.id) &&
+                    !mamaCatIds.has(p.brandCategoryId) &&
                     (extraSearchQuery === "" ||
                       p.name.toLowerCase().includes(extraSearchQuery.toLowerCase()))
                   );
+                  if (extraAnimalFilter !== "all") {
+                    const catIds = new Set(categories.filter(c => c.animal === extraAnimalFilter).map(c => c.id));
+                    availableProducts = availableProducts.filter(p => catIds.has(p.brandCategoryId));
+                  }
+                  if (extraSubcategoryFilter !== "all") {
+                    const catIds = new Set(categories.filter(c => c.subcategory === extraSubcategoryFilter).map(c => c.id));
+                    availableProducts = availableProducts.filter(p => catIds.has(p.brandCategoryId));
+                  }
+                  const extraAvailableSubcats = subcategoriesByAnimal[extraAnimalFilter] || [];
                   return (
                     <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
                       {parentProduct && (
@@ -1756,6 +1770,32 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </div>
                         </div>
                       )}
+                      <div className="flex items-center gap-2">
+                        <Select value={extraAnimalFilter} onValueChange={(val) => { setExtraAnimalFilter(val); setExtraSubcategoryFilter("all"); }}>
+                          <SelectTrigger className="w-[100px] h-8 text-xs" data-testid="select-extra-animal">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">Tümü</SelectItem>
+                            {ANIMALS.map((a) => (
+                              <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        {extraAnimalFilter !== "all" && extraAvailableSubcats.length > 0 && (
+                          <Select value={extraSubcategoryFilter} onValueChange={setExtraSubcategoryFilter}>
+                            <SelectTrigger className="flex-1 h-8 text-xs" data-testid="select-extra-subcategory">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="all">Tüm Kategoriler</SelectItem>
+                              {extraAvailableSubcats.filter(sc => !mamaSubcats.has(sc.slug)).map((sc) => (
+                                <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </div>
                       <Input
                         placeholder="Ürün adı ara..."
                         value={extraSearchQuery}
