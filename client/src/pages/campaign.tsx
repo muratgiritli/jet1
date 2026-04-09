@@ -1,8 +1,9 @@
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tag, Eye } from "lucide-react";
+import { Tag, Eye, Cat, Dog, Bird } from "lucide-react";
 import ProductImage from "@/components/ProductImage";
 import { productUrl } from "@/lib/data";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
@@ -19,6 +20,7 @@ interface CampaignProduct {
   img: string | null;
   stock: number;
   skt: string | null;
+  animal?: string | null;
 }
 
 function CampaignProductCard({ item }: { item: CampaignProduct }) {
@@ -84,12 +86,30 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
   );
 }
 
+const ANIMAL_FILTERS = [
+  { id: "all", label: "Tümü", icon: Tag },
+  { id: "kedi", label: "Kedi", icon: Cat },
+  { id: "kopek", label: "Köpek", icon: Dog },
+  { id: "kus", label: "Kuş", icon: Bird },
+] as const;
+
 export default function CampaignPage() {
   const { data: items = [], isLoading } = useQuery<CampaignProduct[]>({
     queryKey: ["/api/campaign-items"],
   });
 
-  const mainItems = items.filter((i) => i.item_type === "main");
+  const [animalFilter, setAnimalFilter] = useState<string>("all");
+
+  const mainItems = useMemo(() => {
+    const mains = items.filter((i) => i.item_type === "main");
+    if (animalFilter === "all") return mains;
+    return mains.filter((i) => i.animal === animalFilter);
+  }, [items, animalFilter]);
+
+  const availableAnimals = useMemo(() => {
+    const animals = new Set(items.filter(i => i.item_type === "main" && i.animal).map(i => i.animal!));
+    return animals;
+  }, [items]);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-50 pb-20 md:pb-0">
@@ -110,6 +130,30 @@ export default function CampaignPage() {
           </div>
         </div>
 
+        <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar" data-testid="campaign-animal-filters">
+          {ANIMAL_FILTERS.filter(f => f.id === "all" || availableAnimals.has(f.id)).map((f) => {
+            const Icon = f.icon;
+            const isActive = animalFilter === f.id;
+            return (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setAnimalFilter(f.id)}
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${
+                  isActive
+                    ? "text-white shadow-md"
+                    : "bg-white text-gray-600 border border-gray-200 hover:border-purple-300 hover:text-purple-700"
+                }`}
+                style={isActive ? { backgroundColor: "#6B3480" } : undefined}
+                data-testid={`btn-filter-${f.id}`}
+              >
+                <Icon className="w-4 h-4" />
+                {f.label}
+              </button>
+            );
+          })}
+        </div>
+
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3">
             {[...Array(6)].map((_, i) => (
@@ -122,11 +166,12 @@ export default function CampaignPage() {
           </div>
         ) : (
           <>
-            {mainItems.length > 0 && (
+            {mainItems.length > 0 ? (
               <section data-testid="section-main-products">
                 <h2 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
                   <Tag className="w-4 h-4" style={{ color: "#ff6f00" }} />
                   Kampanya Ürünleri
+                  <span className="text-xs font-normal text-muted-foreground">({mainItems.length})</span>
                 </h2>
                 <div className="grid grid-cols-2 gap-3">
                   {mainItems.map((item) => (
@@ -134,6 +179,10 @@ export default function CampaignPage() {
                   ))}
                 </div>
               </section>
+            ) : (
+              <div className="text-center py-8 text-gray-400 text-sm">
+                Bu kategoride kampanyalı ürün bulunmuyor.
+              </div>
             )}
           </>
         )}

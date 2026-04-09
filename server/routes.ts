@@ -1935,9 +1935,11 @@ export async function registerRoutes(
     try {
       const { rows } = await sharedPool.query(`
         SELECT ci.*, p.name, p.price, p.original_price, p.img, p.stock, p.is_active, p.skt,
+          bc.animal,
           CASE WHEN ci.campaign_price IS NOT NULL THEN ci.campaign_price ELSE p.price END AS display_price
         FROM campaign_items ci
         JOIN products p ON p.id = ci.product_id
+        LEFT JOIN brand_categories bc ON bc.id = p.brand_category_id
         WHERE ci.is_active = true AND p.is_active = true
         ORDER BY ci.item_type, ci.sort_order
       `);
