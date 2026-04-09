@@ -69,6 +69,7 @@ export default function Checkout() {
   const [usePoints, setUsePoints] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authStep, setAuthStep] = useState<"phone" | "otp" | "register">("phone");
+  const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authPhone, setAuthPhone] = useState("");
   const [authOtpCode, setAuthOtpCode] = useState(["", "", "", "", "", ""]);
   const [authName, setAuthName] = useState("");
@@ -546,15 +547,46 @@ export default function Checkout() {
               </button>
 
               <div className="px-5 pt-5 pb-2">
-                <div className="flex items-center gap-3 mb-1">
-                  <div className="w-11 h-11 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Gift className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <p className="font-bold text-lg leading-tight">Üye Ol & Bonus Kazan</p>
-                    <p className="text-sm text-white/90 leading-tight">100 TL anında bonus sepetinde!</p>
-                  </div>
+                <div className="flex rounded-xl overflow-hidden mb-3 bg-white/10">
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode("login"); setAuthStep("phone"); setAuthErrors({}); }}
+                    className={`flex-1 py-2.5 text-sm font-bold text-center transition-colors ${authMode === "login" ? "bg-yellow-400 text-gray-900" : "text-white/80 hover:text-white"}`}
+                    data-testid="tab-auth-login"
+                  >
+                    ÜYE GİRİŞİ
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setAuthMode("register"); setAuthStep("phone"); setAuthErrors({}); }}
+                    className={`flex-1 py-2.5 text-sm font-bold text-center transition-colors ${authMode === "register" ? "bg-yellow-400 text-gray-900" : "text-white/80 hover:text-white"}`}
+                    data-testid="tab-auth-register"
+                  >
+                    YENİ ÜYE OL
+                  </button>
                 </div>
+                {authMode === "register" && (
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="w-11 h-11 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <Gift className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg leading-tight">Üye Ol & Bonus Kazan</p>
+                      <p className="text-sm text-white/90 leading-tight">100 TL anında bonus sepetinde!</p>
+                    </div>
+                  </div>
+                )}
+                {authMode === "login" && (
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="w-11 h-11 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <LogIn className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg leading-tight">Hoş Geldiniz</p>
+                      <p className="text-sm text-white/90 leading-tight">Telefon numaranızla giriş yapın</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="px-5 pb-5 space-y-3">
@@ -588,7 +620,6 @@ export default function Checkout() {
                       </button>
                     </div>
                     {authErrors.phone && <p className="text-yellow-200 text-xs mt-1">{authErrors.phone}</p>}
-                    <p className="text-xs text-white/60 text-center mt-2">Mevcut üyeler giriş yaparak devam edebilir</p>
                   </>
                 )}
 
