@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import {
-  Truck, CreditCard, Banknote, Smartphone,
+  Truck, CreditCard, Banknote, Smartphone, Building2,
   ArrowRight, ChevronRight, Star, Clock, Shield,
   Gift, MapPin, Phone, Mail, BookOpen,
   PackageCheck, Zap,
@@ -65,6 +65,7 @@ const QUICK_ACTIONS = [
   { icon: Smartphone, label: "Kapıda\nQR", color: "#0284c7", bg: "bg-sky-50" },
   { icon: CreditCard, label: "Kapıda\nPos", color: "#7c3aed", bg: "bg-purple-50" },
   { icon: Banknote, label: "Kapıda\nNakit", color: "#059669", bg: "bg-emerald-50" },
+  { icon: Building2, label: "Banka\nHavalesi", color: "#0369a1", bg: "bg-blue-50" },
 ];
 
 function HeroCarousel() {
