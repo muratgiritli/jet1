@@ -286,9 +286,9 @@ function CategoryGrid() {
 
 function WhyJetgo() {
   const items = [
-    { icon: Zap, title: "Aynı Gün Kapında", desc: "Sipariş ver, aynı gün kapına gelsin. İnternetten günlerce bekleme!", color: "#f59e0b", bg: "from-amber-50 to-orange-50", border: "border-amber-200" },
-    { icon: Truck, title: "Eve Teslim", desc: "Ağır çuvalları sen taşıma, biz getirelim. Uğraş yok, rahat alışveriş.", color: "#6B3480", bg: "from-purple-50 to-fuchsia-50", border: "border-purple-200" },
-    { icon: PackageCheck, title: "Kapıda Kontrol Et", desc: "Ürünü kapıda aç, kontrol et. Memnun kalmazsan iade garantisi.", color: "#10b981", bg: "from-emerald-50 to-teal-50", border: "border-emerald-200" },
+    { emoji: "🚚", title: "1 Saat İçinde Kapında", desc: "Sipariş ver, 1 saat içinde kapına gelsin. İnternetten günlerce bekleme derdi yok.", color: "#f59e0b", bg: "from-amber-50 to-orange-50", border: "border-amber-200" },
+    { emoji: "💳", title: "Esnek Ödeme Seçenekleri", desc: "Kapıda nakit ödeme, POS cihazı ile kart, QR ile ödeme, banka havalesi. Sana hangisi uygunsa öyle öde.", color: "#6B3480", bg: "from-purple-50 to-fuchsia-50", border: "border-purple-200" },
+    { emoji: "📅", title: "Son Kullanma Tarihini Görerek Al", desc: "Tüm mamalarda son kullanma tarihini gör. Güvenle, gönül rahatlığıyla alışveriş yap.", color: "#10b981", bg: "from-emerald-50 to-teal-50", border: "border-emerald-200" },
   ];
 
   return (
@@ -297,8 +297,8 @@ function WhyJetgo() {
       <div className="space-y-2.5 md:hidden">
         {items.map((item, i) => (
           <div key={i} className={`bg-gradient-to-r ${item.bg} rounded-xl p-3 flex items-center gap-3 border ${item.border}`} data-testid={`why-jetgo-${i}`}>
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ backgroundColor: item.color + "15" }}>
-              <item.icon className="w-5 h-5" style={{ color: item.color }} />
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 text-xl" style={{ backgroundColor: item.color + "15" }}>
+              {item.emoji}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-xs font-bold text-gray-800">{item.title}</p>
@@ -307,11 +307,11 @@ function WhyJetgo() {
           </div>
         ))}
       </div>
-      <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="hidden md:grid md:grid-cols-3 gap-5">
         {items.map((item, i) => (
           <div key={i} className={`bg-gradient-to-br ${item.bg} rounded-2xl p-6 border ${item.border} hover:shadow-lg transition-shadow group`} data-testid={`why-jetgo-desktop-${i}`}>
-            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform" style={{ backgroundColor: item.color + "15" }}>
-              <item.icon className="w-7 h-7" style={{ color: item.color }} />
+            <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform text-3xl" style={{ backgroundColor: item.color + "15" }}>
+              {item.emoji}
             </div>
             <p className="text-base font-bold text-gray-800 mb-1.5">{item.title}</p>
             <p className="text-sm text-gray-500 leading-relaxed">{item.desc}</p>
