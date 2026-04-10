@@ -414,6 +414,18 @@ function InlineSubcategories({
   );
 }
 
+const MAMA_TYPE_LABELS: Record<string, string> = {
+  yavru: "Yavru",
+  yetiskin: "Yetişkin",
+  kisir: "Kısır",
+  yasli: "Yaşlı",
+  "ozel-seri": "Özel Seri",
+  veteriner: "Veteriner",
+  hipoalerjenik: "Hipoalerjenik",
+  "mini-irk": "Mini Irk",
+  "buyuk-irk": "Büyük Irk",
+};
+
 export default function BrandProductsPage() {
   const [, siparisParams] = useRoute("/siparis/:animal/:subcategory/:brand");
   const [, kategoriParams] = useRoute("/kategori/:animal/:subcategory/:brand");
@@ -424,6 +436,7 @@ export default function BrandProductsPage() {
 
   const { basket, updateQty, grandTotal, itemCount } = useCart();
   const [, setLocation] = useLocation();
+  const [activeMamaType, setActiveMamaType] = useState("");
   const backUrl = subcategory === brandSlug ? `/kategori/${animal}` : `/kategori/${animal}/${subcategory}`;
 
   const { data, isLoading } = useQuery<{ category: BrandCategory; products: Product[] }>({
@@ -486,8 +499,38 @@ export default function BrandProductsPage() {
           </div>
         )}
 
+        {(() => {
+          const availableTypes = [...new Set(data.products.map(p => p.mamaType).filter(Boolean))] as string[];
+          if (availableTypes.length === 0) return null;
+          return (
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar mb-4 pb-1" data-testid="filter-mama-types">
+              <button
+                type="button"
+                onClick={() => setActiveMamaType("")}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${!activeMamaType ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                data-testid="btn-filter-all"
+              >
+                Tümü
+              </button>
+              {availableTypes.map(t => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setActiveMamaType(activeMamaType === t ? "" : t)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-bold transition-colors ${activeMamaType === t ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                  data-testid={`btn-filter-${t}`}
+                >
+                  {MAMA_TYPE_LABELS[t] || t}
+                </button>
+              ))}
+            </div>
+          );
+        })()}
+
         <div className="grid grid-cols-2 gap-3" data-testid="grid-products">
-          {data.products.map((product) => (
+          {data.products
+            .filter(p => !activeMamaType || p.mamaType === activeMamaType)
+            .map((product) => (
             <div key={product.id}>
               <BrandProductCard
                 product={product}

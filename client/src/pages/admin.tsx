@@ -263,6 +263,7 @@ function ProductForm({
   const [stock, setStock] = useState(product?.stock?.toString() ?? "10");
   const [barcode, setBarcode] = useState(product?.barcode || "");
   const [costPrice, setCostPrice] = useState(product?.costPrice?.toString() || "");
+  const [mamaType, setMamaType] = useState(product?.mamaType || "");
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [brandCategoryId, setBrandCategoryId] = useState(
@@ -324,6 +325,7 @@ function ProductForm({
           brandCategoryId: parseInt(brandCategoryId),
           stock: parseInt(stock) || 0,
           barcode: barcode.trim() || null,
+          mamaType: mamaType || null,
         });
       }}
       className="space-y-4"
@@ -505,9 +507,31 @@ function ProductForm({
           <Input type="number" min="0" value={stock} onChange={(e) => setStock(e.target.value)} data-testid="input-product-stock" />
         </div>
       </div>
-      <div className="space-y-2">
-        <Label>Barkod Numarası</Label>
-        <Input value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="8690000000000" className="font-mono" data-testid="input-product-barcode" />
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-2">
+          <Label>Barkod Numarası</Label>
+          <Input value={barcode} onChange={(e) => setBarcode(e.target.value)} placeholder="8690000000000" className="font-mono" data-testid="input-product-barcode" />
+        </div>
+        <div className="space-y-2">
+          <Label>Mama Türü</Label>
+          <Select value={mamaType || "none"} onValueChange={(v) => setMamaType(v === "none" ? "" : v)}>
+            <SelectTrigger data-testid="select-mama-type">
+              <SelectValue placeholder="Seçiniz (opsiyonel)" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="none">Seçim Yok</SelectItem>
+              <SelectItem value="yavru">Yavru</SelectItem>
+              <SelectItem value="yetiskin">Yetişkin</SelectItem>
+              <SelectItem value="kisir">Kısır</SelectItem>
+              <SelectItem value="yasli">Yaşlı</SelectItem>
+              <SelectItem value="ozel-seri">Özel Seri</SelectItem>
+              <SelectItem value="veteriner">Veteriner</SelectItem>
+              <SelectItem value="hipoalerjenik">Hipoalerjenik</SelectItem>
+              <SelectItem value="mini-irk">Mini Irk</SelectItem>
+              <SelectItem value="buyuk-irk">Büyük Irk</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
       <div className="space-y-2">
         <Label>Ürün Görseli</Label>
