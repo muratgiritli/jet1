@@ -11,6 +11,7 @@ interface BrandCategory {
 
 const SUBCATEGORY_TITLES: Record<string, string> = {
   "mama-markalari": "Mama Markaları",
+  "kopek-kuru-mama": "Kuru Mama",
   "kedi-mamasi": "Kedi Maması",
   "kopek-mamasi": "Köpek Maması",
   "acik-mama": "Açık Mama",
@@ -24,6 +25,7 @@ const SUBCATEGORY_SLUG_MAP: Record<string, string> = {
   "malt-macun": "malt-macun",
   "malt-vitamin": "malt-vitamin",
   "kopek-mamasi": "mama-markalari",
+  "kopek-kuru-mama": "mama-markalari",
 };
 
 const BRAND_COLORS: Record<string, string> = {

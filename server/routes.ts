@@ -625,6 +625,7 @@ export async function registerRoutes(
     "malt-macun": "malt-macun",
     "malt-vitamin": "malt-vitamin",
     "kopek-mamasi": "mama-markalari",
+    "kopek-kuru-mama": "mama-markalari",
   };
 
   app.get("/api/brand-products/:animal/:subcategory/:brandSlug", async (req, res) => {
