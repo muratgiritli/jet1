@@ -157,6 +157,7 @@ export const customers = pgTable("customers", {
   name: text("name").notNull(),
   address: text("address"),
   email: text("email"),
+  tcNo: text("tc_no"),
   notifyStock: boolean("notify_stock").notNull().default(true),
   notifyCampaign: boolean("notify_campaign").notNull().default(true),
   isBlacklisted: boolean("is_blacklisted").notNull().default(false),

@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   User, Phone, MapPin, LogOut, Loader2, Check, Edit2,
   Package, Heart, Home, PawPrint, Bell,
-  Plus, Trash2, Star, ChevronRight, Mail,
+  Plus, Trash2, Star, ChevronRight, Mail, CreditCard, FileText,
   ShoppingCart, RefreshCw, Eye, TrendingUp, UserX,
   AlertTriangle, Lock, ChevronDown, ChevronUp, BarChart3
 } from "lucide-react";
@@ -187,12 +187,14 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
   const [editName, setEditName] = useState("");
   const [editAddress, setEditAddress] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [editTcNo, setEditTcNo] = useState("");
   const [saving, setSaving] = useState(false);
 
   const startEdit = () => {
     setEditName(customer.name || "");
     setEditAddress(customer.address || "");
     setEditEmail(customer.email || "");
+    setEditTcNo(customer.tcNo || "");
     setEditing(true);
   };
 
@@ -205,9 +207,13 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
       toast({ title: "Hata", description: "Geçerli bir e-posta adresi girin", variant: "destructive" });
       return;
     }
+    if (editTcNo.trim() && !/^\d{11}$/.test(editTcNo.trim())) {
+      toast({ title: "Hata", description: "TC Kimlik No 11 haneli olmalıdır", variant: "destructive" });
+      return;
+    }
     setSaving(true);
     try {
-      await updateProfile({ name: editName.trim(), address: editAddress.trim(), email: editEmail.trim() || null });
+      await updateProfile({ name: editName.trim(), address: editAddress.trim(), email: editEmail.trim() || null, tcNo: editTcNo.trim() || null });
       setEditing(false);
       toast({ title: "Bilgiler güncellendi" });
     } catch {
@@ -218,6 +224,7 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
   };
 
   return (
+    <div className="space-y-4">
     <Card className="rounded-2xl border-gray-100 shadow-sm">
       <CardContent className="p-5 space-y-4">
         <div className="flex items-center justify-between">
@@ -246,13 +253,6 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
-                <Mail className="w-3.5 h-3.5" /> E-posta
-              </label>
-              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="ornek@mail.com" type="email" className="rounded-xl" data-testid="input-profile-email" />
-              <p className="text-[10px] text-muted-foreground">Fatura ve sipariş bilgilendirmesi için kullanılır</p>
-            </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
                 <MapPin className="w-3.5 h-3.5" /> Adres
               </label>
               <Textarea value={editAddress} onChange={(e) => setEditAddress(e.target.value)} placeholder="Teslimat adresiniz" rows={3} className="rounded-xl" data-testid="input-profile-address" />
@@ -275,14 +275,6 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
             </div>
             <div className="space-y-1.5 bg-gray-50 rounded-xl p-3">
               <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
-                <Mail className="w-3.5 h-3.5" /> E-posta
-              </label>
-              <p className="text-sm" data-testid="text-profile-email">
-                {customer.email || <span className="text-muted-foreground italic">Henüz e-posta eklenmemiş</span>}
-              </p>
-            </div>
-            <div className="space-y-1.5 bg-gray-50 rounded-xl p-3">
-              <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
                 <MapPin className="w-3.5 h-3.5" /> Adres
               </label>
               <p className="text-sm" data-testid="text-profile-address">
@@ -291,6 +283,71 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
             </div>
           </>
         )}
+      </CardContent>
+    </Card>
+
+    <Card className="rounded-2xl border-gray-100 shadow-sm">
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-lg bg-blue-100 flex items-center justify-center">
+            <FileText className="w-4 h-4 text-blue-600" />
+          </div>
+          <div>
+            <h2 className="font-bold text-base">e-Fatura Bilgileri</h2>
+            <p className="text-[11px] text-muted-foreground">Fatura düzenlenmesi için gerekli bilgiler</p>
+          </div>
+        </div>
+
+        {editing ? (
+          <>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
+                <CreditCard className="w-3.5 h-3.5" /> TC Kimlik No
+              </label>
+              <Input
+                value={editTcNo}
+                onChange={(e) => {
+                  const v = e.target.value.replace(/\D/g, "").slice(0, 11);
+                  setEditTcNo(v);
+                }}
+                placeholder="11 haneli TC Kimlik numaranız"
+                inputMode="numeric"
+                maxLength={11}
+                className="rounded-xl"
+                data-testid="input-profile-tc"
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
+                <Mail className="w-3.5 h-3.5" /> E-posta Adresi
+              </label>
+              <Input value={editEmail} onChange={(e) => setEditEmail(e.target.value)} placeholder="ornek@mail.com" type="email" className="rounded-xl" data-testid="input-profile-email" />
+              <p className="text-[10px] text-muted-foreground">e-Fatura bu adrese gönderilecektir</p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="space-y-1.5 bg-gray-50 rounded-xl p-3">
+              <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
+                <CreditCard className="w-3.5 h-3.5" /> TC Kimlik No
+              </label>
+              <p className="text-sm" data-testid="text-profile-tc">
+                {customer.tcNo ? `${customer.tcNo.slice(0, 3)}*****${customer.tcNo.slice(-2)}` : <span className="text-muted-foreground italic">Henüz TC Kimlik No eklenmemiş</span>}
+              </p>
+            </div>
+            <div className="space-y-1.5 bg-gray-50 rounded-xl p-3">
+              <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
+                <Mail className="w-3.5 h-3.5" /> E-posta Adresi
+              </label>
+              <p className="text-sm" data-testid="text-profile-email">
+                {customer.email || <span className="text-muted-foreground italic">Henüz e-posta eklenmemiş</span>}
+              </p>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+    </div>
       </CardContent>
     </Card>
   );

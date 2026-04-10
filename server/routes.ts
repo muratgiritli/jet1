@@ -1481,12 +1481,12 @@ export async function registerRoutes(
         welcomeCoupon = { code: c.code, discountValue: c.discount_value, minOrderAmount: c.min_order_amount, expiresAt: c.expires_at };
       }
     } catch {}
-    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, email: customer.email, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign, welcomeCoupon });
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, email: customer.email, tcNo: customer.tcNo, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign, welcomeCoupon });
   });
 
   app.patch("/api/customer/profile", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
-    const { name, address, email } = req.body;
+    const { name, address, email, tcNo } = req.body;
     const updateData: Record<string, any> = {};
     if (name) {
       if (typeof name !== "string" || name.trim().length < 2 || name.trim().length > 100) {
@@ -1506,9 +1506,15 @@ export async function registerRoutes(
       }
       updateData.email = email ? email.trim() : null;
     }
+    if (tcNo !== undefined) {
+      if (tcNo && (typeof tcNo !== "string" || !/^\d{11}$/.test(tcNo.trim()))) {
+        return res.status(400).json({ message: "TC Kimlik No 11 haneli olmalıdır" });
+      }
+      updateData.tcNo = tcNo ? tcNo.trim() : null;
+    }
     const customer = await storage.updateCustomer(customerId, updateData);
     if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
-    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, email: customer.email, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, email: customer.email, tcNo: customer.tcNo, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
   });
 
   app.patch("/api/customer/password", requireCustomer, async (req, res) => {

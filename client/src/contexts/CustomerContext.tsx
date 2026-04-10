@@ -26,7 +26,7 @@ interface CustomerContextType {
   register: (phone: string, password: string, name: string, address?: string) => Promise<void>;
   loginWithOtp: (phone: string, code: string, name?: string, address?: string) => Promise<void>;
   logout: () => Promise<void>;
-  updateProfile: (data: { name?: string; address?: string }) => Promise<void>;
+  updateProfile: (data: { name?: string; address?: string; email?: string | null; tcNo?: string | null }) => Promise<void>;
   refetch: () => Promise<void>;
 }
 
@@ -108,7 +108,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     queryClient.removeQueries({ queryKey: ["/api/customer/pets"] });
   }, []);
 
-  const updateProfile = useCallback(async (data: { name?: string; address?: string }) => {
+  const updateProfile = useCallback(async (data: { name?: string; address?: string; email?: string | null; tcNo?: string | null }) => {
     const res = await apiRequest("PATCH", "/api/customer/profile", data);
     const updated = await res.json();
     setCustomer(updated);
