@@ -65,6 +65,12 @@ setInterval(() => {
   for (const [key, val] of apiRateLimits) {
     if (val.resetAt <= now) apiRateLimits.delete(key);
   }
+  for (const [key, val] of otpStore) {
+    if (val.expiresAt <= now) otpStore.delete(key);
+  }
+  for (const [key, val] of otpSendCount) {
+    if (val.resetAt <= now) otpSendCount.delete(key);
+  }
 }, 60000);
 
 function generateOTP(): string {
