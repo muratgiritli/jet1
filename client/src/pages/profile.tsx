@@ -348,8 +348,6 @@ function ProfileSection({ customer, updateProfile, toast }: { customer: any; upd
       </CardContent>
     </Card>
     </div>
-      </CardContent>
-    </Card>
   );
 }
 
