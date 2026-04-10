@@ -71,7 +71,16 @@ setInterval(() => {
   for (const [key, val] of otpSendCount) {
     if (val.resetAt <= now) otpSendCount.delete(key);
   }
+  for (const [key, val] of loginAttempts) {
+    if ((val.blockedUntil > 0 && val.blockedUntil <= now) || (val.blockedUntil === 0 && val.count > 0)) loginAttempts.delete(key);
+  }
+  if (apiRateLimits.size > 10000) apiRateLimits.clear();
+  if (loginAttempts.size > 5000) loginAttempts.clear();
+  if (otpStore.size > 5000) otpStore.clear();
+  if (otpSendCount.size > 5000) otpSendCount.clear();
 }, 60000);
+
+const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
 
 function generateOTP(): string {
   return crypto.randomInt(100000, 1000000).toString();
@@ -584,8 +593,10 @@ export async function registerRoutes(
 
   app.post("/api/admin/subcategories", requireAdmin, async (req, res) => {
     try {
-      const data = req.body;
-      const sub = await storage.createSubcategory(data);
+      const schema = z.object({ animal: z.string().min(1).max(30), slug: z.string().min(1).max(50), displayName: z.string().min(1).max(100), color: z.string().max(20).optional(), hasBrands: z.boolean().optional(), sortOrder: z.number().int().optional(), isActive: z.boolean().optional() });
+      const parsed = schema.safeParse(req.body);
+      if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri", errors: parsed.error.errors });
+      const sub = await storage.createSubcategory(parsed.data as any);
       res.status(201).json(sub);
     } catch (e: any) {
       res.status(400).json({ message: e.message });
@@ -594,7 +605,13 @@ export async function registerRoutes(
 
   app.patch("/api/admin/subcategories/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
-    const sub = await storage.updateSubcategory(id, req.body);
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
+    const allowedKeys = ["animal", "slug", "displayName", "color", "hasBrands", "sortOrder", "isActive"];
+    const safeBody: Record<string, any> = {};
+    for (const key of allowedKeys) {
+      if (req.body[key] !== undefined) safeBody[key] = req.body[key];
+    }
+    const sub = await storage.updateSubcategory(id, safeBody);
     if (!sub) return res.status(404).json({ message: "Subcategory not found" });
     res.json(sub);
   });
@@ -685,8 +702,6 @@ export async function registerRoutes(
     res.json(results.filter(p => p.isActive).slice(0, 20).map(({ costPrice, ...rest }) => rest));
   });
 
-  const loginAttempts = new Map<string, { count: number; blockedUntil: number }>();
-
   app.post("/api/admin/login", async (req, res) => {
     const ip = req.ip || "unknown";
     const now = Date.now();
@@ -740,7 +755,13 @@ export async function registerRoutes(
 
   app.patch("/api/admin/brand-categories/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
-    const category = await storage.updateBrandCategory(id, req.body);
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
+    const allowedKeys = ["brandName", "brandSlug", "animal", "subcategory"];
+    const safeBody: Record<string, any> = {};
+    for (const key of allowedKeys) {
+      if (req.body[key] !== undefined) safeBody[key] = req.body[key];
+    }
+    const category = await storage.updateBrandCategory(id, safeBody);
     if (!category) return res.status(404).json({ message: "Category not found" });
     res.json(category);
   });
@@ -894,7 +915,13 @@ export async function registerRoutes(
 
   app.patch("/api/admin/cross-sell-sections/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
-    const section = await storage.updateCrossSellSection(id, req.body);
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
+    const allowedKeys = ["title", "forProductId", "forAnimal", "sortOrder", "isActive"];
+    const safeBody: Record<string, any> = {};
+    for (const key of allowedKeys) {
+      if (req.body[key] !== undefined) safeBody[key] = req.body[key];
+    }
+    const section = await storage.updateCrossSellSection(id, safeBody);
     if (!section) return res.status(404).json({ message: "Section not found" });
     res.json(section);
   });
@@ -1493,6 +1520,10 @@ export async function registerRoutes(
 
   app.patch("/api/customer/profile", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
+    const ip = req.ip || "unknown";
+    if (rateLimit(`profile:${ip}`, 15, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
     const { name, address, email, tcNo } = req.body;
     const updateData: Record<string, any> = {};
     if (name) {
@@ -1526,6 +1557,10 @@ export async function registerRoutes(
 
   app.patch("/api/customer/password", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
+    const ip = req.ip || "unknown";
+    if (rateLimit(`passwd:${ip}`, 5, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla şifre değiştirme denemesi. Lütfen daha sonra tekrar deneyin." });
+    }
     const { currentPassword, newPassword } = req.body;
     if (!currentPassword || !newPassword) return res.status(400).json({ message: "Mevcut ve yeni şifre gerekli" });
     if (typeof newPassword !== "string" || newPassword.length < 6) return res.status(400).json({ message: "Yeni şifre en az 6 karakter olmalı" });
@@ -1688,6 +1723,10 @@ export async function registerRoutes(
 
   app.post("/api/customer/favorites", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
+    const ip = req.ip || "unknown";
+    if (rateLimit(`fav:${ip}`, 30, 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek." });
+    }
     const { productId } = req.body;
     if (!productId) return res.status(400).json({ message: "productId gerekli" });
     await storage.addCustomerFavorite({ customerId, productId: Number(productId) });
@@ -1707,7 +1746,8 @@ export async function registerRoutes(
     const customerId = (req as any).customerId;
     const { productIds } = req.body;
     if (Array.isArray(productIds)) {
-      for (const pid of productIds) {
+      const safeIds = productIds.filter(pid => typeof pid === "number" || (typeof pid === "string" && /^\d+$/.test(pid))).slice(0, 100);
+      for (const pid of safeIds) {
         await storage.addCustomerFavorite({ customerId, productId: Number(pid) });
       }
     }
@@ -1723,7 +1763,15 @@ export async function registerRoutes(
 
   app.post("/api/customer/addresses", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
-    const schema = z.object({ label: z.string().min(1), address: z.string().min(1), isDefault: z.boolean().optional(), neighborhoodId: z.number().optional(), district: z.string().optional() });
+    const ip = req.ip || "unknown";
+    if (rateLimit(`addr:${ip}`, 10, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
+    const existingAddrs = await storage.getCustomerAddresses(customerId);
+    if (existingAddrs.length >= 10) {
+      return res.status(400).json({ message: "En fazla 10 adres ekleyebilirsiniz." });
+    }
+    const schema = z.object({ label: z.string().min(1).max(50), address: z.string().min(1).max(500), isDefault: z.boolean().optional(), neighborhoodId: z.number().optional(), district: z.string().max(100).optional() });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri" });
     if (parsed.data.isDefault) {
@@ -1774,7 +1822,11 @@ export async function registerRoutes(
 
   app.post("/api/customer/pets", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
-    const schema = z.object({ name: z.string().min(1), type: z.string().min(1), breed: z.string().optional(), age: z.number().optional(), weight: z.number().optional() });
+    const ip = req.ip || "unknown";
+    if (rateLimit(`pets:${ip}`, 10, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
+    const schema = z.object({ name: z.string().min(1).max(50), type: z.string().min(1).max(30), breed: z.string().max(50).optional(), age: z.number().min(0).max(50).optional(), weight: z.number().min(0).max(200).optional() });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri" });
     await storage.createPetProfile({ customerId, ...parsed.data });
@@ -2723,7 +2775,12 @@ export async function registerRoutes(
 
   app.patch("/api/admin/coupons/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
-    const data: any = { ...req.body };
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
+    const allowedKeys = ["code", "discountType", "discountValue", "minOrderAmount", "maxUses", "isActive", "expiresAt", "customerId"];
+    const data: any = {};
+    for (const key of allowedKeys) {
+      if (req.body[key] !== undefined) data[key] = req.body[key];
+    }
     if (data.expiresAt) data.expiresAt = new Date(data.expiresAt);
     else if (data.expiresAt === null) data.expiresAt = null;
     const updated = await storage.updateCoupon(id, data);
@@ -2767,6 +2824,10 @@ export async function registerRoutes(
   app.post("/api/customer/virtual-pet/feed", requireCustomer, async (req, res) => {
     try {
       const customerId = (req as any).customerId;
+      const ip = req.ip || "unknown";
+      if (rateLimit(`petfeed:${ip}`, 10, 60 * 60 * 1000)) {
+        return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+      }
       const [pet] = await db.select().from(virtualPets).where(eq(virtualPets.customerId, customerId));
       if (!pet) return res.status(404).json({ message: "Önce bir sanal hayvan sahiplen!" });
 
@@ -2804,7 +2865,12 @@ export async function registerRoutes(
 
       const customer = await storage.getCustomer(customerId);
       if (customer) {
-        await storage.addLoyaltyPoints(customer.phone, feedPoints, `Sanal pet besleme (Gün ${newStreak})`);
+        await storage.addLoyaltyPoints({
+          customerId,
+          amount: feedPoints,
+          type: "earned",
+          description: `Sanal pet besleme (Gün ${newStreak})`,
+        });
       }
 
       res.json({ pet: updated, pointsEarned: feedPoints, message: `+${feedPoints} Para Puan kazandın!` });
@@ -2854,7 +2920,13 @@ export async function registerRoutes(
 
   app.patch("/api/admin/product-quick-update/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ürün ID" });
     const { stock, skt, barcode } = req.body;
+    if (stock !== undefined && (typeof stock !== "number" || stock < 0 || stock > 99999)) return res.status(400).json({ message: "Geçersiz stok değeri" });
+    if (skt !== undefined && typeof skt !== "string") return res.status(400).json({ message: "Geçersiz SKT" });
+    if (barcode !== undefined && typeof barcode !== "string") return res.status(400).json({ message: "Geçersiz barkod" });
+    if (skt && skt.length > 20) return res.status(400).json({ message: "SKT çok uzun" });
+    if (barcode && barcode.length > 50) return res.status(400).json({ message: "Barkod çok uzun" });
     const updates: string[] = [];
     const values: any[] = [];
     let idx = 1;
@@ -2878,8 +2950,17 @@ export async function registerRoutes(
   app.post("/api/customer/pet-profiles", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const ip = req.ip || "unknown";
+    if (rateLimit(`petprof:${ip}`, 10, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
     const { name, type, breed, birthday, weight, photoData, notes } = req.body;
     if (!name || !type) return res.status(400).json({ message: "İsim ve tür gerekli" });
+    if (typeof name !== "string" || name.length > 50) return res.status(400).json({ message: "İsim çok uzun" });
+    if (typeof type !== "string" || type.length > 30) return res.status(400).json({ message: "Geçersiz tür" });
+    if (breed && (typeof breed !== "string" || breed.length > 100)) return res.status(400).json({ message: "Cins adı çok uzun" });
+    if (notes && (typeof notes !== "string" || notes.length > 500)) return res.status(400).json({ message: "Not çok uzun" });
+    if (photoData && (typeof photoData !== "string" || photoData.length > 4 * 1024 * 1024)) return res.status(400).json({ message: "Fotoğraf çok büyük (max 3MB)" });
     const result = await sharedPool.query(
       "INSERT INTO pet_profiles (customer_id, name, type, breed, birthday, weight, photo_data, notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *",
       [customerId, name, type, breed || null, birthday || null, weight || null, photoData || null, notes || null]
@@ -2890,8 +2971,17 @@ export async function registerRoutes(
   app.patch("/api/customer/pet-profiles/:id", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const ip = req.ip || "unknown";
+    if (rateLimit(`petprofup:${ip}`, 15, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
     const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
     const { name, breed, birthday, weight, photoData, notes, favoriteFoodId } = req.body;
+    if (name && (typeof name !== "string" || name.length > 50)) return res.status(400).json({ message: "İsim çok uzun" });
+    if (breed && (typeof breed !== "string" || breed.length > 100)) return res.status(400).json({ message: "Cins çok uzun" });
+    if (notes && (typeof notes !== "string" || notes.length > 500)) return res.status(400).json({ message: "Not çok uzun" });
+    if (photoData && (typeof photoData !== "string" || photoData.length > 4 * 1024 * 1024)) return res.status(400).json({ message: "Fotoğraf çok büyük" });
     await sharedPool.query(
       "UPDATE pet_profiles SET name=COALESCE($1,name), breed=COALESCE($2,breed), birthday=COALESCE($3,birthday), weight=COALESCE($4,weight), photo_data=COALESCE($5,photo_data), notes=COALESCE($6,notes), favorite_food_id=COALESCE($7,favorite_food_id) WHERE id=$8 AND customer_id=$9",
       [name, breed, birthday, weight, photoData, notes, favoriteFoodId, id, customerId]
@@ -2929,10 +3019,16 @@ export async function registerRoutes(
   app.post("/api/customer/pet-profiles/:id/health", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const ip = req.ip || "unknown";
+    if (rateLimit(`pethealth:${ip}`, 20, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
     const petId = parseInt(req.params.id);
     if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
     const { recordType, title, date, notes, nextDate } = req.body;
     if (!recordType || !title || !date) return res.status(400).json({ message: "Tür, başlık ve tarih gerekli" });
+    if (typeof title !== "string" || title.length > 200) return res.status(400).json({ message: "Başlık çok uzun" });
+    if (notes && (typeof notes !== "string" || notes.length > 500)) return res.status(400).json({ message: "Not çok uzun" });
     const result = await sharedPool.query(
       "INSERT INTO pet_health_records (pet_profile_id, record_type, title, date, notes, next_date) VALUES ($1,$2,$3,$4,$5,$6) RETURNING *",
       [petId, recordType, title, date, notes || null, nextDate || null]
@@ -2965,10 +3061,15 @@ export async function registerRoutes(
   app.post("/api/customer/pet-profiles/:id/weight", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const ip = req.ip || "unknown";
+    if (rateLimit(`petweight:${ip}`, 20, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
     const petId = parseInt(req.params.id);
     if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
     const { weight, date } = req.body;
     if (!weight || !date) return res.status(400).json({ message: "Kilo ve tarih gerekli" });
+    if (typeof weight !== "number" || weight <= 0 || weight > 200) return res.status(400).json({ message: "Geçersiz kilo değeri" });
     const result = await sharedPool.query(
       "INSERT INTO pet_weight_log (pet_profile_id, weight, date) VALUES ($1,$2,$3) RETURNING *",
       [petId, weight, date]
@@ -2988,10 +3089,15 @@ export async function registerRoutes(
   app.post("/api/customer/pet-profiles/:id/photos", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
+    const ip = req.ip || "unknown";
+    if (rateLimit(`petphoto:${ip}`, 20, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla fotoğraf yükleme. Lütfen daha sonra tekrar deneyin." });
+    }
     const petId = parseInt(req.params.id);
     if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
     const { photoData, caption } = req.body;
     if (!photoData) return res.status(400).json({ message: "Fotoğraf gerekli" });
+    if (caption && (typeof caption !== "string" || caption.length > 200)) return res.status(400).json({ message: "Açıklama çok uzun" });
     if (photoData.length > 4 * 1024 * 1024) return res.status(400).json({ message: "Dosya çok büyük (maks 3MB)" });
     const result = await sharedPool.query(
       "INSERT INTO pet_photos (pet_profile_id, photo_data, caption) VALUES ($1,$2,$3) RETURNING *",
@@ -3146,6 +3252,10 @@ export async function registerRoutes(
 
   app.post("/api/pet-contest", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
+    const ip = req.ip || "unknown";
+    if (rateLimit(`contest:${ip}`, 5, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
     const { petName, petType, photo, description } = req.body;
     if (!petName || !photo) return res.status(400).json({ message: "Pet adı ve fotoğraf gerekli" });
     if (typeof photo !== "string" || photo.length > 5 * 1024 * 1024) return res.status(400).json({ message: "Fotoğraf boyutu çok büyük (max 4MB)" });

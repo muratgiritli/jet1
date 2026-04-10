@@ -42,7 +42,7 @@ The application employs a modern web architecture:
 - **Sahiplendirme & Kayıp İlan**: Lost/found/adoption board for pets.
 - **Pati-Blog & Bilgi Bankası**: Local pet care knowledge base with categorized articles.
 - **Order Notifications**: Real-time admin notifications for new orders — browser sound alerts (Web Audio API) + visual popup in admin panel with 10s polling, and SMS notification to admin phone via NetGSM. Admin phone number and SMS toggle configurable from admin settings panel (`app_settings` table: `admin_phone`, `order_notification_sms` keys).
-- **Security Hardening**: Multi-layer rate limiting, comprehensive security headers (HSTS, CSP, etc.), input validation, and admin-specific lockout mechanisms.
+- **Security Hardening**: Multi-layer rate limiting on all write endpoints (orders, OTP, registration, pet profiles, photos, addresses, health records, weight logs, favorites, lost/found, voice orders, contest entries/votes, coupon validation, AI chatbot), comprehensive security headers (HSTS, CSP, X-Frame-Options, X-Content-Type-Options, Referrer-Policy, Permissions-Policy), input validation with Zod schemas and field whitelisting on all PATCH endpoints, admin-specific lockout mechanisms, automatic memory cleanup for rate limit/OTP/login attempt Maps, and configurable per-endpoint rate limits for DDOS protection.
 - **UI/UX**: Clean, modern, and responsive design with intuitive navigation elements.
 
 ## External Dependencies
