@@ -13,6 +13,7 @@ import FavoriteButton from "@/components/FavoriteButton";
 import { ProductGridSkeleton } from "@/components/ProductSkeleton";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import ProductImage from "@/components/ProductImage";
+import ImageLightbox from "@/components/ImageLightbox";
 
 interface SubcategoryInfo {
   name: string;
@@ -117,6 +118,7 @@ function BrandProductCard({
   showDetailLink?: boolean;
 }) {
   const isActive = quantity > 0;
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
@@ -158,7 +160,14 @@ function BrandProductCard({
           </Link>
         ) : (
           <>
-              <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative" data-testid={`img-container-${pid}`}>
+              <div
+                className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative cursor-pointer"
+                data-testid={`img-container-${pid}`}
+                role="button"
+                tabIndex={0}
+                onClick={() => product.img && setLightboxOpen(true)}
+                onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && product.img) { e.preventDefault(); setLightboxOpen(true); } }}
+              >
                 <ProductImage
                   src={product.img}
                   alt={product.name}
@@ -179,6 +188,9 @@ function BrandProductCard({
             <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${pid}`}>
               {product.name}
             </p>
+            {lightboxOpen && product.img && (
+              <ImageLightbox src={product.img} alt={product.name} onClose={() => setLightboxOpen(false)} />
+            )}
           </>
         )}
         <div className="flex flex-col items-center gap-0.5">
@@ -234,6 +246,7 @@ function InlineSubcategoryProductCard({
   showDetailLink?: boolean;
 }) {
   const isActive = quantity > 0;
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   const discount = product.originalPrice && product.originalPrice > product.price
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
@@ -244,7 +257,13 @@ function InlineSubcategoryProductCard({
       data-testid={`card-inline-product-${product.id}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
-          <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
+          <div
+            className={`w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative ${!showDetailLink ? "cursor-pointer" : ""}`}
+            role={!showDetailLink ? "button" : undefined}
+            tabIndex={!showDetailLink ? 0 : undefined}
+            onClick={!showDetailLink ? () => product.img && setLightboxOpen(true) : undefined}
+            onKeyDown={!showDetailLink ? (e) => { if ((e.key === "Enter" || e.key === " ") && product.img) { e.preventDefault(); setLightboxOpen(true); } } : undefined}
+          >
             <ProductImage
               src={product.img}
               alt={product.name}
@@ -294,6 +313,9 @@ function InlineSubcategoryProductCard({
             quantity={quantity}
             onUpdate={onUpdate}
           />
+        )}
+        {lightboxOpen && product.img && (
+          <ImageLightbox src={product.img} alt={product.name} onClose={() => setLightboxOpen(false)} />
         )}
       </CardContent>
     </Card>

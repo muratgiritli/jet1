@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductImage from "@/components/ProductImage";
+import ImageLightbox from "@/components/ImageLightbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -90,13 +91,21 @@ function ProductCard({
   onUpdate: (id: string, delta: number) => void;
 }) {
   const isActive = quantity > 0;
+  const [lightboxOpen, setLightboxOpen] = useState(false);
   return (
     <Card
       className={`transition-all duration-200 ${isActive ? "ring-2 ring-inset ring-primary" : ""}`}
       data-testid={`card-product-${product.id}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
-          <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30" data-testid={`img-container-${product.id}`}>
+          <div
+            className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 cursor-pointer"
+            data-testid={`img-container-${product.id}`}
+            role="button"
+            tabIndex={0}
+            onClick={() => product.img && setLightboxOpen(true)}
+            onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && product.img) { e.preventDefault(); setLightboxOpen(true); } }}
+          >
             <ProductImage
               src={product.img}
               alt={product.name}
@@ -130,6 +139,9 @@ function ProductCard({
           quantity={quantity}
           onUpdate={onUpdate}
         />
+        {lightboxOpen && product.img && (
+          <ImageLightbox src={product.img} alt={product.name} onClose={() => setLightboxOpen(false)} />
+        )}
       </CardContent>
     </Card>
   );
