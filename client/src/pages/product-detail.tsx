@@ -689,7 +689,7 @@ export default function ProductDetailPage() {
           <div className="mt-8" id="campaign-extras-section" data-testid="section-campaign-extras">
             <h3 className="text-base font-extrabold text-gray-800 mb-1 flex items-center gap-1.5">
               <Gift className="w-5 h-5" style={{ color: "#2e7d32" }} />
-              SIKLIKLA ALINAN ÜRÜNLER
+              Özel Kampanya: 1 İlave Ürün ile Geçerli
             </h3>
             <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
               {campaignExtras.map((p) => (
