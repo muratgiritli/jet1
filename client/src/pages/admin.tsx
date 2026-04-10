@@ -1733,7 +1733,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     .filter(i => i.item_type === "extra" && i.parent_product_id === campaignParentProductId)
                     .map(i => i.product_id);
                   const campaignMainIds = campaignItems.filter(i => i.item_type === "main").map(i => i.product_id);
-                  const mamaSubcats = new Set(["kedi-mamasi", "mama-markalari", "acik-mama"]);
+                  const mamaSubcats = new Set(["kedi-mamasi", "mama-markalari", "kopek-kuru-mama", "acik-mama"]);
                   const mamaCatIds = new Set(categories.filter(c => mamaSubcats.has(c.subcategory)).map(c => c.id));
                   let availableProducts = allProducts.filter(p =>
                     p.id !== campaignParentProductId &&

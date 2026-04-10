@@ -47,6 +47,7 @@ const ANIMAL_META: Record<string, {
 };
 
 const SUBCATEGORY_ICONS: Record<string, string> = {
+  "kopek-kuru-mama": "🍖",
   "mama-markalari": "🦴",
   "kedi-mamasi": "🐟",
   "kopek-mamasi": "🐕",

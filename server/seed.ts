@@ -559,7 +559,8 @@ async function seedCrossSellSections() {
 }
 
 const SUBCATEGORY_SEED_DATA = [
-  { animal: "kopek", slug: "mama-markalari", displayName: "Köpek\nMaması", color: "#FF5722", hasBrands: true, sortOrder: 0 },
+  { animal: "kopek", slug: "kopek-kuru-mama", displayName: "Köpek Kuru\nMama", color: "#E65100", hasBrands: true, sortOrder: 0 },
+  { animal: "kopek", slug: "mama-markalari", displayName: "Köpek\nMaması", color: "#FF5722", hasBrands: true, sortOrder: 1 },
   { animal: "kopek", slug: "acik-mama", displayName: "Açık Mama\nÇeşitleri", color: "#FF9800", hasBrands: true, sortOrder: 2 },
   { animal: "kopek", slug: "tuvalet-malzemeleri", displayName: "Tuvalet\nMalzemeleri", color: "#8BC34A", hasBrands: false, sortOrder: 3 },
   { animal: "kopek", slug: "yas-mama", displayName: "Yaş Mama\nÇeşitleri", color: "#E91E63", hasBrands: false, sortOrder: 4 },
@@ -824,7 +825,7 @@ async function seedBreedStats() {
     if (!cat) continue;
 
     const isKedi = cat.animal === "kedi" && (cat.subcategory === "kedi-mamasi" || cat.subcategory === "acik-mama");
-    const isKopek = cat.animal === "kopek" && (cat.subcategory === "mama-markalari" || cat.subcategory === "kopek-mamasi" || cat.subcategory === "acik-mama" || cat.subcategory === "uygun-cuval");
+    const isKopek = cat.animal === "kopek" && (cat.subcategory === "mama-markalari" || cat.subcategory === "kopek-mamasi" || cat.subcategory === "kopek-kuru-mama" || cat.subcategory === "acik-mama" || cat.subcategory === "uygun-cuval");
     if (!isKedi && !isKopek) continue;
 
     const breeds = isKopek ? KOPEK_BREEDS : KEDI_BREEDS;
