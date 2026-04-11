@@ -1,10 +1,71 @@
 import { Link, useRoute } from "wouter";
-import { MapPin, Truck, Phone, ChevronRight, Star, ShieldCheck, Clock, Package } from "lucide-react";
+import { MapPin, Truck, Phone, ChevronRight, Star, ShieldCheck, Clock, Package, CreditCard, MessageCircle } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD, FAQ_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import { SEO_PAGES, type SeoPageData } from "@/lib/seo-data";
 import NotFound from "@/pages/not-found";
+
+function StoreInfoBox() {
+  return (
+    <section className="border-2 border-[#6B3480]/20 rounded-2xl overflow-hidden" data-testid="store-info-box">
+      <div className="bg-[#6B3480]/5 px-5 py-3 border-b border-[#6B3480]/10">
+        <h2 className="text-lg font-bold flex items-center gap-2">
+          <MapPin className="w-5 h-5 text-[#6B3480]" />
+          JETGO Pet Shop - Mağaza Bilgileri
+        </h2>
+      </div>
+      <div className="p-5 grid gap-4 sm:grid-cols-2">
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <MapPin className="w-4 h-4 text-[#6B3480] mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold">Adres</p>
+              <p className="text-sm text-muted-foreground">Atakum, Samsun 55200</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Phone className="w-4 h-4 text-[#6B3480] mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold">Telefon</p>
+              <a href="tel:+908508403959" className="text-sm text-[#6B3480] hover:underline">0850 840 39 59</a>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <MessageCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold">WhatsApp Sipariş</p>
+              <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="text-sm text-green-600 hover:underline">0850 840 39 59</a>
+            </div>
+          </div>
+        </div>
+        <div className="space-y-3">
+          <div className="flex items-start gap-3">
+            <Clock className="w-4 h-4 text-[#6B3480] mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold">Çalışma Saatleri</p>
+              <p className="text-sm text-muted-foreground">Her gün 09:00 - 21:00</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <CreditCard className="w-4 h-4 text-[#6B3480] mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold">Ödeme Yöntemleri</p>
+              <p className="text-sm text-muted-foreground">Nakit, Kredi Kartı (POS), QR, EFT/Havale</p>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <Truck className="w-4 h-4 text-[#6B3480] mt-0.5 shrink-0" />
+            <div>
+              <p className="text-sm font-semibold">Teslimat</p>
+              <p className="text-sm text-muted-foreground">Atakum, İlkadım, Canik - Aynı gün</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function SeoPageContent({ page }: { page: SeoPageData }) {
   const breadcrumbs = [
@@ -86,6 +147,27 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
           ))}
         </section>
 
+        {page.sections && page.sections.length > 0 && (
+          page.sections.map((sec, si) => (
+            <section key={si}>
+              <h2 className="text-xl font-bold mb-3">{sec.h2}</h2>
+              {sec.paragraphs.map((p, pi) => (
+                <p key={pi} className="text-muted-foreground leading-relaxed mb-3">{p}</p>
+              ))}
+              {sec.list && sec.list.length > 0 && (
+                <ul className="grid gap-1.5 mt-2 mb-3">
+                  {sec.list.map((item, li) => (
+                    <li key={li} className="flex items-start gap-2 text-sm text-muted-foreground">
+                      <ChevronRight className="w-3.5 h-3.5 text-[#6B3480] mt-0.5 shrink-0" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ))
+        )}
+
         {page.features && page.features.length > 0 && (
           <section>
             <h2 className="text-xl font-bold mb-4" data-testid="seo-h2-features">
@@ -120,6 +202,8 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
             </div>
           </section>
         )}
+
+        <StoreInfoBox />
 
         {page.type === "core" && (
           <section>

@@ -347,7 +347,7 @@ export async function registerRoutes(
         { url: "/kedi-kumu-en-iyi", priority: "0.7", changefreq: "monthly" },
         { url: "/kopek-mamasi-fiyatlari", priority: "0.7", changefreq: "monthly" },
       ];
-      const atakumMahalleler = ["denizevleri","guzelyali","kurupelit","atakent","incesu","mimar-sinan","korfez","yeni-mahalle","altinkum","balac","cakirlar","soguksu","taflan","cobanli","buyukoyumca"];
+      const atakumMahalleler = ["denizevleri","guzelyali","kurupelit","atakent","incesu","mimar-sinan","korfez","yeni-mahalle","altinkum","balac","cakirlar","soguksu","taflan","cobanli","buyukoyumca","esenevler"];
       const ilkadimMahalleler = ["kadikoy","rasathane","kilicdede","baruthane","kalkanci","ulugazi","derecik","adalet","ciftlik"];
       const canikMahalleler = ["karsiyaka","gaziosmanpasa","canik-yenimahalle","kuzeyyildizi"];
       const mahalleSlugs = [
@@ -356,16 +356,24 @@ export async function registerRoutes(
         ...canikMahalleler.map(m => ({ url: `/canik-${m}-petshop`, priority: "0.6", changefreq: "monthly" })),
       ];
       const keywordSlugs = [
+        { url: "/samsun-atakum-petshop-kedi-kopek-mamasi", priority: "0.8", changefreq: "weekly" },
+        { url: "/jetgo-petshop", priority: "0.8", changefreq: "weekly" },
+        { url: "/samsun-petshop-kedi-mamasi", priority: "0.8", changefreq: "weekly" },
+        { url: "/samsun-petshop-kopek-mamasi", priority: "0.8", changefreq: "weekly" },
+        { url: "/samsun-petshop-kedi-kumu", priority: "0.8", changefreq: "weekly" },
+        { url: "/atakum-petshop-kedi-mamasi", priority: "0.7", changefreq: "weekly" },
+        { url: "/atakum-petshop-kopek-mamasi", priority: "0.7", changefreq: "weekly" },
         { url: "/en-yakin-petshop-samsun", priority: "0.7", changefreq: "weekly" },
         { url: "/kapiya-teslim-petshop-samsun", priority: "0.7", changefreq: "weekly" },
         { url: "/online-petshop-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/acil-kedi-mamasi-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/kopek-mamasi-hizli-teslim-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/petshop-delivery-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/mama-siparis-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/kedi-kumu-kapiya-teslim-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/samsun-petshop-fiyat-kampanya", priority: "0.7", changefreq: "weekly" },
         { url: "/samsun-evcil-hayvan-magazasi", priority: "0.7", changefreq: "weekly" },
         { url: "/samsun-kedi-mamasi-fiyatlari", priority: "0.7", changefreq: "weekly" },
+        { url: "/acil-kedi-mamasi-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/kopek-mamasi-hizli-teslim-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/kedi-kumu-kapiya-teslim-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/mama-siparis-samsun", priority: "0.7", changefreq: "weekly" },
+        { url: "/petshop-delivery-samsun", priority: "0.7", changefreq: "weekly" },
       ];
       const blogSlugs = [
         { url: "/blog", priority: "0.8", changefreq: "weekly" },

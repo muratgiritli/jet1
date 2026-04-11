@@ -19,6 +19,7 @@ The application employs a modern web architecture:
 - **Delivery Management**: Configurable delivery pricing and selectable time slots.
 - **SEO**: Comprehensive Local SEO including custom metadata, sitemaps, robots.txt, structured data (Schema.org), programmatic page generation, and keyword-optimized content.
 - **Blog System**: Pet care blog with category filters, articles, FAQ sections, and SEO optimization.
+- **SEO Pages**: Comprehensive local SEO with 30+ mahalle pages, 20+ keyword pages, store info box, FAQ schema, BreadcrumbList schema, and 500+ word content per page. Pages cover location-based (Atakum, İlkadım, Canik), category-based (kedi maması, köpek maması, kedi kumu), brand-based (JETGO), and intent-based (kapıya teslim, online sipariş, fiyat kampanya) keywords.
 - **Low Stock Alerts**: Visual alerts for products with limited stock.
 - **Product Reviews**: Deterministic review generation and a user review submission form.
 - **Coupon System**: Full CRUD for coupons in the admin panel, supporting various discount types and user-bound coupons.
