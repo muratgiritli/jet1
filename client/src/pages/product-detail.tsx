@@ -20,6 +20,7 @@ import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
 import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import SEO, { SITE_DOMAIN, PRODUCT_JSONLD, BREADCRUMB_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import ProductReviews from "@/components/ProductReviews";
+import ProductPopup from "@/components/ProductPopup";
 import { SiWhatsapp, SiFacebook, SiX } from "react-icons/si";
 
 type ProductDetailData = {
@@ -89,14 +90,20 @@ function CrossSellProductCard({
 }) {
   const pid = String(product.id);
   const isActive = quantity > 0;
+  const [showPopup, setShowPopup] = useState(false);
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
   return (
+    <>
     <Card className={`overflow-visible transition-all duration-200 ${isActive ? "ring-2 ring-primary shadow-md" : ""}`} data-testid={`card-cross-sell-${pid}`}>
       <CardContent className="p-2 flex flex-col items-center gap-1.5">
-          <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
+          <div
+            className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative cursor-pointer"
+            onClick={() => setShowPopup(true)}
+            data-testid={`img-cross-sell-${pid}`}
+          >
             <ProductImage
               src={product.img}
               alt={product.name}
@@ -112,7 +119,10 @@ function CrossSellProductCard({
               </Badge>
             )}
           </div>
-        <p className="text-[11px] font-semibold text-center leading-tight line-clamp-2 min-h-[1.5rem]">
+        <p
+          className="text-[11px] font-semibold text-center leading-tight line-clamp-2 min-h-[1.5rem] cursor-pointer"
+          onClick={() => setShowPopup(true)}
+        >
           {product.name}
         </p>
         <span className="text-xs font-bold text-foreground">
@@ -153,6 +163,15 @@ function CrossSellProductCard({
         )}
       </CardContent>
     </Card>
+    {showPopup && (
+      <ProductPopup
+        product={product}
+        quantity={quantity}
+        onUpdate={onUpdate}
+        onClose={() => setShowPopup(false)}
+      />
+    )}
+    </>
   );
 }
 

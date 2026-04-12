@@ -3,10 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tag, Eye, Cat, Dog, Bird } from "lucide-react";
+import { Tag, Eye, Cat, Dog, Bird, ShoppingCart, Plus, Minus, X } from "lucide-react";
 import ProductImage from "@/components/ProductImage";
 import { productUrl } from "@/lib/data";
+import { useCart } from "@/contexts/CartContext";
+import ProductPopup from "@/components/ProductPopup";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
+import type { Product } from "@shared/schema";
 
 
 interface CampaignProduct {
@@ -23,31 +26,57 @@ interface CampaignProduct {
   animal?: string | null;
 }
 
-function CampaignProductCard({ item }: { item: CampaignProduct }) {
+function CampaignProductCard({ item, basket, onUpdate }: { item: CampaignProduct; basket: Record<string, number>; onUpdate: (id: string, delta: number) => void }) {
+  const [showPopup, setShowPopup] = useState(false);
+  const pid = String(item.product_id);
+  const qty = basket[pid] || 0;
+
+  const popupProduct: Product = {
+    id: item.product_id,
+    name: item.name,
+    price: item.price,
+    originalPrice: item.original_price ?? undefined,
+    img: item.img ?? "",
+    stock: item.stock,
+    animal: (item.animal ?? "kedi") as any,
+    subcategory: "",
+    brand: "",
+    barcode: null,
+    weight: null,
+    mamaType: null,
+    costPrice: null,
+    skt: item.skt ?? null,
+  };
+
   return (
+    <>
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-testid={`campaign-product-${item.product_id}`}>
-      <Link href={productUrl(item.product_id, item.name) + "?kampanya=1"}>
-        <div className="relative aspect-square bg-gray-50 p-2 cursor-pointer">
-          <ProductImage
-            src={item.img}
-            alt={item.name}
-            className="w-full h-full object-contain"
-            loading="lazy"
-          />
-          <Badge
-            className="absolute top-2 left-2 text-[10px] font-bold"
-            style={{ backgroundColor: "#6B3480", color: "#fff" }}
-          >
-            KAMPANYA
-          </Badge>
-        </div>
-      </Link>
+      <div
+        className="relative aspect-square bg-gray-50 p-2 cursor-pointer"
+        onClick={() => setShowPopup(true)}
+        data-testid={`img-campaign-${item.product_id}`}
+      >
+        <ProductImage
+          src={item.img}
+          alt={item.name}
+          className="w-full h-full object-contain"
+          loading="lazy"
+        />
+        <Badge
+          className="absolute top-2 left-2 text-[10px] font-bold"
+          style={{ backgroundColor: "#6B3480", color: "#fff" }}
+        >
+          KAMPANYA
+        </Badge>
+      </div>
       <div className="p-3 space-y-2">
-        <Link href={productUrl(item.product_id, item.name) + "?kampanya=1"}>
-          <h3 className="text-xs font-semibold text-gray-800 line-clamp-2 min-h-[2rem] cursor-pointer hover:text-primary" data-testid={`text-name-${item.product_id}`}>
-            {item.name}
-          </h3>
-        </Link>
+        <h3
+          className="text-xs font-semibold text-gray-800 line-clamp-2 min-h-[2rem] cursor-pointer hover:text-primary"
+          onClick={() => setShowPopup(true)}
+          data-testid={`text-name-${item.product_id}`}
+        >
+          {item.name}
+        </h3>
         <div className="flex flex-col gap-0.5">
           <div className="flex items-baseline gap-1.5">
             <span className="text-base font-bold text-primary" data-testid={`text-price-${item.product_id}`}>
@@ -66,16 +95,15 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
           )}
         </div>
         {item.stock > 0 ? (
-          <Link href={productUrl(item.product_id, item.name) + "?kampanya=1"}>
-            <Button
-              className="w-full h-8 text-xs font-bold"
-              style={{ backgroundColor: "#6B3480" }}
-              data-testid={`btn-inspect-${item.product_id}`}
-            >
-              <Eye className="w-3.5 h-3.5 mr-1" />
-              İncele
-            </Button>
-          </Link>
+          <Button
+            className="w-full h-8 text-xs font-bold"
+            style={{ backgroundColor: "#6B3480" }}
+            onClick={() => setShowPopup(true)}
+            data-testid={`btn-inspect-${item.product_id}`}
+          >
+            <Eye className="w-3.5 h-3.5 mr-1" />
+            İncele
+          </Button>
         ) : (
           <div className="text-center text-[11px] font-semibold py-1.5 rounded-md" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>
             Tükendi
@@ -83,6 +111,15 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
         )}
       </div>
     </div>
+    {showPopup && (
+      <ProductPopup
+        product={popupProduct}
+        quantity={qty}
+        onUpdate={onUpdate}
+        onClose={() => setShowPopup(false)}
+      />
+    )}
+    </>
   );
 }
 
@@ -94,6 +131,7 @@ const ANIMAL_FILTERS = [
 ] as const;
 
 export default function CampaignPage() {
+  const { basket, updateQty } = useCart();
   const { data: items = [], isLoading } = useQuery<CampaignProduct[]>({
     queryKey: ["/api/campaign-items"],
   });
@@ -175,7 +213,7 @@ export default function CampaignPage() {
                 </h2>
                 <div className="grid grid-cols-2 gap-3">
                   {mainItems.map((item) => (
-                    <CampaignProductCard key={item.id} item={item} />
+                    <CampaignProductCard key={item.id} item={item} basket={basket} onUpdate={updateQty} />
                   ))}
                 </div>
               </section>
