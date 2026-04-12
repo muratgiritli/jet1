@@ -756,6 +756,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [bulkPricePercent, setBulkPricePercent] = useState("");
   const [bulkPriceMode, setBulkPriceMode] = useState<"percent" | "individual">("individual");
   const [individualPrices, setIndividualPrices] = useState<Record<number, string>>({});
+  const [bulkStockDialogOpen, setBulkStockDialogOpen] = useState(false);
+  const [individualStocks, setIndividualStocks] = useState<Record<number, string>>({});
   const [ordersExpanded, setOrdersExpanded] = useState(false);
   const [campaignExpanded, setCampaignExpanded] = useState(false);
   const [campaignAddType, setCampaignAddType] = useState<"main" | "extra">("main");
@@ -865,6 +867,21 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setBulkPriceDialogOpen(false);
       setIndividualPrices({});
       toast({ title: "Başarılı", description: `${variables.updates.length} ürün fiyatı güncellendi.` });
+    },
+  });
+
+  const bulkStockUpdateMutation = useMutation({
+    mutationFn: async ({ updates }: { updates: { id: number; stock: number }[] }) => {
+      await apiRequest("POST", "/api/admin/products/bulk-stock-update", { updates });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      setBulkStockDialogOpen(false);
+      setIndividualStocks({});
+      toast({ title: "Başarılı", description: `${variables.updates.length} ürün stoğu güncellendi.` });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Stok güncellenirken bir hata oluştu.", variant: "destructive" });
     },
   });
 
@@ -3231,6 +3248,95 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       </Button>
                     </div>
                   )}
+                </DialogContent>
+              </Dialog>
+
+              <Dialog open={bulkStockDialogOpen} onOpenChange={(open) => { setBulkStockDialogOpen(open); if (!open) setIndividualStocks({}); }}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" disabled={filteredProducts.length === 0} data-testid="btn-bulk-stock">
+                    <Package className="w-4 h-4" />
+                    Toplu Stok Güncelle
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-[95vw] sm:max-w-2xl max-h-[90vh] flex flex-col">
+                  <DialogHeader>
+                    <DialogTitle>Toplu Stok Güncelleme</DialogTitle>
+                    <p className="text-sm text-muted-foreground">
+                      Seçili filtredeki <span className="font-bold text-foreground">{filteredProducts.length}</span> ürün
+                    </p>
+                  </DialogHeader>
+                  <div className="flex flex-col flex-1 min-h-0">
+                    <div className="overflow-y-auto flex-1 border rounded-lg" style={{ maxHeight: "50vh" }}>
+                      <table className="w-full text-sm">
+                        <thead className="sticky top-0 bg-background border-b">
+                          <tr>
+                            <th className="text-left p-2 font-medium">Ürün</th>
+                            <th className="text-right p-2 font-medium w-24">Mevcut</th>
+                            <th className="text-right p-2 font-medium w-32">Yeni Stok</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {filteredProducts.map((p) => (
+                            <tr key={p.id} className={`border-b last:border-0 hover:bg-muted/30 ${p.stock === 0 ? "bg-red-50" : ""}`}>
+                              <td className="p-2 text-xs leading-tight" data-testid={`text-stock-product-${p.id}`}>{p.name}</td>
+                              <td className="p-2 text-right text-xs whitespace-nowrap">
+                                <span className={p.stock === 0 ? "text-red-500 font-bold" : p.stock <= 5 ? "text-orange-500 font-semibold" : "text-muted-foreground"}>
+                                  {p.stock}
+                                </span>
+                              </td>
+                              <td className="p-2">
+                                <Input
+                                  type="number"
+                                  step="1"
+                                  min="0"
+                                  placeholder={String(p.stock)}
+                                  value={individualStocks[p.id] || ""}
+                                  onChange={(e) => setIndividualStocks(prev => ({ ...prev, [p.id]: e.target.value }))}
+                                  className="h-8 text-sm text-right w-28"
+                                  data-testid={`input-stock-${p.id}`}
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                      <p className="text-xs text-muted-foreground">
+                        {Object.values(individualStocks).filter(v => v !== "" && !isNaN(parseInt(v))).length} ürün değiştirildi
+                      </p>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const allZero: Record<number, string> = {};
+                            filteredProducts.forEach(p => { allZero[p.id] = "0"; });
+                            setIndividualStocks(allZero);
+                          }}
+                          data-testid="btn-stock-all-zero"
+                        >
+                          Tümünü 0 Yap
+                        </Button>
+                        <Button
+                          disabled={Object.values(individualStocks).filter(v => v !== "" && !isNaN(parseInt(v))).length === 0 || bulkStockUpdateMutation.isPending}
+                          onClick={() => {
+                            const updates = Object.entries(individualStocks)
+                              .filter(([_, v]) => v !== "" && !isNaN(parseInt(v)))
+                              .map(([id, v]) => ({ id: parseInt(id), stock: parseInt(v) }));
+                            if (updates.length > 0) bulkStockUpdateMutation.mutate({ updates });
+                          }}
+                          data-testid="btn-save-bulk-stock"
+                        >
+                          {bulkStockUpdateMutation.isPending ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <>Stokları Kaydet</>
+                          )}
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </DialogContent>
               </Dialog>
 

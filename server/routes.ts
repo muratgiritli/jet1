@@ -914,6 +914,25 @@ export async function registerRoutes(
     res.json({ message: `${updated} ürün fiyatı güncellendi`, updated });
   });
 
+  app.post("/api/admin/products/bulk-stock-update", requireAdmin, async (req, res) => {
+    const { updates } = req.body;
+    if (!Array.isArray(updates) || updates.length === 0 || updates.length > 500) {
+      return res.status(400).json({ message: "Invalid data" });
+    }
+    let updated = 0;
+    for (const item of updates) {
+      const id = Number(item.id);
+      const stock = Number(item.stock);
+      if (!Number.isInteger(id) || id <= 0 || !Number.isFinite(stock) || stock < 0) continue;
+      const product = await storage.getProduct(id);
+      if (product) {
+        await storage.updateProduct(id, { stock: Math.floor(stock) });
+        updated++;
+      }
+    }
+    res.json({ message: `${updated} ürün stoğu güncellendi`, updated });
+  });
+
   app.get("/api/product-detail/:id", async (req, res) => {
     const id = parseInt(req.params.id);
     const product = await storage.getProduct(id);
