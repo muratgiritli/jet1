@@ -38,6 +38,7 @@ import {
   User as UserIcon,
   ArrowRight,
   Phone as PhoneIcon,
+  Clock,
 } from "lucide-react";
 import SEO from "@/components/SEO";
 import {
@@ -330,6 +331,7 @@ export default function Checkout() {
     campaignExtraCount,
     campaignValid,
     campaignCartIds,
+    isPreorderProduct,
   } = useCart();
 
   const [orderError, setOrderError] = useState("");
@@ -810,6 +812,12 @@ export default function Checkout() {
           </div>
         ) : (
           <>
+            {selectedProducts.some(({ product }) => isPreorderProduct(String(product.id))) && (
+              <div className="mt-6 flex items-start gap-2 p-3 rounded-lg" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }} data-testid="banner-preorder-checkout">
+                <Clock className="w-4 h-4 mt-0.5 shrink-0" />
+                <p className="text-xs font-medium">Sepetinizde ön siparişli ürün(ler) var. Bu ürünler ortalama 3 iş günü içinde tedarik edilip teslim edilecektir.</p>
+              </div>
+            )}
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-cart-items">
                 Sepetinizdeki Ürünler
@@ -830,6 +838,12 @@ export default function Checkout() {
                             <p className="text-xs text-muted-foreground" data-testid={`text-checkout-unit-${product.id}`}>
                               {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL / adet
                             </p>
+                            {isPreorderProduct(String(product.id)) && (
+                              <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }} data-testid={`badge-preorder-${product.id}`}>
+                                <Clock className="w-2.5 h-2.5" />
+                                Ön Sipariş — ~3 gün teslimat
+                              </span>
+                            )}
                           </div>
                           <div className="flex items-center gap-1">
                             <Button

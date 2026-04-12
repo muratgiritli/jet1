@@ -1039,6 +1039,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
   });
 
+  const togglePreorderMutation = useMutation({
+    mutationFn: async ({ id, preorderEnabled }: { id: number; preorderEnabled: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/products/${id}`, { preorderEnabled });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Güncellendi", description: "Ön sipariş durumu değiştirildi." });
+    },
+  });
+
   const deleteCategoryMutation = useMutation({
     mutationFn: async (id: number) => {
       await apiRequest("DELETE", `/api/admin/brand-categories/${id}`);
@@ -3472,6 +3482,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           >
                             Stok: {product.stock}
                           </Badge>
+                          {product.preorderEnabled && (
+                            <Badge className="text-[10px] no-default-hover-elevate no-default-active-elevate" style={{ backgroundColor: "#1565c0", color: "#fff" }} data-testid={`badge-preorder-${product.id}`}>
+                              Ön Sipariş Açık
+                            </Badge>
+                          )}
                           {product.skt && (
                             <span className="text-[10px] text-muted-foreground">
                               SKT: {product.skt}
@@ -3485,6 +3500,20 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </div>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          title={product.preorderEnabled ? "Ön Siparişi Kapat" : "Ön Siparişi Aç"}
+                          className={product.preorderEnabled ? "border-blue-400 text-blue-600 bg-blue-50" : "border-gray-300 text-gray-400"}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            togglePreorderMutation.mutate({ id: product.id, preorderEnabled: !product.preorderEnabled });
+                          }}
+                          data-testid={`btn-toggle-preorder-${product.id}`}
+                        >
+                          <Clock className="w-4 h-4" />
+                        </Button>
                         <Button
                           variant="outline"
                           size="icon"

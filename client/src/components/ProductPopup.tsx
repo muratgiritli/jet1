@@ -1,5 +1,5 @@
 import { useEffect, useRef, useCallback, useState } from "react";
-import { X, Plus, Minus, ShoppingCart, Tag } from "lucide-react";
+import { X, Plus, Minus, ShoppingCart, Tag, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ProductImage from "@/components/ProductImage";
@@ -112,10 +112,53 @@ export default function ProductPopup({ product, quantity, onUpdate, onClose }: P
             <p className="text-xs text-muted-foreground">{product.weight}</p>
           )}
 
-          {product.stock === 0 ? (
+          {product.stock === 0 && !product.preorderEnabled ? (
             <div className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>
               <Tag className="w-4 h-4" />
               Tükendi
+            </div>
+          ) : product.stock === 0 && product.preorderEnabled ? (
+            <div className="space-y-2">
+              <div className="flex items-center justify-center gap-2 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }}>
+                <Clock className="w-3.5 h-3.5" />
+                Ön Sipariş — Ortalama 3 gün içinde teslimat
+              </div>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-0 border rounded-lg overflow-hidden border-blue-300" data-testid="product-popup-preorder-qty">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-9 p-0 rounded-none"
+                    onClick={() => onUpdate(pid, -1)}
+                    data-testid="product-popup-preorder-minus"
+                  >
+                    <Minus className="w-4 h-4" />
+                  </Button>
+                  <div className="flex items-center justify-center w-10 h-9 text-sm font-bold text-blue-700">
+                    {quantity}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-9 w-9 p-0 rounded-none"
+                    onClick={() => onUpdate(pid, 1)}
+                    data-testid="product-popup-preorder-plus"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </Button>
+                </div>
+                {quantity === 0 && (
+                  <Button
+                    className="flex-1 h-9 text-sm font-semibold"
+                    style={{ backgroundColor: "#1565c0" }}
+                    onClick={() => onUpdate(pid, 1)}
+                    data-testid="product-popup-preorder-add"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    Ön Sipariş Ver
+                  </Button>
+                )}
+              </div>
             </div>
           ) : (
             <div className="flex items-center gap-3">

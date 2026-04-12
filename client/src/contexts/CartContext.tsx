@@ -50,6 +50,7 @@ interface CartContextType {
   getProductStock: (id: string) => number;
   updateStock: (id: string, stock: number) => void;
   campaignCartIds: Set<string>;
+  isPreorderProduct: (id: string) => boolean;
 }
 
 const CartContext = createContext<CartContextType | null>(null);
@@ -181,12 +182,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return s;
   }, [dbProducts]);
   const isKediKumu = useCallback((id: string) => kediKumuIdsRef.current.has(id), []);
+  const isPreorderProduct = useCallback((id: string) => preorderIdsRef.current.has(id) && (stockMapRef.current.get(id) ?? 0) === 0, []);
 
   const stockMapRef = useRef<Map<string, number>>(new Map());
+  const preorderIdsRef = useRef<Set<string>>(new Set());
   useMemo(() => {
     const m = new Map<string, number>();
-    for (const p of dbProducts) m.set(String(p.id), p.stock ?? 0);
+    const po = new Set<string>();
+    for (const p of dbProducts) {
+      m.set(String(p.id), p.stock ?? 0);
+      if (p.preorderEnabled) po.add(String(p.id));
+    }
     stockMapRef.current = m;
+    preorderIdsRef.current = po;
     return m;
   }, [dbProducts]);
 
@@ -224,7 +232,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         next = KEDI_KUMU_MAX_QTY;
       }
       const stockVal = stockMapRef.current.get(id);
-      if (delta > 0 && stockVal !== undefined && next > stockVal) {
+      const isPreorder = preorderIdsRef.current.has(id);
+      if (delta > 0 && stockVal !== undefined && next > stockVal && !isPreorder) {
         blocked = true;
         next = stockVal;
         if (next === current) return prev;
@@ -348,8 +357,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
       getProductStock,
       updateStock,
       campaignCartIds,
+      isPreorderProduct,
     }),
-    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock, updateStock, campaignCartIds]
+    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock, updateStock, campaignCartIds, isPreorderProduct]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

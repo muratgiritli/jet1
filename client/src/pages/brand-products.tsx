@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRoute, useLocation } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, Eye, ShieldCheck } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, Eye, ShieldCheck, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -208,7 +208,19 @@ function BrandProductCard({
             </span>
           )}
         </div>
-        {product.stock === 0 ? (
+        {product.stock === 0 && product.preorderEnabled ? (
+          <div className="w-full space-y-1">
+            <div className="flex items-center justify-center gap-1 py-0.5 rounded text-[10px] font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }}>
+              <Clock className="w-3 h-3" />
+              Ön Sipariş — ~3 gün teslimat
+            </div>
+            <QuantityControl
+              productId={pid}
+              quantity={quantity}
+              onUpdate={onUpdate}
+            />
+          </div>
+        ) : product.stock === 0 ? (
           <Link href={productUrl(product.id, product.name)} className="w-full">
             <Button variant="default" size="sm" className="w-full" style={{ backgroundColor: "#e65100" }} data-testid={`btn-stock-alert-${pid}`}>
               <Bell className="w-3.5 h-3.5" />

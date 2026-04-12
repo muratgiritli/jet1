@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link, useRoute, useSearch, useLocation } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2 } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -128,7 +128,19 @@ function CrossSellProductCard({
         <span className="text-xs font-bold text-foreground">
           {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
         </span>
-        {product.stock === 0 ? (
+        {product.stock === 0 && product.preorderEnabled ? (
+          <div className="space-y-1">
+            <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }}>
+              <Clock className="w-2.5 h-2.5" />
+              Ön Sipariş
+            </div>
+            <div className="flex items-center gap-0" data-testid={`qty-control-preorder-${pid}`}>
+              <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => onUpdate(pid, -1)}><Minus className="w-3 h-3" /></Button>
+              <div className="flex items-center justify-center font-bold text-blue-700 w-7 text-sm">{quantity}</div>
+              <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => onUpdate(pid, 1)}><Plus className="w-3 h-3" /></Button>
+            </div>
+          </div>
+        ) : product.stock === 0 ? (
           <div className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>
             <Bell className="w-3 h-3" />
             Tukendi
@@ -585,7 +597,29 @@ export default function ProductDetailPage() {
                 </DialogContent>
               </Dialog>
 
-              {product.stock === 0 ? (
+              {product.stock === 0 && product.preorderEnabled ? (
+                <div className="mt-2 space-y-2">
+                  <div className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }}>
+                    <Clock className="w-4 h-4" />
+                    Ön Sipariş — Ortalama 3 gün içinde teslimat
+                  </div>
+                  <div className="flex flex-col gap-3">
+                    <div className="flex items-center gap-3 flex-wrap">
+                      <span className="text-sm text-muted-foreground font-medium">ADET</span>
+                      <QuantityControl productId={pid} quantity={quantity} onUpdate={updateQty} />
+                    </div>
+                    <Button
+                      className="w-full"
+                      style={{ backgroundColor: "#1565c0" }}
+                      onClick={() => { if (quantity === 0) updateQty(pid, 1); }}
+                      data-testid="btn-preorder-add"
+                    >
+                      <ShoppingCart className="w-4 h-4" />
+                      Ön Sipariş Ver
+                    </Button>
+                  </div>
+                </div>
+              ) : product.stock === 0 ? (
                 <div className="mt-2 space-y-2">
                   {stockAlertSent ? (
                     <div className="flex items-center gap-2 px-4 py-3 rounded-md text-sm font-semibold" style={{ backgroundColor: "#e8f5e9", color: "#2e7d32" }} data-testid="text-stock-alert-success">

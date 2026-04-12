@@ -840,7 +840,7 @@ export async function registerRoutes(
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ürün ID" });
-    const allowedFields = ["name", "price", "originalPrice", "skt", "img", "originalImg", "brandCategoryId", "isActive", "stock", "barcode", "costPrice", "mamaType"];
+    const allowedFields = ["name", "price", "originalPrice", "skt", "img", "originalImg", "brandCategoryId", "isActive", "stock", "barcode", "costPrice", "mamaType", "preorderEnabled"];
     const safeBody: Record<string, any> = {};
     for (const key of allowedFields) {
       if (req.body[key] !== undefined) safeBody[key] = req.body[key];
@@ -1202,6 +1202,7 @@ export async function registerRoutes(
       orderData.grandTotal = Math.round(serverTotal * 100) / 100;
     }
 
+    let hasPreorderItems = false;
     for (const item of orderData.items) {
       const productId = parseInt(String(item.productId));
       if (!isNaN(productId)) {
@@ -1212,11 +1213,25 @@ export async function registerRoutes(
             return res.status(400).json({ message: `${item.name} ürününün son kullanma tarihi geçmiş. Sipariş verilemez.` });
           }
         }
-        const ok = await storage.decrementStock(productId, item.quantity);
-        if (!ok) {
-          return res.status(400).json({ message: `Stok yetersiz: ${item.name}` });
+        if (prod && prod.preorderEnabled) {
+          if (prod.stock > 0) {
+            const deductQty = Math.min(prod.stock, item.quantity);
+            await storage.decrementStock(productId, deductQty);
+          }
+          if (prod.stock < item.quantity) {
+            hasPreorderItems = true;
+            item.isPreorder = true;
+          }
+        } else {
+          const ok = await storage.decrementStock(productId, item.quantity);
+          if (!ok) {
+            return res.status(400).json({ message: `Stok yetersiz: ${item.name}` });
+          }
         }
       }
+    }
+    if (hasPreorderItems) {
+      orderData.hasPreorder = true;
     }
 
     const order = await storage.createOrder(orderData);
