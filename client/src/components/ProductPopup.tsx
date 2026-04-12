@@ -123,6 +123,7 @@ export default function ProductPopup({ product, quantity, onUpdate, onClose }: P
                 <Clock className="w-3.5 h-3.5" />
                 Ön Sipariş — Ortalama 3 gün içinde teslimat
               </div>
+              <p className="text-[11px] font-medium" style={{ color: "#1565c0" }}>Ödeme teslimat sırasında nakit olarak yapılacaktır.</p>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-0 border rounded-lg overflow-hidden border-blue-300" data-testid="product-popup-preorder-qty">
                   <Button
