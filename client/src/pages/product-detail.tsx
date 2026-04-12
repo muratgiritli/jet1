@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link, useRoute, useSearch, useLocation } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock, HelpCircle } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -598,7 +598,7 @@ export default function ProductDetailPage() {
               </Dialog>
 
               {product.stock === 0 && product.preorderEnabled ? (
-                <div className="mt-2 space-y-2">
+                <div className="mt-2 space-y-3">
                   <div className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }}>
                     <Clock className="w-4 h-4" />
                     Ön Sipariş — Ortalama 3 gün içinde teslimat
@@ -617,6 +617,20 @@ export default function ProductDetailPage() {
                       <ShoppingCart className="w-4 h-4" />
                       Ön Sipariş Ver
                     </Button>
+                  </div>
+                  <div className="rounded-lg border p-3 space-y-2" style={{ backgroundColor: "#f5f9ff", borderColor: "#bbdefb" }} data-testid="preorder-info-section">
+                    <h4 className="text-sm font-bold flex items-center gap-1.5" style={{ color: "#1565c0" }}>
+                      <HelpCircle className="w-4 h-4" />
+                      Ön Sipariş Nedir?
+                    </h4>
+                    <p className="text-xs leading-relaxed text-gray-700">
+                      Bu ürünün stokları şu an tükenmiş durumdadır. Ön sipariş vererek ürünü şimdiden satın alabilirsiniz. Siparişiniz alındıktan sonra tedarik sürecimiz başlar ve ortalama <strong>3 iş günü</strong> içinde stoklarımız yenilenir. Stok geldiğinde siparişiniz hazırlanarak tarafınıza teslim edilir.
+                    </p>
+                    <ul className="text-[11px] text-gray-600 space-y-1 list-disc list-inside">
+                      <li>Ön sipariş ile fiyat avantajını kaçırmadan ürünü garantileyin.</li>
+                      <li>Ortalama teslimat süresi: 3 iş günü.</li>
+                      <li>Sipariş durumunuz hakkında bilgilendirileceksiniz.</li>
+                    </ul>
                   </div>
                 </div>
               ) : product.stock === 0 ? (

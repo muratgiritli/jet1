@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Plus, Minus, Tag, Gift, Lock, AlertTriangle, Cat, Dog, Bird } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Tag, Gift, Lock, AlertTriangle, Cat, Dog, Bird, Clock } from "lucide-react";
 import ProductImage from "@/components/ProductImage";
 import { useCart } from "@/contexts/CartContext";
 import { productUrl } from "@/lib/data";
@@ -22,6 +22,7 @@ interface CampaignProduct {
   stock: number;
   skt: string | null;
   animal?: string | null;
+  preorder_enabled?: boolean;
 }
 
 function CampaignProductCard({ item }: { item: CampaignProduct }) {
@@ -130,6 +131,16 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
               Sepete Ekle
             </Button>
           )
+        ) : item.preorder_enabled ? (
+          <Button
+            className="w-full h-8 text-xs font-bold"
+            style={{ backgroundColor: "#1565c0" }}
+            onClick={() => updateQty(pid, 1)}
+            data-testid={`btn-preorder-${item.product_id}`}
+          >
+            <Clock className="w-3.5 h-3.5 mr-1" />
+            Ön Sipariş
+          </Button>
         ) : (
           <div className="text-center text-[11px] font-semibold py-1.5 rounded-md" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>
             Tükendi

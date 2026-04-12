@@ -2134,7 +2134,7 @@ export async function registerRoutes(
   app.get("/api/campaign-items", async (req, res) => {
     try {
       const { rows } = await sharedPool.query(`
-        SELECT ci.*, p.name, p.price, p.original_price, p.img, p.stock, p.is_active, p.skt,
+        SELECT ci.*, p.name, p.price, p.original_price, p.img, p.stock, p.is_active, p.skt, p.preorder_enabled,
           bc.animal,
           CASE WHEN ci.campaign_price IS NOT NULL THEN ci.campaign_price ELSE p.price END AS display_price
         FROM campaign_items ci
