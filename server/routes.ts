@@ -1646,6 +1646,10 @@ export async function registerRoutes(
 
   app.delete("/api/customer/account", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
+    const ip = req.ip || "unknown";
+    if (rateLimit(`accdel:${ip}`, 3, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
+    }
     const { password } = req.body;
     if (!password) return res.status(400).json({ message: "Şifre gerekli" });
     const customer = await storage.getCustomer(customerId);
@@ -1814,6 +1818,10 @@ export async function registerRoutes(
 
   app.post("/api/customer/favorites/sync", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
+    const ip = req.ip || "unknown";
+    if (rateLimit(`favsync:${ip}`, 20, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek." });
+    }
     const { productIds } = req.body;
     if (Array.isArray(productIds)) {
       const safeIds = productIds.filter(pid => typeof pid === "number" || (typeof pid === "string" && /^\d+$/.test(pid))).slice(0, 100);
@@ -3205,6 +3213,13 @@ export async function registerRoutes(
     if (!postType || !petName || !petType || !description || !contactPhone) {
       return res.status(400).json({ message: "Zorunlu alanları doldurun" });
     }
+    if (!["lost", "found", "adoption"].includes(postType)) return res.status(400).json({ message: "Geçersiz ilan tipi" });
+    if (typeof petName !== "string" || petName.length > 100) return res.status(400).json({ message: "Pet adı çok uzun" });
+    if (typeof petType !== "string" || petType.length > 50) return res.status(400).json({ message: "Geçersiz pet türü" });
+    if (typeof contactPhone !== "string" || contactPhone.length < 7 || contactPhone.length > 20) return res.status(400).json({ message: "Geçersiz telefon numarası" });
+    if (breed && (typeof breed !== "string" || breed.length > 100)) return res.status(400).json({ message: "Cins bilgisi çok uzun" });
+    if (color && (typeof color !== "string" || color.length > 50)) return res.status(400).json({ message: "Renk bilgisi çok uzun" });
+    if (lastSeenLocation && (typeof lastSeenLocation !== "string" || lastSeenLocation.length > 200)) return res.status(400).json({ message: "Konum bilgisi çok uzun" });
     if (photoData && (typeof photoData !== "string" || photoData.length > 5 * 1024 * 1024)) {
       return res.status(400).json({ message: "Fotoğraf boyutu çok büyük (max 4MB)" });
     }
@@ -3222,7 +3237,13 @@ export async function registerRoutes(
   app.patch("/api/lost-found/:id/resolve", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
-    await sharedPool.query("UPDATE lost_found_posts SET is_resolved = true WHERE id=$1 AND customer_id=$2", [parseInt(req.params.id), customerId]);
+    const ip = req.ip || "unknown";
+    if (rateLimit(`lfresolve:${ip}`, 10, 60 * 60 * 1000)) {
+      return res.status(429).json({ message: "Çok fazla istek." });
+    }
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
+    await sharedPool.query("UPDATE lost_found_posts SET is_resolved = true WHERE id=$1 AND customer_id=$2", [id, customerId]);
     res.json({ success: true });
   });
 
