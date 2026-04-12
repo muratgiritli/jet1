@@ -630,6 +630,7 @@ export default function ProductDetailPage() {
                       <li>Ön sipariş ile fiyat avantajını kaçırmadan ürünü garantileyin.</li>
                       <li>Ortalama teslimat süresi: 3 iş günü.</li>
                       <li>Sipariş durumunuz hakkında bilgilendirileceksiniz.</li>
+                      <li><strong>Ödeme, teslim esnasında nakit olarak yapılacaktır.</strong></li>
                     </ul>
                   </div>
                 </div>
