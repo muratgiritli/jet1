@@ -963,16 +963,16 @@ export default function Checkout() {
                       return (
                         <label
                           key={opt.id}
-                          className={`flex items-center gap-3 p-3 rounded-md cursor-pointer transition-colors flex-wrap ${paymentId === opt.id ? "bg-accent" : ""}`}
+                          className={`flex items-center gap-2 p-3 rounded-md cursor-pointer transition-colors ${paymentId === opt.id ? "bg-accent" : ""}`}
                           data-testid={`radio-payment-${opt.id}`}
                         >
                           <RadioGroupItem value={opt.id} data-testid={`input-radio-${opt.id}`} />
                           <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <span className="text-sm font-medium" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
-                          <span className="flex-1" />
+                          <span className="text-sm font-medium truncate" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
+                          <span className="flex-1 min-w-0" />
                           <Badge
                             variant="secondary"
-                            className="no-default-hover-elevate shrink-0"
+                            className="no-default-hover-elevate shrink-0 whitespace-nowrap"
                             data-testid={`badge-payment-tag-${opt.id}`}
                           >
                             {opt.disc < 0 ? `${(subtotal * (1 + Math.abs(opt.disc))).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL` : `${subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`}
