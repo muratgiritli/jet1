@@ -5470,6 +5470,7 @@ function SettingsSection() {
     loyalty_percent: "",
     admin_phone: "",
     order_notification_sms: "1",
+    payment_eft_enabled: "0",
   });
 
   useEffect(() => {
@@ -5483,6 +5484,7 @@ function SettingsSection() {
         loyalty_percent: settings.loyalty_percent || "5",
         admin_phone: settings.admin_phone || "",
         order_notification_sms: settings.order_notification_sms ?? "1",
+        payment_eft_enabled: settings.payment_eft_enabled ?? "0",
       });
     }
   }, [settings]);
@@ -5590,6 +5592,21 @@ function SettingsSection() {
               data-testid="toggle-sms-notification"
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.order_notification_sms === "1" ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+          </div>
+
+          <div className="flex items-center justify-between pt-3 border-t">
+            <div>
+              <Label className="text-sm font-bold">Banka Havalesi (EFT) Ödeme</Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Checkout'ta EFT/Havale seçeneği görünsün mü?</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForm(prev => ({ ...prev, payment_eft_enabled: prev.payment_eft_enabled === "true" ? "0" : "true" }))}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.payment_eft_enabled === "true" ? "bg-green-500" : "bg-gray-300"}`}
+              data-testid="toggle-eft-payment"
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.payment_eft_enabled === "true" ? "translate-x-6" : "translate-x-1"}`} />
             </button>
           </div>
         </CardContent>

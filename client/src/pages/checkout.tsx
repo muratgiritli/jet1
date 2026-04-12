@@ -89,6 +89,11 @@ export default function Checkout() {
 
   const pointsBalance = loyaltyData?.balance || 0;
 
+  const { data: publicSettings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/public-settings"],
+  });
+  const eftEnabled = publicSettings?.payment_eft_enabled === "true";
+
   const { data: savedAddresses = [] } = useQuery<any[]>({
     queryKey: ["/api/customer/addresses"],
     enabled: isLoggedIn,
@@ -972,7 +977,7 @@ export default function Checkout() {
                     </div>
                   ) : (
                   <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
-                    {PAYMENT_OPTIONS.map((opt) => {
+                    {PAYMENT_OPTIONS.filter((opt) => opt.id !== "eft" || eftEnabled).map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
                       return (
                         <label

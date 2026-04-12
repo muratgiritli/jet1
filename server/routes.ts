@@ -1310,6 +1310,17 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/public-settings", async (_req, res) => {
+    try {
+      const result = await sharedPool.query("SELECT key, value FROM app_settings WHERE key IN ('payment_eft_enabled')");
+      const settings: Record<string, string> = {};
+      for (const row of result.rows) settings[row.key] = row.value;
+      res.json(settings);
+    } catch {
+      res.json({});
+    }
+  });
+
   app.get("/api/admin/settings", requireAdmin, async (_req, res) => {
     try {
       const result = await sharedPool.query("SELECT key, value FROM app_settings");
@@ -1325,7 +1336,7 @@ export async function registerRoutes(
     try {
       const updates = req.body;
       const numericKeys = ["pet_base_points", "pet_streak_divisor", "pet_max_points", "pet_base_exp", "pet_streak_exp_bonus", "loyalty_percent"];
-      const textKeys = ["admin_phone", "order_notification_sms"];
+      const textKeys = ["admin_phone", "order_notification_sms", "payment_eft_enabled"];
       for (const [key, value] of Object.entries(updates)) {
         if (numericKeys.includes(key)) {
           const numVal = Number(value);
