@@ -3,10 +3,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Tag, Eye, Cat, Dog, Bird, ShoppingCart, Plus, Minus, X } from "lucide-react";
+import { ShoppingCart, Plus, Minus, Tag, Gift, Lock, AlertTriangle, Cat, Dog, Bird } from "lucide-react";
 import ProductImage from "@/components/ProductImage";
-import { productUrl } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
+import { productUrl } from "@/lib/data";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 
 
@@ -24,37 +24,37 @@ interface CampaignProduct {
   animal?: string | null;
 }
 
-function CampaignProductCard({ item, basket, onUpdate }: { item: CampaignProduct; basket: Record<string, number>; onUpdate: (id: string, delta: number) => void }) {
+function CampaignProductCard({ item }: { item: CampaignProduct }) {
+  const { basket, updateQty, campaignMainInCart, isKediKumu } = useCart();
   const pid = String(item.product_id);
-  const href = productUrl(item.product_id, item.name);
+  const qty = basket[pid] || 0;
+  const isMain = item.item_type === "main";
+  const maxQty = isKediKumu(pid) ? 2 : 99;
+  const isLockedMain = isMain && campaignMainInCart !== null && campaignMainInCart !== pid;
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" data-testid={`campaign-product-${item.product_id}`}>
-      <Link href={href} className="block">
-        <div
-          className="relative aspect-square bg-gray-50 p-2 cursor-pointer"
-          data-testid={`img-campaign-${item.product_id}`}
-        >
+    <div className={`bg-white rounded-xl shadow-sm border overflow-hidden ${isLockedMain ? "border-gray-200 opacity-60" : "border-gray-100"}`} data-testid={`campaign-product-${item.product_id}`}>
+      <Link href={productUrl(item.product_id, item.name) + "?kampanya=1"}>
+        <div className="relative aspect-square bg-gray-50 p-2 cursor-pointer">
           <ProductImage
             src={item.img}
             alt={item.name}
             className="w-full h-full object-contain"
             loading="lazy"
           />
-          <Badge
-            className="absolute top-2 left-2 text-[10px] font-bold"
-            style={{ backgroundColor: "#6B3480", color: "#fff" }}
-          >
-            KAMPANYA
-          </Badge>
+          {isMain && (
+            <Badge
+              className="absolute top-2 left-2 text-[10px] font-bold"
+              style={{ backgroundColor: "#6B3480", color: "#fff" }}
+            >
+              KAMPANYA
+            </Badge>
+          )}
         </div>
       </Link>
       <div className="p-3 space-y-2">
-        <Link href={href}>
-          <h3
-            className="text-xs font-semibold text-gray-800 line-clamp-2 min-h-[2rem] cursor-pointer hover:text-primary"
-            data-testid={`text-name-${item.product_id}`}
-          >
+        <Link href={productUrl(item.product_id, item.name) + "?kampanya=1"}>
+          <h3 className="text-xs font-semibold text-gray-800 line-clamp-2 min-h-[2rem] cursor-pointer hover:text-primary" data-testid={`text-name-${item.product_id}`}>
             {item.name}
           </h3>
         </Link>
@@ -76,16 +76,60 @@ function CampaignProductCard({ item, basket, onUpdate }: { item: CampaignProduct
           )}
         </div>
         {item.stock > 0 ? (
-          <Link href={href} className="block">
+          isLockedMain ? (
+            <div className="text-center text-[11px] font-semibold py-1.5 rounded-md flex items-center justify-center gap-1" style={{ backgroundColor: "#f5f5f5", color: "#9e9e9e" }} data-testid={`locked-${item.product_id}`}>
+              <Lock className="w-3 h-3" />
+              Başka ürün seçildi
+            </div>
+          ) : qty > 0 ? (
+            (isMain || isKediKumu) ? (
+              <div className="text-center text-[11px] font-semibold py-1.5 rounded-md" style={{ backgroundColor: "#f3e5f9", color: "#6B3480" }} data-testid={`qty-added-${item.product_id}`}>
+                Sepette ✓
+                <button
+                  className="ml-2 underline text-[10px]"
+                  onClick={() => updateQty(pid, -1)}
+                  data-testid={`btn-remove-${item.product_id}`}
+                >
+                  Çıkar
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center gap-0" data-testid={`qty-control-${item.product_id}`}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => updateQty(pid, -1)}
+                  data-testid={`btn-minus-${item.product_id}`}
+                >
+                  <Minus className="w-3.5 h-3.5" />
+                </Button>
+                <div className="flex items-center justify-center font-bold text-primary w-10 text-base">
+                  {qty}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-8 p-0"
+                  onClick={() => { if (qty < maxQty) updateQty(pid, 1); }}
+                  disabled={qty >= maxQty}
+                  data-testid={`btn-plus-${item.product_id}`}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )
+          ) : (
             <Button
-              className="w-full h-8 text-xs font-bold pointer-events-none"
+              className="w-full h-8 text-xs font-bold"
               style={{ backgroundColor: "#6B3480" }}
-              data-testid={`btn-inspect-${item.product_id}`}
+              onClick={() => updateQty(pid, 1)}
+              data-testid={`btn-add-${item.product_id}`}
             >
-              <Eye className="w-3.5 h-3.5 mr-1" />
-              İncele
+              <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+              Sepete Ekle
             </Button>
-          </Link>
+          )
         ) : (
           <div className="text-center text-[11px] font-semibold py-1.5 rounded-md" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>
             Tükendi
@@ -104,7 +148,6 @@ const ANIMAL_FILTERS = [
 ] as const;
 
 export default function CampaignPage() {
-  const { basket, updateQty } = useCart();
   const { data: items = [], isLoading } = useQuery<CampaignProduct[]>({
     queryKey: ["/api/campaign-items"],
   });
@@ -116,6 +159,10 @@ export default function CampaignPage() {
     if (animalFilter === "all") return mains;
     return mains.filter((i) => i.animal === animalFilter);
   }, [items, animalFilter]);
+
+  const extraItems = useMemo(() => {
+    return items.filter((i) => i.item_type === "extra");
+  }, [items]);
 
   const availableAnimals = useMemo(() => {
     const animals = new Set(items.filter(i => i.item_type === "main" && i.animal).map(i => i.animal!));
@@ -177,8 +224,8 @@ export default function CampaignPage() {
           </div>
         ) : (
           <>
-            {mainItems.length > 0 ? (
-              <section data-testid="section-main-products">
+            {mainItems.length > 0 && (
+              <section className="mb-6" data-testid="section-main-products">
                 <h2 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
                   <Tag className="w-4 h-4" style={{ color: "#ff6f00" }} />
                   Kampanya Ürünleri
@@ -186,11 +233,33 @@ export default function CampaignPage() {
                 </h2>
                 <div className="grid grid-cols-2 gap-3">
                   {mainItems.map((item) => (
-                    <CampaignProductCard key={item.id} item={item} basket={basket} onUpdate={updateQty} />
+                    <CampaignProductCard key={item.id} item={item} />
                   ))}
                 </div>
               </section>
-            ) : (
+            )}
+
+            {extraItems.length > 0 && (
+              <section data-testid="section-extra-products">
+                <h2 className="text-base font-extrabold text-gray-800 mb-1 flex items-center gap-1.5">
+                  <Gift className="w-5 h-5" style={{ color: "#2e7d32" }} />
+                  EKSTRA ÜRÜNLER
+                </h2>
+                <div className="flex items-start gap-1.5 mb-3 p-2.5 rounded-lg" style={{ backgroundColor: "#fff3e0", border: "1px solid #ffe0b2" }} data-testid="campaign-extra-warning">
+                  <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: "#e65100" }} />
+                  <p className="text-[11px] font-semibold" style={{ color: "#e65100" }}>
+                    Kampanyadan yararlanmak için aşağıdan en az 1 ürün satın almanız gerekmektedir.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {extraItems.map((item) => (
+                    <CampaignProductCard key={item.id} item={item} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {mainItems.length === 0 && (
               <div className="text-center py-8 text-gray-400 text-sm">
                 Bu kategoride kampanyalı ürün bulunmuyor.
               </div>
