@@ -837,7 +837,7 @@ export default function ProductDetailPage() {
         )}
 
 
-        <ProductReviews productId={product.id} />
+        {!isCampaignMode && <ProductReviews productId={product.id} />}
 
         {recentlyViewed.length > 0 && (
           <div className="mt-6">
