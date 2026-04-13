@@ -499,7 +499,7 @@ export default function ProductDetailPage() {
               )}
 
 
-              {!isCampaignMode && category && shouldShowFastDelivery(category.animal, category.subcategory) && (
+              {!isCampaignMode && !(product.stock === 0 && product.preorderEnabled) && category && shouldShowFastDelivery(category.animal, category.subcategory) && (
                 <FastDeliveryBanner />
               )}
 
@@ -631,7 +631,7 @@ export default function ProductDetailPage() {
                         ⚠ Ödemeyi ürün teslimi sırasında yapacaksınız.
                       </p>
                       <p className="text-[11px] mt-0.5" style={{ color: "#bf360c" }}>
-                        Ön sipariş verirken ödeme alınmaz. Ürün size teslim edilirken ödemenizi nakit olarak yaparsınız.
+                        Ön sipariş verirken ödeme alınmaz. Ürün size teslim edilirken ödemenizi yaparsınız.
                       </p>
                     </div>
                     <ul className="text-[11px] text-gray-600 space-y-1 list-disc list-inside mt-2">
