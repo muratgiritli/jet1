@@ -711,6 +711,21 @@ export async function registerRoutes(
     res.json({ category, products: prods.filter(p => p.isActive) });
   });
 
+  app.get("/api/animal-products/:animal", async (req, res) => {
+    const { animal } = req.params;
+    const allBrandCats = await storage.getAllBrandCategories();
+    const matchingCatIds = allBrandCats
+      .filter((bc) => bc.animal === animal)
+      .map((bc) => bc.id);
+    if (matchingCatIds.length === 0) return res.json([]);
+    const allProducts = await storage.getAllProducts();
+    const filtered = allProducts.filter(
+      (p) => p.isActive && p.brandCategoryId && matchingCatIds.includes(p.brandCategoryId)
+    );
+    res.setHeader("Cache-Control", "public, max-age=120, stale-while-revalidate=600");
+    res.json(filtered.map(({ costPrice, ...rest }) => rest));
+  });
+
   app.get("/api/subcategory-products/:animal/:subcategorySlug", async (req, res) => {
     const { animal } = req.params;
     const subcategorySlug = SUBCATEGORY_SLUG_MAP[req.params.subcategorySlug] || req.params.subcategorySlug;
