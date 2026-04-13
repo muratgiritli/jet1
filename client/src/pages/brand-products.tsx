@@ -214,6 +214,7 @@ function BrandProductCard({
               <Clock className="w-3 h-3" />
               Ön Sipariş — ~3 gün teslimat
             </div>
+            <p className="text-[9px] text-center font-medium" style={{ color: "#1565c0" }}>Ödemeyi ürün tesliminde yapacaksınız</p>
             <QuantityControl
               productId={pid}
               quantity={quantity}

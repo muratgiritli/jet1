@@ -626,11 +626,18 @@ export default function ProductDetailPage() {
                     <p className="text-xs leading-relaxed text-gray-700">
                       Bu ürünün stokları şu an tükenmiş durumdadır. Ön sipariş vererek ürünü şimdiden satın alabilirsiniz. Siparişiniz alındıktan sonra tedarik sürecimiz başlar ve ortalama <strong>3 iş günü</strong> içinde stoklarımız yenilenir. Stok geldiğinde siparişiniz hazırlanarak tarafınıza teslim edilir.
                     </p>
-                    <ul className="text-[11px] text-gray-600 space-y-1 list-disc list-inside">
+                    <div className="mt-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#fff3e0", border: "1px solid #ffcc80" }}>
+                      <p className="text-xs font-bold" style={{ color: "#e65100" }}>
+                        ⚠ Ödemeyi ürün teslimi sırasında yapacaksınız.
+                      </p>
+                      <p className="text-[11px] mt-0.5" style={{ color: "#bf360c" }}>
+                        Ön sipariş verirken ödeme alınmaz. Ürün size teslim edilirken ödemenizi nakit olarak yaparsınız.
+                      </p>
+                    </div>
+                    <ul className="text-[11px] text-gray-600 space-y-1 list-disc list-inside mt-2">
                       <li>Ön sipariş ile fiyat avantajını kaçırmadan ürünü garantileyin.</li>
                       <li>Ortalama teslimat süresi: 3 iş günü.</li>
                       <li>Sipariş durumunuz hakkında bilgilendirileceksiniz.</li>
-                      <li><strong>Ödeme, teslim esnasında nakit olarak yapılacaktır.</strong></li>
                     </ul>
                   </div>
                 </div>
