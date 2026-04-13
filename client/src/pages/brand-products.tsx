@@ -209,18 +209,12 @@ function BrandProductCard({
           )}
         </div>
         {product.stock === 0 && product.preorderEnabled ? (
-          <div className="w-full space-y-1">
-            <div className="flex items-center justify-center gap-1 py-0.5 rounded text-[10px] font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }}>
-              <Clock className="w-3 h-3" />
-              Ön Sipariş — ~3 gün teslimat
-            </div>
-            <p className="text-[9px] text-center font-medium" style={{ color: "#1565c0" }}>Ödemeyi ürün tesliminde yapacaksınız</p>
-            <QuantityControl
-              productId={pid}
-              quantity={quantity}
-              onUpdate={onUpdate}
-            />
-          </div>
+          <Link href={productUrl(product.id, product.name)} className="w-full">
+            <Button variant="default" size="sm" className="w-full" style={{ backgroundColor: "#1565c0" }} data-testid={`btn-preorder-${pid}`}>
+              <Clock className="w-3.5 h-3.5" />
+              Ön Sipariş Ver
+            </Button>
+          </Link>
         ) : product.stock === 0 ? (
           <Link href={productUrl(product.id, product.name)} className="w-full">
             <Button variant="default" size="sm" className="w-full" style={{ backgroundColor: "#e65100" }} data-testid={`btn-stock-alert-${pid}`}>
