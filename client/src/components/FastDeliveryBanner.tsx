@@ -16,8 +16,7 @@ function getTurkeyTime(): Date {
 function getDeliveryDeadline(): Date | null {
   const now = getTurkeyTime();
   const hour = now.getHours();
-  const day = now.getDay();
-  if (day === 0 || hour < 12 || hour >= 18) return null;
+  if (hour < 11 || hour >= 18) return null;
   const deadline = new Date(now);
   deadline.setHours(18, 0, 0, 0);
   return deadline;

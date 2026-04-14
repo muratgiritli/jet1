@@ -620,7 +620,7 @@ export default function Landing() {
               Jetgo ile siparişin{" "}<span className="text-yellow-300">1 saat</span>{" "}<span className="whitespace-nowrap">içinde kapına gelir!</span>
             </p>
             <p className="text-white/80 text-[11px] md:text-sm mt-1 font-medium">
-              Atakum için her gün 10.00-19.00 arası
+              Haftanın 7 günü saat 11.00-19.00 arası adrese teslimat yapılır
             </p>
           </div>
         </div>
