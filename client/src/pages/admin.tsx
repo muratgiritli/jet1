@@ -5728,6 +5728,9 @@ function ReviewManagementSection() {
       return res.json();
     },
   });
+  const { data: categories = [] } = useQuery<BrandCategory[]>({
+    queryKey: ["/api/brand-categories"],
+  });
   const { data: reviews = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/reviews"],
   });
@@ -5748,6 +5751,45 @@ function ReviewManagementSection() {
     return now.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
   });
   const [formPublished, setFormPublished] = useState(true);
+  const [formAnimal, setFormAnimal] = useState("");
+  const [formBrand, setFormBrand] = useState("");
+  const [formProductSearch, setFormProductSearch] = useState("");
+
+  const categoryMap = useMemo(() => {
+    const map = new Map<number, BrandCategory>();
+    categories.forEach(c => map.set(c.id, c));
+    return map;
+  }, [categories]);
+
+  const animalLabels: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kemirgen: "Kemirgen", kus: "Kuş" };
+  const animalOptions = useMemo(() => {
+    const set = new Set<string>();
+    categories.forEach(c => set.add(c.animal));
+    return Array.from(set);
+  }, [categories]);
+
+  const brandOptions = useMemo(() => {
+    const set = new Set<string>();
+    categories.filter(c => !formAnimal || c.animal === formAnimal).forEach(c => set.add(c.brandName));
+    return Array.from(set).sort();
+  }, [categories, formAnimal]);
+
+  const formFilteredProducts = useMemo(() => {
+    let result = allProducts;
+    if (formAnimal) {
+      const catIds = new Set(categories.filter(c => c.animal === formAnimal).map(c => c.id));
+      result = result.filter(p => catIds.has(p.brandCategoryId));
+    }
+    if (formBrand) {
+      const catIds = new Set(categories.filter(c => c.brandName === formBrand && (!formAnimal || c.animal === formAnimal)).map(c => c.id));
+      result = result.filter(p => catIds.has(p.brandCategoryId));
+    }
+    if (formProductSearch.trim()) {
+      const q = formProductSearch.trim().toLowerCase();
+      result = result.filter(p => p.name.toLowerCase().includes(q));
+    }
+    return result;
+  }, [allProducts, categories, formAnimal, formBrand, formProductSearch]);
 
   const productMap = useMemo(() => {
     const map = new Map<number, string>();
@@ -5818,6 +5860,9 @@ function ReviewManagementSection() {
     setFormHelpful("0");
     setFormDate(new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" }));
     setFormPublished(true);
+    setFormAnimal("");
+    setFormBrand("");
+    setFormProductSearch("");
   }
 
   function openEditDialog(r: any) {
@@ -5829,6 +5874,10 @@ function ReviewManagementSection() {
     setFormHelpful(String(r.helpfulCount));
     setFormDate(r.reviewDate);
     setFormPublished(r.isPublished);
+    const cat = categoryMap.get(allProducts.find(p => p.id === r.productId)?.brandCategoryId ?? 0);
+    setFormAnimal(cat?.animal || "");
+    setFormBrand(cat?.brandName || "");
+    setFormProductSearch("");
   }
 
   function handleSubmit() {
@@ -5853,21 +5902,58 @@ function ReviewManagementSection() {
 
   const reviewForm = (
     <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <div>
+          <Label className="text-xs font-bold">Kategori</Label>
+          <Select value={formAnimal} onValueChange={(v) => { setFormAnimal(v === "all_animals" ? "" : v); setFormBrand(""); setFormProductId(""); }}>
+            <SelectTrigger className="h-8 text-xs" data-testid="select-review-animal">
+              <SelectValue placeholder="Tümü" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_animals">Tümü</SelectItem>
+              {animalOptions.map(a => (
+                <SelectItem key={a} value={a}>{animalLabels[a] || a}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs font-bold">Marka</Label>
+          <Select value={formBrand} onValueChange={(v) => { setFormBrand(v === "all_brands" ? "" : v); setFormProductId(""); }}>
+            <SelectTrigger className="h-8 text-xs" data-testid="select-review-brand">
+              <SelectValue placeholder="Tümü" />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              <SelectItem value="all_brands">Tümü</SelectItem>
+              {brandOptions.map(b => (
+                <SelectItem key={b} value={b}>{b}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       <div>
-        <Label className="text-xs font-bold">Ürün</Label>
+        <Label className="text-xs font-bold">Ürün Ara</Label>
+        <Input
+          value={formProductSearch}
+          onChange={e => setFormProductSearch(e.target.value)}
+          placeholder="Ürün adı ile ara..."
+          className="h-8 text-xs"
+          data-testid="input-review-product-search"
+        />
+      </div>
+      <div>
+        <Label className="text-xs font-bold">Ürün ({formFilteredProducts.length})</Label>
         <Select value={formProductId} onValueChange={setFormProductId}>
           <SelectTrigger className="h-9 text-xs" data-testid="select-review-product">
             <SelectValue placeholder="Ürün seçin..." />
           </SelectTrigger>
           <SelectContent className="max-h-60">
-            {allProducts.slice(0, 200).map(p => (
+            {formFilteredProducts.map(p => (
               <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
-        {allProducts.length > 200 && (
-          <p className="text-[10px] text-muted-foreground mt-0.5">İlk 200 ürün gösteriliyor. Ürün detay sayfasından da yorum ekleyebilirsiniz.</p>
-        )}
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
