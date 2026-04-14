@@ -759,6 +759,7 @@ export default function ProductDetailPage() {
           </div>
         )}
 
+        {!isCampaignMode && <ProductReviews productId={product.id} />}
 
         {isCampaignMode && campaignExtras.length > 0 && !(product.stock === 0 && product.preorderEnabled) && (
           <div className="mt-8" id="campaign-extras-section" data-testid="section-campaign-extras">
@@ -836,8 +837,6 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-
-        {!isCampaignMode && <ProductReviews productId={product.id} />}
 
         {recentlyViewed.length > 0 && (
           <div className="mt-6">
