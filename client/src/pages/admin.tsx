@@ -66,6 +66,7 @@ import {
   Save,
   Settings,
   LogIn,
+  ThumbsUp,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1562,6 +1563,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "raporlama", label: "Raporlama", icon: <BarChart3 className="w-3.5 h-3.5" /> },
             { key: "stoksayim", label: "Stok Sayım", icon: <ScanLine className="w-3.5 h-3.5" /> },
             { key: "skttakip", label: "SKT Takip", icon: <Calendar className="w-3.5 h-3.5" /> },
+            { key: "yorumlar", label: "Yorumlar", icon: <MessageSquare className="w-3.5 h-3.5" /> },
             { key: "ayarlar", label: "Ayarlar", icon: <Settings className="w-3.5 h-3.5" /> },
           ].map(tab => (
             <button
@@ -1593,6 +1595,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "raporlama" && <ReportsSection />}
         {activeSection === "stoksayim" && <StokSayimSection />}
         {activeSection === "skttakip" && <SktTakipSection />}
+        {activeSection === "yorumlar" && <ReviewManagementSection />}
         {activeSection === "ayarlar" && <SettingsSection />}
         {activeSection === "yonetim" && <>
           {!yonetimSub && (
@@ -5713,6 +5716,339 @@ function SettingsSection() {
         {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
         Ayarları Kaydet
       </Button>
+    </div>
+  );
+}
+
+function ReviewManagementSection() {
+  const { data: allProducts = [] } = useQuery<Product[]>({
+    queryKey: ["/api/products", "all"],
+    queryFn: async () => {
+      const res = await fetch("/api/products?all=true", { credentials: "include" });
+      return res.json();
+    },
+  });
+  const { data: reviews = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin/reviews"],
+  });
+
+  const [filterProduct, setFilterProduct] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [addDialogOpen, setAddDialogOpen] = useState(false);
+  const [editReview, setEditReview] = useState<any>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [formProductId, setFormProductId] = useState("");
+  const [formName, setFormName] = useState("");
+  const [formRating, setFormRating] = useState("5");
+  const [formComment, setFormComment] = useState("");
+  const [formHelpful, setFormHelpful] = useState("0");
+  const [formDate, setFormDate] = useState(() => {
+    const now = new Date();
+    return now.toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" });
+  });
+  const [formPublished, setFormPublished] = useState(true);
+
+  const productMap = useMemo(() => {
+    const map = new Map<number, string>();
+    allProducts.forEach(p => map.set(p.id, p.name));
+    return map;
+  }, [allProducts]);
+
+  const filteredReviews = useMemo(() => {
+    let result = reviews;
+    if (filterProduct) {
+      const pid = parseInt(filterProduct);
+      result = result.filter(r => r.productId === pid);
+    }
+    if (filterStatus === "published") result = result.filter(r => r.isPublished);
+    if (filterStatus === "draft") result = result.filter(r => !r.isPublished);
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter(r => r.reviewerName.toLowerCase().includes(q) || r.comment.toLowerCase().includes(q) || (productMap.get(r.productId) || "").toLowerCase().includes(q));
+    }
+    return result;
+  }, [reviews, filterProduct, filterStatus, searchQuery, productMap]);
+
+  const createMutation = useMutation({
+    mutationFn: async (data: any) => {
+      await apiRequest("POST", "/api/admin/reviews", data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+      setAddDialogOpen(false);
+      resetForm();
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => {
+      await apiRequest("PATCH", `/api/admin/reviews/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+      setEditReview(null);
+      resetForm();
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/reviews/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+    },
+  });
+
+  const togglePublishMutation = useMutation({
+    mutationFn: async ({ id, isPublished }: { id: number; isPublished: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/reviews/${id}`, { isPublished });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/reviews"] });
+    },
+  });
+
+  function resetForm() {
+    setFormProductId("");
+    setFormName("");
+    setFormRating("5");
+    setFormComment("");
+    setFormHelpful("0");
+    setFormDate(new Date().toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" }));
+    setFormPublished(true);
+  }
+
+  function openEditDialog(r: any) {
+    setEditReview(r);
+    setFormProductId(String(r.productId));
+    setFormName(r.reviewerName);
+    setFormRating(String(r.rating));
+    setFormComment(r.comment);
+    setFormHelpful(String(r.helpfulCount));
+    setFormDate(r.reviewDate);
+    setFormPublished(r.isPublished);
+  }
+
+  function handleSubmit() {
+    const data = {
+      productId: parseInt(formProductId),
+      reviewerName: formName.trim(),
+      rating: parseInt(formRating),
+      comment: formComment.trim(),
+      helpfulCount: parseInt(formHelpful) || 0,
+      reviewDate: formDate.trim(),
+      isPublished: formPublished,
+    };
+    if (!data.productId || !data.reviewerName || !data.comment || !data.reviewDate) return;
+    if (editReview) {
+      updateMutation.mutate({ id: editReview.id, data });
+    } else {
+      createMutation.mutate(data);
+    }
+  }
+
+  const formValid = formProductId && formName.trim() && formComment.trim() && formDate.trim();
+
+  const reviewForm = (
+    <div className="space-y-3">
+      <div>
+        <Label className="text-xs font-bold">Ürün</Label>
+        <Select value={formProductId} onValueChange={setFormProductId}>
+          <SelectTrigger className="h-9 text-xs" data-testid="select-review-product">
+            <SelectValue placeholder="Ürün seçin..." />
+          </SelectTrigger>
+          <SelectContent className="max-h-60">
+            {allProducts.slice(0, 200).map(p => (
+              <SelectItem key={p.id} value={String(p.id)}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {allProducts.length > 200 && (
+          <p className="text-[10px] text-muted-foreground mt-0.5">İlk 200 ürün gösteriliyor. Ürün detay sayfasından da yorum ekleyebilirsiniz.</p>
+        )}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label className="text-xs font-bold">Yorum Yazan</Label>
+          <Input value={formName} onChange={e => setFormName(e.target.value)} placeholder="Ayşe Y." className="h-9 text-xs" data-testid="input-review-name" />
+        </div>
+        <div>
+          <Label className="text-xs font-bold">Yorum Tarihi</Label>
+          <Input value={formDate} onChange={e => setFormDate(e.target.value)} placeholder="14 Nisan 2026" className="h-9 text-xs" data-testid="input-review-date" />
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <Label className="text-xs font-bold">Puan (1-5)</Label>
+          <Select value={formRating} onValueChange={setFormRating}>
+            <SelectTrigger className="h-9 text-xs" data-testid="select-review-rating">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {[5, 4, 3, 2, 1].map(r => (
+                <SelectItem key={r} value={String(r)}>{"⭐".repeat(r)} ({r})</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <Label className="text-xs font-bold">Faydalı Bulan</Label>
+          <Input type="number" min="0" value={formHelpful} onChange={e => setFormHelpful(e.target.value)} className="h-9 text-xs" data-testid="input-review-helpful" />
+        </div>
+      </div>
+      <div>
+        <Label className="text-xs font-bold">Yorum</Label>
+        <textarea
+          className="w-full border rounded-lg p-3 text-xs resize-none focus:outline-none focus:ring-2 focus:ring-[#6B3480]/20"
+          rows={3}
+          value={formComment}
+          onChange={e => setFormComment(e.target.value)}
+          placeholder="Ürün ve hizmet hakkında yorum..."
+          data-testid="textarea-review-comment"
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={() => setFormPublished(!formPublished)}
+          className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${formPublished ? "bg-green-500" : "bg-gray-300"}`}
+          data-testid="toggle-review-published"
+        >
+          <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${formPublished ? "translate-x-5" : "translate-x-0.5"}`} />
+        </button>
+        <Label className="text-xs">{formPublished ? "Yayında" : "Taslak"}</Label>
+      </div>
+      <Button
+        className="w-full"
+        style={{ backgroundColor: "#6B3480" }}
+        disabled={!formValid || createMutation.isPending || updateMutation.isPending}
+        onClick={handleSubmit}
+        data-testid="btn-save-review"
+      >
+        {(createMutation.isPending || updateMutation.isPending) ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Save className="w-4 h-4 mr-1" />}
+        {editReview ? "Güncelle" : "Yorum Ekle"}
+      </Button>
+    </div>
+  );
+
+  return (
+    <div className="space-y-4" data-testid="section-review-management">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-extrabold flex items-center gap-2">
+          <MessageSquare className="w-5 h-5" />
+          Yorum Yönetimi
+          <span className="text-sm font-normal text-muted-foreground">({reviews.length})</span>
+        </h2>
+        <Button size="sm" style={{ backgroundColor: "#6B3480" }} onClick={() => { resetForm(); setAddDialogOpen(true); }} data-testid="btn-add-review">
+          <Plus className="w-4 h-4 mr-1" />
+          Yorum Ekle
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-2 flex-wrap">
+        <Input
+          placeholder="Ara (yorum, isim, ürün)..."
+          value={searchQuery}
+          onChange={e => setSearchQuery(e.target.value)}
+          className="h-8 text-xs w-[200px]"
+          data-testid="input-search-reviews"
+        />
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[130px] h-8 text-xs" data-testid="select-review-status-filter">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tümü</SelectItem>
+            <SelectItem value="published">Yayında</SelectItem>
+            <SelectItem value="draft">Taslak</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <Dialog open={addDialogOpen} onOpenChange={(open) => { if (!open) { setAddDialogOpen(false); resetForm(); } else setAddDialogOpen(true); }}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base">Yeni Yorum Ekle</DialogTitle>
+          </DialogHeader>
+          {reviewForm}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!editReview} onOpenChange={(open) => { if (!open) { setEditReview(null); resetForm(); } }}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-base">Yorumu Düzenle</DialogTitle>
+          </DialogHeader>
+          {reviewForm}
+        </DialogContent>
+      </Dialog>
+
+      {isLoading ? (
+        <div className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin mx-auto" /></div>
+      ) : filteredReviews.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground text-sm">
+          {reviews.length === 0 ? "Henüz yorum eklenmedi" : "Filtreye uygun yorum bulunamadı"}
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filteredReviews.map((r: any) => (
+            <Card key={r.id} className={`${!r.isPublished ? "opacity-60 border-dashed" : ""}`} data-testid={`review-card-${r.id}`}>
+              <CardContent className="p-3">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="text-xs font-bold">{r.reviewerName}</span>
+                      <div className="flex gap-0.5">
+                        {Array.from({ length: 5 }).map((_, i) => (
+                          <Star key={i} className={`w-3 h-3 ${i < r.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-200"}`} />
+                        ))}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground">{r.reviewDate}</span>
+                      {!r.isPublished && (
+                        <Badge variant="secondary" className="text-[9px] px-1 py-0">Taslak</Badge>
+                      )}
+                      {r.helpfulCount > 0 && (
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                          <ThumbsUp className="w-2.5 h-2.5" /> {r.helpfulCount}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mb-1 font-medium truncate" data-testid={`review-product-${r.id}`}>
+                      {productMap.get(r.productId) || `Ürün #${r.productId}`}
+                    </p>
+                    <p className="text-xs text-gray-700 line-clamp-2">{r.comment}</p>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => togglePublishMutation.mutate({ id: r.id, isPublished: !r.isPublished })}
+                      className={`px-2 py-1 rounded text-[10px] font-semibold ${r.isPublished ? "bg-green-100 text-green-700" : "bg-gray-100 text-gray-600"}`}
+                      data-testid={`btn-toggle-publish-${r.id}`}
+                    >
+                      {r.isPublished ? "Yayında" : "Yayınla"}
+                    </button>
+                    <button
+                      onClick={() => openEditDialog(r)}
+                      className="px-2 py-1 rounded text-[10px] font-semibold bg-blue-100 text-blue-700"
+                      data-testid={`btn-edit-review-${r.id}`}
+                    >
+                      Düzenle
+                    </button>
+                    <button
+                      onClick={() => { if (confirm("Bu yorumu silmek istediğinize emin misiniz?")) deleteMutation.mutate(r.id); }}
+                      className="px-2 py-1 rounded text-[10px] font-semibold bg-red-100 text-red-700"
+                      data-testid={`btn-delete-review-${r.id}`}
+                    >
+                      Sil
+                    </button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

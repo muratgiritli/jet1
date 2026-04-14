@@ -21,7 +21,7 @@ The application employs a modern web architecture:
 - **Blog System**: Pet care blog with category filters, articles, FAQ sections, and SEO optimization.
 - **SEO Pages**: Comprehensive local SEO with 30+ mahalle pages, 20+ keyword pages, store info box, FAQ schema, BreadcrumbList schema, and 500+ word content per page. Pages cover location-based (Atakum, İlkadım, Canik), category-based (kedi maması, köpek maması, kedi kumu), brand-based (JETGO), and intent-based (kapıya teslim, online sipariş, fiyat kampanya) keywords.
 - **Low Stock Alerts**: Visual alerts for products with limited stock.
-- **Product Reviews**: Deterministic review generation and a user review submission form.
+- **Product Reviews**: DB-backed review system with `product_reviews` table. Admin can create/edit/delete/publish/unpublish reviews per product (reviewer name, date, rating, helpful count, comment). Public API serves only published reviews. Admin panel has dedicated "Yorumlar" section with search, status filter, and inline management.
 - **Coupon System**: Full CRUD for coupons in the admin panel, supporting various discount types and user-bound coupons.
 - **Signup Bonus**: New users receive a 100 TL welcome coupon, displayed via a banner and integrated into the registration flow.
 - **Checkout Coupon UI**: Integrated coupon application and display within the checkout process.

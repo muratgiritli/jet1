@@ -416,3 +416,16 @@ export const lostFoundPosts = pgTable("lost_found_posts", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 export type LostFoundPost = typeof lostFoundPosts.$inferSelect;
+
+export const productReviews = pgTable("product_reviews", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  reviewerName: text("reviewer_name").notNull(),
+  rating: integer("rating").notNull().default(5),
+  comment: text("comment").notNull(),
+  helpfulCount: integer("helpful_count").notNull().default(0),
+  reviewDate: text("review_date").notNull(),
+  isPublished: boolean("is_published").notNull().default(true),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export type ProductReview = typeof productReviews.$inferSelect;

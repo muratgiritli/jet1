@@ -3,7 +3,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { storage, pool as sharedPool, db } from "./storage";
 import { seedDatabase } from "./seed";
-import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders, virtualPets, petContestEntries, petContestVotes } from "@shared/schema";
+import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders, virtualPets, petContestEntries, petContestVotes, productReviews } from "@shared/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -2215,6 +2215,63 @@ export async function registerRoutes(
     } catch (err) {
       res.status(500).json({ message: "Campaign item create error" });
     }
+  });
+
+  app.get("/api/reviews/:productId", async (req, res) => {
+    const productId = parseInt(req.params.productId);
+    if (isNaN(productId)) return res.status(400).json({ message: "Geçersiz ID" });
+    const reviews = await db.select().from(productReviews).where(and(eq(productReviews.productId, productId), eq(productReviews.isPublished, true))).orderBy(desc(productReviews.helpfulCount));
+    res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+    res.json(reviews);
+  });
+
+  app.get("/api/admin/reviews", requireAdmin, async (req, res) => {
+    const reviews = await db.select().from(productReviews).orderBy(desc(productReviews.createdAt));
+    res.json(reviews);
+  });
+
+  app.post("/api/admin/reviews", requireAdmin, async (req, res) => {
+    const schema = z.object({
+      productId: z.number().int(),
+      reviewerName: z.string().min(1).max(100),
+      rating: z.number().int().min(1).max(5),
+      comment: z.string().min(1).max(2000),
+      helpfulCount: z.number().int().min(0).default(0),
+      reviewDate: z.string().min(1).max(50),
+      isPublished: z.boolean().default(true),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri", errors: parsed.error.errors });
+    const [review] = await db.insert(productReviews).values(parsed.data).returning();
+    res.status(201).json(review);
+  });
+
+  app.patch("/api/admin/reviews/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
+    const patchSchema = z.object({
+      productId: z.number().int().optional(),
+      reviewerName: z.string().min(1).max(100).optional(),
+      rating: z.number().int().min(1).max(5).optional(),
+      comment: z.string().min(1).max(2000).optional(),
+      helpfulCount: z.number().int().min(0).optional(),
+      reviewDate: z.string().min(1).max(50).optional(),
+      isPublished: z.boolean().optional(),
+    });
+    const parsed = patchSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri", errors: parsed.error.errors });
+    const safeBody = parsed.data;
+    if (Object.keys(safeBody).length === 0) return res.status(400).json({ message: "Güncellenecek alan yok" });
+    const [updated] = await db.update(productReviews).set(safeBody).where(eq(productReviews.id, id)).returning();
+    if (!updated) return res.status(404).json({ message: "Yorum bulunamadı" });
+    res.json(updated);
+  });
+
+  app.delete("/api/admin/reviews/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
+    await db.delete(productReviews).where(eq(productReviews.id, id));
+    res.json({ message: "Silindi" });
   });
 
   app.get("/api/admin/campaign-items", requireAdmin, async (req, res) => {
