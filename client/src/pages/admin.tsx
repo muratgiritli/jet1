@@ -751,6 +751,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [selectedSubcategoryFilter, setSelectedSubcategoryFilter] = useState<string>("all");
   const [selectedBrandFilter, setSelectedBrandFilter] = useState<string>("all");
   const [productSearchQuery, setProductSearchQuery] = useState("");
+  const [quickFilter, setQuickFilter] = useState<string>("none");
+  const [sortMode, setSortMode] = useState<string>("default");
   const [expandedAnimals, setExpandedAnimals] = useState<Record<string, boolean>>({});
   const [bulkPriceDialogOpen, setBulkPriceDialogOpen] = useState(false);
   const [bulkPricePercent, setBulkPricePercent] = useState("");
@@ -910,6 +912,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
   });
 
+  const { data: productCampaignIds = [] } = useQuery<number[]>({
+    queryKey: ["/api/admin/campaign-product-ids"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/campaign-items", { credentials: "include" });
+      const items = await res.json();
+      return items.filter((i: any) => i.is_active).map((i: any) => i.product_id);
+    },
+  });
+  const campaignIdSet = useMemo(() => new Set(productCampaignIds), [productCampaignIds]);
+
   const filteredBrands = useMemo(() => {
     let filtered = categories;
     if (selectedAnimalFilter !== "all") {
@@ -951,8 +963,48 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         .map((c) => c.id);
       products = products.filter((p) => catIds.includes(p.brandCategoryId));
     }
+    if (quickFilter === "preorder") {
+      products = products.filter((p) => p.preorderEnabled);
+    } else if (quickFilter === "out-of-stock") {
+      products = products.filter((p) => p.stock === 0);
+    } else if (quickFilter === "inactive") {
+      products = products.filter((p) => !p.isActive);
+    } else if (quickFilter === "campaign") {
+      products = products.filter((p) => campaignIdSet.has(p.id));
+    } else if (quickFilter === "has-skt") {
+      products = products.filter((p) => p.skt);
+    } else if (quickFilter === "low-stock") {
+      products = products.filter((p) => p.stock > 0 && p.stock <= 3);
+    }
+    if (sortMode === "skt-asc") {
+      const parseSkt = (skt: string | null) => {
+        if (!skt) return Infinity;
+        const parts = skt.split(".");
+        const m = parseInt(parts[0]);
+        const y = parseInt(parts[1]);
+        return (y < 100 ? 2000 + y : y) * 100 + m;
+      };
+      products = [...products].sort((a, b) => parseSkt(a.skt) - parseSkt(b.skt));
+    } else if (sortMode === "price-asc") {
+      products = [...products].sort((a, b) => a.price - b.price);
+    } else if (sortMode === "price-desc") {
+      products = [...products].sort((a, b) => b.price - a.price);
+    } else if (sortMode === "stock-asc") {
+      products = [...products].sort((a, b) => a.stock - b.stock);
+    } else if (sortMode === "name-asc") {
+      products = [...products].sort((a, b) => a.name.localeCompare(b.name, "tr"));
+    } else if (sortMode === "weight") {
+      const extractWeight = (name: string): number => {
+        const kgMatch = name.match(/(\d+[\.,]?\d*)\s*kg/i);
+        if (kgMatch) return parseFloat(kgMatch[1].replace(",", "."));
+        const grMatch = name.match(/(\d+[\.,]?\d*)\s*gr/i);
+        if (grMatch) return parseFloat(grMatch[1].replace(",", ".")) / 1000;
+        return 0;
+      };
+      products = [...products].sort((a, b) => extractWeight(b.name) - extractWeight(a.name));
+    }
     return products;
-  }, [allProducts, selectedAnimalFilter, selectedSubcategoryFilter, selectedBrandFilter, categories, productSearchQuery]);
+  }, [allProducts, selectedAnimalFilter, selectedSubcategoryFilter, selectedBrandFilter, categories, productSearchQuery, quickFilter, sortMode, campaignIdSet]);
 
   const sktWarningProducts = useMemo(() => {
     const now = new Date();
@@ -3099,6 +3151,45 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   </SelectContent>
                 </Select>
               )}
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[
+                { id: "none", label: "Tümü", icon: "📋" },
+                { id: "out-of-stock", label: "Stokta Yok", icon: "🔴" },
+                { id: "low-stock", label: "Az Stok", icon: "🟡" },
+                { id: "inactive", label: "Yayında Değil", icon: "⚫" },
+                { id: "preorder", label: "Ön Sipariş", icon: "🕐" },
+                { id: "campaign", label: "Kampanya", icon: "🏷️" },
+                { id: "has-skt", label: "SKT'li", icon: "📅" },
+              ].map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => setQuickFilter(quickFilter === f.id ? "none" : f.id)}
+                  className={`px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors ${quickFilter === f.id ? "bg-purple-100 border-purple-400 text-purple-800" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`}
+                  data-testid={`btn-quick-filter-${f.id}`}
+                >
+                  {f.icon} {f.label}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-[11px] text-muted-foreground font-medium">Sırala:</span>
+              <Select value={sortMode} onValueChange={setSortMode}>
+                <SelectTrigger className="w-[160px] h-7 text-xs" data-testid="select-sort-mode">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Varsayılan</SelectItem>
+                  <SelectItem value="weight">Kilo (Büyük-Küçük)</SelectItem>
+                  <SelectItem value="skt-asc">SKT (Yakın-Uzak)</SelectItem>
+                  <SelectItem value="price-asc">Fiyat (Düşük-Yüksek)</SelectItem>
+                  <SelectItem value="price-desc">Fiyat (Yüksek-Düşük)</SelectItem>
+                  <SelectItem value="stock-asc">Stok (Az-Çok)</SelectItem>
+                  <SelectItem value="name-asc">İsim (A-Z)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
