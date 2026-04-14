@@ -617,7 +617,7 @@ export default function Landing() {
         <div className="mt-3 md:mt-5">
           <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl px-4 py-3 md:px-8 md:py-4 text-center" data-testid="slogan-banner">
             <p className="text-white font-extrabold text-base md:text-xl tracking-tight">
-              Jetgo ile siparişin{" "}<span className="text-yellow-300">1 saat</span>{" "}<span className="whitespace-nowrap">içinde kapına gelir!</span>
+              Sen iste{" "}<span className="text-yellow-300">jet</span>{" "}<span className="whitespace-nowrap">ile kapına gelsin!</span>
             </p>
             <p className="text-white/80 text-[11px] md:text-sm mt-1 font-medium">
               Haftanın 7 günü saat 11.00-19.00 arası adrese teslimat yapılır
