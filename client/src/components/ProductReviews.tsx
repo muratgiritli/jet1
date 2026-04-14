@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { Star, ThumbsUp, MessageSquare, ChevronDown } from "lucide-react";
+import { Star, ThumbsUp, MessageSquare, ChevronDown, Lock, ShoppingBag } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useQuery } from "@tanstack/react-query";
+import { useCustomer } from "@/contexts/CustomerContext";
 
 interface Review {
   id: number;
@@ -102,6 +103,7 @@ function ReviewForm({ onClose }: { onClose: () => void }) {
 }
 
 export default function ProductReviews({ productId }: { productId: number | string }) {
+  const { isLoggedIn, customer } = useCustomer();
   const { data: reviews = [] } = useQuery<Review[]>({
     queryKey: ["/api/reviews", productId],
     queryFn: async () => {
@@ -111,8 +113,14 @@ export default function ProductReviews({ productId }: { productId: number | stri
       return Array.isArray(data) ? data : [];
     },
   });
+  const { data: orders = [] } = useQuery<any[]>({
+    queryKey: ["/api/customer/orders"],
+    enabled: isLoggedIn,
+  });
   const [showAll, setShowAll] = useState(false);
   const [showForm, setShowForm] = useState(false);
+
+  const hasOrders = orders.length > 0;
 
   if (reviews.length === 0) return null;
 
@@ -182,7 +190,23 @@ export default function ProductReviews({ productId }: { productId: number | stri
       )}
 
       <div className="mt-4">
-        {!showForm ? (
+        {!isLoggedIn ? (
+          <Card className="border-dashed">
+            <CardContent className="p-4 text-center">
+              <Lock className="w-5 h-5 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm font-semibold text-gray-700 mb-1">Yorum yazmak için üye girişi yapmalısınız</p>
+              <p className="text-xs text-muted-foreground">Üye olduktan ve alışveriş yaptıktan sonra yorum yazabilirsiniz.</p>
+            </CardContent>
+          </Card>
+        ) : !hasOrders ? (
+          <Card className="border-dashed">
+            <CardContent className="p-4 text-center">
+              <ShoppingBag className="w-5 h-5 mx-auto mb-2 text-muted-foreground" />
+              <p className="text-sm font-semibold text-gray-700 mb-1">Yorum yazmak için alışveriş yapmalısınız</p>
+              <p className="text-xs text-muted-foreground">Henüz bir siparişiniz bulunmuyor. Alışveriş yaptıktan sonra yorum yazabilirsiniz.</p>
+            </CardContent>
+          </Card>
+        ) : !showForm ? (
           <Button
             variant="outline"
             className="w-full"
