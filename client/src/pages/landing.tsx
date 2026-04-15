@@ -256,7 +256,7 @@ function CategoryGrid() {
           Tümü <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5 md:gap-6" data-testid="grid-categories">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5 md:gap-5" data-testid="grid-categories">
         {CATEGORIES.map((cat) => {
           const animal = cat.href.split("/").pop() || "";
           const prefetchCategory = () => {
