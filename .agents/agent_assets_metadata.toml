@@ -1,5 +1,10 @@
 uploads = []
-generated = []
+
+[[generated]]
+id = "l3NJwlQ2CqaRNN7bUHvC8"
+uri = "file://attached_assets/cat-fish.png"
+type = "image"
+title = "betta fish category image"
 
 [[outputs]]
 id = "9y2QoewR6z_sxq3OzRlmR"
