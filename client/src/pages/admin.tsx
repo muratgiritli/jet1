@@ -5765,7 +5765,7 @@ function ReviewManagementSection() {
     return map;
   }, [categories]);
 
-  const animalLabels: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kemirgen: "Kemirgen", kus: "Kuş" };
+  const animalLabels: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kemirgen: "Kemirgen", kus: "Kuş", akvaryum: "Akvaryum" };
   const animalOptions = useMemo(() => {
     const set = new Set<string>();
     categories.forEach(c => set.add(c.animal));

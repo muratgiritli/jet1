@@ -454,6 +454,10 @@ const KEMIRGEN_KUS_BRAND_DATA: BrandProductData[] = [
   { brandName: "Kemirgen Kafesleri", brandSlug: "kemirgen-kafesi", animal: "kemirgen", subcategory: "kemirgen-kafesi", products: [] },
   { brandName: "Bakım ve Aksesuar", brandSlug: "bakim-aksesuar", animal: "kemirgen", subcategory: "bakim-aksesuar", products: [] },
   { brandName: "Vitamin ve Takviye", brandSlug: "vitamin-takviye", animal: "kemirgen", subcategory: "vitamin-takviye", products: [] },
+  { brandName: "Akvaryum Balıkları", brandSlug: "akvaryum-balik", animal: "akvaryum", subcategory: "akvaryum-balik", products: [] },
+  { brandName: "Akvaryum Ekipman", brandSlug: "akvaryum-ekipman", animal: "akvaryum", subcategory: "akvaryum-ekipman", products: [] },
+  { brandName: "Akvaryum Aksesuar", brandSlug: "akvaryum-aksesuar", animal: "akvaryum", subcategory: "akvaryum-aksesuar", products: [] },
+  { brandName: "Akvaryum Yem", brandSlug: "akvaryum-yem", animal: "akvaryum", subcategory: "akvaryum-yem", products: [] },
   { brandName: "Kuş Yemi Çeşitleri", brandSlug: "kus-yemi", animal: "kus", subcategory: "kus-yemi", products: [] },
   { brandName: "Kuş Kafesi Çeşitleri", brandSlug: "kus-kafesi", animal: "kus", subcategory: "kus-kafesi", products: [] },
   { brandName: "Kuş Vitaminleri", brandSlug: "kus-vitamin", animal: "kus", subcategory: "kus-vitamin", products: [] },
@@ -587,6 +591,10 @@ const SUBCATEGORY_SEED_DATA = [
   { animal: "kemirgen", slug: "kemirgen-kafesi", displayName: "Kemirgen\nKafesleri", color: "#795548", hasBrands: false, sortOrder: 2 },
   { animal: "kemirgen", slug: "bakim-aksesuar", displayName: "Bakım ve\nAksesuar", color: "#00BCD4", hasBrands: false, sortOrder: 3 },
   { animal: "kemirgen", slug: "vitamin-takviye", displayName: "Vitamin ve\nTakviye", color: "#4CAF50", hasBrands: false, sortOrder: 4 },
+  { animal: "akvaryum", slug: "akvaryum-balik", displayName: "Akvaryum\nBalıkları", color: "#0097A7", hasBrands: false, sortOrder: 1 },
+  { animal: "akvaryum", slug: "akvaryum-ekipman", displayName: "Akvaryum\nEkipman", color: "#455A64", hasBrands: false, sortOrder: 2 },
+  { animal: "akvaryum", slug: "akvaryum-aksesuar", displayName: "Akvaryum\nAksesuar", color: "#26A69A", hasBrands: false, sortOrder: 3 },
+  { animal: "akvaryum", slug: "akvaryum-yem", displayName: "Akvaryum\nYem", color: "#EF6C00", hasBrands: false, sortOrder: 4 },
 ];
 
 async function seedSubcategories() {

@@ -53,6 +53,12 @@ const ANIMAL_META: Record<string, {
     gradient: "from-pink-500 to-rose-600",
     bgGradient: "from-pink-50 to-rose-50",
   },
+  akvaryum: {
+    title: "Akvaryum",
+    emoji: "🐠",
+    gradient: "from-cyan-500 to-blue-600",
+    bgGradient: "from-cyan-50 to-blue-50",
+  },
 };
 
 const SUBCATEGORY_ICONS: Record<string, string> = {
@@ -80,9 +86,13 @@ const SUBCATEGORY_ICONS: Record<string, string> = {
   "kemirgen-kafesi": "🏡",
   "vitamin-takviye": "💊",
   "bakim-aksesuar": "✨",
+  "akvaryum-balik": "🐠",
+  "akvaryum-ekipman": "🔧",
+  "akvaryum-aksesuar": "🪸",
+  "akvaryum-yem": "🦐",
 };
 
-const DIRECT_PRODUCT_ANIMALS = ["kemirgen"];
+const DIRECT_PRODUCT_ANIMALS = ["kemirgen", "akvaryum"];
 
 function KemirgenProductCard({ product }: { product: Product }) {
   const { basket, updateQty, isKediKumu } = useCart();
@@ -256,7 +266,7 @@ export default function CategoryPage() {
               <p className="text-muted-foreground text-sm" data-testid="text-no-products">Henüz ürün eklenmedi</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3" data-testid="grid-kemirgen-products">
+            <div className={`grid gap-3 ${animalSlug === "akvaryum" ? "grid-cols-1" : "grid-cols-2"}`} data-testid="grid-direct-products">
               {products.map((product) => (
                 <KemirgenProductCard key={product.id} product={product} />
               ))}

@@ -59,6 +59,7 @@ const CATEGORIES = [
   { name: "Kedi", img: catCat, href: "/kategori/kedi", color: "from-pink-400 to-rose-500", emoji: "🐱" },
   { name: "Kuş", img: catBird, href: "/kategori/kus", color: "from-sky-400 to-blue-500", emoji: "🐦" },
   { name: "Kemirgen", img: catRabbit, href: "/kategori/kemirgen", color: "from-lime-400 to-green-500", emoji: "🐹" },
+  { name: "Akvaryum", img: catRabbit, href: "/kategori/akvaryum", color: "from-cyan-400 to-blue-500", emoji: "🐠" },
 ];
 
 const QUICK_ACTIONS = [

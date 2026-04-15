@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { name: "Köpek", href: "/kategori/kopek" },
   { name: "Kuş", href: "/kategori/kus" },
   { name: "Kemirgen", href: "/kategori/kemirgen" },
+  { name: "Akvaryum", href: "/kategori/akvaryum" },
   { name: "Kampanya", href: "/kampanya", highlight: true },
 ];
 
