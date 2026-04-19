@@ -52,6 +52,7 @@ const AuthPage = lazy(() => import("@/pages/auth"));
 const ProfilePage = lazy(() => import("@/pages/profile"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 const CampaignPage = lazy(() => import("@/pages/campaign"));
+const CampaignDemoPage = lazy(() => import("@/pages/campaign-demo"));
 const PetContestPage = lazy(() => import("@/pages/pet-contest"));
 const PetDashboardPage = lazy(() => import("@/pages/pet-dashboard"));
 const LostFoundPage = lazy(() => import("@/pages/lost-found"));
@@ -102,6 +103,7 @@ function Router() {
         <Route path="/hesabim" component={ProfilePage} />
         <Route path="/demo" component={DemoLanding} />
         <Route path="/kampanya" component={CampaignPage} />
+        <Route path="/kampanya-demo" component={CampaignDemoPage} />
         <Route path="/yarisma" component={PetContestPage} />
         <Route path="/ozel-patiler" component={PetDashboardPage} />
         <Route path="/kayip-ilan" component={LostFoundPage} />
