@@ -1439,6 +1439,7 @@ export default function Checkout() {
                         <span className="font-medium" style={{ color: "#e65100" }} data-testid="text-donation">+{donationAmount} TL</span>
                       </div>
                     )}
+                    )}
                   </div>
 
                   {paymentDiscountAmount > 0 && (
