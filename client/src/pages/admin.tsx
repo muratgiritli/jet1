@@ -2115,7 +2115,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             className="font-bold text-sm sm:text-base text-primary hover:underline cursor-pointer"
                             data-testid={`btn-order-detail-${order.id}`}
                           >
-                            #{order.id}
+                            #{order.isCampaign ? `K${String(order.id).padStart(2, "0")}` : order.id}
                           </button>
                           <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground">
                             <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
@@ -2228,7 +2228,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <Card key={order.id} data-testid={`card-history-order-${order.id}`}>
                         <CardContent className="p-3 space-y-2">
                           <div className="flex items-center justify-between gap-2">
-                            <span className="font-semibold text-sm">#{order.id}</span>
+                            <span className="font-semibold text-sm">#{order.isCampaign ? `K${String(order.id).padStart(2, "0")}` : order.id}</span>
                             <div className="flex items-center gap-2">
                               <span className="text-xs text-muted-foreground">
                                 {new Date(order.createdAt).toLocaleDateString("tr-TR")} {new Date(order.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}

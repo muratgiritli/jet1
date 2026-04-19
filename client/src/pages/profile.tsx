@@ -18,6 +18,7 @@ import { useCustomer } from "@/contexts/CustomerContext";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { formatOrderNo } from "@/lib/utils";
 import { productUrl, TESLIMAT_MAHALLELERI } from "@/lib/data";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Logo from "@/components/Logo";
@@ -418,7 +419,7 @@ function OrdersSection() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between mb-2">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-bold">#{order.id}</span>
+                  <span className="text-sm font-bold">#{formatOrderNo(order.id, order.isCampaign)}</span>
                   <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${status.color}`}>{status.label}</span>
                 </div>
                 <span className="text-xs text-muted-foreground">
