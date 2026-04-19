@@ -1407,6 +1407,7 @@ export default function Checkout() {
                     </div>
 
                     {!hasCampaignItems && (
+                    <>
                     <div
                       className="mt-3 rounded-xl p-3 cursor-pointer transition-all"
                       style={{
@@ -1439,6 +1440,7 @@ export default function Checkout() {
                         <span className="font-medium" style={{ color: "#e65100" }} data-testid="text-donation">+{donationAmount} TL</span>
                       </div>
                     )}
+                    </>
                     )}
                   </div>
 
