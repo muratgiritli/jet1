@@ -106,11 +106,6 @@ function CampaignCard({ product, override }: { product: ApiProduct; override: ty
       </Link>
 
       <div className="p-3 space-y-2.5">
-        <div className="flex items-center gap-1.5 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-200">
-          <Truck className="w-3 h-3" />
-          ÖN SİPARİŞ — 3 GÜNDE TESLİM
-        </div>
-
         <Link href={href}>
           <h3 className="text-sm font-bold text-gray-900 line-clamp-2 min-h-[2.5rem] cursor-pointer hover:text-purple-700" data-testid={`text-title-${product.id}`}>
             {product.name}
