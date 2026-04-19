@@ -211,6 +211,12 @@ export async function registerRoutes(
     console.error("Session table setup error:", e);
   }
 
+  try {
+    await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_campaign boolean NOT NULL DEFAULT false;`);
+  } catch (e) {
+    console.error("Orders is_campaign migration error:", e);
+  }
+
   app.use(
     session({
       store: new PgSession({
