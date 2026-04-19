@@ -41,6 +41,7 @@ import {
   Clock,
 } from "lucide-react";
 import SEO from "@/components/SEO";
+import InstallmentBanner from "@/components/InstallmentBanner";
 import {
   CONFIG,
   PAYMENT_OPTIONS,
