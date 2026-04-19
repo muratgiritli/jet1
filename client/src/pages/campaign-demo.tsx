@@ -1,13 +1,14 @@
 import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  Flame, Gift, Clock, TrendingUp, Sparkles, Plus, Minus,
-  ShoppingCart, Zap, Users, Package, Heart, Truck,
-  Cat, Dog, Bird, Filter,
+  Flame, Gift, Clock, TrendingUp, Sparkles, Eye,
+  Zap, Heart, Truck, Cat, Dog, Bird, Filter,
 } from "lucide-react";
 import ProductImage from "@/components/ProductImage";
+import { productUrl } from "@/lib/data";
 
 const CATEGORIES = [
   { id: "all", label: "Tümü", icon: Sparkles, color: "bg-purple-600" },
@@ -24,14 +25,14 @@ interface ApiProduct {
 }
 
 const CAMPAIGN_OVERRIDES = [
-  { discount: 32, tag: "10kg + 1.5kg HEDİYE", color: "from-red-500 to-orange-500", soldToday: 47, badge: "🔥 SÜPER FIRSAT", socialProof: "Bu hafta en çok tercih edilen" },
-  { discount: 50, tag: "2 AL 1 BEDAVA", color: "from-purple-500 to-pink-500", soldToday: 89, badge: "🎁 2 AL 1 ÖDE", socialProof: "Çift alana özel kampanya" },
-  { discount: 23, tag: "Ön Sipariş - 3 Gün", color: "from-blue-500 to-cyan-500", soldToday: 23, badge: "📦 ÇOKLU PAKET", socialProof: "Stoğa özel sipariş" },
-  { discount: 29, tag: "+ 2 KONSERVE HEDİYE", color: "from-emerald-500 to-teal-500", soldToday: 31, badge: "🎁 HEDİYELİ", socialProof: "Yaş mama severlerin tercihi" },
-  { discount: 21, tag: "1500 TL+ KUM HEDİYE", color: "from-indigo-500 to-violet-500", soldToday: 18, badge: "💰 SEPETE ÖZEL", socialProof: "Sepet tutarına bonus hediye" },
-  { discount: 17, tag: "+ 100 TL KUPON", color: "from-pink-500 to-rose-500", soldToday: 12, badge: "🆕 YENİ ÜYE", socialProof: "Yeni üyelere özel" },
-  { discount: 28, tag: "BÜYÜK BOY AVANTAJ", color: "from-amber-500 to-yellow-500", soldToday: 35, badge: "⭐ ÇOK SATAN", socialProof: "Aylık en çok satılan ürün" },
-  { discount: 15, tag: "TÜKENMEK ÜZERE", color: "from-slate-600 to-gray-700", soldToday: 9, badge: "🏷️ FIRSAT", socialProof: "Sezon sonu indirimi" },
+  { discount: 32, tag: "SÜPER FIRSAT", color: "from-red-500 to-orange-500", socialProof: "Bu hafta en çok tercih edilen" },
+  { discount: 23, tag: "ÖN SİPARİŞ - 3 GÜN", color: "from-blue-500 to-cyan-500", socialProof: "Stoğa özel sipariş" },
+  { discount: 29, tag: "ÇOKLU PAKET", color: "from-emerald-500 to-teal-500", socialProof: "Yaş mama severlerin tercihi" },
+  { discount: 21, tag: "SEPETE ÖZEL", color: "from-indigo-500 to-violet-500", socialProof: "Sepet tutarına özel indirim" },
+  { discount: 17, tag: "YENİ ÜYE", color: "from-pink-500 to-rose-500", socialProof: "Yeni üyelere özel" },
+  { discount: 28, tag: "ÇOK SATAN", color: "from-amber-500 to-yellow-500", socialProof: "Aylık en çok satılan ürün" },
+  { discount: 15, tag: "SEZON SONU", color: "from-slate-600 to-gray-700", socialProof: "Sezon sonu indirimi" },
+  { discount: 35, tag: "BÜYÜK İNDİRİM", color: "from-fuchsia-500 to-purple-600", socialProof: "Sınırlı sayıda kampanya" },
 ];
 
 function CountdownTimer() {
@@ -64,10 +65,10 @@ function CountdownTimer() {
 }
 
 function CampaignCard({ product, override }: { product: ApiProduct; override: typeof CAMPAIGN_OVERRIDES[0] }) {
-  const [qty, setQty] = useState(0);
   const [liked, setLiked] = useState(false);
   const oldPrice = Math.round(product.price / (1 - override.discount / 100));
   const savings = oldPrice - product.price;
+  const href = productUrl(product.id, product.name);
 
   return (
     <div
@@ -88,30 +89,33 @@ function CampaignCard({ product, override }: { product: ApiProduct; override: ty
         <Heart className={`w-4 h-4 ${liked ? "fill-red-500 text-red-500" : "text-gray-600"}`} />
       </button>
 
-      <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 p-4 relative overflow-hidden">
-        <ProductImage
-          src={product.image}
-          alt={product.name}
-          className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-        />
-        <div className="absolute bottom-2 left-2 right-2">
-          <div className={`bg-gradient-to-r ${override.color} text-white text-[10px] font-bold px-3 py-1.5 rounded-lg text-center shadow-lg`}>
-            {override.tag}
+      <Link href={href}>
+        <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 p-4 relative overflow-hidden cursor-pointer">
+          <ProductImage
+            src={product.img}
+            alt={product.name}
+            className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
+            loading="lazy"
+          />
+          <div className="absolute bottom-2 left-2 right-2">
+            <div className={`bg-gradient-to-r ${override.color} text-white text-[10px] font-bold px-3 py-1.5 rounded-lg text-center shadow-lg`}>
+              {override.tag}
+            </div>
           </div>
         </div>
-      </div>
+      </Link>
 
       <div className="p-3 space-y-2.5">
-        {/* Ön Sipariş badge */}
         <div className="flex items-center gap-1.5 text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-200">
           <Truck className="w-3 h-3" />
           ÖN SİPARİŞ — 3 GÜNDE TESLİM
         </div>
 
-        <h3 className="text-sm font-bold text-gray-900 line-clamp-2 min-h-[2.5rem]" data-testid={`text-title-${product.id}`}>
-          {product.name}
-        </h3>
+        <Link href={href}>
+          <h3 className="text-sm font-bold text-gray-900 line-clamp-2 min-h-[2.5rem] cursor-pointer hover:text-purple-700" data-testid={`text-title-${product.id}`}>
+            {product.name}
+          </h3>
+        </Link>
 
         <div className="flex items-baseline gap-2">
           <span className="text-lg font-extrabold text-purple-700">
@@ -132,36 +136,15 @@ function CampaignCard({ product, override }: { product: ApiProduct; override: ty
           {override.socialProof}
         </div>
 
-        {qty === 0 ? (
+        <Link href={href}>
           <Button
-            onClick={() => setQty(1)}
             className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold h-10 rounded-xl shadow-md"
-            data-testid={`btn-add-${product.id}`}
+            data-testid={`btn-incele-${product.id}`}
           >
-            <ShoppingCart className="w-4 h-4 mr-1.5" />
-            Ön Siparişe Ekle
+            <Eye className="w-4 h-4 mr-1.5" />
+            İncele
           </Button>
-        ) : (
-          <div className="flex items-center justify-between bg-purple-50 border-2 border-purple-200 rounded-xl p-1.5">
-            <Button
-              size="sm" variant="ghost"
-              onClick={() => setQty(Math.max(0, qty - 1))}
-              className="h-8 w-8 p-0 rounded-lg hover:bg-purple-100"
-              data-testid={`btn-minus-${product.id}`}
-            >
-              <Minus className="w-4 h-4 text-purple-700" />
-            </Button>
-            <span className="font-extrabold text-purple-900 text-base" data-testid={`text-qty-${product.id}`}>{qty}</span>
-            <Button
-              size="sm" variant="ghost"
-              onClick={() => setQty(qty + 1)}
-              className="h-8 w-8 p-0 rounded-lg hover:bg-purple-100"
-              data-testid={`btn-plus-${product.id}`}
-            >
-              <Plus className="w-4 h-4 text-purple-700" />
-            </Button>
-          </div>
-        )}
+        </Link>
       </div>
     </div>
   );
