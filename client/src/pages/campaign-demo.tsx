@@ -131,11 +131,6 @@ function CampaignCard({ product, override }: { product: ApiProduct; override: ty
           {savings.toLocaleString("tr-TR")} TL TASARRUF
         </div>
 
-        <div className="flex items-center gap-1.5 text-[10px] text-gray-600">
-          <TrendingUp className="w-3 h-3 text-orange-500" />
-          {override.socialProof}
-        </div>
-
         <Link href={href}>
           <Button
             className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold h-10 rounded-xl shadow-md"
