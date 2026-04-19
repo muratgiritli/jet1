@@ -246,6 +246,12 @@ export default function CampaignProductDemoPage() {
                     <strong>Ön sipariş — 3 iş günü</strong> içinde adresinize teslim edilir.
                   </div>
                 </li>
+                <li className="flex items-start gap-2.5">
+                  <Banknote className="w-5 h-5 text-amber-700 flex-shrink-0 mt-0.5" />
+                  <div className="text-xs text-amber-900">
+                    <strong>Ön sipariş verirken ödeme alınmaz</strong>, sadece teslimde ücret alınır.
+                  </div>
+                </li>
               </ul>
             </div>
 
