@@ -185,7 +185,7 @@ export default function CampaignProductDemoPage() {
             <CountdownStrip />
 
             {/* Başlık */}
-            <h1 className="text-xl md:text-2xl font-extrabold text-gray-900 leading-tight" data-testid="text-product-title">
+            <h1 className="text-sm md:text-2xl font-extrabold text-gray-900 leading-tight truncate" data-testid="text-product-title">
               {product.name}
             </h1>
 
