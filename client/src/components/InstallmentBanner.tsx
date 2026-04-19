@@ -29,7 +29,7 @@ export default function InstallmentBanner({ variant = "full", className = "" }: 
           <CreditCard className="w-5 h-5" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm text-blue-900">Peşin Fiyatına 3 Taksit</p>
+          <p className="font-bold text-sm text-blue-900">Peşin Fiyatına 3 Taksit + 9 Ay Taksit İmkanı</p>
           <p className="text-[11px] text-blue-700 truncate">{INSTALLMENT_BANKS.join(" · ")}</p>
         </div>
       </div>
@@ -46,7 +46,7 @@ export default function InstallmentBanner({ variant = "full", className = "" }: 
           <CreditCard className="w-6 h-6" />
         </div>
         <div>
-          <h3 className="text-lg font-bold text-blue-900">Peşin Fiyatına 3 Taksit Fırsatı</h3>
+          <h3 className="text-lg font-bold text-blue-900">Peşin Fiyatına 3 Taksit + 9 Ay Taksit İmkanı</h3>
           <p className="text-xs text-blue-700 flex items-center gap-1">
             <ShieldCheck className="w-3.5 h-3.5" /> PayTR güvenli ödeme · Ek komisyon yok
           </p>

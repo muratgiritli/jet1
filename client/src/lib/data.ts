@@ -96,12 +96,10 @@ export const PAYMENT_OPTIONS: PaymentOption[] = [
 ];
 
 export const INSTALLMENT_BANKS = [
-  "World",
-  "Axess",
+  "AXESS",
   "Maximum",
-  "CardFinans",
-  "Paraf",
-  "Advantage",
   "Bonus",
+  "WORLD",
+  "QNB",
 ];
 

@@ -657,10 +657,10 @@ export default function Landing() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm md:text-lg font-extrabold leading-tight">
-                  Kredi Kartı ile Peşin Fiyatına 3 Ay Taksit!
+                  Peşin Fiyatına 3 Taksit + 9 Ay Taksit İmkanı!
                 </p>
                 <p className="text-[11px] md:text-sm text-white/90 font-medium leading-tight mt-0.5">
-                  Anlaşmalı bankalarla ek komisyon yok · World, Axess, Maximum, Bonus
+                  Anlaşmalı bankalarla ek komisyon yok · AXESS · Maximum · Bonus · WORLD · QNB
                 </p>
               </div>
               <span className="shrink-0 hidden sm:inline text-xs md:text-sm bg-yellow-300 text-blue-900 font-extrabold px-3 py-1.5 rounded-full">
