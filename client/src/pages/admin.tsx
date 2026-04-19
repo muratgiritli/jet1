@@ -67,6 +67,8 @@ import {
   Settings,
   LogIn,
   ThumbsUp,
+  Mail,
+  Trash2,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1564,6 +1566,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "stoksayim", label: "Stok Sayım", icon: <ScanLine className="w-3.5 h-3.5" /> },
             { key: "skttakip", label: "SKT Takip", icon: <Calendar className="w-3.5 h-3.5" /> },
             { key: "yorumlar", label: "Yorumlar", icon: <MessageSquare className="w-3.5 h-3.5" /> },
+            { key: "iletisim", label: "İletişim", icon: <Mail className="w-3.5 h-3.5" /> },
             { key: "ayarlar", label: "Ayarlar", icon: <Settings className="w-3.5 h-3.5" /> },
           ].map(tab => (
             <button
@@ -1596,6 +1599,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "stoksayim" && <StokSayimSection />}
         {activeSection === "skttakip" && <SktTakipSection />}
         {activeSection === "yorumlar" && <ReviewManagementSection />}
+        {activeSection === "iletisim" && <ContactMessagesSection />}
         {activeSection === "ayarlar" && <SettingsSection />}
         {activeSection === "yonetim" && <>
           {!yonetimSub && (
@@ -5716,6 +5720,141 @@ function SettingsSection() {
         {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Save className="w-4 h-4 mr-2" />}
         Ayarları Kaydet
       </Button>
+    </div>
+  );
+}
+
+interface ContactMessageRow {
+  id: number;
+  name: string;
+  phone: string;
+  email: string | null;
+  subject: string | null;
+  message: string;
+  isRead: boolean;
+  createdAt: string;
+}
+
+function ContactMessagesSection() {
+  const { toast } = useToast();
+  const { data: messages = [], isLoading } = useQuery<ContactMessageRow[]>({
+    queryKey: ["/api/admin/contact-messages"],
+  });
+
+  const markRead = useMutation({
+    mutationFn: async ({ id, isRead }: { id: number; isRead: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/contact-messages/${id}`, { isRead });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/contact-messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/contact-messages/unread-count"] });
+    },
+  });
+
+  const deleteMsg = useMutation({
+    mutationFn: async (id: number) => {
+      await apiRequest("DELETE", `/api/admin/contact-messages/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/contact-messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/contact-messages/unread-count"] });
+      toast({ title: "Mesaj silindi" });
+    },
+  });
+
+  const unreadCount = messages.filter((m) => !m.isRead).length;
+
+  return (
+    <div className="space-y-3" data-testid="section-contact-messages">
+      <div className="flex items-center justify-between flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <Mail className="w-5 h-5 text-primary" />
+          <h2 className="text-xl font-bold">İletişim Mesajları</h2>
+          {unreadCount > 0 && (
+            <Badge className="bg-red-500 text-white" data-testid="badge-unread-count">
+              {unreadCount} yeni
+            </Badge>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground">Toplam {messages.length} mesaj</p>
+      </div>
+
+      {isLoading ? (
+        <p className="text-sm text-muted-foreground">Yükleniyor...</p>
+      ) : messages.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            <Mail className="w-12 h-12 mx-auto mb-2 opacity-30" />
+            <p>Henüz mesaj yok.</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <div className="space-y-2">
+          {messages.map((m) => (
+            <Card
+              key={m.id}
+              className={!m.isRead ? "border-l-4 border-l-red-500 bg-red-50/30" : ""}
+              data-testid={`contact-message-${m.id}`}
+            >
+              <CardContent className="p-3 sm:p-4">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-sm" data-testid={`contact-name-${m.id}`}>{m.name}</span>
+                      {!m.isRead && <Badge className="bg-red-500 text-white text-[10px]">YENİ</Badge>}
+                      {m.subject && <Badge variant="outline" className="text-[11px]">{m.subject}</Badge>}
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
+                      <a href={`tel:${m.phone}`} className="flex items-center gap-1 hover:text-primary" data-testid={`contact-phone-${m.id}`}>
+                        <Phone className="w-3 h-3" />
+                        {m.phone}
+                      </a>
+                      {m.email && (
+                        <a href={`mailto:${m.email}`} className="flex items-center gap-1 hover:text-primary" data-testid={`contact-email-${m.id}`}>
+                          <Mail className="w-3 h-3" />
+                          {m.email}
+                        </a>
+                      )}
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        {new Date(m.createdAt).toLocaleString("tr-TR")}
+                      </span>
+                    </div>
+                    <p className="mt-2 text-sm whitespace-pre-wrap text-gray-700" data-testid={`contact-message-text-${m.id}`}>
+                      {m.message}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-1.5 shrink-0">
+                    <Button
+                      size="sm"
+                      variant={m.isRead ? "outline" : "default"}
+                      onClick={() => markRead.mutate({ id: m.id, isRead: !m.isRead })}
+                      disabled={markRead.isPending}
+                      data-testid={`btn-toggle-read-${m.id}`}
+                    >
+                      <Check className="w-3.5 h-3.5 mr-1" />
+                      {m.isRead ? "Okunmadı" : "Okundu"}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="text-red-600 hover:text-red-700"
+                      onClick={() => {
+                        if (confirm("Mesaj silinsin mi?")) deleteMsg.mutate(m.id);
+                      }}
+                      disabled={deleteMsg.isPending}
+                      data-testid={`btn-delete-msg-${m.id}`}
+                    >
+                      <Trash2 className="w-3.5 h-3.5 mr-1" />
+                      Sil
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

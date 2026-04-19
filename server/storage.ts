@@ -21,7 +21,8 @@ import {
   type DeliveryNeighborhood, type InsertDeliveryNeighborhood,
   type Banner, type InsertBanner,
   type Coupon, type InsertCoupon,
-  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders, deliveryNeighborhoods, banners, coupons,
+  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders, deliveryNeighborhoods, banners, coupons, contactMessages,
+  type ContactMessage, type InsertContactMessage,
 } from "@shared/schema";
 
 export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
@@ -139,7 +140,14 @@ export interface IStorage {
   createCoupon(data: InsertCoupon): Promise<Coupon>;
   updateCoupon(id: number, data: Partial<InsertCoupon>): Promise<Coupon | undefined>;
   deleteCoupon(id: number): Promise<void>;
+
   incrementCouponUsage(id: number): Promise<void>;
+
+  createContactMessage(data: InsertContactMessage): Promise<ContactMessage>;
+  getAllContactMessages(): Promise<ContactMessage[]>;
+  getUnreadContactMessageCount(): Promise<number>;
+  markContactMessageRead(id: number, isRead: boolean): Promise<ContactMessage | undefined>;
+  deleteContactMessage(id: number): Promise<void>;
 
   deleteCustomerAccount(customerId: number): Promise<void>;
 }
@@ -592,6 +600,25 @@ export class DatabaseStorage implements IStorage {
 
   async incrementCouponUsage(id: number): Promise<void> {
     await db.update(coupons).set({ usedCount: sql`${coupons.usedCount} + 1` }).where(eq(coupons.id, id));
+  }
+
+  async createContactMessage(data: InsertContactMessage): Promise<ContactMessage> {
+    const [row] = await db.insert(contactMessages).values(data).returning();
+    return row;
+  }
+  async getAllContactMessages(): Promise<ContactMessage[]> {
+    return db.select().from(contactMessages).orderBy(desc(contactMessages.createdAt));
+  }
+  async getUnreadContactMessageCount(): Promise<number> {
+    const result = await db.select({ count: sql<number>`count(*)::int` }).from(contactMessages).where(eq(contactMessages.isRead, false));
+    return result[0]?.count ?? 0;
+  }
+  async markContactMessageRead(id: number, isRead: boolean): Promise<ContactMessage | undefined> {
+    const [row] = await db.update(contactMessages).set({ isRead }).where(eq(contactMessages.id, id)).returning();
+    return row;
+  }
+  async deleteContactMessage(id: number): Promise<void> {
+    await db.delete(contactMessages).where(eq(contactMessages.id, id));
   }
 
   async deleteCustomerAccount(customerId: number): Promise<void> {

@@ -431,3 +431,17 @@ export const productReviews = pgTable("product_reviews", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 export type ProductReview = typeof productReviews.$inferSelect;
+
+export const contactMessages = pgTable("contact_messages", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  phone: text("phone").notNull(),
+  email: text("email"),
+  subject: text("subject"),
+  message: text("message").notNull(),
+  isRead: boolean("is_read").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export type ContactMessage = typeof contactMessages.$inferSelect;
+export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({ id: true, isRead: true, createdAt: true });
+export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;

@@ -3,7 +3,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { storage, pool as sharedPool, db } from "./storage";
 import { seedDatabase } from "./seed";
-import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders, virtualPets, petContestEntries, petContestVotes, productReviews } from "@shared/schema";
+import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders, virtualPets, petContestEntries, petContestVotes, productReviews, insertContactMessageSchema } from "@shared/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -3135,6 +3135,43 @@ export async function registerRoutes(
   app.delete("/api/admin/coupons/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     await storage.deleteCoupon(id);
+    res.json({ message: "Silindi" });
+  });
+
+  app.post("/api/contact-messages", async (req, res) => {
+    try {
+      const data = insertContactMessageSchema.parse(req.body);
+      if (data.message.length > 2000 || data.name.length > 100 || data.phone.length > 30) {
+        return res.status(400).json({ message: "Geçersiz veri uzunluğu" });
+      }
+      const created = await storage.createContactMessage(data);
+      res.json(created);
+    } catch (e: any) {
+      res.status(400).json({ message: e?.message || "Geçersiz veri" });
+    }
+  });
+
+  app.get("/api/admin/contact-messages", requireAdmin, async (_req, res) => {
+    const list = await storage.getAllContactMessages();
+    res.json(list);
+  });
+
+  app.get("/api/admin/contact-messages/unread-count", requireAdmin, async (_req, res) => {
+    const count = await storage.getUnreadContactMessageCount();
+    res.json({ count });
+  });
+
+  app.patch("/api/admin/contact-messages/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    const isRead = req.body?.isRead === true;
+    const updated = await storage.markContactMessageRead(id, isRead);
+    if (!updated) return res.status(404).json({ message: "Bulunamadı" });
+    res.json(updated);
+  });
+
+  app.delete("/api/admin/contact-messages/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    await storage.deleteContactMessage(id);
     res.json({ message: "Silindi" });
   });
 

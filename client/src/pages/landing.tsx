@@ -5,7 +5,7 @@ import { queryClient } from "@/lib/queryClient";
 import {
   Truck, CreditCard, Banknote, Smartphone, Building2,
   ArrowRight, ChevronRight, Star, Clock, Shield,
-  Gift, MapPin, Phone, Mail, BookOpen,
+  Gift, MapPin, Phone, Mail, BookOpen, MessageSquare,
   PackageCheck, Zap,
   Stethoscope, ShoppingBag, Heart, Sparkles
 } from "lucide-react";
@@ -13,6 +13,7 @@ import { SiWhatsapp } from "react-icons/si";
 import { useCustomer } from "@/contexts/CustomerContext";
 import SEO, { LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import SignupBonusBanner from "@/components/SignupBonusBanner";
+import ContactDialog from "@/components/ContactDialog";
 import WelcomeCouponBanner from "@/components/WelcomeCouponBanner";
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
@@ -326,8 +327,10 @@ function WhyJetgo() {
 }
 
 function MobileFooter() {
+  const [mobileContactOpen, setMobileContactOpen] = useState(false);
   return (
     <section className="md:hidden" data-testid="section-mobile-footer">
+      <ContactDialog open={mobileContactOpen} onOpenChange={setMobileContactOpen} />
       <div className="bg-gray-900 rounded-xl p-4 space-y-4 text-gray-300">
         <div>
           <h4 className="text-sm font-bold text-white mb-2.5 flex items-center gap-2">
@@ -361,6 +364,15 @@ function MobileFooter() {
               <SiWhatsapp className="w-3.5 h-3.5" />
               WhatsApp ile ulaşın
             </a>
+            <button
+              type="button"
+              onClick={() => setMobileContactOpen(true)}
+              className="w-full mt-2 flex items-center justify-center gap-2 bg-yellow-400 hover:bg-yellow-300 text-blue-900 font-extrabold text-sm py-2.5 px-3 rounded-lg transition-colors shadow-md"
+              data-testid="mobile-footer-iletisime-gec"
+            >
+              <MessageSquare className="w-4 h-4" />
+              İletişime Geç
+            </button>
           </div>
         </div>
 

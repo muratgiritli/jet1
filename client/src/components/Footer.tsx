@@ -1,7 +1,9 @@
+import { useState } from "react";
 import { Link } from "wouter";
-import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info, Truck, Lock, ShieldCheck, ScrollText, Gift, ChevronRight } from "lucide-react";
+import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info, Truck, Lock, ShieldCheck, ScrollText, Gift, ChevronRight, MessageSquare } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import kartLogoPath from "@assets/kart_1775765432584.png";
+import ContactDialog from "@/components/ContactDialog";
 
 const FOOTER_LINKS = [
   { label: "Sıkça Sorulan Sorular", href: "/sss", icon: HelpCircle },
@@ -19,6 +21,7 @@ const LEGAL_LINKS = [
 ];
 
 export default function Footer() {
+  const [contactOpen, setContactOpen] = useState(false);
   return (
     <footer className="hidden md:block bg-gray-900 text-gray-300 mt-8" data-testid="footer-desktop">
       <div className="max-w-7xl mx-auto px-6 py-10">
@@ -70,6 +73,17 @@ export default function Footer() {
                   <SiWhatsapp className="w-4 h-4 flex-shrink-0 text-green-500" />
                   WhatsApp ile ulaşın
                 </a>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setContactOpen(true)}
+                  className="flex items-center gap-2.5 text-sm text-yellow-300 hover:text-yellow-200 font-bold transition-colors"
+                  data-testid="footer-iletisime-gec"
+                >
+                  <MessageSquare className="w-4 h-4 flex-shrink-0" />
+                  İletişime Geç →
+                </button>
               </li>
               <li>
                 <a href="mailto:info@sizpa.com" className="flex items-center gap-2.5 text-sm hover:text-white transition-colors" data-testid="footer-email">
@@ -144,6 +158,7 @@ export default function Footer() {
           </div>
         </div>
       </div>
+      <ContactDialog open={contactOpen} onOpenChange={setContactOpen} />
     </footer>
   );
 }
