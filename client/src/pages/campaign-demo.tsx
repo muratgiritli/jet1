@@ -121,20 +121,21 @@ function CampaignCard({ product, override }: { product: ApiProduct; override: ty
           </span>
         </div>
 
-        <div className="flex items-center gap-1 text-[10px] font-bold text-green-700 bg-green-50 px-2 py-1 rounded-md border border-green-200 w-fit">
-          <Zap className="w-3 h-3" />
-          {savings.toLocaleString("tr-TR")} TL TASARRUF
+        <div className="pt-1 space-y-2">
+          <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-green-700 bg-green-50 px-2 py-1.5 rounded-md border border-green-200 w-full">
+            <Zap className="w-3.5 h-3.5" />
+            {savings.toLocaleString("tr-TR")} TL TASARRUF
+          </div>
+          <Link href={href}>
+            <Button
+              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold h-10 rounded-xl shadow-md"
+              data-testid={`btn-incele-${product.id}`}
+            >
+              <Eye className="w-4 h-4 mr-1.5" />
+              İncele
+            </Button>
+          </Link>
         </div>
-
-        <Link href={href}>
-          <Button
-            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold h-10 rounded-xl shadow-md"
-            data-testid={`btn-incele-${product.id}`}
-          >
-            <Eye className="w-4 h-4 mr-1.5" />
-            İncele
-          </Button>
-        </Link>
       </div>
     </div>
   );
