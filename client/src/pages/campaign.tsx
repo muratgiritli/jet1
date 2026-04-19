@@ -154,7 +154,7 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
                     variant="outline"
                     size="sm"
                     className="h-9 w-9 p-0"
-                    onClick={() => updateQty(pid, -1)}
+                    onClick={() => updateQty(pid, -1, true)}
                     data-testid={`btn-minus-${item.product_id}`}
                   >
                     <Minus className="w-3.5 h-3.5" />
@@ -166,7 +166,7 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
                     variant="outline"
                     size="sm"
                     className="h-9 w-9 p-0"
-                    onClick={() => { if (qty < (isMain ? 1 : maxQty)) updateQty(pid, 1); }}
+                    onClick={() => { if (qty < (isMain ? 1 : maxQty)) updateQty(pid, 1, true); }}
                     disabled={qty >= (isMain ? 1 : maxQty)}
                     data-testid={`btn-plus-${item.product_id}`}
                   >
@@ -176,7 +176,7 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
               ) : (
                 <div className="text-center text-[11px] font-semibold py-2 rounded-md bg-purple-50 text-purple-800" data-testid={`qty-added-${item.product_id}`}>
                   Sepette ✓
-                  <button className="ml-2 underline text-[10px]" onClick={() => updateQty(pid, -1)} data-testid={`btn-remove-${item.product_id}`}>
+                  <button className="ml-2 underline text-[10px]" onClick={() => updateQty(pid, -1, true)} data-testid={`btn-remove-${item.product_id}`}>
                     Çıkar
                   </button>
                 </div>
@@ -184,7 +184,7 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
             ) : (
               <Button
                 className="w-full h-9 text-xs font-bold bg-purple-600 hover:bg-purple-700 rounded-xl"
-                onClick={() => updateQty(pid, 1)}
+                onClick={() => updateQty(pid, 1, true)}
                 data-testid={`btn-add-${item.product_id}`}
               >
                 <ShoppingCart className="w-3.5 h-3.5 mr-1" />
@@ -194,7 +194,7 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
           ) : item.preorder_enabled ? (
             <Button
               className="w-full h-9 text-xs font-bold bg-blue-600 hover:bg-blue-700 rounded-xl"
-              onClick={() => updateQty(pid, 1)}
+              onClick={() => updateQty(pid, 1, true)}
               data-testid={`btn-preorder-${item.product_id}`}
             >
               <Clock className="w-3.5 h-3.5 mr-1" />
