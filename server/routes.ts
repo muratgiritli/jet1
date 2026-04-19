@@ -1337,7 +1337,7 @@ export async function registerRoutes(
           userIp,
           okUrl: `${baseUrl}/odeme-sonuc?orderId=${order.id}`,
           failUrl: `${baseUrl}/odeme-sonuc?orderId=${order.id}&fail=1`,
-          testMode: 0,
+          testMode: process.env.PAYTR_TEST_MODE === "1" ? 1 : 0,
           noInstallment: 0,
           maxInstallment: 0,
           currency: "TL",

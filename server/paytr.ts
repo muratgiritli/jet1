@@ -87,11 +87,14 @@ export async function createPaytrToken(params: PaytrInitParams): Promise<PaytrIn
     headers: { "Content-Type": "application/x-www-form-urlencoded" },
     body: body.toString(),
   });
-  const data = await res.json();
+  const text = await res.text();
+  let data: any;
+  try { data = JSON.parse(text); } catch { data = { status: "failed", reason: text }; }
+  console.log("[PayTR] get-token response:", JSON.stringify(data));
   if (data.status === "success") {
     return { status: "success", token: data.token };
   }
-  return { status: "failed", reason: data.reason || "Bilinmeyen hata" };
+  return { status: "failed", reason: data.reason || data.err_msg || "Bilinmeyen hata" };
 }
 
 export function verifyPaytrCallbackHash(body: any): boolean {
