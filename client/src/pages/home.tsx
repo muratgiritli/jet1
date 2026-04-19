@@ -20,6 +20,7 @@ import {
 } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
 import BackNavigation from "@/components/BackNavigation";
+import InstallmentBanner from "@/components/InstallmentBanner";
 
 const SLUG_TO_CATEGORY: Record<string, string> = {
   "kedi-bakim-saglik": "BAKIM VE SAĞLIK",
@@ -219,6 +220,9 @@ export default function Home() {
       <BackNavigation />
 
       <main className="max-w-2xl mx-auto px-4 pb-24 md:pb-8">
+        <div className="mt-4">
+          <InstallmentBanner variant="full" />
+        </div>
         <section className="mt-6">
           {directCategory ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">

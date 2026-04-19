@@ -21,6 +21,7 @@ import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed"
 import SEO, { SITE_DOMAIN, PRODUCT_JSONLD, BREADCRUMB_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import ProductReviews from "@/components/ProductReviews";
 import ProductPopup from "@/components/ProductPopup";
+import InstallmentBanner from "@/components/InstallmentBanner";
 import { SiWhatsapp, SiFacebook, SiX } from "react-icons/si";
 
 type ProductDetailData = {
@@ -564,6 +565,8 @@ export default function ProductDetailPage() {
                   </span>
                 </div>
               )}
+
+              <InstallmentBanner variant="compact" />
 
               <Dialog open={paraPuanInfoOpen} onOpenChange={setParaPuanInfoOpen}>
                 <DialogContent className="max-w-md">

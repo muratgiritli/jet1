@@ -369,8 +369,13 @@ export default function Checkout() {
   const effectiveGrandTotal = Math.max(0, (hasCampaignItems ? campaignGrandTotal : normalGrandTotal) - couponDiscountAmount);
   const effectiveMinReached = hasCampaignItems ? minReached : stdMinReached;
 
-  const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
-  const displayTotal = (pointsDiscount > 0 ? Math.max(0, effectiveGrandTotal - pointsDiscount) : effectiveGrandTotal) + donationAmount;
+  const selectedPay = PAYMENT_OPTIONS.find((p) => p.id === paymentId);
+  const paymentDiscountRate = !hasCampaignItems && selectedPay && selectedPay.disc < 0 ? Math.abs(selectedPay.disc) : 0;
+  const paymentDiscountAmount = Math.round(effectiveGrandTotal * paymentDiscountRate);
+  const totalAfterPaymentDisc = Math.max(0, effectiveGrandTotal - paymentDiscountAmount);
+
+  const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, totalAfterPaymentDisc) : 0;
+  const displayTotal = (pointsDiscount > 0 ? Math.max(0, totalAfterPaymentDisc - pointsDiscount) : totalAfterPaymentDisc) + donationAmount;
 
   const [autoApplyAttemptedSubtotal, setAutoApplyAttemptedSubtotal] = useState<number | null>(null);
 
@@ -461,8 +466,11 @@ export default function Checkout() {
       }));
 
       const payMethod = hasCampaignItems ? "Kapıda Nakit" : pay.name;
-      const pointsUsed = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
-      const finalTotal = (pointsUsed > 0 ? Math.max(0, effectiveGrandTotal - pointsUsed) : effectiveGrandTotal) + donationAmount;
+      const payDiscRate = !hasCampaignItems && pay.disc < 0 ? Math.abs(pay.disc) : 0;
+      const payDiscAmount = Math.round(effectiveGrandTotal * payDiscRate);
+      const totalAfterPayDisc = Math.max(0, effectiveGrandTotal - payDiscAmount);
+      const pointsUsed = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, totalAfterPayDisc) : 0;
+      const finalTotal = (pointsUsed > 0 ? Math.max(0, totalAfterPayDisc - pointsUsed) : totalAfterPayDisc) + donationAmount;
 
       const orderPayload: Record<string, unknown> = {
         items: orderItems,
@@ -1097,17 +1105,39 @@ export default function Checkout() {
                           <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
                           <span className="text-sm font-medium truncate" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
                           <span className="flex-1 min-w-0" />
-                          <Badge
-                            variant="secondary"
-                            className="no-default-hover-elevate shrink-0 whitespace-nowrap"
-                            data-testid={`badge-payment-tag-${opt.id}`}
-                          >
-                            {opt.disc < 0 ? `${(subtotal * (1 + Math.abs(opt.disc))).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL` : `${subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`}
-                          </Badge>
+                          {opt.disc < 0 ? (
+                            <Badge
+                              className="no-default-hover-elevate shrink-0 whitespace-nowrap bg-green-100 text-green-800 border border-green-300"
+                              data-testid={`badge-payment-tag-${opt.id}`}
+                            >
+                              {opt.tag}
+                            </Badge>
+                          ) : opt.id === "online" ? (
+                            <Badge
+                              className="no-default-hover-elevate shrink-0 whitespace-nowrap bg-blue-100 text-blue-800 border border-blue-300"
+                              data-testid={`badge-payment-tag-${opt.id}`}
+                            >
+                              {opt.tag}
+                            </Badge>
+                          ) : (
+                            <Badge
+                              variant="secondary"
+                              className="no-default-hover-elevate shrink-0 whitespace-nowrap"
+                              data-testid={`badge-payment-tag-${opt.id}`}
+                            >
+                              {opt.tag}
+                            </Badge>
+                          )}
                         </label>
                       );
                     })}
                   </RadioGroup>
+                  )}
+
+                  {paymentId === "online" && !hasCampaignItems && (
+                    <div className="mt-3">
+                      <InstallmentBanner variant="compact" />
+                    </div>
                   )}
 
                 </CardContent>
@@ -1396,6 +1426,15 @@ export default function Checkout() {
                       </div>
                     )}
                   </div>
+
+                  {paymentDiscountAmount > 0 && (
+                    <div className="flex justify-between gap-3 flex-wrap mt-2">
+                      <span className="text-muted-foreground flex items-center gap-1">💰 Nakit Ödeme İndirimi (%10)</span>
+                      <span className="font-medium text-green-700" data-testid="text-payment-discount">
+                        -{paymentDiscountAmount.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                      </span>
+                    </div>
+                  )}
 
                   <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t flex-wrap">
                     <span className="text-lg font-bold">Genel Toplam</span>
