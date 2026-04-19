@@ -1620,10 +1620,16 @@ export async function registerRoutes(
               "UPDATE trusted_devices SET created_at = NOW(), expires_at = NOW() + INTERVAL '30 days' WHERE id = $1",
               [result.rows[0].id]
             );
-            return res.json({
-              message: "Güvenilir cihaz ile giriş yapıldı",
-              trustedLogin: true,
-              customer: { id: customer.id, phone: customer.phone, name: customer.name, address: customer.address }
+            return req.session.save((err) => {
+              if (err) {
+                console.error("Session save error:", err);
+                return res.status(500).json({ message: "Oturum kaydedilemedi" });
+              }
+              res.json({
+                message: "Güvenilir cihaz ile giriş yapıldı",
+                trustedLogin: true,
+                customer: { id: customer.id, phone: customer.phone, name: customer.name, address: customer.address }
+              });
             });
           }
         }
@@ -1732,7 +1738,13 @@ export async function registerRoutes(
       await sharedPool.query("DELETE FROM trusted_devices WHERE expires_at < NOW()");
     } catch (e) {}
 
-    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, deviceToken: newDeviceToken, isNewUser, welcomeCouponCode });
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ message: "Oturum kaydedilemedi" });
+      }
+      res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, deviceToken: newDeviceToken, isNewUser, welcomeCouponCode });
+    });
   });
 
   app.post("/api/customer/register", async (req, res) => {
@@ -1770,7 +1782,13 @@ export async function registerRoutes(
     const hashed = await bcrypt.hash(password, 10);
     const customer = await storage.createCustomer({ phone: normalized, password: hashed, name: name.trim(), address: address?.trim() || null });
     (req.session as any).customerId = customer.id;
-    res.status(201).json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ message: "Oturum kaydedilemedi" });
+      }
+      res.status(201).json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
+    });
   });
 
   app.post("/api/customer/login", async (req, res) => {
@@ -1791,7 +1809,13 @@ export async function registerRoutes(
     const valid = await bcrypt.compare(password, customer.password);
     if (!valid) return res.status(401).json({ message: "Telefon numarası veya şifre hatalı" });
     (req.session as any).customerId = customer.id;
-    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
+    req.session.save((err) => {
+      if (err) {
+        console.error("Session save error:", err);
+        return res.status(500).json({ message: "Oturum kaydedilemedi" });
+      }
+      res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address });
+    });
   });
 
   app.post("/api/customer/logout", (req, res) => {
@@ -2772,7 +2796,13 @@ export async function registerRoutes(
       if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
       (req.session as any).customerId = customer.id;
       (req.session as any).adminImpersonating = true;
-      res.json({ success: true, phone: customer.phone, name: customer.name });
+      req.session.save((err) => {
+        if (err) {
+          console.error("Session save error:", err);
+          return res.status(500).json({ message: "Oturum kaydedilemedi" });
+        }
+        res.json({ success: true, phone: customer.phone, name: customer.name });
+      });
     } catch (err) {
       res.status(500).json({ message: "Impersonation error" });
     }
