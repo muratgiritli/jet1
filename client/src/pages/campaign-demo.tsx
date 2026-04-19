@@ -273,11 +273,6 @@ export default function CampaignDemoPage() {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 mt-8 text-center">
-        <p className="text-xs text-gray-500">
-          Tüm kampanyalar PayTR güvenli ödeme ile · 3 taksit + 9 ay taksit imkanı
-        </p>
-      </div>
     </div>
   );
 }
