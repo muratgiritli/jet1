@@ -59,7 +59,7 @@ export default function InstallmentBanner({ variant = "full", className = "", pr
             <CreditCard className="w-5 h-5" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="font-bold text-sm text-blue-900 whitespace-nowrap overflow-hidden text-ellipsis">
+            <p className="font-bold text-[11px] sm:text-xs text-blue-900 whitespace-nowrap">
               Peşin Fiyatına 3 Taksit + 9 Ay Taksit İmkanı
             </p>
             {pricePerInstallment !== undefined && (
