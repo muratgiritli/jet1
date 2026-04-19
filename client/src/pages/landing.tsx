@@ -357,7 +357,7 @@ function MobileFooter() {
             <div className="flex items-start gap-2 ml-6">
               <span className="text-[11px] text-gray-400 leading-relaxed">Yenimahalle Atatürk 3. Kısım Blv. No:113/A, Atakum, Samsun</span>
             </div>
-            <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 ml-6 text-[12px] text-green-400 hover:text-green-300 transition-colors" data-testid="mobile-footer-whatsapp">
+            <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="hidden items-center gap-2 ml-6 text-[12px] text-green-400 hover:text-green-300 transition-colors" data-testid="mobile-footer-whatsapp">
               <SiWhatsapp className="w-3.5 h-3.5" />
               WhatsApp ile ulaşın
             </a>
@@ -634,7 +634,32 @@ export default function Landing() {
           <DesktopStatsBar />
         </div>
 
-        <div className="mt-4 md:mt-10">
+        <Link href="/odeme">
+          <div
+            className="mt-4 md:mt-8 relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg cursor-pointer hover-elevate active-elevate-2"
+            data-testid="banner-installment-categories"
+          >
+            <div className="px-4 py-3 md:px-6 md:py-4 flex items-center gap-3">
+              <div className="shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl md:text-3xl">
+                💳
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm md:text-lg font-extrabold leading-tight">
+                  Kredi Kartı ile Peşin Fiyatına 3 Ay Taksit!
+                </p>
+                <p className="text-[11px] md:text-sm text-white/90 font-medium leading-tight mt-0.5">
+                  Anlaşmalı bankalarla ek komisyon yok · World, Axess, Maximum, Bonus
+                </p>
+              </div>
+              <span className="shrink-0 hidden sm:inline text-xs md:text-sm bg-yellow-300 text-blue-900 font-extrabold px-3 py-1.5 rounded-full">
+                Hemen Sipariş Ver
+              </span>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse pointer-events-none" />
+          </div>
+        </Link>
+
+        <div className="mt-4 md:mt-6">
           <CategoryGrid />
         </div>
 
