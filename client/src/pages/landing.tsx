@@ -660,7 +660,7 @@ export default function Landing() {
                   Peşin Fiyatına 3 Taksit + 9 Ay Taksit İmkanı!
                 </p>
                 <p className="text-[11px] md:text-sm text-white/90 font-medium leading-tight mt-0.5">
-                  Anlaşmalı bankalarla ek komisyon yok · AXESS · Maximum · Bonus · WORLD · QNB
+                  AXESS · Maximum · Bonus · WORLD · QNB
                 </p>
               </div>
               <span className="shrink-0 hidden sm:inline text-xs md:text-sm bg-yellow-300 text-blue-900 font-extrabold px-3 py-1.5 rounded-full">
