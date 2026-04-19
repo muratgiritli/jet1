@@ -453,6 +453,27 @@ function OrdersSection() {
                     {order.discount > 0 && <div><span className="text-muted-foreground">İndirim:</span> <span className="font-medium text-green-600">-{order.discount?.toFixed(0)} TL</span></div>}
                     <div><span className="text-muted-foreground">Ödeme:</span> <span className="font-medium">{PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod}</span></div>
                   </div>
+                  {order.customerAddress && (
+                    <div className="text-xs"><span className="text-muted-foreground">Adres:</span> <span className="font-medium">{order.customerAddress}</span></div>
+                  )}
+                  {order.installmentMonths > 0 && (
+                    <div className="bg-blue-50 rounded-lg p-2.5 text-xs">
+                      <div className="font-semibold text-blue-700 mb-1">Taksit Bilgisi</div>
+                      <div className="grid grid-cols-3 gap-2 text-center">
+                        <div><div className="text-muted-foreground">Taksit</div><div className="font-bold">{order.installmentMonths}</div></div>
+                        <div><div className="text-muted-foreground">Aylık</div><div className="font-bold">{order.installmentMonthly?.toFixed(2)} TL</div></div>
+                        <div><div className="text-muted-foreground">Toplam</div><div className="font-bold">{order.installmentTotal?.toFixed(2)} TL</div></div>
+                      </div>
+                    </div>
+                  )}
+                  {order.paymentStatus && order.paymentMethod === "Online Kredi Kartı" && (
+                    <div className="text-xs">
+                      <span className="text-muted-foreground">Ödeme Durumu:</span>{" "}
+                      <span className={`font-medium ${order.paymentStatus === "paid" ? "text-green-600" : order.paymentStatus === "failed" ? "text-red-600" : "text-amber-600"}`}>
+                        {order.paymentStatus === "paid" ? "Ödendi" : order.paymentStatus === "failed" ? "Başarısız" : "Bekliyor"}
+                      </span>
+                    </div>
+                  )}
                   <div className="text-xs"><span className="text-muted-foreground">Teslimat Zamanı:</span> <span className="font-medium">
                     {order.isCampaign
                       ? "min. 3 gün içinde"

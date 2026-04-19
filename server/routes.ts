@@ -1605,11 +1605,25 @@ export async function registerRoutes(
     const allOrders = await storage.getAllOrders();
     const campaignRows = await sharedPool.query("SELECT product_id FROM campaign_items WHERE is_active = true");
     const campaignProductIds = new Set<number>(campaignRows.rows.map((r: any) => r.product_id));
+    const productIds = new Set<number>();
+    for (const o of allOrders) {
+      const items = Array.isArray(o.items) ? (o.items as any[]) : [];
+      for (const it of items) {
+        const pid = Number(it.productId);
+        if (pid) productIds.add(pid);
+      }
+    }
+    const productMap = new Map<number, { img: string | null }>();
+    if (productIds.size > 0) {
+      const bulkProducts = await storage.getProductsByIds([...productIds]);
+      for (const p of bulkProducts) productMap.set(p.id, { img: p.img });
+    }
     const enriched = allOrders.map(o => {
       const items = Array.isArray(o.items) ? (o.items as any[]) : [];
       const isCampaign = (o as any).isCampaign === true
         || (items.length > 0 && items.some((it: any) => campaignProductIds.has(Number(it.productId))));
-      return { ...o, isCampaign };
+      const itemsWithImg = items.map((it: any) => ({ ...it, img: productMap.get(Number(it.productId))?.img || null }));
+      return { ...o, items: itemsWithImg, isCampaign };
     });
     res.json(enriched);
   });
@@ -2079,6 +2093,11 @@ export async function registerRoutes(
         subtotal: o.subtotal, shipping: o.shipping, discount: o.discount,
         grandTotal: o.grandTotal, status: o.status, paymentMethod: o.paymentMethod, createdAt: o.createdAt,
         customerNote: o.customerNote, deliverySlot: o.deliverySlot,
+        customerAddress: o.customerAddress,
+        installmentMonths: (o as any).installmentMonths,
+        installmentMonthly: (o as any).installmentMonthly,
+        installmentTotal: (o as any).installmentTotal,
+        paymentStatus: (o as any).paymentStatus,
         isCampaign,
       };
     }));
