@@ -6,23 +6,11 @@ import { useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
 
 export default function FloatingCartBar() {
-  const { itemCount, subtotal, hasCampaignItems, campaignExtraCount } = useCart();
+  const { itemCount, subtotal } = useCart();
   const [location, setLocation] = useLocation();
-  const [showWarning, setShowWarning] = useState(false);
-
-  const isCampaignPage = location === "/kampanya" || window.location.search.includes("kampanya=1");
-  const needsExtra = isCampaignPage && hasCampaignItems && campaignExtraCount < 1;
-
-  const handleCampaignBlock = (e: React.MouseEvent) => {
-    if (needsExtra) {
-      e.preventDefault();
-      e.stopPropagation();
-      setShowWarning(true);
-      setTimeout(() => setShowWarning(false), 4000);
-      const el = document.getElementById("campaign-extras-section");
-      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
+  const [showWarning] = useState(false);
+  const needsExtra = false;
+  const handleCampaignBlock = (_e: React.MouseEvent) => {};
 
   const goToCart = () => {
     setLocation("/odeme");

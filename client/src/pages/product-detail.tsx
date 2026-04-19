@@ -292,39 +292,7 @@ export default function ProductDetailPage() {
     stock: number;
   }
 
-  const { data: campaignItems = [] } = useQuery<CampaignItem[]>({
-    queryKey: ["/api/campaign-items"],
-    enabled: isCampaignMode,
-  });
-
-  const campaignExtras = useMemo(() => {
-    const product = resolvedData?.product;
-    if (!isCampaignMode || !product) return [];
-    const specificExtras = campaignItems.filter((i) => i.item_type === "extra" && i.parent_product_id === product.id);
-    const extras = specificExtras.length > 0
-      ? specificExtras
-      : campaignItems.filter((i) => i.item_type === "extra" && !i.parent_product_id);
-    return extras
-      .map((i) => ({
-        id: i.product_id,
-        name: i.name,
-        price: i.price,
-        originalPrice: i.original_price,
-        img: i.img,
-        stock: i.stock,
-        isActive: true,
-        brandCategoryId: 0,
-        skt: null,
-        barcode: null,
-        originalImg: null,
-      } as Product));
-  }, [isCampaignMode, campaignItems, resolvedData]);
-
-  useEffect(() => {
-    for (const extra of campaignExtras) {
-      updateStock(String(extra.id), extra.stock ?? 0);
-    }
-  }, [campaignExtras, updateStock]);
+  const campaignExtras: Product[] = [];
 
   const [stockName, setStockName] = useState("");
   const [stockPhone, setStockPhone] = useState("");
@@ -765,26 +733,6 @@ export default function ProductDetailPage() {
         )}
 
         {!isCampaignMode && <ProductReviews productId={product.id} />}
-
-        {isCampaignMode && campaignExtras.length > 0 && !(product.stock === 0 && product.preorderEnabled) && (
-          <div className="mt-8" id="campaign-extras-section" data-testid="section-campaign-extras">
-            <h3 className="text-base font-extrabold text-gray-800 mb-1 flex items-center gap-1.5">
-              <Gift className="w-5 h-5" style={{ color: "#2e7d32" }} />
-              Özel Kampanya: 1 İlave Ürün ile Geçerli
-            </h3>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {campaignExtras.map((p) => (
-                <div key={p.id}>
-                  <CrossSellProductCard
-                    product={p}
-                    quantity={basket[String(p.id)] || 0}
-                    onUpdate={(id, delta) => updateQty(id, delta, true)}
-                  />
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
 
         {!isCampaignMode && needsCrossSell && alsoBoughtCategories.length > 0 && (
           <div className="mt-8" data-testid="section-also-bought">

@@ -1287,20 +1287,7 @@ export default function Checkout() {
                           )}
                           <span>Ana ürün: {campaignMainCount} adet ({campaignMainCount >= 1 ? "Tamam" : "En az 1 gerekli"})</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          {campaignExtraCount >= 1 ? (
-                            <Check className="w-3 h-3 text-chart-2" />
-                          ) : (
-                            <span className="w-3 h-3 rounded-full border border-gray-300 inline-block" />
-                          )}
-                          <span>Ek ürün: {campaignExtraCount} adet ({campaignExtraCount >= 1 ? "Tamam" : "En az 1 gerekli"})</span>
-                        </div>
                       </div>
-                      {!campaignValid && (
-                        <p className="text-xs text-red-500 mt-2 font-medium">
-                          Kampanyadan yararlanmak için sepete en az 1 ana ürün ve 1 ek ürün eklemeniz gerekmektedir.
-                        </p>
-                      )}
                     </div>
                   )}
                 </CardContent>

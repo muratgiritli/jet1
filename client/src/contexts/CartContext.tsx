@@ -310,26 +310,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const { hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart } = useMemo(() => {
     let mainCount = 0;
-    let extraCount = 0;
     let mainInCart: string | null = null;
     for (const { product, qty } of selectedProducts) {
       const type = campaignSet.get(product.id);
-      if (!type) continue;
       if (type === "main") {
         mainCount += qty;
         mainInCart = product.id;
       }
-      if (type === "extra") extraCount += qty;
     }
-    const hasCampaign = mainCount > 0 || extraCount > 0;
     return {
-      hasCampaignItems: hasCampaign,
+      hasCampaignItems: mainCount > 0,
       campaignMainCount: mainCount,
-      campaignExtraCount: extraCount,
-      campaignValid: !hasCampaign || (mainCount >= 1 && extraCount >= 1),
+      campaignExtraCount: 0,
+      campaignValid: true,
       campaignMainInCart: mainInCart,
     };
-  }, [selectedProducts, campaignSet, campaignCartIds]);
+  }, [selectedProducts, campaignSet]);
 
   const value = useMemo(
     () => ({

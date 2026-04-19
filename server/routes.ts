@@ -1188,8 +1188,8 @@ export async function registerRoutes(
     }
 
     if (isCampaignOrder) {
-      if (campaignMainCount < 1 || campaignExtraCount < 1) {
-        return res.status(400).json({ message: "Kampanya siparişlerinde en az 1 ana ürün ve 1 ek ürün gereklidir." });
+      if (campaignMainCount < 1) {
+        return res.status(400).json({ message: "Kampanya siparişlerinde en az 1 ana ürün gereklidir." });
       }
       if (campaignMainCount > 1) {
         return res.status(400).json({ message: "Kampanya ana ürünlerinden toplamda sadece 1 adet alabilirsiniz." });
