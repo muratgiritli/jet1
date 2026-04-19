@@ -779,6 +779,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [orderDateTo, setOrderDateTo] = useState("");
   const [phoneHistoryDialog, setPhoneHistoryDialog] = useState<string | null>(null);
   const [orderSearchPhone, setOrderSearchPhone] = useState("");
+  const [orderTypeFilter, setOrderTypeFilter] = useState<"all" | "campaign" | "normal">("all");
   const [orderDetailDialog, setOrderDetailDialog] = useState<Order | null>(null);
   const [neighborhoodExpanded, setNeighborhoodExpanded] = useState(false);
   const [nhDialogOpen, setNhDialogOpen] = useState(false);
@@ -2026,7 +2027,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
             <Search className="w-4 h-4 text-muted-foreground" />
             <Input
               placeholder="Telefon ile ara..."
@@ -2040,6 +2041,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <X className="w-4 h-4" />
               </button>
             )}
+            <div className="flex items-center gap-1 ml-2">
+              {([
+                { key: "all", label: "Tümü" },
+                { key: "campaign", label: "Kampanya" },
+                { key: "normal", label: "Normal" },
+              ] as const).map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => setOrderTypeFilter(opt.key)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                    orderTypeFilter === opt.key
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-muted-foreground border-border hover:bg-muted"
+                  }`}
+                  data-testid={`btn-order-type-${opt.key}`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {ordersLoading ? (
@@ -2060,6 +2081,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 const turkeyDate = d.toLocaleDateString("sv-SE", { timeZone: "Europe/Istanbul" });
                 if (orderDateFrom && turkeyDate < orderDateFrom) return false;
                 if (orderDateTo && turkeyDate > orderDateTo) return false;
+                return true;
+              })
+              .filter((o) => {
+                if (orderTypeFilter === "campaign") return (o as any).isCampaign === true;
+                if (orderTypeFilter === "normal") return !(o as any).isCampaign;
                 return true;
               })
               .filter((o) => {
