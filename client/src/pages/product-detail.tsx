@@ -566,7 +566,9 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              <InstallmentBanner variant="compact" pricePerInstallment={displayPrice / 3} />
+              {!isCampaignMode && (
+                <InstallmentBanner variant="compact" pricePerInstallment={displayPrice / 3} />
+              )}
 
               <Dialog open={paraPuanInfoOpen} onOpenChange={setParaPuanInfoOpen}>
                 <DialogContent className="max-w-md">
