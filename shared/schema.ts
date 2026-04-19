@@ -119,6 +119,7 @@ export const orders = pgTable("orders", {
   installmentTotal: real("installment_total"),
   paymentStatus: text("payment_status").notNull().default("completed"),
   paytrMerchantOid: text("paytr_merchant_oid"),
+  isCampaign: boolean("is_campaign").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

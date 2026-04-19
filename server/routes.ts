@@ -1303,6 +1303,7 @@ export async function registerRoutes(
     if (isOnlinePayment) {
       (orderData as any).paymentStatus = "pending";
     }
+    (orderData as any).isCampaign = isCampaignOrder;
 
     const order = await storage.createOrder(orderData);
 
@@ -2053,7 +2054,8 @@ export async function registerRoutes(
     const campaignProductIds = new Set<number>(campaignRows.rows.map((r: any) => r.product_id));
     res.json(customerOrders.map(o => {
       const items = Array.isArray(o.items) ? (o.items as any[]) : [];
-      const isCampaign = items.length > 0 && items.some((it: any) => campaignProductIds.has(it.productId));
+      const isCampaign = (o as any).isCampaign === true
+        || (items.length > 0 && items.some((it: any) => campaignProductIds.has(it.productId)));
       return {
         id: o.id,
         items: items.map((item: any) => {
