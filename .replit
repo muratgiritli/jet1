@@ -55,3 +55,4 @@ integrations = ["javascript_openai_ai_integrations:2.0.0"]
 [userenv.shared]
 NETGSM_USERCODE = "8508403959"
 NETGSM_MSGHEADER = "SIZPA INT."
+PAYTR_TEST_MODE = "1"
