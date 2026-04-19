@@ -234,7 +234,7 @@ export default function CampaignDemoPage() {
         </div>
 
         {isLoading ? (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-2 md:gap-3">
             {Array.from({ length: 8 }).map((_, i) => (
               <div key={i} className="aspect-[3/4] bg-gray-100 rounded-2xl animate-pulse" />
             ))}
@@ -244,7 +244,7 @@ export default function CampaignDemoPage() {
             Bu kategoride ürün bulunmuyor.
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 md:gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-6 gap-2 md:gap-3">
             {filtered.map((p, i) => (
               <CampaignCard
                 key={p.id}
