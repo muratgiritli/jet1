@@ -97,11 +97,6 @@ function CampaignCard({ product, override }: { product: ApiProduct; override: ty
             className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-300"
             loading="lazy"
           />
-          <div className="absolute bottom-2 left-2 right-2">
-            <div className={`bg-gradient-to-r ${override.color} text-white text-[10px] font-bold px-3 py-1.5 rounded-lg text-center shadow-lg`}>
-              {override.tag}
-            </div>
-          </div>
         </div>
       </Link>
 
@@ -121,12 +116,12 @@ function CampaignCard({ product, override }: { product: ApiProduct; override: ty
           </span>
         </div>
 
-        <div className="pt-1 space-y-2">
-          <div className="flex items-center justify-center gap-1 text-[11px] font-bold text-green-700 bg-green-50 px-2 py-1.5 rounded-md border border-green-200 w-full">
-            <Zap className="w-3.5 h-3.5" />
+        <div className="pt-2 flex flex-col items-center gap-3">
+          <div className="flex items-center justify-center gap-1 text-[10px] font-bold text-green-700 bg-green-50 px-2 py-0.5 rounded border border-green-200">
+            <Zap className="w-3 h-3" />
             {savings.toLocaleString("tr-TR")} TL TASARRUF
           </div>
-          <Link href={href}>
+          <Link href={href} className="w-full">
             <Button
               className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold h-10 rounded-xl shadow-md"
               data-testid={`btn-incele-${product.id}`}
