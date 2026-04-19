@@ -2049,16 +2049,23 @@ export async function registerRoutes(
     for (const p of bulkProducts) {
       productMap.set(p.id, { img: p.img, stock: p.stock });
     }
-    res.json(customerOrders.map(o => ({
-      id: o.id,
-      items: Array.isArray(o.items) ? (o.items as any[]).map((item: any) => {
-        const pData = productMap.get(item.productId);
-        return { ...item, img: pData?.img || null, currentStock: pData?.stock ?? 0 };
-      }) : o.items,
-      subtotal: o.subtotal, shipping: o.shipping, discount: o.discount,
-      grandTotal: o.grandTotal, status: o.status, paymentMethod: o.paymentMethod, createdAt: o.createdAt,
-      customerNote: o.customerNote, deliverySlot: o.deliverySlot,
-    })));
+    const campaignRows = await sharedPool.query("SELECT product_id FROM campaign_items WHERE is_active = true");
+    const campaignProductIds = new Set<number>(campaignRows.rows.map((r: any) => r.product_id));
+    res.json(customerOrders.map(o => {
+      const items = Array.isArray(o.items) ? (o.items as any[]) : [];
+      const isCampaign = items.length > 0 && items.some((it: any) => campaignProductIds.has(it.productId));
+      return {
+        id: o.id,
+        items: items.map((item: any) => {
+          const pData = productMap.get(item.productId);
+          return { ...item, img: pData?.img || null, currentStock: pData?.stock ?? 0 };
+        }),
+        subtotal: o.subtotal, shipping: o.shipping, discount: o.discount,
+        grandTotal: o.grandTotal, status: o.status, paymentMethod: o.paymentMethod, createdAt: o.createdAt,
+        customerNote: o.customerNote, deliverySlot: o.deliverySlot,
+        isCampaign,
+      };
+    }));
   });
 
   app.get("/api/customer/favorites", requireCustomer, async (req, res) => {

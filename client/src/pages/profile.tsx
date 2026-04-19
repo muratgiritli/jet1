@@ -452,16 +452,18 @@ function OrdersSection() {
                     {order.discount > 0 && <div><span className="text-muted-foreground">İndirim:</span> <span className="font-medium text-green-600">-{order.discount?.toFixed(0)} TL</span></div>}
                     <div><span className="text-muted-foreground">Ödeme:</span> <span className="font-medium">{PAYMENT_LABELS[order.paymentMethod] || order.paymentMethod}</span></div>
                   </div>
-                  {order.deliverySlot && (
-                    <div className="text-xs"><span className="text-muted-foreground">Teslimat Zamanı:</span> <span className="font-medium">
-                      {({
-                        hemen: "Hemen (En kısa sürede)",
-                        bugun_ogle: "Bugün 12:00-14:00",
-                        bugun_aksam: "Bugün 16:00-19:00",
-                        yarin_sabah: "Yarın Sabah 10:00-12:00",
-                      } as Record<string, string>)[order.deliverySlot] || order.deliverySlot}
-                    </span></div>
-                  )}
+                  <div className="text-xs"><span className="text-muted-foreground">Teslimat Zamanı:</span> <span className="font-medium">
+                    {order.isCampaign
+                      ? "3 gün içinde (ortalama)"
+                      : (order.deliverySlot
+                          ? (({
+                              hemen: "Gün içinde",
+                              bugun_ogle: "Bugün 12:00-14:00",
+                              bugun_aksam: "Bugün 16:00-19:00",
+                              yarin_sabah: "Yarın Sabah 10:00-12:00",
+                            } as Record<string, string>)[order.deliverySlot] || order.deliverySlot)
+                          : "Gün içinde")}
+                  </span></div>
                   {order.customerNote && (
                     <div className="text-xs bg-yellow-50 rounded-lg p-2">
                       <span className="text-muted-foreground">Not: </span>{order.customerNote}
