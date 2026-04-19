@@ -528,20 +528,6 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              <div
-                className="mt-2 flex items-center gap-2 px-3 py-2 rounded-lg bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200"
-                data-testid="text-installment-info"
-              >
-                <CreditCard className="w-4 h-4 text-blue-700 shrink-0" />
-                <div className="text-sm leading-tight">
-                  <span className="font-bold text-blue-900">Peşin Fiyatına 3 Taksit</span>
-                  <span className="text-blue-800"> · 3 ay x </span>
-                  <span className="font-extrabold text-blue-900">
-                    {(displayPrice / 3).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                  </span>
-                </div>
-              </div>
-
               {!isCampaignMode && (
                 <div data-testid="text-loyalty-points-earn">
                   <div
@@ -580,7 +566,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              <InstallmentBanner variant="compact" />
+              <InstallmentBanner variant="compact" pricePerInstallment={displayPrice / 3} />
 
               <Dialog open={paraPuanInfoOpen} onOpenChange={setParaPuanInfoOpen}>
                 <DialogContent className="max-w-md">

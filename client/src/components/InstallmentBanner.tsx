@@ -4,9 +4,38 @@ import { INSTALLMENT_BANKS } from "@/lib/data";
 interface InstallmentBannerProps {
   variant?: "full" | "compact" | "inline";
   className?: string;
+  pricePerInstallment?: number;
 }
 
-export default function InstallmentBanner({ variant = "full", className = "" }: InstallmentBannerProps) {
+const BRAND_STYLES: Record<string, { bg: string; text: string; label: string }> = {
+  AXESS: { bg: "#e30613", text: "#ffffff", label: "axess" },
+  Maximum: { bg: "#FFD400", text: "#000000", label: "maximum" },
+  Bonus: { bg: "#005baa", text: "#ffffff", label: "bonus" },
+  WORLD: { bg: "#e30613", text: "#ffffff", label: "world" },
+  QNB: { bg: "#5e2d91", text: "#ffffff", label: "QNB" },
+};
+
+function BrandLogos() {
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {INSTALLMENT_BANKS.map((bank) => {
+        const s = BRAND_STYLES[bank] ?? { bg: "#374151", text: "#fff", label: bank.toLowerCase() };
+        return (
+          <span
+            key={bank}
+            className="inline-flex items-center justify-center px-2 py-1 rounded text-[10px] font-extrabold tracking-tight shadow-sm"
+            style={{ backgroundColor: s.bg, color: s.text, fontFamily: "system-ui, sans-serif" }}
+            data-testid={`logo-${bank.toLowerCase()}`}
+          >
+            {s.label}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function InstallmentBanner({ variant = "full", className = "", pricePerInstallment }: InstallmentBannerProps) {
   if (variant === "inline") {
     return (
       <div
@@ -22,15 +51,29 @@ export default function InstallmentBanner({ variant = "full", className = "" }: 
   if (variant === "compact") {
     return (
       <div
-        className={`flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 ${className}`}
+        className={`p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 ${className}`}
         data-testid="banner-installment-compact"
       >
-        <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">
-          <CreditCard className="w-5 h-5" />
+        <div className="flex items-center gap-3">
+          <div className="flex-shrink-0 w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">
+            <CreditCard className="w-5 h-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-bold text-sm text-blue-900 whitespace-nowrap overflow-hidden text-ellipsis">
+              Peşin Fiyatına 3 Taksit + 9 Ay Taksit İmkanı
+            </p>
+            {pricePerInstallment !== undefined && (
+              <p className="text-[11px] text-blue-800 whitespace-nowrap overflow-hidden text-ellipsis">
+                3 ay x{" "}
+                <strong className="text-blue-900">
+                  {pricePerInstallment.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                </strong>
+              </p>
+            )}
+          </div>
         </div>
-        <div className="flex-1 min-w-0">
-          <p className="font-bold text-sm text-blue-900">Peşin Fiyatına 3 Taksit + 9 Ay Taksit İmkanı</p>
-          <p className="text-[11px] text-blue-700 truncate">{INSTALLMENT_BANKS.join(" · ")}</p>
+        <div className="mt-2.5">
+          <BrandLogos />
         </div>
       </div>
     );
