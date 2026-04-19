@@ -322,6 +322,14 @@ export default function Checkout() {
   const [paytrToken, setPaytrToken] = useState<string | null>(null);
   const [paytrOrderId, setPaytrOrderId] = useState<number | null>(null);
   const [paytrPolling, setPaytrPolling] = useState(false);
+  const [isMobile, setIsMobile] = useState<boolean>(typeof window !== "undefined" ? window.innerWidth < 768 : false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches);
+    setIsMobile(mq.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
   const {
     paymentId,
     setPaymentId,
@@ -466,8 +474,8 @@ export default function Checkout() {
         img: product.img || undefined,
       }));
 
-      const payMethod = hasCampaignItems ? "Kapıda Nakit" : pay.name;
-      const payDiscRate = !hasCampaignItems && pay.disc < 0 ? Math.abs(pay.disc) : 0;
+      const payMethod = (hasCampaignItems || isMobile) ? "Kapıda Nakit" : pay.name;
+      const payDiscRate = !(hasCampaignItems || isMobile) && pay.disc < 0 ? Math.abs(pay.disc) : 0;
       const payDiscAmount = Math.round(effectiveGrandTotal * payDiscRate);
       const totalAfterPayDisc = Math.max(0, effectiveGrandTotal - payDiscAmount);
       const pointsUsed = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, totalAfterPayDisc) : 0;
@@ -1080,7 +1088,7 @@ export default function Checkout() {
               </h2>
               <Card>
                 <CardContent className="p-4">
-                  {hasCampaignItems ? (
+                  {hasCampaignItems || isMobile ? (
                     <div className="p-3 rounded-md bg-accent" data-testid="campaign-payment-only">
                       <div className="flex items-center gap-3">
                         <Banknote className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -1090,7 +1098,11 @@ export default function Checkout() {
                           {subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground mt-2">Kampanya siparislerinde sadece kapida nakit odeme gecerlidir.</p>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        {hasCampaignItems
+                          ? "Kampanya siparislerinde sadece kapida nakit odeme gecerlidir."
+                          : "Mobil siparişlerde kapıda nakit ödeme geçerlidir."}
+                      </p>
                     </div>
                   ) : (
                   <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
