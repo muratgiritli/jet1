@@ -962,14 +962,14 @@ export default function Checkout() {
                           data-testid={`row-checkout-item-${product.id}`}
                         >
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate" data-testid={`text-checkout-name-${product.id}`}>
+                            <p className="text-sm font-medium md:truncate break-words" data-testid={`text-checkout-name-${product.id}`}>
                               {product.name}
                             </p>
-                            <p className="text-xs text-muted-foreground" data-testid={`text-checkout-unit-${product.id}`}>
+                            <p className="hidden md:block text-xs text-muted-foreground" data-testid={`text-checkout-unit-${product.id}`}>
                               {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL / adet
                             </p>
                             {isPreorderProduct(String(product.id)) && (
-                              <span className="inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }} data-testid={`badge-preorder-${product.id}`}>
+                              <span className="hidden md:inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }} data-testid={`badge-preorder-${product.id}`}>
                                 <Clock className="w-2.5 h-2.5" />
                                 Ön Sipariş — ~3 gün teslimat
                               </span>
@@ -1406,6 +1406,7 @@ export default function Checkout() {
                       </span>
                     </div>
 
+                    {!hasCampaignItems && (
                     <div
                       className="mt-3 rounded-xl p-3 cursor-pointer transition-all"
                       style={{
@@ -1478,17 +1479,19 @@ export default function Checkout() {
                     </p>
                   )}
 
-                  <Link href="/">
-                    <Button
-                      className="w-full mt-3"
-                      variant="outline"
-                      size="lg"
-                      data-testid="btn-go-home"
-                    >
-                      <ArrowLeft className="w-4 h-4" />
-                      Alışverişe Devam Et
-                    </Button>
-                  </Link>
+                  {!hasCampaignItems && (
+                    <Link href="/">
+                      <Button
+                        className="w-full mt-3"
+                        variant="outline"
+                        size="lg"
+                        data-testid="btn-go-home"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        Alışverişe Devam Et
+                      </Button>
+                    </Link>
+                  )}
                 </CardContent>
               </Card>
             </section>
