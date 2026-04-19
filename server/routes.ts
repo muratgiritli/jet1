@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
 import { saveProductImage, getProductImage, downloadAndSaveImage } from "./image-service";
+import { createPaytrToken, verifyPaytrCallbackHash, generateMerchantOid } from "./paytr";
 import multer from "multer";
 import OpenAI from "openai";
 
@@ -1249,13 +1250,18 @@ export async function registerRoutes(
       orderData.hasPreorder = true;
     }
 
+    const isOnlinePayment = orderData.paymentMethod === "Online Kredi Kartı";
+    if (isOnlinePayment) {
+      (orderData as any).paymentStatus = "pending";
+    }
+
     const order = await storage.createOrder(orderData);
 
-    if (appliedCoupon) {
+    if (appliedCoupon && !isOnlinePayment) {
       await storage.incrementCouponUsage(appliedCoupon.id);
     }
 
-    if (customerId) {
+    if (customerId && !isOnlinePayment) {
       if (!isCampaignOrder && pointsToUse > 0) {
         await storage.addLoyaltyPoints({
           customerId,
@@ -1283,23 +1289,185 @@ export async function registerRoutes(
         }
       }
     }
-    try {
-      const adminPhoneResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'admin_phone'");
-      const smsEnabledResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'order_notification_sms'");
-      const adminPhone = adminPhoneResult.rows[0]?.value;
-      const smsEnabled = smsEnabledResult.rows[0]?.value !== "0";
-      if (adminPhone && smsEnabled) {
-        const customerName = orderData.customerName || "Bilinmeyen";
-        const smsMsg = `YENI SIPARIS #${order.id}\n${customerName}\nTutar: ${orderData.grandTotal} TL\nOdeme: ${orderData.paymentMethod}\n${orderData.items.length} urun`;
-        sendSmsViaNetgsm(adminPhone, smsMsg).catch(err => {
-          console.error("Admin order notification SMS error:", err);
-        });
+    if (!isOnlinePayment) {
+      try {
+        const adminPhoneResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'admin_phone'");
+        const smsEnabledResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'order_notification_sms'");
+        const adminPhone = adminPhoneResult.rows[0]?.value;
+        const smsEnabled = smsEnabledResult.rows[0]?.value !== "0";
+        if (adminPhone && smsEnabled) {
+          const customerName = orderData.customerName || "Bilinmeyen";
+          const smsMsg = `YENI SIPARIS #${order.id}\n${customerName}\nTutar: ${orderData.grandTotal} TL\nOdeme: ${orderData.paymentMethod}\n${orderData.items.length} urun`;
+          sendSmsViaNetgsm(adminPhone, smsMsg).catch(err => {
+            console.error("Admin order notification SMS error:", err);
+          });
+        }
+      } catch (e) {
+        console.error("Admin notification error:", e);
       }
-    } catch (e) {
-      console.error("Admin notification error:", e);
+    }
+
+    if (isOnlinePayment) {
+      try {
+        const merchantOid = generateMerchantOid(order.id);
+        await sharedPool.query("UPDATE orders SET paytr_merchant_oid = $1 WHERE id = $2", [merchantOid, order.id]);
+
+        const customerEmailResult = await sharedPool.query("SELECT email FROM customers WHERE id = $1", [customerId]);
+        const userEmail = customerEmailResult.rows[0]?.email || `musteri${customerId}@jetgo.pet`;
+        const userIp = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip || "1.1.1.1";
+
+        const userBasket: Array<[string, string, number]> = orderData.items.map((it: any) => [
+          String(it.name).substring(0, 100),
+          (Number(it.price) || 0).toFixed(2),
+          Number(it.quantity) || 1,
+        ]);
+
+        const protocol = (req.headers["x-forwarded-proto"] as string) || req.protocol || "https";
+        const host = req.headers["x-forwarded-host"] || req.headers.host;
+        const baseUrl = `${protocol}://${host}`;
+
+        const tokenResult = await createPaytrToken({
+          merchantOid,
+          email: userEmail,
+          paymentAmount: orderData.grandTotal,
+          userName: orderData.customerName || "Müşteri",
+          userAddress: orderData.customerAddress || "Adres",
+          userPhone: orderData.customerPhone || "0000000000",
+          userBasket,
+          userIp,
+          okUrl: `${baseUrl}/odeme-sonuc?orderId=${order.id}`,
+          failUrl: `${baseUrl}/odeme-sonuc?orderId=${order.id}&fail=1`,
+          testMode: 0,
+          noInstallment: 0,
+          maxInstallment: 0,
+          currency: "TL",
+        });
+
+        if (tokenResult.status === "success" && tokenResult.token) {
+          return res.status(201).json({ ...order, paytrToken: tokenResult.token, paytrMerchantOid: merchantOid });
+        } else {
+          await sharedPool.query("UPDATE orders SET payment_status = 'failed', status = 'iptal' WHERE id = $1", [order.id]);
+          for (const item of orderData.items) {
+            const productId = parseInt(String(item.productId));
+            if (!isNaN(productId)) {
+              await sharedPool.query("UPDATE products SET stock = stock + $1 WHERE id = $2", [item.quantity, productId]);
+            }
+          }
+          return res.status(502).json({ message: `Ödeme başlatılamadı: ${tokenResult.reason || "Bilinmeyen hata"}` });
+        }
+      } catch (err: any) {
+        console.error("PayTR init error:", err);
+        await sharedPool.query("UPDATE orders SET payment_status = 'failed', status = 'iptal' WHERE id = $1", [order.id]);
+        for (const item of orderData.items) {
+          const productId = parseInt(String(item.productId));
+          if (!isNaN(productId)) {
+            await sharedPool.query("UPDATE products SET stock = stock + $1 WHERE id = $2", [item.quantity, productId]);
+          }
+        }
+        return res.status(500).json({ message: err?.message || "Online ödeme başlatılamadı" });
+      }
     }
 
     res.status(201).json(order);
+  });
+
+  // PayTR callback (notification) — PayTR sunucusu ödeme tamamlandığında bu endpoint'e POST yapar
+  app.post("/api/paytr/callback", async (req, res) => {
+    try {
+      const body = req.body || {};
+      if (!verifyPaytrCallbackHash(body)) {
+        console.error("PayTR callback hash mismatch:", body);
+        return res.status(400).send("PAYTR notification failed: bad hash");
+      }
+      const { merchant_oid, status, total_amount, failed_reason_msg } = body;
+      const orderResult = await sharedPool.query(
+        "SELECT id, payment_status, customer_phone, items, grand_total, customer_name, payment_method, subtotal FROM orders WHERE paytr_merchant_oid = $1",
+        [merchant_oid]
+      );
+      if (orderResult.rows.length === 0) {
+        console.error("PayTR callback: order not found for merchant_oid", merchant_oid);
+        return res.send("OK");
+      }
+      const order = orderResult.rows[0];
+      if (order.payment_status === "paid") {
+        return res.send("OK"); // idempotent
+      }
+
+      if (status === "success") {
+        await sharedPool.query("UPDATE orders SET payment_status = 'paid' WHERE id = $1", [order.id]);
+
+        // Müşteri customerId'sini bul
+        const custRow = await sharedPool.query("SELECT id FROM customers WHERE phone = $1 LIMIT 1", [order.customer_phone]);
+        const customerId = custRow.rows[0]?.id;
+
+        if (customerId) {
+          let loyaltyPct = 5;
+          try {
+            const lpResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'loyalty_percent'");
+            if (lpResult.rows.length > 0) loyaltyPct = Number(lpResult.rows[0].value) || 5;
+          } catch {}
+          const earnedPoints = Math.round(Number(order.subtotal) * (loyaltyPct / 100) * 100) / 100;
+          if (earnedPoints > 0) {
+            await storage.addLoyaltyPoints({
+              customerId,
+              orderId: order.id,
+              amount: earnedPoints,
+              type: "earned",
+              description: `Sipariş #${order.id} - %${loyaltyPct} Para Puan kazanımı`,
+            }).catch(e => console.error("Loyalty award error:", e));
+          }
+        }
+
+        // Admin SMS bildirimi
+        try {
+          const adminPhoneResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'admin_phone'");
+          const smsEnabledResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'order_notification_sms'");
+          const adminPhone = adminPhoneResult.rows[0]?.value;
+          const smsEnabled = smsEnabledResult.rows[0]?.value !== "0";
+          if (adminPhone && smsEnabled) {
+            const items = Array.isArray(order.items) ? order.items : [];
+            const smsMsg = `YENI SIPARIS #${order.id}\n${order.customer_name || "Musteri"}\nTutar: ${order.grand_total} TL\nOdeme: ${order.payment_method} (Online)\n${items.length} urun`;
+            sendSmsViaNetgsm(adminPhone, smsMsg).catch(err => console.error("Admin SMS error:", err));
+          }
+        } catch (e) {
+          console.error("Admin notification error:", e);
+        }
+      } else {
+        await sharedPool.query("UPDATE orders SET payment_status = 'failed', status = 'iptal' WHERE id = $1", [order.id]);
+        // Stok iadesi
+        const items = Array.isArray(order.items) ? order.items : [];
+        for (const item of items) {
+          const productId = parseInt(String(item.productId));
+          if (!isNaN(productId)) {
+            await sharedPool.query("UPDATE products SET stock = stock + $1 WHERE id = $2", [item.quantity, productId]);
+          }
+        }
+        console.log(`PayTR ödeme başarısız order #${order.id}: ${failed_reason_msg || ""}`);
+      }
+      res.send("OK");
+    } catch (err) {
+      console.error("PayTR callback error:", err);
+      res.status(500).send("PAYTR notification failed");
+    }
+  });
+
+  // Frontend ödeme durumunu sorgular
+  app.get("/api/orders/:id/payment-status", async (req, res) => {
+    const customerId = (req.session as any)?.customerId;
+    if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız." });
+    const orderId = parseInt(req.params.id);
+    if (isNaN(orderId)) return res.status(400).json({ message: "Geçersiz sipariş" });
+    const result = await sharedPool.query(
+      "SELECT id, payment_status, status, customer_phone FROM orders WHERE id = $1",
+      [orderId]
+    );
+    if (result.rows.length === 0) return res.status(404).json({ message: "Sipariş bulunamadı" });
+    const order = result.rows[0];
+    const cust = await sharedPool.query("SELECT phone FROM customers WHERE id = $1", [customerId]);
+    if (cust.rows[0]?.phone !== order.customer_phone) {
+      return res.status(403).json({ message: "Bu siparişe erişim yok" });
+    }
+    res.json({ orderId: order.id, paymentStatus: order.payment_status, status: order.status });
   });
 
   app.get("/api/admin/new-order-check", requireAdmin, async (_req, res) => {
