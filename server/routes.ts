@@ -2061,7 +2061,7 @@ export async function registerRoutes(
     res.json(customerOrders.map(o => {
       const items = Array.isArray(o.items) ? (o.items as any[]) : [];
       const isCampaign = (o as any).isCampaign === true
-        || (items.length > 0 && items.some((it: any) => campaignProductIds.has(it.productId)));
+        || (items.length > 0 && items.some((it: any) => campaignProductIds.has(Number(it.productId))));
       return {
         id: o.id,
         items: items.map((item: any) => {
