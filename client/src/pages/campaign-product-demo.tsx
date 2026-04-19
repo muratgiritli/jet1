@@ -100,8 +100,8 @@ function CartCashDialog({ open, onOpenChange, product }: { open: boolean; onOpen
           <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} data-testid="btn-continue-shopping">
             Alışverişe Devam Et
           </Button>
-          <Button className="flex-1 bg-purple-600 hover:bg-purple-700" onClick={() => onOpenChange(false)} data-testid="btn-go-checkout">
-            Ödemeye Git
+          <Button className="flex-1 bg-purple-600 hover:bg-purple-700" onClick={() => onOpenChange(false)} data-testid="btn-place-preorder">
+            Ön Sipariş Ver
           </Button>
         </div>
       </DialogContent>
