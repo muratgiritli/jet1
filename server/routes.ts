@@ -1131,6 +1131,34 @@ export async function registerRoutes(
       campaignMap.set(row.product_id, row.item_type);
     }
 
+    // SECURITY: server-side price recompute to prevent client tampering
+    const allProductsForPrice = await storage.getAllProducts();
+    const productPriceMap = new Map<number, { price: number; name: string; img: string | null; isCampaignMain: boolean }>();
+    for (const p of allProductsForPrice) {
+      productPriceMap.set(p.id, {
+        price: Number(p.price) || 0,
+        name: p.name,
+        img: p.img,
+        isCampaignMain: campaignMap.get(p.id) === "main",
+      });
+    }
+    let serverSubtotal = 0;
+    for (const item of orderData.items) {
+      const pid = parseInt(String(item.productId));
+      const p = productPriceMap.get(pid);
+      if (!p) {
+        return res.status(400).json({ message: `Geçersiz ürün: ${item.productId}` });
+      }
+      const qty = Math.max(1, parseInt(String(item.quantity)) || 1);
+      item.price = p.price;
+      item.name = p.name;
+      item.quantity = qty;
+      serverSubtotal += p.price * qty;
+    }
+    serverSubtotal = Math.round(serverSubtotal * 100) / 100;
+    orderData.subtotal = serverSubtotal;
+    orderData.discount = 0;
+
     let campaignMainCount = 0;
     let campaignExtraCount = 0;
     for (const item of orderData.items) {
@@ -1277,7 +1305,7 @@ export async function registerRoutes(
           const lpResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'loyalty_percent'");
           if (lpResult.rows.length > 0) loyaltyPct = Number(lpResult.rows[0].value) || 5;
         } catch {}
-        const earnedPoints = Math.round(parsed.data.subtotal * (loyaltyPct / 100) * 100) / 100;
+        const earnedPoints = Math.round(orderData.subtotal * (loyaltyPct / 100) * 100) / 100;
         if (earnedPoints > 0) {
           await storage.addLoyaltyPoints({
             customerId,
