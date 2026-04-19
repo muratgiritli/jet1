@@ -73,7 +73,7 @@ function CartCashDialog({ open, onOpenChange, product }: { open: boolean; onOpen
             <ProductImage src={product.img} alt={product.name} className="w-full h-full object-contain" loading="eager" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-gray-900 line-clamp-2">{product.name}</p>
+            <p className="text-xs font-bold text-gray-900 truncate">{product.name}</p>
             <p className="text-sm font-extrabold text-purple-700 mt-0.5">{product.price.toLocaleString("tr-TR")} TL</p>
           </div>
           <Badge className="bg-purple-100 text-purple-800 text-[10px]">x1</Badge>
@@ -96,12 +96,7 @@ function CartCashDialog({ open, onOpenChange, product }: { open: boolean; onOpen
           </div>
         </div>
 
-        <div className="text-[11px] text-gray-500 flex items-start gap-1.5 mt-1">
-          <Info className="w-3.5 h-3.5 flex-shrink-0 mt-0.5" />
-          Diğer ödeme seçenekleri (kredi kartı, EFT, QR) bu kampanya için <strong>devre dışı</strong>dır.
-        </div>
-
-        <div className="flex gap-2 mt-3">
+        <div className="flex gap-2 mt-4">
           <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)} data-testid="btn-continue-shopping">
             Alışverişe Devam Et
           </Button>
