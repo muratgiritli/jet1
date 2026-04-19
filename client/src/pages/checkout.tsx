@@ -486,10 +486,7 @@ export default function Checkout() {
       const orderJson = await orderRes.json();
 
       if (payMethod === "Online Kredi Kartı" && orderJson?.paytrToken) {
-        setPaytrOrderId(orderJson.id);
-        setPaytrToken(orderJson.paytrToken);
-        setPaytrPolling(true);
-        setOrderLoading(false);
+        window.location.href = `https://www.paytr.com/odeme/guvenli/${orderJson.paytrToken}`;
         return;
       }
 
