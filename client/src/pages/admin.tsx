@@ -5569,6 +5569,9 @@ function SettingsSection() {
     admin_phone: "",
     order_notification_sms: "1",
     payment_eft_enabled: "0",
+    campaign_hero_title: "",
+    campaign_hero_subtitle: "",
+    campaign_end_date: "",
   });
 
   useEffect(() => {
@@ -5583,6 +5586,9 @@ function SettingsSection() {
         admin_phone: settings.admin_phone || "",
         order_notification_sms: settings.order_notification_sms ?? "1",
         payment_eft_enabled: settings.payment_eft_enabled ?? "0",
+        campaign_hero_title: settings.campaign_hero_title || "",
+        campaign_hero_subtitle: settings.campaign_hero_subtitle || "",
+        campaign_end_date: settings.campaign_end_date || "",
       });
     }
   }, [settings]);
@@ -5706,6 +5712,46 @@ function SettingsSection() {
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.payment_eft_enabled === "true" ? "translate-x-6" : "translate-x-1"}`} />
             </button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-4 space-y-4">
+          <h3 className="text-sm font-bold flex items-center gap-2">🔥 Kampanya Sayfası Yönetimi</h3>
+          <p className="text-[11px] text-muted-foreground">/kampanya sayfasının üst kısmındaki başlık, alt başlık ve geri sayım için bitiş tarihi.</p>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-bold">Kampanya Başlığı</Label>
+            <Input
+              type="text"
+              placeholder="Kaçırılmaz Kampanyalar"
+              value={form.campaign_hero_title}
+              onChange={e => setForm(prev => ({ ...prev, campaign_hero_title: e.target.value.slice(0, 80) }))}
+              data-testid="input-campaign-title"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-bold">Alt Başlık</Label>
+            <Input
+              type="text"
+              placeholder="Sınırlı stoklarla özel indirimler — kapıda nakit · 3 günde teslim"
+              value={form.campaign_hero_subtitle}
+              onChange={e => setForm(prev => ({ ...prev, campaign_hero_subtitle: e.target.value.slice(0, 200) }))}
+              data-testid="input-campaign-subtitle"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-bold">Kampanya Bitiş Tarihi (Geri Sayım)</Label>
+            <Input
+              type="datetime-local"
+              value={form.campaign_end_date}
+              onChange={e => setForm(prev => ({ ...prev, campaign_end_date: e.target.value }))}
+              data-testid="input-campaign-end-date"
+            />
+            <p className="text-[11px] text-muted-foreground">Boş bırakılırsa geri sayım gösterilmez. Tarih geçince otomatik gizlenir.</p>
           </div>
         </CardContent>
       </Card>

@@ -1,14 +1,16 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ShoppingCart, Plus, Minus, Tag, Gift, Lock, AlertTriangle, Cat, Dog, Bird, Clock } from "lucide-react";
+import {
+  ShoppingCart, Plus, Minus, Tag, Lock, Cat, Dog, Bird, Clock,
+  Flame, Eye, Zap, Gift, Truck, ShieldCheck, Banknote,
+} from "lucide-react";
 import ProductImage from "@/components/ProductImage";
 import { useCart } from "@/contexts/CartContext";
 import { productUrl } from "@/lib/data";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
-
 
 interface CampaignProduct {
   id: number;
@@ -25,6 +27,46 @@ interface CampaignProduct {
   preorder_enabled?: boolean;
 }
 
+interface PublicSettings {
+  campaign_hero_title?: string;
+  campaign_hero_subtitle?: string;
+  campaign_end_date?: string;
+}
+
+function CountdownStrip({ endDate }: { endDate?: string }) {
+  const [now, setNow] = useState(Date.now());
+  useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+
+  if (!endDate) return null;
+  const target = new Date(endDate).getTime();
+  if (isNaN(target)) return null;
+  const diff = Math.max(0, target - now);
+  if (diff === 0) return null;
+
+  const d = Math.floor(diff / 86400000);
+  const h = Math.floor((diff % 86400000) / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+
+  return (
+    <div className="flex items-center justify-center gap-2 bg-red-600/95 text-white rounded-xl px-3 py-2 shadow-md mt-3">
+      <Flame className="w-4 h-4 animate-pulse" />
+      <span className="text-xs font-bold">Kampanya bitmesine:</span>
+      <div className="flex gap-1">
+        {[{ v: d, l: "G" }, { v: h, l: "S" }, { v: m, l: "DK" }, { v: s, l: "SN" }].map((b, i) => (
+          <div key={i} className="bg-white/20 rounded px-1.5 py-0.5 text-center min-w-[30px]">
+            <div className="text-xs font-extrabold leading-tight">{String(b.v).padStart(2, "0")}</div>
+            <div className="text-[8px] opacity-80">{b.l}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function CampaignProductCard({ item }: { item: CampaignProduct }) {
   const { basket, updateQty, campaignMainInCart, isKediKumu } = useCart();
   const pid = String(item.product_id);
@@ -32,120 +74,138 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
   const isMain = item.item_type === "main";
   const maxQty = isKediKumu(pid) ? 2 : 99;
   const isLockedMain = isMain && campaignMainInCart !== null && campaignMainInCart !== pid;
+  const href = productUrl(item.product_id, item.name) + "?kampanya=1";
+
+  const oldPrice = item.original_price && item.original_price > item.price ? item.original_price : null;
+  const discountPct = oldPrice ? Math.round(((oldPrice - item.price) / oldPrice) * 100) : 0;
+  const savings = oldPrice ? oldPrice - item.price : 0;
 
   return (
-    <div className={`bg-white rounded-xl shadow-sm border overflow-hidden ${isLockedMain ? "border-gray-200 opacity-60" : "border-gray-100"}`} data-testid={`campaign-product-${item.product_id}`}>
-      <Link href={productUrl(item.product_id, item.name) + "?kampanya=1"}>
-        <div className="relative aspect-square bg-gray-50 p-2 cursor-pointer">
+    <div
+      className={`bg-white rounded-2xl border-2 overflow-hidden flex flex-col transition-all ${
+        isLockedMain ? "border-gray-200 opacity-60" : "border-purple-100 hover:border-purple-300 hover:shadow-md"
+      }`}
+      data-testid={`campaign-product-${item.product_id}`}
+    >
+      {discountPct > 0 && (
+        <div className="absolute z-10 m-2">
+          <div className="bg-gradient-to-br from-red-500 to-orange-500 text-white text-[11px] font-extrabold w-11 h-11 rounded-full flex items-center justify-center shadow-md">
+            %{discountPct}
+          </div>
+        </div>
+      )}
+
+      <Link href={href}>
+        <div className="aspect-square bg-gradient-to-br from-gray-50 to-gray-100 p-3 relative overflow-hidden cursor-pointer">
           <ProductImage
             src={item.img}
             alt={item.name}
-            className="w-full h-full object-contain"
+            className="w-full h-full object-contain hover:scale-105 transition-transform duration-300"
             loading="lazy"
           />
-          {isMain && (
-            <Badge
-              className="absolute top-2 left-2 text-[10px] font-bold"
-              style={{ backgroundColor: "#6B3480", color: "#fff" }}
-            >
-              KAMPANYA
-            </Badge>
-          )}
         </div>
       </Link>
-      <div className="p-3 space-y-2">
-        <Link href={productUrl(item.product_id, item.name) + "?kampanya=1"}>
-          <h3 className="text-xs font-semibold text-gray-800 line-clamp-2 min-h-[2rem] cursor-pointer hover:text-primary" data-testid={`text-name-${item.product_id}`}>
+
+      <div className="p-2.5 flex flex-col gap-2 flex-1">
+        <Link href={href}>
+          <h3
+            className="text-xs font-bold text-gray-900 line-clamp-2 min-h-[2.25rem] cursor-pointer hover:text-purple-700"
+            data-testid={`text-name-${item.product_id}`}
+          >
             {item.name}
           </h3>
         </Link>
-        <div className="flex flex-col gap-0.5">
-          <div className="flex items-baseline gap-1.5">
-            <span className="text-base font-bold text-primary" data-testid={`text-price-${item.product_id}`}>
-              {item.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-            </span>
-            {item.original_price && item.original_price > item.price && (
-              <span className="text-[10px] text-gray-400 line-through">
-                {item.original_price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-              </span>
-            )}
-          </div>
-          {item.skt && (
-            <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 w-fit">
-              S.K.T: {item.skt}
+
+        <div className="flex items-baseline gap-1.5">
+          <span className="text-base font-extrabold text-purple-700" data-testid={`text-price-${item.product_id}`}>
+            {item.price.toLocaleString("tr-TR")} TL
+          </span>
+          {oldPrice && (
+            <span className="text-[10px] text-gray-400 line-through">
+              {oldPrice.toLocaleString("tr-TR")} TL
             </span>
           )}
         </div>
-        {item.stock > 0 ? (
-          isLockedMain ? (
-            <div className="text-center text-[11px] font-semibold py-1.5 rounded-md flex items-center justify-center gap-1" style={{ backgroundColor: "#f5f5f5", color: "#9e9e9e" }} data-testid={`locked-${item.product_id}`}>
-              <Lock className="w-3 h-3" />
-              Başka ürün seçildi
-            </div>
-          ) : qty > 0 ? (
-            (isMain || isKediKumu) ? (
-              <div className="text-center text-[11px] font-semibold py-1.5 rounded-md" style={{ backgroundColor: "#f3e5f9", color: "#6B3480" }} data-testid={`qty-added-${item.product_id}`}>
-                Sepette ✓
-                <button
-                  className="ml-2 underline text-[10px]"
-                  onClick={() => updateQty(pid, -1)}
-                  data-testid={`btn-remove-${item.product_id}`}
-                >
-                  Çıkar
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center gap-0" data-testid={`qty-control-${item.product_id}`}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={() => updateQty(pid, -1)}
-                  data-testid={`btn-minus-${item.product_id}`}
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </Button>
-                <div className="flex items-center justify-center font-bold text-primary w-10 text-base">
-                  {qty}
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={() => { if (qty < maxQty) updateQty(pid, 1); }}
-                  disabled={qty >= maxQty}
-                  data-testid={`btn-plus-${item.product_id}`}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </Button>
-              </div>
-            )
-          ) : (
-            <Button
-              className="w-full h-8 text-xs font-bold"
-              style={{ backgroundColor: "#6B3480" }}
-              onClick={() => updateQty(pid, 1)}
-              data-testid={`btn-add-${item.product_id}`}
-            >
-              <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-              Sepete Ekle
-            </Button>
-          )
-        ) : item.preorder_enabled ? (
-          <Button
-            className="w-full h-8 text-xs font-bold"
-            style={{ backgroundColor: "#1565c0" }}
-            onClick={() => updateQty(pid, 1)}
-            data-testid={`btn-preorder-${item.product_id}`}
-          >
-            <Clock className="w-3.5 h-3.5 mr-1" />
-            Ön Sipariş
-          </Button>
-        ) : (
-          <div className="text-center text-[11px] font-semibold py-1.5 rounded-md" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>
-            Tükendi
+
+        {savings > 0 && (
+          <div className="inline-flex items-center justify-center gap-1 text-[9px] font-bold text-green-700 bg-green-50 px-1.5 py-0.5 rounded border border-green-200 self-start">
+            <Zap className="w-2.5 h-2.5" />
+            {savings.toLocaleString("tr-TR")} TL TASARRUF
           </div>
         )}
+
+        {item.skt && (
+          <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 w-fit">
+            S.K.T: {item.skt}
+          </span>
+        )}
+
+        <div className="mt-auto pt-1">
+          {item.stock > 0 ? (
+            isLockedMain ? (
+              <div className="text-center text-[10px] font-semibold py-1.5 rounded-md flex items-center justify-center gap-1 bg-gray-100 text-gray-500" data-testid={`locked-${item.product_id}`}>
+                <Lock className="w-3 h-3" />
+                Başka ürün seçildi
+              </div>
+            ) : qty > 0 ? (
+              isMain || isKediKumu(pid) === false ? (
+                <div className="flex items-center justify-center gap-0" data-testid={`qty-control-${item.product_id}`}>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-9 p-0"
+                    onClick={() => updateQty(pid, -1)}
+                    data-testid={`btn-minus-${item.product_id}`}
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </Button>
+                  <div className="flex items-center justify-center font-bold text-purple-700 w-10 text-base">
+                    {qty}
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-9 w-9 p-0"
+                    onClick={() => { if (qty < (isMain ? 1 : maxQty)) updateQty(pid, 1); }}
+                    disabled={qty >= (isMain ? 1 : maxQty)}
+                    data-testid={`btn-plus-${item.product_id}`}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="text-center text-[11px] font-semibold py-2 rounded-md bg-purple-50 text-purple-800" data-testid={`qty-added-${item.product_id}`}>
+                  Sepette ✓
+                  <button className="ml-2 underline text-[10px]" onClick={() => updateQty(pid, -1)} data-testid={`btn-remove-${item.product_id}`}>
+                    Çıkar
+                  </button>
+                </div>
+              )
+            ) : (
+              <Button
+                className="w-full h-9 text-xs font-bold bg-purple-600 hover:bg-purple-700 rounded-xl"
+                onClick={() => updateQty(pid, 1)}
+                data-testid={`btn-add-${item.product_id}`}
+              >
+                <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                Sepete Ekle
+              </Button>
+            )
+          ) : item.preorder_enabled ? (
+            <Button
+              className="w-full h-9 text-xs font-bold bg-blue-600 hover:bg-blue-700 rounded-xl"
+              onClick={() => updateQty(pid, 1)}
+              data-testid={`btn-preorder-${item.product_id}`}
+            >
+              <Clock className="w-3.5 h-3.5 mr-1" />
+              Ön Sipariş
+            </Button>
+          ) : (
+            <div className="text-center text-[11px] font-semibold py-2 rounded-md bg-orange-50 text-orange-700">
+              Tükendi
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -162,8 +222,14 @@ export default function CampaignPage() {
   const { data: items = [], isLoading } = useQuery<CampaignProduct[]>({
     queryKey: ["/api/campaign-items"],
   });
+  const { data: settings = {} } = useQuery<PublicSettings>({
+    queryKey: ["/api/public-settings"],
+  });
 
   const [animalFilter, setAnimalFilter] = useState<string>("all");
+
+  const heroTitle = settings.campaign_hero_title || "Kaçırılmaz Kampanyalar";
+  const heroSubtitle = settings.campaign_hero_subtitle || "Sınırlı stoklarla özel indirimler — kapıda nakit · 3 günde teslim";
 
   const mainItems = useMemo(() => {
     const mains = items.filter((i) => i.item_type === "main");
@@ -171,34 +237,44 @@ export default function CampaignPage() {
     return mains.filter((i) => i.animal === animalFilter);
   }, [items, animalFilter]);
 
-  const extraItems = useMemo(() => {
-    return items.filter((i) => i.item_type === "extra");
-  }, [items]);
-
   const availableAnimals = useMemo(() => {
-    const animals = new Set(items.filter(i => i.item_type === "main" && i.animal).map(i => i.animal!));
-    return animals;
+    return new Set(items.filter(i => i.item_type === "main" && i.animal).map(i => i.animal!));
   }, [items]);
 
   return (
-    <div className="min-h-screen flex flex-col bg-gray-50 pb-20 md:pb-0">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-purple-50 via-white to-white pb-20 md:pb-8">
       <SEO
         title="Kampanyalı Ürünler | JETGO Pet Shop Samsun"
         description="JETGO Pet Shop kampanyalı mama ve evcil hayvan ürünleri. Özel fiyatlarla kedi ve köpek mamaları."
         canonical={`${SITE_DOMAIN}/kampanya`}
       />
-      <main className="flex-1 max-w-lg mx-auto w-full px-3 py-4">
+
+      <main className="flex-1 max-w-7xl mx-auto w-full px-3 md:px-6 py-4">
+        {/* Hero */}
         <div
-          className="rounded-xl p-4 mb-4 text-center"
+          className="rounded-2xl p-5 md:p-6 mb-4 text-center shadow-lg"
           style={{ background: "linear-gradient(135deg, #6B3480 0%, #8e44ad 50%, #9b59b6 100%)" }}
           data-testid="campaign-hero"
         >
-          <div className="flex items-center justify-center gap-2">
-            <Tag className="w-6 h-6 text-white" />
-            <h1 className="text-xl font-extrabold text-white">Kampanyalı Ürünler</h1>
+          <Badge className="bg-yellow-400 text-yellow-900 font-extrabold mb-2 text-[11px]">
+            <Flame className="w-3 h-3 mr-1" />
+            ÖZEL KAMPANYA
+          </Badge>
+          <h1 className="text-xl md:text-3xl font-extrabold text-white mb-1.5" data-testid="text-hero-title">
+            {heroTitle}
+          </h1>
+          <p className="text-xs md:text-sm text-white/90" data-testid="text-hero-subtitle">{heroSubtitle}</p>
+
+          <CountdownStrip endDate={settings.campaign_end_date} />
+
+          <div className="flex flex-wrap justify-center gap-2 md:gap-3 mt-3 text-[10px] md:text-xs text-white">
+            <span className="inline-flex items-center gap-1 bg-white/20 rounded-full px-2.5 py-1"><Banknote className="w-3 h-3" /> Kapıda Nakit</span>
+            <span className="inline-flex items-center gap-1 bg-white/20 rounded-full px-2.5 py-1"><Truck className="w-3 h-3" /> 3 Gün Teslim</span>
+            <span className="inline-flex items-center gap-1 bg-white/20 rounded-full px-2.5 py-1"><ShieldCheck className="w-3 h-3" /> 1 Adet / Kişi</span>
           </div>
         </div>
 
+        {/* Animal filters */}
         <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar" data-testid="campaign-animal-filters">
           {ANIMAL_FILTERS.filter(f => f.id === "all" || availableAnimals.has(f.id)).map((f) => {
             const Icon = f.icon;
@@ -209,11 +285,8 @@ export default function CampaignPage() {
                 type="button"
                 onClick={() => setAnimalFilter(f.id)}
                 className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-bold whitespace-nowrap transition-colors ${
-                  isActive
-                    ? "text-white shadow-md"
-                    : "bg-white text-gray-600 border border-gray-200 hover:border-purple-300 hover:text-purple-700"
+                  isActive ? "bg-purple-700 text-white shadow-md" : "bg-white text-gray-600 border border-gray-200 hover:border-purple-300 hover:text-purple-700"
                 }`}
-                style={isActive ? { backgroundColor: "#6B3480" } : undefined}
                 data-testid={`btn-filter-${f.id}`}
               >
                 <Icon className="w-4 h-4" />
@@ -223,40 +296,19 @@ export default function CampaignPage() {
           })}
         </div>
 
+        {/* Grid */}
         {isLoading ? (
-          <div className="grid grid-cols-2 gap-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white rounded-xl p-3 animate-pulse">
-                <div className="aspect-square bg-gray-200 rounded-lg mb-2" />
-                <div className="h-3 bg-gray-200 rounded mb-1" />
-                <div className="h-3 bg-gray-200 rounded w-2/3" />
-              </div>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div key={i} className="aspect-[3/4] bg-gray-100 rounded-2xl animate-pulse" />
             ))}
           </div>
+        ) : mainItems.length === 0 ? (
+          <div className="text-center py-12 text-gray-400 text-sm">Bu kategoride kampanyalı ürün bulunmuyor.</div>
         ) : (
-          <>
-            {mainItems.length > 0 && (
-              <section className="mb-6" data-testid="section-main-products">
-                <h2 className="text-sm font-bold text-gray-700 mb-3 flex items-center gap-1.5">
-                  <Tag className="w-4 h-4" style={{ color: "#ff6f00" }} />
-                  Kampanya Ürünleri
-                  <span className="text-xs font-normal text-muted-foreground">({mainItems.length})</span>
-                </h2>
-                <div className="grid grid-cols-2 gap-3">
-                  {mainItems.map((item) => (
-                    <CampaignProductCard key={item.id} item={item} />
-                  ))}
-                </div>
-              </section>
-            )}
-
-
-            {mainItems.length === 0 && (
-              <div className="text-center py-8 text-gray-400 text-sm">
-                Bu kategoride kampanyalı ürün bulunmuyor.
-              </div>
-            )}
-          </>
+          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2 md:gap-3" data-testid="grid-campaign-products">
+            {mainItems.map((item) => <CampaignProductCard key={item.id} item={item} />)}
+          </div>
         )}
       </main>
     </div>
