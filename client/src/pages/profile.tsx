@@ -454,7 +454,7 @@ function OrdersSection() {
                   </div>
                   <div className="text-xs"><span className="text-muted-foreground">Teslimat Zamanı:</span> <span className="font-medium">
                     {order.isCampaign
-                      ? "3 gün içinde (ortalama)"
+                      ? "min. 3 gün içinde"
                       : (order.deliverySlot
                           ? (({
                               hemen: "Gün içinde",
