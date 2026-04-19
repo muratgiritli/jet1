@@ -2027,8 +2027,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 mb-4 flex-wrap">
-            <Search className="w-4 h-4 text-muted-foreground" />
+          <div className="flex items-center gap-2 mb-3">
+            <Search className="w-4 h-4 text-muted-foreground shrink-0" />
             <Input
               placeholder="Telefon ile ara..."
               value={orderSearchPhone}
@@ -2041,26 +2041,27 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <X className="w-4 h-4" />
               </button>
             )}
-            <div className="flex items-center gap-1 ml-2">
-              {([
-                { key: "all", label: "Tümü" },
-                { key: "campaign", label: "Kampanya" },
-                { key: "normal", label: "Normal" },
-              ] as const).map((opt) => (
-                <button
-                  key={opt.key}
-                  onClick={() => setOrderTypeFilter(opt.key)}
-                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
-                    orderTypeFilter === opt.key
-                      ? "bg-primary text-primary-foreground border-primary"
-                      : "bg-background text-muted-foreground border-border hover:bg-muted"
-                  }`}
-                  data-testid={`btn-order-type-${opt.key}`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
+          </div>
+          <div className="flex items-center gap-2 mb-4 flex-wrap overflow-x-auto">
+            <span className="text-xs text-muted-foreground shrink-0">Tip:</span>
+            {([
+              { key: "all", label: "Tümü" },
+              { key: "campaign", label: "Kampanya" },
+              { key: "normal", label: "Normal" },
+            ] as const).map((opt) => (
+              <button
+                key={opt.key}
+                onClick={() => setOrderTypeFilter(opt.key)}
+                className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                  orderTypeFilter === opt.key
+                    ? "bg-primary text-primary-foreground border-primary"
+                    : "bg-background text-muted-foreground border-border hover:bg-muted"
+                }`}
+                data-testid={`btn-order-type-${opt.key}`}
+              >
+                {opt.label}
+              </button>
+            ))}
           </div>
 
           {ordersLoading ? (
