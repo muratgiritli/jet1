@@ -1603,7 +1603,15 @@ export async function registerRoutes(
 
   app.get("/api/admin/orders", requireAdmin, async (_req, res) => {
     const allOrders = await storage.getAllOrders();
-    res.json(allOrders);
+    const campaignRows = await sharedPool.query("SELECT product_id FROM campaign_items WHERE is_active = true");
+    const campaignProductIds = new Set<number>(campaignRows.rows.map((r: any) => r.product_id));
+    const enriched = allOrders.map(o => {
+      const items = Array.isArray(o.items) ? (o.items as any[]) : [];
+      const isCampaign = (o as any).isCampaign === true
+        || (items.length > 0 && items.some((it: any) => campaignProductIds.has(Number(it.productId))));
+      return { ...o, isCampaign };
+    });
+    res.json(enriched);
   });
 
   app.patch("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
