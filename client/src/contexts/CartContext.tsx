@@ -313,8 +313,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     let extraCount = 0;
     let mainInCart: string | null = null;
     for (const { product, qty } of selectedProducts) {
-      if (!campaignCartIds.has(product.id)) continue;
       const type = campaignSet.get(product.id);
+      if (!type) continue;
       if (type === "main") {
         mainCount += qty;
         mainInCart = product.id;
