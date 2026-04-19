@@ -316,24 +316,6 @@ export default function CampaignProductDemoPage() {
         </div>
       </div>
 
-      {/* Sticky alt bar (mobil) */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-2xl p-3 md:hidden z-30">
-        <div className="flex items-center gap-3">
-          <div>
-            <div className="text-lg font-extrabold text-purple-700">{product.price.toLocaleString("tr-TR")} TL</div>
-            <div className="text-[10px] text-gray-500 line-through">{oldPrice.toLocaleString("tr-TR")} TL</div>
-          </div>
-          <Button
-            onClick={() => setShowCart(true)}
-            className="flex-1 h-12 bg-purple-600 hover:bg-purple-700 text-white font-extrabold rounded-xl"
-            data-testid="btn-add-cart-mobile"
-          >
-            <Banknote className="w-4 h-4 mr-1.5" />
-            Sepete Ekle (Nakit)
-          </Button>
-        </div>
-      </div>
-
       <CartCashDialog open={showCart} onOpenChange={setShowCart} product={product} />
     </div>
   );
