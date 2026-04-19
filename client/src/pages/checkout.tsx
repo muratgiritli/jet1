@@ -640,6 +640,19 @@ export default function Checkout() {
                 title="PayTR Ödeme"
               />
             </div>
+            <div className="p-3 border-t bg-gray-50 text-center">
+              <p className="text-xs text-gray-600 mb-2">Ödeme sayfası açılmıyor mu?</p>
+              <a
+                href={`https://www.paytr.com/odeme/guvenli/${paytrToken}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
+                data-testid="link-paytr-newtab"
+              >
+                Yeni sekmede güvenli ödeme sayfasını aç
+              </a>
+              <p className="text-[10px] text-gray-500 mt-2">Ödemeyi tamamladıktan sonra bu sayfaya geri dönün — sipariş durumu otomatik güncellenecek.</p>
+            </div>
           </div>
         </div>
       )}
