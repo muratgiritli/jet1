@@ -1444,7 +1444,7 @@ export default function Checkout() {
                     )}
                   </div>
 
-                  {paymentDiscountAmount > 0 && (
+                  {!hasCampaignItems && paymentDiscountAmount > 0 && (
                     <div className="flex justify-between gap-3 flex-wrap mt-2">
                       <span className="text-muted-foreground flex items-center gap-1">💰 Nakit Ödeme İndirimi (%10)</span>
                       <span className="font-medium text-green-700" data-testid="text-payment-discount">
