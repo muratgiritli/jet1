@@ -1555,7 +1555,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       )}
 
       <div className="border-b bg-background/95 backdrop-blur sticky top-[49px] sm:top-[57px] z-[9998]">
-        <div className="max-w-5xl mx-auto px-2 sm:px-4 py-1.5 sm:py-2 flex gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar" style={{ WebkitOverflowScrolling: "touch" }}>
+        <div className="max-w-5xl mx-auto px-2 sm:px-4 py-1.5 sm:py-2 grid grid-cols-4 sm:grid-cols-8 gap-1 sm:gap-1.5">
           {[
             { key: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-3.5 h-3.5" /> },
             { key: "yonetim", label: "Yönetim", icon: <Package className="w-3.5 h-3.5" /> },
