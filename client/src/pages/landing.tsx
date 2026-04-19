@@ -621,6 +621,9 @@ export default function Landing() {
             <p className="text-white font-extrabold text-base md:text-xl tracking-tight">
               Sen iste{" "}<span className="text-yellow-300">jet</span>{" "}<span className="whitespace-nowrap">ile kapına gelsin!</span>
             </p>
+            <p className="text-yellow-200 text-xs md:text-base mt-1 font-bold tracking-wide">
+              📍 Samsun · Atakum bölgesine özel hızlı teslimat
+            </p>
             <p className="text-white/80 text-[11px] md:text-sm mt-1 font-medium">
               Haftanın 7 günü saat 11.00-19.00 arası adrese teslimat yapılır
             </p>
