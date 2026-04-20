@@ -1429,14 +1429,6 @@ export default function Checkout() {
                     )}
                   </div>
 
-                  {!hasCampaignItems && paymentDiscountAmount > 0 && (
-                    <div className="flex justify-between gap-3 flex-wrap mt-2">
-                      <span className="text-muted-foreground flex items-center gap-1">💰 Nakit Ödeme İndirimi (%10)</span>
-                      <span className="font-medium text-green-700" data-testid="text-payment-discount">
-                        -{paymentDiscountAmount.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                      </span>
-                    </div>
-                  )}
 
                   <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t flex-wrap">
                     <span className="text-lg font-bold">Genel Toplam</span>
