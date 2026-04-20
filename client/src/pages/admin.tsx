@@ -1388,9 +1388,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       if (campaignPrice !== undefined) body.campaignPrice = campaignPrice;
       await apiRequest("PATCH", `/api/admin/campaign-items/${id}`, body);
     },
-    onSuccess: () => {
+    onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
       queryClient.invalidateQueries({ queryKey: ["/api/admin/campaign-items"] });
+      if (vars.campaignPrice !== undefined) {
+        toast({ title: vars.campaignPrice ? `Kampanya fiyatı kaydedildi: ${vars.campaignPrice} TL` : "Kampanya fiyatı kaldırıldı" });
+      }
+    },
+    onError: (err: any) => {
+      toast({ title: "Kaydedilemedi", description: err?.message || "Hata", variant: "destructive" });
     },
   });
 
@@ -1698,15 +1704,29 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 step="0.01"
                                 placeholder="Fiyat"
                                 defaultValue={mainItem.campaign_price || ""}
-                                className="w-20 h-6 text-xs border rounded px-1.5 text-purple-700 font-bold focus:ring-1 focus:ring-purple-400 outline-none"
+                                className="w-24 h-7 text-xs border-2 border-purple-300 rounded px-1.5 text-purple-700 font-bold focus:ring-1 focus:ring-purple-400 outline-none"
                                 data-testid={`input-campaign-price-${mainItem.id}`}
-                                onBlur={(e) => {
-                                  const val = e.target.value;
-                                  toggleCampaignItemMutation.mutate({ id: mainItem.id, campaignPrice: val === "" ? null : val });
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") {
+                                    const val = (e.target as HTMLInputElement).value;
+                                    toggleCampaignItemMutation.mutate({ id: mainItem.id, campaignPrice: val === "" ? null : val });
+                                  }
                                 }}
-                                onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); }}
                               />
                               <span className="text-xs text-purple-600 font-bold">TL</span>
+                              <button
+                                type="button"
+                                className="ml-1 px-2 h-7 rounded bg-purple-600 hover:bg-purple-700 text-white text-[11px] font-bold disabled:opacity-50"
+                                data-testid={`btn-save-campaign-price-${mainItem.id}`}
+                                disabled={toggleCampaignItemMutation.isPending}
+                                onClick={() => {
+                                  const inp = document.querySelector<HTMLInputElement>(`[data-testid="input-campaign-price-${mainItem.id}"]`);
+                                  const val = inp?.value ?? "";
+                                  toggleCampaignItemMutation.mutate({ id: mainItem.id, campaignPrice: val === "" ? null : val });
+                                }}
+                              >
+                                Kaydet
+                              </button>
                             </div>
                             {mainItem.stock <= 0 && (
                               <span className="text-[10px] font-bold text-red-600 bg-red-50 px-1.5 py-0.5 rounded">STOK YOK</span>
