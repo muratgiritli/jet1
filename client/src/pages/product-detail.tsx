@@ -462,9 +462,13 @@ export default function ProductDetailPage() {
               </h1>
 
               {category && (
-                <p className="text-sm text-muted-foreground" data-testid="text-brand-name">
+                <Link
+                  href={`/siparis/${category.animal}/${category.subcategory}/${category.brandSlug}`}
+                  className="text-sm text-primary hover:underline w-fit"
+                  data-testid="link-brand-category"
+                >
                   {category.brandName}
-                </p>
+                </Link>
               )}
 
 
