@@ -1099,7 +1099,7 @@ export default function Checkout() {
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        Kampanya siparislerinde sadece kapida nakit odeme gecerlidir.
+                        Bu ürün ücreti teslim sırasında sizden nakit alınacaktır.
                       </p>
                     </div>
                   ) : (
