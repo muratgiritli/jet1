@@ -968,12 +968,6 @@ export default function Checkout() {
                             <p className="hidden md:block text-xs text-muted-foreground" data-testid={`text-checkout-unit-${product.id}`}>
                               {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL / adet
                             </p>
-                            {isPreorderProduct(String(product.id)) && (
-                              <span className="hidden md:inline-flex items-center gap-1 mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }} data-testid={`badge-preorder-${product.id}`}>
-                                <Clock className="w-2.5 h-2.5" />
-                                Ön Sipariş — ~3 gün teslimat
-                              </span>
-                            )}
                           </div>
                           <div className="flex items-center gap-1">
                             <Button
