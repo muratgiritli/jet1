@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductImage from "@/components/ProductImage";
-import ImageLightbox from "@/components/ImageLightbox";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,6 +15,7 @@ import {
 } from "lucide-react";
 import {
   CATEGORIES,
+  productUrl,
   type Product,
 } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
@@ -92,20 +92,16 @@ function ProductCard({
   onUpdate: (id: string, delta: number) => void;
 }) {
   const isActive = quantity > 0;
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   return (
     <Card
       className={`transition-all duration-200 ${isActive ? "ring-2 ring-inset ring-primary" : ""}`}
       data-testid={`card-product-${product.id}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
-          <div
+          <Link
+            href={productUrl(product.id, product.name)}
             className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 cursor-pointer"
             data-testid={`img-container-${product.id}`}
-            role="button"
-            tabIndex={0}
-            onClick={() => product.img && setLightboxOpen(true)}
-            onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && product.img) { e.preventDefault(); setLightboxOpen(true); } }}
           >
             <ProductImage
               src={product.img}
@@ -114,10 +110,14 @@ function ProductCard({
               loading="lazy"
               data-testid={`img-product-${product.id}`}
             />
-          </div>
-        <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${product.id}`}>
+          </Link>
+        <Link
+          href={productUrl(product.id, product.name)}
+          className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem] hover:underline"
+          data-testid={`text-name-${product.id}`}
+        >
           {product.name}
-        </p>
+        </Link>
         <div className="flex flex-col items-center gap-0.5">
           <div className="flex items-center gap-1 flex-wrap justify-center">
             <span className="text-sm font-bold text-foreground" data-testid={`text-price-${product.id}`}>
@@ -140,9 +140,6 @@ function ProductCard({
           quantity={quantity}
           onUpdate={onUpdate}
         />
-        {lightboxOpen && product.img && (
-          <ImageLightbox src={product.img} alt={product.name} onClose={() => setLightboxOpen(false)} />
-        )}
       </CardContent>
     </Card>
   );
