@@ -221,6 +221,9 @@ const ANIMAL_FILTERS = [
 export default function CampaignPage() {
   const { data: items = [], isLoading } = useQuery<CampaignProduct[]>({
     queryKey: ["/api/campaign-items"],
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
   });
   const { data: settings = {} } = useQuery<PublicSettings>({
     queryKey: ["/api/public-settings"],
