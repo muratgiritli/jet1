@@ -1314,7 +1314,7 @@ export default function Checkout() {
                           type="text"
                           value={couponCode}
                           onChange={(e) => setCouponCode(e.target.value.toUpperCase())}
-                          placeholder="Kupon kodunuzu girin"
+                          placeholder="Eğer var ise kupon kodunuzu giriniz"
                           maxLength={50}
                           className="flex-1 px-3 py-2 text-sm border rounded-lg outline-none focus:border-primary"
                           data-testid="input-coupon-code"
