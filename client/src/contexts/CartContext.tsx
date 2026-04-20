@@ -280,7 +280,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
 
     const pay = PAYMENT_OPTIONS.find((p) => p.id === paymentId)!;
-    const disc = sub * pay.disc;
+    const discRate = pay.disc < 0 ? Math.abs(pay.disc) : 0;
+    const disc = sub * discRate;
     const afterDisc = sub - disc;
     const ship = afterDisc >= CONFIG.shipLimit ? 0 : CONFIG.shipFee;
     const total = afterDisc + ship;
