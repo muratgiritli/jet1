@@ -474,8 +474,8 @@ export default function Checkout() {
         img: product.img || undefined,
       }));
 
-      const payMethod = (hasCampaignItems || isMobile) ? "Kapıda Nakit" : pay.name;
-      const payDiscRate = !(hasCampaignItems || isMobile) && pay.disc < 0 ? Math.abs(pay.disc) : 0;
+      const payMethod = hasCampaignItems ? "Kapıda Nakit" : pay.name;
+      const payDiscRate = !hasCampaignItems && pay.disc < 0 ? Math.abs(pay.disc) : 0;
       const payDiscAmount = Math.round(effectiveGrandTotal * payDiscRate);
       const totalAfterPayDisc = Math.max(0, effectiveGrandTotal - payDiscAmount);
       const pointsUsed = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, totalAfterPayDisc) : 0;
@@ -1088,7 +1088,7 @@ export default function Checkout() {
               </h2>
               <Card>
                 <CardContent className="p-4">
-                  {hasCampaignItems || isMobile ? (
+                  {hasCampaignItems ? (
                     <div className="p-3 rounded-md bg-accent" data-testid="campaign-payment-only">
                       <div className="flex items-center gap-3">
                         <Banknote className="w-4 h-4 text-muted-foreground shrink-0" />
@@ -1099,9 +1099,7 @@ export default function Checkout() {
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground mt-2">
-                        {hasCampaignItems
-                          ? "Kampanya siparislerinde sadece kapida nakit odeme gecerlidir."
-                          : "Mobil siparişlerde kapıda nakit ödeme geçerlidir."}
+                        Kampanya siparislerinde sadece kapida nakit odeme gecerlidir.
                       </p>
                     </div>
                   ) : (
