@@ -13,7 +13,6 @@ import FavoriteButton from "@/components/FavoriteButton";
 import { ProductGridSkeleton } from "@/components/ProductSkeleton";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import ProductImage from "@/components/ProductImage";
-import ImageLightbox from "@/components/ImageLightbox";
 
 interface SubcategoryInfo {
   name: string;
@@ -118,7 +117,6 @@ function BrandProductCard({
   showDetailLink?: boolean;
 }) {
   const isActive = quantity > 0;
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
@@ -130,69 +128,35 @@ function BrandProductCard({
       data-testid={`card-product-${pid}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
-        {showDetailLink ? (
-          <Link href={productUrl(product.id, product.name)} className="w-full flex flex-col items-center gap-2">
-              <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative" data-testid={`img-container-${pid}`}>
-                <ProductImage
-                  src={product.img}
-                  alt={product.name}
-                  className="w-full h-full object-contain"
-                  loading="lazy"
-                  data-testid={`img-product-${pid}`}
-                />
-                {discount > 0 && (
-                  <Badge
-                    className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
-                    style={{ backgroundColor: "#e53935", color: "#fff" }}
-                    data-testid={`badge-discount-${pid}`}
-                  >
-                    %{discount}
-                  </Badge>
-                )}
-                <FavoriteButton
-                  product={{ id: pid, name: product.name, price: product.price, img: product.img || null }}
-                  className="absolute bottom-1 right-1 shadow-sm"
-                />
-              </div>
-            <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${pid}`}>
-              {product.name}
-            </p>
-          </Link>
-        ) : (
-          <>
-              <div
-                className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative cursor-pointer"
-                data-testid={`img-container-${pid}`}
-                role="button"
-                tabIndex={0}
-                onClick={() => product.img && setLightboxOpen(true)}
-                onKeyDown={(e) => { if ((e.key === "Enter" || e.key === " ") && product.img) { e.preventDefault(); setLightboxOpen(true); } }}
+        <Link href={productUrl(product.id, product.name)} className="w-full flex flex-col items-center gap-2">
+          <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative" data-testid={`img-container-${pid}`}>
+            <ProductImage
+              src={product.img}
+              alt={product.name}
+              className="w-full h-full object-contain"
+              loading="lazy"
+              data-testid={`img-product-${pid}`}
+            />
+            {discount > 0 && (
+              <Badge
+                className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
+                style={{ backgroundColor: "#e53935", color: "#fff" }}
+                data-testid={`badge-discount-${pid}`}
               >
-                <ProductImage
-                  src={product.img}
-                  alt={product.name}
-                  className="w-full h-full object-contain"
-                  loading="lazy"
-                  data-testid={`img-product-${pid}`}
-                />
-                {discount > 0 && (
-                  <Badge
-                    className="absolute top-1 right-1 text-[10px] no-default-hover-elevate no-default-active-elevate"
-                    style={{ backgroundColor: "#e53935", color: "#fff" }}
-                    data-testid={`badge-discount-${pid}`}
-                  >
-                    %{discount}
-                  </Badge>
-                )}
-              </div>
-            <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${pid}`}>
-              {product.name}
-            </p>
-            {lightboxOpen && product.img && (
-              <ImageLightbox src={product.img} alt={product.name} onClose={() => setLightboxOpen(false)} />
+                %{discount}
+              </Badge>
             )}
-          </>
-        )}
+            <div onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}>
+              <FavoriteButton
+                product={{ id: pid, name: product.name, price: product.price, img: product.img || null }}
+                className="absolute bottom-1 right-1 shadow-sm"
+              />
+            </div>
+          </div>
+          <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem] hover:underline" data-testid={`text-name-${pid}`}>
+            {product.name}
+          </p>
+        </Link>
         <div className="flex flex-col items-center gap-0.5">
           {product.originalPrice && product.originalPrice > product.price && (
             <span className="text-[11px] text-muted-foreground line-through" data-testid={`text-original-price-${pid}`}>
@@ -253,7 +217,6 @@ function InlineSubcategoryProductCard({
   showDetailLink?: boolean;
 }) {
   const isActive = quantity > 0;
-  const [lightboxOpen, setLightboxOpen] = useState(false);
   const discount = product.originalPrice && product.originalPrice > product.price
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
@@ -264,13 +227,8 @@ function InlineSubcategoryProductCard({
       data-testid={`card-inline-product-${product.id}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
-          <div
-            className={`w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative ${!showDetailLink ? "cursor-pointer" : ""}`}
-            role={!showDetailLink ? "button" : undefined}
-            tabIndex={!showDetailLink ? 0 : undefined}
-            onClick={!showDetailLink ? () => product.img && setLightboxOpen(true) : undefined}
-            onKeyDown={!showDetailLink ? (e) => { if ((e.key === "Enter" || e.key === " ") && product.img) { e.preventDefault(); setLightboxOpen(true); } } : undefined}
-          >
+        <Link href={productUrl(product.id, product.name)} className="w-full flex flex-col items-center gap-2">
+          <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
             <ProductImage
               src={product.img}
               alt={product.name}
@@ -294,9 +252,10 @@ function InlineSubcategoryProductCard({
               </Badge>
             )}
           </div>
-        <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]">
-          {product.name}
-        </p>
+          <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem] hover:underline">
+            {product.name}
+          </p>
+        </Link>
         <div className="flex flex-col items-center gap-0.5">
           {product.originalPrice && product.originalPrice > product.price && (
             <span className="text-[11px] text-muted-foreground line-through">
@@ -320,9 +279,6 @@ function InlineSubcategoryProductCard({
             quantity={quantity}
             onUpdate={onUpdate}
           />
-        )}
-        {lightboxOpen && product.img && (
-          <ImageLightbox src={product.img} alt={product.name} onClose={() => setLightboxOpen(false)} />
         )}
       </CardContent>
     </Card>
