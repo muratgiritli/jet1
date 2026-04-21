@@ -361,6 +361,24 @@ export default function Checkout() {
   const stdShipping = subtotal >= CONFIG.shipLimit ? 0 : CONFIG.shipFee;
   const stdMinReached = subtotal >= CONFIG.minLimit;
 
+  const dominantAnimal = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const { product, qty } of selectedProducts) {
+      const a = product.animal;
+      if (!a) continue;
+      counts[a] = (counts[a] || 0) + qty;
+    }
+    let best: string | null = null;
+    let bestN = 0;
+    for (const [a, n] of Object.entries(counts)) {
+      if (n > bestN) { best = a; bestN = n; }
+    }
+    return best;
+  }, [selectedProducts]);
+  const animalLabels: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", akvaryum: "Akvaryum", kemirgen: "Kemirgen" };
+  const categoryHref = dominantAnimal ? `/kategori/${dominantAnimal}` : "/";
+  const categoryLabel = dominantAnimal ? `${animalLabels[dominantAnimal] || dominantAnimal} Kategorisine Git` : "Markete Git";
+
   const CAMPAIGN_SHIP_LIMIT = 4000;
   const campaignShipping = hasCampaignItems ? (subtotal >= CAMPAIGN_SHIP_LIMIT ? 0 : CONFIG.shipFee) : stdShipping;
   const campaignDiscount = hasCampaignItems ? 0 : discount;
@@ -1339,10 +1357,39 @@ export default function Checkout() {
                     <p className="text-[12px] text-red-500 text-center mt-2">{orderError}</p>
                   )}
 
-                  {!effectiveMinReached && selectedProducts.length > 0 && (
-                    <p className="text-xs text-center mt-2 text-muted-foreground" data-testid="text-min-warning">
-                      Minimum sipariş tutarı {CONFIG.minLimit} TL'dir
-                    </p>
+                  {!effectiveMinReached && selectedProducts.length > 0 && !hasCampaignItems && (
+                    <div
+                      className="mt-3 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4"
+                      data-testid="alert-min-order"
+                      role="alert"
+                    >
+                      <div className="flex items-start gap-3">
+                        <div className="shrink-0 w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
+                          <Package className="w-4 h-4 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-amber-900 dark:text-amber-200" data-testid="text-min-warning-title">
+                            Minimum Sipariş: {CONFIG.minLimit} TL
+                          </p>
+                          <p className="text-xs text-amber-800/90 dark:text-amber-200/90 mt-1 leading-relaxed" data-testid="text-min-warning-msg">
+                            JETGO için minimum sipariş tutarı <strong>{CONFIG.minLimit} TL</strong>'dir. Sepetinize{" "}
+                            <strong className="text-amber-700 dark:text-amber-300">
+                              {(CONFIG.minLimit - subtotal).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                            </strong>{" "}
+                            değerinde ürün daha eklemeniz gerekmektedir.
+                          </p>
+                          <Link href={categoryHref}>
+                            <a
+                              className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:underline"
+                              data-testid="link-min-warning-category"
+                            >
+                              {categoryLabel}
+                              <ArrowRight className="w-3.5 h-3.5" />
+                            </a>
+                          </Link>
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   {!hasCampaignItems && (

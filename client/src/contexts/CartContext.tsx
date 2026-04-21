@@ -13,6 +13,7 @@ interface CartProduct {
   img?: string | null;
   skt?: string | null;
   originalPrice?: number | null;
+  animal?: string | null;
 }
 
 type BasketItems = Record<string, number>;
@@ -171,6 +172,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         img: p.img,
         skt: p.skt,
         originalPrice: cp ? p.price : p.originalPrice,
+        animal: (p as any).animal ?? null,
       };
     });
   }, [dbProducts, campaignPriceMap, campaignCartIds]);
