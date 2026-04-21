@@ -1,27 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ShoppingCart, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useCart } from "@/contexts/CartContext";
+import { CONFIG } from "@/lib/data";
 
 export default function FloatingCartBar() {
   const { itemCount, subtotal } = useCart();
   const [location, setLocation] = useLocation();
-  const [showWarning] = useState(false);
-  const needsExtra = false;
-  const handleCampaignBlock = (_e: React.MouseEvent) => {};
+  const [showMinWarning, setShowMinWarning] = useState(false);
 
-  const goToCart = () => {
+  const remaining = Math.max(0, CONFIG.minLimit - subtotal);
+  const minReached = remaining <= 0;
+
+  useEffect(() => {
+    if (!showMinWarning) return;
+    const t = setTimeout(() => setShowMinWarning(false), 4000);
+    return () => clearTimeout(t);
+  }, [showMinWarning]);
+
+  useEffect(() => {
+    if (minReached) setShowMinWarning(false);
+  }, [minReached]);
+
+  const handleGoToCart = () => {
+    if (!minReached) {
+      setShowMinWarning(true);
+      return;
+    }
     setLocation("/odeme");
   };
+
+  const minWarningText = `Minimum sipariş tutarı ${CONFIG.minLimit} TL'dir. Sepete ${remaining.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL daha ürün eklemeniz gerekir.`;
 
   return (
     <AnimatePresence>
       {itemCount > 0 && location !== "/odeme" && (
         <>
           <AnimatePresence>
-            {showWarning && (
+            {showMinWarning && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -31,17 +49,17 @@ export default function FloatingCartBar() {
               >
                 <div
                   className="rounded-xl px-4 py-3 text-center text-sm font-bold shadow-lg"
-                  style={{ backgroundColor: "#ffebee", border: "2px solid #ef5350", color: "#c62828" }}
-                  data-testid="text-float-campaign-warning"
+                  style={{ backgroundColor: "#fff7ed", border: "2px solid #f59e0b", color: "#92400e" }}
+                  data-testid="text-float-min-warning"
                 >
                   <AlertTriangle className="w-4 h-4 inline-block mr-1 -mt-0.5" />
-                  Kampanyadan yararlanmak için en az yukarıdaki seçeneklerden bir ürün eklemeniz gerekmektedir!
+                  {minWarningText}
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
           <AnimatePresence>
-            {showWarning && (
+            {showMinWarning && (
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -50,10 +68,11 @@ export default function FloatingCartBar() {
               >
                 <div
                   className="max-w-lg mx-auto rounded-xl px-4 py-3 text-center text-sm font-bold shadow-lg"
-                  style={{ backgroundColor: "#ffebee", border: "2px solid #ef5350", color: "#c62828" }}
+                  style={{ backgroundColor: "#fff7ed", border: "2px solid #f59e0b", color: "#92400e" }}
+                  data-testid="text-float-min-warning-desktop"
                 >
                   <AlertTriangle className="w-4 h-4 inline-block mr-1 -mt-0.5" />
-                  Kampanyadan yararlanmak için en az yukarıdaki seçeneklerden bir ürün eklemeniz gerekmektedir!
+                  {minWarningText}
                 </div>
               </motion.div>
             )}
@@ -78,7 +97,7 @@ export default function FloatingCartBar() {
               <Button
                 variant="default"
                 size="sm"
-                onClick={needsExtra ? handleCampaignBlock : goToCart}
+                onClick={handleGoToCart}
                 data-testid="btn-float-go-cart"
               >
                 <ShoppingCart className="w-3.5 h-3.5 mr-1" />
@@ -105,7 +124,7 @@ export default function FloatingCartBar() {
               <Button
                 variant="default"
                 size="sm"
-                onClick={needsExtra ? handleCampaignBlock : goToCart}
+                onClick={handleGoToCart}
                 data-testid="btn-float-go-cart-desktop"
               >
                 <ShoppingCart className="w-3.5 h-3.5 mr-1" />

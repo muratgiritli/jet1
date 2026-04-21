@@ -69,7 +69,7 @@ export const SEO_PAGES: SeoPageData[] = [
         h2: "Samsun Petshop Fiyat ve Kampanya Avantajları",
         paragraphs: [
           "JETGO olarak Samsun petshop fiyatlarında en rekabetçi fiyat politikasını benimsiyoruz. Nakit ödemede ekstra avantajlı fiyat uyguluyoruz. Her siparişte kazandığınız %5 Para Puan ile bir sonraki alışverişinizde tasarruf sağlarsınız. Kampanya ürünlerimizi takip ederek özel fırsatları kaçırmayın.",
-          "Minimum sipariş tutarımız 700 TL'dir. 1.500 TL ve üzeri siparişlerde kargo ücretsizdir. Samsun petshop indirim ve kampanyalarını düzenli olarak güncelliyoruz. Üye olan müşterilerimize özel hoş geldin kuponu hediye ediyoruz.",
+          "Minimum sipariş tutarımız 500 TL'dir. 1.500 TL ve üzeri siparişlerde kargo ücretsizdir. Samsun petshop indirim ve kampanyalarını düzenli olarak güncelliyoruz. Üye olan müşterilerimize özel hoş geldin kuponu hediye ediyoruz.",
         ],
       },
     ],
@@ -91,7 +91,7 @@ export const SEO_PAGES: SeoPageData[] = [
     ],
     faq: [
       { q: "Samsun'da pet shop teslimat süresi ne kadar?", a: "Samsun merkez ilçelere (Atakum, İlkadım, Canik) aynı gün teslimat yapıyoruz. Siparişinizi sabah verirseniz akşama kadar elinizde olur. Ortalama teslimat süremiz 1-3 saattir." },
-      { q: "Samsun petshop minimum sipariş tutarı nedir?", a: "Minimum sipariş tutarımız 700 TL'dir. 1.500 TL ve üzeri siparişlerde kargo ücretsizdir." },
+      { q: "Samsun petshop minimum sipariş tutarı nedir?", a: "Minimum sipariş tutarımız 500 TL'dir. 1.500 TL ve üzeri siparişlerde kargo ücretsizdir." },
       { q: "Samsun petshop hangi ödeme yöntemlerini kabul ediyor?", a: "Kapıda nakit, kapıda kredi kartı (POS), banka havalesi/EFT ve QR ödeme seçeneklerimiz mevcuttur. Nakit ödemede ekstra avantajlı fiyat uyguluyoruz." },
     ],
     internalLinks: [
@@ -237,7 +237,7 @@ export const SEO_PAGES: SeoPageData[] = [
     ],
     faq: [
       { q: "Canik'e petshop teslimat süresi ne kadar?", a: "Canik ilçesine ortalama 1-3 saat içinde teslimat yapıyoruz. Aynı gün teslimat garantimiz geçerlidir." },
-      { q: "Canik'te minimum sipariş tutarı nedir?", a: "Minimum sipariş tutarımız 700 TL'dir. 1.500 TL üzeri siparişlerde kargo ücretsizdir." },
+      { q: "Canik'te minimum sipariş tutarı nedir?", a: "Minimum sipariş tutarımız 500 TL'dir. 1.500 TL üzeri siparişlerde kargo ücretsizdir." },
       { q: "Canik Karşıyaka'ya petshop teslimatı var mı?", a: "Evet, Karşıyaka dahil Canik'in tüm mahallelerine aynı gün teslimat yapıyoruz." },
     ],
     internalLinks: [
@@ -741,7 +741,7 @@ function generateMahallePage(m: MahalleConfig): SeoPageData {
     ],
     faq: [
       { q: `${m.name}'ye petshop teslimat süresi ne kadar?`, a: `${m.name} mahallesine ortalama 1-2 saat içinde teslimat yapıyoruz. ${m.district} merkezine yakınlığı sayesinde hızlı ulaşım sağlıyoruz. Aynı gün teslimat garantimiz geçerlidir.` },
-      { q: `${m.name}'de minimum sipariş tutarı nedir?`, a: `${m.name} mahallesi için minimum sipariş tutarı 700 TL'dir. 1.500 TL üzeri siparişlerde kargo ücretsizdir. Nakit ödemede ekstra avantajlı fiyat uygulanır.` },
+      { q: `${m.name}'de minimum sipariş tutarı nedir?`, a: `${m.name} mahallesi için minimum sipariş tutarı 500 TL'dir. 1.500 TL üzeri siparişlerde kargo ücretsizdir. Nakit ödemede ekstra avantajlı fiyat uygulanır.` },
       { q: `${m.name} yakınında açık petshop var mı?`, a: `JETGO, ${m.name} ve çevresindeki ${nearbyText} mahallelerine kapıya teslim petshop hizmeti sunmaktadır. Her gün 09:00-21:00 arası hizmet veriyoruz. Mağazaya gitmenize gerek yok!` },
     ],
     internalLinks: [
@@ -1191,7 +1191,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
         paragraphs: [
           "JETGO'da samsun petshop mama fiyat karşılaştırmasında nakit ödeme fiyatları piyasanın en uygun fiyatlarıdır. Samsun petshop kedi kumu fiyat karşılaştırmasında da uygun fiyat garantisi sunuyoruz. Atakum petshop mama fiyat ve atakum petshop kedi kumu fiyat aynı avantajlı fiyatlarla geçerlidir.",
           "Samsun petshop en ucuz mama seçenekleri olarak Reflex ve Pro Performance markaları kg başı en uygun fiyatlı mamalardır. Premium segmentte ise Royal Canin, Hill's ve N&D markaları piyasanın altında fiyatlarla sunulmaktadır.",
-          "Minimum sipariş tutarı 700 TL, 1.500 TL üzeri ücretsiz kargo. Nakit ödemede ekstra avantajlı fiyat. %5 Para Puan kazanımı. 100 TL hoş geldin kuponu yeni üyelere hediye.",
+          "Minimum sipariş tutarı 500 TL, 1.500 TL üzeri ücretsiz kargo. Nakit ödemede ekstra avantajlı fiyat. %5 Para Puan kazanımı. 100 TL hoş geldin kuponu yeni üyelere hediye.",
         ],
       },
     ],
