@@ -422,23 +422,18 @@ export default function Checkout() {
 
   const CAMPAIGN_SHIP_LIMIT = 4000;
   const campaignShipping = hasCampaignItems ? (subtotal >= CAMPAIGN_SHIP_LIMIT ? 0 : CONFIG.shipFee) : stdShipping;
-  const campaignDiscount = hasCampaignItems ? 0 : discount;
-  const normalGrandTotal = subtotal - discount + stdShipping;
+  const paymentDiscount = hasCampaignItems ? 0 : discount;
+  const normalGrandTotal = subtotal - paymentDiscount + stdShipping;
   const campaignGrandTotal = hasCampaignItems ? (subtotal + campaignShipping) : normalGrandTotal;
 
   const effectiveShipping = hasCampaignItems ? campaignShipping : stdShipping;
   const couponDiscountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
-  const effectiveDiscount = (hasCampaignItems ? campaignDiscount : discount) + couponDiscountAmount;
+  const effectiveDiscount = paymentDiscount + couponDiscountAmount;
   const effectiveGrandTotal = Math.max(0, (hasCampaignItems ? campaignGrandTotal : normalGrandTotal) - couponDiscountAmount);
   const effectiveMinReached = hasCampaignItems ? minReached : stdMinReached;
 
-  const selectedPay = PAYMENT_OPTIONS.find((p) => p.id === paymentId);
-  const paymentDiscountRate = !hasCampaignItems && selectedPay && selectedPay.disc < 0 ? Math.abs(selectedPay.disc) : 0;
-  const paymentDiscountAmount = Math.round(effectiveGrandTotal * paymentDiscountRate);
-  const totalAfterPaymentDisc = Math.max(0, effectiveGrandTotal - paymentDiscountAmount);
-
-  const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, totalAfterPaymentDisc) : 0;
-  const displayTotal = (pointsDiscount > 0 ? Math.max(0, totalAfterPaymentDisc - pointsDiscount) : totalAfterPaymentDisc) + donationAmount;
+  const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
+  const displayTotal = Math.max(0, effectiveGrandTotal - pointsDiscount) + donationAmount;
 
   const [autoApplyAttemptedSubtotal, setAutoApplyAttemptedSubtotal] = useState<number | null>(null);
 
@@ -529,17 +524,14 @@ export default function Checkout() {
       }));
 
       const payMethod = hasCampaignItems ? "Kapıda Nakit" : pay.name;
-      const payDiscRate = !hasCampaignItems && pay.disc < 0 ? Math.abs(pay.disc) : 0;
-      const payDiscAmount = Math.round(effectiveGrandTotal * payDiscRate);
-      const totalAfterPayDisc = Math.max(0, effectiveGrandTotal - payDiscAmount);
-      const pointsUsed = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, totalAfterPayDisc) : 0;
-      const finalTotal = (pointsUsed > 0 ? Math.max(0, totalAfterPayDisc - pointsUsed) : totalAfterPayDisc) + donationAmount;
+      const pointsUsed = pointsDiscount;
+      const finalTotal = displayTotal;
 
       const orderPayload: Record<string, unknown> = {
         items: orderItems,
         subtotal,
         shipping: effectiveShipping,
-        discount: hasCampaignItems ? 0 : discount,
+        discount: effectiveDiscount,
         grandTotal: finalTotal,
         paymentMethod: payMethod,
         customerName: customerName.trim(),
@@ -1454,8 +1446,19 @@ export default function Checkout() {
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between gap-3 flex-wrap">
                       <span className="text-muted-foreground">Ara Toplam</span>
-                      <span className="font-medium" data-testid="text-subtotal">{(subtotal - effectiveDiscount).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                      <span className="font-medium" data-testid="text-subtotal">{subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                     </div>
+                    {paymentDiscount > 0 && (
+                      <div className="flex justify-between gap-3 flex-wrap">
+                        <span className="text-muted-foreground flex items-center gap-1">
+                          <Gift className="w-3.5 h-3.5" style={{ color: "#2e7d32" }} />
+                          Kapıda Nakit İndirimi (%10)
+                        </span>
+                        <span className="font-medium" style={{ color: "#2e7d32" }} data-testid="text-payment-discount">
+                          -{paymentDiscount.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                        </span>
+                      </div>
+                    )}
                     {!hasCampaignItems && isLoggedIn && pointsBalance > 0 && (
                       <div className="flex justify-between items-center gap-3 flex-wrap">
                         <button
