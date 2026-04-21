@@ -927,7 +927,8 @@ export default function Checkout() {
                               {product.name}
                             </p>
                             <p className="hidden md:block text-xs text-muted-foreground" data-testid={`text-checkout-unit-${product.id}`}>
-                              {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL / adet
+                              {(product.price * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL / adet
+                              <span className="ml-1 text-[10px] text-emerald-700 font-semibold">(Kapıda Nakit fiyatı)</span>
                             </p>
                           </div>
                           <div className="flex items-center gap-1">
@@ -1076,29 +1077,6 @@ export default function Checkout() {
                             <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
                             <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
                               <span className="text-sm font-medium" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
-                              {opt.disc < 0 ? (
-                                <Badge
-                                  className="no-default-hover-elevate shrink-0 whitespace-nowrap bg-green-100 text-green-800 border border-green-300"
-                                  data-testid={`badge-payment-tag-${opt.id}`}
-                                >
-                                  {opt.tag}
-                                </Badge>
-                              ) : opt.id === "online" ? (
-                                <Badge
-                                  className="no-default-hover-elevate shrink-0 whitespace-nowrap bg-blue-100 text-blue-800 border border-blue-300"
-                                  data-testid={`badge-payment-tag-${opt.id}`}
-                                >
-                                  {opt.tag}
-                                </Badge>
-                              ) : (
-                                <Badge
-                                  variant="secondary"
-                                  className="no-default-hover-elevate shrink-0 whitespace-nowrap"
-                                  data-testid={`badge-payment-tag-${opt.id}`}
-                                >
-                                  {opt.tag}
-                                </Badge>
-                              )}
                             </div>
                             <span className="text-sm font-extrabold text-primary tabular-nums shrink-0" data-testid={`text-payment-price-${opt.id}`}>
                               {optTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
