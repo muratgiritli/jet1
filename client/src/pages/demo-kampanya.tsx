@@ -92,20 +92,42 @@ export default function DemoKampanya() {
         <ChevronRight className="w-6 h-6" />
       </button>
 
-      {/* DOTS */}
-      <div className="absolute bottom-2 left-0 right-0 z-20 flex items-center justify-center gap-1.5 px-4 overflow-x-auto no-scrollbar">
-        {CAMPAIGNS.map((c, i) => (
+      {/* BOTTOM NAV BAR — mobile prev/next + dots */}
+      <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 via-black/60 to-transparent pt-6 pb-3">
+        <div className="flex items-center gap-2 px-3">
           <button
-            key={c.id}
-            onClick={() => {
-              const el = scrollerRef.current;
-              if (!el) return;
-              el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
-            }}
-            className={`shrink-0 transition-all rounded-full ${i === activeIdx ? "w-6 h-1.5 bg-yellow-400" : "w-1.5 h-1.5 bg-white/50"}`}
-            data-testid={`dot-${c.id}`}
-          />
-        ))}
+            onClick={() => scrollBy(-1)}
+            disabled={activeIdx === 0}
+            className="shrink-0 flex items-center gap-1 bg-white/15 hover:bg-white/30 disabled:opacity-30 backdrop-blur-md text-white text-sm font-bold px-3 py-2.5 rounded-full border border-white/20"
+            data-testid="button-prev-mobile"
+          >
+            <ChevronLeft className="w-4 h-4" /> Önceki
+          </button>
+
+          <div className="flex-1 min-w-0 flex items-center justify-center gap-1.5 overflow-x-auto no-scrollbar">
+            {CAMPAIGNS.map((c, i) => (
+              <button
+                key={c.id}
+                onClick={() => {
+                  const el = scrollerRef.current;
+                  if (!el) return;
+                  el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
+                }}
+                className={`shrink-0 transition-all rounded-full ${i === activeIdx ? "w-6 h-1.5 bg-yellow-400" : "w-1.5 h-1.5 bg-white/50"}`}
+                data-testid={`dot-${c.id}`}
+              />
+            ))}
+          </div>
+
+          <button
+            onClick={() => scrollBy(1)}
+            disabled={activeIdx === CAMPAIGNS.length - 1}
+            className="shrink-0 flex items-center gap-1 bg-yellow-400 hover:bg-yellow-300 disabled:opacity-30 text-purple-900 text-sm font-extrabold px-3 py-2.5 rounded-full"
+            data-testid="button-next-mobile"
+          >
+            Sonraki <ChevronRight className="w-4 h-4" />
+          </button>
+        </div>
       </div>
     </div>
   );
