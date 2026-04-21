@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -349,6 +350,8 @@ export default function Checkout() {
 
   const [orderError, setOrderError] = useState("");
   const [orderNote, setOrderNote] = useState("");
+  const [contactlessDelivery, setContactlessDelivery] = useState(false);
+  const [doNotRing, setDoNotRing] = useState(false);
   const SLOT_TIMES = ["11:00-13:00", "12:00-14:00", "13:00-15:00", "14:00-16:00", "15:00-17:00", "16:00-18:00"];
   const TR_DAY_NAMES = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
   const TR_MONTH_NAMES = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
@@ -541,7 +544,14 @@ export default function Checkout() {
         usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
         couponCode: appliedCoupon ? appliedCoupon.code : undefined,
         donationAmount: donationAmount > 0 ? donationAmount : undefined,
-        customerNote: orderNote.trim() || undefined,
+        customerNote: ((): string | undefined => {
+          const flags: string[] = [];
+          if (contactlessDelivery) flags.push("Temassız Teslimat");
+          if (doNotRing) flags.push("Zile Basma");
+          const flagText = flags.length ? `[${flags.join(" • ")}]` : "";
+          const combined = [flagText, orderNote.trim()].filter(Boolean).join(" ");
+          return combined || undefined;
+        })(),
         deliverySlot: deliverySlot || undefined,
         campaignProductIds: hasCampaignItems ? Array.from(campaignCartIds) : undefined,
       };
@@ -1167,6 +1177,38 @@ export default function Checkout() {
                 </Card>
               </section>
             )}
+
+            <section className="mt-6">
+              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-delivery-options">
+                Teslimat Seçenekleri
+              </h2>
+              <Card>
+                <CardContent className="p-4 divide-y divide-gray-100 dark:divide-gray-800">
+                  <div className="flex items-start justify-between gap-4 pb-3">
+                    <div>
+                      <div className="font-semibold text-sm">Temassız Teslimat</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">(Kuryemiz siparişinizi kapınıza bırakacaktır.)</div>
+                    </div>
+                    <Switch
+                      checked={contactlessDelivery}
+                      onCheckedChange={setContactlessDelivery}
+                      data-testid="switch-contactless-delivery"
+                    />
+                  </div>
+                  <div className="flex items-start justify-between gap-4 pt-3">
+                    <div>
+                      <div className="font-semibold text-sm">Zile Basma</div>
+                      <div className="text-xs text-muted-foreground mt-0.5">(Kuryemiz adresinize ulaştığında sizi telefonla arayacaktır.)</div>
+                    </div>
+                    <Switch
+                      checked={doNotRing}
+                      onCheckedChange={setDoNotRing}
+                      data-testid="switch-do-not-ring"
+                    />
+                  </div>
+                </CardContent>
+              </Card>
+            </section>
 
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-note">
