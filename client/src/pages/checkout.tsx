@@ -1061,40 +1061,60 @@ export default function Checkout() {
                   <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
                     {PAYMENT_OPTIONS.filter((opt) => opt.id !== "eft" || eftEnabled).map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
+                      const optDiscRate = opt.disc < 0 ? Math.abs(opt.disc) : 0;
+                      const optDiscAmount = subtotal * optDiscRate;
+                      const optShipping = (subtotal - optDiscAmount) >= CONFIG.shipLimit ? 0 : CONFIG.shipFee;
+                      const optTotal = Math.max(0, subtotal - optDiscAmount + optShipping - couponDiscountAmount) + donationAmount;
+                      const has3Installment = installmentRates.some(r => r.isActive && r.months === 3 && (r.rate || 0) === 0);
                       return (
-                        <label
-                          key={opt.id}
-                          className={`flex items-center gap-2 p-3 rounded-md cursor-pointer transition-colors ${paymentId === opt.id ? "bg-accent" : ""}`}
-                          data-testid={`radio-payment-${opt.id}`}
-                        >
-                          <RadioGroupItem value={opt.id} data-testid={`input-radio-${opt.id}`} />
-                          <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <span className="text-sm font-medium truncate" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
-                          <span className="flex-1 min-w-0" />
-                          {opt.disc < 0 ? (
-                            <Badge
-                              className="no-default-hover-elevate shrink-0 whitespace-nowrap bg-green-100 text-green-800 border border-green-300"
-                              data-testid={`badge-payment-tag-${opt.id}`}
+                        <div key={opt.id}>
+                          <label
+                            className={`flex items-center gap-2 p-3 rounded-md cursor-pointer transition-colors ${paymentId === opt.id ? "bg-accent" : ""}`}
+                            data-testid={`radio-payment-${opt.id}`}
+                          >
+                            <RadioGroupItem value={opt.id} data-testid={`input-radio-${opt.id}`} />
+                            <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                            <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                              <span className="text-sm font-medium" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
+                              {opt.disc < 0 ? (
+                                <Badge
+                                  className="no-default-hover-elevate shrink-0 whitespace-nowrap bg-green-100 text-green-800 border border-green-300"
+                                  data-testid={`badge-payment-tag-${opt.id}`}
+                                >
+                                  {opt.tag}
+                                </Badge>
+                              ) : opt.id === "online" ? (
+                                <Badge
+                                  className="no-default-hover-elevate shrink-0 whitespace-nowrap bg-blue-100 text-blue-800 border border-blue-300"
+                                  data-testid={`badge-payment-tag-${opt.id}`}
+                                >
+                                  {opt.tag}
+                                </Badge>
+                              ) : (
+                                <Badge
+                                  variant="secondary"
+                                  className="no-default-hover-elevate shrink-0 whitespace-nowrap"
+                                  data-testid={`badge-payment-tag-${opt.id}`}
+                                >
+                                  {opt.tag}
+                                </Badge>
+                              )}
+                            </div>
+                            <span className="text-sm font-extrabold text-primary tabular-nums shrink-0" data-testid={`text-payment-price-${opt.id}`}>
+                              {optTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                            </span>
+                          </label>
+                          {opt.id === "pos" && has3Installment && (
+                            <div
+                              className="ml-9 mr-3 -mt-1 mb-2 px-3 py-1.5 rounded-md text-[11px] font-bold flex items-center gap-1.5"
+                              style={{ backgroundColor: "#fff7ed", color: "#9a3412", border: "1px dashed #fdba74" }}
+                              data-testid={`text-payment-slogan-${opt.id}`}
                             >
-                              {opt.tag}
-                            </Badge>
-                          ) : opt.id === "online" ? (
-                            <Badge
-                              className="no-default-hover-elevate shrink-0 whitespace-nowrap bg-blue-100 text-blue-800 border border-blue-300"
-                              data-testid={`badge-payment-tag-${opt.id}`}
-                            >
-                              {opt.tag}
-                            </Badge>
-                          ) : (
-                            <Badge
-                              variant="secondary"
-                              className="no-default-hover-elevate shrink-0 whitespace-nowrap"
-                              data-testid={`badge-payment-tag-${opt.id}`}
-                            >
-                              {opt.tag}
-                            </Badge>
+                              <span>🎉</span>
+                              <span>Peşin fiyatına 3 taksit fırsatı!</span>
+                            </div>
                           )}
-                        </label>
+                        </div>
                       );
                     })}
                   </RadioGroup>
