@@ -1064,8 +1064,7 @@ export default function Checkout() {
                       const Icon = paymentIcons[opt.id] || CreditCard;
                       const optDiscRate = opt.disc < 0 ? Math.abs(opt.disc) : 0;
                       const optDiscAmount = subtotal * optDiscRate;
-                      const optShipping = (subtotal - optDiscAmount) >= CONFIG.shipLimit ? 0 : CONFIG.shipFee;
-                      const optTotal = Math.max(0, subtotal - optDiscAmount + optShipping - couponDiscountAmount) + donationAmount;
+                      const optTotal = Math.max(0, subtotal - optDiscAmount);
                       const has3Installment = installmentRates.some(r => r.isActive && r.months === 3 && (r.rate || 0) === 0);
                       return (
                         <div key={opt.id}>
@@ -1539,11 +1538,51 @@ export default function Checkout() {
                   </div>
 
 
-                  <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t flex-wrap">
-                    <span className="text-lg font-bold">Genel Toplam</span>
-                    <span className="text-2xl font-extrabold text-primary" data-testid="text-total">
-                      {displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                    </span>
+                  <div className="mt-4 pt-4 border-t">
+                    <div className="flex items-center justify-between gap-3 flex-wrap">
+                      <span className="text-lg font-bold">Genel Toplam</span>
+                      <span className="text-2xl font-extrabold text-primary" data-testid="text-total">
+                        {displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                      </span>
+                    </div>
+                    <div className="mt-2 rounded-lg bg-muted/40 p-3 space-y-1 text-[11px]" data-testid="breakdown-total">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Ürünler</span>
+                        <span className="tabular-nums">{subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                      </div>
+                      {paymentDiscount > 0 && (
+                        <div className="flex justify-between text-emerald-700">
+                          <span>− Kapıda Nakit İndirimi (%10)</span>
+                          <span className="tabular-nums">-{paymentDiscount.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                        </div>
+                      )}
+                      {couponDiscountAmount > 0 && (
+                        <div className="flex justify-between text-emerald-700">
+                          <span>− Kupon ({appliedCoupon?.code})</span>
+                          <span className="tabular-nums">-{couponDiscountAmount.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                        </div>
+                      )}
+                      {pointsDiscount > 0 && (
+                        <div className="flex justify-between text-emerald-700">
+                          <span>− Para Puan</span>
+                          <span className="tabular-nums">-{pointsDiscount.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">+ Teslimat Ücreti</span>
+                        <span className="tabular-nums">{effectiveShipping === 0 ? "Ücretsiz" : `${effectiveShipping.toLocaleString("tr-TR")} TL`}</span>
+                      </div>
+                      {donationAmount > 0 && (
+                        <div className="flex justify-between text-amber-700">
+                          <span>+ 🐾 Askıda Mama Bağışı</span>
+                          <span className="tabular-nums">+{donationAmount.toLocaleString("tr-TR")} TL</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between pt-1 mt-1 border-t border-dashed font-bold">
+                        <span>= Ödenecek Tutar</span>
+                        <span className="tabular-nums text-primary">{displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                      </div>
+                    </div>
                   </div>
 
                   <Button
