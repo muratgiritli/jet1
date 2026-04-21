@@ -60,15 +60,15 @@ export default function DemoKampanya() {
       >
         {CAMPAIGNS.map((c) => (
           <Link key={c.id} href={`/demo-kampanya/urun/${c.id}`}>
-            <div className="snap-center shrink-0 w-screen h-full flex items-center justify-center cursor-pointer relative" data-testid={`banner-${c.id}`}>
+            <div className="snap-center shrink-0 w-screen h-full flex items-center justify-center cursor-pointer relative px-3 py-4" data-testid={`banner-${c.id}`}>
               <img
                 src={c.img}
                 alt={c.title}
-                className="max-h-full max-w-full object-contain select-none"
+                className="max-h-[78%] max-w-[92%] object-contain select-none rounded-2xl shadow-2xl"
                 draggable={false}
               />
               {/* Click hint */}
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-yellow-400 text-purple-900 font-extrabold text-sm px-4 py-2 rounded-full shadow-xl flex items-center gap-1.5 animate-pulse">
+              <div className="absolute bottom-6 left-1/2 -translate-x-1/2 bg-yellow-400 text-purple-900 font-extrabold text-sm px-4 py-2 rounded-full shadow-xl flex items-center gap-1.5 animate-pulse">
                 <ShoppingCart className="w-4 h-4" /> Ürünü İncele
               </div>
             </div>

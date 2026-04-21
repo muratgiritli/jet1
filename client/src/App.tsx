@@ -139,7 +139,7 @@ function Router() {
 function AppShell() {
   const [location] = useLocation();
   const isAdmin = location.startsWith("/admin");
-  const isDemo = location === "/demo";
+  const isDemo = location === "/demo" || location.startsWith("/demo-kampanya") || location === "/demo1" || location === "/demo2";
 
   useEffect(() => {
     if (location === "/") {
