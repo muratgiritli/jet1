@@ -70,6 +70,8 @@ const TeslimatIadePage = lazy(() => import("@/pages/static-pages").then(m => ({ 
 const GizlilikSozlesmesiPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.GizlilikSozlesmesiPage })));
 const MesafeliSatisSozlesmesiPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.MesafeliSatisSozlesmesiPage })));
 const DemoLanding = lazy(() => import("@/pages/demo-landing"));
+const Demo1Page = lazy(() => import("@/pages/demo1"));
+const Demo2Page = lazy(() => import("@/pages/demo2"));
 const SeoPage = lazy(() => import("@/pages/seo-pages"));
 const BlogListRoute = lazy(() => import("@/pages/blog").then(m => ({ default: m.BlogListRoute })));
 const BlogPostRoute = lazy(() => import("@/pages/blog").then(m => ({ default: m.BlogPostRoute })));
@@ -101,6 +103,8 @@ function Router() {
         <Route path="/giris" component={AuthPage} />
         <Route path="/hesabim" component={ProfilePage} />
         <Route path="/demo" component={DemoLanding} />
+        <Route path="/demo1" component={Demo1Page} />
+        <Route path="/demo2" component={Demo2Page} />
         <Route path="/kampanya" component={CampaignPage} />
         <Route path="/kampanya-demo" component={CampaignDemoPage} />
         <Route path="/kampanya-urun-demo" component={CampaignProductDemoPage} />
