@@ -88,7 +88,6 @@ export const TESLIMAT_MAHALLELERI = [
 ];
 
 export const PAYMENT_OPTIONS: PaymentOption[] = [
-  { id: "online", name: "Online Kredi Kartı", disc: 0, tag: "3 Taksit" },
   { id: "nakit", name: "Kapıda Nakit", disc: -0.10, tag: "%10 İndirim" },
   { id: "eft", name: "Banka Havalesi", disc: 0, tag: "Peşin" },
   { id: "qr", name: "Kapıda QR Ödeme", disc: 0, tag: "Peşin" },

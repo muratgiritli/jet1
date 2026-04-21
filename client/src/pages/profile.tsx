@@ -466,14 +466,6 @@ function OrdersSection() {
                       </div>
                     </div>
                   )}
-                  {order.paymentStatus && order.paymentMethod === "Online Kredi Kartı" && (
-                    <div className="text-xs">
-                      <span className="text-muted-foreground">Ödeme Durumu:</span>{" "}
-                      <span className={`font-medium ${order.paymentStatus === "paid" ? "text-green-600" : order.paymentStatus === "failed" ? "text-red-600" : "text-amber-600"}`}>
-                        {order.paymentStatus === "paid" ? "Ödendi" : order.paymentStatus === "failed" ? "Başarısız" : "Bekliyor"}
-                      </span>
-                    </div>
-                  )}
                   <div className="text-xs"><span className="text-muted-foreground">Teslimat Zamanı:</span> <span className="font-medium">
                     {order.isCampaign
                       ? "min. 3 gün içinde"

@@ -38,7 +38,6 @@ const importBrands = () => import("@/pages/brands");
 const importBrandProducts = () => import("@/pages/brand-products");
 
 const Checkout = lazy(importCheckout);
-const PaymentResult = lazy(() => import("@/pages/payment-result"));
 const CategoryPage = lazy(importCategory);
 const CategoriesOverview = lazy(importCategoriesOverview);
 const BrandsPage = lazy(importBrands);
@@ -96,7 +95,6 @@ function Router() {
         <Route path="/kategori/:animal/:subcategory" component={BrandsPage} />
         <Route path="/kategori/:animal" component={CategoryPage} />
         <Route path="/odeme" component={Checkout} />
-        <Route path="/odeme-sonuc" component={PaymentResult} />
         <Route path="/admin" component={AdminPage} />
         <Route path="/siparis-takip" component={OrderTrackingPage} />
         <Route path="/favoriler" component={FavoritesPage} />

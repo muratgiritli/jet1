@@ -91,7 +91,7 @@ export default function InstallmentBanner({ variant = "full", className = "", pr
         <div>
           <h3 className="text-lg font-bold text-blue-900">Peşin Fiyatına 3 Taksit + 9 Ay Taksit İmkanı</h3>
           <p className="text-xs text-blue-700 flex items-center gap-1">
-            <ShieldCheck className="w-3.5 h-3.5" /> PayTR güvenli ödeme · Ek komisyon yok
+            <ShieldCheck className="w-3.5 h-3.5" /> Güvenli ödeme · Ek komisyon yok
           </p>
         </div>
       </div>

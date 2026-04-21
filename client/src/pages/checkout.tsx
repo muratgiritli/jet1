@@ -31,7 +31,6 @@ import {
   Eye,
   EyeOff,
   Lock,
-  ShieldCheck,
   ShoppingBag,
   Gift,
   Home,
@@ -52,7 +51,6 @@ import { useCart } from "@/contexts/CartContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useCustomer } from "@/contexts/CustomerContext";
 const paymentIcons: Record<string, typeof CreditCard> = {
-  online: ShieldCheck,
   nakit: Banknote,
   eft: Wallet,
   qr: QrCode,
@@ -319,9 +317,6 @@ export default function Checkout() {
     return () => clearTimeout(timer);
   }, [customerPhone, lookupCustomer, isLoggedIn]);
   const [stockWarning, setStockWarning] = useState("");
-  const [paytrToken, setPaytrToken] = useState<string | null>(null);
-  const [paytrOrderId, setPaytrOrderId] = useState<number | null>(null);
-  const [paytrPolling, setPaytrPolling] = useState(false);
   const [isMobile, setIsMobile] = useState<boolean>(typeof window !== "undefined" ? window.innerWidth < 768 : false);
   useEffect(() => {
     const mq = window.matchMedia("(max-width: 767px)");
@@ -500,12 +495,7 @@ export default function Checkout() {
       };
 
       const orderRes = await apiRequest("POST", "/api/orders", orderPayload);
-      const orderJson = await orderRes.json();
-
-      if (payMethod === "Online Kredi Kartı" && orderJson?.paytrToken) {
-        window.location.href = `https://www.paytr.com/odeme/guvenli/${orderJson.paytrToken}`;
-        return;
-      }
+      await orderRes.json();
 
       if (typeof window !== "undefined" && (window as any).gtag) {
         (window as any).gtag("event", "conversion", {
@@ -565,50 +555,6 @@ export default function Checkout() {
     }
   }, [pendingOrderAfterAuth, isLoggedIn, showAuthModal, customerName]);
 
-  useEffect(() => {
-    if (!paytrPolling || !paytrOrderId) return;
-    const interval = setInterval(async () => {
-      try {
-        const res = await fetch(`/api/orders/${paytrOrderId}/payment-status`, { credentials: "include" });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data.paymentStatus === "paid") {
-          clearInterval(interval);
-          setPaytrPolling(false);
-          setPaytrToken(null);
-          clearCart();
-          queryClient.invalidateQueries({ queryKey: ["/api/customer/orders"] });
-          setLocation("/odeme-sonuc?orderId=" + paytrOrderId + "&success=1");
-        } else if (data.paymentStatus === "failed") {
-          clearInterval(interval);
-          setPaytrPolling(false);
-          setPaytrToken(null);
-          setLocation("/odeme-sonuc?orderId=" + paytrOrderId + "&fail=1");
-        }
-      } catch {}
-    }, 3000);
-    return () => clearInterval(interval);
-  }, [paytrPolling, paytrOrderId]);
-
-  useEffect(() => {
-    if (!paytrToken) return;
-    const existing = document.getElementById("paytr-iframe-script");
-    if (existing) existing.remove();
-    const script = document.createElement("script");
-    script.id = "paytr-iframe-script";
-    script.src = "https://www.paytr.com/js/iframeResizer.min.js";
-    script.async = true;
-    script.onload = () => {
-      try {
-        (window as any).iFrameResize?.({ checkOrigin: false }, "#paytriframe");
-      } catch {}
-    };
-    document.body.appendChild(script);
-    return () => {
-      script.remove();
-    };
-  }, [paytrToken]);
-
   return (
     <div className="min-h-screen bg-background pb-16 md:pb-0">
       <SEO
@@ -616,60 +562,6 @@ export default function Checkout() {
         description="JETGO Pet Shop sepetiniz. Kapıda nakit, kredi kartı, havale/EFT ile ödeme. Samsun içi aynı gün teslimat."
         noindex
       />
-      {paytrToken && (
-        <div className="fixed inset-0 z-[10001] bg-black/70 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4" data-testid="modal-paytr">
-          <div className="relative w-full max-w-2xl bg-white rounded-2xl overflow-hidden shadow-2xl flex flex-col" style={{ maxHeight: "95vh" }}>
-            <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-5 h-5" />
-                <div>
-                  <p className="font-bold text-sm">Güvenli Ödeme</p>
-                  <p className="text-xs text-white/80">PayTR ile koruma altında</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  if (confirm("Ödemeyi iptal etmek istediğinize emin misiniz? Siparişiniz iptal edilecektir.")) {
-                    setPaytrToken(null);
-                    setPaytrPolling(false);
-                    setPaytrOrderId(null);
-                  }
-                }}
-                className="p-1.5 text-white/80 hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-colors"
-                data-testid="btn-close-paytr"
-                aria-label="Kapat"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-            <div className="flex-1 overflow-auto bg-white">
-              <iframe
-                id="paytriframe"
-                src={`https://www.paytr.com/odeme/guvenli/${paytrToken}`}
-                frameBorder="0"
-                scrolling="no"
-                style={{ width: "100%", minHeight: "600px", border: "none" }}
-                data-testid="iframe-paytr"
-                title="PayTR Ödeme"
-              />
-            </div>
-            <div className="p-3 border-t bg-gray-50 text-center">
-              <p className="text-xs text-gray-600 mb-2">Ödeme sayfası açılmıyor mu?</p>
-              <a
-                href={`https://www.paytr.com/odeme/guvenli/${paytrToken}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition-colors"
-                data-testid="link-paytr-newtab"
-              >
-                Yeni sekmede güvenli ödeme sayfasını aç
-              </a>
-              <p className="text-[10px] text-gray-500 mt-2">Ödemeyi tamamladıktan sonra bu sayfaya geri dönün — sipariş durumu otomatik güncellenecek.</p>
-            </div>
-          </div>
-        </div>
-      )}
       {showAuthModal && !isLoggedIn && (
           <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowAuthModal(false); setAuthStep("phone"); setAuthErrors({}); }} />
