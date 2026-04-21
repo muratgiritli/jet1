@@ -34,7 +34,7 @@ export interface PaymentOption {
 
 export const CONFIG = {
   phone: "+908508403959",
-  shipLimit: 1500,
+  shipLimit: 1000,
   minLimit: 700,
   shipFee: 89,
   bankInfo:

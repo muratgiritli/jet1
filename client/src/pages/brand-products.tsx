@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { FreeShippingBanner } from "@/components/FreeShippingBanner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -457,6 +458,7 @@ export default function BrandProductsPage() {
         canonical={`${SITE_DOMAIN}/siparis/${animal}/${subcategory}/${brandSlug}`}
       />
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6 pb-28 md:pb-8">
+        <FreeShippingBanner className="mb-4" />
         <div className="text-center mb-6">
           <h2 className="text-xl font-extrabold" data-testid="text-brand-title">
             {data.category.brandName}

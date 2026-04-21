@@ -1,4 +1,5 @@
 import { Link, useRoute, useLocation } from "wouter";
+import { FreeShippingBanner } from "@/components/FreeShippingBanner";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, ShoppingCart, Plus, Minus, Clock, Bell, ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
@@ -295,6 +296,7 @@ export default function CategoryPage() {
       />
 
       <main className="flex-1 max-w-2xl mx-auto px-4 w-full py-6">
+        <FreeShippingBanner className="mb-4" />
         <div className="text-center mb-6">
           <span className="text-4xl md:text-5xl block mb-2">{animalMeta.emoji}</span>
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight" data-testid="text-category-title">

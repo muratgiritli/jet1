@@ -1,4 +1,5 @@
 import { Link, useRoute } from "wouter";
+import { FreeShippingBanner } from "@/components/FreeShippingBanner";
 import { useQuery } from "@tanstack/react-query";
 
 interface BrandCategory {
@@ -112,6 +113,7 @@ export default function BrandsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
+        <FreeShippingBanner className="mb-4" />
         <div className="text-center mb-6">
           <h2 className="text-2xl font-extrabold" data-testid="text-brands-title">
             <span style={{ color: "#2196F3" }}>{animalLabel} {title}</span>

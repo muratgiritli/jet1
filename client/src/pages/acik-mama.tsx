@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { FreeShippingBanner } from "@/components/FreeShippingBanner";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -134,6 +135,7 @@ export default function AcikMamaPage() {
   return (
     <div className="min-h-screen flex flex-col pb-16 md:pb-0" style={{ backgroundColor: "#f0f2f5" }}>
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
+        <FreeShippingBanner className="mb-4" />
         <div className="text-center mb-6">
           <h2 className="text-2xl font-extrabold" data-testid="text-acik-title">
             <span style={{ color: "#2196F3" }}>{title}</span>

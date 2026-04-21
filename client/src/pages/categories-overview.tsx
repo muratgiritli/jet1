@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { FreeShippingBanner } from "@/components/FreeShippingBanner";
 import { motion } from "framer-motion";
 import { ChevronRight } from "lucide-react";
 import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD } from "@/components/SEO";
@@ -55,6 +56,7 @@ export default function CategoriesOverview() {
         ])}
       />
       <div className="max-w-2xl mx-auto px-4 py-6">
+        <FreeShippingBanner className="mb-4" />
         <div className="text-center mb-6">
           <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight" data-testid="text-categories-title">
             Kategoriler
