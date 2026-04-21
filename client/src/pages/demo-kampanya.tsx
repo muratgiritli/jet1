@@ -92,16 +92,16 @@ export default function DemoKampanya() {
         <ChevronRight className="w-6 h-6" />
       </button>
 
-      {/* BOTTOM NAV BAR — mobile prev/next + dots */}
-      <div className="absolute bottom-0 left-0 right-0 z-20 bg-gradient-to-t from-black/80 via-black/60 to-transparent pt-6 pb-3">
-        <div className="flex items-center gap-2 px-3">
+      {/* BOTTOM NAV STRIP — between banner and footer (white background) */}
+      <div className="shrink-0 bg-white border-t border-gray-200 px-3 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-2px_10px_rgba(0,0,0,0.08)]">
+        <div className="flex items-center gap-2 max-w-3xl mx-auto">
           <button
             onClick={() => scrollBy(-1)}
             disabled={activeIdx === 0}
-            className="shrink-0 flex items-center gap-1 bg-white/15 hover:bg-white/30 disabled:opacity-30 backdrop-blur-md text-white text-sm font-bold px-3 py-2.5 rounded-full border border-white/20"
+            className="shrink-0 flex items-center gap-1 bg-white hover:bg-gray-50 disabled:opacity-40 text-purple-700 text-sm font-bold px-3.5 py-2.5 rounded-full border-2 border-purple-300 shadow"
             data-testid="button-prev-mobile"
           >
-            <ChevronLeft className="w-4 h-4" /> Önceki
+            <ChevronLeft className="w-5 h-5" strokeWidth={3} /> Önceki
           </button>
 
           <div className="flex-1 min-w-0 flex items-center justify-center gap-1.5 overflow-x-auto no-scrollbar">
@@ -113,7 +113,7 @@ export default function DemoKampanya() {
                   if (!el) return;
                   el.scrollTo({ left: i * el.clientWidth, behavior: "smooth" });
                 }}
-                className={`shrink-0 transition-all rounded-full ${i === activeIdx ? "w-6 h-1.5 bg-yellow-400" : "w-1.5 h-1.5 bg-white/50"}`}
+                className={`shrink-0 transition-all rounded-full ${i === activeIdx ? "w-6 h-2 bg-purple-600" : "w-2 h-2 bg-gray-300"}`}
                 data-testid={`dot-${c.id}`}
               />
             ))}
@@ -122,10 +122,10 @@ export default function DemoKampanya() {
           <button
             onClick={() => scrollBy(1)}
             disabled={activeIdx === CAMPAIGNS.length - 1}
-            className="shrink-0 flex items-center gap-1 bg-yellow-400 hover:bg-yellow-300 disabled:opacity-30 text-purple-900 text-sm font-extrabold px-3 py-2.5 rounded-full"
+            className="shrink-0 flex items-center gap-1 bg-purple-600 hover:bg-purple-700 disabled:opacity-40 text-white text-sm font-extrabold px-3.5 py-2.5 rounded-full shadow"
             data-testid="button-next-mobile"
           >
-            Sonraki <ChevronRight className="w-4 h-4" />
+            Sonraki <ChevronRight className="w-5 h-5" strokeWidth={3} />
           </button>
         </div>
       </div>
