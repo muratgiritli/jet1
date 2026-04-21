@@ -40,7 +40,7 @@ export const SEO_PAGES: SeoPageData[] = [
         h2: "Samsun Petshop Hizmeti Nasıl Çalışır?",
         paragraphs: [
           "JETGO pet shop hizmeti, Getir modeli ile çalışan Samsun'un ilk kapıya teslim evcil hayvan mağazasıdır. Geleneksel pet shop'lara gidip ağır mama çuvallarını ve kedi kumu paketlerini taşıma derdi artık geride kaldı. Samsun petshop arayanlar için en pratik çözüm JETGO'dur.",
-          "jetgo.pet web sitemiz üzerinden tüm ürünleri inceleyebilir, fiyatları karşılaştırabilir ve sepetinize ekleyebilirsiniz. Ardından WhatsApp üzerinden tek tıkla siparişinizi onaylayın. Kurye ekibimiz siparişinizi kapınıza kadar getirir. Kapıda nakit, POS ile kredi kartı veya QR kod ile ödeme yapabilirsiniz.",
+          "jetgo.shop web sitemiz üzerinden tüm ürünleri inceleyebilir, fiyatları karşılaştırabilir ve sepetinize ekleyebilirsiniz. Ardından WhatsApp üzerinden tek tıkla siparişinizi onaylayın. Kurye ekibimiz siparişinizi kapınıza kadar getirir. Kapıda nakit, POS ile kredi kartı veya QR kod ile ödeme yapabilirsiniz.",
           "Samsun petshop denilince akla ilk gelen isim olan JETGO, müşterilerine sadakat programı olan Para Puan sistemi ile her siparişte %5 geri kazanım sağlar. Biriken puanlarınızı sonraki siparişlerinizde kullanabilirsiniz.",
         ],
       },
@@ -815,12 +815,12 @@ const KEYWORD_PAGES: SeoPageData[] = [
     slug: "jetgo-petshop",
     type: "keyword",
     title: "JETGO Petshop",
-    metaTitle: "JETGO Petshop Samsun Atakum | Hızlı Teslimat Kapıda Ödeme | jetgo.pet",
-    metaDescription: "JETGO petshop Samsun ve Atakum. Kedi maması, köpek maması, kedi kumu 1 saatte kapıya teslim. 900+ ürün, premium markalar. jetgo.pet online sipariş.",
-    keywords: "jetgo petshop, jetgo petshop samsun, jetgo petshop atakum, jetgo pet samsun, jetgo.pet, jetgo mama samsun, jetgo petshop hızlı teslim, jetgo petshop eve teslim, jetgo petshop kapıda ödeme, jetgo petshop online sipariş, jetgo petshop kedi kumu",
+    metaTitle: "JETGO Petshop Samsun Atakum | Hızlı Teslimat Kapıda Ödeme | jetgo.shop",
+    metaDescription: "JETGO petshop Samsun ve Atakum. Kedi maması, köpek maması, kedi kumu 1 saatte kapıya teslim. 900+ ürün, premium markalar. jetgo.shop online sipariş.",
+    keywords: "jetgo petshop, jetgo petshop samsun, jetgo petshop atakum, jetgo pet samsun, jetgo.shop, jetgo mama samsun, jetgo petshop hızlı teslim, jetgo petshop eve teslim, jetgo petshop kapıda ödeme, jetgo petshop online sipariş, jetgo petshop kedi kumu",
     h1: "JETGO Petshop - Samsun'un Kapıya Teslim Pet Shop'u",
     intro: [
-      "JETGO, Samsun'un ilk ve en kapsamlı kapıya teslim petshop hizmetidir. Getir modeli ile çalışan JETGO, evcil hayvan ürünlerinizi online sipariş ile aynı gün kapınıza teslim eder. jetgo.pet adresinden veya WhatsApp ile kolayca sipariş verebilirsiniz.",
+      "JETGO, Samsun'un ilk ve en kapsamlı kapıya teslim petshop hizmetidir. Getir modeli ile çalışan JETGO, evcil hayvan ürünlerinizi online sipariş ile aynı gün kapınıza teslim eder. jetgo.shop adresinden veya WhatsApp ile kolayca sipariş verebilirsiniz.",
       "JETGO petshop Samsun ve Atakum başta olmak üzere İlkadım ve Canik ilçelerine de hizmet vermektedir. 900'den fazla ürün çeşidi, Royal Canin, Hill's, N&D, Pro Plan gibi premium markalar ve piyasanın en rekabetçi fiyatları ile hizmetinizdeyiz.",
       "JETGO petshop hızlı teslim özelliği sayesinde siparişleriniz ortalama 1-3 saat içinde kapınızda. Kapıda nakit ödeme, POS ile kredi kartı ve QR kod ödeme seçenekleri mevcut. Her siparişte %5 Para Puan kazanırsınız.",
     ],
@@ -829,7 +829,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
         h2: "JETGO Petshop Neden Farklı?",
         paragraphs: [
           "JETGO petshop geleneksel pet shop'lardan farklı olarak tamamen online çalışan bir kapıya teslim hizmetidir. Mağazaya gitmenize, trafikte vakit kaybetmenize veya ağır çuvalları taşımanıza gerek yok. Tüm ürünleri online inceleyin, fiyatları karşılaştırın ve tek tıkla sipariş verin.",
-          "JETGO petshop mama sipariş sürecini olabildiğince kolaylaştırmıştır. Web sitesi jetgo.pet üzerinden sepetinizi oluşturun, WhatsApp ile onaylayın ve aynı gün teslimatı bekleyin. Sesli sipariş seçeneği ile WhatsApp üzerinden sesli mesajla da sipariş verebilirsiniz.",
+          "JETGO petshop mama sipariş sürecini olabildiğince kolaylaştırmıştır. Web sitesi jetgo.shop üzerinden sepetinizi oluşturun, WhatsApp ile onaylayın ve aynı gün teslimatı bekleyin. Sesli sipariş seçeneği ile WhatsApp üzerinden sesli mesajla da sipariş verebilirsiniz.",
           "JETGO petshop online sipariş avantajları arasında 7/24 sipariş verebilme, fiyat karşılaştırma, ürün detaylarını inceleme ve favori ürün listeleri oluşturma yer almaktadır. Para Puan sadakat programı ile her siparişte tasarruf sağlarsınız.",
         ],
       },
@@ -848,11 +848,11 @@ const KEYWORD_PAGES: SeoPageData[] = [
       "Kapıda nakit, POS, QR ödeme",
       "Her siparişte %5 Para Puan kazanımı",
       "WhatsApp ile kolay ve sesli sipariş",
-      "jetgo.pet online sipariş platformu",
+      "jetgo.shop online sipariş platformu",
       "Atakum, İlkadım, Canik teslimat",
     ],
     faq: [
-      { q: "JETGO petshop nasıl sipariş verilir?", a: "jetgo.pet adresinden ürünlerinizi sepete ekleyin, WhatsApp ile siparişi onaylayın. Aynı gün kapınıza teslim edilir. Sesli sipariş de mevcuttur." },
+      { q: "JETGO petshop nasıl sipariş verilir?", a: "jetgo.shop adresinden ürünlerinizi sepete ekleyin, WhatsApp ile siparişi onaylayın. Aynı gün kapınıza teslim edilir. Sesli sipariş de mevcuttur." },
       { q: "JETGO petshop teslimat süresi ne kadar?", a: "Ortalama 1-3 saat içinde teslimat yapıyoruz. 17:00'ye kadar verilen siparişler aynı gün teslim edilir." },
       { q: "JETGO petshop hangi bölgelere teslimat yapıyor?", a: "Samsun'un Atakum, İlkadım ve Canik ilçelerinin tüm mahallelerine teslimat yapıyoruz." },
     ],
@@ -987,7 +987,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
         h2: "Atakum Mahallelerine Kedi Maması Teslimatı",
         paragraphs: [
           "Atakum Denizevleri, Güzelyalı, Kurupelit, Atakent, Mimar Sinan, Körfez, Yeni Mahalle, İncesu, Soğuksu, Taflan ve tüm diğer mahallelere kedi maması teslimatı yapıyoruz. Sahil şeridindeki mahallelere öncelikli hızlı teslimat avantajı mevcuttur.",
-          "Atakum petshop kedi maması siparişinizi jetgo.pet üzerinden veya WhatsApp ile verin, aynı gün kapınıza teslim edelim. 1,5 kg'dan 15 kg'a kadar tüm paket boyutları mevcut.",
+          "Atakum petshop kedi maması siparişinizi jetgo.shop üzerinden veya WhatsApp ile verin, aynı gün kapınıza teslim edelim. 1,5 kg'dan 15 kg'a kadar tüm paket boyutları mevcut.",
         ],
       },
     ],
@@ -1099,7 +1099,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
       {
         h2: "Samsun Petshop Hızlı Teslimat Nasıl Çalışır?",
         paragraphs: [
-          "jetgo.pet üzerinden ürünlerinizi sepete ekleyin, WhatsApp ile siparişinizi onaylayın. Samsun petshop kurye ekibimiz siparişinizi kapınıza getirir. Ortalama teslimat süremiz 1-3 saattir. Samsun petshop hızlı kurye hizmetimizle acil ihtiyaçlarınız için öncelikli teslimat da mevcuttur.",
+          "jetgo.shop üzerinden ürünlerinizi sepete ekleyin, WhatsApp ile siparişinizi onaylayın. Samsun petshop kurye ekibimiz siparişinizi kapınıza getirir. Ortalama teslimat süremiz 1-3 saattir. Samsun petshop hızlı kurye hizmetimizle acil ihtiyaçlarınız için öncelikli teslimat da mevcuttur.",
           "Samsun petshop mama sipariş, samsun petshop whatsapp sipariş ve samsun petshop telefon sipariş seçenekleriyle kolayca sipariş verebilirsiniz. Samsun petshop online satış platformumuz 7/24 açıktır.",
           "Atakum petshop hızlı teslim, atakum petshop eve teslim ve atakum petshop kapıda ödeme avantajlarından yararlanın. Tüm Samsun merkez ilçelerine aynı gün teslimat garantisi sunuyoruz.",
         ],
@@ -1139,7 +1139,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
     intro: [
       "Samsun'un en kapsamlı online petshop'u JETGO ile evcil hayvan alışverişinizi kolaylaştırın. 900'den fazla ürün, premium markalar ve uygun fiyatlarla tüm ihtiyaçlarınızı tek tıkla karşılayın. Samsun petshop online sipariş ile 7/24 sipariş verin.",
       "Kedi maması, köpek maması, kedi kumu, kuş yemi, kemirgen ürünleri ve evcil hayvan aksesuarlarını online sipariş verin. Atakum, İlkadım ve Canik'e aynı gün kapıya teslim ediyoruz. Samsun petshop internetten alışveriş artık çok kolay.",
-      "Online alışverişin avantajlarından yararlanın: fiyat karşılaştırma, ürün detayları ve Para Puan kazanımı. Her siparişte %5 Para Puan kazanın. Samsun petshop e-ticaret platformumuz jetgo.pet üzerinden güvenle alışveriş yapın.",
+      "Online alışverişin avantajlarından yararlanın: fiyat karşılaştırma, ürün detayları ve Para Puan kazanımı. Her siparişte %5 Para Puan kazanın. Samsun petshop e-ticaret platformumuz jetgo.shop üzerinden güvenle alışveriş yapın.",
     ],
     sections: [
       {
@@ -1160,7 +1160,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
       "Favorilere ekleme ve hatırlatma",
     ],
     faq: [
-      { q: "Samsun online petshop'tan nasıl sipariş verilir?", a: "jetgo.pet adresine girin, ürünlerinizi sepete ekleyin ve WhatsApp üzerinden siparişinizi tamamlayın. Aynı gün kapınıza teslim." },
+      { q: "Samsun online petshop'tan nasıl sipariş verilir?", a: "jetgo.shop adresine girin, ürünlerinizi sepete ekleyin ve WhatsApp üzerinden siparişinizi tamamlayın. Aynı gün kapınıza teslim." },
       { q: "Online petshop sipariş güvenli mi?", a: "Evet, ödeme kapıda yapılır. Nakit, POS veya QR kod ile güvenle ödeme yapabilirsiniz." },
       { q: "Samsun online petshop'ta indirim var mı?", a: "Evet, nakit ödemede ekstra avantajlı fiyat. Her siparişte %5 Para Puan kazanırsınız. Düzenli kampanyalar mevcuttur." },
     ],
@@ -1287,7 +1287,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
     h1: "Acil Kedi Maması Teslimatı - Samsun",
     intro: [
       "Kedi maması bitti ve acil ihtiyacınız mı var? JETGO ile Samsun'da aynı gün kedi maması teslimatı yapıyoruz. Royal Canin, Hill's, N&D, Pro Plan ve Reflex kedi mamalarını hızla kapınıza getiriyoruz.",
-      "Kedinizin açlığını bekletmeyin! jetgo.pet üzerinden veya WhatsApp ile anında sipariş verin. Atakum, İlkadım ve Canik'e hızlandırılmış teslimat seçeneğimiz mevcuttur. Ortalama 1-2 saat içinde kapınızda.",
+      "Kedinizin açlığını bekletmeyin! jetgo.shop üzerinden veya WhatsApp ile anında sipariş verin. Atakum, İlkadım ve Canik'e hızlandırılmış teslimat seçeneğimiz mevcuttur. Ortalama 1-2 saat içinde kapınızda.",
       "Yavru kedi maması, yetişkin kedi maması, kısırlaştırılmış kedi maması - hangi türü ararsanız arayın, stoklarımızda hazır. Acil siparişleriniz için öncelikli teslimat yapıyoruz.",
     ],
     faq: [
@@ -1366,7 +1366,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
       "Nakit ödemede avantajlı fiyat ve her siparişte %5 Para Puan kazanımı. Mama siparişinizi JETGO ile verin, hem tasarruf edin hem de kolaylıktan yararlanın. Samsun petshop whatsapp sipariş ile hızlı ve kolay.",
     ],
     faq: [
-      { q: "Samsun'da mama sipariş nasıl verilir?", a: "jetgo.pet adresinden ürünlerinizi sepete ekleyin, WhatsApp ile siparişinizi tamamlayın. WhatsApp: 0850 840 39 59." },
+      { q: "Samsun'da mama sipariş nasıl verilir?", a: "jetgo.shop adresinden ürünlerinizi sepete ekleyin, WhatsApp ile siparişinizi tamamlayın. WhatsApp: 0850 840 39 59." },
       { q: "Mama siparişi aynı gün gelir mi?", a: "Evet, saat 17:00'ye kadar verilen mama siparişleri aynı gün teslim edilir." },
       { q: "En ucuz mama siparişi nereden verilir?", a: "JETGO'da nakit ödeme fiyatları piyasanın en uygun fiyatlarıdır. %5 Para Puan ile ekstra tasarruf." },
     ],
@@ -1563,7 +1563,7 @@ const KEYWORD_PAGES: SeoPageData[] = [
       {
         h2: "Atakum Teslimat Nasıl Çalışır?",
         paragraphs: [
-          "jetgo.pet adresinden veya WhatsApp ile sipariş verin. Siparişiniz anında onaylanır ve teslimat sürecine alınır. Atakum merkez mahallelerine (Denizevleri, Güzelyalı, Kurupelit, Atakent) 1-2 saat, diğer mahallelere 2-3 saat içinde teslimat yapılır.",
+          "jetgo.shop adresinden veya WhatsApp ile sipariş verin. Siparişiniz anında onaylanır ve teslimat sürecine alınır. Atakum merkez mahallelerine (Denizevleri, Güzelyalı, Kurupelit, Atakent) 1-2 saat, diğer mahallelere 2-3 saat içinde teslimat yapılır.",
           "Sesli sipariş seçeneği ile WhatsApp üzerinden sesli mesaj göndererek de sipariş verebilirsiniz. Yaşlı veya meşgul müşterilerimiz için bu seçenek büyük kolaylık sağlamaktadır.",
         ],
       },

@@ -365,7 +365,7 @@ export function Modern() {
               <p className="text-white font-bold text-sm mb-4">İletişim</p>
               <p className="text-sm py-1.5">📍 Atakum, Samsun</p>
               <p className="text-sm py-1.5">📞 0850 123 45 67</p>
-              <p className="text-sm py-1.5">✉️ info@jetgo.pet</p>
+              <p className="text-sm py-1.5">✉️ info@jetgo.shop</p>
               <div className="flex gap-3 mt-4">
                 {["📘", "📸", "🐦"].map((s, i) => (
                   <span key={i} className="w-10 h-10 bg-gray-800 rounded-xl flex items-center justify-center text-lg cursor-pointer hover:bg-gray-700 transition-colors">{s}</span>

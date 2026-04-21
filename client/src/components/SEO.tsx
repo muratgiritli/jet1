@@ -11,7 +11,7 @@ interface SEOProps {
   keywords?: string;
 }
 
-export const SITE_DOMAIN = "https://www.jetgo.pet";
+export const SITE_DOMAIN = "https://www.jetgo.shop";
 export const SITE_NAME = "JETGO Pet Shop Samsun";
 export const DEFAULT_OG_IMAGE = `${SITE_DOMAIN}/og-image.webp`;
 
@@ -127,8 +127,8 @@ export const LOCAL_BUSINESS_JSONLD = {
     ],
   },
   "sameAs": [
-    "https://www.instagram.com/jetgo.pet",
-    "https://www.facebook.com/jetgo.pet",
+    "https://www.instagram.com/jetgo.shop",
+    "https://www.facebook.com/jetgo.shop",
   ],
 };
 
