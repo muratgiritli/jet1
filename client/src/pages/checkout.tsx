@@ -349,7 +349,7 @@ export default function Checkout() {
 
   const [orderError, setOrderError] = useState("");
   const [orderNote, setOrderNote] = useState("");
-  const SLOT_TIMES = ["11:00-13:00", "13:00-15:00", "15:00-18:00"];
+  const SLOT_TIMES = ["11:00-13:00", "12:00-14:00", "13:00-15:00", "14:00-16:00", "15:00-17:00", "16:00-18:00"];
   const TR_DAY_NAMES = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
   const TR_MONTH_NAMES = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
   const slotPassed = (dateStr: string, range: string) => {
