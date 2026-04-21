@@ -5624,6 +5624,97 @@ function CouponsSection() {
   );
 }
 
+interface InstallmentRateRow { id: number; months: number; rate: number; isActive: boolean; sortOrder: number }
+
+function InstallmentRatesCard() {
+  const { toast } = useToast();
+  const { data: rates = [], isLoading } = useQuery<InstallmentRateRow[]>({
+    queryKey: ["/api/admin/installment-rates"],
+  });
+  const [editing, setEditing] = useState<Record<number, { months: string; rate: string; sortOrder: string; isActive: boolean }>>({});
+  const [newRow, setNewRow] = useState({ months: "", rate: "", sortOrder: "0", isActive: true });
+
+  const refresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["/api/admin/installment-rates"] });
+    queryClient.invalidateQueries({ queryKey: ["/api/installment-rates"] });
+  };
+
+  const createMut = useMutation({
+    mutationFn: async (data: any) => (await apiRequest("POST", "/api/admin/installment-rates", data)).json(),
+    onSuccess: () => { refresh(); setNewRow({ months: "", rate: "", sortOrder: "0", isActive: true }); toast({ title: "Eklendi" }); },
+    onError: () => toast({ title: "Eklenemedi", variant: "destructive" }),
+  });
+  const updateMut = useMutation({
+    mutationFn: async ({ id, data }: { id: number; data: any }) => (await apiRequest("PATCH", `/api/admin/installment-rates/${id}`, data)).json(),
+    onSuccess: () => { refresh(); toast({ title: "Güncellendi" }); },
+    onError: () => toast({ title: "Güncellenemedi", variant: "destructive" }),
+  });
+  const deleteMut = useMutation({
+    mutationFn: async (id: number) => (await apiRequest("DELETE", `/api/admin/installment-rates/${id}`)).json(),
+    onSuccess: () => { refresh(); toast({ title: "Silindi" }); },
+    onError: () => toast({ title: "Silinemedi", variant: "destructive" }),
+  });
+
+  return (
+    <Card>
+      <CardContent className="pt-4 space-y-3">
+        <div>
+          <h3 className="text-sm font-bold flex items-center gap-2">💳 Taksit Oranları</h3>
+          <p className="text-[11px] text-muted-foreground mt-1">Kredi kartı ödemelerinde gösterilecek taksit ay seçenekleri ve vade farkı oranları (%). Oran 0 ise "peşin fiyatına" rozeti gösterilir. Tek Çekim seçeneği otomatik eklenir.</p>
+        </div>
+
+        {isLoading ? (
+          <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin" /></div>
+        ) : (
+          <div className="space-y-2">
+            <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-muted-foreground uppercase px-2">
+              <div className="col-span-2">Ay</div>
+              <div className="col-span-3">Vade Farkı %</div>
+              <div className="col-span-2">Sıra</div>
+              <div className="col-span-2 text-center">Aktif</div>
+              <div className="col-span-3"></div>
+            </div>
+            {rates.sort((a, b) => a.sortOrder - b.sortOrder || a.months - b.months).map((r) => {
+              const e = editing[r.id] || { months: String(r.months), rate: String(r.rate), sortOrder: String(r.sortOrder), isActive: r.isActive };
+              return (
+                <div key={r.id} className="grid grid-cols-12 gap-2 items-center bg-muted/30 rounded-lg p-2" data-testid={`row-installment-${r.id}`}>
+                  <Input className="col-span-2 h-8 text-xs" type="number" min="2" value={e.months} onChange={ev => setEditing(p => ({ ...p, [r.id]: { ...e, months: ev.target.value } }))} data-testid={`input-installment-months-${r.id}`} />
+                  <Input className="col-span-3 h-8 text-xs" type="number" min="0" step="0.01" value={e.rate} onChange={ev => setEditing(p => ({ ...p, [r.id]: { ...e, rate: ev.target.value } }))} data-testid={`input-installment-rate-${r.id}`} />
+                  <Input className="col-span-2 h-8 text-xs" type="number" value={e.sortOrder} onChange={ev => setEditing(p => ({ ...p, [r.id]: { ...e, sortOrder: ev.target.value } }))} data-testid={`input-installment-sort-${r.id}`} />
+                  <div className="col-span-2 flex justify-center">
+                    <Switch checked={e.isActive} onCheckedChange={(v) => setEditing(p => ({ ...p, [r.id]: { ...e, isActive: v } }))} data-testid={`switch-installment-active-${r.id}`} />
+                  </div>
+                  <div className="col-span-3 flex gap-1 justify-end">
+                    <Button size="sm" variant="outline" className="h-7 px-2 text-xs" onClick={() => updateMut.mutate({ id: r.id, data: { months: Number(e.months), rate: Number(e.rate), sortOrder: Number(e.sortOrder), isActive: e.isActive } })} disabled={updateMut.isPending} data-testid={`btn-installment-save-${r.id}`}>Kaydet</Button>
+                    <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-red-600" onClick={() => { if (confirm("Silinsin mi?")) deleteMut.mutate(r.id); }} data-testid={`btn-installment-delete-${r.id}`}>Sil</Button>
+                  </div>
+                </div>
+              );
+            })}
+
+            <div className="grid grid-cols-12 gap-2 items-center border-2 border-dashed border-amber-300 rounded-lg p-2 bg-amber-50/30 dark:bg-amber-950/20">
+              <Input className="col-span-2 h-8 text-xs" type="number" min="2" placeholder="Ay" value={newRow.months} onChange={ev => setNewRow(p => ({ ...p, months: ev.target.value }))} data-testid="input-new-installment-months" />
+              <Input className="col-span-3 h-8 text-xs" type="number" min="0" step="0.01" placeholder="0 = peşin" value={newRow.rate} onChange={ev => setNewRow(p => ({ ...p, rate: ev.target.value }))} data-testid="input-new-installment-rate" />
+              <Input className="col-span-2 h-8 text-xs" type="number" value={newRow.sortOrder} onChange={ev => setNewRow(p => ({ ...p, sortOrder: ev.target.value }))} data-testid="input-new-installment-sort" />
+              <div className="col-span-2 flex justify-center">
+                <Switch checked={newRow.isActive} onCheckedChange={(v) => setNewRow(p => ({ ...p, isActive: v }))} data-testid="switch-new-installment-active" />
+              </div>
+              <div className="col-span-3 flex justify-end">
+                <Button size="sm" className="h-7 px-2 text-xs" onClick={() => {
+                  const m = Number(newRow.months); const rt = Number(newRow.rate);
+                  if (!m || m < 2) { toast({ title: "Ay sayısı 2 veya daha büyük olmalı", variant: "destructive" }); return; }
+                  if (isNaN(rt) || rt < 0) { toast({ title: "Geçersiz oran", variant: "destructive" }); return; }
+                  createMut.mutate({ months: m, rate: rt, sortOrder: Number(newRow.sortOrder) || 0, isActive: newRow.isActive });
+                }} disabled={createMut.isPending} data-testid="btn-new-installment-add">Ekle</Button>
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 function SettingsSection() {
   const { toast } = useToast();
   const { data: settings, isLoading } = useQuery<Record<string, string>>({
@@ -5786,6 +5877,8 @@ function SettingsSection() {
           </div>
         </CardContent>
       </Card>
+
+      <InstallmentRatesCard />
 
       <Card>
         <CardContent className="pt-4 space-y-4">

@@ -352,6 +352,10 @@ export default function Checkout() {
   const [orderNote, setOrderNote] = useState("");
   const [contactlessDelivery, setContactlessDelivery] = useState(false);
   const [doNotRing, setDoNotRing] = useState(false);
+  const [installmentMonths, setInstallmentMonths] = useState<number>(1);
+  const { data: installmentRates = [] } = useQuery<{ id: number; months: number; rate: number; isActive: boolean; sortOrder: number }[]>({
+    queryKey: ["/api/installment-rates"],
+  });
   const SLOT_TIMES = ["11:00-13:00", "12:00-14:00", "13:00-15:00", "14:00-16:00", "15:00-17:00", "16:00-18:00"];
   const TR_DAY_NAMES = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
   const TR_MONTH_NAMES = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
@@ -554,6 +558,17 @@ export default function Checkout() {
         })(),
         deliverySlot: deliverySlot || undefined,
         campaignProductIds: hasCampaignItems ? Array.from(campaignCartIds) : undefined,
+        ...((paymentId === "pos" || paymentId === "online") && installmentMonths > 1 ? (() => {
+          const r = installmentRates.find(x => x.months === installmentMonths);
+          if (!r) return {};
+          const total = displayTotal * (1 + (r.rate || 0) / 100);
+          return {
+            installmentMonths: r.months,
+            installmentRate: r.rate,
+            installmentMonthly: Math.round((total / r.months) * 100) / 100,
+            installmentTotal: Math.round(total * 100) / 100,
+          };
+        })() : {}),
       };
 
       const orderRes = await apiRequest("POST", "/api/orders", orderPayload);
@@ -1096,6 +1111,65 @@ export default function Checkout() {
                   {paymentId === "online" && !hasCampaignItems && (
                     <div className="mt-3">
                       <InstallmentBanner variant="compact" />
+                    </div>
+                  )}
+
+                  {(paymentId === "pos" || paymentId === "online") && !hasCampaignItems && (
+                    <div className="mt-4 border-t pt-4">
+                      <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+                        <CreditCard className="w-4 h-4 text-blue-600" />
+                        Taksit Seçenekleri
+                      </h3>
+                      <div className="space-y-2">
+                        {[{ months: 1, rate: 0, isTekCekim: true }, ...installmentRates.filter(r => r.isActive).sort((a, b) => a.sortOrder - b.sortOrder || a.months - b.months).map(r => ({ months: r.months, rate: r.rate, isTekCekim: false }))].map((opt) => {
+                          const total = displayTotal * (1 + (opt.rate || 0) / 100);
+                          const monthly = total / opt.months;
+                          const active = installmentMonths === opt.months;
+                          const isPesin = opt.rate === 0;
+                          return (
+                            <button
+                              key={opt.months}
+                              type="button"
+                              onClick={() => setInstallmentMonths(opt.months)}
+                              className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border text-sm transition ${active ? "bg-amber-50 border-amber-400 dark:bg-amber-950/30 dark:border-amber-600" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-amber-300"}`}
+                              data-testid={`btn-installment-${opt.months}`}
+                            >
+                              <div className="flex items-center gap-2 min-w-0">
+                                <span className={`w-4 h-4 rounded-sm border-2 flex items-center justify-center shrink-0 ${active ? "bg-amber-500 border-amber-500" : "border-gray-300 dark:border-gray-600"}`}>
+                                  {active && <Check className="w-3 h-3 text-white" />}
+                                </span>
+                                <span className="font-medium">
+                                  {opt.isTekCekim ? "Tek Çekim" : `${opt.months} Taksit`}
+                                </span>
+                                {isPesin && !opt.isTekCekim && (
+                                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-300 px-1.5 py-0.5 rounded">peşin fiyatına</span>
+                                )}
+                              </div>
+                              <div className="text-right shrink-0">
+                                {opt.isTekCekim ? (
+                                  <span className="font-semibold tabular-nums">{displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                                ) : (
+                                  <span className="text-xs">
+                                    <span className="text-muted-foreground">{opt.months} x </span>
+                                    <span className="font-semibold tabular-nums">{monthly.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                                  </span>
+                                )}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {installmentMonths > 1 && (() => {
+                        const r = installmentRates.find(x => x.months === installmentMonths);
+                        if (!r) return null;
+                        const total = displayTotal * (1 + (r.rate || 0) / 100);
+                        return (
+                          <p className="text-[11px] text-muted-foreground mt-2 text-center">
+                            Karttan toplam çekilecek: <strong className="text-foreground">{total.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</strong>
+                            {r.rate > 0 && ` (vade farkı +%${r.rate})`}
+                          </p>
+                        );
+                      })()}
                     </div>
                   )}
 
