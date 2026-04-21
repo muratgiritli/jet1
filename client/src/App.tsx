@@ -72,6 +72,8 @@ const MesafeliSatisSozlesmesiPage = lazy(() => import("@/pages/static-pages").th
 const DemoLanding = lazy(() => import("@/pages/demo-landing"));
 const Demo1Page = lazy(() => import("@/pages/demo1"));
 const Demo2Page = lazy(() => import("@/pages/demo2"));
+const DemoKampanyaPage = lazy(() => import("@/pages/demo-kampanya"));
+const DemoKampanyaUrunPage = lazy(() => import("@/pages/demo-kampanya").then(m => ({ default: m.DemoKampanyaUrun })));
 const SeoPage = lazy(() => import("@/pages/seo-pages"));
 const BlogListRoute = lazy(() => import("@/pages/blog").then(m => ({ default: m.BlogListRoute })));
 const BlogPostRoute = lazy(() => import("@/pages/blog").then(m => ({ default: m.BlogPostRoute })));
@@ -105,6 +107,8 @@ function Router() {
         <Route path="/demo" component={DemoLanding} />
         <Route path="/demo1" component={Demo1Page} />
         <Route path="/demo2" component={Demo2Page} />
+        <Route path="/demo-kampanya" component={DemoKampanyaPage} />
+        <Route path="/demo-kampanya/urun/:id" component={DemoKampanyaUrunPage} />
         <Route path="/kampanya" component={CampaignPage} />
         <Route path="/kampanya-demo" component={CampaignDemoPage} />
         <Route path="/kampanya-urun-demo" component={CampaignProductDemoPage} />
