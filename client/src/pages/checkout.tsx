@@ -1428,20 +1428,9 @@ export default function Checkout() {
                 <CardContent className="p-5">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between gap-3 flex-wrap">
-                      <span className="text-muted-foreground">Ara Toplam</span>
+                      <span className="text-muted-foreground">Sipariş Tutarı</span>
                       <span className="font-medium" data-testid="text-subtotal">{subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                     </div>
-                    {paymentDiscount > 0 && (
-                      <div className="flex justify-between gap-3 flex-wrap">
-                        <span className="text-muted-foreground flex items-center gap-1">
-                          <Gift className="w-3.5 h-3.5" style={{ color: "#2e7d32" }} />
-                          Kapıda Nakit İndirimi (%10)
-                        </span>
-                        <span className="font-medium" style={{ color: "#2e7d32" }} data-testid="text-payment-discount">
-                          -{paymentDiscount.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                        </span>
-                      </div>
-                    )}
                     {!hasCampaignItems && isLoggedIn && pointsBalance > 0 && (
                       <div className="flex justify-between items-center gap-3 flex-wrap">
                         <button
@@ -1484,48 +1473,14 @@ export default function Checkout() {
                         )}
                       </span>
                     </div>
-
                   </div>
-
 
                   <div className="mt-4 pt-4 border-t">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <span className="text-lg font-bold">Genel Toplam</span>
+                      <span className="text-lg font-bold">Ödenecek Tutar</span>
                       <span className="text-2xl font-extrabold text-primary" data-testid="text-total">
                         {displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                       </span>
-                    </div>
-                    <div className="mt-2 rounded-lg bg-muted/40 p-3 space-y-1 text-[11px]" data-testid="breakdown-total">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Ürünler</span>
-                        <span className="tabular-nums">{subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                      </div>
-                      {paymentDiscount > 0 && (
-                        <div className="flex justify-between text-emerald-700">
-                          <span>− Kapıda Nakit İndirimi (%10)</span>
-                          <span className="tabular-nums">-{paymentDiscount.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                        </div>
-                      )}
-                      {couponDiscountAmount > 0 && (
-                        <div className="flex justify-between text-emerald-700">
-                          <span>− Kupon ({appliedCoupon?.code})</span>
-                          <span className="tabular-nums">-{couponDiscountAmount.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                        </div>
-                      )}
-                      {pointsDiscount > 0 && (
-                        <div className="flex justify-between text-emerald-700">
-                          <span>− Para Puan</span>
-                          <span className="tabular-nums">-{pointsDiscount.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                        </div>
-                      )}
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">+ Teslimat Ücreti</span>
-                        <span className="tabular-nums">{effectiveShipping === 0 ? "Ücretsiz" : `${effectiveShipping.toLocaleString("tr-TR")} TL`}</span>
-                      </div>
-                      <div className="flex justify-between pt-1 mt-1 border-t border-dashed font-bold">
-                        <span>= Ödenecek Tutar</span>
-                        <span className="tabular-nums text-primary">{displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                      </div>
                     </div>
                   </div>
 
