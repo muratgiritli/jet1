@@ -1433,8 +1433,15 @@ export default function Checkout() {
                 <CardContent className="p-5">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between gap-3 flex-wrap">
-                      <span className="text-muted-foreground">Sipariş Tutarı</span>
-                      <span className="font-medium" data-testid="text-subtotal">{subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                      <span className="text-muted-foreground">
+                        Sipariş Tutarı
+                        {paymentId === "nakit" && paymentDiscount > 0 && (
+                          <span className="ml-1 font-bold" style={{ color: "#dc2626" }}>(%10 indirimli)</span>
+                        )}
+                      </span>
+                      <span className="font-medium" data-testid="text-subtotal">
+                        {(subtotal - paymentDiscount).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                      </span>
                     </div>
                     {!hasCampaignItems && isLoggedIn && pointsBalance > 0 && (
                       <div className="flex justify-between items-center gap-3 flex-wrap">
