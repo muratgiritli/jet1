@@ -1330,66 +1330,48 @@ export default function Checkout() {
                     </div>
                   ) : (
                   <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
-                    {PAYMENT_OPTIONS.filter((opt) => opt.id !== "eft" || eftEnabled).map((opt) => {
+                    {PAYMENT_OPTIONS.filter((opt) => opt.id !== "pos" && opt.id !== "online" && (opt.id !== "eft" || eftEnabled)).map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
                       const optDiscRate = opt.disc < 0 ? Math.abs(opt.disc) : 0;
                       const optDiscAmount = subtotal * optDiscRate;
                       const optTotal = Math.max(0, subtotal - optDiscAmount);
-                      const has3Installment = installmentRates.some(r => r.isActive && r.months === 3 && (r.rate || 0) === 0);
                       return (
-                        <div key={opt.id}>
-                          <label
-                            className={`flex items-center gap-2 p-3 rounded-md cursor-pointer transition-colors ${paymentId === opt.id ? "bg-accent" : ""}`}
-                            data-testid={`radio-payment-${opt.id}`}
-                          >
-                            <RadioGroupItem value={opt.id} data-testid={`input-radio-${opt.id}`} />
-                            <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
-                            <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-                              <span className="text-sm font-medium" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
-                            </div>
-                            <span className="text-sm font-extrabold text-primary tabular-nums shrink-0" data-testid={`text-payment-price-${opt.id}`}>
-                              {optTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                            </span>
-                          </label>
-                          {opt.id === "pos" && has3Installment && (
-                            <div
-                              className="ml-9 mr-3 -mt-1 mb-2 px-3 py-1.5 rounded-md text-[11px] font-bold flex items-center gap-1.5"
-                              style={{ backgroundColor: "#fff7ed", color: "#9a3412", border: "1px dashed #fdba74" }}
-                              data-testid={`text-payment-slogan-${opt.id}`}
-                            >
-                              <span>🎉</span>
-                              <span>Peşin fiyatına 3 taksit fırsatı!</span>
-                            </div>
-                          )}
-                        </div>
+                        <label
+                          key={opt.id}
+                          className={`flex items-center gap-2 p-3 rounded-md cursor-pointer transition-colors ${paymentId === opt.id ? "bg-accent" : ""}`}
+                          data-testid={`radio-payment-${opt.id}`}
+                        >
+                          <RadioGroupItem value={opt.id} data-testid={`input-radio-${opt.id}`} />
+                          <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
+                            <span className="text-sm font-medium" data-testid={`text-payment-name-${opt.id}`}>{opt.name}</span>
+                          </div>
+                          <span className="text-sm font-extrabold text-primary tabular-nums shrink-0" data-testid={`text-payment-price-${opt.id}`}>
+                            {optTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                          </span>
+                        </label>
                       );
                     })}
                   </RadioGroup>
                   )}
 
-                  {paymentId === "online" && !hasCampaignItems && (
-                    <div className="mt-3">
-                      <InstallmentBanner variant="compact" />
-                    </div>
-                  )}
-
-                  {(paymentId === "pos" || paymentId === "online") && !hasCampaignItems && (
+                  {!hasCampaignItems && (
                     <div className="mt-4 border-t pt-4">
                       <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
                         <CreditCard className="w-4 h-4 text-blue-600" />
-                        Taksit Seçenekleri
+                        Kapıda Kredi Kartı ile Ödeme Yap
                       </h3>
                       <div className="space-y-2">
                         {[{ months: 1, rate: 0, isTekCekim: true }, ...installmentRates.filter(r => r.isActive).sort((a, b) => a.sortOrder - b.sortOrder || a.months - b.months).map(r => ({ months: r.months, rate: r.rate, isTekCekim: false }))].map((opt) => {
-                          const total = displayTotal * (1 + (opt.rate || 0) / 100);
+                          const total = subtotal * (1 + (opt.rate || 0) / 100);
                           const monthly = total / opt.months;
-                          const active = installmentMonths === opt.months;
+                          const active = paymentId === "pos" && installmentMonths === opt.months;
                           const isPesin = opt.rate === 0;
                           return (
                             <button
                               key={opt.months}
                               type="button"
-                              onClick={() => setInstallmentMonths(opt.months)}
+                              onClick={() => { setPaymentId("pos"); setInstallmentMonths(opt.months); }}
                               className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg border text-sm transition ${active ? "bg-amber-50 border-amber-400 dark:bg-amber-950/30 dark:border-amber-600" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-amber-300"}`}
                               data-testid={`btn-installment-${opt.months}`}
                             >
@@ -1406,7 +1388,7 @@ export default function Checkout() {
                               </div>
                               <div className="text-right shrink-0">
                                 {opt.isTekCekim ? (
-                                  <span className="font-semibold tabular-nums">{displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                                  <span className="font-semibold tabular-nums">{subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                                 ) : (
                                   <span className="text-xs">
                                     <span className="text-muted-foreground">{opt.months} x </span>
@@ -1418,10 +1400,10 @@ export default function Checkout() {
                           );
                         })}
                       </div>
-                      {installmentMonths > 1 && (() => {
+                      {paymentId === "pos" && installmentMonths > 1 && (() => {
                         const r = installmentRates.find(x => x.months === installmentMonths);
                         if (!r) return null;
-                        const total = displayTotal * (1 + (r.rate || 0) / 100);
+                        const total = subtotal * (1 + (r.rate || 0) / 100);
                         return (
                           <p className="text-[11px] text-muted-foreground mt-2 text-center">
                             Karttan toplam çekilecek: <strong className="text-foreground">{total.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</strong>
