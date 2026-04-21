@@ -1485,42 +1485,6 @@ export default function Checkout() {
                       </span>
                     </div>
 
-                    {!hasCampaignItems && (
-                    <>
-                    <div
-                      className="mt-3 rounded-xl p-3 cursor-pointer transition-all"
-                      style={{
-                        backgroundColor: donationAmount > 0 ? "#fff8e1" : "#f9fafb",
-                        border: donationAmount > 0 ? "2px solid #ffb300" : "1px solid #e5e7eb",
-                      }}
-                      onClick={() => setDonationAmount(donationAmount > 0 ? 0 : 10)}
-                      data-testid="btn-donation-toggle"
-                    >
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded border-2 flex items-center justify-center shrink-0 ${donationAmount > 0 ? "border-amber-500 bg-amber-500" : "border-gray-300"}`}>
-                          {donationAmount > 0 && <Check className="w-3.5 h-3.5 text-white" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-base">🐾</span>
-                            <span className="text-sm font-bold" style={{ color: "#e65100" }}>Askıda Mama</span>
-                            <span className="text-xs font-bold px-1.5 py-0.5 rounded-full" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>+10 TL</span>
-                          </div>
-                          <p className="text-[11px] text-muted-foreground mt-0.5 leading-snug">
-                            Sokak hayvanları için barınak ve besleme noktalarına mama bağışla
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {donationAmount > 0 && (
-                      <div className="flex justify-between gap-3 flex-wrap mt-2">
-                        <span className="text-muted-foreground flex items-center gap-1">🐾 Askıda Mama</span>
-                        <span className="font-medium" style={{ color: "#e65100" }} data-testid="text-donation">+{donationAmount} TL</span>
-                      </div>
-                    )}
-                    </>
-                    )}
                   </div>
 
 
@@ -1558,12 +1522,6 @@ export default function Checkout() {
                         <span className="text-muted-foreground">+ Teslimat Ücreti</span>
                         <span className="tabular-nums">{effectiveShipping === 0 ? "Ücretsiz" : `${effectiveShipping.toLocaleString("tr-TR")} TL`}</span>
                       </div>
-                      {donationAmount > 0 && (
-                        <div className="flex justify-between text-amber-700">
-                          <span>+ 🐾 Askıda Mama Bağışı</span>
-                          <span className="tabular-nums">+{donationAmount.toLocaleString("tr-TR")} TL</span>
-                        </div>
-                      )}
                       <div className="flex justify-between pt-1 mt-1 border-t border-dashed font-bold">
                         <span>= Ödenecek Tutar</span>
                         <span className="tabular-nums text-primary">{displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
