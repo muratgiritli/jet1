@@ -24,6 +24,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import Logo from "@/components/Logo";
 import ProductImage from "@/components/ProductImage";
 
+const TR_MONTHS = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+function formatDeliverySlot(slot: string): string {
+  const legacy: Record<string, string> = {
+    hemen: "Gün içinde",
+    bugun_ogle: "Bugün 12:00-14:00",
+    bugun_aksam: "Bugün 16:00-19:00",
+    yarin_sabah: "Yarın Sabah 10:00-12:00",
+  };
+  if (legacy[slot]) return legacy[slot];
+  const m = slot.match(/^(\d{4})-(\d{2})-(\d{2})\|(\d{2}:\d{2}-\d{2}:\d{2})$/);
+  if (!m) return slot;
+  const [, y, mo, da, time] = m;
+  const d = new Date(Number(y), Number(mo) - 1, Number(da));
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diffDays = Math.round((d.getTime() - today.getTime()) / 86400000);
+  const dayLabel = diffDays === 0 ? "Bugün" : diffDays === 1 ? "Yarın" : `${d.getDate()} ${TR_MONTHS[d.getMonth()]}`;
+  return `${dayLabel} ${time}`;
+}
+
 type TabKey = "profile" | "points" | "orders" | "favorites" | "addresses" | "pets" | "notifications" | "spending" | "security";
 
 const TABS: { key: TabKey; label: string; icon: any; emoji: string }[] = [
@@ -470,12 +489,7 @@ function OrdersSection() {
                     {order.isCampaign
                       ? "min. 3 gün içinde"
                       : (order.deliverySlot
-                          ? (({
-                              hemen: "Gün içinde",
-                              bugun_ogle: "Bugün 12:00-14:00",
-                              bugun_aksam: "Bugün 16:00-19:00",
-                              yarin_sabah: "Yarın Sabah 10:00-12:00",
-                            } as Record<string, string>)[order.deliverySlot] || order.deliverySlot)
+                          ? formatDeliverySlot(order.deliverySlot)
                           : "Gün içinde")}
                   </span></div>
                   {order.customerNote && (

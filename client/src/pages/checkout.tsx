@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -349,7 +349,41 @@ export default function Checkout() {
 
   const [orderError, setOrderError] = useState("");
   const [orderNote, setOrderNote] = useState("");
-  const [deliverySlot, setDeliverySlot] = useState("hemen");
+  const SLOT_TIMES = ["11:00-13:00", "13:00-15:00", "15:00-18:00"];
+  const TR_DAY_NAMES = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
+  const TR_MONTH_NAMES = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+  const slotPassed = (dateStr: string, range: string) => {
+    const now = new Date();
+    const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+    if (dateStr !== todayKey) return false;
+    const [start] = range.split("-");
+    const [hh, mm] = start.split(":").map(Number);
+    const startMin = hh * 60 + mm;
+    const nowMin = now.getHours() * 60 + now.getMinutes();
+    return nowMin >= startMin;
+  };
+  const deliveryDays = useMemo(() => {
+    const days: { key: string; dayLabel: string; dateLabel: string; isToday: boolean }[] = [];
+    const today = new Date();
+    for (let i = 0; i < 3; i++) {
+      const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() + i);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const dayLabel = i === 0 ? "Bugün" : i === 1 ? "Yarın" : TR_DAY_NAMES[d.getDay()];
+      const dateLabel = `${d.getDate()} ${TR_MONTH_NAMES[d.getMonth()]}`;
+      days.push({ key, dayLabel, dateLabel, isToday: i === 0 });
+    }
+    return days;
+  }, []);
+  const initialSlot = useMemo(() => {
+    for (const d of deliveryDays) {
+      for (const t of SLOT_TIMES) {
+        if (!slotPassed(d.key, t)) return `${d.key}|${t}`;
+      }
+    }
+    return `${deliveryDays[0].key}|${SLOT_TIMES[0]}`;
+  }, [deliveryDays]);
+  const [deliverySlot, setDeliverySlot] = useState<string>(initialSlot);
+  const [selectedDay, setSelectedDay] = useState<string>(deliverySlot.split("|")[0]);
   const [pendingOrderAfterAuth, setPendingOrderAfterAuth] = useState(false);
   const [donationAmount, setDonationAmount] = useState(0);
   const [showPointsDialog, setShowPointsDialog] = useState(false);
@@ -1079,6 +1113,60 @@ export default function Checkout() {
                 </CardContent>
               </Card>
             </section>
+
+            {!hasCampaignItems && (
+              <section className="mt-6">
+                <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-delivery">
+                  <Clock className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+                  Teslimat Zamanı
+                </h2>
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    <div className="flex gap-2 overflow-x-auto pb-1">
+                      {deliveryDays.map((d) => {
+                        const active = selectedDay === d.key;
+                        return (
+                          <button
+                            key={d.key}
+                            type="button"
+                            onClick={() => setSelectedDay(d.key)}
+                            className={`shrink-0 px-3 py-2 rounded-xl border text-center transition ${active ? "bg-emerald-600 text-white border-emerald-600 shadow" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-emerald-400"}`}
+                            data-testid={`btn-day-${d.key}`}
+                          >
+                            <div className={`text-xs font-bold ${active ? "text-white" : ""}`}>{d.dayLabel}</div>
+                            <div className={`text-[11px] ${active ? "text-white/90" : "text-muted-foreground"}`}>{d.dateLabel}</div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {SLOT_TIMES.map((t) => {
+                        const slotId = `${selectedDay}|${t}`;
+                        const passed = slotPassed(selectedDay, t);
+                        const active = deliverySlot === slotId;
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            disabled={passed}
+                            onClick={() => setDeliverySlot(slotId)}
+                            className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm transition ${passed ? "opacity-50 cursor-not-allowed bg-gray-50 dark:bg-gray-900/50 border-gray-200 dark:border-gray-800" : active ? "bg-emerald-50 border-emerald-500 text-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-200 dark:border-emerald-600 shadow-sm" : "bg-white dark:bg-gray-900 border-gray-200 dark:border-gray-700 hover:border-emerald-400"}`}
+                            data-testid={`btn-slot-${slotId}`}
+                          >
+                            <span className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${active ? "border-emerald-600 bg-emerald-600" : "border-gray-300"}`}>
+                              {active && <Check className="w-2.5 h-2.5 text-white" />}
+                            </span>
+                            <span className="font-medium">{t}</span>
+                            {passed && <span className="ml-auto text-[10px] font-bold text-red-500 bg-red-50 dark:bg-red-950/30 px-1.5 py-0.5 rounded">DOLU</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">Teslimatlar 11:00 - 18:00 saatleri arasında yapılır.</p>
+                  </CardContent>
+                </Card>
+              </section>
+            )}
 
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-note">

@@ -82,6 +82,25 @@ const ANIMALS = [
   { id: "kemirgen", name: "Kemirgen", icon: Rabbit },
 ];
 
+const TR_MONTHS_ADMIN = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
+function formatAdminDeliverySlot(slot: string): string {
+  const legacy: Record<string, string> = {
+    hemen: "Hemen (En kısa sürede)",
+    bugun_ogle: "Bugün 12:00-14:00",
+    bugun_aksam: "Bugün 16:00-19:00",
+    yarin_sabah: "Yarın Sabah 10:00-12:00",
+  };
+  if (legacy[slot]) return legacy[slot];
+  const m = slot.match(/^(\d{4})-(\d{2})-(\d{2})\|(\d{2}:\d{2}-\d{2}:\d{2})$/);
+  if (!m) return slot;
+  const [, y, mo, da, time] = m;
+  const d = new Date(Number(y), Number(mo) - 1, Number(da));
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diffDays = Math.round((d.getTime() - today.getTime()) / 86400000);
+  const dayLabel = diffDays === 0 ? "Bugün" : diffDays === 1 ? "Yarın" : `${d.getDate()} ${TR_MONTHS_ADMIN[d.getMonth()]}`;
+  return `${dayLabel} ${time}`;
+}
+
 function useSubcategories() {
   const { data: allSubs = [] } = useQuery<Subcategory[]>({
     queryKey: ["/api/subcategories", "all"],
@@ -2451,12 +2470,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   {(order as any).deliverySlot && (
                     <div className="text-sm bg-blue-50 dark:bg-blue-950/30 rounded-lg p-3">
                       <span className="font-medium">Teslimat Zamanı: </span>
-                      {({
-                        hemen: "Hemen (En kısa sürede)",
-                        bugun_ogle: "Bugün 12:00-14:00",
-                        bugun_aksam: "Bugün 16:00-19:00",
-                        yarin_sabah: "Yarın Sabah 10:00-12:00",
-                      } as Record<string, string>)[(order as any).deliverySlot] || (order as any).deliverySlot}
+                      {formatAdminDeliverySlot((order as any).deliverySlot)}
                     </div>
                   )}
 

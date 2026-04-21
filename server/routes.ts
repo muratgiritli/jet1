@@ -1114,7 +1114,7 @@ export async function registerRoutes(
     grandTotal: z.number(),
     paymentMethod: z.string(),
     customerNote: z.string().max(500).optional(),
-    deliverySlot: z.enum(["hemen", "bugun_ogle", "bugun_aksam", "yarin_sabah"]).optional(),
+    deliverySlot: z.string().max(60).optional(),
     customerPhone: z.string().min(7, "Telefon numarası gerekli").max(20, "Telefon numarası çok uzun"),
     customerName: z.string().min(1, "Ad soyad gerekli").max(100, "Ad soyad çok uzun"),
     customerAddress: z.string().min(1, "Adres gerekli").max(500, "Adres çok uzun"),
