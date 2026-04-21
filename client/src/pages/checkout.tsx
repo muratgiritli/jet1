@@ -927,8 +927,7 @@ export default function Checkout() {
                               {product.name}
                             </p>
                             <p className="hidden md:block text-xs text-muted-foreground" data-testid={`text-checkout-unit-${product.id}`}>
-                              {(product.price * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL / adet
-                              <span className="ml-1 text-[10px] text-emerald-700 font-semibold">(Kapıda Nakit fiyatı)</span>
+                              {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL / adet
                             </p>
                           </div>
                           <div className="flex items-center gap-1">
