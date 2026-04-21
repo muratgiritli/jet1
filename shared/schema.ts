@@ -223,6 +223,7 @@ export const installmentRates = pgTable("installment_rates", {
   rate: real("rate").notNull(),
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
+  noInterest: boolean("no_interest").notNull().default(false),
 });
 
 export const insertInstallmentRateSchema = createInsertSchema(installmentRates).omit({ id: true });

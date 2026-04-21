@@ -1362,7 +1362,7 @@ export default function Checkout() {
                         Kapıda Kredi Kartı ile Ödeme Yap
                       </h3>
                       <div className="space-y-2">
-                        {[{ months: 1, rate: 0, isTekCekim: true }, ...installmentRates.filter(r => r.isActive).sort((a, b) => a.sortOrder - b.sortOrder || a.months - b.months).map(r => ({ months: r.months, rate: r.rate, isTekCekim: false }))].map((opt) => {
+                        {[{ months: 1, rate: 0, isTekCekim: true, noInterest: false }, ...installmentRates.filter(r => r.isActive).sort((a, b) => a.sortOrder - b.sortOrder || a.months - b.months).map(r => ({ months: r.months, rate: r.rate, isTekCekim: false, noInterest: (r as any).noInterest || false }))].map((opt) => {
                           const total = subtotal * (1 + (opt.rate || 0) / 100);
                           const monthly = total / opt.months;
                           const active = paymentId === "pos" && installmentMonths === opt.months;
@@ -1382,7 +1382,10 @@ export default function Checkout() {
                                 <span className="font-medium">
                                   {opt.isTekCekim ? "Tek Çekim" : `${opt.months} Taksit`}
                                 </span>
-                                {isPesin && !opt.isTekCekim && (
+                                {opt.noInterest && !opt.isTekCekim && (
+                                  <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-300 px-1.5 py-0.5 rounded">(Vade farkı yok)</span>
+                                )}
+                                {isPesin && !opt.noInterest && !opt.isTekCekim && (
                                   <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-300 px-1.5 py-0.5 rounded">peşin fiyatına</span>
                                 )}
                               </div>
