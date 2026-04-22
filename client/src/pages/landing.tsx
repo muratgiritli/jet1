@@ -220,6 +220,30 @@ function QuickActions() {
   );
 }
 
+function HomeBanners() {
+  const { data: banners = [] } = useQuery<Array<{ id: number; title: string; imageData: string | null; linkUrl: string | null; sortOrder: number }>>({
+    queryKey: ["/api/banners"],
+  });
+  const top2 = banners.filter(b => b.imageData).slice(0, 2);
+  if (top2.length === 0) return null;
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5" data-testid="section-home-banners">
+      {top2.map((b) => {
+        const inner = (
+          <div className="relative w-full overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-shadow" data-testid={`home-banner-${b.sortOrder}`}>
+            <img src={b.imageData!} alt={b.title} className="w-full h-auto object-cover" loading="lazy" />
+          </div>
+        );
+        return b.linkUrl ? (
+          <Link key={b.id} href={b.linkUrl}>{inner}</Link>
+        ) : (
+          <div key={b.id}>{inner}</div>
+        );
+      })}
+    </div>
+  );
+}
+
 function CampaignBanner() {
   return (
     <div data-testid="section-campaign-banner">
@@ -625,52 +649,9 @@ export default function Landing() {
           </div>
         )}
 
-        <div className="hidden md:block mt-2 md:mt-6">
-          <HeroCarousel />
+        <div className="mt-3 md:mt-6">
+          <HomeBanners />
         </div>
-
-        <div className="mt-3 md:mt-5">
-          <div className="bg-gradient-to-r from-purple-600 to-indigo-600 rounded-2xl px-4 py-3 md:px-8 md:py-4 text-center" data-testid="slogan-banner">
-            <p className="text-white font-extrabold text-base md:text-xl tracking-tight">
-              Sen iste{" "}<span className="text-yellow-300">jet</span>{" "}<span className="whitespace-nowrap">ile kapına gelsin!</span>
-            </p>
-            <p className="text-yellow-200 text-xs md:text-base mt-1 font-bold tracking-wide">
-              📍 Samsun · Atakum bölgesine özel hızlı teslimat
-            </p>
-            <p className="text-white/80 text-[11px] md:text-sm mt-1 font-medium">
-              Haftanın 7 günü saat 11.00-19.00 arası adrese teslimat yapılır
-            </p>
-          </div>
-        </div>
-
-        <div className="hidden md:block mt-8">
-          <DesktopStatsBar />
-        </div>
-
-        <Link href="/odeme">
-          <div
-            className="mt-4 md:mt-8 relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 text-white shadow-lg cursor-pointer hover-elevate active-elevate-2"
-            data-testid="banner-installment-categories"
-          >
-            <div className="px-4 py-3 md:px-6 md:py-4 flex items-center gap-3">
-              <div className="shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl bg-white/20 flex items-center justify-center text-2xl md:text-3xl">
-                💳
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm md:text-lg font-extrabold leading-tight">
-                  Peşin Fiyatına 3 Taksit + 9 Ay Taksit İmkanı!
-                </p>
-                <p className="text-[11px] md:text-sm text-white/90 font-medium leading-tight mt-0.5">
-                  AXESS · Maximum · Bonus · WORLD · QNB
-                </p>
-              </div>
-              <span className="shrink-0 hidden sm:inline text-xs md:text-sm bg-yellow-300 text-blue-900 font-extrabold px-3 py-1.5 rounded-full">
-                Hemen Sipariş Ver
-              </span>
-            </div>
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse pointer-events-none" />
-          </div>
-        </Link>
 
         <div className="mt-4 md:mt-6">
           <CategoryGrid />

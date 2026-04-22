@@ -2756,12 +2756,28 @@ export async function registerRoutes(
       if (!title) return res.status(400).json({ message: "Başlık gerekli" });
       let imageData: string | undefined;
       if (req.file) {
-        imageData = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+        const sharp = (await import("sharp")).default;
+        const webp = await sharp(req.file.buffer)
+          .resize(1600, 900, { fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 82 })
+          .toBuffer();
+        imageData = `data:image/webp;base64,${webp.toString("base64")}`;
       }
       const banner = await storage.createBanner({ title, linkUrl: linkUrl || null, imageData: imageData || null, sortOrder: parseInt(sortOrder || "0"), isActive: true });
       res.json(banner);
     } catch (err) {
       res.status(500).json({ message: "Banner oluşturma hatası" });
+    }
+  });
+
+  app.get("/api/banners", async (_req, res) => {
+    try {
+      const all = await storage.getAllBanners();
+      const active = all.filter((b: any) => b.isActive).sort((a: any, b: any) => a.sortOrder - b.sortOrder);
+      res.set("Cache-Control", "public, max-age=60");
+      res.json(active);
+    } catch (err) {
+      res.status(500).json({ message: "Banners fetch error" });
     }
   });
 
