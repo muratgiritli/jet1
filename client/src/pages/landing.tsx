@@ -704,10 +704,10 @@ export default function Landing() {
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
       <SEO
-        title="Samsun Pet Shop - Kedi Köpek Maması Online Sipariş | JETGO"
-        description="Samsun pet shop JETGO - Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri. Samsun içi aynı gün kapıya teslimat, kapıda ödeme. En uygun fiyatlarla online sipariş."
+        title="Atakum Petshop & Samsun Pet Shop - Aynı Gün Teslimat | JETGO"
+        description="Atakum, Samsun, İlkadım, Canik, Tekkeköy'e aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu, ödül maması kapıda ödeme. JETGO Pet Shop Samsun: 09:00-21:00 hizmet, +90 850 840 39 59. Mahalleye en yakın petshop."
+        keywords="atakum petshop, samsun petshop, samsun pet shop, atakum pet shop, samsun kedi maması, samsun köpek maması, samsun kedi kumu, atakum aynı gün petshop teslimatı, samsun acil kedi kumu, ilkadım petshop, canik petshop, tekkeköy petshop, kapıda ödeme petshop samsun, denizevleri petshop, güzelyalı petshop, kurupelit petshop, atakent petshop, mimar sinan petshop"
         canonical={`${SITE_DOMAIN}/`}
-        keywords="samsun petshop, samsun pet shop, kedi maması samsun, köpek maması samsun, kapıya teslim petshop, online pet shop samsun, kedi kumu samsun, evcil hayvan ürünleri samsun"
         jsonLd={[LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD]}
       />
 
