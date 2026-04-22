@@ -668,12 +668,12 @@ export default function Landing() {
           <CategoryGrid />
         </div>
 
-        <div className="mt-1 md:mt-2">
-          <HomeBannersBelowCategory />
+        <div className="mt-3 md:mt-6">
+          <OrderCounter />
         </div>
 
-        <div className="mt-4 md:mt-10">
-          <OrderCounter />
+        <div className="mt-1 md:mt-2">
+          <HomeBannersBelowCategory />
         </div>
 
         <div className="mt-4 md:mt-10">
