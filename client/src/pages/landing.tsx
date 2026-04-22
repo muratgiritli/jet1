@@ -20,6 +20,7 @@ import catCat from "@/assets/images/cat-cat.webp";
 import catBird from "@/assets/images/cat-bird.webp";
 import catRabbit from "@/assets/images/cat-rabbit.webp";
 import catFish from "@assets/cat-fish.png";
+import desktopHeroBanner from "@assets/ChatGPT_Image_22_Nis_2026_20_21_27_1776878498194.png";
 import brandRoyalCanin from "@/assets/images/brands/royal-canin.webp";
 import brandHills from "@/assets/images/brands/hills.webp";
 import brandNd from "@/assets/images/brands/nd.webp";
@@ -753,19 +754,25 @@ export default function Landing() {
       />
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 md:px-6 lg:px-8">
-        {/* MOBILE-ONLY: signup/welcome banner kept exactly as before */}
-        {!isLoggedIn && (
-          <div className="mt-2 md:hidden">
-            <SignupBonusBanner />
-          </div>
-        )}
+        {/* MOBILE-ONLY: welcome coupon banner for logged-in users */}
         {isLoggedIn && (
           <div className="mt-2 md:hidden">
             <WelcomeCouponBanner />
           </div>
         )}
 
-        {/* DESKTOP/TABLET HERO ROW: full-width carousel (signup banner hidden on desktop/tablet) */}
+        {/* DESKTOP/TABLET: promo banner image directly under header */}
+        <div className="hidden md:block mt-6">
+          <img
+            src={desktopHeroBanner}
+            alt="Petshop'a gitmeden 1 saatte kapında - Atakum içi 1 saatte teslim"
+            className="w-full h-auto rounded-2xl shadow-md"
+            loading="eager"
+            data-testid="img-desktop-hero-banner"
+          />
+        </div>
+
+        {/* DESKTOP/TABLET HERO ROW: full-width carousel */}
         <div className="hidden md:block mt-6">
           <HeroCarousel />
         </div>
