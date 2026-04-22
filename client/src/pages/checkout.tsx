@@ -1055,6 +1055,15 @@ export default function Checkout() {
                     data-testid="input-customer-address"
                   />
                   <p className="text-xs text-muted-foreground text-right mt-1">{customerAddress.length}/500</p>
+                  {isLoggedIn && paymentId === "nakit" && (
+                    <div
+                      className="mt-3 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900"
+                      data-testid="info-nakit-fatura-adres"
+                    >
+                      <Banknote className="w-4 h-4 mt-0.5 shrink-0" />
+                      <span>Faturanız bu adrese gönderilecektir.</span>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </section>
