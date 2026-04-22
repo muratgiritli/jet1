@@ -2787,14 +2787,26 @@ export async function registerRoutes(
     }
   });
 
-  app.patch("/api/admin/banners/:id", requireAdmin, async (req, res) => {
+  app.patch("/api/admin/banners/:id", requireAdmin, upload.single("image"), async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const updates: any = {};
       if (req.body.title !== undefined) updates.title = req.body.title;
       if (req.body.linkUrl !== undefined) updates.linkUrl = req.body.linkUrl;
-      if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
+      if (req.body.isActive !== undefined) updates.isActive = req.body.isActive === true || req.body.isActive === "true";
       if (req.body.sortOrder !== undefined) updates.sortOrder = parseInt(req.body.sortOrder);
+      if (req.body.position !== undefined) {
+        const allowed = ["home_top", "home_below_category", "home_bottom_carousel"];
+        if (allowed.includes(req.body.position)) updates.position = req.body.position;
+      }
+      if (req.file) {
+        const sharp = (await import("sharp")).default;
+        const webp = await sharp(req.file.buffer)
+          .resize(1600, 900, { fit: "inside", withoutEnlargement: true })
+          .webp({ quality: 82 })
+          .toBuffer();
+        updates.imageData = `data:image/webp;base64,${webp.toString("base64")}`;
+      }
       const updated = await storage.updateBanner(id, updates);
       if (!updated) return res.status(404).json({ message: "Banner bulunamadı" });
       res.json(updated);

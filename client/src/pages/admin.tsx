@@ -5339,6 +5339,72 @@ function NotificationsSection() {
   );
 }
 
+function positionLabel(p: string) {
+  if (p === "home_below_category") return "Kategori Altı";
+  if (p === "home_bottom_carousel") return "Alt Karusel";
+  return "Kategori Üstü";
+}
+
+function BannerEditRow({ banner, onCancel }: { banner: any; onCancel: () => void }) {
+  const [title, setTitle] = useState(banner.title || "");
+  const [linkUrl, setLinkUrl] = useState(banner.linkUrl || "");
+  const [sortOrder, setSortOrder] = useState(String(banner.sortOrder ?? 0));
+  const [position, setPosition] = useState(banner.position || "home_top");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const { toast } = useToast();
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const formData = new FormData();
+      formData.append("title", title);
+      formData.append("linkUrl", linkUrl);
+      formData.append("sortOrder", sortOrder);
+      formData.append("position", position);
+      if (imageFile) formData.append("image", imageFile);
+      const res = await fetch(`/api/admin/banners/${banner.id}`, { method: "PATCH", body: formData, credentials: "include" });
+      if (!res.ok) throw new Error("Failed");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
+      toast({ title: "Banner güncellendi" });
+      onCancel();
+    },
+  });
+  return (
+    <Card className="border-purple-300">
+      <CardContent className="p-3 space-y-2">
+        <div className="flex items-center gap-2">
+          {banner.imageData && <img src={banner.imageData} alt={banner.title} className="w-16 h-10 object-cover rounded" />}
+          <p className="text-xs text-muted-foreground">Banner #{banner.id} düzenleniyor</p>
+        </div>
+        <Input placeholder="Banner başlığı" value={title} onChange={e => setTitle(e.target.value)} className="h-8 text-sm" data-testid={`input-edit-banner-title-${banner.id}`} />
+        <Input placeholder="Link URL (opsiyonel)" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} className="h-8 text-sm" data-testid={`input-edit-banner-link-${banner.id}`} />
+        <div className="flex gap-2">
+          <Input type="number" placeholder="Sıra" value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="h-8 text-sm w-20" />
+          <select value={position} onChange={e => setPosition(e.target.value)} className="h-8 text-sm border rounded px-2 bg-background flex-1" data-testid={`select-edit-banner-position-${banner.id}`}>
+            <option value="home_top">Üst (Kategori Üstü)</option>
+            <option value="home_below_category">Alt (Kategori Altı)</option>
+            <option value="home_bottom_carousel">Alt Karusel (Footer Üstü, Satın Al Butonlu)</option>
+          </select>
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-1">Görseli değiştirmek istersen yeni görsel seç (boş bırakırsan mevcut korunur)</p>
+          <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="text-xs w-full" />
+        </div>
+        <div className="flex gap-2">
+          <Button size="sm" onClick={() => updateMutation.mutate()} disabled={!title.trim() || updateMutation.isPending} data-testid={`button-save-banner-${banner.id}`}>
+            {updateMutation.isPending ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : null}
+            Kaydet
+          </Button>
+          <Button size="sm" variant="outline" onClick={onCancel} data-testid={`button-cancel-edit-banner-${banner.id}`}>
+            İptal
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 function BannersSection() {
   const { data: allBanners = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/banners"] });
   const [title, setTitle] = useState("");
@@ -5346,6 +5412,7 @@ function BannersSection() {
   const [sortOrder, setSortOrder] = useState("0");
   const [position, setPosition] = useState("home_top");
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
   const { toast } = useToast();
 
   const createMutation = useMutation({
@@ -5406,18 +5473,23 @@ function BannersSection() {
         </CardContent>
       </Card>
       <div className="space-y-2">
-        {allBanners.map(b => (
+        {allBanners.map(b => editingId === b.id ? (
+          <BannerEditRow key={b.id} banner={b} onCancel={() => setEditingId(null)} />
+        ) : (
           <Card key={b.id}>
             <CardContent className="p-3 flex items-center gap-3">
               {b.imageData && <img src={b.imageData} alt={b.title} className="w-16 h-10 object-cover rounded" />}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{b.title} <span className="text-xs text-muted-foreground">#{b.sortOrder}</span></p>
-                <p className="text-[10px] text-muted-foreground">{b.position === "home_below_category" ? "Kategori Altı" : "Kategori Üstü"}</p>
+                <p className="text-[10px] text-muted-foreground">{positionLabel(b.position)}</p>
                 {b.linkUrl && <p className="text-xs text-muted-foreground truncate">{b.linkUrl}</p>}
               </div>
               <Badge variant={b.isActive ? "default" : "secondary"} className="cursor-pointer text-xs" onClick={() => toggleMutation.mutate({ id: b.id, isActive: !b.isActive })}>
                 {b.isActive ? "Aktif" : "Pasif"}
               </Badge>
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" onClick={() => setEditingId(b.id)} data-testid={`button-edit-banner-${b.id}`}>
+                <Pencil className="w-3.5 h-3.5" />
+              </Button>
               <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500" onClick={() => deleteMutation.mutate(b.id)}>
                 <Trash2 className="w-3.5 h-3.5" />
               </Button>
