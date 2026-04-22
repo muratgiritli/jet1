@@ -672,14 +672,6 @@ export default function Landing() {
           <HomeBannersBelowCategory />
         </div>
 
-        <div className="mt-3 md:mt-4">
-          <QuickActions />
-        </div>
-
-        <div className="mt-4 md:hidden">
-          <CampaignBanner />
-        </div>
-
         <div className="mt-4 md:mt-10">
           <OrderCounter />
         </div>
