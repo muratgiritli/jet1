@@ -220,17 +220,20 @@ function QuickActions() {
   );
 }
 
-function HomeBanners() {
-  const { data: banners = [] } = useQuery<Array<{ id: number; title: string; imageData: string | null; linkUrl: string | null; sortOrder: number }>>({
-    queryKey: ["/api/banners"],
+type BannerItem = { id: number; title: string; imageData: string | null; linkUrl: string | null; sortOrder: number; position?: string };
+
+function BannerStrip({ position, max, gridClass, testId }: { position: string; max: number; gridClass: string; testId: string }) {
+  const { data: banners = [] } = useQuery<BannerItem[]>({
+    queryKey: ["/api/banners", position],
+    queryFn: () => fetch(`/api/banners?position=${position}`).then(r => r.json()),
   });
-  const top2 = banners.filter(b => b.imageData).slice(0, 2);
-  if (top2.length === 0) return null;
+  const items = banners.filter(b => b.imageData).slice(0, max);
+  if (items.length === 0) return null;
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5" data-testid="section-home-banners">
-      {top2.map((b) => {
+    <div className={gridClass} data-testid={testId}>
+      {items.map((b) => {
         const inner = (
-          <div className="relative w-full overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-shadow" data-testid={`home-banner-${b.sortOrder}`}>
+          <div className="relative w-full overflow-hidden rounded-2xl shadow-md hover:shadow-xl transition-shadow cursor-pointer" data-testid={`${testId}-${b.sortOrder}`}>
             <img src={b.imageData!} alt={b.title} className="w-full h-auto object-cover" loading="lazy" />
           </div>
         );
@@ -242,6 +245,14 @@ function HomeBanners() {
       })}
     </div>
   );
+}
+
+function HomeBanners() {
+  return <BannerStrip position="home_top" max={2} gridClass="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5" testId="section-home-banners" />;
+}
+
+function HomeBannersBelowCategory() {
+  return <BannerStrip position="home_below_category" max={4} gridClass="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-5" testId="section-home-banners-below" />;
 }
 
 function CampaignBanner() {
@@ -655,6 +666,10 @@ export default function Landing() {
 
         <div className="mt-4 md:mt-6">
           <CategoryGrid />
+        </div>
+
+        <div className="mt-3 md:mt-6">
+          <HomeBannersBelowCategory />
         </div>
 
         <div className="mt-3 md:mt-4">

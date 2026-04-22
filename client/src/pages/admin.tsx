@@ -5344,6 +5344,7 @@ function BannersSection() {
   const [title, setTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [sortOrder, setSortOrder] = useState("0");
+  const [position, setPosition] = useState("home_top");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { toast } = useToast();
 
@@ -5353,6 +5354,7 @@ function BannersSection() {
       formData.append("title", title);
       formData.append("linkUrl", linkUrl);
       formData.append("sortOrder", sortOrder);
+      formData.append("position", position);
       if (imageFile) formData.append("image", imageFile);
       const res = await fetch("/api/admin/banners", { method: "POST", body: formData, credentials: "include" });
       if (!res.ok) throw new Error("Failed");
@@ -5360,7 +5362,7 @@ function BannersSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
-      setTitle(""); setLinkUrl(""); setSortOrder("0"); setImageFile(null);
+      setTitle(""); setLinkUrl(""); setSortOrder("0"); setPosition("home_top"); setImageFile(null);
       toast({ title: "Banner eklendi" });
     },
   });
@@ -5391,8 +5393,12 @@ function BannersSection() {
           <Input placeholder="Link URL (opsiyonel)" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} className="h-8 text-sm" />
           <div className="flex gap-2">
             <Input type="number" placeholder="Sıra" value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="h-8 text-sm w-20" />
-            <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="text-xs flex-1" />
+            <select value={position} onChange={e => setPosition(e.target.value)} className="h-8 text-sm border rounded px-2 bg-background" data-testid="select-banner-position">
+              <option value="home_top">Üst (Kategori Üstü)</option>
+              <option value="home_below_category">Alt (Kategori Altı)</option>
+            </select>
           </div>
+          <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="text-xs w-full" />
           <Button size="sm" onClick={() => createMutation.mutate()} disabled={!title.trim() || createMutation.isPending}>
             <Plus className="w-3.5 h-3.5 mr-1" />Ekle
           </Button>
@@ -5404,7 +5410,8 @@ function BannersSection() {
             <CardContent className="p-3 flex items-center gap-3">
               {b.imageData && <img src={b.imageData} alt={b.title} className="w-16 h-10 object-cover rounded" />}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{b.title}</p>
+                <p className="text-sm font-medium truncate">{b.title} <span className="text-xs text-muted-foreground">#{b.sortOrder}</span></p>
+                <p className="text-[10px] text-muted-foreground">{b.position === "home_below_category" ? "Kategori Altı" : "Kategori Üstü"}</p>
                 {b.linkUrl && <p className="text-xs text-muted-foreground truncate">{b.linkUrl}</p>}
               </div>
               <Badge variant={b.isActive ? "default" : "secondary"} className="cursor-pointer text-xs" onClick={() => toggleMutation.mutate({ id: b.id, isActive: !b.isActive })}>

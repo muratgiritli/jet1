@@ -2752,7 +2752,7 @@ export async function registerRoutes(
 
   app.post("/api/admin/banners", requireAdmin, upload.single("image"), async (req, res) => {
     try {
-      const { title, linkUrl, sortOrder } = req.body;
+      const { title, linkUrl, sortOrder, position } = req.body;
       if (!title) return res.status(400).json({ message: "Başlık gerekli" });
       let imageData: string | undefined;
       if (req.file) {
@@ -2763,17 +2763,22 @@ export async function registerRoutes(
           .toBuffer();
         imageData = `data:image/webp;base64,${webp.toString("base64")}`;
       }
-      const banner = await storage.createBanner({ title, linkUrl: linkUrl || null, imageData: imageData || null, sortOrder: parseInt(sortOrder || "0"), isActive: true });
+      const pos = position === "home_below_category" ? "home_below_category" : "home_top";
+      const banner = await storage.createBanner({ title, linkUrl: linkUrl || null, imageData: imageData || null, sortOrder: parseInt(sortOrder || "0"), isActive: true, position: pos });
       res.json(banner);
     } catch (err) {
       res.status(500).json({ message: "Banner oluşturma hatası" });
     }
   });
 
-  app.get("/api/banners", async (_req, res) => {
+  app.get("/api/banners", async (req, res) => {
     try {
       const all = await storage.getAllBanners();
-      const active = all.filter((b: any) => b.isActive).sort((a: any, b: any) => a.sortOrder - b.sortOrder);
+      const position = typeof req.query.position === "string" ? req.query.position : null;
+      const active = all
+        .filter((b: any) => b.isActive)
+        .filter((b: any) => !position || (b.position || "home_top") === position)
+        .sort((a: any, b: any) => a.sortOrder - b.sortOrder);
       res.set("Cache-Control", "public, max-age=60");
       res.json(active);
     } catch (err) {
