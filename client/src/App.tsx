@@ -69,6 +69,7 @@ const IletisimPage = lazy(() => import("@/pages/static-pages").then(m => ({ defa
 const TeslimatIadePage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.TeslimatIadePage })));
 const GizlilikSozlesmesiPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.GizlilikSozlesmesiPage })));
 const MesafeliSatisSozlesmesiPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.MesafeliSatisSozlesmesiPage })));
+const MagazaPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.MagazaPage })));
 const DemoLanding = lazy(() => import("@/pages/demo-landing"));
 const Demo1Page = lazy(() => import("@/pages/demo1"));
 const Demo2Page = lazy(() => import("@/pages/demo2"));
@@ -126,6 +127,7 @@ function Router() {
         <Route path="/islem-rehberi" component={IslemRehberiPage} />
         <Route path="/hakkimizda" component={HakkimizdaPage} />
         <Route path="/iletisim" component={IletisimPage} />
+        <Route path="/magaza" component={MagazaPage} />
         <Route path="/teslimat-iade" component={TeslimatIadePage} />
         <Route path="/gizlilik-sozlesmesi" component={GizlilikSozlesmesiPage} />
         <Route path="/mesafeli-satis" component={MesafeliSatisSozlesmesiPage} />

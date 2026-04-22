@@ -1,5 +1,5 @@
 import { Link } from "wouter";
-import { Phone, Mail, MapPin, ChevronDown, ChevronUp, ShoppingCart, Truck, CreditCard, Search, UserPlus, Heart, ClipboardList, Building2 } from "lucide-react";
+import { Phone, Mail, MapPin, ChevronDown, ChevronUp, ShoppingCart, Truck, CreditCard, Search, UserPlus, Heart, ClipboardList, Building2, Clock, Navigation, Store } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useState } from "react";
 import SEO, { SITE_DOMAIN, FAQ_JSONLD } from "@/components/SEO";
@@ -1185,6 +1185,280 @@ export function IletisimPage() {
             <li>Kapıda POS cihazı ile kredi kartı / banka kartı</li>
             <li>Kapıda QR ödeme (mobil bankacılık)</li>
           </ul>
+        </div>
+      </div>
+    </PageWrapper>
+  );
+}
+
+export function MagazaPage() {
+  const storeFaqs = [
+    {
+      q: "JETGO Pet Shop mağazası nerede?",
+      a: `Mağazamız ${COMPANY.address} adresinde, Atakum'un merkezi konumunda Atatürk Bulvarı üzerinde yer almaktadır. OMÜ Eğitim ve Araştırma Hastanesi, Atakum Sahili ve Yenimahalle bölgesine yürüme mesafesindedir.`
+    },
+    {
+      q: "Atakum'da aynı gün teslimat var mı?",
+      a: "Evet. Atakum, İlkadım ve Canik içindeki tüm hizmet bölgelerimize aynı gün teslimat yapıyoruz. Saat 18:00'a kadar verilen siparişler aynı gün, sonrası ise ertesi gün teslim edilir."
+    },
+    {
+      q: "Mağazadan paket teslim alabilir miyim?",
+      a: "Evet, sipariş verdikten sonra mağazadan ücretsiz teslim alma seçeneğini tercih edebilirsiniz. WhatsApp üzerinden hazır olduğunda size bildirim gönderiyoruz."
+    },
+    {
+      q: "Mağazada hangi ürünler bulunur?",
+      a: "Mağazamızda 900+ ürün bulunmaktadır: kedi maması, köpek maması, kedi kumu, açık mama, ödül-ek besin, oyuncak, tasma-kayış, kuş yemi, kemirgen yemi, akvaryum yemi ve hijyen ürünleri stoklarımızda mevcuttur."
+    },
+    {
+      q: "Çalışma saatleriniz nedir?",
+      a: "Pazartesi-Cumartesi 09:00-22:00, Pazar 10:00-22:00 saatleri arasında hizmet veriyoruz. Online sipariş 7/24 alınmaktadır."
+    },
+    {
+      q: "Otopark var mı?",
+      a: "Mağazamızın önünde ve Atatürk Bulvarı üzerinde ücretsiz cadde otoparkı bulunmaktadır."
+    },
+    {
+      q: "Samsun içinde kapıda ödeme alıyor musunuz?",
+      a: "Evet. Kapıda nakit ödemede %5 indirim uygulanır. Ayrıca POS ile kredi/banka kartı, QR ödeme ve havale/EFT seçenekleri mevcuttur."
+    },
+    {
+      q: "Ürünlerin son kullanma tarihini görebilir miyim?",
+      a: "Evet. Tüm mama, konserve ve gıda ürünlerimizin son kullanma tarihi ürün sayfasında belirtilir. SKT'si yaklaşan ürünler indirimli fiyatlarla 'Açık Mama / SKT Yakın' bölümünde sunulur ve sipariş öncesi sistem tarafından kontrol edilir."
+    },
+  ];
+
+  const storeJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "PetStore",
+    "@id": `${SITE_DOMAIN}/magaza#location`,
+    "name": "JETGO Pet Shop - Atakum Mağazası",
+    "url": `${SITE_DOMAIN}/magaza`,
+    "image": `${SITE_DOMAIN}/og-image.webp`,
+    "telephone": COMPANY.phoneHref,
+    "email": COMPANY.email,
+    "priceRange": "₺₺",
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A",
+      "addressLocality": "Atakum",
+      "addressRegion": "Samsun",
+      "postalCode": "55200",
+      "addressCountry": "TR"
+    },
+    "geo": { "@type": "GeoCoordinates", "latitude": 41.2867, "longitude": 36.33 },
+    "hasMap": "https://www.google.com/maps/search/?api=1&query=Yenimahalle+Atatürk+3.+Kısım+Bulvarı+113%2FA+Atakum+Samsun",
+    "openingHoursSpecification": [
+      { "@type": "OpeningHoursSpecification", "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"], "opens": "09:00", "closes": "22:00" },
+      { "@type": "OpeningHoursSpecification", "dayOfWeek": "Sunday", "opens": "10:00", "closes": "22:00" }
+    ],
+    "areaServed": [
+      { "@type": "City", "name": "Samsun" },
+      { "@type": "AdministrativeArea", "name": "Atakum" },
+      { "@type": "AdministrativeArea", "name": "İlkadım" },
+      { "@type": "AdministrativeArea", "name": "Canik" }
+    ]
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      { "@type": "ListItem", "position": 1, "name": "Ana Sayfa", "item": SITE_DOMAIN },
+      { "@type": "ListItem", "position": 2, "name": "Mağaza", "item": `${SITE_DOMAIN}/magaza` }
+    ]
+  };
+
+  return (
+    <PageWrapper title="JETGO Pet Shop Atakum Mağazası">
+      <SEO
+        title="JETGO Atakum Mağaza | Samsun Pet Shop Adres, Harita, Çalışma Saatleri"
+        description="JETGO Pet Shop Atakum mağazası: Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A. Aynı gün teslimat, kapıda ödeme, 900+ ürün. Pzt-Cmt 09:00-22:00, Pazar 10:00-22:00."
+        canonical={`${SITE_DOMAIN}/magaza`}
+        keywords="atakum petshop mağaza, samsun pet shop adres, jetgo mağaza, atakum pet shop, yenimahalle pet shop, samsun petshop konum"
+        jsonLd={[storeJsonLd, breadcrumbJsonLd, FAQ_JSONLD(storeFaqs.map(f => ({ question: f.q, answer: f.a })))]}
+      />
+
+      <div className="space-y-6">
+        <div className="p-5 border rounded-lg bg-gradient-to-br from-primary/5 to-transparent" data-testid="store-hero">
+          <div className="flex items-start gap-3">
+            <Store className="w-7 h-7 text-primary flex-shrink-0 mt-0.5" />
+            <div>
+              <h2 className="font-semibold text-base mb-1">JETGO Pet Shop — Atakum, Samsun</h2>
+              <p className="text-sm text-muted-foreground leading-relaxed">
+                Samsun Atakum'un merkezinde, Atatürk Bulvarı üzerinde hizmet veren mahalle pet shop'unuz.
+                900+ ürün, taze stok, son kullanma tarihi kontrollü mama, kapıda ödeme ve aynı gün teslimat seçenekleriyle
+                Samsun içindeki tüm hizmet bölgelerimize hizmet veriyoruz.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-4">
+          <div className="p-5 border rounded-lg space-y-3" data-testid="store-nap">
+            <h2 className="font-semibold flex items-center gap-2"><MapPin className="w-4 h-4 text-primary" />Adres ve İletişim</h2>
+            <div className="text-sm space-y-2">
+              <p><strong>Adres:</strong><br />{COMPANY.address}</p>
+              <p>
+                <strong>Telefon:</strong>{" "}
+                <a href={`tel:${COMPANY.phoneHref}`} className="text-primary underline" data-testid="store-phone">{COMPANY.phone}</a>
+              </p>
+              <p>
+                <strong>WhatsApp:</strong>{" "}
+                <a href={`https://wa.me/${COMPANY.whatsapp}`} target="_blank" rel="noopener noreferrer" className="text-green-600 dark:text-green-400 underline" data-testid="store-whatsapp">+90 850 840 3959</a>
+              </p>
+              <p><strong>E-posta:</strong> <a href={`mailto:${COMPANY.email}`} className="text-primary underline">{COMPANY.email}</a></p>
+            </div>
+            <div className="flex gap-2 pt-1">
+              <a
+                href={`https://wa.me/${COMPANY.whatsapp}?text=${encodeURIComponent("Merhaba, JETGO Pet Shop hakkında bilgi almak istiyorum.")}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
+                data-testid="button-store-whatsapp"
+              >
+                <SiWhatsapp className="w-4 h-4" /> WhatsApp
+              </a>
+              <a
+                href={`tel:${COMPANY.phoneHref}`}
+                className="flex-1 inline-flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
+                data-testid="button-store-call"
+              >
+                <Phone className="w-4 h-4" /> Ara
+              </a>
+            </div>
+          </div>
+
+          <div className="p-5 border rounded-lg space-y-3" data-testid="store-hours">
+            <h2 className="font-semibold flex items-center gap-2"><Clock className="w-4 h-4 text-primary" />Çalışma Saatleri</h2>
+            <ul className="text-sm space-y-1.5">
+              <li className="flex justify-between"><span>Pazartesi</span><span className="text-muted-foreground">09:00 - 22:00</span></li>
+              <li className="flex justify-between"><span>Salı</span><span className="text-muted-foreground">09:00 - 22:00</span></li>
+              <li className="flex justify-between"><span>Çarşamba</span><span className="text-muted-foreground">09:00 - 22:00</span></li>
+              <li className="flex justify-between"><span>Perşembe</span><span className="text-muted-foreground">09:00 - 22:00</span></li>
+              <li className="flex justify-between"><span>Cuma</span><span className="text-muted-foreground">09:00 - 22:00</span></li>
+              <li className="flex justify-between"><span>Cumartesi</span><span className="text-muted-foreground">09:00 - 22:00</span></li>
+              <li className="flex justify-between"><span>Pazar</span><span className="text-muted-foreground">10:00 - 22:00</span></li>
+            </ul>
+            <p className="text-xs text-muted-foreground pt-1">Online sipariş hattımız 7/24 açıktır. Aynı gün teslimat için saat 18:00'a kadar sipariş verebilirsiniz.</p>
+          </div>
+        </div>
+
+        <div className="border rounded-lg overflow-hidden" data-testid="store-map">
+          <iframe
+            title="JETGO Pet Shop Atakum Mağaza Konumu"
+            src="https://maps.google.com/maps?q=Yenimahalle%20Atat%C3%BCrk%203.%20K%C4%B1s%C4%B1m%20Bulvar%C4%B1%20No%3A113%2FA%20Atakum%20Samsun&t=&z=15&ie=UTF8&iwloc=&output=embed"
+            width="100%"
+            height="320"
+            loading="lazy"
+            referrerPolicy="no-referrer-when-downgrade"
+            className="block w-full"
+          />
+          <div className="p-3 flex items-center justify-between gap-3 bg-muted/30 text-sm">
+            <span className="flex items-center gap-2 text-muted-foreground">
+              <Navigation className="w-4 h-4" />
+              Atakum, Samsun
+            </span>
+            <a
+              href="https://www.google.com/maps/search/?api=1&query=Yenimahalle+Atat%C3%BCrk+3.+K%C4%B1s%C4%B1m+Bulvar%C4%B1+113%2FA+Atakum+Samsun"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary font-medium underline"
+              data-testid="link-store-directions"
+            >
+              Yol Tarifi Al →
+            </a>
+          </div>
+        </div>
+
+        <div className="p-5 border rounded-lg space-y-2" data-testid="store-about">
+          <h2 className="font-semibold">Mağazamız Hakkında</h2>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            JETGO Pet Shop, Samsun Atakum'da kurulmuş bir mahalle pet shop'tur. Kedi maması, köpek maması, kedi kumu,
+            açık mama, ödül-ek besin, oyuncak, tasma, kuş yemi, kemirgen yemi, akvaryum ürünleri ve hijyen ürünleri
+            kategorilerinde 900+ ürün bulundurmaktayız.
+          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Tüm gıda ürünlerimizin son kullanma tarihini sistemimiz üzerinden takip ediyoruz; SKT'si yaklaşan ürünler
+            "Açık Mama / SKT Yakın" bölümünde indirimli fiyatlarla sunulur. Açılmış mama satışı yapıyor, isteyen
+            müşterilerimize gramaj bazlı tartım hizmeti veriyoruz. "Para Puan" sistemimiz sayesinde her alışverişte %5
+            puan kazanır, sonraki siparişlerinizde indirim olarak kullanabilirsiniz.
+          </p>
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            Kapıda nakit (%5 indirimli), kapıda kart (POS), QR ödeme ve havale/EFT seçenekleriyle kolay ödeme imkânı
+            sunuyoruz. "Askıda Mama" projemizle sokak hayvanlarına destek olabilir, yeni üye bonusu olarak 100 TL
+            hoşgeldin kuponu kazanabilirsiniz.
+          </p>
+        </div>
+
+        <div className="p-5 border rounded-lg space-y-3" data-testid="store-areas">
+          <h2 className="font-semibold flex items-center gap-2"><Truck className="w-4 h-4 text-primary" />Aynı Gün Teslimat Bölgeleri</h2>
+          <p className="text-sm text-muted-foreground">
+            Samsun Atakum, İlkadım ve Canik ilçeleri içindeki mahallelerimize aynı gün teslimat yapıyoruz. Aşağıdaki
+            mahalle sayfalarımızdan bölgenize özel petshop hizmetimizi inceleyebilirsiniz:
+          </p>
+          <div className="flex flex-wrap gap-2 pt-1">
+            {[
+              { label: "Atakum Pet Shop", href: "/atakum-petshop" },
+              { label: "İlkadım Pet Shop", href: "/ilkadim-petshop" },
+              { label: "Canik Pet Shop", href: "/canik-petshop" },
+              { label: "Samsun Pet Shop", href: "/samsun-petshop" },
+              { label: "Aynı Gün Teslimat", href: "/ayni-gun-teslimat-petshop" },
+              { label: "Kapıda Ödeme Petshop", href: "/kapida-odeme-petshop" },
+            ].map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="text-xs px-3 py-1.5 rounded-full border bg-muted/40 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors"
+                data-testid={`store-area-${l.href.slice(1)}`}
+              >
+                {l.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="p-5 border rounded-lg space-y-3" data-testid="store-categories">
+          <h2 className="font-semibold flex items-center gap-2"><Heart className="w-4 h-4 text-primary" />Mağazadaki Kategoriler</h2>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: "Kedi Maması", href: "/kedi-mamasi" },
+              { label: "Köpek Maması", href: "/kopek-mamasi" },
+              { label: "Kedi Kumu", href: "/kedi-kumu" },
+              { label: "Pet Aksesuar", href: "/pet-aksesuar" },
+              { label: "Açık Mama", href: "/acik-mama" },
+              { label: "Kampanyalar", href: "/kampanya" },
+              { label: "Tüm Markalar", href: "/markalar" },
+            ].map((l) => (
+              <Link
+                key={l.href}
+                href={l.href}
+                className="text-xs px-3 py-1.5 rounded-full border bg-muted/40 hover:bg-primary/10 hover:text-primary hover:border-primary/40 transition-colors"
+                data-testid={`store-cat-${l.href.slice(1)}`}
+              >
+                {l.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+
+        <div className="space-y-2" data-testid="store-faq">
+          <h2 className="font-semibold flex items-center gap-2"><Building2 className="w-4 h-4 text-primary" />Mağaza Hakkında Sıkça Sorulanlar</h2>
+          {storeFaqs.map((faq, i) => (
+            <details key={i} className="border rounded-lg p-3 group" data-testid={`store-faq-${i}`}>
+              <summary className="cursor-pointer text-sm font-medium flex items-center justify-between gap-2">
+                <span>{faq.q}</span>
+                <ChevronDown className="w-4 h-4 flex-shrink-0 group-open:rotate-180 transition-transform" />
+              </summary>
+              <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{faq.a}</p>
+            </details>
+          ))}
+        </div>
+
+        <div className="p-4 border rounded-lg bg-muted/30 text-sm" data-testid="store-cta">
+          <p className="text-muted-foreground">
+            Sipariş için <Link href="/" className="text-primary underline font-medium">ana sayfaya</Link> dönüp ürünlere göz atabilir
+            ya da <a href={`https://wa.me/${COMPANY.whatsapp}`} target="_blank" rel="noopener noreferrer" className="text-primary underline font-medium">WhatsApp</a> üzerinden bize ulaşabilirsiniz.
+          </p>
         </div>
       </div>
     </PageWrapper>

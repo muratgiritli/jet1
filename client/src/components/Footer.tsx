@@ -8,6 +8,7 @@ import ContactDialog from "@/components/ContactDialog";
 const FOOTER_LINKS = [
   { label: "Sıkça Sorulan Sorular", href: "/sss", icon: HelpCircle },
   { label: "İşlem Rehberi", href: "/islem-rehberi", icon: Info },
+  { label: "Mağaza & Konum", href: "/magaza", icon: MapPin },
   { label: "Teslimat ve İade Şartları", href: "/teslimat-iade", icon: Truck },
   { label: "Mesafeli Satış Sözleşmesi", href: "/mesafeli-satis", icon: ScrollText },
 ];

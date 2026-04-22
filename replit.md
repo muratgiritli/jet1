@@ -34,6 +34,7 @@ The application employs a modern web architecture:
 - **SKT Validation**: Server-side validation to prevent orders of expired products, with an endpoint for near-expiry items.
 - **Askıda Mama**: Donation toggle at checkout for supporting street animals.
 - **Veteriner Entegrasyonu**: Landing page section listing local veterinary clinics.
+- **Mağaza/Konum Sayfası (/magaza)**: Dedicated store page with full NAP (Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A, Atakum), embedded Google Maps iframe, weekly opening hours, WhatsApp/call CTAs, store-about content, internal cross-links to local landing pages and category pages, and 8 store-focused FAQs with FAQPage + PetStore + BreadcrumbList JSON-LD. Linked from desktop footer "Müşteri Hizmetleri" section. Added to sitemap-main with priority 0.9. CSP `frame-src` extended to permit Google Maps embed.
 - **Birlikte Alınır (Seasonal Recommendations)**: Seasonal expert tips and cross-selling links on product detail pages.
 - **Son Siparişimi Tekrarla**: One-click reorder functionality for logged-in users.
 - **Sesli Sipariş**: WhatsApp-based voice ordering option for accessibility.

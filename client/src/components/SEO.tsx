@@ -92,7 +92,7 @@ export const LOCAL_BUSINESS_JSONLD = {
   "email": "info@sizpa.com",
   "address": {
     "@type": "PostalAddress",
-    "streetAddress": "Atakum",
+    "streetAddress": "Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A",
     "addressLocality": "Atakum",
     "addressRegion": "Samsun",
     "postalCode": "55200",
@@ -103,7 +103,7 @@ export const LOCAL_BUSINESS_JSONLD = {
     "latitude": 41.2867,
     "longitude": 36.33,
   },
-  "hasMap": "https://www.google.com/maps/search/?api=1&query=JETGO+Pet+Shop+Samsun",
+  "hasMap": "https://www.google.com/maps/search/?api=1&query=Yenimahalle+Atatürk+3.+Kısım+Bulvarı+113%2FA+Atakum+Samsun",
   "priceRange": "₺₺",
   "currenciesAccepted": "TRY",
   "paymentAccepted": ["Nakit", "Kredi Kartı", "Havale/EFT", "Kapıda Ödeme"],

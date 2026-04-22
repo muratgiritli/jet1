@@ -242,7 +242,7 @@ export async function registerRoutes(
     res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
     res.setHeader("X-Download-Options", "noopen");
     res.setHeader("X-Permitted-Cross-Domain-Policies", "none");
-    res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.googleadservices.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.google-analytics.com https://www.google.com https://googleads.g.doubleclick.net https://www.googleadservices.com; frame-ancestors 'self'; base-uri 'self'; form-action 'self';");
+    res.setHeader("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://googleads.g.doubleclick.net https://www.googleadservices.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https:; connect-src 'self' https://www.google-analytics.com https://www.google.com https://googleads.g.doubleclick.net https://www.googleadservices.com; frame-src 'self' https://www.google.com https://maps.google.com https://www.google.com.tr; frame-ancestors 'self'; base-uri 'self'; form-action 'self';");
 
     if (req.path.startsWith("/api/")) {
       const ip = req.ip || "unknown";
@@ -291,6 +291,7 @@ export async function registerRoutes(
         { url: "/kategori/kus", priority: "0.7", changefreq: "weekly" },
         { url: "/kategori/kemirgen", priority: "0.7", changefreq: "weekly" },
         { url: "/kampanya", priority: "0.8", changefreq: "daily" },
+        { url: "/magaza", priority: "0.9", changefreq: "monthly" },
         { url: "/sss", priority: "0.5", changefreq: "monthly" },
         { url: "/hakkimizda", priority: "0.4", changefreq: "monthly" },
         { url: "/iletisim", priority: "0.4", changefreq: "monthly" },
@@ -846,9 +847,11 @@ export async function registerRoutes(
 - **Şirket:** Sizpa İnternet Tic. Ltd. Şti.
 - **Şehir:** Samsun, Türkiye
 - **Hizmet bölgeleri:** Atakum, İlkadım, Canik (tüm mahalleler)
+- **Mağaza adresi:** Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A, Atakum, Samsun (55200)
 - **Domain:** https://www.jetgo.pet
 - **Telefon:** +90 850 840 39 59
-- **Çalışma saatleri:** Pazartesi-Cumartesi 09:00-21:00, Pazar 10:00-20:00
+- **E-posta:** info@sizpa.com
+- **Çalışma saatleri:** Pazartesi-Cumartesi 09:00-22:00, Pazar 10:00-22:00 (online sipariş 7/24)
 
 ## Ana Hizmetler
 - Aynı gün teslimat (Samsun içi 20 km yarıçap)
