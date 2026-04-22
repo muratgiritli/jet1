@@ -772,11 +772,6 @@ export default function Landing() {
           />
         </div>
 
-        {/* DESKTOP/TABLET HERO ROW: full-width carousel */}
-        <div className="hidden md:block mt-6">
-          <HeroCarousel />
-        </div>
-
         <div className="mt-1 md:hidden">
           <HomeBanners />
         </div>
