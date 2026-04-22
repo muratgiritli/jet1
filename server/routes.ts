@@ -809,6 +809,100 @@ export async function registerRoutes(
     res.type("text/html").send("google-site-verification: googleb16b707b9ac148c4.html");
   });
 
+  // Google Merchant Center product feed (RSS 2.0 with g: namespace)
+  app.get("/google-merchant.xml", async (_req, res) => {
+    try {
+      const SITE = "https://www.jetgo.shop";
+      const ANIMAL_LABEL: Record<string, string> = {
+        kedi: "Kedi", kopek: "Köpek", kus: "Kuş",
+        kemirgen: "Kemirgen", akvaryum: "Akvaryum", balik: "Balık",
+      };
+      const GOOGLE_CATEGORY: Record<string, string> = {
+        kedi: "Animals & Pet Supplies > Pet Supplies > Cat Supplies > Cat Food",
+        kopek: "Animals & Pet Supplies > Pet Supplies > Dog Supplies > Dog Food",
+        kus: "Animals & Pet Supplies > Pet Supplies > Bird Supplies > Bird Food",
+        kemirgen: "Animals & Pet Supplies > Pet Supplies > Small Animal Supplies > Small Animal Food",
+        akvaryum: "Animals & Pet Supplies > Pet Supplies > Fish Supplies",
+      };
+
+      const { rows } = await sharedPool.query(`
+        SELECT p.id, p.name, p.price, p.original_price, p.img, p.stock, p.barcode,
+               p.is_active, p.preorder_enabled,
+               bc.brand_name, bc.animal, s.display_name as subcategory_name
+        FROM products p
+        LEFT JOIN brand_categories bc ON p.brand_category_id = bc.id
+        LEFT JOIN subcategories s ON bc.subcategory = s.slug AND bc.animal = s.animal
+        WHERE p.is_active = true AND p.price > 0
+        ORDER BY p.id
+      `);
+
+      const esc = (s: string | null | undefined) =>
+        String(s ?? "")
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+
+      const fmtPrice = (n: number) => `${Number(n).toFixed(2)} TRY`;
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      xml += `<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">\n`;
+      xml += `  <channel>\n`;
+      xml += `    <title>JETGO Pet Shop</title>\n`;
+      xml += `    <link>${SITE}</link>\n`;
+      xml += `    <description>Samsun'un en hızlı pet shop'u — kedi maması, köpek maması, kedi kumu ve daha fazlası. Aynı gün teslimat.</description>\n`;
+
+      for (const r of rows as any[]) {
+        const animal = (r.animal || "").toLowerCase();
+        const animalLabel = ANIMAL_LABEL[animal] || "";
+        const productType = [animalLabel, r.subcategory_name, r.brand_name].filter(Boolean).join(" > ");
+        const googleCat = GOOGLE_CATEGORY[animal] || "Animals & Pet Supplies > Pet Supplies";
+        const inStock = r.stock > 0;
+        const availability = inStock
+          ? "in_stock"
+          : (r.preorder_enabled ? "preorder" : "out_of_stock");
+        const imageUrl = r.img ? (r.img.startsWith("http") ? r.img : `${SITE}${r.img}`) : "";
+        const description = `${r.brand_name || "JETGO"} ${r.name}. ${animalLabel} için ${r.subcategory_name || "pet ürünü"}. Samsun Atakum, İlkadım ve Canik bölgelerinde aynı gün kapıda teslimat ve kapıda ödeme imkanı.`;
+
+        xml += `    <item>\n`;
+        xml += `      <g:id>${r.id}</g:id>\n`;
+        xml += `      <g:title>${esc(r.name)}</g:title>\n`;
+        xml += `      <g:description>${esc(description)}</g:description>\n`;
+        xml += `      <g:link>${SITE}/urun/${r.id}</g:link>\n`;
+        if (imageUrl) xml += `      <g:image_link>${esc(imageUrl)}</g:image_link>\n`;
+        xml += `      <g:availability>${availability}</g:availability>\n`;
+        xml += `      <g:price>${fmtPrice(r.price)}</g:price>\n`;
+        if (r.original_price && r.original_price > r.price) {
+          xml += `      <g:sale_price>${fmtPrice(r.price)}</g:sale_price>\n`;
+        }
+        xml += `      <g:condition>new</g:condition>\n`;
+        xml += `      <g:brand>${esc(r.brand_name || "JETGO")}</g:brand>\n`;
+        if (r.barcode) {
+          xml += `      <g:gtin>${esc(r.barcode)}</g:gtin>\n`;
+          xml += `      <g:identifier_exists>yes</g:identifier_exists>\n`;
+        } else {
+          xml += `      <g:mpn>JETGO-${r.id}</g:mpn>\n`;
+          xml += `      <g:identifier_exists>no</g:identifier_exists>\n`;
+        }
+        xml += `      <g:google_product_category>${esc(googleCat)}</g:google_product_category>\n`;
+        if (productType) xml += `      <g:product_type>${esc(productType)}</g:product_type>\n`;
+        xml += `      <g:shipping>\n`;
+        xml += `        <g:country>TR</g:country>\n`;
+        xml += `        <g:service>Standard</g:service>\n`;
+        xml += `        <g:price>0.00 TRY</g:price>\n`;
+        xml += `      </g:shipping>\n`;
+        xml += `    </item>\n`;
+      }
+
+      xml += `  </channel>\n</rss>\n`;
+
+      res.setHeader("Content-Type", "application/xml; charset=utf-8");
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      res.send(xml);
+    } catch (err) {
+      console.error("Google Merchant feed error:", err);
+      res.status(500).send("Feed generation failed");
+    }
+  });
+
   app.get("/robots.txt", (req, res) => {
     res.set("Content-Type", "text/plain");
     const txt = [
