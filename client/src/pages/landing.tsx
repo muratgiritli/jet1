@@ -660,15 +660,15 @@ export default function Landing() {
           </div>
         )}
 
-        <div className="mt-3 md:mt-6">
+        <div className="mt-1 md:mt-2">
           <HomeBanners />
         </div>
 
-        <div className="mt-4 md:mt-6">
+        <div className="mt-1 md:mt-2">
           <CategoryGrid />
         </div>
 
-        <div className="mt-3 md:mt-6">
+        <div className="mt-1 md:mt-2">
           <HomeBannersBelowCategory />
         </div>
 
