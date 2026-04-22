@@ -5396,6 +5396,7 @@ function BannersSection() {
             <select value={position} onChange={e => setPosition(e.target.value)} className="h-8 text-sm border rounded px-2 bg-background" data-testid="select-banner-position">
               <option value="home_top">Üst (Kategori Üstü)</option>
               <option value="home_below_category">Alt (Kategori Altı)</option>
+              <option value="home_bottom_carousel">Alt Karusel (Footer Üstü, Satın Al Butonlu)</option>
             </select>
           </div>
           <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="text-xs w-full" />

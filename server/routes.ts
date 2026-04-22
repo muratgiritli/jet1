@@ -2763,7 +2763,8 @@ export async function registerRoutes(
           .toBuffer();
         imageData = `data:image/webp;base64,${webp.toString("base64")}`;
       }
-      const pos = position === "home_below_category" ? "home_below_category" : "home_top";
+      const allowed = ["home_top", "home_below_category", "home_bottom_carousel"];
+      const pos = allowed.includes(position) ? position : "home_top";
       const banner = await storage.createBanner({ title, linkUrl: linkUrl || null, imageData: imageData || null, sortOrder: parseInt(sortOrder || "0"), isActive: true, position: pos });
       res.json(banner);
     } catch (err) {

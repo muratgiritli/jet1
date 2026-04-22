@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import {
   Truck, CreditCard, Banknote, Smartphone, Building2,
-  ArrowRight, ChevronRight, Star, Clock, Shield,
+  ArrowRight, ChevronRight, ChevronLeft, Star, Clock, Shield,
   Gift, MapPin, Phone, Mail, BookOpen, MessageSquare,
   PackageCheck, Zap,
   Stethoscope, ShoppingBag, Heart, Sparkles
@@ -253,6 +253,69 @@ function HomeBanners() {
 
 function HomeBannersBelowCategory() {
   return <BannerStrip position="home_below_category" max={4} gridClass="grid grid-cols-1 md:grid-cols-2 gap-0.5 md:gap-1" testId="section-home-banners-below" />;
+}
+
+function HomeBottomCarousel() {
+  const { data: banners = [] } = useQuery<BannerItem[]>({
+    queryKey: ["/api/banners", "home_bottom_carousel"],
+    queryFn: () => fetch(`/api/banners?position=home_bottom_carousel`).then(r => r.json()),
+  });
+  const items = banners.filter(b => b.imageData);
+  const [idx, setIdx] = useState(0);
+  useEffect(() => { if (idx >= items.length) setIdx(0); }, [items.length, idx]);
+  if (items.length === 0) return null;
+  const current = items[idx];
+  const prev = () => setIdx((i) => (i - 1 + items.length) % items.length);
+  const next = () => setIdx((i) => (i + 1) % items.length);
+  return (
+    <div data-testid="section-home-bottom-carousel">
+      <div className="relative w-full overflow-hidden rounded-2xl shadow-lg bg-gray-50">
+        <img src={current.imageData!} alt={current.title} className="w-full h-auto object-cover block" loading="lazy" data-testid={`bottom-banner-${current.sortOrder}`} />
+        {current.linkUrl && (
+          <Link href={current.linkUrl}>
+            <button
+              className="absolute left-1/2 bottom-3 md:bottom-5 -translate-x-1/2 bg-yellow-400 hover:bg-yellow-300 active:scale-95 text-purple-900 text-sm md:text-lg font-extrabold px-6 md:px-10 py-2.5 md:py-3 rounded-full shadow-2xl flex items-center gap-2 ring-2 ring-white"
+              data-testid={`button-buy-${current.sortOrder}`}
+            >
+              <ShoppingBag className="w-4 h-4 md:w-5 md:h-5" />
+              Satın Al
+            </button>
+          </Link>
+        )}
+      </div>
+
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <button
+          onClick={prev}
+          disabled={items.length < 2}
+          className="flex items-center gap-1 bg-white border-2 border-purple-300 text-purple-700 text-sm font-bold px-3 py-2 rounded-full shadow disabled:opacity-40"
+          data-testid="button-bottom-prev"
+        >
+          <ChevronLeft className="w-4 h-4" strokeWidth={3} /> Önceki
+        </button>
+
+        <div className="flex items-center gap-1.5">
+          {items.map((b, i) => (
+            <button
+              key={b.id}
+              onClick={() => setIdx(i)}
+              className={`rounded-full transition-all ${i === idx ? "w-6 h-2 bg-purple-600" : "w-2 h-2 bg-gray-300"}`}
+              data-testid={`bottom-dot-${i}`}
+            />
+          ))}
+        </div>
+
+        <button
+          onClick={next}
+          disabled={items.length < 2}
+          className="flex items-center gap-1 bg-purple-600 text-white text-sm font-extrabold px-3 py-2 rounded-full shadow disabled:opacity-40"
+          data-testid="button-bottom-next"
+        >
+          Sonraki <ChevronRight className="w-4 h-4" strokeWidth={3} />
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function CampaignBanner() {
@@ -694,6 +757,10 @@ export default function Landing() {
 
         <div className="mt-5 md:mt-12">
           <DesktopContactStrip />
+        </div>
+
+        <div className="mt-5 md:mt-10">
+          <HomeBottomCarousel />
         </div>
 
         <div className="mt-5 mb-4 md:mb-10">
