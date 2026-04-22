@@ -1,0 +1,148 @@
+2) Tek bir sayfanın ideal içerik düzeni
+
+Örnek sayfa:
+/atakum-kedi-mamasi
+
+Title
+
+Atakum Kedi Maması | Aynı Gün Teslimat | Jetgo Pet
+
+Meta description
+
+Atakum’da kedi maması siparişi için Jetgo Pet aynı gün teslimat, kapıda ödeme ve güvenilir ürün avantajı sunar.
+
+H1
+
+Atakum Kedi Maması – Aynı Gün Teslimat
+
+İlk paragraf
+
+Bu paragraf 70–120 kelime arası olsun:
+
+Atakum’da kedi maması arıyorsanız, Jetgo Pet olarak farklı yaş ve ihtiyaçlara uygun mama seçeneklerini hızlı teslimatla sunuyoruz. Yavru kedi maması, yetişkin kedi maması, tahılsız kedi maması ve premium markalar için Atakum’un farklı mahallelerine aynı gün teslimat sağlıyoruz.
+
+Burada amaç:
+
+ana keyword geçsin
+ilçe adı geçsin
+hizmet net anlatılsın
+doğal olsun
+
+Google’ın SEO başlangıç rehberi sayfaların kullanıcı için açık ve anlaşılır olmasını öneriyor.
+
+3) Orta bölüm nasıl yazılmalı
+A) Hizmet alanı bölümü
+
+Başlık:
+Atakum’da hangi bölgelere teslimat yapıyoruz?
+
+Altına:
+
+Denizevleri
+Körfez
+Mimar Sinan
+Yeni Mahalle
+Altınkum
+Güzelyalı
+Taflan
+
+Bunu düz cümleyle de yaz:
+
+Jetgo Pet, Atakum merkez başta olmak üzere Denizevleri, Körfez, Mimar Sinan, Yeni Mahalle, Altınkum ve çevre mahallelere hızlı teslimat sunar.
+
+Bu, sayfayı yerel olarak daha anlamlı yapar; ancak gerçek dışı hizmet alanı yazmamak gerekir. Structured data da görünür içerikle uyumlu olmalı; Google bunu özellikle ister.
+
+B) Ürün/hizmet bölümü
+
+Başlık:
+Atakum’da en çok tercih edilen kedi maması türleri
+
+Altına 3–5 alt blok:
+
+yavru kedi maması
+yetişkin kedi maması
+kısırlaştırılmış kedi maması
+tahılsız mama
+hassas sindirim için mama
+
+Her biri 2–3 cümle.
+
+C) Güven bloğu
+
+Başlık:
+Neden Jetgo Pet?
+
+Altına:
+
+ürün bilgisi net
+hızlı teslimat
+kapıda ödeme seçeneği
+yerel mağaza desteği
+Samsun / Atakum odaklı hizmet
+
+Bu tür açıklayıcı içerik, Google’ın sayfayı ve işletmeyi anlamasına yardımcı olur.
+
+4) Dönüşüm alanı mutlaka olsun
+
+Sayfa sadece SEO için değil, sipariş için olmalı.
+
+Şunları koy:
+
+“Hemen Sipariş Ver” butonu
+“WhatsApp’tan Sor” butonu
+telefon tıkla
+“Kapıda ödeme var” bilgisi
+“Teslimat bölgesi sor” kısa formu
+
+Bu kısım SEO dokümanlarında “CTA koy” diye geçmez ama kullanıcı davranışı açısından çok değerlidir. Sayfanın amacı ziyaretçiye karar verdirmek olmalı; SEO Starter Guide da bunun özünde kullanıcıya yardımcı içerik üretmeyi vurgular.
+
+5) FAQ bölümü nasıl olmalı
+
+Sayfa altına 4–6 soru koy:
+
+Atakum’da aynı gün teslimat var mı?
+Kapıda ödeme yapabiliyor muyum?
+Hangi kedi maması markaları bulunuyor?
+Geç saatlerde sipariş verilebilir mi?
+Hangi mahallelere teslimat yapıyorsunuz?
+
+Bu bölüm hem kullanıcıya yarar sağlar hem de sayfanın arama niyetini daha net yapar. Structured data kullanacaksan, sayfadaki görünür içerikle birebir uyumlu olmalı.
+
+6) En alt bölüm nasıl olmalı
+
+Footer veya alt blokta sabit olarak:
+
+işletme adı
+açık adres
+telefon
+çalışma saatleri
+Google Maps linki
+hizmet verilen alanlar
+
+Google, local business structured data içinde adres, saatler, telefon gibi işletme detaylarının açık verilmesini öneriyor.
+
+7) Kopya içerik olmaması için ne değiştireceksin
+
+Asıl kritik nokta bu.
+
+/atakum-kedi-mamasi ile /ilkadim-kedi-mamasi sayfası aynı olmamalı. Değişmesi gerekenler:
+
+ilçe adı
+mahalle listesi
+teslimat süresi
+giriş paragrafı
+örnek ürün vurguları
+FAQ metni
+title ve meta
+görsellerin alt metinleri
+
+Yani tek şablon kullanabilirsin ama metnin en az %30–40’ı değişsin. Google structured data ve genel kalite kurallarında yanıltıcı, ana içerikle uyumsuz veya düşük kaliteli tekrarları önemsiyor.
+
+8) İdeal kelime sayısı
+
+Jetgo için pratik aralık:
+
+kısa local sayfa: 450–700 kelime
+güçlü satış + SEO sayfası: 700–1100 kelime
+
+Çok kısa olursa zayıf kalır. Çok uzun olursa gereksiz şişebilir. Önemli olan uzunluk değil, arama niyetini karşılamasıdır; Google da temel olarak buna odaklanır.

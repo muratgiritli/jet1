@@ -676,6 +676,7 @@ const ATAKUM_MAHALLELER: MahalleConfig[] = [
   { name: "Yeniçam", slug: "yenicam", district: "Atakum", districtSlug: "atakum", nearby: ["Çatalçam", "Avdan", "Taflan"] },
   { name: "Organize Sanayi", slug: "organize-sanayi", district: "Atakum", districtSlug: "atakum", nearby: ["Kurupelit", "Atakent", "İncesu"], landmark: "Samsun OSB" },
   { name: "Kozaağaç", slug: "kozaagac", district: "Atakum", districtSlug: "atakum", nearby: ["Soğuksu", "Körfez", "Taflan"] },
+  { name: "Küçükkolpınar", slug: "kucukkolpinar", district: "Atakum", districtSlug: "atakum", nearby: ["Büyükoyumca", "Mecidiye", "Küçükoyumca"], landmark: "Küçükkolpınar köy yolu" },
 ];
 
 const ILKADIM_MAHALLELER: MahalleConfig[] = [
@@ -688,6 +689,8 @@ const ILKADIM_MAHALLELER: MahalleConfig[] = [
   { name: "Derecik", slug: "derecik", district: "İlkadım", districtSlug: "ilkadim", nearby: ["Baruthane", "Ulugazi", "Çiftlik"] },
   { name: "Adalet", slug: "adalet", district: "İlkadım", districtSlug: "ilkadim", nearby: ["Kadıköy", "Kalkancı", "Çiftlik"], landmark: "Adalet Sarayı" },
   { name: "Çiftlik", slug: "ciftlik", district: "İlkadım", districtSlug: "ilkadim", nearby: ["Adalet", "Derecik", "Kalkancı"] },
+  { name: "Liman", slug: "liman", district: "İlkadım", districtSlug: "ilkadim", nearby: ["Kadıköy", "Adalet", "Hançerli"], landmark: "Samsun Limanı" },
+  { name: "Tepecik", slug: "tepecik", district: "İlkadım", districtSlug: "ilkadim", nearby: ["Baruthane", "Ulugazi", "Derecik"], landmark: "Tepecik mevkii" },
 ];
 
 const CANIK_MAHALLELER: MahalleConfig[] = [
@@ -695,6 +698,7 @@ const CANIK_MAHALLELER: MahalleConfig[] = [
   { name: "Gaziosmanpaşa", slug: "gaziosmanpasa", district: "Canik", districtSlug: "canik", nearby: ["Karşıyaka", "Yenimahalle", "Kuzeyyıldızı"] },
   { name: "Yenimahalle", slug: "canik-yenimahalle", district: "Canik", districtSlug: "canik", nearby: ["Karşıyaka", "Gaziosmanpaşa", "Kuzeyyıldızı"] },
   { name: "Kuzeyyıldızı", slug: "kuzeyyildizi", district: "Canik", districtSlug: "canik", nearby: ["Yenimahalle", "Gaziosmanpaşa", "Karşıyaka"] },
+  { name: "Karadeniz", slug: "karadeniz", district: "Canik", districtSlug: "canik", nearby: ["Karşıyaka", "Gaziosmanpaşa", "Kuzeyyıldızı"], landmark: "Karadeniz Mahallesi" },
 ];
 
 function generateMahallePage(m: MahalleConfig): SeoPageData {
@@ -1684,7 +1688,1181 @@ const KEYWORD_PAGES: SeoPageData[] = [
       { text: "JETGO Petshop", href: "/jetgo-petshop" },
     ],
   },
+
+  // ============ KAPSAMLI LOCAL SEO LANDING PAGES (2026 hub) ============
+  // Kısa-form ürün/ilçe varyasyonları
+  {
+    slug: "atakum-kedi-mamasi",
+    type: "keyword",
+    title: "Atakum Kedi Maması",
+    metaTitle: "Atakum Kedi Maması | Aynı Gün Teslimat | JETGO Pet",
+    metaDescription: "Atakum'da kedi maması siparişi için JETGO aynı gün teslimat, kapıda ödeme ve güvenilir ürün avantajı sunar. Yavru, yetişkin, kısırlaştırılmış, tahılsız ve premium markalar.",
+    keywords: "atakum kedi maması, atakum kedi mama siparişi, atakum yavru kedi maması, atakum kısırlaştırılmış kedi maması, atakum tahılsız mama, atakum premium kedi maması, samsun atakum kedi mama",
+    h1: "Atakum Kedi Maması – Aynı Gün Teslimat",
+    intro: [
+      "Atakum'da kedi maması arıyorsanız, JETGO Pet olarak farklı yaş ve ihtiyaçlara uygun mama seçeneklerini hızlı teslimatla sunuyoruz. Yavru kedi maması, yetişkin kedi maması, kısırlaştırılmış kedi maması, tahılsız kedi maması ve premium markalar için Atakum'un farklı mahallelerine aynı gün teslimat sağlıyoruz.",
+      "Mağazamız Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A adresinde olup, Atakum sahili boyunca Denizevleri'nden Cumhuriyet'e, içeride Mimar Sinan ve Körfez'e kadar tüm bölgeye düzenli rotalarla kurye çıkarıyoruz. Tüm mama paketlerimizin son kullanma tarihini sistemimiz üzerinden takip ediyor, SKT'si yakın ürünleri ayrı bölümde indirimli sunuyoruz.",
+      "Sipariş için ürünleri seçin, sepete ekleyin, üye ol veya WhatsApp üzerinden tamamlayın. Atakum içi siparişler genellikle 1–2 saat içinde elinizde olur. Kapıda nakit (%5 indirimli), POS ile kart, QR ödeme ve havale/EFT seçenekleri mevcuttur.",
+    ],
+    sections: [
+      {
+        h2: "Atakum'da Hangi Mahallelere Kedi Maması Teslim Ediyoruz?",
+        paragraphs: [
+          "JETGO Pet, Atakum merkez başta olmak üzere Denizevleri, Körfez, Mimar Sinan, Yeni Mahalle, Altınkum, Güzelyalı, Taflan, Kurupelit, Atakent ve çevre mahallelere düzenli kedi maması teslimatı yapar. Sahil şeridindeki adreslere ortalama 60–90 dakika, iç mahallelerde 90–120 dakika içinde teslim ediyoruz.",
+          "Saat 18:00'a kadar verilen siparişler aynı gün içinde teslim edilir; sonrasındaki siparişler ertesi sabah ilk rotalardan biriyle yola çıkar. Atakum dışına teslimat yapmıyoruz; bu sayede teslimat süremizi 1–2 saatte tutuyor, mamanın transit süresini kısaltıyoruz.",
+        ],
+        list: [
+          "Denizevleri & sahil şeridi — sahile yakın siteler için öncelikli rota",
+          "Mimar Sinan, Körfez, İncesu — iç bölgelere doğrudan teslimat",
+          "Yeni Mahalle, Cumhuriyet, Esenevler — merkez teslimat",
+          "Kurupelit, Atakent — OMÜ ve çevresi",
+          "Taflan, Soğuksu, Çakırlar — çevre mahalleler",
+        ],
+      },
+      {
+        h2: "Atakum'da En Çok Tercih Edilen Kedi Maması Türleri",
+        paragraphs: [
+          "Yavru kedi maması (kitten): 2–12 ay arası yavrularda hızlı büyüme için yüksek protein. Royal Canin Kitten, Pro Plan Junior, Hill's Science Plan Kitten gibi seçenekler stoklarımızdadır.",
+          "Yetişkin kedi maması (adult): 1 yaş üzeri sağlıklı kediler için dengeli formüller. Pronature Original, N&D, Reflex Plus, ProChoice gibi farklı bütçelere uygun markalar mevcut.",
+          "Kısırlaştırılmış kedi maması (sterilised): kilo kontrolü ve idrar yolu sağlığı için düşük yağ-yüksek lif. Royal Canin Sterilised, Hill's Sterilised serileri Atakum'da en çok satan kategorimiz.",
+          "Tahılsız kedi maması (grain-free): hassas sindirim ve alerji için tahıl içermeyen formüller. N&D Grain Free, Reflex Plus Grain Free seçeneklerimiz Atakum müşterilerinin favorisi.",
+          "Hassas sindirim formülleri: kusma, ishal, hassas mide şikâyetleri için Sensitive serileri.",
+        ],
+      },
+      {
+        h2: "Neden JETGO Pet Atakum?",
+        paragraphs: [
+          "Atakum'daki yerel mağazamızdan çıkan tüm mama paketlerinde son kullanma tarihi kontrolünden geçirilir. Sistemimiz SKT'si yakın bir ürünü siparişe eklemenize izin vermez; bu sayede tazelik garantisi sunarız. Açılmamış kedi maması için 14 gün iade hakkınız vardır.",
+          "Her siparişte %5 Para Puan kazanırsınız; sonraki alışverişlerinizde indirim olarak kullanırsınız. Yeni üyelere 100 TL hoş geldin kuponu sunuyoruz. Askıda Mama bölümünden sokak hayvanlarına bağışta bulunabilir, gönüllü besleme programımıza destek olabilirsiniz.",
+        ],
+      },
+    ],
+    features: [
+      "Atakum içine 1–2 saat aynı gün teslimat",
+      "Royal Canin, Hill's, Pro Plan, N&D, Reflex, Pronature stoğu",
+      "SKT kontrollü mama paketleri",
+      "Kapıda nakitte %5 indirim",
+      "Akıllı mama hesaplama: bir paket kaç gün gider?",
+      "Açılmamış mamada 14 gün iade hakkı",
+    ],
+    mahalleler: ["Denizevleri", "Körfez", "Mimar Sinan", "Yeni Mahalle", "Altınkum", "Güzelyalı", "Taflan", "Cumhuriyet", "Esenevler", "Kurupelit"],
+    faq: [
+      { q: "Atakum'da aynı gün kedi maması teslimatı var mı?", a: "Evet. Saat 18:00'a kadar verilen tüm Atakum içi siparişleri aynı gün, ortalama 1–2 saat içinde teslim ediyoruz. Sonraki siparişler ertesi sabah ilk rotalardan biriyle gönderilir." },
+      { q: "Atakum'da kapıda ödeme yapabiliyor muyum?", a: "Evet. Atakum içi tüm siparişlerde kapıda nakit (%5 indirimli), POS cihazı ile kredi/banka kartı ve QR ödeme alıyoruz. Havale/EFT seçeneği de aktiftir." },
+      { q: "Hangi kedi maması markaları Atakum'da bulunur?", a: "Royal Canin, Hill's Science Plan, Pro Plan, N&D Farmina, Reflex Plus, Pronature Original, ProChoice, Felicia ve Brit gibi 15+ marka stoklarımızda hazırdır." },
+      { q: "Geç saatlerde sipariş verilebilir mi?", a: "Online sipariş hattımız 7/24 açıktır; ancak aynı gün teslimat için son kabul saati 18:00'dır. Sonrasındaki siparişler ertesi sabah ilk rotalarda teslim edilir." },
+      { q: "Hangi mahallelere teslimat yapıyorsunuz?", a: "Atakum'un tüm mahallelerine teslimat yapıyoruz: Denizevleri, Güzelyalı, Kurupelit, Atakent, İncesu, Mimar Sinan, Körfez, Yeni Mahalle, Altınkum, Balaç, Çakırlar, Soğuksu, Taflan, Çobanlı, Büyükoyumca, Esenevler, Cumhuriyet ve daha fazlası." },
+    ],
+    internalLinks: [
+      { text: "Atakum Pet Shop", href: "/atakum-petshop" },
+      { text: "Atakum Köpek Maması", href: "/atakum-kopek-mamasi" },
+      { text: "Samsun Kedi Maması", href: "/samsun-petshop-kedi-mamasi" },
+      { text: "Atakum Aynı Gün Teslimat", href: "/atakum-petshop-ayni-gun-teslimat" },
+      { text: "Atakum Yavru Kedi Maması", href: "/atakum-yavru-kedi-mamasi" },
+      { text: "Atakum Tahılsız Mama", href: "/atakum-tahilsiz-mama" },
+      { text: "Mağaza & Konum", href: "/magaza" },
+    ],
+  },
+
+  {
+    slug: "atakum-kopek-mamasi",
+    type: "keyword",
+    title: "Atakum Köpek Maması",
+    metaTitle: "Atakum Köpek Maması | Kapıda Ödeme & Aynı Gün Teslimat | JETGO Pet",
+    metaDescription: "Atakum'da köpek maması: yavru, yetişkin, büyük ırk, küçük ırk ve hipoalerjenik formüller. Aynı gün teslimat, kapıda ödeme, premium markalar. JETGO Pet Atakum.",
+    keywords: "atakum köpek maması, atakum köpek mama siparişi, atakum yavru köpek maması, atakum büyük ırk köpek maması, atakum proplan, atakum royal canin, samsun atakum köpek mama",
+    h1: "Atakum Köpek Maması – Eve Teslim, Kapıda Ödeme",
+    intro: [
+      "Atakum'da köpek maması ihtiyacınızı tek seferde, ağır çuvalı taşımadan karşılayın. JETGO Pet olarak yavru köpek maması, yetişkin köpek maması, büyük ırk köpek maması, küçük ırk formülleri ve hipoalerjenik (tahılsız) seçenekleri Atakum'daki adresinize aynı gün teslim ediyoruz.",
+      "10–20 kg arası büyük çuvalları kurye ekibimiz kapınıza kadar getirir; siz kasanın başında değilsiniz, kuryeniz değil. Atakum sahil şeridinden iç mahallelere kadar tüm bölgede aktif teslimat rotamız var. Ürünlerin SKT'si sistem tarafından kontrol edilir, sadece taze parti satışa açılır.",
+      "Royal Canin, Hill's, Pro Plan, N&D, Reflex, Pro Performance, Econature ve Brit gibi 15+ marka stoğumuzda. Kapıda nakitte %5 indirim, POS ile kart, QR ödeme veya havale/EFT seçenekleriyle istediğiniz şekilde ödeyin.",
+    ],
+    sections: [
+      {
+        h2: "Atakum'da Hangi Bölgelere Köpek Maması Teslim Ediyoruz?",
+        paragraphs: [
+          "Atakum'un tüm mahallelerine teslimat yapıyoruz: Denizevleri, Güzelyalı, Kurupelit, Atakent, İncesu, Mimar Sinan, Körfez, Yeni Mahalle, Altınkum, Cumhuriyet, Esenevler, Taflan, Soğuksu, Çakırlar, Balaç, Büyükoyumca, Çobanlı, Kozaağaç, Mecidiye ve çevre mahalleler.",
+          "Atakum içi ortalama teslimat süresi 60–120 dakikadır. Saat 18:00'a kadar verilen siparişler aynı gün, sonrası ertesi sabah teslim edilir. Büyük çuval (15 kg+) siparişlerinde kurye merdivenden taşıma yardımı sağlar.",
+        ],
+      },
+      {
+        h2: "Atakum'da En Çok Tercih Edilen Köpek Maması Türleri",
+        paragraphs: [
+          "Yavru köpek maması (puppy/junior): 2–12 ay arası gelişim için yüksek protein ve DHA. Pro Plan Puppy, Royal Canin Mini/Maxi Puppy, Hill's Science Plan Puppy.",
+          "Yetişkin köpek maması (adult): 1 yaş üzeri dengeli formüller. Reflex Plus Adult, N&D Adult, Pro Performance.",
+          "Büyük ırk köpek maması: 25 kg+ ırklar (Golden, Labrador, Çoban köpekleri) için özel kalsiyum-fosfor dengesi.",
+          "Küçük ırk köpek maması: Yorkshire, Maltese, Pomeranian gibi küçük ırklar için yoğun enerji formülleri.",
+          "Hipoalerjenik / tahılsız köpek maması: hassas mide ve alerji için tahıl içermeyen seçenekler.",
+        ],
+      },
+      {
+        h2: "Neden Atakumlu Köpek Sahipleri JETGO Tercih Ediyor?",
+        paragraphs: [
+          "Mağazamız Atakum içinde olduğu için kuryelerimiz şehir trafiğine takılmadan kısa rotada teslim eder. Siparişiniz hazırlanırken size WhatsApp üzerinden bilgi gelir; kurye yola çıktığında ikinci bilgilendirme yapılır. Yerli mağazadan çıkan üründe orijinallik garantimiz vardır.",
+          "Akıllı mama hesaplama aracımızla köpeğinizin kilosuna göre 15 kg'lık çuvalın kaç gün gideceğini hesaplayın; mama bittiğinde size hatırlatma göndelim. Reçeteli (veteriner önerili) mamalarda da yardımcı oluyoruz.",
+        ],
+      },
+    ],
+    features: [
+      "Atakum içi 1–2 saat teslimat",
+      "Büyük çuvalı kuryeniz taşır",
+      "Royal Canin, Pro Plan, Hill's, N&D, Reflex Plus stoğu",
+      "Kapıda nakitte %5 indirim",
+      "Akıllı mama hesaplama + bitti hatırlatması",
+      "Açılmamış mamada 14 gün iade",
+    ],
+    mahalleler: ["Denizevleri", "Mimar Sinan", "Körfez", "Yeni Mahalle", "Cumhuriyet", "Kurupelit", "Atakent", "Altınkum", "Taflan", "Esenevler"],
+    faq: [
+      { q: "Atakum'da aynı gün köpek maması teslimatı var mı?", a: "Evet, 18:00'a kadar verilen tüm Atakum siparişleri aynı gün, ortalama 1–2 saat içinde teslim edilir." },
+      { q: "Atakum'da kapıda ödeme yapabiliyor muyum?", a: "Evet, kapıda nakit (%5 indirimli), POS ile kart, QR ödeme ve havale/EFT seçenekleri tüm Atakum bölgesinde aktiftir." },
+      { q: "Büyük ırk köpek maması bulunur mu?", a: "Royal Canin Maxi, Pro Plan Large Breed, N&D Adult Maxi, Reflex Plus Maxi ve Brit Premium Adult Large gibi 10+ büyük ırk seçeneği stoklarımızda mevcuttur." },
+      { q: "Veteriner reçeteli özel mama da getiriyor musunuz?", a: "Evet. Hill's Prescription Diet, Royal Canin Veterinary Diet ve N&D Vet serilerini stokta bulundurabiliyoruz; reçetenizi WhatsApp üzerinden iletmeniz yeterlidir." },
+      { q: "Atakum dışına da teslimat yapıyor musunuz?", a: "Hayır. Hızı koruyabilmek için yalnızca Atakum, İlkadım ve Canik içine teslimat yapıyoruz." },
+    ],
+    internalLinks: [
+      { text: "Atakum Pet Shop", href: "/atakum-petshop" },
+      { text: "Atakum Kedi Maması", href: "/atakum-kedi-mamasi" },
+      { text: "Samsun Köpek Maması", href: "/samsun-kopek-mamasi" },
+      { text: "Atakum Yavru Kedi Maması", href: "/atakum-yavru-kedi-mamasi" },
+      { text: "Atakum Tahılsız Mama", href: "/atakum-tahilsiz-mama" },
+      { text: "Mağaza & Konum", href: "/magaza" },
+    ],
+  },
+
+  {
+    slug: "samsun-kedi-kumu",
+    type: "keyword",
+    title: "Samsun Kedi Kumu",
+    metaTitle: "Samsun Kedi Kumu | Kapıya Teslim Bentonit & Silika | JETGO",
+    metaDescription: "Samsun'da kedi kumu: bentonit, silika, aktif karbonlu, kokulu/kokusuz seçenekler. Atakum, İlkadım, Canik aynı gün teslimat. Ağır paketi kuryeniz taşır.",
+    keywords: "samsun kedi kumu, atakum kedi kumu, samsun bentonit kedi kumu, samsun silika kedi kumu, kedi kumu kapıya teslim samsun, samsun kedi kumu fiyatları",
+    h1: "Samsun Kedi Kumu – Ağır Paketi Kuryeniz Taşır",
+    intro: [
+      "Samsun'da kedi kumu siparişi vermek için artık ağır paketi siz taşımayın. JETGO Pet olarak Atakum, İlkadım ve Canik içindeki tüm mahallelere bentonit, silika ve aktif karbonlu kedi kumu çeşitlerini aynı gün teslim ediyoruz.",
+      "10 kg ve 20 kg paketler kurye ekibimizle apartman kapısına kadar getirilir; gerekirse kurye merdiven yardımı sağlar. Van Cat, Biokat's, Sanicat ve farklı bütçelere uygun yerli markalar stoklarımızdadır.",
+      "Samsun içi teslimat süremiz ortalama 1–3 saattir. Kapıda nakit (%5 indirim), POS, QR ve havale ödeme seçenekleri mevcuttur. Üyelerimiz her siparişte %5 Para Puan kazanır.",
+    ],
+    sections: [
+      {
+        h2: "Samsun'da Hangi Kedi Kumu Türleri Bulunur?",
+        paragraphs: [
+          "Bentonit kedi kumu: en çok tercih edilen tür. Topaklanma yeteneği yüksek, ekonomiktir. Kokulu/kokusuz, ince/iri taneli seçenekleri mevcuttur.",
+          "Silika (kristal) kedi kumu: koku tutma kapasitesi yüksek, daha az değiştirilir, hijyenik. Tek kediler için ideal.",
+          "Aktif karbonlu kedi kumu: çoklu kedi evlerinde koku problemine etkili çözüm.",
+          "Doğal-bitkisel (mısır/tofu) kedi kumu: tuvalete dökülebilen, doğa dostu seçenek.",
+        ],
+        list: [
+          "Van Cat — bentonit, premium, beyaz görünüm",
+          "Biokat's — yüksek topaklanma, koku kontrol",
+          "Sanicat — ekonomik, geniş ürün yelpazesi",
+          "JETGO ekonomik bentonit — tek kediliklerde uygun fiyat",
+        ],
+      },
+      {
+        h2: "Samsun'da Kedi Kumu Teslimat Bölgeleri",
+        paragraphs: [
+          "Atakum: Denizevleri, Güzelyalı, Mimar Sinan, Körfez, Yeni Mahalle, Cumhuriyet, Altınkum ve tüm çevre mahalleler. İlkadım: Kadıköy, Rasathane, Kılıçdede, Baruthane, Adalet, Ulugazi, Liman ve çevresi. Canik: Karşıyaka, Gaziosmanpaşa, Yenimahalle, Kuzeyyıldızı, Karadeniz mahalleleri.",
+          "Saat 18:00'a kadar verilen siparişler Samsun içinde aynı gün teslim edilir; sonrası ertesi sabah ilk rotalarda gönderilir.",
+        ],
+      },
+    ],
+    features: [
+      "Bentonit, silika, aktif karbonlu, doğal seçenekler",
+      "10 kg / 20 kg paketleri kuryeniz taşır",
+      "Atakum, İlkadım, Canik aynı gün teslimat",
+      "Kapıda nakit, kart, QR, havale ödeme",
+      "Açılmamış paketlerde 14 gün iade",
+      "Para Puan ile %5 geri kazanım",
+    ],
+    faq: [
+      { q: "Samsun'a kaç saatte kedi kumu gelir?", a: "Atakum içine 1–2 saat, İlkadım ve Canik'e 1–3 saat içinde teslim ediyoruz." },
+      { q: "Hangi kedi kumu markaları stoklarınızda var?", a: "Van Cat, Biokat's, Sanicat, kendi ekonomik bentonit serimiz ve farklı bütçelere yönelik yerli markalarımız mevcuttur." },
+      { q: "Çoklu kedi için en iyi kum hangisi?", a: "Çoklu kedi evlerinde aktif karbonlu bentonit veya silika önerilir; koku kontrolü daha iyidir." },
+      { q: "İade yapabilir miyim?", a: "Açılmamış paketlerde 14 gün iade hakkınız vardır; açılmış kedi kumu hijyen gereği iade alınmaz." },
+    ],
+    internalLinks: [
+      { text: "Kedi Kumu", href: "/kedi-kumu" },
+      { text: "Atakum Kedi Kumu", href: "/atakum-kedi-kumu-kapiya-teslim" },
+      { text: "En İyi Kedi Kumu", href: "/kedi-kumu-en-iyi" },
+      { text: "Atakum Hızlı Kedi Kumu", href: "/atakum-hizli-kedi-kumu" },
+      { text: "Samsun Pet Shop", href: "/samsun-petshop" },
+      { text: "Mağaza & Konum", href: "/magaza" },
+    ],
+  },
+
+  {
+    slug: "samsun-kopek-mamasi",
+    type: "keyword",
+    title: "Samsun Köpek Maması",
+    metaTitle: "Samsun Köpek Maması | Aynı Gün Teslimat & Kapıda Ödeme | JETGO",
+    metaDescription: "Samsun'da köpek maması: yavru, yetişkin, büyük/küçük ırk, hipoalerjenik. Atakum, İlkadım, Canik aynı gün teslimat. Royal Canin, Pro Plan, Hill's, N&D stoğu.",
+    keywords: "samsun köpek maması, samsun büyük ırk köpek maması, samsun küçük ırk köpek maması, samsun yavru köpek maması, samsun proplan, samsun royal canin köpek",
+    h1: "Samsun Köpek Maması – Çuvalı Kuryeniz Getirir",
+    intro: [
+      "Samsun'da köpek maması ararken ağır 15–20 kg çuvallarla uğraşmanıza gerek yok. JETGO Pet olarak Samsun'un Atakum, İlkadım ve Canik ilçelerine yavru, yetişkin, büyük ırk, küçük ırk ve hipoalerjenik köpek mamalarını aynı gün teslim ediyoruz.",
+      "Mağazamız Atakum'un kalbinde, Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A'dadır. Royal Canin, Hill's, Pro Plan, N&D Farmina, Reflex Plus, Pro Performance, Econature ve Brit gibi premium ile ekonomik markaları bir arada bulundururuz.",
+      "Sipariş için ürünleri seçin, sepete ekleyin, WhatsApp veya online sipariş üzerinden tamamlayın. Saat 18:00'a kadar verilen siparişler aynı gün Samsun içinde teslim edilir. Kapıda nakitte %5 indirim, POS, QR ve havale seçenekleri mevcuttur.",
+    ],
+    sections: [
+      {
+        h2: "Samsun'da Köpek Maması Teslimat Bölgeleri",
+        paragraphs: [
+          "Atakum: Denizevleri, Güzelyalı, Kurupelit, Atakent, İncesu, Mimar Sinan, Körfez, Yeni Mahalle, Altınkum, Cumhuriyet, Esenevler, Taflan, Soğuksu, Büyükoyumca, Çobanlı, Kozaağaç ve tüm çevre. İlkadım: Kadıköy, Rasathane, Kılıçdede, Baruthane, Ulugazi, Adalet, Çiftlik, Tepecik, Liman. Canik: Karşıyaka, Gaziosmanpaşa, Yenimahalle, Kuzeyyıldızı, Karadeniz.",
+          "Atakum içi ortalama 60–90 dakika, İlkadım/Canik içi 90–180 dakikada teslim ediyoruz.",
+        ],
+      },
+      {
+        h2: "Samsun'da Hangi Köpek Maması Türlerini Bulabilirsiniz?",
+        paragraphs: [
+          "Yavru köpek maması: Royal Canin Puppy, Pro Plan Puppy, Hill's Science Plan Puppy, N&D Puppy.",
+          "Yetişkin köpek maması: Reflex Plus Adult, Pronature Original Adult, ProChoice Adult.",
+          "Büyük ırk köpek maması: Pro Plan Large Breed, Royal Canin Maxi Adult, Brit Premium Adult Large, N&D Maxi.",
+          "Küçük ırk köpek maması: Royal Canin Mini, Pro Plan Small Breed, Reflex Plus Mini.",
+          "Hipoalerjenik / tahılsız: N&D Grain Free, Reflex Grain Free, Brit Grain Free.",
+        ],
+      },
+      {
+        h2: "Neden JETGO Pet Samsun?",
+        paragraphs: [
+          "Samsun yerel mağazamızdan çıkan tüm mama paketleri SKT kontrolünden geçer. Sistemimiz SKT'si yakın bir ürünü siparişe eklemenize izin vermez. Açılmamış mama için 14 gün iade hakkı, %5 Para Puan, akıllı mama hesaplama, mama bittiğinde hatırlatma ve veteriner reçeteli mama tedariki gibi avantajlarımız vardır.",
+        ],
+      },
+    ],
+    features: [
+      "Atakum, İlkadım, Canik içine aynı gün teslimat",
+      "15–20 kg çuvalı kurye taşır",
+      "Royal Canin, Pro Plan, Hill's, N&D, Reflex, Brit stoğu",
+      "Kapıda nakit (%5 indirim), POS, QR, havale",
+      "SKT kontrollü mamalar, 14 gün iade",
+      "Akıllı mama hesaplama + hatırlatma",
+    ],
+    faq: [
+      { q: "Samsun'da hangi ilçelere köpek maması teslim ediyorsunuz?", a: "Atakum, İlkadım ve Canik içindeki tüm mahallelere teslim ediyoruz. Tekkeköy hattını şu an aktif olarak servisliyoruz ancak öncelik merkez 3 ilçedir." },
+      { q: "Büyük çuval taşımakta zorlanıyorum, kurye yardım eder mi?", a: "Evet. 15 kg+ çuvallarda kurye apartman içine taşıma yardımı sağlar." },
+      { q: "Reçeteli (veteriner) mama getiriyor musunuz?", a: "Evet. Hill's Prescription Diet, Royal Canin Veterinary Diet ve N&D Vet ürünlerini reçetenizi WhatsApp'tan paylaştığınızda tedarik ediyoruz." },
+      { q: "Minimum sipariş tutarı nedir?", a: "Samsun içi minimum sipariş tutarımız 500 TL'dir. 1.000 TL üzeri siparişlerde teslimat ücretsizdir." },
+    ],
+    internalLinks: [
+      { text: "Samsun Pet Shop", href: "/samsun-petshop" },
+      { text: "Atakum Köpek Maması", href: "/atakum-kopek-mamasi" },
+      { text: "Köpek Maması Fiyatları", href: "/kopek-mamasi-fiyatlari" },
+      { text: "Samsun Büyük Irk Köpek Maması", href: "/samsun-buyuk-irk-kopek-mamasi" },
+      { text: "Samsun Royal Canin Mama", href: "/samsun-royal-canin-mama" },
+      { text: "Mağaza & Konum", href: "/magaza" },
+    ],
+  },
+
+  // Hız / aciliyet pages
+  ...buildSpeedPages(),
+
+  // Kapıda ödeme & eve teslim pages
+  ...buildPaymentPages(),
+
+  // Marka & ürün özelinde
+  ...buildBrandProductPages(),
+
+  // Güven & yorumlar
+  ...buildTrustPages(),
 ];
+
+// ----------- Builder helpers for variation -----------
+
+function buildLandingPage(cfg: {
+  slug: string;
+  title: string;
+  metaTitle: string;
+  metaDescription: string;
+  keywords: string;
+  h1: string;
+  intro: string[];
+  sections?: SeoSection[];
+  features: string[];
+  mahalleler?: string[];
+  faq: { q: string; a: string }[];
+  internalLinks: { text: string; href: string }[];
+}): SeoPageData {
+  return { type: "keyword", ...cfg };
+}
+
+function buildSpeedPages(): SeoPageData[] {
+  return [
+    buildLandingPage({
+      slug: "samsun-hizli-petshop",
+      title: "Samsun Hızlı Petshop",
+      metaTitle: "Samsun Hızlı Petshop | 1–2 Saatte Teslim | JETGO Pet",
+      metaDescription: "Samsun'un en hızlı pet shop hizmeti. Atakum içine 60–90 dk, İlkadım ve Canik'e 90–180 dk teslimat. Ağır mama ve kum çuvalları kapınıza kadar.",
+      keywords: "samsun hızlı petshop, samsun hızlı pet shop, samsun pet shop hızlı teslimat, samsun express petshop",
+      h1: "Samsun'un En Hızlı Pet Shop'u – 1–2 Saatte Kapınızda",
+      intro: [
+        "Samsun'da kedinizin maması, köpeğinizin kumu veya kuşunuzun yemi acilen lazım olduğunda zaman kaybetmek istemezsiniz. JETGO Pet olarak Samsun içine ortalama 60–180 dakika içinde teslimat sunuyoruz.",
+        "Mağazamız Atakum'da olduğu için Atakum içi teslimat süremiz çoğu zaman 60–90 dakikadır. İlkadım ve Canik'e 90–180 dakikada ulaşıyoruz. Kuryelerimiz şehir trafiğini bilen yerel ekiptir; kısa rotalarla planlanır.",
+        "Online sipariş hattımız 7/24 açık; aynı gün teslimat için son saat 18:00'dır. Sonrasındaki siparişler ertesi sabah ilk rotalarda yola çıkar.",
+      ],
+      sections: [
+        {
+          h2: "Hızı Mümkün Kılan Yerel Operasyon",
+          paragraphs: [
+            "Atakum içindeki yerel mağazamız sayesinde sipariş hazırlığı 5–10 dakikada tamamlanır; kurye doğrudan adresinize çıkar. Kargo bekleme, depo hareketi yoktur.",
+            "Hangi kuryenin hangi rotada olduğunu bilen mini-bölge sistemi ile mahallenize en yakın kuryeyi atarız.",
+          ],
+        },
+      ],
+      features: [
+        "Atakum içine 60–90 dk teslimat",
+        "İlkadım/Canik'e 90–180 dk teslimat",
+        "Mağaza Atakum'da: kısa rota",
+        "Yerel kurye ekibi",
+        "WhatsApp anlık bilgilendirme",
+      ],
+      faq: [
+        { q: "Samsun'da en hızlı petshop hangi?", a: "Yerel mağaza + yerel kurye + dar bölge planı sayesinde Samsun içinde 1–3 saat aralığında en hızlı teslimatı sunuyoruz." },
+        { q: "Acil sipariş işaretleyebilir miyim?", a: "Sipariş notuna 'acil' yazmanız yeterlidir; mümkünse rota başına alınır." },
+      ],
+      internalLinks: [
+        { text: "Atakum Acil Petshop", href: "/atakum-acil-petshop" },
+        { text: "Samsun Acil Petshop", href: "/samsun-acil-petshop" },
+        { text: "Samsun Express Petshop", href: "/samsun-express-petshop" },
+        { text: "Atakum 1 Saatte Kedi Maması", href: "/atakum-1-saatte-kedi-mamasi" },
+        { text: "Mağaza & Konum", href: "/magaza" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-acil-petshop",
+      title: "Atakum Acil Petshop",
+      metaTitle: "Atakum Acil Petshop | 1 Saatte Mama Teslimi | JETGO Pet",
+      metaDescription: "Atakum'da acil mama, kedi kumu, çiş pedi ihtiyacınızda 1 saat içinde kapınızdayız. Mağazamız Atakum merkezinde, kuryelerimiz hep yakınınızda.",
+      keywords: "atakum acil petshop, atakum 1 saatte mama, atakum acil kedi maması, atakum hızlı petshop",
+      h1: "Atakum Acil Petshop – Yaklaşık 1 Saatte Kapınızda",
+      intro: [
+        "Mama bitti, kediniz aç mı kaldı? Atakum içinde JETGO Pet, ortalama 60 dakika içinde acil siparişinizi teslim eder. Mağazamız Atakum merkezindedir; kuryelerimiz Atakum içinde dolaşır.",
+        "Atakum'un Denizevleri, Mimar Sinan, Cumhuriyet, Yeni Mahalle, Altınkum, Kurupelit gibi mahallelerine doğrudan rotalardan teslim ediyoruz. Acil siparişlerde sipariş notuna 'acil' yazmanız yeterlidir.",
+        "Açık olan saatlerde aynı gün teslim, kapalı saatte ertesi sabah ilk rotalardan biriyle teslim. WhatsApp üzerinden hızlı destek alabilirsiniz.",
+      ],
+      features: [
+        "Ortalama 60 dakika teslimat",
+        "Yerel mağaza, yerel kurye",
+        "Atakum içinde kısa rota",
+        "WhatsApp anlık takip",
+        "Kapıda nakit, POS, QR ödeme",
+      ],
+      faq: [
+        { q: "Atakum'da gerçekten 1 saat içinde gelir mi?", a: "Atakum merkez ve sahil bölgelerinde çoğu zaman 60–90 dakika arasındayız. Trafik ve yoğunluğa göre 90 dk'yı geçtiği günler olabilir." },
+        { q: "Gece sipariş verirsem ne olur?", a: "23:00'dan sonra verilen siparişler ertesi sabah ilk rotalardan biriyle teslim edilir." },
+      ],
+      internalLinks: [
+        { text: "Atakum 1 Saatte Kedi Maması", href: "/atakum-1-saatte-kedi-mamasi" },
+        { text: "Atakum Hızlı Kedi Kumu", href: "/atakum-hizli-kedi-kumu" },
+        { text: "Atakum Anında Teslim Mama", href: "/atakum-aninda-teslim-mama" },
+        { text: "Samsun Hızlı Petshop", href: "/samsun-hizli-petshop" },
+        { text: "Mağaza & Konum", href: "/magaza" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "samsun-acil-petshop",
+      title: "Samsun Acil Petshop",
+      metaTitle: "Samsun Acil Petshop | Aynı Saat Teslim | JETGO Pet",
+      metaDescription: "Samsun'da acil pet ürünleri için JETGO Pet. Atakum, İlkadım, Canik içinde 1–3 saat teslim. Mama, kum, çiş pedi, kedi/köpek hijyen ürünleri.",
+      keywords: "samsun acil petshop, samsun acil mama, samsun pet shop hızlı, samsun acil kedi kumu",
+      h1: "Samsun Acil Petshop – Hızlı, Yerel, Güvenilir",
+      intro: [
+        "Samsun'un her yerinden acil pet ihtiyacınız için JETGO Pet 1–3 saat aralığında teslimat sunar. Atakum içine 60–90 dk, İlkadım ve Canik içine 90–180 dk içinde ulaşırız.",
+        "Acil sipariş için sepetinizdeki ürünleri tamamladıktan sonra notlara 'acil' yazmanız yeterli. Kuryelerimiz mümkün olan en kısa rotada size yönlenir.",
+      ],
+      features: [
+        "Atakum 60–90 dk, İlkadım/Canik 90–180 dk",
+        "Yerel mağaza, yerel kurye",
+        "Kapıda nakit, kart, QR ödeme",
+        "WhatsApp ile sipariş takibi",
+      ],
+      faq: [
+        { q: "Acil sipariş ek ücretli mi?", a: "Ek bir ücret almıyoruz. 1.000 TL üzeri tüm siparişlerde teslimat ücretsizdir." },
+        { q: "Hangi ürünler acil sipariş için ideal?", a: "Mama, kedi kumu, çiş pedi, hijyen ürünleri ve veteriner önerili reçeteli mamalar." },
+      ],
+      internalLinks: [
+        { text: "Samsun Hızlı Petshop", href: "/samsun-hizli-petshop" },
+        { text: "Samsun Express Petshop", href: "/samsun-express-petshop" },
+        { text: "Samsun 1 Saatte Köpek Maması", href: "/samsun-1-saatte-kopek-mamasi" },
+        { text: "Samsun 1 Saat Teslim Petshop", href: "/samsun-1-saat-teslim-petshop" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-1-saatte-kedi-mamasi",
+      title: "Atakum 1 Saatte Kedi Maması",
+      metaTitle: "Atakum 1 Saatte Kedi Maması Teslim | JETGO Pet",
+      metaDescription: "Atakum'da 1 saat içinde kedi maması teslimatı. Yerel mağaza, yerel kurye. Royal Canin, Pro Plan, Hill's stoğu hazır.",
+      keywords: "atakum 1 saatte kedi maması, atakum kedi maması hızlı teslimat, atakum acil kedi maması",
+      h1: "Atakum 1 Saatte Kedi Maması Teslimatı",
+      intro: [
+        "Kediniz mamayı bitirdi mi? Atakum'da yaşıyorsanız JETGO Pet'ten verdiğiniz siparişi ortalama 60 dakika içinde alırsınız. Mağazamız Atakum'un kalbinde, Yenimahalle Atatürk 3. Kısım Bulvarı'nda.",
+        "Royal Canin, Hill's, Pro Plan, N&D, Reflex Plus, Pronature Original gibi tüm popüler kedi maması markalarını anında stoktan çıkarırız. Yavru, yetişkin, kısırlaştırılmış, tahılsız ve hassas sindirim formülleri hazırdır.",
+      ],
+      features: [
+        "Ortalama 60 dk teslim",
+        "Atakum merkez yerel mağaza",
+        "Royal Canin, Hill's, Pro Plan, N&D",
+        "Kapıda nakitte %5 indirim",
+        "Yavru / yetişkin / kısır / tahılsız",
+      ],
+      faq: [
+        { q: "Hangi mahalleye 1 saat içinde gelirsiniz?", a: "Denizevleri, Mimar Sinan, Körfez, Yeni Mahalle, Cumhuriyet, Esenevler, Altınkum başta olmak üzere Atakum içi tüm mahallelerde 1 saat hedefimiz vardır." },
+        { q: "Marka stokta yoksa ne olur?", a: "Sipariş öncesi stok kontrolü sistem üzerinden yapılır; sepete eklediğiniz ürün stokta var demektir." },
+      ],
+      internalLinks: [
+        { text: "Atakum Kedi Maması", href: "/atakum-kedi-mamasi" },
+        { text: "Atakum Acil Petshop", href: "/atakum-acil-petshop" },
+        { text: "Atakum Anında Teslim Mama", href: "/atakum-aninda-teslim-mama" },
+        { text: "Atakum Yavru Kedi Maması", href: "/atakum-yavru-kedi-mamasi" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "samsun-1-saatte-kopek-mamasi",
+      title: "Samsun 1 Saatte Köpek Maması",
+      metaTitle: "Samsun 1 Saatte Köpek Maması Teslim | JETGO Pet",
+      metaDescription: "Samsun'da köpek maması 1 saat içinde kapınızda. Atakum içi 1 saat, İlkadım/Canik 1–3 saat. Büyük çuvalı kuryeniz taşır.",
+      keywords: "samsun 1 saatte köpek maması, samsun acil köpek maması, samsun hızlı köpek mama",
+      h1: "Samsun 1 Saatte Köpek Maması Teslimatı",
+      intro: [
+        "Samsun'da köpek maması ihtiyacınızı en hızlı şekilde JETGO Pet karşılar. Atakum içi siparişler ortalama 60 dakikada, İlkadım ve Canik içi siparişler 60–180 dakika arasında teslim edilir.",
+        "Pro Plan, Royal Canin, Hill's, N&D, Reflex, Brit, Pro Performance markalarımız 15 kg ve 20 kg çuvallar dahil hazır stoktadır. Kuryeniz büyük çuvalı kapınıza kadar taşır.",
+      ],
+      features: [
+        "Atakum'da 1 saat hedefi",
+        "Tüm Samsun'da 1–3 saat",
+        "15–20 kg çuvalı kurye taşır",
+        "Pro Plan, Royal Canin, Hill's stoğu",
+      ],
+      faq: [
+        { q: "Çuval taşımam lazım mı?", a: "Hayır. Kurye apartman kapısına kadar (talep ederseniz daire içine kadar) taşır." },
+        { q: "Köpek mamamın markası özel ise?", a: "Stokta varsa ürünü sepette görürsünüz. Görmüyorsanız WhatsApp'tan sorabilirsiniz, mümkünse aynı gün getiriyoruz." },
+      ],
+      internalLinks: [
+        { text: "Samsun Köpek Maması", href: "/samsun-kopek-mamasi" },
+        { text: "Atakum Köpek Maması", href: "/atakum-kopek-mamasi" },
+        { text: "Samsun Hızlı Petshop", href: "/samsun-hizli-petshop" },
+        { text: "Samsun Express Petshop", href: "/samsun-express-petshop" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-gece-acik-petshop",
+      title: "Atakum Gece Açık Petshop",
+      metaTitle: "Atakum Gece Sipariş Pet Shop | JETGO 7/24 Online",
+      metaDescription: "Atakum'da gece sipariş alan pet shop. Online sipariş hattımız 7/24 açık. Sabah ilk rotada teslimat. WhatsApp destek.",
+      keywords: "atakum gece açık petshop, atakum 24 saat petshop, atakum gece kedi maması",
+      h1: "Atakum Gece Sipariş Pet Shop – Online 7/24",
+      intro: [
+        "Mağazamızın fiziksel saatleri Pzt-Cmt 09:00-22:00, Pazar 10:00-22:00 olsa da online sipariş hattımız 7/24 açıktır. Atakum'da gece verdiğiniz siparişler ertesi sabah ilk rotalardan biriyle teslim edilir.",
+        "Acil bir durum varsa sipariş notuna belirtin; mümkünse açılışla birlikte ilk teslimat sizin olur.",
+      ],
+      features: [
+        "7/24 online sipariş",
+        "Sabah ilk rota teslimat",
+        "Ertesi gün garanti",
+        "Atakum merkez mağaza",
+      ],
+      faq: [
+        { q: "Gece nereden sipariş veririm?", a: "jetgo.pet üzerinden ürünleri seçip sepeti tamamlayın; sabah hazırlığı başlar." },
+        { q: "Gece kapıya teslim var mı?", a: "Şu an gece teslimat yapmıyoruz; sabah ilk rota ile teslim ediyoruz. Trafik açıldığı anda yola çıkarız." },
+      ],
+      internalLinks: [
+        { text: "Atakum Pet Shop", href: "/atakum-petshop" },
+        { text: "Atakum Acil Petshop", href: "/atakum-acil-petshop" },
+        { text: "Mağaza & Konum", href: "/magaza" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-aninda-teslim-mama",
+      title: "Atakum Anında Teslim Mama",
+      metaTitle: "Atakum Anında Teslim Kedi Köpek Maması | JETGO",
+      metaDescription: "Atakum'da anında teslim kedi ve köpek maması. Yerel mağazadan çıkış, 1 saatte kapınızda. Royal Canin, Pro Plan, Hill's stoğu hazır.",
+      keywords: "atakum anında teslim mama, atakum hemen teslim mama, atakum mama hızlı teslimat",
+      h1: "Atakum Anında Teslim Mama – Sipariş Verir Vermez Yola Çıkıyoruz",
+      intro: [
+        "Atakum'daki yerel mağazamızdan size doğrudan teslim. Sipariş gelir gelmez hazırlığı başlatıyor, kurye 5–10 dakika içinde yola çıkıyor. Atakum içi ortalama 60 dk hedefimiz vardır.",
+        "Tüm popüler kedi/köpek maması markalarımız sürekli stokta tutulur. SKT kontrolü sistemimiz sayesinde taze paketler size ulaşır.",
+      ],
+      features: [
+        "5–10 dk hazırlık",
+        "Atakum içi 60 dk hedef",
+        "Premium markalar",
+        "SKT kontrollü stok",
+        "WhatsApp anlık takip",
+      ],
+      faq: [
+        { q: "Kurye yola çıktığını nasıl bilirim?", a: "WhatsApp üzerinden sipariş hazırlandı ve kurye yola çıktı bildirimleri gönderilir." },
+        { q: "Sipariş içi değişiklik yapabilir miyim?", a: "Kurye yola çıkmadan önce evet. WhatsApp'tan iletmeniz yeterli." },
+      ],
+      internalLinks: [
+        { text: "Atakum Kedi Maması", href: "/atakum-kedi-mamasi" },
+        { text: "Atakum Köpek Maması", href: "/atakum-kopek-mamasi" },
+        { text: "Atakum 1 Saatte Kedi Maması", href: "/atakum-1-saatte-kedi-mamasi" },
+        { text: "Atakum Acil Petshop", href: "/atakum-acil-petshop" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "samsun-1-saat-teslim-petshop",
+      title: "Samsun 1 Saat Teslim Petshop",
+      metaTitle: "Samsun 1 Saat Teslim Petshop | JETGO Pet",
+      metaDescription: "Samsun'da 1 saat teslim hedefli pet shop. Atakum içi 60 dk, İlkadım/Canik içi 90–180 dk. Mama, kum, hijyen ürünleri.",
+      keywords: "samsun 1 saat teslim petshop, samsun pet shop hızlı teslim, samsun 1 saatte teslim",
+      h1: "Samsun 1 Saat Teslim Pet Shop",
+      intro: [
+        "Samsun'da en hızlı pet shop deneyimini yaşamak için JETGO Pet'i tercih edin. Atakum içine 60 dakika hedefimiz vardır; İlkadım ve Canik'e 90–180 dakika içinde ulaşırız.",
+        "Mağazadan çıkış sonrası kuryeniz adresinize en kısa rotadan ilerler. Sipariş takibi WhatsApp üzerinden sizinle paylaşılır.",
+      ],
+      features: [
+        "Atakum 60 dk hedef",
+        "İlkadım/Canik 90–180 dk",
+        "WhatsApp anlık takip",
+        "Yerel kurye ekibi",
+      ],
+      faq: [
+        { q: "1 saat teslim garantili mi?", a: "Atakum'da çoğu zaman; trafik ve yoğunluğa göre 90 dk'yı bulabilir. Garantili değildir, hedefimizdir." },
+        { q: "İlkadım/Canik için teslim süresi nedir?", a: "90–180 dakika aralığındadır." },
+      ],
+      internalLinks: [
+        { text: "Samsun Hızlı Petshop", href: "/samsun-hizli-petshop" },
+        { text: "Samsun Express Petshop", href: "/samsun-express-petshop" },
+        { text: "Samsun 1 Saatte Köpek Maması", href: "/samsun-1-saatte-kopek-mamasi" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "samsun-express-petshop",
+      title: "Samsun Express Petshop",
+      metaTitle: "Samsun Express Petshop | Hızlı Mama, Kum, Aksesuar | JETGO",
+      metaDescription: "Samsun express pet shop hizmeti. Aynı gün 1–3 saat teslim, kapıda ödeme, premium markalar. JETGO Pet Atakum mağazası.",
+      keywords: "samsun express petshop, samsun pet shop express, samsun hızlı pet shop hizmeti",
+      h1: "Samsun Express Pet Shop – Hızlı ve Yerel",
+      intro: [
+        "JETGO Pet, Samsun express pet shop kategorisinde en hızlı yerel hizmettir. Mağaza Atakum'da, kurye Samsun'da. Aynı gün teslim ve kapıda ödeme standardımızdır.",
+        "Atakum içi 60–90 dk, İlkadım/Canik içi 90–180 dk teslimat. Mama, kum, çiş pedi, hijyen, aksesuar.",
+      ],
+      features: [
+        "Aynı gün teslimat",
+        "Yerel mağaza + yerel kurye",
+        "Premium ve ekonomik markalar",
+        "Kapıda nakit, kart, QR",
+      ],
+      faq: [
+        { q: "Express sipariş için ek ücret var mı?", a: "Hayır, normal teslimat ücretleri geçerlidir." },
+        { q: "Aksesuar da express geliyor mu?", a: "Evet, mağaza stoğunda olan tüm ürünler aynı süreyle gelir." },
+      ],
+      internalLinks: [
+        { text: "Samsun Hızlı Petshop", href: "/samsun-hizli-petshop" },
+        { text: "Samsun Acil Petshop", href: "/samsun-acil-petshop" },
+        { text: "Samsun 1 Saat Teslim Petshop", href: "/samsun-1-saat-teslim-petshop" },
+      ],
+    }),
+  ];
+}
+
+function buildPaymentPages(): SeoPageData[] {
+  return [
+    buildLandingPage({
+      slug: "samsun-kapida-odeme-petshop",
+      title: "Samsun Kapıda Ödeme Petshop",
+      metaTitle: "Samsun Kapıda Ödeme Petshop | %5 Nakit İndirim | JETGO",
+      metaDescription: "Samsun'da kapıda ödeme alan pet shop. Nakitte %5 indirim, POS ile kart, QR ödeme, havale. Atakum, İlkadım, Canik aynı gün teslim.",
+      keywords: "samsun kapıda ödeme petshop, samsun pet shop kapıda ödeme, samsun kapıda nakit petshop, samsun kapıda kart pos",
+      h1: "Samsun'da Kapıda Ödeme Yapabileceğiniz Pet Shop",
+      intro: [
+        "JETGO Pet, Samsun'da kapıda ödeme alan yerel pet shop'tur. Atakum, İlkadım ve Canik içine yapılan tüm teslimatlarda kapıda nakit, POS ile kredi/banka kartı, QR ödeme ve havale/EFT seçenekleri mevcuttur.",
+        "Kapıda nakit ödemede otomatik %5 indirim uygulanır. Üye olmanıza gerek yoktur; ancak üyeyseniz her siparişte %5 Para Puan da kazanırsınız.",
+        "Online sipariş ile mağaza fiyatı arasında fark yoktur. Kart taksit seçeneklerini POS üzerinden bankanızla seçebilirsiniz.",
+      ],
+      features: [
+        "Kapıda nakit (%5 indirimli)",
+        "Kapıda kart (POS) ile taksit",
+        "Kapıda QR ödeme (mobil bankacılık)",
+        "Havale / EFT seçeneği",
+        "Üyeye %5 Para Puan",
+      ],
+      faq: [
+        { q: "Kapıda nakit indirimi nasıl uygulanır?", a: "Sepet sayfasında kapıda nakit seçtiğinizde toplamdan otomatik %5 düşülür." },
+        { q: "Kart ile taksit yapabilir miyim?", a: "Evet. POS cihazımız ile bankanızın taksit seçeneklerini kullanabilirsiniz." },
+        { q: "Havale ile sipariş verirsem ne zaman teslim?", a: "Havale dekontunu WhatsApp'tan iletirseniz teslimat aynı gün başlar." },
+      ],
+      internalLinks: [
+        { text: "Atakum Kapıda Ödeme Petshop", href: "/atakum-kapida-odeme-petshop" },
+        { text: "Atakum Pet Shop Kapıda Ödeme", href: "/atakum-petshop-kapida-odeme" },
+        { text: "Kapıya Teslim Petshop Samsun", href: "/kapiya-teslim-petshop-samsun" },
+        { text: "Samsun Pet Shop", href: "/samsun-petshop" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-kapida-odeme-petshop",
+      title: "Atakum Kapıda Ödeme Petshop",
+      metaTitle: "Atakum Kapıda Ödeme Petshop | %5 Nakit İndirim | JETGO",
+      metaDescription: "Atakum'da kapıda ödeme alan pet shop. Nakit, POS, QR, havale seçenekleri. Aynı gün teslimat, %5 nakit indirimi.",
+      keywords: "atakum kapıda ödeme petshop, atakum pet shop kapıda ödeme, atakum kapıda nakit petshop, atakum kapıda kart",
+      h1: "Atakum Kapıda Ödeme Pet Shop – Nakit, Kart, QR",
+      intro: [
+        "Atakum içindeki tüm teslimatlarda kapıda ödeme avantajını JETGO Pet ile yaşayın. Kapıda nakit ödemede %5 indirim, POS cihazıyla kart, QR ödeme ve havale seçenekleri tüm Atakum bölgesinde aktiftir.",
+        "Mağazamız Atakum'un kalbinde olduğu için kuryelerimiz Atakum içinde sürekli rotada. Sipariş hazırlığı sonrası kurye 5–10 dakika içinde yola çıkar.",
+      ],
+      features: [
+        "Atakum içi tüm mahallelerde geçerli",
+        "Nakit ödemede %5 indirim",
+        "POS ile kart + taksit",
+        "QR ödeme (mobil bankacılık)",
+        "Havale / EFT alternatif",
+      ],
+      faq: [
+        { q: "Atakum'da hangi mahallelerde kapıda ödeme aktif?", a: "Atakum'un tüm mahallelerinde aktiftir: Denizevleri, Mimar Sinan, Körfez, Yeni Mahalle, Cumhuriyet, Altınkum, Kurupelit, Atakent ve diğerleri." },
+        { q: "Kart taksit yapılır mı?", a: "Bankanızın izin verdiği taksit seçeneklerini POS üzerinden uygulayabilirsiniz." },
+      ],
+      internalLinks: [
+        { text: "Atakum Pet Shop Kapıda Ödeme", href: "/atakum-petshop-kapida-odeme" },
+        { text: "Samsun Kapıda Ödeme Petshop", href: "/samsun-kapida-odeme-petshop" },
+        { text: "Atakum Pet Shop", href: "/atakum-petshop" },
+        { text: "Mağaza & Konum", href: "/magaza" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "samsun-eve-teslim-kedi-mamasi",
+      title: "Samsun Eve Teslim Kedi Maması",
+      metaTitle: "Samsun Eve Teslim Kedi Maması | JETGO Pet",
+      metaDescription: "Samsun'da eve teslim kedi maması. Aynı gün teslimat, kapıda ödeme, premium markalar. Atakum, İlkadım, Canik içinde yerel servis.",
+      keywords: "samsun eve teslim kedi maması, samsun kedi maması eve gelir, samsun pet shop eve teslim",
+      h1: "Samsun Eve Teslim Kedi Maması",
+      intro: [
+        "Samsun'da kedinizin maması bittiyse mağazaya gitmenize gerek yok. JETGO Pet eve teslim kedi maması hizmetiyle Atakum, İlkadım ve Canik içine aynı gün teslimat yapar.",
+        "Royal Canin, Pro Plan, Hill's, N&D, Reflex Plus, Pronature, Felicia, Brit, ProChoice gibi 15+ marka stoklarımızda. SKT kontrollü, taze paketler kapınıza kadar gelir.",
+      ],
+      features: [
+        "Atakum/İlkadım/Canik aynı gün teslim",
+        "Kapıda nakit (%5 indirim), POS, QR",
+        "Premium ve ekonomik markalar",
+        "SKT kontrollü stok",
+        "Akıllı mama hesaplama",
+      ],
+      faq: [
+        { q: "Hangi saate kadar sipariş verirsem aynı gün gelir?", a: "Saat 18:00'a kadar verilen siparişler aynı gün teslim edilir." },
+        { q: "Eve teslim için ek ücret var mı?", a: "1.000 TL üzeri siparişlerde teslimat ücretsizdir." },
+      ],
+      internalLinks: [
+        { text: "Samsun Kedi Maması", href: "/samsun-petshop-kedi-mamasi" },
+        { text: "Atakum Kedi Maması", href: "/atakum-kedi-mamasi" },
+        { text: "Atakum Eve Teslim Köpek Maması", href: "/atakum-eve-teslim-kopek-mamasi" },
+        { text: "Mağaza & Konum", href: "/magaza" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-eve-teslim-kopek-mamasi",
+      title: "Atakum Eve Teslim Köpek Maması",
+      metaTitle: "Atakum Eve Teslim Köpek Maması | Aynı Gün | JETGO",
+      metaDescription: "Atakum'da eve teslim köpek maması. Büyük çuvalı kuryeniz taşır. Royal Canin, Pro Plan, Hill's, N&D, Reflex stoğu.",
+      keywords: "atakum eve teslim köpek maması, atakum köpek maması eve gelir, atakum köpek mama teslim",
+      h1: "Atakum Eve Teslim Köpek Maması",
+      intro: [
+        "Atakum içindeki tüm mahallelere eve teslim köpek maması hizmeti. Büyük çuvallarınızı kuryeniz apartman içine kadar taşır. Mama hazırlığı 5–10 dk, teslim 60–90 dk.",
+        "Pro Plan, Royal Canin, Hill's, N&D, Reflex Plus, Brit, Pronature, Pro Performance gibi tüm popüler markalarımız stokta.",
+      ],
+      features: [
+        "Atakum içi 60–90 dk teslim",
+        "Büyük çuvalı kurye taşır",
+        "Kapıda nakit, kart, QR",
+        "SKT kontrollü mama",
+        "Para Puan ile %5 geri kazanım",
+      ],
+      faq: [
+        { q: "Daire içine kadar taşır mı?", a: "Talep ederseniz evet. Asansörsüz binalarda da yardımcı oluyoruz." },
+        { q: "Atakum dışına eve teslim yapıyor musunuz?", a: "Hayır, sadece Atakum, İlkadım, Canik içine teslim ediyoruz." },
+      ],
+      internalLinks: [
+        { text: "Atakum Köpek Maması", href: "/atakum-kopek-mamasi" },
+        { text: "Samsun Eve Teslim Kedi Maması", href: "/samsun-eve-teslim-kedi-mamasi" },
+        { text: "Samsun Köpek Maması", href: "/samsun-kopek-mamasi" },
+        { text: "Mağaza & Konum", href: "/magaza" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "samsun-petshop-kurye",
+      title: "Samsun Petshop Kurye",
+      metaTitle: "Samsun Petshop Kurye Hizmeti | Aynı Gün Teslim | JETGO",
+      metaDescription: "Samsun'da pet shop kurye hizmeti. Atakum mağazasından çıkış, yerel kurye ekibi, 1–3 saatte teslim. Mama, kum, çiş pedi.",
+      keywords: "samsun petshop kurye, samsun pet shop kurye, samsun mama kurye, samsun kedi maması kurye",
+      h1: "Samsun Pet Shop Kurye Hizmeti",
+      intro: [
+        "JETGO Pet, Samsun'un en aktif pet shop kurye ağına sahip yerel mağazasıdır. Atakum mağazamızdan çıkan siparişler, yerel kurye ekibimizle Atakum, İlkadım ve Canik adreslerine 1–3 saat aralığında teslim edilir.",
+        "Hangi kuryenin nerede olduğunu bilen mini-bölge sistemi sayesinde mahallenize en yakın kuryeyi atarız.",
+      ],
+      features: [
+        "Yerel kurye ekibi",
+        "Mini-bölge dağıtım",
+        "WhatsApp anlık takip",
+        "Atakum içi 1 saat hedef",
+      ],
+      faq: [
+        { q: "Kurye numarasıyla iletişime geçebilir miyim?", a: "Sipariş takibi WhatsApp ana hat üzerindendir; özel kurye numarası paylaşımı standart değildir." },
+        { q: "Sipariş notu yazabilir miyim?", a: "Evet. Ödeme adımında kurye için not alanı vardır (kapı kodu, kat vs.)." },
+      ],
+      internalLinks: [
+        { text: "Samsun Hızlı Petshop", href: "/samsun-hizli-petshop" },
+        { text: "Samsun Express Petshop", href: "/samsun-express-petshop" },
+        { text: "Samsun Pet Shop", href: "/samsun-petshop" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-hizli-kedi-kumu",
+      title: "Atakum Hızlı Kedi Kumu",
+      metaTitle: "Atakum Hızlı Kedi Kumu Teslim | JETGO Pet",
+      metaDescription: "Atakum'da kedi kumu 1 saat içinde kapınızda. Bentonit, silika, aktif karbonlu seçenekler. 10–20 kg paketleri kuryeniz taşır.",
+      keywords: "atakum hızlı kedi kumu, atakum kedi kumu acil, atakum kedi kumu hızlı teslim",
+      h1: "Atakum Hızlı Kedi Kumu Teslimatı",
+      intro: [
+        "Atakum'da kedi kumu acil mi lazım? JETGO Pet'in yerel mağazasından çıkan siparişler ortalama 60 dakika içinde Atakum içindeki adresinize ulaşır. 10 kg ve 20 kg paketleri kurye apartman kapısına kadar taşır.",
+        "Bentonit (Van Cat, Biokat's, Sanicat), silika ve aktif karbonlu seçenekler stoğumuzda. Tek kedi, çoklu kedi ve hassas burunlu kedi sahipleri için farklı koku kontrol seviyelerinde ürün bulunur.",
+      ],
+      features: [
+        "Atakum içi ~60 dk teslim",
+        "Bentonit, silika, aktif karbonlu",
+        "10 kg ve 20 kg paketler",
+        "Kuryeniz paketi taşır",
+        "Kapıda nakit, kart, QR",
+      ],
+      faq: [
+        { q: "20 kg kedi kumu paketi merdivene çıkar mı?", a: "Evet, kurye apartman içine ve gerekirse daire içine kadar taşır." },
+        { q: "Kokulu/kokusuz seçenek var mı?", a: "Her iki seçenek de stoktadır." },
+      ],
+      internalLinks: [
+        { text: "Samsun Kedi Kumu", href: "/samsun-kedi-kumu" },
+        { text: "Atakum Kedi Kumu Kapıya Teslim", href: "/atakum-kedi-kumu-kapiya-teslim" },
+        { text: "En İyi Kedi Kumu", href: "/kedi-kumu-en-iyi" },
+        { text: "Atakum Acil Petshop", href: "/atakum-acil-petshop" },
+      ],
+    }),
+  ];
+}
+
+function buildBrandProductPages(): SeoPageData[] {
+  return [
+    buildLandingPage({
+      slug: "samsun-ucuz-kedi-mamasi",
+      title: "Samsun Ucuz Kedi Maması",
+      metaTitle: "Samsun Ucuz Kedi Maması | Uygun Fiyat & Kalite | JETGO",
+      metaDescription: "Samsun'da ucuz kedi maması: ekonomik markalar, kampanyalı paketler, açık mama tartım. Aynı gün teslimat, kapıda nakit indirimi.",
+      keywords: "samsun ucuz kedi maması, samsun ekonomik kedi maması, samsun uygun fiyatlı kedi maması, samsun kedi mama indirim",
+      h1: "Samsun Ucuz Kedi Maması – Bütçe Dostu Seçenekler",
+      intro: [
+        "Samsun'da bütçeye uygun kedi maması arıyorsanız JETGO Pet'in ekonomik mama bölümüne göz atın. ProChoice, Felicia, Pronature gibi uygun fiyatlı markalar ve büyük gramajlı kampanya paketleri stoğumuzda.",
+        "Açık mama satışı yapıyoruz: 500 g'dan istediğiniz miktarda tartım. Para Puan ve kapıda nakitte %5 ek indirim ile tasarrufu artırın.",
+      ],
+      features: [
+        "Ekonomik markalar: ProChoice, Felicia, Pronature",
+        "Kampanyalı büyük paketler",
+        "Açık mama tartım (500 g+)",
+        "Kapıda nakitte %5 indirim",
+        "Para Puan ile %5 geri kazanım",
+      ],
+      faq: [
+        { q: "En ucuz kedi maması hangisi?", a: "Marka ve gramaja göre değişir. Açık mama tartımı en ekonomik yoldur." },
+        { q: "Kampanya ürünlerini nereden görürüm?", a: "/kampanya sayfasından kampanyalı tüm ürünlere ulaşırsınız." },
+      ],
+      internalLinks: [
+        { text: "Atakum Uygun Fiyatlı Mama", href: "/atakum-uygun-fiyatli-mama" },
+        { text: "Samsun Kedi Maması", href: "/samsun-petshop-kedi-mamasi" },
+        { text: "Açık Mama", href: "/acik-mama" },
+        { text: "Kampanyalar", href: "/kampanya" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "samsun-en-iyi-kopek-mamasi",
+      title: "Samsun En İyi Köpek Maması",
+      metaTitle: "Samsun En İyi Köpek Maması | Premium Markalar | JETGO",
+      metaDescription: "Samsun'da en iyi köpek maması: Royal Canin, Hill's, Pro Plan, N&D. Veteriner önerili premium ve süper-premium formüller.",
+      keywords: "samsun en iyi köpek maması, samsun premium köpek maması, samsun süper premium köpek mama, samsun veteriner mama",
+      h1: "Samsun'da En İyi Köpek Maması Markaları",
+      intro: [
+        "Samsun'da köpeğiniz için en iyi maması seçerken yaş, ırk büyüklüğü, aktivite seviyesi ve sağlık durumu dikkate alınmalıdır. JETGO Pet olarak veterinerlerin önerdiği premium ve süper-premium markaları stokta tutuyoruz.",
+        "Royal Canin, Hill's Science Plan, Pro Plan, N&D Farmina, Brit Premium ve Reflex Plus gibi birinci sınıf seçenekler. Tüm formüllerde SKT kontrolü yapılır.",
+      ],
+      features: [
+        "Royal Canin (Mini, Maxi, Veterinary)",
+        "Hill's Science Plan + Prescription Diet",
+        "Pro Plan (Puppy, Adult, Sensitive)",
+        "N&D Farmina Grain Free",
+        "Brit Premium ve Reflex Plus",
+      ],
+      faq: [
+        { q: "En iyi köpek maması nedir?", a: "Köpeğinizin yaş, ırk büyüklüğü ve sağlık durumuna göre değişir. Veteriner önerisi en doğrusudur." },
+        { q: "Veteriner reçeteli mama getiriyor musunuz?", a: "Evet, Hill's Prescription Diet, Royal Canin Veterinary Diet ve N&D Vet ürünlerini reçete ile tedarik ederiz." },
+      ],
+      internalLinks: [
+        { text: "Samsun Köpek Maması", href: "/samsun-kopek-mamasi" },
+        { text: "Samsun Premium Mama", href: "/samsun-premium-mama" },
+        { text: "Samsun Royal Canin Mama", href: "/samsun-royal-canin-mama" },
+        { text: "Atakum ProPlan Mama", href: "/atakum-proplan-mama" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-proplan-mama",
+      title: "Atakum Pro Plan Mama",
+      metaTitle: "Atakum Pro Plan Mama | Kedi & Köpek | Aynı Gün | JETGO",
+      metaDescription: "Atakum'da Pro Plan kedi ve köpek maması. Tüm yaş ve ırk seçenekleri stokta. Aynı gün teslimat, %5 nakit indirim.",
+      keywords: "atakum proplan mama, atakum pro plan kedi maması, atakum pro plan köpek maması, samsun pro plan",
+      h1: "Atakum Pro Plan Mama – Kedi & Köpek Tüm Seriler",
+      intro: [
+        "Atakum'da Pro Plan mama tedarikçisi JETGO Pet'tedir. Pro Plan'ın tüm kedi (Kitten, Adult, Sterilised, Hairball, Sensitive) ve köpek (Puppy, Adult, Small Breed, Large Breed Athletic, Sensitive) serilerini stoğumuzda bulundururuz.",
+        "Atakum içi 60–90 dk teslim, kapıda %5 nakit indirim ve her siparişte %5 Para Puan kazanım.",
+      ],
+      features: [
+        "Pro Plan Kitten, Adult, Sterilised",
+        "Pro Plan Puppy, Adult, Senior",
+        "Sensitive ve Hairball formülleri",
+        "Atakum içi 1 saat teslim",
+        "%5 nakit indirim + %5 Para Puan",
+      ],
+      faq: [
+        { q: "Pro Plan tüm gramajlar var mı?", a: "1.5 kg, 3 kg, 7 kg, 10 kg ve 14 kg gramajların büyük kısmı stokta tutulur. Yoksa 1–2 gün içinde tedarik edilir." },
+        { q: "Pro Plan otantik mi?", a: "Tüm Pro Plan ürünleri orijinal Türkiye distribütöründen alınır. Sahte ürün ihtimali yoktur." },
+      ],
+      internalLinks: [
+        { text: "Atakum Köpek Maması", href: "/atakum-kopek-mamasi" },
+        { text: "Atakum Kedi Maması", href: "/atakum-kedi-mamasi" },
+        { text: "Samsun Royal Canin Mama", href: "/samsun-royal-canin-mama" },
+        { text: "Samsun En İyi Köpek Maması", href: "/samsun-en-iyi-kopek-mamasi" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "samsun-royal-canin-mama",
+      title: "Samsun Royal Canin Mama",
+      metaTitle: "Samsun Royal Canin Mama | Kedi & Köpek | JETGO",
+      metaDescription: "Samsun'da Royal Canin kedi ve köpek maması. Veteriner serileri dahil. Atakum, İlkadım, Canik aynı gün teslim.",
+      keywords: "samsun royal canin mama, samsun royal canin kedi, samsun royal canin köpek, samsun royal canin veterinary",
+      h1: "Samsun Royal Canin Mama Tedariki",
+      intro: [
+        "Royal Canin'in tüm Samsun çapında en güvenilir tedarikçilerinden biri JETGO Pet'tir. Royal Canin Kitten, Adult, Sterilised, Hairball Care, Indoor, Sensible serilerinin yanı sıra Mini, Medium, Maxi köpek serileri ve Veterinary Diet (Renal, Urinary, Hepatic, Diabetic, Hypoallergenic) reçeteli ürünleri tedarik ediyoruz.",
+        "Atakum mağazamızdan Samsun'un her yerine 1–3 saat içinde teslim ediyoruz.",
+      ],
+      features: [
+        "Royal Canin Kitten/Adult/Sterilised",
+        "Royal Canin Mini/Medium/Maxi köpek",
+        "Veterinary Diet (reçeteli)",
+        "Türkiye orijinal distribütör",
+        "Atakum/İlkadım/Canik aynı gün teslim",
+      ],
+      faq: [
+        { q: "Royal Canin Veterinary Diet için reçete şart mı?", a: "Evet, veteriner reçetesini WhatsApp'tan iletmeniz yeterlidir." },
+        { q: "Royal Canin gramaj seçenekleri?", a: "400 g'dan 15 kg'a kadar farklı gramajlar bulunur; stok durumu ürün sayfasında görünür." },
+      ],
+      internalLinks: [
+        { text: "Atakum Pro Plan Mama", href: "/atakum-proplan-mama" },
+        { text: "Samsun En İyi Köpek Maması", href: "/samsun-en-iyi-kopek-mamasi" },
+        { text: "Samsun Premium Mama", href: "/samsun-premium-mama" },
+        { text: "Samsun Köpek Maması", href: "/samsun-kopek-mamasi" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-yavru-kedi-mamasi",
+      title: "Atakum Yavru Kedi Maması",
+      metaTitle: "Atakum Yavru Kedi Maması (Kitten) | Aynı Gün | JETGO",
+      metaDescription: "Atakum'da yavru kedi maması (kitten): Royal Canin Kitten, Pro Plan Junior, Hill's Science Plan Kitten, N&D Kitten. Hızlı teslim.",
+      keywords: "atakum yavru kedi maması, atakum kitten mama, atakum yavru kedi mama, samsun yavru kedi mama",
+      h1: "Atakum Yavru Kedi Maması (Kitten) – Hızlı Teslim",
+      intro: [
+        "2–12 ay arası yavru kedinizin gelişimi için yüksek protein ve DHA içeren kitten mamalar şart. Atakum'da JETGO Pet, Royal Canin Kitten, Pro Plan Junior, Hill's Science Plan Kitten, N&D Kitten ve Pronature Original Kitten gibi formüllerle sizleri bekliyor.",
+        "Yavru kedinizin günlük mama ihtiyacını akıllı mama hesaplama aracımızla öğrenin.",
+      ],
+      features: [
+        "Royal Canin / Pro Plan / Hill's / N&D Kitten",
+        "1.5–3 kg gramaj seçenekleri",
+        "Yüksek protein ve DHA",
+        "Atakum içi 60 dk teslim",
+        "Akıllı mama hesaplama",
+      ],
+      faq: [
+        { q: "Yavru kedimi ne zaman yetişkin mamaya geçirmeliyim?", a: "Genellikle 12. aydan sonra. Veterinerinizle birlikte karar vermek en doğrusudur." },
+        { q: "Yavru kedi maması ile yetişkin mama farkı nedir?", a: "Yavru mamada protein, kalori ve DHA daha yüksektir; gelişim için tasarlanır." },
+      ],
+      internalLinks: [
+        { text: "Atakum Kedi Maması", href: "/atakum-kedi-mamasi" },
+        { text: "Atakum Tahılsız Mama", href: "/atakum-tahilsiz-mama" },
+        { text: "Atakum ProPlan Mama", href: "/atakum-proplan-mama" },
+        { text: "Samsun Royal Canin Mama", href: "/samsun-royal-canin-mama" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "samsun-buyuk-irk-kopek-mamasi",
+      title: "Samsun Büyük Irk Köpek Maması",
+      metaTitle: "Samsun Büyük Irk Köpek Maması | Maxi Formül | JETGO",
+      metaDescription: "Samsun'da büyük ırk köpek maması (Golden, Labrador, Çoban köpekleri). Maxi formüllerde özel kalsiyum-fosfor dengesi.",
+      keywords: "samsun büyük ırk köpek maması, samsun maxi köpek mama, samsun golden mama, samsun labrador mama, samsun çoban köpeği mama",
+      h1: "Samsun Büyük Irk Köpek Maması",
+      intro: [
+        "Samsun'da büyük ırk köpekleriniz için (Golden Retriever, Labrador, Alman Çoban Köpeği, Kangal, Rottweiler) maxi formül kuru mama tedarikçisi JETGO Pet'tir. Eklem sağlığı için glukozamin-kondroitin, dengeli kalsiyum-fosfor oranı ve büyük tane yapısı.",
+        "Pro Plan Large Breed Adult/Athletic, Royal Canin Maxi Adult, Brit Premium Adult Large, N&D Maxi Adult, Reflex Plus Maxi seçenekleri stoğumuzda.",
+      ],
+      features: [
+        "Pro Plan Large Breed",
+        "Royal Canin Maxi",
+        "Brit Premium Adult Large",
+        "N&D Maxi Adult",
+        "Glukozamin + kondroitin destekli",
+      ],
+      faq: [
+        { q: "Büyük ırk köpek mamasının farkı nedir?", a: "Daha büyük tane (yutkunmayı önler), eklem destek katkıları ve kalsiyum-fosfor dengesi içerir." },
+        { q: "20 kg+ köpeğim için hangi gramaj?", a: "Genellikle 15 kg ve üzeri çuvallar ekonomiktir; akıllı mama hesaplama aracını kullanabilirsiniz." },
+      ],
+      internalLinks: [
+        { text: "Samsun Köpek Maması", href: "/samsun-kopek-mamasi" },
+        { text: "Atakum Köpek Maması", href: "/atakum-kopek-mamasi" },
+        { text: "Atakum ProPlan Mama", href: "/atakum-proplan-mama" },
+        { text: "Samsun En İyi Köpek Maması", href: "/samsun-en-iyi-kopek-mamasi" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-tahilsiz-mama",
+      title: "Atakum Tahılsız Mama",
+      metaTitle: "Atakum Tahılsız Mama (Grain Free) Kedi & Köpek | JETGO",
+      metaDescription: "Atakum'da tahılsız (grain-free) kedi ve köpek maması: hassas mide ve alerji için ideal. N&D, Reflex Grain Free, Brit Grain Free.",
+      keywords: "atakum tahılsız mama, atakum grain free, atakum hipoalerjenik mama, samsun tahılsız mama",
+      h1: "Atakum Tahılsız Mama – Hassas Mide ve Alerji İçin",
+      intro: [
+        "Hassas sindirim, gıda alerjisi veya cilt problemleri olan evcil hayvanlar için tahılsız (grain-free) mamalar idealdir. Atakum'da N&D Grain Free (Farmina), Reflex Plus Grain Free, Brit Grain Free, ProChoice Grain Free ve Pronature Grain Free seçenekleri stoğumuzda.",
+        "Atakum içi 60–90 dk teslimat, %5 nakit indirim ve %5 Para Puan kazanım.",
+      ],
+      features: [
+        "N&D Farmina Grain Free",
+        "Reflex Plus Grain Free",
+        "Brit Grain Free",
+        "Hassas mide ve alerji desteği",
+        "Atakum içi hızlı teslim",
+      ],
+      faq: [
+        { q: "Tahılsız mamayı her köpek/kedi yiyebilir mi?", a: "Çoğunluk yiyebilir; bilinen kalp hastalığı olan ırklarda veteriner görüşü alın." },
+        { q: "Tahılsız mama daha mı pahalı?", a: "Genellikle premium kategorisindedir; ekonomik tahılsız seçeneklerimiz de var." },
+      ],
+      internalLinks: [
+        { text: "Atakum Yavru Kedi Maması", href: "/atakum-yavru-kedi-mamasi" },
+        { text: "Atakum Kedi Maması", href: "/atakum-kedi-mamasi" },
+        { text: "Atakum Köpek Maması", href: "/atakum-kopek-mamasi" },
+        { text: "Samsun Premium Mama", href: "/samsun-premium-mama" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "samsun-premium-mama",
+      title: "Samsun Premium Mama",
+      metaTitle: "Samsun Premium Mama | Süper-Premium Markalar | JETGO",
+      metaDescription: "Samsun'da premium ve süper-premium kedi/köpek maması: Royal Canin, Hill's Science Plan, Pro Plan, N&D, Brit. Aynı gün teslim.",
+      keywords: "samsun premium mama, samsun süper premium mama, samsun premium kedi mama, samsun premium köpek mama",
+      h1: "Samsun Premium ve Süper-Premium Mama",
+      intro: [
+        "Premium mama; daha yüksek protein kaynağı, daha az dolgu maddesi ve daha dengeli besin içerir. Samsun'da JETGO Pet süper-premium kategoride Royal Canin, Hill's Science Plan, Pro Plan, N&D Farmina ve Brit Premium serilerini stoğunda bulundurur.",
+        "Premium mama seçimi yaparken kedi/köpeğinizin yaş ve sağlık durumunu mutlaka göz önünde bulundurun. Akıllı mama hesaplama aracımız size yardımcı olur.",
+      ],
+      features: [
+        "Royal Canin",
+        "Hill's Science Plan",
+        "Pro Plan",
+        "N&D Farmina",
+        "Brit Premium",
+        "Aynı gün Samsun içi teslim",
+      ],
+      faq: [
+        { q: "Premium ile ekonomik mama arasında fark nedir?", a: "Premium mamada protein kaynağı et bazlıdır, dolgu maddesi (mısır, soya) azdır ve genellikle daha az miktarda yedirilir." },
+        { q: "Premium mama bütçemi zorluyor, alternatif var mı?", a: "Evet. Kampanyalı paketler ve büyük gramajlarla maliyet düşürebilirsiniz; açık mama tartım da seçenektir." },
+      ],
+      internalLinks: [
+        { text: "Samsun En İyi Köpek Maması", href: "/samsun-en-iyi-kopek-mamasi" },
+        { text: "Samsun Royal Canin Mama", href: "/samsun-royal-canin-mama" },
+        { text: "Atakum ProPlan Mama", href: "/atakum-proplan-mama" },
+        { text: "Atakum Tahılsız Mama", href: "/atakum-tahilsiz-mama" },
+      ],
+    }),
+  ];
+}
+
+function buildTrustPages(): SeoPageData[] {
+  return [
+    buildLandingPage({
+      slug: "samsun-sahte-mama-nasil-anlasilir",
+      title: "Samsun'da Sahte Mama Nasıl Anlaşılır",
+      metaTitle: "Samsun Sahte Mama Nasıl Anlaşılır? | Orijinal Tedarik | JETGO",
+      metaDescription: "Samsun'da sahte mama nasıl anlaşılır? Etiket, ambalaj, lot numarası, üretim/SKT kontrolü. Orijinal Türkiye distribütör tedariki: JETGO Pet.",
+      keywords: "samsun sahte mama, samsun sahte kedi maması, samsun sahte köpek maması, sahte mama nasıl anlaşılır, orijinal mama samsun",
+      h1: "Samsun'da Sahte Mama Nasıl Anlaşılır?",
+      intro: [
+        "Samsun'da maalesef internet üzerinden ya da bazı yerlerden ucuz fiyata satılan mamalarda sahtelik veya 'paralel ithalat' (Türkiye dışında üretilmiş, garanti dışı) ürünlerle karşılaşılabilir. JETGO Pet olarak tüm ürünlerimizi orijinal Türkiye distribütörlerinden tedarik ediyoruz.",
+        "Sahte mamayı anlamanın en temel yolları: etiket dilini kontrol edin (Türkçe Tarım Bakanlığı izinli mi?), lot numarası ve üretim/SKT tarihi okunabilir mi, ambalaj kalitesi düşük mü?",
+      ],
+      sections: [
+        {
+          h2: "Sahte Mamayı Anlamanın 6 Yolu",
+          paragraphs: [
+            "1. Türkçe etiket: Türkiye'de satılan tüm mamaların Türkçe etiket içermesi şarttır.",
+            "2. Lot numarası ve üretim/SKT: Açıkça okunabilir olmalı; silinmiş veya etiketin üzerine yapıştırılmış görünmemeli.",
+            "3. Ambalaj kalitesi: Yırtık, baskısı silik, renk farkları olan paketler şüphelidir.",
+            "4. Mama görünümü: Renk, koku ve tane yapısında ani farklar dikkat gerektirir.",
+            "5. Distribütör bilgisi: Etikette Türkiye distribütör/ithalatçı bilgisi olmalı.",
+            "6. Fiyat: Piyasa fiyatının çok altında olan ürünlerde dikkatli olun.",
+          ],
+        },
+      ],
+      features: [
+        "Orijinal Türkiye distribütör tedariki",
+        "SKT kontrollü stok",
+        "Türkçe etiketli tüm ürünler",
+        "Lot/SKT şeffaflığı",
+        "Şüphe varsa ücretsiz iade",
+      ],
+      faq: [
+        { q: "JETGO'dan aldığım mamada sahtelik şüphem olursa?", a: "Hemen WhatsApp'tan iletişime geçin; ürünü ücretsiz alır, inceleme sonrası iade-değişim yaparız." },
+        { q: "Paralel ithalat ürünü ile orijinal arasında fark nedir?", a: "Paralel ithalatta Türkiye distribütör garantisi olmaz; üretici ülkesi farklı olabilir." },
+      ],
+      internalLinks: [
+        { text: "Atakum SKT Mama", href: "/atakum-son-kullanma-tarihi-mama" },
+        { text: "Samsun Orijinal Mama", href: "/samsun-orijinal-mama-nereden-alinir" },
+        { text: "Atakum Güvenilir Petshop", href: "/atakum-guvenilir-petshop" },
+        { text: "Samsun Pet Shop Yorumları", href: "/samsun-petshop-yorumlari" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-son-kullanma-tarihi-mama",
+      title: "Atakum SKT (Son Kullanma Tarihi) Mama",
+      metaTitle: "Atakum SKT Kontrollü Mama | Taze Stok | JETGO Pet",
+      metaDescription: "Atakum'da SKT (son kullanma tarihi) kontrollü mama. Sistemimiz SKT'si yakın ürünü siparişe almaz; SKT yakın olanlar indirimli ayrı bölümde.",
+      keywords: "atakum son kullanma tarihi mama, atakum skt mama, atakum taze mama, atakum mama tarih kontrolü",
+      h1: "Atakum SKT Kontrollü Mama – Taze Stok Garantisi",
+      intro: [
+        "JETGO Pet'in Atakum mağazasında satılan tüm mamalar son kullanma tarihi (SKT) kontrolünden geçer. Sistemimiz SKT'si yakın bir ürünü standart siparişe eklemenize izin vermez; bu ürünler 'Açık Mama / SKT Yakın' bölümünde indirimli olarak ayrı satılır.",
+        "Sipariş öncesi sunucu tarafında SKT validasyonu yapılır; süresi geçmiş bir ürün hiçbir zaman size gönderilmez. Ürünün SKT'si ürün sayfasında belirtilir.",
+      ],
+      features: [
+        "Sunucu tarafında SKT validasyonu",
+        "SKT yakın ürünler ayrı, indirimli",
+        "Tüm gıdada tarih şeffaflığı",
+        "Açılmamış mamada 14 gün iade",
+        "Ücretsiz değişim garantisi",
+      ],
+      faq: [
+        { q: "SKT'ye ne kadar kalanı satıyorsunuz?", a: "SKT'sine 30 gün ve üstü kalan ürünler standart siparişe alınır. 30 gün ve altı ürünler indirimli SKT bölümüne taşınır." },
+        { q: "SKT'si geçmiş ürün gelirse ne yapayım?", a: "Şu ana kadar gelmedi, ancak gelirse hemen WhatsApp'tan iletişime geçin; ücretsiz değişim ve iade yaparız." },
+      ],
+      internalLinks: [
+        { text: "Açık Mama", href: "/acik-mama" },
+        { text: "Samsun Sahte Mama", href: "/samsun-sahte-mama-nasil-anlasilir" },
+        { text: "Samsun Orijinal Mama", href: "/samsun-orijinal-mama-nereden-alinir" },
+        { text: "Atakum Güvenilir Petshop", href: "/atakum-guvenilir-petshop" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "samsun-orijinal-mama-nereden-alinir",
+      title: "Samsun'da Orijinal Mama Nereden Alınır",
+      metaTitle: "Samsun Orijinal Mama Nereden Alınır? | Güvenli Tedarik | JETGO",
+      metaDescription: "Samsun'da orijinal mama nereden alınır? JETGO Pet, tüm ürünleri Türkiye orijinal distribütörlerinden tedarik eder. SKT kontrollü, Türkçe etiketli.",
+      keywords: "samsun orijinal mama, samsun orijinal kedi maması, samsun orijinal köpek maması, samsun mama güvenli alışveriş",
+      h1: "Samsun'da Orijinal Mama Nereden Alınır?",
+      intro: [
+        "Samsun'da orijinal mama almak için yapmanız gereken en basit kontrol: ürün etiketinde Türkiye distribütörü bilgisi var mı? JETGO Pet'in tüm ürünleri Türkiye orijinal distribütörlerinden alınır; Türkçe etiketli ve Tarım Bakanlığı kayıtlıdır.",
+        "Orijinal ürün almak için şu kanalları tercih edin: yerli mağazalar (görüp dokunabilirsiniz), Türkiye distribütörü ile resmi anlaşmalı satıcılar, etiketinde Türkçe yazısı ve resmi distribütör bilgisi olan ürünler.",
+      ],
+      features: [
+        "Türkiye distribütör tedariki",
+        "Türkçe etiket zorunluluğu",
+        "Lot/SKT şeffaflığı",
+        "Şüphede ücretsiz iade",
+        "JETGO Pet yerli mağaza güvencesi",
+      ],
+      faq: [
+        { q: "İnternetten alınan mama orijinal olmayabilir mi?", a: "Maalesef internet pazarlarında bazı satıcılar paralel ithalat veya sahte ürünler satabiliyor. Yerli mağaza ve resmi distribütörü tercih edin." },
+        { q: "JETGO Pet'in tüm ürünleri orijinal mi?", a: "Evet, tüm ürünler Türkiye orijinal distribütörlerinden alınır. Sahte/paralel ürün satışı yapılmaz." },
+      ],
+      internalLinks: [
+        { text: "Samsun Sahte Mama Nasıl Anlaşılır", href: "/samsun-sahte-mama-nasil-anlasilir" },
+        { text: "Atakum SKT Mama", href: "/atakum-son-kullanma-tarihi-mama" },
+        { text: "Atakum Güvenilir Petshop", href: "/atakum-guvenilir-petshop" },
+        { text: "Samsun Pet Shop Yorumları", href: "/samsun-petshop-yorumlari" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-guvenilir-petshop",
+      title: "Atakum Güvenilir Petshop",
+      metaTitle: "Atakum Güvenilir Petshop | Yerli Mağaza & Orijinal Ürün | JETGO",
+      metaDescription: "Atakum'da güvenilir pet shop: yerli mağaza, orijinal Türkiye distribütör tedariki, SKT kontrollü, müşteri yorumları, 14 gün iade.",
+      keywords: "atakum güvenilir petshop, atakum güvenilir pet shop, atakum yerli petshop, atakum kaliteli petshop",
+      h1: "Atakum'da Güvenilir Pet Shop – JETGO Pet",
+      intro: [
+        "Atakum'da yıllardır hizmet veren JETGO Pet, yerli mağazasıyla Atakum sakinlerinin güvenilir pet shop'udur. Tüm ürünler Türkiye orijinal distribütörlerinden alınır; SKT şeffaftır; açılmamış üründe 14 gün iade hakkı vardır.",
+        "Sahte ürün riskine karşı yerli ve fiziksel adresi olan bir pet shop'u tercih etmek en akıllıca yoldur. Mağazamız Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A'dadır.",
+      ],
+      features: [
+        "Yerli mağaza, fiziksel adres",
+        "Türkiye distribütör tedariki",
+        "SKT kontrollü stok",
+        "14 gün açılmamış iade",
+        "Müşteri yorumları şeffaf",
+      ],
+      faq: [
+        { q: "JETGO yıllardır mı hizmet veriyor?", a: "Evet. Sizpa İnternet Tic. Ltd. Şti. çatısı altında Atakum'da yıllardır faaliyet gösteriyoruz." },
+        { q: "İade ve değişim politikanız ne?", a: "Açılmamış üründe 14 gün iade. Hatalı/hasarlı ürün ücretsiz değişim." },
+      ],
+      internalLinks: [
+        { text: "Samsun Pet Shop Yorumları", href: "/samsun-petshop-yorumlari" },
+        { text: "Mağaza & Konum", href: "/magaza" },
+        { text: "Samsun Orijinal Mama", href: "/samsun-orijinal-mama-nereden-alinir" },
+        { text: "Atakum SKT Mama", href: "/atakum-son-kullanma-tarihi-mama" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "samsun-petshop-yorumlari",
+      title: "Samsun Pet Shop Yorumları",
+      metaTitle: "Samsun Pet Shop Yorumları | JETGO Müşteri Deneyimleri",
+      metaDescription: "Samsun pet shop yorumları. JETGO Pet müşteri deneyimleri, hızlı teslimat, kapıda ödeme, orijinal ürün geri bildirimleri.",
+      keywords: "samsun petshop yorumları, samsun pet shop yorumları, jetgo yorum, jetgo pet yorumları, samsun pet shop güvenilir mi",
+      h1: "Samsun Pet Shop Yorumları – JETGO Pet Deneyimleri",
+      intro: [
+        "Samsun'da bir pet shop seçerken yorumları okumak büyük önem taşır. JETGO Pet, müşteri deneyimine ve şeffaflığa öncelik verir. Ürün sayfalarımızda gerçek müşteri yorumlarını yayınlıyoruz.",
+        "Hız, orijinal ürün, kapıda ödeme kolaylığı ve müşteri hizmetlerimizle ilgili Atakum, İlkadım ve Canik müşterilerinden geri bildirim alıyoruz.",
+      ],
+      features: [
+        "Gerçek müşteri yorumları",
+        "Yıldız puanlama sistemi",
+        "Hız geri bildirimleri",
+        "Kapıda ödeme deneyimleri",
+        "Veteriner mama tedarik geri bildirimleri",
+      ],
+      faq: [
+        { q: "Yorumlar nereden okunabilir?", a: "Ürün detay sayfalarında, alt bölümde gerçek kullanıcı yorumları yer alır." },
+        { q: "Yorumlar onaylı mı?", a: "Yayına almadan önce admin tarafından kontrol edilir; spam ve uygunsuz içerikler filtrelenir." },
+      ],
+      internalLinks: [
+        { text: "Atakum Güvenilir Petshop", href: "/atakum-guvenilir-petshop" },
+        { text: "Mağaza & Konum", href: "/magaza" },
+        { text: "Samsun Orijinal Mama", href: "/samsun-orijinal-mama-nereden-alinir" },
+        { text: "Samsun Sahte Mama", href: "/samsun-sahte-mama-nasil-anlasilir" },
+      ],
+    }),
+    buildLandingPage({
+      slug: "atakum-uygun-fiyatli-mama",
+      title: "Atakum Uygun Fiyatlı Mama",
+      metaTitle: "Atakum Uygun Fiyatlı Mama | Bütçe Dostu Markalar | JETGO",
+      metaDescription: "Atakum'da uygun fiyatlı kedi ve köpek maması. Ekonomik markalar, kampanyalı paketler, açık mama tartım. %5 nakit indirim.",
+      keywords: "atakum uygun fiyatlı mama, atakum ekonomik mama, atakum ucuz mama, atakum bütçe mama",
+      h1: "Atakum Uygun Fiyatlı Kedi & Köpek Maması",
+      intro: [
+        "Atakum'da kalitenin tadını bütçe dostu fiyatlarla yaşayın. ProChoice, Felicia, Pronature gibi ekonomik markalar; kampanyalı büyük paketler; açık mama tartım hizmeti ile her bütçeye uygun seçenek.",
+        "Kapıda nakit ödemede %5 indirim, üyelik ile %5 Para Puan: toplamda %10'a varan tasarruf.",
+      ],
+      features: [
+        "Ekonomik markalar (ProChoice, Felicia)",
+        "Kampanya paketleri",
+        "Açık mama tartım (500 g+)",
+        "%5 nakit indirim",
+        "%5 Para Puan kazanım",
+      ],
+      faq: [
+        { q: "En ekonomik mama nasıl seçilir?", a: "Açık mama tartımı veya büyük gramajlı kampanya paketleri en ekonomiktir." },
+        { q: "Kampanyalar değişiyor mu?", a: "Evet. /kampanya sayfasından güncel listeyi görebilirsiniz." },
+      ],
+      internalLinks: [
+        { text: "Samsun Ucuz Kedi Maması", href: "/samsun-ucuz-kedi-mamasi" },
+        { text: "Açık Mama", href: "/acik-mama" },
+        { text: "Kampanyalar", href: "/kampanya" },
+        { text: "Atakum Pet Shop", href: "/atakum-petshop" },
+      ],
+    }),
+  ];
+}
 
 const PRODUCT_SEO_PAGES: SeoPageData[] = [
   {
