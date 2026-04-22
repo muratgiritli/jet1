@@ -1,6 +1,7 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
+import { injectSeoMeta } from "./seo-meta";
 
 export function serveStatic(app: Express) {
   const candidates = [
