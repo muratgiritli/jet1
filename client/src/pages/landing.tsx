@@ -765,19 +765,9 @@ export default function Landing() {
           </div>
         )}
 
-        {/* DESKTOP/TABLET HERO ROW: carousel + signup/welcome side-by-side */}
-        <div className="hidden md:grid md:grid-cols-12 gap-6 mt-6">
-          <div className="md:col-span-8">
-            <HeroCarousel />
-          </div>
-          <div className="md:col-span-4">
-            {!isLoggedIn ? <SignupBonusBanner /> : <WelcomeCouponBanner />}
-          </div>
-        </div>
-
-        {/* DESKTOP DELIVERY STRIP – its own full-width row */}
+        {/* DESKTOP/TABLET HERO ROW: full-width carousel (signup banner hidden on desktop/tablet) */}
         <div className="hidden md:block mt-6">
-          <DesktopDeliveryInfo />
+          <HeroCarousel />
         </div>
 
         <div className="mt-1 md:hidden">
