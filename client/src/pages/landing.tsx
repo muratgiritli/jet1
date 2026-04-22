@@ -248,11 +248,11 @@ function BannerStrip({ position, max, gridClass, testId }: { position: string; m
 }
 
 function HomeBanners() {
-  return <BannerStrip position="home_top" max={2} gridClass="grid grid-cols-1 md:grid-cols-2 gap-1.5 md:gap-2" testId="section-home-banners" />;
+  return <BannerStrip position="home_top" max={2} gridClass="grid grid-cols-1 md:grid-cols-2 gap-0.5 md:gap-1" testId="section-home-banners" />;
 }
 
 function HomeBannersBelowCategory() {
-  return <BannerStrip position="home_below_category" max={4} gridClass="grid grid-cols-1 md:grid-cols-2 gap-1.5 md:gap-2" testId="section-home-banners-below" />;
+  return <BannerStrip position="home_below_category" max={4} gridClass="grid grid-cols-1 md:grid-cols-2 gap-0.5 md:gap-1" testId="section-home-banners-below" />;
 }
 
 function CampaignBanner() {
