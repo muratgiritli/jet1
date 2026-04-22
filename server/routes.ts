@@ -836,12 +836,25 @@ export async function registerRoutes(
         ORDER BY p.id
       `);
 
-      const esc = (s: string | null | undefined) =>
+      const clean = (s: string | null | undefined) =>
         String(s ?? "")
+          .replace(/[\r\n\t]+/g, " ")
+          .replace(/[\x00-\x1F\x7F]/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+      const esc = (s: string | null | undefined) =>
+        clean(s)
           .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
           .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
 
       const fmtPrice = (n: number) => `${Number(n).toFixed(2)} TRY`;
+      const truncate = (s: string, max: number) =>
+        s.length <= max ? s : s.slice(0, max - 1).trimEnd() + "…";
+
+      // Preorder availability date: 3 days from now in ISO 8601
+      const preorderDate = new Date();
+      preorderDate.setDate(preorderDate.getDate() + 3);
+      const preorderDateStr = preorderDate.toISOString().split("T")[0];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
       xml += `<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">\n`;
@@ -850,47 +863,67 @@ export async function registerRoutes(
       xml += `    <link>${SITE}</link>\n`;
       xml += `    <description>Samsun'un en hızlı pet shop'u — kedi maması, köpek maması, kedi kumu ve daha fazlası. Aynı gün teslimat.</description>\n`;
 
+      let included = 0;
+      let skippedNoImage = 0;
       for (const r of rows as any[]) {
-        const animal = (r.animal || "").toLowerCase();
+        // Google requires a valid image_link — skip products without images
+        if (!r.img) { skippedNoImage++; continue; }
+
+        const animal = clean(r.animal).toLowerCase();
         const animalLabel = ANIMAL_LABEL[animal] || "";
-        const productType = [animalLabel, r.subcategory_name, r.brand_name].filter(Boolean).join(" > ");
+        const subcatClean = clean(r.subcategory_name);
+        const brandClean = clean(r.brand_name) || "JETGO";
+        const nameClean = truncate(clean(r.name), 150);
+
+        const productType = [animalLabel, subcatClean, brandClean].filter(Boolean).join(" > ");
         const googleCat = GOOGLE_CATEGORY[animal] || "Animals & Pet Supplies > Pet Supplies";
         const inStock = r.stock > 0;
         const availability = inStock
           ? "in_stock"
           : (r.preorder_enabled ? "preorder" : "out_of_stock");
-        const imageUrl = r.img ? (r.img.startsWith("http") ? r.img : `${SITE}${r.img}`) : "";
-        const description = `${r.brand_name || "JETGO"} ${r.name}. ${animalLabel} için ${r.subcategory_name || "pet ürünü"}. Samsun Atakum, İlkadım ve Canik bölgelerinde aynı gün kapıda teslimat ve kapıda ödeme imkanı.`;
+        const imageUrl = r.img.startsWith("http") ? r.img : `${SITE}${r.img}`;
+        const nameStartsWithBrand = brandClean && nameClean.toLowerCase().startsWith(brandClean.toLowerCase());
+        const descPrefix = nameStartsWithBrand ? nameClean : `${brandClean} ${nameClean}`;
+        const descRaw = `${descPrefix}. ${animalLabel} için ${subcatClean || "pet ürünü"}. Samsun Atakum, İlkadım ve Canik mahallelerine aynı gün kapıda teslimat ve kapıda ödeme imkanı sunulur.`;
+        const description = truncate(descRaw, 5000);
+
+        // Pricing: if original_price > price, original goes in g:price, discounted in g:sale_price
+        const hasDiscount = r.original_price && r.original_price > r.price;
+        const listPrice = hasDiscount ? r.original_price : r.price;
 
         xml += `    <item>\n`;
         xml += `      <g:id>${r.id}</g:id>\n`;
-        xml += `      <g:title>${esc(r.name)}</g:title>\n`;
+        xml += `      <g:title>${esc(nameClean)}</g:title>\n`;
         xml += `      <g:description>${esc(description)}</g:description>\n`;
         xml += `      <g:link>${SITE}/urun/${r.id}</g:link>\n`;
-        if (imageUrl) xml += `      <g:image_link>${esc(imageUrl)}</g:image_link>\n`;
+        xml += `      <g:image_link>${esc(imageUrl)}</g:image_link>\n`;
         xml += `      <g:availability>${availability}</g:availability>\n`;
-        xml += `      <g:price>${fmtPrice(r.price)}</g:price>\n`;
-        if (r.original_price && r.original_price > r.price) {
+        if (availability === "preorder") {
+          xml += `      <g:availability_date>${preorderDateStr}</g:availability_date>\n`;
+        }
+        xml += `      <g:price>${fmtPrice(listPrice)}</g:price>\n`;
+        if (hasDiscount) {
           xml += `      <g:sale_price>${fmtPrice(r.price)}</g:sale_price>\n`;
         }
         xml += `      <g:condition>new</g:condition>\n`;
-        xml += `      <g:brand>${esc(r.brand_name || "JETGO")}</g:brand>\n`;
-        if (r.barcode) {
+        xml += `      <g:brand>${esc(brandClean)}</g:brand>\n`;
+        if (r.barcode && /^\d{8,14}$/.test(String(r.barcode).trim())) {
           xml += `      <g:gtin>${esc(r.barcode)}</g:gtin>\n`;
-          xml += `      <g:identifier_exists>yes</g:identifier_exists>\n`;
         } else {
+          // No valid GTIN — provide MPN; with brand+mpn Google accepts the product
           xml += `      <g:mpn>JETGO-${r.id}</g:mpn>\n`;
-          xml += `      <g:identifier_exists>no</g:identifier_exists>\n`;
         }
         xml += `      <g:google_product_category>${esc(googleCat)}</g:google_product_category>\n`;
         if (productType) xml += `      <g:product_type>${esc(productType)}</g:product_type>\n`;
         xml += `      <g:shipping>\n`;
         xml += `        <g:country>TR</g:country>\n`;
-        xml += `        <g:service>Standard</g:service>\n`;
+        xml += `        <g:service>Aynı Gün Teslimat</g:service>\n`;
         xml += `        <g:price>0.00 TRY</g:price>\n`;
         xml += `      </g:shipping>\n`;
         xml += `    </item>\n`;
+        included++;
       }
+      console.log(`[google-merchant] included=${included} skippedNoImage=${skippedNoImage}`);
 
       xml += `  </channel>\n</rss>\n`;
 
