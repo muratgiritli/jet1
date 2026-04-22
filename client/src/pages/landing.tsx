@@ -287,16 +287,14 @@ function HomeBottomCarousel() {
   const hasLink = rawLink.length > 0;
 
   const imageEl = (
-    <div className="w-full aspect-[16/9] bg-gray-100 overflow-hidden">
-      <img
-        src={current.imageData!}
-        alt={current.title}
-        className="w-full h-full object-cover block select-none pointer-events-none"
-        loading="lazy"
-        draggable={false}
-        data-testid={`bottom-banner-${current.sortOrder}`}
-      />
-    </div>
+    <img
+      src={current.imageData!}
+      alt={current.title}
+      className="w-full h-auto object-cover block select-none pointer-events-none"
+      loading="lazy"
+      draggable={false}
+      data-testid={`bottom-banner-${current.sortOrder}`}
+    />
   );
 
   const buyButton = (
