@@ -308,8 +308,8 @@ function HomeBottomCarousel() {
       );
     }
     return (
-      <Link href={rawLink}>
-        <a className="block w-full" data-testid={`link-bottom-banner-${current.sortOrder}`}>{children}</a>
+      <Link href={rawLink} className="block w-full" data-testid={`link-bottom-banner-${current.sortOrder}`}>
+        {children}
       </Link>
     );
   };
