@@ -1,6 +1,6 @@
 import { SEO_PAGES, type SeoPageData } from "../client/src/lib/seo-data";
 
-const SITE = "https://www.jetgo.pet";
+const SITE = "https://www.jetgo.shop";
 
 const slugMap: Map<string, SeoPageData> = new Map(
   SEO_PAGES.map((p) => [p.slug, p]),
