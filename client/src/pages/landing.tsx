@@ -780,7 +780,7 @@ export default function Landing() {
           <DesktopDeliveryInfo />
         </div>
 
-        <div className="mt-1 md:mt-8">
+        <div className="mt-1 md:hidden">
           <HomeBanners />
         </div>
 
@@ -803,7 +803,7 @@ export default function Landing() {
           </div>
         </div>
 
-        <div className="mt-1 md:mt-8">
+        <div className="mt-1 md:hidden">
           <HomeBannersBelowCategory />
         </div>
 
