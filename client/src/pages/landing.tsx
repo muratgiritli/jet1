@@ -810,10 +810,6 @@ export default function Landing() {
         </div>
 
         <div className="hidden md:block mt-12">
-          <BrandSlider />
-        </div>
-
-        <div className="hidden md:block mt-12">
           <BlogPreview />
         </div>
 
