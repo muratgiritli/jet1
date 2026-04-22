@@ -42,32 +42,32 @@ export function injectSeoMeta(html: string, urlPath: string): string {
   // Replace <title>
   out = out.replace(/<title>[\s\S]*?<\/title>/i, `<title>${title}</title>`);
 
-  // Replace meta description
+  // Replace meta description (content wrapped in double quotes in index.html)
   out = out.replace(
-    /<meta\s+name=["']description["']\s+content=["'][^"']*["']\s*\/?>/i,
+    /<meta\s+name="description"\s+content="[^"]*"\s*\/?>/i,
     `<meta name="description" content="${description}" />`,
   );
 
   // Replace OG title / description / url
   out = out.replace(
-    /<meta\s+property=["']og:title["']\s+content=["'][^"']*["']\s*\/?>/i,
+    /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i,
     `<meta property="og:title" content="${title}" />`,
   );
   out = out.replace(
-    /<meta\s+property=["']og:description["']\s+content=["'][^"']*["']\s*\/?>/i,
+    /<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i,
     `<meta property="og:description" content="${description}" />`,
   );
-  if (/<meta\s+property=["']og:url["']/i.test(out)) {
+  if (/<meta\s+property="og:url"/i.test(out)) {
     out = out.replace(
-      /<meta\s+property=["']og:url["']\s+content=["'][^"']*["']\s*\/?>/i,
+      /<meta\s+property="og:url"\s+content="[^"]*"\s*\/?>/i,
       `<meta property="og:url" content="${canonical}" />`,
     );
   }
 
   // Replace or insert canonical
-  if (/<link\s+rel=["']canonical["']/i.test(out)) {
+  if (/<link\s+rel="canonical"/i.test(out)) {
     out = out.replace(
-      /<link\s+rel=["']canonical["']\s+href=["'][^"']*["']\s*\/?>/i,
+      /<link\s+rel="canonical"\s+href="[^"]*"\s*\/?>/i,
       `<link rel="canonical" href="${canonical}" />`,
     );
   } else {
