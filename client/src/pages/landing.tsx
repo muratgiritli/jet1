@@ -828,10 +828,8 @@ export default function Landing() {
           <DesktopContactStrip />
         </div>
 
-        <div className="mt-5 md:mt-10">
-          <div className="md:max-w-5xl md:mx-auto">
-            <HomeBottomCarousel />
-          </div>
+        <div className="mt-5 md:hidden">
+          <HomeBottomCarousel />
         </div>
 
         <div className="mt-5 mb-4 md:mb-10">
