@@ -164,8 +164,8 @@ export const LOCAL_BUSINESS_JSONLD = {
     { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Para Puan Kazanma (5%)" } },
   ],
   "sameAs": [
-    "https://www.instagram.com/jetgo.pet",
-    "https://www.facebook.com/jetgo.pet",
+    "https://www.instagram.com/jetgo.shop",
+    "https://www.facebook.com/jetgo.shop",
   ],
 };
 
