@@ -20,7 +20,7 @@ import catCat from "@/assets/images/cat-cat.webp";
 import catBird from "@/assets/images/cat-bird.webp";
 import catRabbit from "@/assets/images/cat-rabbit.webp";
 import catFish from "@assets/cat-fish.png";
-import desktopHeroBanner from "@assets/ChatGPT_Image_22_Nis_2026_20_21_27_1776878498194.png";
+import desktopHeroBanner from "@assets/B1_1776879216390.png";
 import brandRoyalCanin from "@/assets/images/brands/royal-canin.webp";
 import brandHills from "@/assets/images/brands/hills.webp";
 import brandNd from "@/assets/images/brands/nd.webp";
