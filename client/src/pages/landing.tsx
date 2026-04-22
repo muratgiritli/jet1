@@ -680,10 +680,6 @@ export default function Landing() {
           <DesktopDeliveryInfo />
         </div>
 
-        <div className="mt-5 md:mt-12">
-          <WhyJetgo />
-        </div>
-
         <div className="hidden md:block mt-12">
           <BrandSlider />
         </div>
