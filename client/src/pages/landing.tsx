@@ -258,15 +258,16 @@ function CategoryGrid() {
           Tümü <ChevronRight className="w-3.5 h-3.5" />
         </Link>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2.5 md:gap-5" data-testid="grid-categories">
-        {CATEGORIES.map((cat) => {
+      <div className="grid grid-cols-6 md:grid-cols-5 gap-2.5 md:gap-5" data-testid="grid-categories">
+        {CATEGORIES.map((cat, idx) => {
           const animal = cat.href.split("/").pop() || "";
           const prefetchCategory = () => {
             import("@/pages/category");
             queryClient.prefetchQuery({ queryKey: ["/api/subcategories", animal], queryFn: () => fetch(`/api/subcategories/${animal}`).then(r => r.json()) });
           };
+          const mobileSpan = idx < 2 ? "col-span-3" : "col-span-2";
           return (
-            <Link key={cat.name} href={cat.href}>
+            <Link key={cat.name} href={cat.href} className={`${mobileSpan} md:col-span-1`}>
               <div
                 className="flex flex-col items-center gap-1.5 md:gap-3 cursor-pointer active:scale-95 md:hover:scale-105 transition-transform group"
                 data-testid={`card-category-${cat.name}`}
