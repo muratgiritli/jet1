@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -263,11 +263,24 @@ function HomeBottomCarousel() {
   });
   const items = banners.filter(b => b.imageData);
   const [idx, setIdx] = useState(0);
+  const touchStartX = useRef<number | null>(null);
   useEffect(() => { if (idx >= items.length) setIdx(0); }, [items.length, idx]);
   if (items.length === 0) return null;
   const current = items[idx];
   const prev = () => setIdx((i) => (i - 1 + items.length) % items.length);
   const next = () => setIdx((i) => (i + 1) % items.length);
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX.current === null) return;
+    const diff = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(diff) > 40) {
+      if (diff < 0) next(); else prev();
+    }
+    touchStartX.current = null;
+  };
 
   const rawLink = (current.linkUrl || "").trim();
   const isExternal = /^https?:\/\//i.test(rawLink);
@@ -277,19 +290,21 @@ function HomeBottomCarousel() {
     <img
       src={current.imageData!}
       alt={current.title}
-      className="w-full h-auto object-cover block"
+      className="w-full h-auto object-cover block select-none pointer-events-none"
       loading="lazy"
+      draggable={false}
       data-testid={`bottom-banner-${current.sortOrder}`}
     />
   );
 
   const buyButton = (
     <span
-      className="absolute left-1/2 bottom-3 md:bottom-5 -translate-x-1/2 bg-yellow-400 hover:bg-yellow-300 active:scale-95 text-purple-900 text-sm md:text-lg font-extrabold px-6 md:px-10 py-2.5 md:py-3 rounded-full shadow-2xl flex items-center gap-2 ring-2 ring-white"
+      className="absolute left-1/2 bottom-3 md:bottom-4 -translate-x-1/2 bg-white/95 backdrop-blur-sm text-purple-700 text-xs md:text-sm font-bold px-4 md:px-5 py-2 md:py-2.5 rounded-full shadow-md inline-flex items-center gap-1.5 hover:bg-white transition-colors"
       data-testid={`button-buy-${current.sortOrder}`}
     >
-      <ShoppingBag className="w-4 h-4 md:w-5 md:h-5" />
+      <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4" />
       Satın Al
+      <ArrowRight className="w-3.5 h-3.5 md:w-4 md:h-4" />
     </span>
   );
 
@@ -317,7 +332,11 @@ function HomeBottomCarousel() {
 
   return (
     <div data-testid="section-home-bottom-carousel">
-      <div className="relative w-full overflow-hidden rounded-2xl shadow-lg bg-gray-50">
+      <div
+        className="relative w-full overflow-hidden rounded-2xl shadow-lg bg-gray-50 touch-pan-y"
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+      >
         {wrapWithLink(
           <div className="relative cursor-pointer">
             {imageEl}
