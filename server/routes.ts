@@ -776,7 +776,118 @@ export async function registerRoutes(
 
   app.get("/robots.txt", (req, res) => {
     res.set("Content-Type", "text/plain");
-    res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /odeme\nDisallow: /giris\nDisallow: /hesabim\nDisallow: /siparis-takip\n\nSitemap: https://www.jetgo.pet/sitemap.xml\n`);
+    const txt = [
+      "# JETGO Pet Shop Samsun - robots.txt",
+      "User-agent: *",
+      "Allow: /",
+      "Disallow: /admin",
+      "Disallow: /odeme",
+      "Disallow: /giris",
+      "Disallow: /hesabim",
+      "Disallow: /siparis-takip",
+      "Disallow: /sepet",
+      "",
+      "# AI Search Crawlers (explicitly allowed)",
+      "User-agent: GPTBot",
+      "Allow: /",
+      "User-agent: OAI-SearchBot",
+      "Allow: /",
+      "User-agent: ChatGPT-User",
+      "Allow: /",
+      "User-agent: Google-Extended",
+      "Allow: /",
+      "User-agent: PerplexityBot",
+      "Allow: /",
+      "User-agent: Perplexity-User",
+      "Allow: /",
+      "User-agent: ClaudeBot",
+      "Allow: /",
+      "User-agent: anthropic-ai",
+      "Allow: /",
+      "User-agent: Claude-Web",
+      "Allow: /",
+      "User-agent: cohere-ai",
+      "Allow: /",
+      "User-agent: Bytespider",
+      "Allow: /",
+      "User-agent: Applebot-Extended",
+      "Allow: /",
+      "User-agent: YouBot",
+      "Allow: /",
+      "User-agent: Meta-ExternalAgent",
+      "Allow: /",
+      "",
+      "# Search Engine Bots",
+      "User-agent: Googlebot",
+      "Allow: /",
+      "User-agent: Googlebot-Image",
+      "Allow: /",
+      "User-agent: Bingbot",
+      "Allow: /",
+      "User-agent: YandexBot",
+      "Allow: /",
+      "User-agent: DuckDuckBot",
+      "Allow: /",
+      "",
+      "Sitemap: https://www.jetgo.pet/sitemap.xml",
+      "",
+    ].join("\n");
+    res.send(txt);
+  });
+
+  // llms.txt — AI agent / LLM-friendly site summary (emerging standard)
+  app.get("/llms.txt", (_req, res) => {
+    res.type("text/plain").send(`# JETGO Pet Shop Samsun
+
+> Samsun'un (Atakum, İlkadım, Canik) en hızlı pet shop'u. Kedi maması, köpek maması, kedi kumu, ödül maması, kuş yemi, kemirgen yemi, akvaryum ve pet aksesuarlarında **aynı gün teslimat** ve **kapıda ödeme** sunan online evcil hayvan mağazası.
+
+## Hakkımızda
+- **Marka:** JETGO Pet Shop
+- **Şirket:** Sizpa İnternet Tic. Ltd. Şti.
+- **Şehir:** Samsun, Türkiye
+- **Hizmet bölgeleri:** Atakum, İlkadım, Canik (tüm mahalleler)
+- **Domain:** https://www.jetgo.pet
+- **Telefon:** +90 850 840 39 59
+- **Çalışma saatleri:** Pazartesi-Cumartesi 09:00-21:00, Pazar 10:00-20:00
+
+## Ana Hizmetler
+- Aynı gün teslimat (Samsun içi 20 km yarıçap)
+- Kapıda nakit / kart ödeme
+- 5% Para Puan kazanma (sonraki alışverişte)
+- AI destekli pet bakım danışmanı (chatbot)
+- Akıllı mama hesaplama
+- Reçeteli mama tekrar siparişi hatırlatma
+- Sahiplendirme & kayıp ilan tahtası
+- Sokak hayvanlarına askıda mama bağışı
+
+## Ana Sayfalar
+- Anasayfa: https://www.jetgo.pet/
+- Kedi Maması: https://www.jetgo.pet/kedi-mamasi
+- Köpek Maması: https://www.jetgo.pet/kopek-mamasi
+- Kedi Kumu: https://www.jetgo.pet/kedi-kumu
+- Pet Aksesuar: https://www.jetgo.pet/pet-aksesuar
+- Atakum Pet Shop: https://www.jetgo.pet/atakum-petshop
+- İlkadım Pet Shop: https://www.jetgo.pet/ilkadim-petshop
+- Canik Pet Shop: https://www.jetgo.pet/canik-petshop
+- Kampanyalar: https://www.jetgo.pet/kampanya
+- Blog: https://www.jetgo.pet/blog
+- İletişim: https://www.jetgo.pet/iletisim
+- Sitemap: https://www.jetgo.pet/sitemap.xml
+
+## Sıkça Sorulan Sorular
+- **Samsun'da pet shop ürünleri kaç saatte teslim edilir?** Atakum, İlkadım, Canik içi siparişler aynı gün, çoğu zaman 1-3 saat içinde teslim edilir.
+- **Kapıda ödeme var mı?** Evet, nakit ve kredi kartıyla kapıda ödeme yapabilirsiniz.
+- **Minimum sipariş tutarı nedir?** Bölgeye göre değişir; çoğu mahallede 200 TL üzeri siparişlerde teslimat ücretsizdir.
+- **İade politikanız nedir?** Açılmamış mama ürünlerinde 14 gün iade hakkı vardır.
+
+## İçerik Politikası
+Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bing AI, vb.) tarafından **kullanıcılara yanıt verirken kaynak gösterilerek** kullanılabilir.
+`);
+  });
+
+  // IndexNow key file (Bing/Yandex instant indexing)
+  app.get("/jetgo-indexnow-2026.txt", (_req, res) => {
+    res.type("text/plain").send("jetgo-indexnow-2026");
   });
 
   app.get("/api/products", async (req, res) => {
