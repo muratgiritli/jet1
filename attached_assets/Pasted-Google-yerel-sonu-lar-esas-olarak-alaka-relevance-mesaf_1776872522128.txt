@@ -1,0 +1,67 @@
+Google yerel sonuçları esas olarak alaka (relevance), mesafe (distance) ve bilinirlik/güç (prominence) ile belirliyor. Yani site tek başına yetmez; ama site, Google’a “bu işletme tam olarak nerede, ne satıyor, hangi mahallelere hizmet veriyor” sinyalini çok net verirse local görünürlüğü ciddi destekler.
+
+1) Ana sayfayı “local intent” için yeniden yaz
+
+Ana sayfa sadece e-ticaret vitrini gibi olmamalı. Şunlar net görünmeli:
+
+H1: Atakum / Samsun Petshop – Aynı Gün Teslimat
+İlk 2 ekranda:
+açık adres
+hizmet bölgesi
+telefon
+çalışma saatleri
+WhatsApp butonu
+“Atakum, İlkadım, Canik, Tekkeköy’e teslimat” gibi bölge metni
+Ana metin içinde doğal şekilde:
+Samsun petshop
+Atakum petshop
+Samsun kedi maması
+Samsun köpek maması
+Atakum aynı gün petshop teslimatı
+Samsun acil kedi kumu
+gibi sorguların varyasyonları geçmeli. Google, kullanıcıya en uygun yerel sonucu göstermek için sayfanın sorguyla alakasını anlamaya çalışır.
+2) Tek tek local landing page aç
+
+Asıl büyüme burada olur. Replit ile şu yapıyı kur:
+
+/samsun-petshop
+/atakum-petshop
+/atakum-kedi-mamasi
+/atakum-kopek-mamasi
+/samsun-kedi-kumu
+/samsun-petshop-ayni-gun-teslimat
+/atakum-acil-petshop
+/ilkadim-petshop
+/canik-petshop
+
+Her sayfa birbirinin kopyası olmamalı. Her birinde:
+
+o bölgeye özel giriş metni
+teslimat süresi
+o bölgede çok satılan ürün grupları
+mahalle isimleri
+mağazadan teslim / kapıda ödeme / hızlı teslim gibi gerçek avantajlar
+FAQ bölümü
+
+Bu sayfalar arama motorunun içeriği daha iyi anlamasına yardım eder; Google Search Essentials ve SEO Starter Guide da sayfaların açık, faydalı ve kullanıcıya yönelik olmasını vurgular.
+
+3) Her sayfada tam NAP kullan
+
+NAP = Name, Address, Phone.
+
+Sitedeki işletme adı, adres ve telefon; Google Business Profile’daki bilgilerle birebir aynı formatta olsun. Yerel işletme temsil kuralları ve LocalBusiness yapılandırılmış veri mantığı açısından tutarlılık çok önemlidir.
+
+Örnek footer:
+
+Jetgo Pet
+Tam adres
+Samsun / Atakum
+Telefon
+Çalışma saatleri
+Google Maps linki
+
+Bunu tüm sayfalarda sabit kullan.
+
+4) LocalBusiness schema ekle
+
+Bu kritik. Google, Local Business structured data ile işletmenin saatleri, adresi, iletişim bilgileri ve iş türünü daha net anlayabildiğini açıkça söylüyor. JSON-LD olarak ekleyin.

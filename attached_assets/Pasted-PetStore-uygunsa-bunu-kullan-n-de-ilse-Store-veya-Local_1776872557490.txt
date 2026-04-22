@@ -1,0 +1,156 @@
+PetStore uygunsa bunu kullanın; değilse Store veya LocalBusiness kullanılabilir. Schema.org tarafında LocalBusiness yerel şube/işletme tipini tanımlar.
+
+5) Ürün ve kategori sayfalarını local sinyalle güçlendir
+
+Kategori sayfalarının altına sadece ürün koymayın. 300–600 kelimelik gerçek açıklama ekleyin:
+
+“Atakum’da kedi maması seçerken…”
+“Samsun’da büyük ırk köpek maması teslimatı…”
+“Son kullanma tarihine dikkat eden müşteriler için…”
+
+Bu içerikler:
+
+kategoriyle alakayı artırır
+uzun kuyruklu yerel sorguları yakalar
+siteyi sadece mağaza değil “faydalı yerel kaynak” yapar
+
+Google’ın SEO dökümanları, kullanıcılara faydalı ve açıklayıcı içerik sunulmasını temel öncelik olarak veriyor.
+
+6) FAQ schema ve gerçek soru-cevap blokları ekle
+
+Özellikle şu sayfalarda:
+
+teslimat
+kapıda ödeme
+iade
+son kullanma tarihi
+sahte ürün riski
+aynı gün teslimat bölgeleri
+
+Örnek sorular:
+
+“Atakum’da aynı gün teslimat var mı?”
+“Samsun içinde kapıda ödeme var mı?”
+“Ürünlerin son kullanma tarihi sitede görülebilir mi?”
+“Açılmış mama iade edilir mi?”
+
+Yapılandırılmış veri Google’ın içeriği anlamasına yardımcı olur; ama önemli olan önce içeriğin gerçekten kullanıcı için faydalı olmasıdır.
+
+7) Teknik temel: index, sitemap, canonical, hız
+
+Replit tarafında bunlar mutlaka düzgün kurulmalı:
+
+robots.txt
+sitemap.xml
+her sayfada doğru canonical
+mobil uyum
+hızlı açılış
+resimlerde alt metni
+temiz title / meta description
+kırık link olmaması
+
+Google Search Essentials ve SEO Starter Guide, taranabilirlik ve anlaşılabilir site yapısının temel olduğunu söylüyor.
+
+Örnek title yapıları:
+
+Atakum Petshop | Kedi ve Köpek Mamaları | Jetgo Pet
+Samsun Kedi Maması | Aynı Gün Teslimat | Jetgo Pet
+Atakum Köpek Maması | Kapıda Ödeme | Jetgo Pet
+8) Store/location page aç
+
+Mutlaka ayrı bir mağaza sayfası aç:
+
+/magaza veya /atakum-magaza
+
+İçinde:
+
+açık adres
+gömülü harita
+ulaşım tarifi
+otopark bilgisi varsa
+mağaza fotoğrafları
+dış cephe, raflar, kasa, teslimat aracı
+çalışma saatleri
+telefon
+WhatsApp
+sık sorulan sorular
+
+Google Business Profile tarafında da fotoğraf ve tam profil kullanımı görünürlüğü destekler.
+
+9) Blog değil, “local content hub” yap
+
+Rastgele blog yerine şu sayfaları üret:
+
+samsun-da-en-iyi-kedi-kumu-nasil-secilir
+atakum-da-acil-kopek-mamasi-nereden-alinir
+samsun-petshop-teslimat-bolgeleri
+kedi-mamasi-son-kullanma-tarihi-nasil-kontrol-edilir
+sahte-pet-urunu-nasil-anlasilir
+
+Bunlar doğrudan ticari local intent’i destekler. “People-first” içerik yaklaşımı burada daha işe yarar.
+
+10) Internal link sistemini local kur
+
+Her local sayfa diğer ilgili sayfalara bağlansın.
+
+Örnek:
+
+/atakum-petshop → /atakum-kedi-mamasi
+/atakum-petshop → /atakum-kopek-mamasi
+/atakum-petshop → /samsun-petshop-ayni-gun-teslimat
+/magaza → tüm bölge sayfaları
+
+Bu, Google’ın site yapısını ve konu kümelerini daha net anlamasına yardım eder.
+
+11) Replit’te nasıl kurulsun
+
+Replit’e verilecek net görev şu olmalı:
+
+Sayfa yapısı
+
+Ana sayfa
+mağaza sayfası
+teslimat bölgeleri sayfası
+her ilçe / ana sorgu için ayrı SEO sayfası
+kategori + ürün + FAQ sayfaları
+
+Teknik
+
+SSR veya en azından HTML kaynakta içerik görünür olsun
+JavaScript yüklenmeden de temel metin taranabilir olsun
+otomatik sitemap üret
+canonical üret
+JSON-LD schema sayfaya server-side bas
+image compression
+lazy load
+Open Graph tags
+breadcrumb schema
+
+İçerik alanları CMS gibi olsun
+
+title
+meta description
+H1
+intro text
+mahalle listesi
+FAQ
+teslimat bilgisi
+mağaza bilgisi
+
+Google’ın temel belgeleri, arama motorlarının sayfayı kolayca tarayıp anlayabilmesini özellikle vurguluyor.
+
+12) En kritik gerçek
+
+Siteyi ne kadar iyi yaparsan yap, Google local’da fiziksel konum hâlâ çok güçlü faktör. Yani Atakum’daki gerçek mağaza adresin, GBP doğruluğun, yorumların, fotoğrafların ve marka aranması artmadan “tüm Samsun’u kaplama” sınırsız olmaz. Google bunu açıkça relevance, distance ve prominence üçlüsüyle açıklıyor.
+
+Sana en doğru öncelik sırası
+Ana sayfa local rewrite
+/magaza sayfası
+8–15 adet local landing page
+LocalBusiness schema
+footer NAP standardı
+sitemap / robots / canonical
+kategori altı local metinler
+FAQ blokları
+mağaza fotoğrafları ve harita entegrasyonu
+GBP ile birebir eşleşme
