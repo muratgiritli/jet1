@@ -37,6 +37,52 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- LocalBusiness / PetStore JSON-LD (static, crawler-safe) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "PetStore",
+      "name": "Jetgo Pet",
+      "alternateName": ["JETGO Pet Shop Samsun", "JETGO Atakum Pet Shop"],
+      "url": "https://www.jetgo.pet",
+      "image": "https://www.jetgo.pet/og-image.webp",
+      "logo": "https://www.jetgo.pet/favicon.webp",
+      "telephone": "+908508403959",
+      "email": "info@sizpa.com",
+      "priceRange": "₺₺",
+      "address": {
+        "@type": "PostalAddress",
+        "streetAddress": "Atakum",
+        "addressLocality": "Atakum",
+        "addressRegion": "Samsun",
+        "postalCode": "55200",
+        "addressCountry": "TR"
+      },
+      "geo": {
+        "@type": "GeoCoordinates",
+        "latitude": "41.2867",
+        "longitude": "36.3300"
+      },
+      "openingHoursSpecification": [
+        {
+          "@type": "OpeningHoursSpecification",
+          "dayOfWeek": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"],
+          "opens": "09:00",
+          "closes": "22:00"
+        }
+      ],
+      "sameAs": [
+        "https://www.instagram.com/jetgo.pet",
+        "https://www.facebook.com/jetgo.pet"
+      ],
+      "areaServed": [
+        {"@type":"City","name":"Samsun"},
+        {"@type":"AdministrativeArea","name":"Atakum"},
+        {"@type":"AdministrativeArea","name":"İlkadım"},
+        {"@type":"AdministrativeArea","name":"Canik"}
+      ]
+    }
+    </script>
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-PKN1VB7PDP"></script>
     <script>
