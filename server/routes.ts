@@ -261,7 +261,7 @@ export async function registerRoutes(
 
   app.get("/sitemap.xml", async (_req, res) => {
     try {
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgo.pet";
       const today = new Date().toISOString().split("T")[0];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
@@ -282,7 +282,7 @@ export async function registerRoutes(
 
   app.get("/sitemap-main.xml", async (_req, res) => {
     try {
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgo.pet";
       const staticPages = [
         { url: "/", priority: "1.0", changefreq: "daily" },
         { url: "/kategori", priority: "0.9", changefreq: "weekly" },
@@ -335,7 +335,7 @@ export async function registerRoutes(
 
   app.get("/sitemap-products.xml", async (_req, res) => {
     try {
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgo.pet";
       const allProducts = await storage.getAllProducts();
       const activeProducts = allProducts.filter((p: any) => p.isActive && p.stock > 0 && p.price > 0);
       const today = new Date().toISOString().split("T")[0];
@@ -358,7 +358,7 @@ export async function registerRoutes(
 
   app.get("/sitemap-seo.xml", async (_req, res) => {
     try {
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgo.pet";
       const today = new Date().toISOString().split("T")[0];
       const coreSlugs = [
         { url: "/samsun-petshop", priority: "0.9", changefreq: "weekly" },
@@ -473,7 +473,7 @@ export async function registerRoutes(
   app.get("/api/export/xlsx", requireAdmin, async (_req, res) => {
     try {
       const XLSX = await import("xlsx");
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgo.pet";
       const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen" };
 
       const { rows } = await sharedPool.query(`
@@ -522,7 +522,7 @@ export async function registerRoutes(
 
   app.get("/api/export/yml", requireAdmin, async (_req, res) => {
     try {
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgo.pet";
       const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen" };
 
       const { rows } = await sharedPool.query(`
@@ -546,7 +546,7 @@ export async function registerRoutes(
 
       const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-      let yml = `<?xml version="1.0" encoding="UTF-8"?>\n<yml_catalog date="${new Date().toISOString().split("T")[0]}">\n  <shop>\n    <name>JETGO Pet Shop</name>\n    <company>Sizpa İnternet Tic. Ltd. Şti.</company>\n    <url>https://www.jetgo.shop</url>\n    <currencies>\n      <currency id="TRY" rate="1"/>\n    </currencies>\n    <categories>\n`;
+      let yml = `<?xml version="1.0" encoding="UTF-8"?>\n<yml_catalog date="${new Date().toISOString().split("T")[0]}">\n  <shop>\n    <name>JETGO Pet Shop</name>\n    <company>Sizpa İnternet Tic. Ltd. Şti.</company>\n    <url>https://www.jetgo.pet</url>\n    <currencies>\n      <currency id="TRY" rate="1"/>\n    </currencies>\n    <categories>\n`;
 
       for (const [, cat] of categories) {
         yml += `      <category id="${cat.id}">${esc(cat.subcat)} (${ANIMAL_MAP[cat.animal] || cat.animal})</category>\n`;
@@ -772,7 +772,7 @@ export async function registerRoutes(
 
   app.get("/robots.txt", (req, res) => {
     res.set("Content-Type", "text/plain");
-    res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /odeme\nDisallow: /giris\nDisallow: /hesabim\nDisallow: /siparis-takip\n\nSitemap: https://www.jetgo.shop/sitemap.xml\n`);
+    res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /odeme\nDisallow: /giris\nDisallow: /hesabim\nDisallow: /siparis-takip\n\nSitemap: https://www.jetgo.pet/sitemap.xml\n`);
   });
 
   app.get("/api/products", async (req, res) => {
@@ -1469,7 +1469,7 @@ export async function registerRoutes(
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     if (status === "tamamlandi" && order.customerPhone) {
-      const smsMessage = `Siparissiniz teslim edildi. Jetgo ile alisveris yaptiginiz icin tesekkurler! Bir sonraki siparissinizde 50 TL indirim icin JETGO50 kodunu kullanin. jetgo.shop`;
+      const smsMessage = `Siparissiniz teslim edildi. Jetgo ile alisveris yaptiginiz icin tesekkurler! Bir sonraki siparissinizde 50 TL indirim icin JETGO50 kodunu kullanin. jetgo.pet`;
       sendSmsViaNetgsm(order.customerPhone, smsMessage).catch(err => {
         console.error("Post-delivery SMS error:", err);
       });
@@ -1532,7 +1532,7 @@ export async function registerRoutes(
     const code = generateOTP();
     otpStore.set(normalized, { code, expiresAt: Date.now() + 180000, attempts: 0 });
 
-    const hostHeader = (req.headers["x-forwarded-host"] as string) || req.headers.host || "jetgo.shop";
+    const hostHeader = (req.headers["x-forwarded-host"] as string) || req.headers.host || "jetgo.pet";
     const otpHost = String(hostHeader).split(":")[0];
     const message = `<#> JETGO dogrulama kodunuz: ${code} (3 dakika gecerlidir)\n\n@${otpHost} #${code}`;
     const sent = await sendSmsViaNetgsm(normalized, message);
