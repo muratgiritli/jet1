@@ -770,6 +770,10 @@ export async function registerRoutes(
   });
 
 
+  app.get("/googleb16b707b9ac148c4.html", (_req, res) => {
+    res.type("text/html").send("google-site-verification: googleb16b707b9ac148c4.html");
+  });
+
   app.get("/robots.txt", (req, res) => {
     res.set("Content-Type", "text/plain");
     res.send(`User-agent: *\nAllow: /\nDisallow: /admin\nDisallow: /odeme\nDisallow: /giris\nDisallow: /hesabim\nDisallow: /siparis-takip\n\nSitemap: https://www.jetgo.pet/sitemap.xml\n`);
