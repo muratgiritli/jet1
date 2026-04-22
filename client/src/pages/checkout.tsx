@@ -356,7 +356,7 @@ export default function Checkout() {
   const { data: installmentRates = [] } = useQuery<{ id: number; months: number; rate: number; isActive: boolean; sortOrder: number }[]>({
     queryKey: ["/api/installment-rates"],
   });
-  const SLOT_TIMES = ["11:00-13:00", "12:00-14:00", "13:00-15:00", "14:00-16:00", "15:00-17:00", "16:00-18:00"];
+  const SLOT_TIMES = ["11:00-12:30", "12:30-14:00", "14:00-15:30", "15:30-17:00", "17:00-18:15", "18:15-19:30"];
   const TR_DAY_NAMES = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
   const TR_MONTH_NAMES = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
   const slotPassed = (dateStr: string, range: string) => {
@@ -1116,7 +1116,7 @@ export default function Checkout() {
                         );
                       })}
                     </div>
-                    <p className="text-[11px] text-muted-foreground">Teslimatlar 11:00 - 18:00 saatleri arasında yapılır.</p>
+                    <p className="text-[11px] text-muted-foreground">Teslimatlar 11:00 - 19:30 saatleri arasında yapılır.</p>
                   </CardContent>
                 </Card>
               </section>
