@@ -712,35 +712,63 @@ export default function Landing() {
       />
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 md:px-6 lg:px-8">
+        {/* MOBILE-ONLY: signup/welcome banner kept exactly as before */}
         {!isLoggedIn && (
-          <div className="mt-2 md:mt-6">
+          <div className="mt-2 md:hidden">
             <SignupBonusBanner />
           </div>
         )}
         {isLoggedIn && (
-          <div className="mt-2 md:mt-6">
+          <div className="mt-2 md:hidden">
             <WelcomeCouponBanner />
           </div>
         )}
 
-        <div className="mt-1 md:mt-2">
+        {/* DESKTOP/TABLET HERO ROW: carousel + signup/welcome side-by-side */}
+        <div className="hidden md:grid md:grid-cols-12 gap-6 mt-6">
+          <div className="md:col-span-8">
+            <HeroCarousel />
+          </div>
+          <div className="md:col-span-4">
+            {!isLoggedIn ? <SignupBonusBanner /> : <WelcomeCouponBanner />}
+          </div>
+        </div>
+
+        {/* DESKTOP DELIVERY STRIP – its own full-width row */}
+        <div className="hidden md:block mt-6">
+          <DesktopDeliveryInfo />
+        </div>
+
+        <div className="mt-1 md:mt-8">
           <HomeBanners />
         </div>
 
-        <div className="mt-1 md:mt-2">
-          <CategoryGrid />
+        {/* CATEGORIES: mobile untouched; desktop centered & narrower so cards aren't gigantic */}
+        <div className="mt-1 md:mt-10">
+          <div className="md:max-w-4xl md:mx-auto">
+            <CategoryGrid />
+          </div>
         </div>
 
-        <div className="mt-3 md:mt-6">
-          <OrderCounter />
+        {/* DESKTOP STATS BAR */}
+        <div className="hidden md:block mt-10">
+          <DesktopStatsBar />
         </div>
 
-        <div className="mt-1 md:mt-2">
+        {/* ORDER COUNTER: mobile full-width; desktop centered */}
+        <div className="mt-3 md:mt-10">
+          <div className="md:max-w-3xl md:mx-auto">
+            <OrderCounter />
+          </div>
+        </div>
+
+        <div className="mt-1 md:mt-8">
           <HomeBannersBelowCategory />
         </div>
 
-        <div className="mt-4 md:mt-10">
-          <DesktopDeliveryInfo />
+        {/* WHY JETGO – desktop benefits row */}
+        <div className="hidden md:block mt-12">
+          <WhyJetgo />
         </div>
 
         <div className="hidden md:block mt-12">
@@ -760,7 +788,9 @@ export default function Landing() {
         </div>
 
         <div className="mt-5 md:mt-10">
-          <HomeBottomCarousel />
+          <div className="md:max-w-5xl md:mx-auto">
+            <HomeBottomCarousel />
+          </div>
         </div>
 
         <div className="mt-5 mb-4 md:mb-10">
