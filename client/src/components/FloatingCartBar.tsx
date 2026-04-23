@@ -27,7 +27,6 @@ export default function FloatingCartBar() {
   const handleGoToCart = () => {
     if (!minReached) {
       setShowMinWarning(true);
-      return;
     }
     setLocation("/odeme");
   };
