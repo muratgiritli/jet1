@@ -96,7 +96,8 @@ async function sendSmsViaNetgsm(phone: string, message: string): Promise<boolean
   }
   const gsmno = phone.replace(/\D/g, "");
   const fullPhone = gsmno.startsWith("90") ? gsmno : "90" + gsmno;
-  console.log(`NetGSM sending to: ${fullPhone}`);
+  const maskedPhone = fullPhone.length >= 6 ? `${fullPhone.slice(0,4)}****${fullPhone.slice(-2)}` : "****";
+  console.log(`NetGSM sending to: ${maskedPhone}`);
 
   for (let attempt = 1; attempt <= 3; attempt++) {
     try {
@@ -117,7 +118,7 @@ async function sendSmsViaNetgsm(phone: string, message: string): Promise<boolean
 
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 15000);
-      const res = await fetch("http://api.netgsm.com.tr/sms/send/xml", {
+      const res = await fetch("https://api.netgsm.com.tr/sms/send/xml", {
         method: "POST",
         headers: { "Content-Type": "application/xml" },
         body: xmlBody,
@@ -153,7 +154,7 @@ async function sendSmsViaNetgsm(phone: string, message: string): Promise<boolean
     });
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
-    const res = await fetch(`http://api.netgsm.com.tr/sms/send/get/?${params.toString()}`, {
+    const res = await fetch(`https://api.netgsm.com.tr/sms/send/get/?${params.toString()}`, {
       signal: controller.signal,
     });
     clearTimeout(timeout);
