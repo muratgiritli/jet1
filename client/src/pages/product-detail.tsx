@@ -587,15 +587,27 @@ export default function ProductDetailPage() {
                       <span className="text-sm text-muted-foreground font-medium">ADET</span>
                       <QuantityControl productId={pid} quantity={quantity} onUpdate={isCampaignMode ? (id, delta) => updateQty(id, delta, true) : updateQty} />
                     </div>
-                    <Button
-                      className="w-full"
-                      style={{ backgroundColor: "#1565c0" }}
-                      onClick={() => { if (quantity === 0) updateQty(pid, 1, isCampaignMode); }}
-                      data-testid="btn-preorder-add"
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      Ön Sipariş Ver
-                    </Button>
+                    {quantity === 0 ? (
+                      <Button
+                        className="w-full"
+                        style={{ backgroundColor: "#1565c0" }}
+                        onClick={() => updateQty(pid, 1, isCampaignMode)}
+                        data-testid="btn-preorder-add"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        Ön Sipariş Ver
+                      </Button>
+                    ) : (
+                      <Button
+                        className="w-full"
+                        style={{ backgroundColor: "#2e7d32" }}
+                        onClick={() => setLocation("/odeme")}
+                        data-testid="btn-preorder-go-cart"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        Sepete Git ({quantity})
+                      </Button>
+                    )}
                   </div>
                   <div className="rounded-lg border p-3 space-y-2" style={{ backgroundColor: "#f5f9ff", borderColor: "#bbdefb" }} data-testid="preorder-info-section">
                     <h4 className="text-sm font-bold flex items-center gap-1.5" style={{ color: "#1565c0" }}>
