@@ -585,12 +585,12 @@ export default function ProductDetailPage() {
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-sm text-muted-foreground font-medium">ADET</span>
-                      <QuantityControl productId={pid} quantity={quantity} onUpdate={updateQty} />
+                      <QuantityControl productId={pid} quantity={quantity} onUpdate={isCampaignMode ? (id, delta) => updateQty(id, delta, true) : updateQty} />
                     </div>
                     <Button
                       className="w-full"
                       style={{ backgroundColor: "#1565c0" }}
-                      onClick={() => { if (quantity === 0) updateQty(pid, 1); }}
+                      onClick={() => { if (quantity === 0) updateQty(pid, 1, isCampaignMode); }}
                       data-testid="btn-preorder-add"
                     >
                       <ShoppingCart className="w-4 h-4" />
