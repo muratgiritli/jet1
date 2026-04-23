@@ -17,6 +17,18 @@ export default function ImageZoom({ src, alt, className = "", children }: ImageZ
   const lastTouchCenter = useRef({ x: 0, y: 0 });
   const isDragging = useRef(false);
   const lastPos = useRef({ x: 0, y: 0 });
+  const [hoverLens, setHoverLens] = useState<{ x: number; y: number; show: boolean }>({ x: 0, y: 0, show: false });
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!src) return;
+    const rect = wrapperRef.current?.getBoundingClientRect();
+    if (!rect) return;
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+    setHoverLens({ x: Math.max(0, Math.min(100, x)), y: Math.max(0, Math.min(100, y)), show: true });
+  };
+  const handleMouseLeave = () => setHoverLens((p) => ({ ...p, show: false }));
 
   const handleOpen = () => {
     setScale(1);
@@ -74,11 +86,36 @@ export default function ImageZoom({ src, alt, className = "", children }: ImageZ
 
   return (
     <>
-      <div className={`relative cursor-zoom-in ${className}`} onClick={handleOpen}>
+      <div
+        ref={wrapperRef}
+        className={`relative cursor-zoom-in ${className}`}
+        onClick={handleOpen}
+        onMouseMove={handleMouseMove}
+        onMouseLeave={handleMouseLeave}
+        data-testid="image-zoom-wrapper"
+      >
         {children}
-        <div className="absolute bottom-2 left-2 bg-black/40 rounded-full p-1.5" data-testid="btn-zoom-hint">
+        <div className="absolute bottom-2 left-2 bg-black/40 rounded-full p-1.5 z-10" data-testid="btn-zoom-hint">
           <ZoomIn className="w-3.5 h-3.5 text-white" />
         </div>
+        {hoverLens.show && src && (
+          <div
+            className="hidden md:block absolute pointer-events-none rounded-full border-2 border-white shadow-2xl overflow-hidden"
+            style={{
+              width: 160,
+              height: 160,
+              left: `calc(${hoverLens.x}% - 80px)`,
+              top: `calc(${hoverLens.y}% - 80px)`,
+              backgroundImage: `url(${src})`,
+              backgroundRepeat: "no-repeat",
+              backgroundSize: "300% 300%",
+              backgroundPosition: `${hoverLens.x}% ${hoverLens.y}%`,
+              backgroundColor: "white",
+              zIndex: 20,
+            }}
+            data-testid="hover-zoom-lens"
+          />
+        )}
       </div>
 
       <AnimatePresence>

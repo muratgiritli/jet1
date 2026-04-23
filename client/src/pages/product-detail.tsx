@@ -281,6 +281,23 @@ export default function ProductDetailPage() {
     }
   }, [resolvedData, updateStock]);
 
+  useEffect(() => {
+    if (resolvedData?.product && typeof window !== "undefined" && (window as any).gtag) {
+      const p = resolvedData.product;
+      try {
+        (window as any).gtag("event", "view_item", {
+          currency: "TRY",
+          value: p.price,
+          items: [{
+            item_id: String(p.id),
+            item_name: p.name,
+            price: p.price,
+          }],
+        });
+      } catch {}
+    }
+  }, [resolvedData?.product?.id]);
+
   interface CampaignItem {
     id: number;
     product_id: number;

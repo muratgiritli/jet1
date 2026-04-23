@@ -114,6 +114,26 @@ export default function Checkout() {
     }
   }, [isLoggedIn, customer, savedAddresses]);
 
+  const beginCheckoutFiredRef = useRef(false);
+  useEffect(() => {
+    if (beginCheckoutFiredRef.current) return;
+    if (selectedProducts.length === 0) return;
+    if (typeof window === "undefined" || !(window as any).gtag) return;
+    try {
+      (window as any).gtag("event", "begin_checkout", {
+        currency: "TRY",
+        value: subtotal,
+        items: selectedProducts.map(({ product, qty }) => ({
+          item_id: String(product.id),
+          item_name: product.name,
+          price: product.price,
+          quantity: qty,
+        })),
+      });
+      beginCheckoutFiredRef.current = true;
+    } catch {}
+  }, [selectedProducts, subtotal]);
+
 
   const formatAuthPhone = (val: string) => {
     const digits = val.replace(/\D/g, "");
@@ -567,11 +587,22 @@ export default function Checkout() {
       await orderRes.json();
 
       if (typeof window !== "undefined" && (window as any).gtag) {
-        (window as any).gtag("event", "conversion", {
-          send_to: "AW-XXXXXXXXXX/CONVERSION_LABEL",
-          value: grandTotal,
-          currency: "TRY",
-        });
+        try {
+          const transactionId = `JG-${Date.now()}-${Math.floor(Math.random() * 9999)}`;
+          const ga4Items = orderItems.map((it) => ({
+            item_id: String(it.productId),
+            item_name: it.name,
+            price: it.price,
+            quantity: it.quantity,
+          }));
+          (window as any).gtag("event", "purchase", {
+            transaction_id: transactionId,
+            value: finalTotal,
+            currency: "TRY",
+            shipping: effectiveShipping,
+            items: ga4Items,
+          });
+        } catch {}
       }
 
       const trimmedAddress = customerAddress.trim();
@@ -1049,12 +1080,25 @@ export default function Checkout() {
                     placeholder="Mahalle, cadde, bina no, kat, daire no..."
                     value={customerAddress}
                     onChange={(e) => setCustomerAddress(e.target.value)}
-                    className="resize-none"
+                    className={`resize-none ${customerAddress.length > 0 && customerAddress.trim().length < 15 ? "border-amber-400 focus-visible:ring-amber-400" : customerAddress.trim().length >= 15 ? "border-green-400 focus-visible:ring-green-400" : ""}`}
                     rows={3}
                     maxLength={500}
                     data-testid="input-customer-address"
                   />
-                  <p className="text-xs text-muted-foreground text-right mt-1">{customerAddress.length}/500</p>
+                  <div className="flex items-center justify-between mt-1">
+                    {customerAddress.length === 0 ? (
+                      <span className="text-xs text-muted-foreground">Eksiksiz adres yazmanız teslimatı hızlandırır</span>
+                    ) : customerAddress.trim().length < 15 ? (
+                      <span className="text-xs font-medium text-amber-600 dark:text-amber-400" data-testid="text-address-warn">
+                        Adres çok kısa — mahalle, sokak, bina ve daire no ekleyin
+                      </span>
+                    ) : (
+                      <span className="text-xs font-medium text-green-600 dark:text-green-500 flex items-center gap-1" data-testid="text-address-ok">
+                        ✓ Adres uygun görünüyor
+                      </span>
+                    )}
+                    <p className="text-xs text-muted-foreground">{customerAddress.length}/500</p>
+                  </div>
                   {isLoggedIn && paymentId === "nakit" && (
                     <div
                       className="mt-3 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900"

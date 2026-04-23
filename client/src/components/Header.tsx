@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, User, LogIn, UserPlus } from "lucide-react";
+import { ArrowLeft, User, LogIn, UserPlus, Sun, Moon } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
 
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
 export default function Header() {
   const [location] = useLocation();
   const { isLoggedIn, customer } = useCustomer();
+  const { theme, toggleTheme } = useTheme();
 
   const isHome = location === "/";
 
@@ -43,6 +45,15 @@ export default function Header() {
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              aria-label={theme === "dark" ? "Açık moda geç" : "Karanlık moda geç"}
+              title={theme === "dark" ? "Açık mod" : "Karanlık mod"}
+              className="w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white transition-colors"
+              data-testid="btn-theme-toggle"
+            >
+              {theme === "dark" ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </button>
             {isLoggedIn ? (
               <Link href="/hesabim">
                 <button

@@ -206,8 +206,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     stockMapRef.current.set(id, stock);
   }, []);
 
+  const dbProductsRef = useRef<DbProduct[]>([]);
+  useEffect(() => { dbProductsRef.current = dbProducts; }, [dbProducts]);
+
   const updateQty = useCallback((id: string, delta: number, fromCampaign?: boolean): boolean => {
     let blocked = false;
+    let actualDelta = 0;
     if (fromCampaign && delta > 0) {
       setCampaignCartIds(prev => {
         const next = new Set(prev);
@@ -220,6 +224,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setBasket((prev) => {
       const current = prev[id] || 0;
       let next = current + delta;
+      actualDelta = 0;
       const isCampaignItem = campaignCartIdsRef.current.has(id);
       if (isCampaignItem && campaignMainIdsRef.current.has(id)) {
         if (next > 1) next = 1;
@@ -255,9 +260,22 @@ export function CartProvider({ children }: { children: ReactNode }) {
       } else {
         updated = { ...prev, [id]: next };
       }
+      actualDelta = next - current;
       saveBasket(updated);
       return updated;
     });
+    if (actualDelta > 0 && typeof window !== "undefined" && (window as any).gtag) {
+      const p = dbProductsRef.current.find((x) => String(x.id) === id);
+      if (p) {
+        try {
+          (window as any).gtag("event", "add_to_cart", {
+            currency: "TRY",
+            value: p.price * actualDelta,
+            items: [{ item_id: String(p.id), item_name: p.name, price: p.price, quantity: actualDelta }],
+          });
+        } catch {}
+      }
+    }
     return blocked;
   }, []);
 

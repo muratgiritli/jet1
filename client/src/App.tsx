@@ -6,11 +6,13 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
 import { CustomerProvider } from "@/contexts/CustomerContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import BottomTabBar from "@/components/BottomTabBar";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import InstallBanner from "@/components/InstallBanner";
+import SocialProofToast from "@/components/SocialProofToast";
 const Landing = lazy(() => import("@/pages/landing"));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; errorMsg: string }> {
@@ -162,6 +164,7 @@ function AppShell() {
       {!isAdmin && !isDemo && location === "/" && <Footer />}
       {!isAdmin && !isDemo && <FloatingCartBar />}
       {!isAdmin && !isDemo && <BottomTabBar />}
+      {!isAdmin && !isDemo && <SocialProofToast />}
     </>
   );
 }
@@ -169,14 +172,16 @@ function AppShell() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <CustomerProvider>
-          <CartProvider>
-            <Toaster />
-            <AppShell />
-          </CartProvider>
-        </CustomerProvider>
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <CustomerProvider>
+            <CartProvider>
+              <Toaster />
+              <AppShell />
+            </CartProvider>
+          </CustomerProvider>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

@@ -1060,6 +1060,62 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     res.type("text/plain").send("jetgo-indexnow-2026");
   });
 
+  app.get("/api/social-proof/recent", async (_req, res) => {
+    try {
+      const all = await storage.getAllOrders();
+      const since = Date.now() - 24 * 60 * 60 * 1000;
+      const districtRegex = /(atakum|i̇lkadım|ilkadım|canik|tekkek[oö]y|bafra|terme|carşamba|çarşamba|vezirk[oö]pr[uü]|samsun)/i;
+      const districtNorm = (s: string) => {
+        const m = s.toLowerCase().normalize("NFC");
+        if (m.includes("atakum")) return "Atakum";
+        if (m.includes("ilkadım") || m.includes("i̇lkadım") || m.includes("ilkadim")) return "İlkadım";
+        if (m.includes("canik")) return "Canik";
+        if (m.includes("tekkek")) return "Tekkeköy";
+        if (m.includes("bafra")) return "Bafra";
+        if (m.includes("terme")) return "Terme";
+        if (m.includes("çarşamba") || m.includes("carşamba") || m.includes("carsamba")) return "Çarşamba";
+        if (m.includes("vezir")) return "Vezirköprü";
+        return "Samsun";
+      };
+      const seen = new Set<string>();
+      const out = all
+        .filter((o) => {
+          const created = o.createdAt ? new Date(o.createdAt).getTime() : 0;
+          if (created < since) return false;
+          if (!o.customerName || !Array.isArray(o.items) || o.items.length === 0) return false;
+          if (o.status === "iptal" || o.status === "cancelled") return false;
+          return true;
+        })
+        .sort((a, b) => new Date(b.createdAt!).getTime() - new Date(a.createdAt!).getTime())
+        .slice(0, 40)
+        .map((o) => {
+          const fullName = (o.customerName || "").trim();
+          const parts = fullName.split(/\s+/);
+          const firstName = parts[0] || "Bir müşteri";
+          const lastInitial = parts[1] && parts[1].length > 0 ? parts[1][0].toUpperCase() + "." : "";
+          const safeName = (firstName.length > 10 ? firstName.slice(0, 10) : firstName) + (lastInitial ? " " + lastInitial : "");
+          const addr = (o.customerAddress || "").trim();
+          const district = districtRegex.test(addr) ? districtNorm(addr) : "";
+          const firstItem = (o.items as any[])[0];
+          const productName = String(firstItem?.name || "Pet ürünü").slice(0, 60);
+          const ageMin = Math.floor((Date.now() - new Date(o.createdAt!).getTime()) / 60000);
+          const timeLabel = ageMin <= 30 ? "az önce" : ageMin <= 180 ? "biraz önce" : "bugün";
+          return { firstName: safeName, district, productName, timeLabel };
+        })
+        .filter((r) => {
+          const key = r.firstName + "|" + r.productName;
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .slice(0, 20);
+      res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
+      res.json(out);
+    } catch {
+      res.json([]);
+    }
+  });
+
   app.get("/api/products", async (req, res) => {
     const allProducts = await storage.getAllProducts();
     const isAdmin = !!(req.session as any)?.userId;
