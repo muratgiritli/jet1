@@ -40,6 +40,7 @@ import {
   AlertTriangle,
   Star,
   Bell,
+  Banknote,
   TrendingUp,
   Phone,
   MapPin,
@@ -1587,6 +1588,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "kuponlar", label: "Kuponlar", icon: <Tag className="w-3.5 h-3.5" /> },
             { key: "musteriler", label: "Müşteri", icon: <Users className="w-3.5 h-3.5" /> },
             { key: "bildirim", label: "Bildirim", icon: <Bell className="w-3.5 h-3.5" /> },
+            { key: "havale", label: "Havale", icon: <Banknote className="w-3.5 h-3.5" /> },
             { key: "banner", label: "Banner", icon: <ImageLucide className="w-3.5 h-3.5" /> },
             { key: "raporlama", label: "Raporlama", icon: <BarChart3 className="w-3.5 h-3.5" /> },
             { key: "stoksayim", label: "Stok Sayım", icon: <ScanLine className="w-3.5 h-3.5" /> },
@@ -1620,6 +1622,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "kuponlar" && <CouponsSection />}
         {activeSection === "musteriler" && <CustomersSection />}
         {activeSection === "bildirim" && <NotificationsSection />}
+        {activeSection === "havale" && <BankTransferAdminSection />}
         {activeSection === "banner" && <BannersSection />}
         {activeSection === "raporlama" && <ReportsSection />}
         {activeSection === "stoksayim" && <StokSayimSection />}
@@ -5824,10 +5827,13 @@ function SettingsSection() {
     loyalty_percent: "",
     admin_phone: "",
     order_notification_sms: "1",
-    payment_eft_enabled: "0",
+    payment_eft_enabled: "true",
     campaign_hero_title: "",
     campaign_hero_subtitle: "",
     campaign_end_date: "",
+    bank_account_name: "",
+    bank_iban: "",
+    bank_name: "",
   });
 
   useEffect(() => {
@@ -5841,10 +5847,13 @@ function SettingsSection() {
         loyalty_percent: settings.loyalty_percent || "5",
         admin_phone: settings.admin_phone || "",
         order_notification_sms: settings.order_notification_sms ?? "1",
-        payment_eft_enabled: settings.payment_eft_enabled ?? "0",
+        payment_eft_enabled: settings.payment_eft_enabled ?? "true",
         campaign_hero_title: settings.campaign_hero_title || "",
         campaign_hero_subtitle: settings.campaign_hero_subtitle || "",
         campaign_end_date: settings.campaign_end_date || "",
+        bank_account_name: settings.bank_account_name || "",
+        bank_iban: settings.bank_iban || "",
+        bank_name: settings.bank_name || "",
       });
     }
   }, [settings]);
@@ -5968,6 +5977,41 @@ function SettingsSection() {
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.payment_eft_enabled === "true" ? "translate-x-6" : "translate-x-1"}`} />
             </button>
+          </div>
+
+          <div className="pt-3 border-t space-y-3">
+            <h4 className="text-sm font-bold">🏦 Banka Hesap Bilgileri</h4>
+            <p className="text-[11px] text-muted-foreground">Bu bilgiler EFT/Havale seçeneğinde ve müşteriye giden SMS'te görünür.</p>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">Alıcı Adı</Label>
+              <Input
+                type="text"
+                placeholder="SİZPA LTD"
+                value={form.bank_account_name}
+                onChange={e => setForm(prev => ({ ...prev, bank_account_name: e.target.value.slice(0, 100) }))}
+                data-testid="input-bank-account-name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">Banka Adı (opsiyonel)</Label>
+              <Input
+                type="text"
+                placeholder="Örn: Ziraat Bankası"
+                value={form.bank_name}
+                onChange={e => setForm(prev => ({ ...prev, bank_name: e.target.value.slice(0, 100) }))}
+                data-testid="input-bank-name"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">IBAN</Label>
+              <Input
+                type="text"
+                placeholder="TR55 5544 4444 4444 4444 4444 44"
+                value={form.bank_iban}
+                onChange={e => setForm(prev => ({ ...prev, bank_iban: e.target.value.slice(0, 40) }))}
+                data-testid="input-bank-iban"
+              />
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -7510,5 +7554,117 @@ export default function AdminPage() {
         queryClient.setQueryData(["/api/admin/me"], null);
       }}
     />
+  );
+}
+
+function BankTransferAdminSection() {
+  const { toast } = useToast();
+  const { data: items = [], isLoading } = useQuery<any[]>({
+    queryKey: ["/api/admin/bank-transfer-notifications"],
+  });
+  const [filter, setFilter] = useState<string>("all");
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      const res = await apiRequest("PATCH", `/api/admin/bank-transfer-notifications/${id}`, { status });
+      if (!res.ok) throw new Error("Güncelleme başarısız");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-transfer-notifications"] });
+      toast({ title: "Güncellendi" });
+    },
+    onError: (err: any) => toast({ title: "Hata", description: err?.message, variant: "destructive" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => {
+      const res = await apiRequest("DELETE", `/api/admin/bank-transfer-notifications/${id}`);
+      if (!res.ok) throw new Error("Silme başarısız");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/bank-transfer-notifications"] });
+      toast({ title: "Silindi" });
+    },
+  });
+
+  const filtered = filter === "all" ? items : items.filter((i: any) => i.status === filter);
+
+  const STATUS: Record<string, { label: string; color: string }> = {
+    pending: { label: "Bekliyor", color: "bg-amber-100 text-amber-800" },
+    confirmed: { label: "Onaylandı", color: "bg-green-100 text-green-800" },
+    rejected: { label: "Reddedildi", color: "bg-red-100 text-red-800" },
+  };
+
+  return (
+    <div className="space-y-3" data-testid="section-bank-transfer-admin">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-bold flex items-center gap-2"><Banknote className="w-5 h-5" /> Havale Bildirimleri</h2>
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          className="text-sm border rounded-md px-2 py-1.5"
+          data-testid="select-havale-filter"
+        >
+          <option value="all">Tümü ({items.length})</option>
+          <option value="pending">Bekleyenler</option>
+          <option value="confirmed">Onaylananlar</option>
+          <option value="rejected">Reddedilenler</option>
+        </select>
+      </div>
+
+      {isLoading ? (
+        <div className="text-center py-8"><Loader2 className="w-6 h-6 animate-spin inline" /></div>
+      ) : filtered.length === 0 ? (
+        <Card><CardContent className="pt-6 text-center text-muted-foreground">Bildirim yok.</CardContent></Card>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((n: any) => {
+            const st = STATUS[n.status] || STATUS.pending;
+            return (
+              <Card key={n.id} data-testid={`havale-item-${n.id}`}>
+                <CardContent className="pt-4 space-y-2">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <div className="font-bold text-sm">
+                        {n.sender_name} — {Number(n.amount).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5">
+                        {n.order_id ? `Sipariş #${n.order_id} • ` : ""}{n.transfer_date}
+                        {n.sender_bank ? ` • ${n.sender_bank}` : ""}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        Üye: {n.customer_name} ({n.customer_phone})
+                      </div>
+                      {n.note && <div className="text-xs mt-1 bg-gray-50 dark:bg-gray-900 p-2 rounded">{n.note}</div>}
+                    </div>
+                    <Badge className={st.color}>{st.label}</Badge>
+                  </div>
+                  <div className="flex flex-wrap gap-2 pt-1 border-t">
+                    {n.status !== "confirmed" && (
+                      <Button size="sm" variant="default" onClick={() => updateMutation.mutate({ id: n.id, status: "confirmed" })} data-testid={`btn-confirm-${n.id}`}>
+                        <Check className="w-3 h-3 mr-1" /> Onayla
+                      </Button>
+                    )}
+                    {n.status !== "rejected" && (
+                      <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: n.id, status: "rejected" })} data-testid={`btn-reject-${n.id}`}>
+                        Reddet
+                      </Button>
+                    )}
+                    {n.status !== "pending" && (
+                      <Button size="sm" variant="outline" onClick={() => updateMutation.mutate({ id: n.id, status: "pending" })} data-testid={`btn-pending-${n.id}`}>
+                        Beklemeye Al
+                      </Button>
+                    )}
+                    <Button size="sm" variant="ghost" className="text-red-600" onClick={() => { if (confirm("Silinsin mi?")) deleteMutation.mutate(n.id); }} data-testid={`btn-delete-${n.id}`}>
+                      <Trash2 className="w-3 h-3" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
+        </div>
+      )}
+    </div>
   );
 }

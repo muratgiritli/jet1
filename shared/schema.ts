@@ -447,3 +447,28 @@ export const contactMessages = pgTable("contact_messages", {
 export type ContactMessage = typeof contactMessages.$inferSelect;
 export const insertContactMessageSchema = createInsertSchema(contactMessages).omit({ id: true, isRead: true, createdAt: true });
 export type InsertContactMessage = z.infer<typeof insertContactMessageSchema>;
+
+export const appSettings = pgTable("app_settings", {
+  key: text("key").primaryKey(),
+  value: text("value"),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+export type AppSetting = typeof appSettings.$inferSelect;
+
+export const bankTransferNotifications = pgTable("bank_transfer_notifications", {
+  id: serial("id").primaryKey(),
+  orderId: integer("order_id"),
+  customerId: integer("customer_id"),
+  customerName: text("customer_name").notNull(),
+  customerPhone: text("customer_phone").notNull(),
+  senderName: text("sender_name").notNull(),
+  senderBank: text("sender_bank"),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  transferDate: text("transfer_date").notNull(),
+  note: text("note"),
+  status: text("status").notNull().default("pending"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export type BankTransferNotification = typeof bankTransferNotifications.$inferSelect;
+export const insertBankTransferNotificationSchema = createInsertSchema(bankTransferNotifications).omit({ id: true, status: true, createdAt: true });
+export type InsertBankTransferNotification = z.infer<typeof insertBankTransferNotificationSchema>;

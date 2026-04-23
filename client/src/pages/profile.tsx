@@ -12,7 +12,7 @@ import {
   Package, Heart, Home, PawPrint, Bell,
   Plus, Trash2, Star, ChevronRight, Mail, CreditCard, FileText,
   ShoppingCart, RefreshCw, Eye, TrendingUp, UserX,
-  AlertTriangle, Lock, ChevronDown, ChevronUp, BarChart3
+  AlertTriangle, Lock, ChevronDown, ChevronUp, BarChart3, Banknote
 } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { useCart } from "@/contexts/CartContext";
@@ -43,12 +43,13 @@ function formatDeliverySlot(slot: string): string {
   return `${dayLabel} ${time}`;
 }
 
-type TabKey = "profile" | "points" | "orders" | "favorites" | "addresses" | "pets" | "notifications" | "spending" | "security";
+type TabKey = "profile" | "points" | "orders" | "favorites" | "addresses" | "pets" | "notifications" | "spending" | "security" | "havale";
 
 const TABS: { key: TabKey; label: string; icon: any; emoji: string }[] = [
   { key: "profile", label: "Profilim", icon: User, emoji: "👤" },
   { key: "points", label: "Para Puanlarım", icon: Star, emoji: "⭐" },
   { key: "orders", label: "Siparişlerim", icon: Package, emoji: "📦" },
+  { key: "havale", label: "Havale Bildirimi", icon: Banknote, emoji: "🏦" },
   { key: "spending", label: "Harcama Özeti", icon: TrendingUp, emoji: "📊" },
   { key: "favorites", label: "Favorilerim", icon: Heart, emoji: "❤️" },
   { key: "addresses", label: "Adreslerim", icon: Home, emoji: "🏠" },
@@ -194,6 +195,7 @@ export default function ProfilePage() {
             {activeTab === "addresses" && <AddressesSection />}
             {activeTab === "pets" && <PetsSection />}
             {activeTab === "notifications" && <NotificationsSection customer={customer!} refetch={refetch} toast={toast} />}
+            {activeTab === "havale" && <BankTransferSection customer={customer!} toast={toast} />}
             {activeTab === "security" && <SecuritySection customer={customer!} logout={logout} toast={toast} />}
           </div>
         </div>
@@ -1345,6 +1347,158 @@ function LoyaltyPointsSection() {
           </CardContent>
         </Card>
       )}
+    </div>
+  );
+}
+
+function BankTransferSection({ customer, toast }: { customer: any; toast: any }) {
+  const params = new URLSearchParams(window.location.search);
+  const presetOrderId = params.get("order") || "";
+  const [orderId, setOrderId] = useState(presetOrderId);
+  const [senderName, setSenderName] = useState("");
+  const [senderBank, setSenderBank] = useState("");
+  const [amount, setAmount] = useState("");
+  const [transferDate, setTransferDate] = useState(new Date().toISOString().slice(0, 10));
+  const [note, setNote] = useState("");
+
+  const { data: bankInfo } = useQuery<Record<string, string>>({
+    queryKey: ["/api/bank-info"],
+  });
+  const { data: notifications = [], isLoading: loadingNotifs } = useQuery<any[]>({
+    queryKey: ["/api/my-bank-transfer-notifications"],
+  });
+
+  const submitMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/bank-transfer-notifications", {
+        orderId: orderId || undefined,
+        senderName: senderName.trim(),
+        senderBank: senderBank.trim() || undefined,
+        amount: String(amount).replace(",", ".").trim(),
+        transferDate,
+        note: note.trim() || undefined,
+      });
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j?.message || "Bildirim gönderilemedi");
+      }
+    },
+    onSuccess: () => {
+      toast({ title: "Bildirim alındı", description: "Havaleniz en kısa sürede onaylanacaktır." });
+      queryClient.invalidateQueries({ queryKey: ["/api/my-bank-transfer-notifications"] });
+      setSenderName(""); setSenderBank(""); setAmount(""); setNote("");
+    },
+    onError: (err: any) => {
+      toast({ title: "Hata", description: err?.message || "Gönderilemedi", variant: "destructive" });
+    },
+  });
+
+  const copy = (txt: string) => {
+    navigator.clipboard?.writeText(txt).then(() => toast({ title: "Kopyalandı" })).catch(() => {});
+  };
+
+  const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+    pending: { label: "Onay Bekliyor", color: "bg-amber-100 text-amber-800" },
+    confirmed: { label: "Onaylandı", color: "bg-green-100 text-green-800" },
+    rejected: { label: "Reddedildi", color: "bg-red-100 text-red-800" },
+  };
+
+  return (
+    <div className="space-y-4">
+      {bankInfo?.bank_iban && (
+        <Card className="border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+          <CardContent className="pt-5 space-y-2">
+            <div className="flex items-center gap-2 font-bold text-blue-900 dark:text-blue-100">
+              <Banknote className="w-5 h-5" /> Banka Bilgilerimiz
+            </div>
+            <div className="text-sm space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <span><span className="text-muted-foreground">Alıcı:</span> <strong>{bankInfo.bank_account_name || "SİZPA LTD"}</strong></span>
+                <Button variant="outline" size="sm" onClick={() => copy(bankInfo.bank_account_name || "SİZPA LTD")} data-testid="btn-copy-name">Kopyala</Button>
+              </div>
+              {bankInfo.bank_name && (
+                <div><span className="text-muted-foreground">Banka:</span> <strong>{bankInfo.bank_name}</strong></div>
+              )}
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-mono break-all"><span className="text-muted-foreground font-sans">IBAN:</span> <strong>{bankInfo.bank_iban}</strong></span>
+                <Button variant="outline" size="sm" onClick={() => copy(bankInfo.bank_iban)} data-testid="btn-copy-iban">Kopyala</Button>
+              </div>
+              <p className="text-xs text-muted-foreground pt-1">Lütfen havale açıklamasına sipariş numaranızı yazınız.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card>
+        <CardContent className="pt-5">
+          <h2 className="font-bold mb-3">Havale Bildirim Formu</h2>
+          <div className="space-y-3">
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Sipariş Numarası</label>
+              <Input value={orderId} onChange={(e) => setOrderId(e.target.value)} placeholder="Örn: 123" data-testid="input-havale-order-id" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Gönderen Ad Soyad *</label>
+              <Input value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="Havaleyi yapan kişinin adı" data-testid="input-havale-sender-name" />
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Gönderen Banka</label>
+              <Input value={senderBank} onChange={(e) => setSenderBank(e.target.value)} placeholder="Örn: Ziraat Bankası" data-testid="input-havale-sender-bank" />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Tutar (TL) *</label>
+                <Input type="number" step="0.01" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" data-testid="input-havale-amount" />
+              </div>
+              <div>
+                <label className="text-xs font-medium text-muted-foreground">Havale Tarihi *</label>
+                <Input type="date" value={transferDate} onChange={(e) => setTransferDate(e.target.value)} data-testid="input-havale-date" />
+              </div>
+            </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground">Açıklama / Not</label>
+              <Textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={500} rows={2} placeholder="Eklemek istediğiniz bilgi..." data-testid="input-havale-note" />
+            </div>
+            <Button
+              className="w-full"
+              disabled={submitMutation.isPending || !senderName.trim() || !amount || Number(amount) <= 0}
+              onClick={() => submitMutation.mutate()}
+              data-testid="btn-havale-submit"
+            >
+              {submitMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Check className="w-4 h-4 mr-2" />}
+              Bildirimi Gönder
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-5">
+          <h2 className="font-bold mb-3">Havale Bildirimlerim</h2>
+          {loadingNotifs ? (
+            <div className="text-center py-4"><Loader2 className="w-5 h-5 animate-spin inline" /></div>
+          ) : notifications.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Henüz bildirim yok.</p>
+          ) : (
+            <div className="space-y-2">
+              {notifications.map((n) => {
+                const st = STATUS_LABELS[n.status] || STATUS_LABELS.pending;
+                return (
+                  <div key={n.id} className="border rounded-lg p-3 text-sm" data-testid={`havale-row-${n.id}`}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-semibold">{n.sender_name} — {Number(n.amount).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                      <Badge className={st.color}>{st.label}</Badge>
+                    </div>
+                    <div className="text-xs text-muted-foreground">
+                      {n.order_id ? `Sipariş #${n.order_id} • ` : ""}{n.transfer_date} {n.sender_bank ? `• ${n.sender_bank}` : ""}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

@@ -93,7 +93,10 @@ export default function Checkout() {
   const { data: publicSettings } = useQuery<Record<string, string>>({
     queryKey: ["/api/public-settings"],
   });
-  const eftEnabled = publicSettings?.payment_eft_enabled === "true";
+  const eftEnabled = publicSettings?.payment_eft_enabled !== "0" && publicSettings?.payment_eft_enabled !== "false";
+  const bankAccountName = publicSettings?.bank_account_name || "";
+  const bankIban = publicSettings?.bank_iban || "";
+  const bankName = publicSettings?.bank_name || "";
 
   const { data: savedAddresses = [] } = useQuery<any[]>({
     queryKey: ["/api/customer/addresses"],
@@ -1411,6 +1414,22 @@ export default function Checkout() {
                       );
                     })}
                   </RadioGroup>
+                  )}
+
+                  {paymentId === "eft" && bankIban && (
+                    <div className="mt-3 rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/30 p-3 space-y-1.5" data-testid="info-bank-transfer">
+                      <div className="text-sm font-bold text-blue-900 dark:text-blue-100 flex items-center gap-1.5">
+                        <Banknote className="w-4 h-4" /> Banka Havalesi / EFT Bilgileri
+                      </div>
+                      <div className="text-xs text-blue-900 dark:text-blue-100">
+                        <div><span className="font-semibold">Alıcı:</span> {bankAccountName || "SİZPA LTD"}</div>
+                        {bankName && <div><span className="font-semibold">Banka:</span> {bankName}</div>}
+                        <div className="font-mono"><span className="font-semibold font-sans">IBAN:</span> {bankIban}</div>
+                        <div className="mt-1 text-[11px] text-blue-800 dark:text-blue-200">
+                          Açıklama kısmına sipariş numaranızı yazınız. Sipariş tamamlandıktan sonra banka bilgileri SMS ile de gönderilecek ve "Hesabım → Havale Bildirimi" sekmesinden formu doldurarak bize bildirebilirsiniz.
+                        </div>
+                      </div>
+                    </div>
                   )}
 
                   {!hasCampaignItems && (

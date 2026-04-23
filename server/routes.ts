@@ -1698,7 +1698,167 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       console.error("Admin notification error:", e);
     }
 
+    try {
+      if (/havale|eft/i.test(orderData.paymentMethod || "") && orderData.customerPhone) {
+        const bankRes = await sharedPool.query(
+          "SELECT key, value FROM app_settings WHERE key IN ('bank_account_name','bank_iban','bank_name')"
+        );
+        const bank: Record<string, string> = {};
+        for (const r of bankRes.rows) bank[r.key] = r.value || "";
+        if (bank.bank_iban) {
+          const formUrl = `https://www.jetgo.shop/hesabim?tab=havale&order=${order.id}`;
+          const lines = [
+            `JETGO Siparis #${order.id}`,
+            `Tutar: ${orderData.grandTotal} TL`,
+            `Alici: ${bank.bank_account_name || "SIZPA LTD"}`,
+            bank.bank_name ? `Banka: ${bank.bank_name}` : "",
+            `IBAN: ${bank.bank_iban}`,
+            `Aciklama: Siparis ${order.id}`,
+            `Havale sonrasi bildirim: ${formUrl}`,
+          ].filter(Boolean);
+          sendSmsViaNetgsm(orderData.customerPhone, lines.join("\n")).catch(err => {
+            console.error("Customer havale SMS error:", err);
+          });
+        }
+      }
+    } catch (e) {
+      console.error("Havale SMS error:", e);
+    }
+
     res.status(201).json(order);
+  });
+
+  app.get("/api/bank-info", async (_req, res) => {
+    try {
+      const r = await sharedPool.query("SELECT key, value FROM app_settings WHERE key IN ('bank_account_name','bank_iban','bank_name','payment_eft_enabled')");
+      const out: Record<string, string> = {};
+      for (const row of r.rows) out[row.key] = row.value || "";
+      res.json(out);
+    } catch {
+      res.json({});
+    }
+  });
+
+  app.post("/api/bank-transfer-notifications", async (req, res) => {
+    try {
+      const customerId = (req.session as any)?.customerId;
+      if (!customerId) return res.status(401).json({ message: "Giriş gerekli" });
+
+      const custRow = await sharedPool.query("SELECT name, phone FROM customers WHERE id = $1", [customerId]);
+      const cust = custRow.rows[0];
+      if (!cust) return res.status(401).json({ message: "Müşteri bulunamadı" });
+
+      const { orderId, senderName, senderBank, amount, transferDate, note } = req.body || {};
+      if (!senderName || amount == null || !transferDate) {
+        return res.status(400).json({ message: "Eksik alanlar var" });
+      }
+
+      const amtStr = String(amount).replace(",", ".").trim();
+      const amt = Number(amtStr);
+      if (!isFinite(amt) || amt <= 0 || amt > 1000000) return res.status(400).json({ message: "Tutar geçersiz" });
+
+      const dateStr = String(transferDate).trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return res.status(400).json({ message: "Tarih formatı geçersiz (YYYY-AA-GG)" });
+      const dateMs = Date.parse(dateStr + "T00:00:00Z");
+      if (!isFinite(dateMs) || dateMs > Date.now() + 86400000 || dateMs < Date.now() - 90 * 86400000) {
+        return res.status(400).json({ message: "Tarih makul aralıkta değil" });
+      }
+
+      let validOrderId: number | null = null;
+      if (orderId) {
+        const oid = parseInt(String(orderId));
+        if (!isNaN(oid)) {
+          const ord = await sharedPool.query("SELECT customer_id FROM orders WHERE id = $1", [oid]);
+          if (ord.rows[0] && Number(ord.rows[0].customer_id) === Number(customerId)) {
+            validOrderId = oid;
+          }
+        }
+      }
+
+      const sName = String(senderName).trim().slice(0, 100);
+      const sBank = senderBank ? String(senderBank).trim().slice(0, 80) : null;
+      if (sName.length < 2) return res.status(400).json({ message: "Gönderen adı geçersiz" });
+
+      const dedup = await sharedPool.query(
+        `SELECT id FROM bank_transfer_notifications
+         WHERE customer_id = $1 AND amount = $2 AND transfer_date = $3 AND sender_name = $4
+         AND created_at > NOW() - INTERVAL '10 minutes' LIMIT 1`,
+        [customerId, amt, dateStr, sName]
+      );
+      if (dedup.rows[0]) {
+        return res.status(200).json({ success: true, id: dedup.rows[0].id, deduplicated: true });
+      }
+
+      const result = await sharedPool.query(
+        `INSERT INTO bank_transfer_notifications
+         (order_id, customer_id, customer_name, customer_phone, sender_name, sender_bank, amount, transfer_date, note, status)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,'pending') RETURNING id`,
+        [validOrderId, customerId, cust.name || "", cust.phone || "",
+         sName, sBank, amt, dateStr,
+         note ? String(note).trim().slice(0, 500) : null]
+      );
+      const customerName = cust.name || "";
+      const transferDateLog = dateStr;
+      try {
+        const adminPhoneResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'admin_phone'");
+        const adminPhone = adminPhoneResult.rows[0]?.value;
+        if (adminPhone) {
+          sendSmsViaNetgsm(adminPhone, `HAVALE BILDIRIMI\nSiparis: ${validOrderId || "-"}\n${customerName}\nGonderen: ${sName}\nTutar: ${amt} TL\nTarih: ${transferDateLog}`).catch(() => {});
+        }
+      } catch {}
+      res.status(201).json({ success: true, id: result.rows[0].id });
+    } catch (err: any) {
+      console.error("Bank transfer notification error:", err);
+      res.status(500).json({ message: err?.message || "Bildirim kaydedilemedi" });
+    }
+  });
+
+  app.get("/api/my-bank-transfer-notifications", async (req, res) => {
+    try {
+      const customerId = (req.session as any)?.customerId;
+      if (!customerId) return res.status(401).json({ message: "Giriş gerekli" });
+      const r = await sharedPool.query(
+        "SELECT * FROM bank_transfer_notifications WHERE customer_id = $1 ORDER BY id DESC",
+        [customerId]
+      );
+      res.json(r.rows);
+    } catch {
+      res.json([]);
+    }
+  });
+
+  app.get("/api/admin/bank-transfer-notifications", requireAdmin, async (_req, res) => {
+    try {
+      const r = await sharedPool.query("SELECT * FROM bank_transfer_notifications ORDER BY id DESC LIMIT 500");
+      res.json(r.rows);
+    } catch {
+      res.json([]);
+    }
+  });
+
+  app.patch("/api/admin/bank-transfer-notifications/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
+      const { status } = req.body || {};
+      const allowed = ["pending", "confirmed", "rejected"];
+      if (!allowed.includes(String(status))) return res.status(400).json({ message: "Geçersiz durum" });
+      await sharedPool.query("UPDATE bank_transfer_notifications SET status = $1 WHERE id = $2", [status, id]);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err?.message || "Güncellenemedi" });
+    }
+  });
+
+  app.delete("/api/admin/bank-transfer-notifications/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
+      await sharedPool.query("DELETE FROM bank_transfer_notifications WHERE id = $1", [id]);
+      res.json({ success: true });
+    } catch (err: any) {
+      res.status(500).json({ message: err?.message || "Silinemedi" });
+    }
   });
 
   app.get("/api/admin/new-order-check", requireAdmin, async (_req, res) => {
@@ -1726,7 +1886,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.get("/api/public-settings", async (_req, res) => {
     try {
-      const result = await sharedPool.query("SELECT key, value FROM app_settings WHERE key IN ('payment_eft_enabled', 'campaign_hero_title', 'campaign_hero_subtitle', 'campaign_end_date')");
+      const result = await sharedPool.query("SELECT key, value FROM app_settings WHERE key IN ('payment_eft_enabled', 'campaign_hero_title', 'campaign_hero_subtitle', 'campaign_end_date', 'bank_account_name', 'bank_iban', 'bank_name')");
       const settings: Record<string, string> = {};
       for (const row of result.rows) settings[row.key] = row.value;
       res.json(settings);
@@ -1750,7 +1910,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     try {
       const updates = req.body;
       const numericKeys = ["pet_base_points", "pet_streak_divisor", "pet_max_points", "pet_base_exp", "pet_streak_exp_bonus", "loyalty_percent"];
-      const textKeys = ["admin_phone", "order_notification_sms", "payment_eft_enabled", "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date"];
+      const textKeys = ["admin_phone", "order_notification_sms", "payment_eft_enabled", "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date", "bank_account_name", "bank_iban", "bank_name"];
       for (const [key, value] of Object.entries(updates)) {
         if (numericKeys.includes(key)) {
           const numVal = Number(value);
