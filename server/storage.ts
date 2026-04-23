@@ -633,10 +633,13 @@ export class DatabaseStorage implements IStorage {
     }
     await db.delete(petProfiles).where(eq(petProfiles.customerId, customerId));
     await db.delete(loyaltyPoints).where(eq(loyaltyPoints.customerId, customerId));
-    await pool.query(`DELETE FROM virtual_pets WHERE customer_id = $1`, [customerId]);
-    await pool.query(`DELETE FROM pet_contest_entries WHERE customer_id = $1`, [customerId]);
-    await pool.query(`DELETE FROM lost_found_posts WHERE customer_id = $1`, [customerId]);
-    await pool.query(`DELETE FROM trusted_devices WHERE customer_id = $1`, [customerId]);
+    const safeDel = async (sql: string) => { try { await pool.query(sql, [customerId]); } catch {} };
+    await safeDel(`DELETE FROM virtual_pets WHERE customer_id = $1`);
+    await safeDel(`DELETE FROM pet_contest_entries WHERE customer_id = $1`);
+    await safeDel(`DELETE FROM pet_contest_votes WHERE customer_id = $1`);
+    await safeDel(`DELETE FROM lost_found_posts WHERE customer_id = $1`);
+    await safeDel(`DELETE FROM trusted_devices WHERE customer_id = $1`);
+    await safeDel(`DELETE FROM coupons WHERE customer_id = $1`);
     await db.delete(customers).where(eq(customers.id, customerId));
   }
 }

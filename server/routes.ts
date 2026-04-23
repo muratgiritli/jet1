@@ -3051,8 +3051,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       if (isNaN(id)) return res.status(400).json({ message: "Geçersiz müşteri ID" });
       await storage.deleteCustomerAccount(id);
       res.json({ success: true });
-    } catch (err) {
-      res.status(500).json({ message: "Müşteri silme hatası" });
+    } catch (err: any) {
+      console.error("Customer delete error:", err);
+      res.status(500).json({ message: err?.message || "Müşteri silme hatası" });
     }
   });
 

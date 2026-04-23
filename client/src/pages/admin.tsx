@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import BackNavigation from "@/components/BackNavigation";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Dialog,
   DialogContent,
@@ -68,7 +69,6 @@ import {
   LogIn,
   ThumbsUp,
   Mail,
-  Trash2,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -4982,12 +4982,19 @@ function CustomersSection() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/admin/customers/${id}`);
+      const res = await apiRequest("DELETE", `/api/admin/customers/${id}`);
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        throw new Error(j?.message || "Silme başarısız");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/customers"] });
       setDeleteConfirmId(null);
       toast({ title: "Müşteri silindi" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Müşteri silinemedi", description: err?.message || "Bilinmeyen hata", variant: "destructive" });
     },
   });
 
