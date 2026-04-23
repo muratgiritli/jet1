@@ -809,6 +809,12 @@ export async function registerRoutes(
     res.type("text/html").send("google-site-verification: googleb16b707b9ac148c4.html");
   });
 
+  app.get("/yandex_bac46bfa93c251d0.html", (_req, res) => {
+    res.type("text/html").send(
+      `<html>\n    <head>\n        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">\n    </head>\n    <body>Verification: bac46bfa93c251d0</body>\n</html>`
+    );
+  });
+
   // Google Merchant Center product feed (RSS 2.0 with g: namespace)
   app.get("/google-merchant.xml", async (_req, res) => {
     try {
