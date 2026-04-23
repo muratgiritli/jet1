@@ -548,7 +548,7 @@ export default function Checkout() {
           const combined = [flagText, orderNote.trim()].filter(Boolean).join(" ");
           return combined || undefined;
         })(),
-        deliverySlot: deliverySlot || undefined,
+        deliverySlot: (selectedProducts.some(({ product }) => isPreorderProduct(String(product.id))) || hasCampaignItems) ? undefined : (deliverySlot || undefined),
         campaignProductIds: hasCampaignItems ? Array.from(campaignCartIds) : undefined,
         ...((paymentId === "pos" || paymentId === "online") && installmentMonths > 1 ? (() => {
           const r = installmentRates.find(x => x.months === installmentMonths);
@@ -1068,7 +1068,7 @@ export default function Checkout() {
               </Card>
             </section>
 
-            {!hasCampaignItems && (
+            {!hasCampaignItems && !selectedProducts.some(({ product }) => isPreorderProduct(String(product.id))) && (
               <section className="mt-6">
                 <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-delivery">
                   <Clock className="w-4 h-4 inline mr-1.5 -mt-0.5" />
