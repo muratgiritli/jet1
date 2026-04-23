@@ -6,7 +6,6 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { CartProvider } from "@/contexts/CartContext";
 import { CustomerProvider } from "@/contexts/CustomerContext";
-import { ThemeProvider } from "@/contexts/ThemeContext";
 import BottomTabBar from "@/components/BottomTabBar";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
@@ -172,16 +171,14 @@ function AppShell() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
-        <TooltipProvider>
-          <CustomerProvider>
-            <CartProvider>
-              <Toaster />
-              <AppShell />
-            </CartProvider>
-          </CustomerProvider>
-        </TooltipProvider>
-      </ThemeProvider>
+      <TooltipProvider>
+        <CustomerProvider>
+          <CartProvider>
+            <Toaster />
+            <AppShell />
+          </CartProvider>
+        </CustomerProvider>
+      </TooltipProvider>
     </QueryClientProvider>
   );
 }
