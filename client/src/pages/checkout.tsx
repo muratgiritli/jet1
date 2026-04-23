@@ -115,24 +115,6 @@ export default function Checkout() {
   }, [isLoggedIn, customer, savedAddresses]);
 
   const beginCheckoutFiredRef = useRef(false);
-  useEffect(() => {
-    if (beginCheckoutFiredRef.current) return;
-    if (selectedProducts.length === 0) return;
-    if (typeof window === "undefined" || !(window as any).gtag) return;
-    try {
-      (window as any).gtag("event", "begin_checkout", {
-        currency: "TRY",
-        value: subtotal,
-        items: selectedProducts.map(({ product, qty }) => ({
-          item_id: String(product.id),
-          item_name: product.name,
-          price: product.price,
-          quantity: qty,
-        })),
-      });
-      beginCheckoutFiredRef.current = true;
-    } catch {}
-  }, [selectedProducts, subtotal]);
 
 
   const formatAuthPhone = (val: string) => {
@@ -421,6 +403,25 @@ export default function Checkout() {
 
   const stdShipping = subtotal >= CONFIG.shipLimit ? 0 : CONFIG.shipFee;
   const stdMinReached = subtotal >= CONFIG.minLimit;
+
+  useEffect(() => {
+    if (beginCheckoutFiredRef.current) return;
+    if (selectedProducts.length === 0) return;
+    if (typeof window === "undefined" || !(window as any).gtag) return;
+    try {
+      (window as any).gtag("event", "begin_checkout", {
+        currency: "TRY",
+        value: subtotal,
+        items: selectedProducts.map(({ product, qty }) => ({
+          item_id: String(product.id),
+          item_name: product.name,
+          price: product.price,
+          quantity: qty,
+        })),
+      });
+      beginCheckoutFiredRef.current = true;
+    } catch {}
+  }, [selectedProducts, subtotal]);
 
   const dominantAnimal = useMemo(() => {
     const counts: Record<string, number> = {};
