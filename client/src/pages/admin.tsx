@@ -37,6 +37,7 @@ import {
   Cat,
   Bird,
   Rabbit,
+  Fish,
   AlertTriangle,
   Star,
   Bell,
@@ -81,6 +82,7 @@ const ANIMALS = [
   { id: "kopek", name: "Köpek", icon: Dog },
   { id: "kus", name: "Kuş", icon: Bird },
   { id: "kemirgen", name: "Kemirgen", icon: Rabbit },
+  { id: "akvaryum", name: "Akvaryum", icon: Fish },
 ];
 
 const TR_MONTHS_ADMIN = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
