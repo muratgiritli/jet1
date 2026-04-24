@@ -1728,6 +1728,14 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     res.status(201).json(order);
   });
 
+  app.all("/api/iyzico/webhook", async (req, res) => {
+    try {
+      const payload = req.method === "GET" ? req.query : req.body;
+      console.log("[iyzico-webhook]", new Date().toISOString(), JSON.stringify(payload).slice(0, 500));
+    } catch {}
+    res.status(200).json({ status: "success" });
+  });
+
   app.get("/api/bank-info", async (_req, res) => {
     try {
       const r = await sharedPool.query("SELECT key, value FROM app_settings WHERE key IN ('bank_account_name','bank_iban','bank_name','payment_eft_enabled')");
