@@ -93,7 +93,7 @@ const SUBCATEGORY_ICONS: Record<string, string> = {
   "akvaryum-yem": "🦐",
 };
 
-const DIRECT_PRODUCT_ANIMALS = ["kemirgen", "akvaryum"];
+const DIRECT_PRODUCT_ANIMALS = ["kemirgen"];
 
 function KemirgenProductCard({ product }: { product: Product }) {
   const { basket, updateQty, isKediKumu } = useCart();

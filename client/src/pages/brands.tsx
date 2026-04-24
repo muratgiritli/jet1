@@ -80,7 +80,7 @@ export default function BrandsPage() {
     (c) => c.animal === animalSlug && c.subcategory === mappedSubSlug
   );
 
-  const animalLabel = animalSlug === "kopek" ? "Köpek" : animalSlug === "kedi" ? "Kedi" : animalSlug === "kus" ? "Kuş" : "Kemirgen";
+  const animalLabel = animalSlug === "kopek" ? "Köpek" : animalSlug === "kedi" ? "Kedi" : animalSlug === "kus" ? "Kuş" : animalSlug === "akvaryum" ? "Akvaryum" : "Kemirgen";
   const title = SUBCATEGORY_TITLES[subSlug] || subSlug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
   if (isLoading) {
