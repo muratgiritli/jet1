@@ -11,7 +11,7 @@ interface SEOProps {
   keywords?: string;
 }
 
-export const SITE_DOMAIN = "https://www.jetgo.shop";
+export const SITE_DOMAIN = "https://www.jetgomarket.com";
 export const SITE_NAME = "JETGO Pet Shop Samsun";
 export const DEFAULT_OG_IMAGE = `${SITE_DOMAIN}/og-image.webp`;
 
@@ -89,7 +89,7 @@ export const LOCAL_BUSINESS_JSONLD = {
   "logo": `${SITE_DOMAIN}/favicon.webp`,
   "image": [`${SITE_DOMAIN}/og-image.webp`, `${SITE_DOMAIN}/favicon.webp`],
   "telephone": "+908508403959",
-  "email": "info@sizpa.com",
+  "email": "info@jetgomarket.com",
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A",
@@ -164,8 +164,8 @@ export const LOCAL_BUSINESS_JSONLD = {
     { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Para Puan Kazanma (5%)" } },
   ],
   "sameAs": [
-    "https://www.instagram.com/jetgo.shop",
-    "https://www.facebook.com/jetgo.shop",
+    "https://www.instagram.com/jetgomarket.com",
+    "https://www.facebook.com/jetgomarket.com",
   ],
 };
 

@@ -4875,7 +4875,7 @@ function DashboardSection() {
                     size="sm"
                     variant="ghost"
                     className="h-6 px-2 text-[10px] text-blue-600 shrink-0"
-                    onClick={() => { setSmsTarget({ phone: c.phone, name: c.name }); setSmsText(`Merhaba ${c.name}, sizi özledik! 🐾 JETGO'da yeni ürünler sizi bekliyor. Hemen sipariş verin, kapınıza getirelim! jetgo.shop`); }}
+                    onClick={() => { setSmsTarget({ phone: c.phone, name: c.name }); setSmsText(`Merhaba ${c.name}, sizi özledik! 🐾 JETGO'da yeni ürünler sizi bekliyor. Hemen sipariş verin, kapınıza getirelim! jetgomarket.com`); }}
                     data-testid={`btn-remind-${c.id}`}
                   >
                     <Send className="w-3 h-3 mr-0.5" /> SMS
@@ -5260,9 +5260,9 @@ function NotificationsSection() {
   };
 
   const quickTemplates = [
-    { label: "Yeni Ürün", text: "JETGO'da yeni ürünler geldi! Hemen inceleyin: jetgo.shop" },
-    { label: "Kampanya", text: "JETGO'da büyük kampanya başladı! Kaçırmayın: jetgo.shop" },
-    { label: "Kargo Ücretsiz", text: "Bugüne özel kargo bedava! Sipariş verin: jetgo.shop" },
+    { label: "Yeni Ürün", text: "JETGO'da yeni ürünler geldi! Hemen inceleyin: jetgomarket.com" },
+    { label: "Kampanya", text: "JETGO'da büyük kampanya başladı! Kaçırmayın: jetgomarket.com" },
+    { label: "Kargo Ücretsiz", text: "Bugüne özel kargo bedava! Sipariş verin: jetgomarket.com" },
   ];
 
   return (

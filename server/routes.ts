@@ -262,7 +262,7 @@ export async function registerRoutes(
 
   app.get("/sitemap.xml", async (_req, res) => {
     try {
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgomarket.com";
       const today = new Date().toISOString().split("T")[0];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
@@ -283,7 +283,7 @@ export async function registerRoutes(
 
   app.get("/sitemap-main.xml", async (_req, res) => {
     try {
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgomarket.com";
       const staticPages = [
         { url: "/", priority: "1.0", changefreq: "daily" },
         { url: "/kategori", priority: "0.9", changefreq: "weekly" },
@@ -337,7 +337,7 @@ export async function registerRoutes(
 
   app.get("/sitemap-products.xml", async (_req, res) => {
     try {
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgomarket.com";
       const allProducts = await storage.getAllProducts();
       const activeProducts = allProducts.filter((p: any) => p.isActive && p.stock > 0 && p.price > 0);
       const today = new Date().toISOString().split("T")[0];
@@ -360,7 +360,7 @@ export async function registerRoutes(
 
   app.get("/sitemap-seo.xml", async (_req, res) => {
     try {
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgomarket.com";
       const today = new Date().toISOString().split("T")[0];
       const coreSlugs = [
         { url: "/samsun-petshop", priority: "0.9", changefreq: "weekly" },
@@ -509,7 +509,7 @@ export async function registerRoutes(
   app.get("/api/export/xlsx", requireAdmin, async (_req, res) => {
     try {
       const XLSX = await import("xlsx");
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgomarket.com";
       const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen" };
 
       const { rows } = await sharedPool.query(`
@@ -558,7 +558,7 @@ export async function registerRoutes(
 
   app.get("/api/export/yml", requireAdmin, async (_req, res) => {
     try {
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgomarket.com";
       const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen" };
 
       const { rows } = await sharedPool.query(`
@@ -582,7 +582,7 @@ export async function registerRoutes(
 
       const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-      let yml = `<?xml version="1.0" encoding="UTF-8"?>\n<yml_catalog date="${new Date().toISOString().split("T")[0]}">\n  <shop>\n    <name>JETGO Pet Shop</name>\n    <company>Sizpa İnternet Tic. Ltd. Şti.</company>\n    <url>https://www.jetgo.shop</url>\n    <currencies>\n      <currency id="TRY" rate="1"/>\n    </currencies>\n    <categories>\n`;
+      let yml = `<?xml version="1.0" encoding="UTF-8"?>\n<yml_catalog date="${new Date().toISOString().split("T")[0]}">\n  <shop>\n    <name>JETGO Pet Shop</name>\n    <company>Sizpa İnternet Tic. Ltd. Şti.</company>\n    <url>https://www.jetgomarket.com</url>\n    <currencies>\n      <currency id="TRY" rate="1"/>\n    </currencies>\n    <categories>\n`;
 
       for (const [, cat] of categories) {
         yml += `      <category id="${cat.id}">${esc(cat.subcat)} (${ANIMAL_MAP[cat.animal] || cat.animal})</category>\n`;
@@ -819,7 +819,7 @@ export async function registerRoutes(
   // Google Merchant Center product feed (RSS 2.0 with g: namespace)
   app.get("/google-merchant.xml", async (_req, res) => {
     try {
-      const SITE = "https://www.jetgo.shop";
+      const SITE = "https://www.jetgomarket.com";
       const ANIMAL_LABEL: Record<string, string> = {
         kedi: "Kedi", kopek: "Köpek", kus: "Kuş",
         kemirgen: "Kemirgen", akvaryum: "Akvaryum", balik: "Balık",
@@ -998,7 +998,7 @@ export async function registerRoutes(
       "User-agent: DuckDuckBot",
       "Allow: /",
       "",
-      "Sitemap: https://www.jetgo.shop/sitemap.xml",
+      "Sitemap: https://www.jetgomarket.com/sitemap.xml",
       "",
     ].join("\n");
     res.send(txt);
@@ -1016,9 +1016,9 @@ export async function registerRoutes(
 - **Şehir:** Samsun, Türkiye
 - **Hizmet bölgeleri:** Atakum, İlkadım, Canik (tüm mahalleler)
 - **Mağaza adresi:** Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A, Atakum, Samsun (55200)
-- **Domain:** https://www.jetgo.shop
+- **Domain:** https://www.jetgomarket.com
 - **Telefon:** +90 850 840 39 59
-- **E-posta:** info@sizpa.com
+- **E-posta:** info@jetgomarket.com
 - **Çalışma saatleri:** Pazartesi-Cumartesi 09:00-22:00, Pazar 10:00-22:00 (online sipariş 7/24)
 
 ## Ana Hizmetler
@@ -1032,18 +1032,18 @@ export async function registerRoutes(
 - Sokak hayvanlarına askıda mama bağışı
 
 ## Ana Sayfalar
-- Anasayfa: https://www.jetgo.shop/
-- Kedi Maması: https://www.jetgo.shop/kedi-mamasi
-- Köpek Maması: https://www.jetgo.shop/kopek-mamasi
-- Kedi Kumu: https://www.jetgo.shop/kedi-kumu
-- Pet Aksesuar: https://www.jetgo.shop/pet-aksesuar
-- Atakum Pet Shop: https://www.jetgo.shop/atakum-petshop
-- İlkadım Pet Shop: https://www.jetgo.shop/ilkadim-petshop
-- Canik Pet Shop: https://www.jetgo.shop/canik-petshop
-- Kampanyalar: https://www.jetgo.shop/kampanya
-- Blog: https://www.jetgo.shop/blog
-- İletişim: https://www.jetgo.shop/iletisim
-- Sitemap: https://www.jetgo.shop/sitemap.xml
+- Anasayfa: https://www.jetgomarket.com/
+- Kedi Maması: https://www.jetgomarket.com/kedi-mamasi
+- Köpek Maması: https://www.jetgomarket.com/kopek-mamasi
+- Kedi Kumu: https://www.jetgomarket.com/kedi-kumu
+- Pet Aksesuar: https://www.jetgomarket.com/pet-aksesuar
+- Atakum Pet Shop: https://www.jetgomarket.com/atakum-petshop
+- İlkadım Pet Shop: https://www.jetgomarket.com/ilkadim-petshop
+- Canik Pet Shop: https://www.jetgomarket.com/canik-petshop
+- Kampanyalar: https://www.jetgomarket.com/kampanya
+- Blog: https://www.jetgomarket.com/blog
+- İletişim: https://www.jetgomarket.com/iletisim
+- Sitemap: https://www.jetgomarket.com/sitemap.xml
 
 ## Sıkça Sorulan Sorular
 - **Samsun'da pet shop ürünleri kaç saatte teslim edilir?** Atakum, İlkadım, Canik içi siparişler aynı gün, çoğu zaman 1-3 saat içinde teslim edilir.
@@ -1706,7 +1706,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         const bank: Record<string, string> = {};
         for (const r of bankRes.rows) bank[r.key] = r.value || "";
         if (bank.bank_iban) {
-          const formUrl = `https://www.jetgo.shop/hesabim?tab=havale&order=${order.id}`;
+          const formUrl = `https://www.jetgomarket.com/hesabim?tab=havale&order=${order.id}`;
           const lines = [
             `JETGO Siparis #${order.id}`,
             `Tutar: ${orderData.grandTotal} TL`,
@@ -1979,7 +1979,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     if (status === "tamamlandi" && order.customerPhone) {
-      const smsMessage = `Siparissiniz teslim edildi. Jetgo ile alisveris yaptiginiz icin tesekkurler! Bir sonraki siparissinizde 50 TL indirim icin JETGO50 kodunu kullanin. jetgo.shop`;
+      const smsMessage = `Siparissiniz teslim edildi. Jetgo ile alisveris yaptiginiz icin tesekkurler! Bir sonraki siparissinizde 50 TL indirim icin JETGO50 kodunu kullanin. jetgomarket.com`;
       sendSmsViaNetgsm(order.customerPhone, smsMessage).catch(err => {
         console.error("Post-delivery SMS error:", err);
       });
@@ -2042,7 +2042,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     const code = generateOTP();
     otpStore.set(normalized, { code, expiresAt: Date.now() + 180000, attempts: 0 });
 
-    const hostHeader = (req.headers["x-forwarded-host"] as string) || req.headers.host || "jetgo.shop";
+    const hostHeader = (req.headers["x-forwarded-host"] as string) || req.headers.host || "jetgomarket.com";
     const otpHost = String(hostHeader).split(":")[0];
     const message = `<#> JETGO dogrulama kodunuz: ${code} (3 dakika gecerlidir)\n\n@${otpHost} #${code}`;
     const sent = await sendSmsViaNetgsm(normalized, message);

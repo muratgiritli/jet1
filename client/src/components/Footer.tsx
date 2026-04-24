@@ -87,9 +87,9 @@ export default function Footer() {
                 </button>
               </li>
               <li>
-                <a href="mailto:info@sizpa.com" className="flex items-center gap-2.5 text-sm hover:text-white transition-colors" data-testid="footer-email">
+                <a href="mailto:info@jetgomarket.com" className="flex items-center gap-2.5 text-sm hover:text-white transition-colors" data-testid="footer-email">
                   <Mail className="w-4 h-4 flex-shrink-0 text-gray-400" />
-                  info@sizpa.com
+                  info@jetgomarket.com
                 </a>
               </li>
             </ul>
@@ -155,7 +155,7 @@ export default function Footer() {
             </div>
 
             <p className="text-xs text-gray-500">JETGO - Samsun Pet Shop</p>
-            <p className="text-xs text-gray-500">Bu web sitesi, <a href="https://www.sizpa.com/" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white transition-colors underline">Sizpa Yazılım</a> tarafından tasarlanmış ve geliştirilmiştir.</p>
+            <p className="text-xs text-gray-500">Bu web sitesi, Sizpa Yazılım tarafından tasarlanmış ve geliştirilmiştir.</p>
           </div>
         </div>
       </div>
