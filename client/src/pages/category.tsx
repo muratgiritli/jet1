@@ -87,10 +87,24 @@ const SUBCATEGORY_ICONS: Record<string, string> = {
   "kemirgen-kafesi": "🏡",
   "vitamin-takviye": "💊",
   "bakim-aksesuar": "✨",
-  "akvaryum-balik": "🐠",
-  "akvaryum-ekipman": "🔧",
-  "akvaryum-aksesuar": "🪸",
-  "akvaryum-yem": "🦐",
+  "akvaryumlar": "🐠",
+  "ic-filtre": "💧",
+  "aski-selale-filtre": "🌊",
+  "tepe-filtre": "🔝",
+  "dis-filtre": "🛢️",
+  "uretim-filtre": "🐣",
+  "sirkulasyon-sump-motoru": "🔄",
+  "hava-motoru": "💨",
+  "filtre-malzemesi": "🧽",
+  "otomatik-yemleme": "🍽️",
+  "balik-yemi": "🦐",
+  "su-hazirlayici-ve-ilaclar": "💊",
+  "akvaryum-dekor": "🪸",
+  "akvaryum-kumu": "🟫",
+  "plastik-bitki": "🌿",
+  "akvaryum-arka-fon": "🖼️",
+  "akvaryum-ekipmanlari": "🔧",
+  "akvaryum-aydinlatma": "💡",
 };
 
 const DIRECT_PRODUCT_ANIMALS = ["kemirgen"];
@@ -317,7 +331,7 @@ export default function CategoryPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3" data-testid="grid-subcategories">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" data-testid="grid-subcategories">
             {subcategories.filter(sub => {
               if (animalSlug === "kedi" && (sub.slug === "malt-vitamin" || sub.slug === "yas-mama")) return false;
               if (animalSlug === "kopek" && sub.slug === "mama-markalari") return false;
