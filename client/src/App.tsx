@@ -155,6 +155,10 @@ function AppShell() {
     }
   }, [location]);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
+  }, [location]);
+
   return (
     <>
       {!isAdmin && !isDemo && <InstallBanner />}
