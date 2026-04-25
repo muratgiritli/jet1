@@ -2432,6 +2432,23 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date",
         "bank_account_name", "bank_iban", "bank_name",
       ];
+
+      const iyzicoFlag = updates.payment_iyzico_enabled;
+      if (iyzicoFlag === "true" || iyzicoFlag === true) {
+        const existing = await sharedPool.query(
+          "SELECT key, value FROM app_settings WHERE key IN ('iyzico_api_key','iyzico_secret_key')"
+        );
+        const cur: Record<string, string> = {};
+        for (const r of existing.rows) cur[r.key] = r.value || "";
+        const finalApiKey = (updates.iyzico_api_key !== undefined ? String(updates.iyzico_api_key).trim() : cur.iyzico_api_key);
+        const finalSecret = (updates.iyzico_secret_key !== undefined ? String(updates.iyzico_secret_key).trim() : cur.iyzico_secret_key);
+        if (!finalApiKey || !finalSecret) {
+          return res.status(400).json({
+            message: "Online Kredi Kartı'nı aktif etmek için Iyzico API Anahtarı ve Güvenlik Anahtarı zorunludur.",
+          });
+        }
+      }
+
       for (const [key, value] of Object.entries(updates)) {
         if (numericKeys.includes(key)) {
           const numVal = Number(value);

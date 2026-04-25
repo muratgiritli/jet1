@@ -5885,10 +5885,20 @@ function SettingsSection() {
       queryClient.invalidateQueries({ queryKey: ["/api/bank-info"] });
       toast({ title: "Ayarlar kaydedildi" });
     },
-    onError: () => {
-      toast({ title: "Kaydetme hatası", variant: "destructive" });
+    onError: (err: any) => {
+      let msg = "Kaydetme hatası";
+      try {
+        const raw = err?.message || "";
+        const jsonPart = raw.replace(/^\d+:\s*/, "");
+        const parsed = JSON.parse(jsonPart);
+        if (parsed?.message) msg = parsed.message;
+      } catch {}
+      toast({ title: msg, variant: "destructive" });
     },
   });
+
+  const iyzicoOn = form.payment_iyzico_enabled === "true";
+  const iyzicoConfigMissing = iyzicoOn && (!form.iyzico_api_key?.trim() || !form.iyzico_secret_key?.trim());
 
   const handleSave = () => {
     saveMutation.mutate(form);
@@ -6084,8 +6094,15 @@ function SettingsSection() {
                 data-testid="input-iyzico-base-url"
               />
             </div>
+            {iyzicoConfigMissing && (
+              <div className="text-xs bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-800 text-red-800 dark:text-red-200 rounded-md p-3 leading-relaxed font-medium" data-testid="warning-iyzico-missing-keys">
+                ⚠️ <strong>Online Kredi Kartı seçeneği aktif</strong> ama API Anahtarı veya Güvenlik Anahtarı boş. Müşteriler "Online ödeme başlatılamadı" hatası alır. Lütfen Iyzico panelinizden anahtarları kopyalayıp yukarıya girin ve <strong>Ayarları Kaydet</strong>'e basın.
+              </div>
+            )}
             <div className="text-[11px] text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-2 leading-relaxed">
               <strong>Callback URL:</strong> Iyzico panelinde "Geri Dönüş URL'si" olarak <code className="font-mono">https://www.jetgomarket.com/api/iyzico/callback</code> adresini ekleyin.
+              <br />
+              <strong>İşyeri Bildirimleri URL:</strong> <code className="font-mono">https://www.jetgomarket.com/api/iyzico/webhook</code>
             </div>
           </div>
         </CardContent>
