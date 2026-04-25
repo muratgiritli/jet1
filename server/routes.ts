@@ -1852,12 +1852,19 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       if (!orderId || isNaN(orderId)) return res.status(400).json({ message: "Sipariş bulunamadı" });
 
       const orderRow = await sharedPool.query(
-        "SELECT id, customer_id, customer_name, customer_phone, customer_address, items, grand_total, payment_method, payment_status FROM orders WHERE id = $1",
+        "SELECT id, customer_name, customer_phone, customer_address, items, grand_total, payment_method, payment_status FROM orders WHERE id = $1",
         [orderId]
       );
       const o = orderRow.rows[0];
       if (!o) return res.status(404).json({ message: "Sipariş bulunamadı" });
-      if (o.customer_id !== customerId) return res.status(403).json({ message: "Yetkisiz" });
+
+      const custRow = await sharedPool.query("SELECT phone FROM customers WHERE id = $1", [customerId]);
+      const sessionPhone = String(custRow.rows[0]?.phone || "").replace(/\D/g, "");
+      const orderPhone = String(o.customer_phone || "").replace(/\D/g, "");
+      if (!sessionPhone || sessionPhone !== orderPhone) {
+        return res.status(403).json({ message: "Yetkisiz" });
+      }
+
       if (o.payment_status === "completed" || o.payment_status === "paid") {
         return res.status(400).json({ message: "Bu sipariş zaten ödenmiş" });
       }
@@ -1923,11 +1930,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         callbackUrl,
         enabledInstallments: [1, 2, 3, 6, 9],
         buyer: {
-          id: `C${o.customer_id}`,
+          id: `C${customerId}`,
           name: buyerName.slice(0, 40),
           surname: buyerSurname.slice(0, 40),
           gsmNumber,
-          email: `c${o.customer_id}@jetgomarket.com`,
+          email: `c${customerId}@jetgomarket.com`,
           identityNumber: "11111111111",
           registrationAddress: String(o.customer_address || "Samsun").slice(0, 200),
           ip: req.ip || "127.0.0.1",
@@ -2093,11 +2100,16 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         if (tokRow.rows[0]?.order_id === id) allowed = true;
       }
       if (!allowed && customerId) {
-        const ownRow = await sharedPool.query(
-          "SELECT 1 FROM orders WHERE id = $1 AND customer_id = $2",
-          [id, customerId]
-        );
-        if (ownRow.rowCount && ownRow.rowCount > 0) allowed = true;
+        const custRow = await sharedPool.query("SELECT phone FROM customers WHERE id = $1", [customerId]);
+        const sessionPhone = String(custRow.rows[0]?.phone || "").replace(/\D/g, "");
+        if (sessionPhone) {
+          const ownRow = await sharedPool.query(
+            "SELECT customer_phone FROM orders WHERE id = $1",
+            [id]
+          );
+          const orderPhone = String(ownRow.rows[0]?.customer_phone || "").replace(/\D/g, "");
+          if (orderPhone && orderPhone === sessionPhone) allowed = true;
+        }
       }
       if (!allowed) return res.status(403).json({ error: "forbidden" });
 
