@@ -2120,12 +2120,117 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
-  app.all("/api/iyzico/webhook", async (req, res) => {
+  app.all("/api/iyzico/webhook", async (req: Request, res: Response) => {
+    const sendOk = () => res.status(200).json({ status: "success" });
     try {
-      const payload = req.method === "GET" ? req.query : req.body;
+      const payload: any = req.method === "GET" ? req.query : (req.body || {});
       console.log("[iyzico-webhook]", new Date().toISOString(), JSON.stringify(payload).slice(0, 500));
-    } catch {}
-    res.status(200).json({ status: "success" });
+
+      const conversationId =
+        payload.paymentConversationId ||
+        payload.conversationId ||
+        payload.iyziConversationId ||
+        "";
+      const token = payload.token || "";
+
+      let tokenRow: any = null;
+      if (token) {
+        const r = await sharedPool.query(
+          "SELECT token, order_id, status, conversation_id FROM iyzico_payment_tokens WHERE token = $1",
+          [token]
+        );
+        tokenRow = r.rows[0] || null;
+      }
+      if (!tokenRow && conversationId) {
+        const r = await sharedPool.query(
+          "SELECT token, order_id, status, conversation_id FROM iyzico_payment_tokens WHERE conversation_id = $1 ORDER BY updated_at DESC LIMIT 1",
+          [conversationId]
+        );
+        tokenRow = r.rows[0] || null;
+      }
+      if (!tokenRow) {
+        console.warn("[iyzico-webhook] no matching token", { conversationId, token });
+        return sendOk();
+      }
+
+      const cfg = await getIyzicoConfig();
+      if (!cfg.iyzico_api_key || !cfg.iyzico_secret_key) {
+        console.warn("[iyzico-webhook] config missing");
+        return sendOk();
+      }
+
+      const sigHeader =
+        (req.headers["x-iyz-signature-v3"] as string) ||
+        (req.headers["x-iyz-signature"] as string) ||
+        "";
+      if (sigHeader && payload.iyziEventType && payload.iyziReferenceCode) {
+        try {
+          const crypto = await import("crypto");
+          const data = `${cfg.iyzico_secret_key}${payload.iyziEventType}${payload.iyziReferenceCode}`;
+          const expected = crypto
+            .createHmac("sha256", cfg.iyzico_secret_key)
+            .update(data)
+            .digest("base64");
+          if (expected !== sigHeader) {
+            console.warn("[iyzico-webhook] signature mismatch (continuing with retrieve verification)");
+          }
+        } catch (e) {
+          console.warn("[iyzico-webhook] signature check error:", e);
+        }
+      }
+
+      if (tokenRow.status === "completed" || tokenRow.status === "failed") {
+        return sendOk();
+      }
+
+      const iyzipay = buildIyzicoClient(cfg);
+      const result: any = await new Promise((resolve, reject) => {
+        iyzipay.checkoutForm.retrieve({ locale: "tr", token: tokenRow.token }, (err: any, r: any) => {
+          if (err) return reject(err);
+          resolve(r);
+        });
+      });
+
+      const success = result?.status === "success" && result?.paymentStatus === "SUCCESS";
+
+      const claim = await sharedPool.query(
+        "UPDATE iyzico_payment_tokens SET status = $1, raw_response = $2::jsonb, updated_at = NOW() WHERE token = $3 AND status = 'pending' RETURNING token",
+        [success ? "completed" : "failed", JSON.stringify(result || {}), tokenRow.token]
+      );
+      if (claim.rowCount === 0) {
+        return sendOk();
+      }
+
+      if (success) {
+        await sharedPool.query(
+          "UPDATE orders SET payment_status = 'completed' WHERE id = $1",
+          [tokenRow.order_id]
+        );
+        return sendOk();
+      }
+
+      await sharedPool.query(
+        "UPDATE orders SET payment_status = 'failed', status = 'iptal' WHERE id = $1 AND status <> 'iptal'",
+        [tokenRow.order_id]
+      );
+      try {
+        const itemsRow = await sharedPool.query("SELECT items FROM orders WHERE id = $1", [tokenRow.order_id]);
+        const items = itemsRow.rows[0]?.items || [];
+        for (const it of items) {
+          const pid = parseInt(String(it.productId));
+          const qty = parseInt(String(it.quantity)) || 0;
+          if (!isNaN(pid) && qty > 0 && !it.isPreorder) {
+            await sharedPool.query("UPDATE products SET stock = stock + $1 WHERE id = $2", [qty, pid]);
+          }
+        }
+      } catch (e) {
+        console.error("[iyzico-webhook] stock restore error:", e);
+      }
+      return sendOk();
+    } catch (err: any) {
+      console.error("[iyzico-webhook] error:", err?.message || err);
+      return sendOk();
+    }
   });
 
   app.get("/api/bank-info", async (_req, res) => {
