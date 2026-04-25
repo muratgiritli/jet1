@@ -93,6 +93,8 @@ export default function Checkout() {
 
   const { data: publicSettings } = useQuery<Record<string, string>>({
     queryKey: ["/api/public-settings"],
+    staleTime: 0,
+    refetchOnMount: "always",
   });
   const isEnabled = (v: string | undefined, def = true) => {
     if (v === undefined) return def;

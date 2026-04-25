@@ -5881,6 +5881,8 @@ function SettingsSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/public-settings"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bank-info"] });
       toast({ title: "Ayarlar kaydedildi" });
     },
     onError: () => {

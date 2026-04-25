@@ -2401,8 +2401,10 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       `);
       const settings: Record<string, string> = {};
       for (const row of result.rows) settings[row.key] = row.value;
+      res.set("Cache-Control", "no-store");
       res.json(settings);
     } catch {
+      res.set("Cache-Control", "no-store");
       res.json({});
     }
   });
