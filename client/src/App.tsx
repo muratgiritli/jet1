@@ -58,6 +58,7 @@ const PetContestPage = lazy(() => import("@/pages/pet-contest"));
 const PetDashboardPage = lazy(() => import("@/pages/pet-dashboard"));
 const LostFoundPage = lazy(() => import("@/pages/lost-found"));
 const PatiBlogPage = lazy(() => import("@/pages/pati-blog"));
+const PaymentResultPage = lazy(() => import("@/pages/payment-result"));
 
 const SSSPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.SSSPage })));
 const KVKKPage = lazy(() => import("@/pages/static-pages").then(m => ({ default: m.KVKKPage })));
@@ -101,6 +102,7 @@ function Router() {
         <Route path="/kategori/:animal/:subcategory" component={BrandsPage} />
         <Route path="/kategori/:animal" component={CategoryPage} />
         <Route path="/odeme" component={Checkout} />
+        <Route path="/odeme-sonuc" component={PaymentResultPage} />
         <Route path="/admin" component={AdminPage} />
         <Route path="/siparis-takip" component={OrderTrackingPage} />
         <Route path="/favoriler" component={FavoritesPage} />

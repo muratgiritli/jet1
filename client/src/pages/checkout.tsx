@@ -52,6 +52,7 @@ import { useCart } from "@/contexts/CartContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useCustomer } from "@/contexts/CustomerContext";
 const paymentIcons: Record<string, typeof CreditCard> = {
+  online: CreditCard,
   nakit: Banknote,
   eft: Wallet,
   qr: QrCode,
@@ -93,7 +94,15 @@ export default function Checkout() {
   const { data: publicSettings } = useQuery<Record<string, string>>({
     queryKey: ["/api/public-settings"],
   });
-  const eftEnabled = publicSettings?.payment_eft_enabled !== "0" && publicSettings?.payment_eft_enabled !== "false";
+  const isEnabled = (v: string | undefined, def = true) => {
+    if (v === undefined) return def;
+    return v !== "0" && v !== "false";
+  };
+  const eftEnabled = isEnabled(publicSettings?.payment_eft_enabled);
+  const nakitEnabled = isEnabled(publicSettings?.payment_nakit_enabled);
+  const qrEnabled = isEnabled(publicSettings?.payment_qr_enabled);
+  const posEnabled = isEnabled(publicSettings?.payment_pos_enabled);
+  const iyzicoEnabled = isEnabled(publicSettings?.payment_iyzico_enabled);
   const bankAccountName = publicSettings?.bank_account_name || "";
   const bankIban = publicSettings?.bank_iban || "";
   const bankName = publicSettings?.bank_name || "";
@@ -588,7 +597,35 @@ export default function Checkout() {
       };
 
       const orderRes = await apiRequest("POST", "/api/orders", orderPayload);
-      await orderRes.json();
+      const orderResult: any = await orderRes.json();
+
+      if (paymentId === "online" && orderResult?.id) {
+        try {
+          const initRes = await apiRequest("POST", "/api/iyzico/init-payment", { orderId: orderResult.id });
+          const initData = await initRes.json();
+          if (initData?.paymentPageUrl) {
+            clearCart();
+            queryClient.invalidateQueries({ queryKey: ["/api/customer/orders"] });
+            window.location.href = initData.paymentPageUrl;
+            return;
+          }
+          throw new Error(initData?.message || "Online ödeme sayfası açılamadı");
+        } catch (e: any) {
+          let msg = "Online ödeme başlatılamadı, lütfen başka bir ödeme yöntemi seçin.";
+          let cancelled = false;
+          try {
+            const raw = e?.message || "";
+            const jsonPart = raw.replace(/^\d+:\s*/, "");
+            const parsed = JSON.parse(jsonPart);
+            if (parsed.message) msg = parsed.message;
+            if (parsed.cancelled) cancelled = true;
+          } catch {}
+          setOrderError(cancelled ? `${msg} Siparişiniz otomatik olarak iptal edildi, ürünleriniz sepete geri eklenebilir.` : msg);
+          setOrderLoading(false);
+          queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+          return;
+        }
+      }
 
       if (typeof window !== "undefined" && (window as any).gtag) {
         try {
@@ -1386,7 +1423,14 @@ export default function Checkout() {
                     </div>
                   ) : (
                   <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
-                    {PAYMENT_OPTIONS.filter((opt) => opt.id !== "pos" && opt.id !== "online" && (opt.id !== "eft" || eftEnabled)).map((opt) => {
+                    {PAYMENT_OPTIONS.filter((opt) => {
+                      if (opt.id === "pos") return false;
+                      if (opt.id === "nakit") return nakitEnabled;
+                      if (opt.id === "eft") return eftEnabled;
+                      if (opt.id === "qr") return qrEnabled;
+                      if (opt.id === "online") return iyzicoEnabled;
+                      return true;
+                    }).map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
                       const optDiscRate = opt.disc < 0 ? Math.abs(opt.disc) : 0;
                       const optDiscAmount = subtotal * optDiscRate;
@@ -1432,7 +1476,7 @@ export default function Checkout() {
                     </div>
                   )}
 
-                  {!hasCampaignItems && (
+                  {!hasCampaignItems && posEnabled && (
                     <div className="mt-4 border-t pt-4">
                       <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
                         <CreditCard className="w-4 h-4 text-blue-600" />

@@ -5830,6 +5830,13 @@ function SettingsSection() {
     admin_phone: "",
     order_notification_sms: "1",
     payment_eft_enabled: "true",
+    payment_nakit_enabled: "true",
+    payment_qr_enabled: "true",
+    payment_pos_enabled: "true",
+    payment_iyzico_enabled: "true",
+    iyzico_api_key: "",
+    iyzico_secret_key: "",
+    iyzico_base_url: "",
     campaign_hero_title: "",
     campaign_hero_subtitle: "",
     campaign_end_date: "",
@@ -5850,6 +5857,13 @@ function SettingsSection() {
         admin_phone: settings.admin_phone || "",
         order_notification_sms: settings.order_notification_sms ?? "1",
         payment_eft_enabled: settings.payment_eft_enabled ?? "true",
+        payment_nakit_enabled: settings.payment_nakit_enabled ?? "true",
+        payment_qr_enabled: settings.payment_qr_enabled ?? "true",
+        payment_pos_enabled: settings.payment_pos_enabled ?? "true",
+        payment_iyzico_enabled: settings.payment_iyzico_enabled ?? "true",
+        iyzico_api_key: settings.iyzico_api_key || "",
+        iyzico_secret_key: settings.iyzico_secret_key || "",
+        iyzico_base_url: settings.iyzico_base_url || "https://api.iyzipay.com",
         campaign_hero_title: settings.campaign_hero_title || "",
         campaign_hero_subtitle: settings.campaign_hero_subtitle || "",
         campaign_end_date: settings.campaign_end_date || "",
@@ -5966,21 +5980,6 @@ function SettingsSection() {
             </button>
           </div>
 
-          <div className="flex items-center justify-between pt-3 border-t">
-            <div>
-              <Label className="text-sm font-bold">Banka Havalesi (EFT) Ödeme</Label>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Checkout'ta EFT/Havale seçeneği görünsün mü?</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setForm(prev => ({ ...prev, payment_eft_enabled: prev.payment_eft_enabled === "true" ? "0" : "true" }))}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.payment_eft_enabled === "true" ? "bg-green-500" : "bg-gray-300"}`}
-              data-testid="toggle-eft-payment"
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.payment_eft_enabled === "true" ? "translate-x-6" : "translate-x-1"}`} />
-            </button>
-          </div>
-
           <div className="pt-3 border-t space-y-3">
             <h4 className="text-sm font-bold">🏦 Banka Hesap Bilgileri</h4>
             <p className="text-[11px] text-muted-foreground">Bu bilgiler EFT/Havale seçeneğinde ve müşteriye giden SMS'te görünür.</p>
@@ -6013,6 +6012,78 @@ function SettingsSection() {
                 onChange={e => setForm(prev => ({ ...prev, bank_iban: e.target.value.slice(0, 40) }))}
                 data-testid="input-bank-iban"
               />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardContent className="pt-4 space-y-4">
+          <h3 className="text-sm font-bold flex items-center gap-2">💳 Ödeme Yöntemleri</h3>
+          <p className="text-[11px] text-muted-foreground">Müşterinin checkout sayfasında göreceği ödeme seçeneklerini buradan açıp kapatabilirsiniz.</p>
+
+          {([
+            { key: "payment_nakit_enabled", label: "Kapıda Nakit", desc: "%10 indirimli, kapıda nakit ödeme", icon: "💵" },
+            { key: "payment_pos_enabled", label: "Kapıda Kredi Kartı", desc: "Kurye gelince fiziksel POS ile ödeme (taksit dahil)", icon: "💳" },
+            { key: "payment_qr_enabled", label: "Kapıda QR Ödeme", desc: "Kurye gelince banka uygulamasından QR ile ödeme", icon: "📱" },
+            { key: "payment_eft_enabled", label: "Banka Havalesi / EFT", desc: "IBAN ile transfer + havale bildirimi", icon: "🏦" },
+            { key: "payment_iyzico_enabled", label: "Online Kredi Kartı (Iyzico)", desc: "Sipariş anında online kredi kartı ile ödeme — Iyzico Sanal POS", icon: "🌐" },
+          ] as const).map(opt => (
+            <div key={opt.key} className="flex items-center justify-between gap-3 py-2 border-b last:border-b-0">
+              <div className="flex items-start gap-2 min-w-0">
+                <span className="text-xl mt-0.5">{opt.icon}</span>
+                <div className="min-w-0">
+                  <Label className="text-sm font-bold">{opt.label}</Label>
+                  <p className="text-[11px] text-muted-foreground">{opt.desc}</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setForm(prev => ({ ...prev, [opt.key]: prev[opt.key] === "true" ? "0" : "true" }))}
+                className={`relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition-colors ${form[opt.key] === "true" ? "bg-green-500" : "bg-gray-300"}`}
+                data-testid={`toggle-${opt.key}`}
+                aria-label={form[opt.key] === "true" ? "Yayını Durdur" : "Yayına Al"}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form[opt.key] === "true" ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+            </div>
+          ))}
+
+          <div className="pt-3 border-t space-y-3">
+            <h4 className="text-sm font-bold flex items-center gap-2">🌐 Iyzico Sanal POS Ayarları</h4>
+            <p className="text-[11px] text-muted-foreground">"Online Kredi Kartı" seçeneği için Iyzico API anahtarları. Üretim için <code>https://api.iyzipay.com</code>, test için <code>https://sandbox-api.iyzipay.com</code>.</p>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">API Anahtarı</Label>
+              <Input
+                type="password"
+                placeholder="Iyzico API Key"
+                value={form.iyzico_api_key}
+                onChange={e => setForm(prev => ({ ...prev, iyzico_api_key: e.target.value.trim().slice(0, 200) }))}
+                data-testid="input-iyzico-api-key"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">Güvenlik Anahtarı</Label>
+              <Input
+                type="password"
+                placeholder="Iyzico Secret Key"
+                value={form.iyzico_secret_key}
+                onChange={e => setForm(prev => ({ ...prev, iyzico_secret_key: e.target.value.trim().slice(0, 200) }))}
+                data-testid="input-iyzico-secret-key"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">Iyzico API URL</Label>
+              <Input
+                type="text"
+                placeholder="https://api.iyzipay.com"
+                value={form.iyzico_base_url}
+                onChange={e => setForm(prev => ({ ...prev, iyzico_base_url: e.target.value.trim().slice(0, 100) }))}
+                data-testid="input-iyzico-base-url"
+              />
+            </div>
+            <div className="text-[11px] text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-2 leading-relaxed">
+              <strong>Callback URL:</strong> Iyzico panelinde "Geri Dönüş URL'si" olarak <code className="font-mono">https://www.jetgomarket.com/api/iyzico/callback</code> adresini ekleyin.
             </div>
           </div>
         </CardContent>

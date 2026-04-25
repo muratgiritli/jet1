@@ -92,6 +92,7 @@ export const PAYMENT_OPTIONS: PaymentOption[] = [
   { id: "eft", name: "Banka Havalesi", disc: 0, tag: "Peşin" },
   { id: "qr", name: "Kapıda QR Ödeme", disc: 0, tag: "Peşin" },
   { id: "pos", name: "Kapıda Kredi Kartı", disc: 0, tag: "Peşin" },
+  { id: "online", name: "Online Kredi Kartı", disc: 0, tag: "Anında" },
 ];
 
 export const INSTALLMENT_BANKS = [
