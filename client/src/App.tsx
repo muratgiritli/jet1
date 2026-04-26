@@ -169,7 +169,6 @@ function AppShell() {
       {!isAdmin && !isDemo && location === "/" && <Footer />}
       {!isAdmin && !isDemo && <FloatingCartBar />}
       {!isAdmin && !isDemo && <BottomTabBar />}
-      {!isAdmin && !isDemo && <SocialProofToast />}
     </>
   );
 }
