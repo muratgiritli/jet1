@@ -5843,6 +5843,7 @@ function SettingsSection() {
     bank_account_name: "",
     bank_iban: "",
     bank_name: "",
+    daily_cargo_widget_enabled: "false",
   });
 
   useEffect(() => {
@@ -5870,6 +5871,7 @@ function SettingsSection() {
         bank_account_name: settings.bank_account_name || "",
         bank_iban: settings.bank_iban || "",
         bank_name: settings.bank_name || "",
+        daily_cargo_widget_enabled: settings.daily_cargo_widget_enabled ?? "false",
       });
     }
   }, [settings]);
@@ -5989,6 +5991,22 @@ function SettingsSection() {
               data-testid="toggle-sms-notification"
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.order_notification_sms === "1" ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+          </div>
+
+          <div className="flex items-start gap-3 pt-3 border-t">
+            <span className="text-xl mt-1">📦</span>
+            <div className="flex-1 min-w-0">
+              <Label className="text-sm font-bold">Günlük Kargo Sayısı Penceresi</Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Ana sayfada bugün kargoya verilen sipariş sayısını gösteren küçük pencereyi göster/gizle.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForm(prev => ({ ...prev, daily_cargo_widget_enabled: prev.daily_cargo_widget_enabled === "true" ? "false" : "true" }))}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.daily_cargo_widget_enabled === "true" ? "bg-green-500" : "bg-gray-300"}`}
+              data-testid="toggle-daily-cargo-widget"
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.daily_cargo_widget_enabled === "true" ? "translate-x-6" : "translate-x-1"}`} />
             </button>
           </div>
 

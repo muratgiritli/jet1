@@ -2401,6 +2401,20 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
+  app.get("/api/public/daily-cargo-count", async (_req, res) => {
+    try {
+      const r = await sharedPool.query(
+        "SELECT COUNT(*)::int AS c FROM orders WHERE created_at >= CURRENT_DATE AND created_at < (CURRENT_DATE + INTERVAL '1 day') AND status <> 'iptal'"
+      );
+      const count = Number(r.rows[0]?.c || 0);
+      res.set("Cache-Control", "public, max-age=60");
+      res.json({ count });
+    } catch {
+      res.set("Cache-Control", "no-store");
+      res.json({ count: 0 });
+    }
+  });
+
   app.get("/api/public-settings", async (_req, res) => {
     try {
       const result = await sharedPool.query(`
@@ -2408,7 +2422,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           'payment_eft_enabled', 'payment_nakit_enabled', 'payment_qr_enabled',
           'payment_pos_enabled', 'payment_iyzico_enabled',
           'campaign_hero_title', 'campaign_hero_subtitle', 'campaign_end_date',
-          'bank_account_name', 'bank_iban', 'bank_name'
+          'bank_account_name', 'bank_iban', 'bank_name',
+          'daily_cargo_widget_enabled'
         )
       `);
       const settings: Record<string, string> = {};
@@ -2443,6 +2458,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         "iyzico_api_key", "iyzico_secret_key", "iyzico_base_url",
         "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date",
         "bank_account_name", "bank_iban", "bank_name",
+        "daily_cargo_widget_enabled",
       ];
 
       const iyzicoFlag = updates.payment_iyzico_enabled;

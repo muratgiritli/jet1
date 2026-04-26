@@ -760,6 +760,44 @@ function DesktopStatsBar() {
   );
 }
 
+function DailyCargoWidget() {
+  const { data: settings } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
+  const enabled = settings?.daily_cargo_widget_enabled === "true";
+  const { data } = useQuery<{ count: number }>({
+    queryKey: ["/api/public/daily-cargo-count"],
+    enabled,
+    refetchInterval: 60_000,
+  });
+  const [closed, setClosed] = useState(false);
+  if (!enabled || closed) return null;
+  const count = data?.count ?? 0;
+  return (
+    <div
+      className="fixed bottom-20 right-3 md:bottom-4 md:right-4 z-40 flex items-center gap-2 rounded-2xl bg-white/95 backdrop-blur shadow-xl border border-orange-200 px-3 py-2 max-w-[260px]"
+      data-testid="widget-daily-cargo"
+    >
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100">
+        <PackageCheck className="h-5 w-5 text-orange-600" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-[11px] text-gray-500 leading-tight">Bugün kargolanan</div>
+        <div className="text-sm font-extrabold text-gray-900 leading-tight" data-testid="text-daily-cargo-count">
+          {count} sipariş
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => setClosed(true)}
+        className="ml-1 rounded-full p-1 text-gray-400 hover:bg-gray-100"
+        aria-label="Kapat"
+        data-testid="button-close-daily-cargo"
+      >
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  );
+}
+
 function ComingSoonPopup() {
   const [open, setOpen] = useState(false);
   useEffect(() => {
@@ -820,6 +858,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
       <ComingSoonPopup />
+      <DailyCargoWidget />
       <SEO
         title="Atakum Petshop & Samsun Pet Shop - Aynı Gün Teslimat | JETGO"
         description="Atakum, Samsun, İlkadım, Canik, Tekkeköy'e aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu, ödül maması kapıda ödeme. JETGO Pet Shop Samsun: 09:00-21:00 hizmet, +90 850 840 39 59. Mahalleye en yakın petshop."
