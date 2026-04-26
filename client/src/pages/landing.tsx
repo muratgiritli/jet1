@@ -760,10 +760,66 @@ function DesktopStatsBar() {
   );
 }
 
+function ComingSoonPopup() {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (sessionStorage.getItem("coming_soon_dismissed") === "1") return;
+    const t = setTimeout(() => setOpen(true), 400);
+    return () => clearTimeout(t);
+  }, []);
+  if (!open) return null;
+  const close = () => {
+    try { sessionStorage.setItem("coming_soon_dismissed", "1"); } catch {}
+    setOpen(false);
+  };
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4"
+      onClick={close}
+      data-testid="popup-coming-soon-backdrop"
+    >
+      <div
+        className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+        onClick={e => e.stopPropagation()}
+        data-testid="popup-coming-soon"
+      >
+        <button
+          type="button"
+          onClick={close}
+          className="absolute right-3 top-3 rounded-full p-1.5 text-gray-500 hover:bg-gray-100"
+          aria-label="Kapat"
+          data-testid="button-close-coming-soon"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+        <div className="flex flex-col items-center text-center">
+          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-orange-100">
+            <Clock className="h-7 w-7 text-orange-600" />
+          </div>
+          <h3 className="mb-2 text-lg font-bold text-gray-900">Bilgilendirme</h3>
+          <p className="text-sm leading-relaxed text-gray-700" data-testid="text-coming-soon-message">
+            HİZMETİMİZ YAKIN ZAMANDA FAALİYETE GEÇECEKTİR.
+          </p>
+          <button
+            type="button"
+            onClick={close}
+            className="mt-5 w-full rounded-xl bg-orange-500 py-2.5 text-sm font-bold text-white hover:bg-orange-600"
+            data-testid="button-ok-coming-soon"
+          >
+            Tamam
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function Landing() {
   const { isLoggedIn } = useCustomer();
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
+      <ComingSoonPopup />
       <SEO
         title="Atakum Petshop & Samsun Pet Shop - Aynı Gün Teslimat | JETGO"
         description="Atakum, Samsun, İlkadım, Canik, Tekkeköy'e aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu, ödül maması kapıda ödeme. JETGO Pet Shop Samsun: 09:00-21:00 hizmet, +90 850 840 39 59. Mahalleye en yakın petshop."
