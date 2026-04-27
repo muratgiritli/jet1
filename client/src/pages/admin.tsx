@@ -6002,14 +6002,21 @@ function SettingsSection() {
             <div className="flex-1 min-w-0">
               <Label className="text-sm font-bold">Günlük Kargo Sayısı Penceresi</Label>
               <p className="text-[11px] text-muted-foreground mt-0.5">Ana sayfada bugün kargoya verilen sipariş sayısını gösteren küçük pencereyi göster/gizle.</p>
+              <p className={`text-[11px] font-bold mt-1 ${form.daily_cargo_widget_enabled === "true" ? "text-green-600" : "text-red-600"}`} data-testid="text-daily-cargo-state">
+                Şu an: {form.daily_cargo_widget_enabled === "true" ? "AÇIK (Yayında)" : "KAPALI (Gizli)"}
+              </p>
             </div>
             <button
               type="button"
               onClick={() => setForm(prev => ({ ...prev, daily_cargo_widget_enabled: prev.daily_cargo_widget_enabled === "true" ? "false" : "true" }))}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${form.daily_cargo_widget_enabled === "true" ? "bg-green-500" : "bg-gray-300"}`}
+              className={`relative inline-flex h-7 items-center rounded-full transition-colors px-1 ${form.daily_cargo_widget_enabled === "true" ? "bg-green-500 w-20 justify-start" : "bg-gray-400 w-20 justify-end"}`}
               data-testid="toggle-daily-cargo-widget"
+              aria-label={form.daily_cargo_widget_enabled === "true" ? "Kapat" : "Aç"}
             >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.daily_cargo_widget_enabled === "true" ? "translate-x-6" : "translate-x-1"}`} />
+              <span className={`absolute text-[10px] font-extrabold text-white tracking-wider ${form.daily_cargo_widget_enabled === "true" ? "left-2" : "right-2"}`}>
+                {form.daily_cargo_widget_enabled === "true" ? "ON" : "OFF"}
+              </span>
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${form.daily_cargo_widget_enabled === "true" ? "translate-x-12" : "translate-x-0"}`} />
             </button>
           </div>
 

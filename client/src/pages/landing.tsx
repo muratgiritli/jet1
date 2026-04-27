@@ -138,9 +138,17 @@ function HeroCarousel() {
 }
 
 function OrderCounter() {
+  const { data: settings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/public-settings"],
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchInterval: 30_000,
+  });
+  const enabled = settings?.daily_cargo_widget_enabled === "true";
   const [count, setCount] = useState(0);
 
   useEffect(() => {
+    if (!enabled) { setCount(0); return; }
     const getOrderCount = () => {
       const trTime = new Date(new Date().toLocaleString("en-US", { timeZone: "Europe/Istanbul" }));
       const hour = trTime.getHours();
@@ -857,7 +865,6 @@ export default function Landing() {
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
       <ComingSoonPopup />
-      <DailyCargoWidget />
       <SEO
         title="Atakum Petshop & Samsun Pet Shop - Aynı Gün Teslimat | JETGO"
         description="Atakum, Samsun, İlkadım, Canik, Tekkeköy'e aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu, ödül maması kapıda ödeme. JETGO Pet Shop Samsun: 09:00-21:00 hizmet, +90 850 840 39 59. Mahalleye en yakın petshop."
@@ -893,13 +900,6 @@ export default function Landing() {
         <div className="mt-1 md:mt-10">
           <div className="md:max-w-4xl md:mx-auto">
             <CategoryGrid />
-          </div>
-        </div>
-
-        {/* DAILY CARGO WIDGET */}
-        <div className="mt-3 md:mt-6">
-          <div className="md:max-w-3xl md:mx-auto">
-            <DailyCargoWidget />
           </div>
         </div>
 
