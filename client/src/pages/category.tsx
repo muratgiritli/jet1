@@ -281,7 +281,7 @@ export default function CategoryPage() {
               <p className="text-muted-foreground text-sm" data-testid="text-no-products">Henüz ürün eklenmedi</p>
             </div>
           ) : (
-            <div className={`grid gap-3 ${animalSlug === "akvaryum" ? "grid-cols-1" : "grid-cols-2"}`} data-testid="grid-direct-products">
+            <div className="grid gap-3 grid-cols-2" data-testid="grid-direct-products">
               {products.map((product) => (
                 <KemirgenProductCard key={product.id} product={product} />
               ))}
