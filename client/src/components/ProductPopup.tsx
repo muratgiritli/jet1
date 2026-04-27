@@ -156,7 +156,7 @@ export default function ProductPopup({ product, quantity, onUpdate, onClose }: P
                     data-testid="product-popup-preorder-add"
                   >
                     <ShoppingCart className="w-4 h-4" />
-                    Ön Sipariş Ver
+                    Sipariş Ver
                   </Button>
                 )}
               </div>

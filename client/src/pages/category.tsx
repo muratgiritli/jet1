@@ -170,7 +170,7 @@ function KemirgenProductCard({ product }: { product: Product }) {
           <Link href={productUrl(product.id, product.name)} className="w-full">
             <Button variant="default" size="sm" className="w-full" style={{ backgroundColor: "#1565c0" }} data-testid={`btn-preorder-${pid}`}>
               <Clock className="w-3.5 h-3.5" />
-              Ön Sipariş Ver
+              Sipariş Ver
             </Button>
           </Link>
         ) : product.stock === 0 ? (

@@ -612,7 +612,7 @@ export default function ProductDetailPage() {
                         data-testid="btn-preorder-add"
                       >
                         <ShoppingCart className="w-4 h-4" />
-                        Ön Sipariş Ver
+                        Sipariş Ver
                       </Button>
                     ) : (
                       <Button
