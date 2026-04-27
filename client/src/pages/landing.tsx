@@ -773,32 +773,26 @@ function DailyCargoWidget() {
     enabled,
     refetchInterval: 60_000,
   });
-  const [closed, setClosed] = useState(false);
-  if (!enabled || closed) return null;
+  if (!enabled) return null;
   const count = data?.count ?? 0;
   return (
     <div
-      className="fixed bottom-20 right-3 md:bottom-4 md:right-4 z-40 flex items-center gap-2 rounded-2xl bg-white/95 backdrop-blur shadow-xl border border-orange-200 px-3 py-2 max-w-[260px]"
+      className="flex items-center gap-3 rounded-xl bg-emerald-50 border border-emerald-200 px-3 py-2.5 md:px-4 md:py-3"
       data-testid="widget-daily-cargo"
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-orange-100">
-        <PackageCheck className="h-5 w-5 text-orange-600" />
+      <div className="flex h-9 w-9 md:h-10 md:w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100">
+        <PackageCheck className="h-5 w-5 md:h-6 md:w-6 text-emerald-700" />
       </div>
       <div className="min-w-0 flex-1">
-        <div className="text-[11px] text-gray-500 leading-tight">Bugün kargolanan</div>
-        <div className="text-sm font-extrabold text-gray-900 leading-tight" data-testid="text-daily-cargo-count">
-          {count} sipariş
+        <div className="text-[11px] md:text-xs text-gray-500 leading-tight">Bugün şu ana kadar</div>
+        <div className="text-sm md:text-base font-extrabold text-emerald-800 leading-tight mt-0.5" data-testid="text-daily-cargo-count">
+          {count}+ sipariş teslim edildi
         </div>
       </div>
-      <button
-        type="button"
-        onClick={() => setClosed(true)}
-        className="ml-1 rounded-full p-1 text-gray-400 hover:bg-gray-100"
-        aria-label="Kapat"
-        data-testid="button-close-daily-cargo"
-      >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
+      <span className="relative flex h-2.5 w-2.5 shrink-0">
+        <span className="absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75 animate-ping"></span>
+        <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+      </span>
     </div>
   );
 }
@@ -899,6 +893,13 @@ export default function Landing() {
         <div className="mt-1 md:mt-10">
           <div className="md:max-w-4xl md:mx-auto">
             <CategoryGrid />
+          </div>
+        </div>
+
+        {/* DAILY CARGO WIDGET */}
+        <div className="mt-3 md:mt-6">
+          <div className="md:max-w-3xl md:mx-auto">
+            <DailyCargoWidget />
           </div>
         </div>
 
