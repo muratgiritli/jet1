@@ -5354,6 +5354,7 @@ function NotificationsSection() {
 function positionLabel(p: string) {
   if (p === "home_below_category") return "Kategori Altı";
   if (p === "home_bottom_carousel") return "Alt Karusel";
+  if (p === "campaign_top") return "Kampanya Üstü (1000x650)";
   return "Kategori Üstü";
 }
 
@@ -5397,6 +5398,7 @@ function BannerEditRow({ banner, onCancel }: { banner: any; onCancel: () => void
             <option value="home_top">Üst (Kategori Üstü)</option>
             <option value="home_below_category">Alt (Kategori Altı)</option>
             <option value="home_bottom_carousel">Alt Karusel (Footer Üstü, Satın Al Butonlu)</option>
+            <option value="campaign_top">Kampanya Sayfası Üstü (1000x650 px)</option>
           </select>
         </div>
         <div>
@@ -5476,6 +5478,7 @@ function BannersSection() {
               <option value="home_top">Üst (Kategori Üstü)</option>
               <option value="home_below_category">Alt (Kategori Altı)</option>
               <option value="home_bottom_carousel">Alt Karusel (Footer Üstü, Satın Al Butonlu)</option>
+              <option value="campaign_top">Kampanya Sayfası Üstü (1000x650 px)</option>
             </select>
           </div>
           <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="text-xs w-full" />

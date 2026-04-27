@@ -3823,17 +3823,18 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     try {
       const { title, linkUrl, sortOrder, position } = req.body;
       if (!title) return res.status(400).json({ message: "Başlık gerekli" });
+      const allowed = ["home_top", "home_below_category", "home_bottom_carousel", "campaign_top"];
+      const pos = allowed.includes(position) ? position : "home_top";
       let imageData: string | undefined;
       if (req.file) {
         const sharp = (await import("sharp")).default;
+        const dims = pos === "campaign_top" ? { w: 1000, h: 650 } : { w: 1600, h: 900 };
         const webp = await sharp(req.file.buffer)
-          .resize(1600, 900, { fit: "inside", withoutEnlargement: true })
+          .resize(dims.w, dims.h, { fit: "inside", withoutEnlargement: true })
           .webp({ quality: 82 })
           .toBuffer();
         imageData = `data:image/webp;base64,${webp.toString("base64")}`;
       }
-      const allowed = ["home_top", "home_below_category", "home_bottom_carousel"];
-      const pos = allowed.includes(position) ? position : "home_top";
       const banner = await storage.createBanner({ title, linkUrl: linkUrl || null, imageData: imageData || null, sortOrder: parseInt(sortOrder || "0"), isActive: true, position: pos });
       res.json(banner);
     } catch (err) {
@@ -3864,14 +3865,16 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       if (req.body.linkUrl !== undefined) updates.linkUrl = req.body.linkUrl;
       if (req.body.isActive !== undefined) updates.isActive = req.body.isActive === true || req.body.isActive === "true";
       if (req.body.sortOrder !== undefined) updates.sortOrder = parseInt(req.body.sortOrder);
+      const allowed = ["home_top", "home_below_category", "home_bottom_carousel", "campaign_top"];
       if (req.body.position !== undefined) {
-        const allowed = ["home_top", "home_below_category", "home_bottom_carousel"];
         if (allowed.includes(req.body.position)) updates.position = req.body.position;
       }
       if (req.file) {
         const sharp = (await import("sharp")).default;
+        const effectivePos = updates.position || (await storage.getAllBanners()).find((b: any) => b.id === id)?.position || "home_top";
+        const dims = effectivePos === "campaign_top" ? { w: 1000, h: 650 } : { w: 1600, h: 900 };
         const webp = await sharp(req.file.buffer)
-          .resize(1600, 900, { fit: "inside", withoutEnlargement: true })
+          .resize(dims.w, dims.h, { fit: "inside", withoutEnlargement: true })
           .webp({ quality: 82 })
           .toBuffer();
         updates.imageData = `data:image/webp;base64,${webp.toString("base64")}`;

@@ -33,6 +33,37 @@ interface PublicSettings {
   campaign_end_date?: string;
 }
 
+function CampaignTopBanner() {
+  const { data: banners = [] } = useQuery<any[]>({
+    queryKey: ["/api/banners", { position: "campaign_top" }],
+    queryFn: async () => {
+      const r = await fetch("/api/banners?position=campaign_top");
+      if (!r.ok) return [];
+      return r.json();
+    },
+  });
+  if (!banners.length) return null;
+  const banner = banners[0];
+  if (!banner.imageData) return null;
+  const Img = (
+    <img
+      src={banner.imageData}
+      alt={banner.title || "Kampanya banner"}
+      className="w-full h-auto max-w-[1000px] mx-auto rounded-2xl shadow-md block"
+      style={{ aspectRatio: "1000 / 650" }}
+      loading="eager"
+      data-testid="img-campaign-top-banner"
+    />
+  );
+  return (
+    <div className="mb-4">
+      {banner.linkUrl ? (
+        <Link href={banner.linkUrl} data-testid="link-campaign-top-banner">{Img}</Link>
+      ) : Img}
+    </div>
+  );
+}
+
 function CountdownStrip({ endDate }: { endDate?: string }) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
@@ -253,6 +284,7 @@ export default function CampaignPage() {
       />
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-3 md:px-6 py-4">
+        <CampaignTopBanner />
         {/* Hero */}
         <div
           className="rounded-2xl p-5 md:p-6 mb-4 text-center shadow-lg"
