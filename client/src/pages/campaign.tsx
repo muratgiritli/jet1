@@ -213,24 +213,26 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
                 </div>
               )
             ) : (
-              <Button
-                className="w-full h-9 text-xs font-bold bg-purple-600 hover:bg-purple-700 rounded-xl"
-                onClick={() => updateQty(pid, 1, true)}
-                data-testid={`btn-add-${item.product_id}`}
-              >
-                <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                Sepete Ekle
-              </Button>
+              <Link href={href} className="w-full">
+                <Button
+                  className="w-full h-9 text-xs font-bold bg-purple-600 hover:bg-purple-700 rounded-xl"
+                  data-testid={`btn-add-${item.product_id}`}
+                >
+                  <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                  Satın Al
+                </Button>
+              </Link>
             )
           ) : item.preorder_enabled ? (
-            <Button
-              className="w-full h-9 text-xs font-bold bg-blue-600 hover:bg-blue-700 rounded-xl"
-              onClick={() => updateQty(pid, 1, true)}
-              data-testid={`btn-preorder-${item.product_id}`}
-            >
-              <Clock className="w-3.5 h-3.5 mr-1" />
-              Ön Sipariş
-            </Button>
+            <Link href={href} className="w-full">
+              <Button
+                className="w-full h-9 text-xs font-bold bg-blue-600 hover:bg-blue-700 rounded-xl"
+                data-testid={`btn-preorder-${item.product_id}`}
+              >
+                <Clock className="w-3.5 h-3.5 mr-1" />
+                Sipariş Ver
+              </Button>
+            </Link>
           ) : (
             <div className="text-center text-[11px] font-semibold py-2 rounded-md bg-orange-50 text-orange-700">
               Tükendi
