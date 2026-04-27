@@ -863,6 +863,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
       <ComingSoonPopup />
+      <DailyCargoWidget />
       <SEO
         title="Atakum Petshop & Samsun Pet Shop - Aynı Gün Teslimat | JETGO"
         description="Atakum, Samsun, İlkadım, Canik, Tekkeköy'e aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu, ödül maması kapıda ödeme. JETGO Pet Shop Samsun: 09:00-21:00 hizmet, +90 850 840 39 59. Mahalleye en yakın petshop."
