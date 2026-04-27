@@ -761,7 +761,12 @@ function DesktopStatsBar() {
 }
 
 function DailyCargoWidget() {
-  const { data: settings } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
+  const { data: settings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/public-settings"],
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchInterval: 30_000,
+  });
   const enabled = settings?.daily_cargo_widget_enabled === "true";
   const { data } = useQuery<{ count: number }>({
     queryKey: ["/api/public/daily-cargo-count"],
