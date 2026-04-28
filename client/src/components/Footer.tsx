@@ -24,9 +24,9 @@ const LEGAL_LINKS = [
 export default function Footer() {
   const [contactOpen, setContactOpen] = useState(false);
   return (
-    <footer className="hidden md:block bg-gray-900 text-gray-300 mt-8" data-testid="footer-desktop">
-      <div className="max-w-7xl mx-auto px-6 py-10">
-        <div className="grid grid-cols-4 gap-10">
+    <footer className="block bg-gray-900 text-gray-300 mt-8 pb-20 md:pb-0" data-testid="footer-desktop">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 md:gap-10">
           <div>
             <h3 className="text-white font-bold text-lg mb-1">Müşteri Hizmetleri</h3>
             <p className="text-gray-400 text-sm mb-4">Sorularınız için bize ulaşın</p>
