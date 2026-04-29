@@ -109,6 +109,11 @@ export default function Checkout() {
   const bankIban = publicSettings?.bank_iban || "";
   const bankName = publicSettings?.bank_name || "";
 
+  const { data: deliveryNeighborhoods = [] } = useQuery<{ id: number; name: string; district: string; minOrder: number; shippingFee: number; freeShippingLimit: number; isActive: boolean }[]>({
+    queryKey: ["/api/delivery-neighborhoods"],
+    staleTime: 60_000,
+  });
+
   const { data: savedAddresses = [] } = useQuery<any[]>({
     queryKey: ["/api/customer/addresses"],
     enabled: isLoggedIn,
@@ -415,8 +420,31 @@ export default function Checkout() {
   const [couponResult, setCouponResult] = useState<{ valid: boolean; message: string; discountAmount?: number; discountType?: string; discountValue?: number } | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
 
-  const stdShipping = subtotal >= CONFIG.shipLimit ? 0 : CONFIG.shipFee;
-  const stdMinReached = subtotal >= CONFIG.minLimit;
+  const matchedNeighborhood = useMemo(() => {
+    const list = (deliveryNeighborhoods || []).filter(n => n.isActive);
+    if (!list.length) return null;
+    const addrLower = (customerAddress || "").toLocaleLowerCase("tr");
+    if (!addrLower.trim()) return null;
+    const compactAddr = addrLower.replace(/\s+/g, " ");
+    const noSpaceAddr = addrLower.replace(/\s+/g, "");
+    let best: typeof list[number] | null = null;
+    for (const nh of list) {
+      const nhLower = (nh.name || "").toLocaleLowerCase("tr");
+      if (!nhLower) continue;
+      const compactNb = nhLower.replace(/\s+/g, " ");
+      const noSpaceNb = nhLower.replace(/\s+/g, "");
+      if (compactAddr.includes(compactNb) || noSpaceAddr.includes(noSpaceNb)) {
+        if (!best || nh.name.length > best.name.length) best = nh;
+      }
+    }
+    return best;
+  }, [customerAddress, deliveryNeighborhoods]);
+
+  const effShipFee = matchedNeighborhood ? matchedNeighborhood.shippingFee : CONFIG.shipFee;
+  const effShipLimit = matchedNeighborhood ? matchedNeighborhood.freeShippingLimit : CONFIG.shipLimit;
+  const effMinLimit = matchedNeighborhood ? matchedNeighborhood.minOrder : CONFIG.minLimit;
+  const stdShipping = subtotal >= effShipLimit ? 0 : effShipFee;
+  const stdMinReached = subtotal >= effMinLimit;
 
   useEffect(() => {
     if (beginCheckoutFiredRef.current) return;
@@ -1142,6 +1170,17 @@ export default function Checkout() {
                     )}
                     <p className="text-xs text-muted-foreground">{customerAddress.length}/500</p>
                   </div>
+                  {matchedNeighborhood && (
+                    <div
+                      className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] text-blue-900 dark:bg-blue-950/40 dark:text-blue-100 dark:border-blue-800"
+                      data-testid="info-matched-neighborhood"
+                    >
+                      <span className="font-medium">{matchedNeighborhood.name} ({matchedNeighborhood.district})</span>
+                      <span>Min: <strong>{matchedNeighborhood.minOrder} TL</strong></span>
+                      <span>Kargo: <strong>{matchedNeighborhood.shippingFee} TL</strong></span>
+                      <span>Ücretsiz: <strong>{matchedNeighborhood.freeShippingLimit} TL+</strong></span>
+                    </div>
+                  )}
                   {isLoggedIn && paymentId === "nakit" && (
                     <div
                       className="mt-3 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900"

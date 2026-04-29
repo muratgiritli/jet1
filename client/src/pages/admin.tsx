@@ -1476,6 +1476,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setEditingNh(null);
       toast({ title: "Başarılı", description: "Mahalle güncellendi" });
     },
+    onError: (err: any) => {
+      toast({ title: "Hata", description: err?.message || "Mahalle güncellenemedi", variant: "destructive" });
+    },
   });
 
   const deleteNhMutation = useMutation({
