@@ -86,6 +86,15 @@ function generateOTP(): string {
   return crypto.randomInt(100000, 1000000).toString();
 }
 
+function normalizeTrSms(s: string): string {
+  if (!s) return "";
+  const map: Record<string, string> = {
+    "ı":"i","İ":"I","ş":"s","Ş":"S","ğ":"g","Ğ":"G",
+    "ü":"u","Ü":"U","ö":"o","Ö":"O","ç":"c","Ç":"C",
+  };
+  return s.replace(/[ıİşŞğĞüÜöÖçÇ]/g, (c) => map[c] || c);
+}
+
 async function sendSmsViaNetgsm(phone: string, message: string): Promise<boolean> {
   const usercode = process.env.NETGSM_USERCODE;
   const password = process.env.NETGSM_PASSWORD;
@@ -94,6 +103,7 @@ async function sendSmsViaNetgsm(phone: string, message: string): Promise<boolean
     console.error("NetGSM credentials not configured");
     return false;
   }
+  message = normalizeTrSms(message);
   const gsmno = phone.replace(/\D/g, "");
   const fullPhone = gsmno.startsWith("90") ? gsmno : "90" + gsmno;
   const maskedPhone = fullPhone.length >= 6 ? `${fullPhone.slice(0,4)}****${fullPhone.slice(-2)}` : "****";
@@ -1788,8 +1798,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
             `Alici: ${bank.bank_account_name || "SIZPA LTD"}`,
             bank.bank_name ? `Banka: ${bank.bank_name}` : "",
             `IBAN: ${bank.bank_iban}`,
-            `Aciklama: Siparis ${order.id}`,
-            `Havale sonrasi bildirim: ${formUrl}`,
+            ``,
+            `ONEMLI: Aciklama kismina "${order.id}" yazin.`,
+            `Onay icin: ${formUrl}`,
           ].filter(Boolean);
           sendSmsViaNetgsm(orderData.customerPhone, lines.join("\n")).catch(err => {
             console.error("Customer havale SMS error:", err);
