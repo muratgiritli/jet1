@@ -1904,7 +1904,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const grandTotal = Number(o.grand_total);
       if (!grandTotal || grandTotal <= 0) return res.status(400).json({ message: "Geçersiz tutar" });
 
-      const merchantOrderId = `JET${o.id}T${Date.now()}`.slice(0, 64);
+      const merchantOrderId = `JET${o.id}T${Date.now().toString(36)}`.slice(0, 20);
       const baseUrl = callbackBaseUrl(req);
       const callbackUrl = `${baseUrl}/api/tosla/callback`;
 
@@ -1972,7 +1972,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         [o.id]
       );
 
-      const paymentPageUrl = `${origin}/threeDSecure/${sessionId}`;
+      const paymentPageUrl = `${origin}/api/Payment/threeDSecure/${sessionId}`;
       res.json({
         success: true,
         token: merchantOrderId,
