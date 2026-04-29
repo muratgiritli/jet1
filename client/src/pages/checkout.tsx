@@ -634,7 +634,6 @@ export default function Checkout() {
           const initRes = await apiRequest("POST", "/api/tosla/init-payment", { orderId: orderResult.id });
           const initData = await initRes.json();
           if (initData?.paymentPageUrl) {
-            clearCart();
             queryClient.invalidateQueries({ queryKey: ["/api/customer/orders"] });
             window.location.href = initData.paymentPageUrl;
             return;

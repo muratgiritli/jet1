@@ -2,10 +2,12 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
 import { CheckCircle2, XCircle, Loader2, Package } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useCart } from "@/contexts/CartContext";
 
 export default function PaymentResultPage() {
   const [location] = useLocation();
   const [params, setParams] = useState<URLSearchParams>(new URLSearchParams());
+  const { clearCart } = useCart();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -17,6 +19,12 @@ export default function PaymentResultPage() {
   const orderId = params.get("order");
   const reason = params.get("msg") || "";
   const isSuccess = status === "success";
+
+  useEffect(() => {
+    if (isSuccess) {
+      clearCart();
+    }
+  }, [isSuccess, clearCart]);
 
   const { data: order, isLoading } = useQuery<any>({
     queryKey: ["/api/orders", orderId, "payment-status"],
