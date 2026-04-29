@@ -2654,13 +2654,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           className="w-full"
                           disabled={!nhName.trim() || createNhMutation.isPending || updateNhMutation.isPending}
                           onClick={() => {
+                            const parsedMin = parseFloat(nhMinOrder);
+                            const parsedShip = parseFloat(nhShipFee);
+                            const parsedFree = parseFloat(nhFreeShipLimit);
+                            const parsedSort = parseInt(nhSortOrder);
                             const data: any = {
                               district: nhDistrict,
                               name: nhName.trim(),
-                              minOrder: parseFloat(nhMinOrder) || 700,
-                              shippingFee: parseFloat(nhShipFee) || 89,
-                              freeShippingLimit: parseFloat(nhFreeShipLimit) || 2000,
-                              sortOrder: parseInt(nhSortOrder) || 0,
+                              minOrder: Number.isFinite(parsedMin) ? parsedMin : 700,
+                              shippingFee: Number.isFinite(parsedShip) ? parsedShip : 89,
+                              freeShippingLimit: Number.isFinite(parsedFree) ? parsedFree : 2000,
+                              sortOrder: Number.isFinite(parsedSort) ? parsedSort : 0,
                             };
                             if (nhDistance) data.distance = parseFloat(nhDistance);
                             if (editingNh) {
