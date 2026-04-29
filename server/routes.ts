@@ -237,6 +237,26 @@ export async function registerRoutes(
   }
 
   try {
+    await sharedPool.query(`
+      CREATE TABLE IF NOT EXISTS tosla_payment_tokens (
+        token VARCHAR(256) PRIMARY KEY,
+        order_id INTEGER NOT NULL,
+        tosla_order_id VARCHAR(64),
+        transaction_id VARCHAR(64),
+        amount NUMERIC(10,2),
+        status TEXT NOT NULL DEFAULT 'pending',
+        raw_response JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_tosla_token_order ON tosla_payment_tokens (order_id);`);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_tosla_token_tosla_order ON tosla_payment_tokens (tosla_order_id);`);
+  } catch (e) {
+    console.error("Tosla payment tokens table setup error:", e);
+  }
+
+  try {
     const defaults: Array<[string, string]> = [
       ["payment_nakit_enabled", "true"],
       ["payment_eft_enabled", "true"],
@@ -246,6 +266,11 @@ export async function registerRoutes(
       ["iyzico_api_key", ""],
       ["iyzico_secret_key", ""],
       ["iyzico_base_url", "https://api.iyzipay.com"],
+      ["payment_tosla_enabled", "0"],
+      ["tosla_client_id", ""],
+      ["tosla_api_user", ""],
+      ["tosla_api_pass", ""],
+      ["tosla_base_url", "https://prepentegrasyon.tosla.com/api/Payment"],
     ];
     for (const [key, value] of defaults) {
       await sharedPool.query(
@@ -1543,7 +1568,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       for (const r of pmRow.rows) pmMap[r.key] = r.value;
       const isOn = (k: string) => pmMap[k] !== "0" && pmMap[k] !== "false";
       const pm = String(orderData.paymentMethod || "").toLowerCase();
-      const requiredKey = /online/.test(pm)
+      const requiredKey = /tosla/.test(pm)
+        ? "payment_tosla_enabled"
+        : /online/.test(pm)
         ? "payment_iyzico_enabled"
         : /havale|eft/.test(pm)
         ? "payment_eft_enabled"
