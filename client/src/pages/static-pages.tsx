@@ -512,7 +512,7 @@ export function KVKKPage() {
         <p>Kişisel verileriniz, aşağıdaki durumlarda ve yalnızca gerekli minimum düzeyde üçüncü taraflarla paylaşılabilmektedir:</p>
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li><strong>Teslimat hizmeti:</strong> Sipariş teslimatı için gerekli minimum bilgilerin (ad, adres, telefon) teslimat personeliyle paylaşılması</li>
-          <li><strong>Ödeme hizmeti:</strong> Ödeme işlemlerinin gerçekleştirilmesi için ödeme hizmeti sağlayıcılarıyla (iyzico vb.) paylaşım</li>
+          <li><strong>Ödeme hizmeti:</strong> Ödeme işlemlerinin gerçekleştirilmesi için ödeme hizmeti sağlayıcılarıyla (Tosla / Aktif Bank — AKÖDE Elektronik Para A.Ş. vb.) paylaşım</li>
           <li><strong>İletişim:</strong> WhatsApp Business üzerinden sipariş iletişimi (talepleriniz doğrultusunda)</li>
           <li><strong>Yasal zorunluluklar:</strong> Kanun ve mevzuat gereği yetkili kamu kurum ve kuruluşlarına bilgi aktarımı</li>
           <li><strong>Hukuki süreçler:</strong> Mahkeme kararı veya yasal zorunluluk halinde yargı organlarına bilgi aktarımı</li>
@@ -625,7 +625,7 @@ export function GizlilikPage() {
         <p>Kişisel bilgileriniz aşağıdaki durumlar dışında üçüncü taraflarla <strong>kesinlikle paylaşılmaz</strong>:</p>
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li><strong>Teslimat hizmeti:</strong> Siparişinizin teslimi için gerekli minimum bilgilerin (ad, adres, telefon) paylaşılması</li>
-          <li><strong>Ödeme altyapısı:</strong> Online ödeme işlemleri için ödeme hizmeti sağlayıcısıyla (iyzico) paylaşım</li>
+          <li><strong>Ödeme altyapısı:</strong> Online ödeme işlemleri için ödeme hizmeti sağlayıcısıyla (Tosla / Aktif Bank — AKÖDE Elektronik Para A.Ş.) paylaşım</li>
           <li><strong>WhatsApp iletişimi:</strong> Sipariş onayı ve müşteri desteği için WhatsApp Business kullanımı</li>
           <li><strong>Yasal zorunluluk:</strong> Kanun gereği yetkili kamu kurum ve kuruluşlarına bilgi aktarımı</li>
         </ul>
@@ -635,7 +635,7 @@ export function GizlilikPage() {
       <Section title="5. Üçüncü Taraf Hizmetler">
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li><strong>WhatsApp Business:</strong> Sipariş iletişimi için kullanılır. WhatsApp'ın kendi gizlilik politikası geçerlidir.</li>
-          <li><strong>iyzico:</strong> Online ödeme altyapısı için kullanılır. iyzico'nun kendi gizlilik politikası ve PCI DSS uyumluluğu geçerlidir.</li>
+          <li><strong>Tosla (Aktif Bank — AKÖDE):</strong> Online kredi kartı ödeme altyapısı için kullanılır. Tosla / Aktif Bank'ın kendi gizlilik politikası ve PCI DSS uyumluluğu geçerlidir.</li>
           <li><strong>OpenAI:</strong> Yapay zeka pet bakım danışmanlığı hizmeti için kullanılır. Bu hizmet kapsamında yalnızca genel pet bakım soruları işlenir, kişisel verileriniz paylaşılmaz.</li>
         </ul>
       </Section>
@@ -768,7 +768,7 @@ export function GizlilikSozlesmesiPage() {
         <p>Kullanıcı'nın kişisel verileri, açık rızası olmaksızın üçüncü taraflarla paylaşılmaz. Aşağıdaki istisnai durumlar saklıdır:</p>
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li><strong>Teslimat hizmeti:</strong> Sipariş teslimatı için gerekli minimum bilgilerin (ad, adres, telefon) teslimat personeliyle paylaşılması</li>
-          <li><strong>Ödeme hizmeti:</strong> Online ödeme işlemleri için ödeme hizmeti sağlayıcısıyla (iyzico) paylaşım. iyzico, PCI DSS uyumlu güvenlik standartlarına sahiptir.</li>
+          <li><strong>Ödeme hizmeti:</strong> Online ödeme işlemleri için ödeme hizmeti sağlayıcısıyla (Tosla / Aktif Bank — AKÖDE Elektronik Para A.Ş.) paylaşım. Tosla, PCI DSS uyumlu güvenlik standartlarına sahiptir.</li>
           <li><strong>İletişim hizmeti:</strong> WhatsApp Business üzerinden sipariş iletişimi (Kullanıcı'nın talebi doğrultusunda)</li>
           <li><strong>Yasal zorunluluk:</strong> Kanun ve mevzuat gereği yetkili kamu kurum ve kuruluşlarına (mahkeme, savcılık, vergi dairesi vb.) bilgi aktarımı</li>
         </ul>

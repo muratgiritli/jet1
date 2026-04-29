@@ -12,7 +12,6 @@ import pgSession from "connect-pg-simple";
 import { saveProductImage, getProductImage, downloadAndSaveImage } from "./image-service";
 import multer from "multer";
 import OpenAI from "openai";
-import Iyzipay from "iyzipay";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -220,24 +219,6 @@ export async function registerRoutes(
 
   try {
     await sharedPool.query(`
-      CREATE TABLE IF NOT EXISTS iyzico_payment_tokens (
-        token VARCHAR(128) PRIMARY KEY,
-        order_id INTEGER NOT NULL,
-        conversation_id VARCHAR(64),
-        amount NUMERIC(10,2),
-        status TEXT NOT NULL DEFAULT 'pending',
-        raw_response JSONB,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
-        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-    `);
-    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_iyzico_token_order ON iyzico_payment_tokens (order_id);`);
-  } catch (e) {
-    console.error("Iyzico payment tokens table setup error:", e);
-  }
-
-  try {
-    await sharedPool.query(`
       CREATE TABLE IF NOT EXISTS tosla_payment_tokens (
         token VARCHAR(256) PRIMARY KEY,
         order_id INTEGER NOT NULL,
@@ -262,15 +243,11 @@ export async function registerRoutes(
       ["payment_eft_enabled", "true"],
       ["payment_qr_enabled", "true"],
       ["payment_pos_enabled", "true"],
-      ["payment_iyzico_enabled", "0"],
-      ["iyzico_api_key", ""],
-      ["iyzico_secret_key", ""],
-      ["iyzico_base_url", "https://api.iyzipay.com"],
       ["payment_tosla_enabled", "0"],
       ["tosla_client_id", ""],
       ["tosla_api_user", ""],
       ["tosla_api_pass", ""],
-      ["tosla_base_url", "https://prepentegrasyon.tosla.com/api/Payment"],
+      ["tosla_base_url", "https://prepentegrasyon.tosla.com"],
     ];
     for (const [key, value] of defaults) {
       await sharedPool.query(
@@ -278,12 +255,6 @@ export async function registerRoutes(
         [key, value]
       );
     }
-    await sharedPool.query(
-      "UPDATE app_settings SET value = '', updated_at = NOW() WHERE key = 'iyzico_api_key' AND value = 'moa5SDnL2PgIgc8yYk2lBt0B29Ki6uoX'"
-    );
-    await sharedPool.query(
-      "UPDATE app_settings SET value = '', updated_at = NOW() WHERE key = 'iyzico_secret_key' AND value = 'xVEls6y1eyHfnzl1uxR6CohcYJFKzdCk'"
-    );
   } catch (e) {
     console.error("Payment settings defaults seeding error:", e);
   }
@@ -1562,16 +1533,14 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
     try {
       const pmRow = await sharedPool.query(
-        "SELECT key, value FROM app_settings WHERE key IN ('payment_nakit_enabled','payment_pos_enabled','payment_qr_enabled','payment_eft_enabled','payment_iyzico_enabled')"
+        "SELECT key, value FROM app_settings WHERE key IN ('payment_nakit_enabled','payment_pos_enabled','payment_qr_enabled','payment_eft_enabled','payment_tosla_enabled')"
       );
       const pmMap: Record<string, string> = {};
       for (const r of pmRow.rows) pmMap[r.key] = r.value;
       const isOn = (k: string) => pmMap[k] !== "0" && pmMap[k] !== "false";
       const pm = String(orderData.paymentMethod || "").toLowerCase();
-      const requiredKey = /tosla/.test(pm)
+      const requiredKey = /tosla|online/.test(pm)
         ? "payment_tosla_enabled"
-        : /online/.test(pm)
-        ? "payment_iyzico_enabled"
         : /havale|eft/.test(pm)
         ? "payment_eft_enabled"
         : /qr/.test(pm)
@@ -1827,21 +1796,44 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     res.status(201).json(order);
   });
 
-  async function getIyzicoConfig() {
+  async function getToslaConfig() {
     const r = await sharedPool.query(
-      "SELECT key, value FROM app_settings WHERE key IN ('iyzico_api_key','iyzico_secret_key','iyzico_base_url','payment_iyzico_enabled')"
+      "SELECT key, value FROM app_settings WHERE key IN ('tosla_client_id','tosla_api_user','tosla_api_pass','tosla_base_url','payment_tosla_enabled')"
     );
     const cfg: Record<string, string> = {};
     for (const row of r.rows) cfg[row.key] = row.value || "";
     return cfg;
   }
 
-  function buildIyzicoClient(cfg: Record<string, string>) {
-    return new (Iyzipay as any)({
-      apiKey: cfg.iyzico_api_key,
-      secretKey: cfg.iyzico_secret_key,
-      uri: cfg.iyzico_base_url || "https://api.iyzipay.com",
-    });
+  function toslaOrigin(cfg: Record<string, string>) {
+    let b = (cfg.tosla_base_url || "https://prepentegrasyon.tosla.com").trim();
+    b = b.replace(/\/api\/payment\/?$/i, "");
+    return b.replace(/\/+$/, "");
+  }
+
+  function toslaTimeSpan() {
+    const d = new Date(Date.now() + 3 * 60 * 60 * 1000);
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getUTCFullYear()}${pad(d.getUTCMonth() + 1)}${pad(d.getUTCDate())}${pad(d.getUTCHours())}${pad(d.getUTCMinutes())}${pad(d.getUTCSeconds())}`;
+  }
+
+  async function toslaRnd() {
+    const crypto = await import("crypto");
+    return crypto.randomBytes(12).toString("hex").slice(0, 24);
+  }
+
+  async function toslaRequestHash(cfg: Record<string, string>, rnd: string, timeSpan: string) {
+    const crypto = await import("crypto");
+    const data = `${cfg.tosla_api_pass}${cfg.tosla_client_id}${cfg.tosla_api_user}${rnd}${timeSpan}`;
+    return crypto.createHash("sha512").update(data, "utf8").digest("base64");
+  }
+
+  async function toslaCallbackHash(cfg: Record<string, string>, params: {
+    OrderId: string; MdStatus: string; BankResponseCode: string; BankResponseMessage: string; RequestStatus: string;
+  }) {
+    const crypto = await import("crypto");
+    const data = `${cfg.tosla_api_pass}${cfg.tosla_client_id}${cfg.tosla_api_user}${params.OrderId}${params.MdStatus}${params.BankResponseCode}${params.BankResponseMessage}${params.RequestStatus}`;
+    return crypto.createHash("sha512").update(data, "utf8").digest("base64");
   }
 
   function callbackBaseUrl(req: Request) {
@@ -1871,7 +1863,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   };
 
-  app.post("/api/iyzico/init-payment", async (req: Request, res: Response) => {
+  app.post("/api/tosla/init-payment", async (req: Request, res: Response) => {
     try {
       const customerId = (req.session as any)?.customerId;
       if (!customerId) return res.status(401).json({ message: "Giriş gerekli" });
@@ -1896,13 +1888,13 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         return res.status(400).json({ message: "Bu sipariş zaten ödenmiş" });
       }
 
-      const cfg = await getIyzicoConfig();
-      if (cfg.payment_iyzico_enabled === "0" || cfg.payment_iyzico_enabled === "false") {
-        await cancelOrderAndRestoreStock(o.id, "iyzico-disabled");
+      const cfg = await getToslaConfig();
+      if (cfg.payment_tosla_enabled === "0" || cfg.payment_tosla_enabled === "false") {
+        await cancelOrderAndRestoreStock(o.id, "tosla-disabled");
         return res.status(400).json({ message: "Online ödeme şu anda kapalı", cancelled: true });
       }
-      if (!cfg.iyzico_api_key || !cfg.iyzico_secret_key) {
-        await cancelOrderAndRestoreStock(o.id, "iyzico-not-configured");
+      if (!cfg.tosla_client_id || !cfg.tosla_api_user || !cfg.tosla_api_pass) {
+        await cancelOrderAndRestoreStock(o.id, "tosla-not-configured");
         return res.status(500).json({ message: "Online ödeme yapılandırılmamış", cancelled: true });
       }
 
@@ -1912,99 +1904,67 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const grandTotal = Number(o.grand_total);
       if (!grandTotal || grandTotal <= 0) return res.status(400).json({ message: "Geçersiz tutar" });
 
-      const conversationId = `JET-${o.id}-${Date.now()}`;
+      const merchantOrderId = `JET${o.id}T${Date.now()}`.slice(0, 64);
       const baseUrl = callbackBaseUrl(req);
-      const callbackUrl = `${baseUrl}/api/iyzico/callback`;
+      const callbackUrl = `${baseUrl}/api/tosla/callback`;
 
-      const nameParts = String(o.customer_name || "Müşteri").trim().split(/\s+/);
-      const buyerName = nameParts[0] || "Musteri";
-      const buyerSurname = nameParts.slice(1).join(" ") || "Jetgo";
-      const phone = String(o.customer_phone || "").replace(/\D/g, "");
-      const gsmNumber = phone ? `+90${phone.slice(-10)}` : "+905000000000";
+      const rnd = await toslaRnd();
+      const timeSpan = toslaTimeSpan();
+      const hash = await toslaRequestHash(cfg, rnd, timeSpan);
 
-      let totalCents = 0;
-      const basketItems = items.map((it: any, idx: number) => {
-        const price = Math.max(0.1, Number(it.price) || 0) * (Number(it.quantity) || 1);
-        const cents = Math.round(price * 100);
-        totalCents += cents;
-        return {
-          id: String(it.productId || `i${idx}`),
-          name: String(it.name || `Urun ${idx + 1}`).slice(0, 60),
-          category1: "PetShop",
-          itemType: "PHYSICAL",
-          price: (cents / 100).toFixed(2),
-        };
-      });
+      const amountKurus = Math.round(grandTotal * 100);
 
-      const orderTotalCents = Math.round(grandTotal * 100);
-      if (totalCents !== orderTotalCents && basketItems.length > 0) {
-        const diff = orderTotalCents - totalCents;
-        const lastPrice = Math.round(parseFloat(basketItems[basketItems.length - 1].price) * 100) + diff;
-        if (lastPrice > 0) {
-          basketItems[basketItems.length - 1].price = (lastPrice / 100).toFixed(2);
-        }
-      }
-      const basketSum = basketItems.reduce((s: number, b: any) => s + parseFloat(b.price), 0).toFixed(2);
-
-      const request = {
-        locale: "tr",
-        conversationId,
-        price: basketSum,
-        paidPrice: grandTotal.toFixed(2),
-        currency: "TRY",
-        basketId: `B${o.id}`,
-        paymentGroup: "PRODUCT",
+      const requestBody = {
+        clientId: cfg.tosla_client_id,
+        apiUser: cfg.tosla_api_user,
+        rnd,
+        timeSpan,
+        hash,
         callbackUrl,
-        enabledInstallments: [1, 2, 3, 6, 9],
-        buyer: {
-          id: `C${customerId}`,
-          name: buyerName.slice(0, 40),
-          surname: buyerSurname.slice(0, 40),
-          gsmNumber,
-          email: `c${customerId}@jetgomarket.com`,
-          identityNumber: "11111111111",
-          registrationAddress: String(o.customer_address || "Samsun").slice(0, 200),
-          ip: req.ip || "127.0.0.1",
-          city: "Samsun",
-          country: "Turkey",
-          zipCode: "55200",
-        },
-        shippingAddress: {
-          contactName: String(o.customer_name || "Musteri").slice(0, 60),
-          city: "Samsun",
-          country: "Turkey",
-          address: String(o.customer_address || "Samsun").slice(0, 200),
-          zipCode: "55200",
-        },
-        billingAddress: {
-          contactName: String(o.customer_name || "Musteri").slice(0, 60),
-          city: "Samsun",
-          country: "Turkey",
-          address: String(o.customer_address || "Samsun").slice(0, 200),
-          zipCode: "55200",
-        },
-        basketItems,
+        orderId: merchantOrderId,
+        amount: amountKurus,
+        currency: 949,
+        installmentCount: 0,
+        languageCode: "tr",
+        transactionType: 1,
+        transactionDateTime: timeSpan,
+        description: `JETGO Sipariş #${o.id}`,
       };
 
-      const iyzipay = buildIyzicoClient(cfg);
-      const result: any = await new Promise((resolve, reject) => {
-        iyzipay.checkoutFormInitialize.create(request, (err: any, r: any) => {
-          if (err) return reject(err);
-          resolve(r);
-        });
-      });
+      const origin = toslaOrigin(cfg);
+      const apiUrl = `${origin}/api/Payment/threeDPayment`;
 
-      if (result.status !== "success") {
-        console.error("[iyzico-init-error]", result);
-        await cancelOrderAndRestoreStock(o.id, "iyzico-init-failed");
-        return res.status(400).json({ message: result.errorMessage || "Online ödeme başlatılamadı", cancelled: true });
+      let result: any = null;
+      try {
+        const fetchRes = await fetch(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Accept": "application/json" },
+          body: JSON.stringify(requestBody),
+        });
+        const text = await fetchRes.text();
+        try { result = JSON.parse(text); } catch { result = { raw: text }; }
+      } catch (netErr: any) {
+        console.error("[tosla-init] network error:", netErr?.message || netErr);
+        await cancelOrderAndRestoreStock(o.id, "tosla-network-error");
+        return res.status(502).json({ message: "Tosla bağlantı hatası", cancelled: true });
+      }
+
+      const code = result?.Code ?? result?.code;
+      const sessionId = result?.ThreeDSessionId || result?.threeDSessionId;
+      const transactionId = result?.TransactionId || result?.transactionId || null;
+
+      if (String(code) !== "0" || !sessionId) {
+        console.error("[tosla-init-error]", result);
+        await cancelOrderAndRestoreStock(o.id, "tosla-init-failed");
+        const msg = result?.Message || result?.message || "Online ödeme başlatılamadı";
+        return res.status(400).json({ message: msg, cancelled: true });
       }
 
       await sharedPool.query(
-        `INSERT INTO iyzico_payment_tokens (token, order_id, conversation_id, amount, status, raw_response, updated_at)
-         VALUES ($1, $2, $3, $4, 'pending', $5::jsonb, NOW())
-         ON CONFLICT (token) DO UPDATE SET order_id = $2, status = 'pending', updated_at = NOW()`,
-        [result.token, o.id, conversationId, grandTotal.toFixed(2), JSON.stringify({ paymentPageUrl: result.paymentPageUrl })]
+        `INSERT INTO tosla_payment_tokens (token, order_id, tosla_order_id, transaction_id, amount, status, raw_response, updated_at)
+         VALUES ($1, $2, $3, $4, $5, 'pending', $6::jsonb, NOW())
+         ON CONFLICT (token) DO UPDATE SET order_id = $2, tosla_order_id = $3, transaction_id = $4, amount = $5, status = 'pending', raw_response = $6::jsonb, updated_at = NOW()`,
+        [merchantOrderId, o.id, String(sessionId), transactionId ? String(transactionId) : null, grandTotal.toFixed(2), JSON.stringify(result || {})]
       );
 
       await sharedPool.query(
@@ -2012,19 +1972,20 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         [o.id]
       );
 
+      const paymentPageUrl = `${origin}/threeDSecure/${sessionId}`;
       res.json({
         success: true,
-        token: result.token,
-        paymentPageUrl: result.paymentPageUrl,
-        checkoutFormContent: result.checkoutFormContent,
+        token: merchantOrderId,
+        paymentPageUrl,
+        threeDSessionId: sessionId,
       });
     } catch (err: any) {
-      console.error("[iyzico-init] error:", err?.message || err);
+      console.error("[tosla-init] error:", err?.message || err);
       res.status(500).json({ message: "Online ödeme başlatılamadı" });
     }
   });
 
-  app.all("/api/iyzico/callback", async (req: Request, res: Response) => {
+  app.all("/api/tosla/callback", async (req: Request, res: Response) => {
     const baseUrl = callbackBaseUrl(req);
     const buildResultUrl = (orderId: number | undefined, status: "success" | "failed", token: string, msg?: string) => {
       const params = new URLSearchParams();
@@ -2038,44 +1999,71 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       res.redirect(303, buildResultUrl(orderId, "failed", token, msg));
 
     try {
-      const token = (req.body?.token || req.query?.token) as string | undefined;
-      if (!token) return res.redirect(303, `${baseUrl}/odeme-sonuc?status=failed&msg=token-missing`);
+      const data: any = (req.body && Object.keys(req.body).length > 0) ? req.body : req.query;
+      const merchantOrderId = String(data?.OrderId || data?.orderId || "").trim();
+      const transactionId = String(data?.TransactionId || data?.transactionId || "").trim();
+      const code = String(data?.Code ?? data?.code ?? "").trim();
+      const responseCode = String(data?.ResponseCode ?? data?.responseCode ?? "").trim();
+      const bankResponseCode = String(data?.BankResponseCode ?? data?.bankResponseCode ?? "").trim();
+      const bankResponseMessage = String(data?.BankResponseMessage ?? data?.bankResponseMessage ?? "").trim();
+      const requestStatus = String(data?.RequestStatus ?? data?.requestStatus ?? "").trim();
+      const mdStatus = String(data?.MdStatus ?? data?.mdStatus ?? "").trim();
+      const callbackHash = String(data?.Hash ?? data?.hash ?? "").trim();
 
-      const tokRow = await sharedPool.query(
-        "SELECT order_id, status FROM iyzico_payment_tokens WHERE token = $1",
-        [token]
-      );
-      const tok = tokRow.rows[0];
-      if (!tok) return res.redirect(303, `${baseUrl}/odeme-sonuc?status=failed&msg=token-not-found&t=${encodeURIComponent(token)}`);
-
-      if (tok.status === "completed") {
-        return res.redirect(303, buildResultUrl(tok.order_id, "success", token));
-      }
-      if (tok.status === "failed") {
-        return failRedirect(tok.order_id, token, "payment-failed");
-      }
-
-      const cfg = await getIyzicoConfig();
-      if (!cfg.iyzico_api_key || !cfg.iyzico_secret_key) {
-        return failRedirect(tok.order_id, token, "config-missing");
-      }
-      const iyzipay = buildIyzicoClient(cfg);
-
-      const result: any = await new Promise((resolve, reject) => {
-        iyzipay.checkoutForm.retrieve({ locale: "tr", token }, (err: any, r: any) => {
-          if (err) return reject(err);
-          resolve(r);
-        });
+      console.log("[tosla-callback]", new Date().toISOString(), {
+        merchantOrderId, code, responseCode, bankResponseCode, requestStatus, mdStatus, transactionId,
       });
 
-      const success = result?.status === "success" && result?.paymentStatus === "SUCCESS";
+      if (!merchantOrderId) {
+        return res.redirect(303, `${baseUrl}/odeme-sonuc?status=failed&msg=order-missing`);
+      }
+
+      const tokRow = await sharedPool.query(
+        "SELECT order_id, status FROM tosla_payment_tokens WHERE token = $1",
+        [merchantOrderId]
+      );
+      const tok = tokRow.rows[0];
+      if (!tok) {
+        return res.redirect(303, `${baseUrl}/odeme-sonuc?status=failed&msg=token-not-found&t=${encodeURIComponent(merchantOrderId)}`);
+      }
+
+      if (tok.status === "completed") {
+        return res.redirect(303, buildResultUrl(tok.order_id, "success", merchantOrderId));
+      }
+      if (tok.status === "failed") {
+        return failRedirect(tok.order_id, merchantOrderId, "payment-failed");
+      }
+
+      const cfg = await getToslaConfig();
+      if (!cfg.tosla_client_id || !cfg.tosla_api_user || !cfg.tosla_api_pass) {
+        return failRedirect(tok.order_id, merchantOrderId, "config-missing");
+      }
+
+      if (callbackHash) {
+        try {
+          const expected = await toslaCallbackHash(cfg, {
+            OrderId: merchantOrderId,
+            MdStatus: mdStatus,
+            BankResponseCode: bankResponseCode,
+            BankResponseMessage: bankResponseMessage,
+            RequestStatus: requestStatus,
+          });
+          if (expected !== callbackHash) {
+            console.warn("[tosla-callback] hash mismatch", { merchantOrderId, expected, callbackHash });
+          }
+        } catch (e) {
+          console.warn("[tosla-callback] hash check error:", e);
+        }
+      }
+
+      const success = code === "0" && bankResponseCode === "00" && (mdStatus === "" || mdStatus === "1");
 
       const claim = await sharedPool.query(
-        "UPDATE iyzico_payment_tokens SET status = $1, raw_response = $2::jsonb, updated_at = NOW() WHERE token = $3 AND status = 'pending' RETURNING token",
-        [success ? "completed" : "failed", JSON.stringify(result || {}), token]
+        "UPDATE tosla_payment_tokens SET status = $1, transaction_id = COALESCE($2, transaction_id), raw_response = $3::jsonb, updated_at = NOW() WHERE token = $4 AND status = 'pending' RETURNING token",
+        [success ? "completed" : "failed", transactionId || null, JSON.stringify(data || {}), merchantOrderId]
       );
       if (claim.rowCount === 0) {
-        return res.redirect(303, buildResultUrl(tok.order_id, success ? "success" : "failed", token));
+        return res.redirect(303, buildResultUrl(tok.order_id, success ? "success" : "failed", merchantOrderId));
       }
 
       if (success) {
@@ -2083,7 +2071,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           "UPDATE orders SET payment_status = 'completed' WHERE id = $1",
           [tok.order_id]
         );
-        return res.redirect(303, buildResultUrl(tok.order_id, "success", token));
+        return res.redirect(303, buildResultUrl(tok.order_id, "success", merchantOrderId));
       }
 
       await sharedPool.query(
@@ -2101,11 +2089,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           }
         }
       } catch (e) {
-        console.error("Stock restore error after failed iyzico:", e);
+        console.error("Stock restore error after failed tosla:", e);
       }
-      return failRedirect(tok.order_id, token, result?.errorMessage || "payment-failed");
+      return failRedirect(tok.order_id, merchantOrderId, bankResponseMessage || "payment-failed");
     } catch (err: any) {
-      console.error("[iyzico-callback] error:", err?.message || err);
+      console.error("[tosla-callback] error:", err?.message || err);
       return res.redirect(303, `${baseUrl}/odeme-sonuc?status=failed&msg=callback-error`);
     }
   });
@@ -2121,7 +2109,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       let allowed = false;
       if (token) {
         const tokRow = await sharedPool.query(
-          "SELECT order_id FROM iyzico_payment_tokens WHERE token = $1",
+          "SELECT order_id FROM tosla_payment_tokens WHERE token = $1",
           [token]
         );
         if (tokRow.rows[0]?.order_id === id) allowed = true;
@@ -2159,82 +2147,68 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
-  app.all("/api/iyzico/webhook", async (req: Request, res: Response) => {
+  app.all("/api/tosla/webhook", async (req: Request, res: Response) => {
     const sendOk = () => res.status(200).json({ status: "success" });
     try {
       const payload: any = req.method === "GET" ? req.query : (req.body || {});
-      console.log("[iyzico-webhook]", new Date().toISOString(), JSON.stringify(payload).slice(0, 500));
+      console.log("[tosla-webhook]", new Date().toISOString(), JSON.stringify(payload).slice(0, 500));
 
-      const conversationId =
-        payload.paymentConversationId ||
-        payload.conversationId ||
-        payload.iyziConversationId ||
-        "";
-      const token = payload.token || "";
+      const merchantOrderId = String(payload.OrderId || payload.orderId || "").trim();
+      if (!merchantOrderId) {
+        console.warn("[tosla-webhook] missing OrderId");
+        return sendOk();
+      }
 
-      let tokenRow: any = null;
-      if (token) {
-        const r = await sharedPool.query(
-          "SELECT token, order_id, status, conversation_id FROM iyzico_payment_tokens WHERE token = $1",
-          [token]
-        );
-        tokenRow = r.rows[0] || null;
-      }
-      if (!tokenRow && conversationId) {
-        const r = await sharedPool.query(
-          "SELECT token, order_id, status, conversation_id FROM iyzico_payment_tokens WHERE conversation_id = $1 ORDER BY updated_at DESC LIMIT 1",
-          [conversationId]
-        );
-        tokenRow = r.rows[0] || null;
-      }
+      const tokRow = await sharedPool.query(
+        "SELECT token, order_id, status FROM tosla_payment_tokens WHERE token = $1",
+        [merchantOrderId]
+      );
+      const tokenRow = tokRow.rows[0];
       if (!tokenRow) {
-        console.warn("[iyzico-webhook] no matching token", { conversationId, token });
+        console.warn("[tosla-webhook] no matching token", { merchantOrderId });
         return sendOk();
-      }
-
-      const cfg = await getIyzicoConfig();
-      if (!cfg.iyzico_api_key || !cfg.iyzico_secret_key) {
-        console.warn("[iyzico-webhook] config missing");
-        return sendOk();
-      }
-
-      const sigHeader =
-        (req.headers["x-iyz-signature-v3"] as string) ||
-        (req.headers["x-iyz-signature"] as string) ||
-        "";
-      if (sigHeader && payload.iyziEventType && payload.iyziReferenceCode) {
-        try {
-          const crypto = await import("crypto");
-          const data = `${cfg.iyzico_secret_key}${payload.iyziEventType}${payload.iyziReferenceCode}`;
-          const expected = crypto
-            .createHmac("sha256", cfg.iyzico_secret_key)
-            .update(data)
-            .digest("base64");
-          if (expected !== sigHeader) {
-            console.warn("[iyzico-webhook] signature mismatch (continuing with retrieve verification)");
-          }
-        } catch (e) {
-          console.warn("[iyzico-webhook] signature check error:", e);
-        }
       }
 
       if (tokenRow.status === "completed" || tokenRow.status === "failed") {
         return sendOk();
       }
 
-      const iyzipay = buildIyzicoClient(cfg);
-      const result: any = await new Promise((resolve, reject) => {
-        iyzipay.checkoutForm.retrieve({ locale: "tr", token: tokenRow.token }, (err: any, r: any) => {
-          if (err) return reject(err);
-          resolve(r);
-        });
-      });
+      const cfg = await getToslaConfig();
+      if (!cfg.tosla_client_id || !cfg.tosla_api_user || !cfg.tosla_api_pass) {
+        console.warn("[tosla-webhook] config missing");
+        return sendOk();
+      }
 
-      const success = result?.status === "success" && result?.paymentStatus === "SUCCESS";
+      const code = String(payload.Code ?? payload.code ?? "").trim();
+      const bankResponseCode = String(payload.BankResponseCode ?? "").trim();
+      const bankResponseMessage = String(payload.BankResponseMessage ?? "").trim();
+      const requestStatus = String(payload.RequestStatus ?? "").trim();
+      const mdStatus = String(payload.MdStatus ?? "").trim();
+      const transactionId = String(payload.TransactionId ?? "").trim();
+      const callbackHash = String(payload.Hash ?? payload.hash ?? "").trim();
+
+      if (callbackHash) {
+        try {
+          const expected = await toslaCallbackHash(cfg, {
+            OrderId: merchantOrderId,
+            MdStatus: mdStatus,
+            BankResponseCode: bankResponseCode,
+            BankResponseMessage: bankResponseMessage,
+            RequestStatus: requestStatus,
+          });
+          if (expected !== callbackHash) {
+            console.warn("[tosla-webhook] hash mismatch");
+          }
+        } catch (e) {
+          console.warn("[tosla-webhook] hash check error:", e);
+        }
+      }
+
+      const success = code === "0" && bankResponseCode === "00" && (mdStatus === "" || mdStatus === "1");
 
       const claim = await sharedPool.query(
-        "UPDATE iyzico_payment_tokens SET status = $1, raw_response = $2::jsonb, updated_at = NOW() WHERE token = $3 AND status = 'pending' RETURNING token",
-        [success ? "completed" : "failed", JSON.stringify(result || {}), tokenRow.token]
+        "UPDATE tosla_payment_tokens SET status = $1, transaction_id = COALESCE($2, transaction_id), raw_response = $3::jsonb, updated_at = NOW() WHERE token = $4 AND status = 'pending' RETURNING token",
+        [success ? "completed" : "failed", transactionId || null, JSON.stringify(payload || {}), merchantOrderId]
       );
       if (claim.rowCount === 0) {
         return sendOk();
@@ -2263,11 +2237,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           }
         }
       } catch (e) {
-        console.error("[iyzico-webhook] stock restore error:", e);
+        console.error("[tosla-webhook] stock restore error:", e);
       }
       return sendOk();
     } catch (err: any) {
-      console.error("[iyzico-webhook] error:", err?.message || err);
+      console.error("[tosla-webhook] error:", err?.message || err);
       return sendOk();
     }
   });
@@ -2447,7 +2421,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const result = await sharedPool.query(`
         SELECT key, value FROM app_settings WHERE key IN (
           'payment_eft_enabled', 'payment_nakit_enabled', 'payment_qr_enabled',
-          'payment_pos_enabled', 'payment_iyzico_enabled',
+          'payment_pos_enabled', 'payment_tosla_enabled',
           'campaign_hero_title', 'campaign_hero_subtitle', 'campaign_end_date',
           'bank_account_name', 'bank_iban', 'bank_name',
           'daily_cargo_widget_enabled'
@@ -2481,25 +2455,26 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const textKeys = [
         "admin_phone", "order_notification_sms",
         "payment_eft_enabled", "payment_nakit_enabled", "payment_qr_enabled",
-        "payment_pos_enabled", "payment_iyzico_enabled",
-        "iyzico_api_key", "iyzico_secret_key", "iyzico_base_url",
+        "payment_pos_enabled", "payment_tosla_enabled",
+        "tosla_client_id", "tosla_api_user", "tosla_api_pass", "tosla_base_url",
         "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date",
         "bank_account_name", "bank_iban", "bank_name",
         "daily_cargo_widget_enabled",
       ];
 
-      const iyzicoFlag = updates.payment_iyzico_enabled;
-      if (iyzicoFlag === "true" || iyzicoFlag === true) {
+      const toslaFlag = updates.payment_tosla_enabled;
+      if (toslaFlag === "true" || toslaFlag === true) {
         const existing = await sharedPool.query(
-          "SELECT key, value FROM app_settings WHERE key IN ('iyzico_api_key','iyzico_secret_key')"
+          "SELECT key, value FROM app_settings WHERE key IN ('tosla_client_id','tosla_api_user','tosla_api_pass')"
         );
         const cur: Record<string, string> = {};
         for (const r of existing.rows) cur[r.key] = r.value || "";
-        const finalApiKey = (updates.iyzico_api_key !== undefined ? String(updates.iyzico_api_key).trim() : cur.iyzico_api_key);
-        const finalSecret = (updates.iyzico_secret_key !== undefined ? String(updates.iyzico_secret_key).trim() : cur.iyzico_secret_key);
-        if (!finalApiKey || !finalSecret) {
+        const finalClientId = (updates.tosla_client_id !== undefined ? String(updates.tosla_client_id).trim() : cur.tosla_client_id);
+        const finalApiUser = (updates.tosla_api_user !== undefined ? String(updates.tosla_api_user).trim() : cur.tosla_api_user);
+        const finalApiPass = (updates.tosla_api_pass !== undefined ? String(updates.tosla_api_pass).trim() : cur.tosla_api_pass);
+        if (!finalClientId || !finalApiUser || !finalApiPass) {
           return res.status(400).json({
-            message: "Online Kredi Kartı'nı aktif etmek için Iyzico API Anahtarı ve Güvenlik Anahtarı zorunludur.",
+            message: "Online Kredi Kartı'nı aktif etmek için Tosla ClientId, ApiUser ve ApiPass zorunludur.",
           });
         }
       }

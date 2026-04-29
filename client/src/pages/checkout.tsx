@@ -104,7 +104,7 @@ export default function Checkout() {
   const nakitEnabled = isEnabled(publicSettings?.payment_nakit_enabled);
   const qrEnabled = isEnabled(publicSettings?.payment_qr_enabled);
   const posEnabled = isEnabled(publicSettings?.payment_pos_enabled);
-  const iyzicoEnabled = isEnabled(publicSettings?.payment_iyzico_enabled);
+  const toslaEnabled = isEnabled(publicSettings?.payment_tosla_enabled);
   const bankAccountName = publicSettings?.bank_account_name || "";
   const bankIban = publicSettings?.bank_iban || "";
   const bankName = publicSettings?.bank_name || "";
@@ -603,7 +603,7 @@ export default function Checkout() {
 
       if (paymentId === "online" && orderResult?.id) {
         try {
-          const initRes = await apiRequest("POST", "/api/iyzico/init-payment", { orderId: orderResult.id });
+          const initRes = await apiRequest("POST", "/api/tosla/init-payment", { orderId: orderResult.id });
           const initData = await initRes.json();
           if (initData?.paymentPageUrl) {
             clearCart();
@@ -1430,7 +1430,7 @@ export default function Checkout() {
                       if (opt.id === "nakit") return nakitEnabled;
                       if (opt.id === "eft") return eftEnabled;
                       if (opt.id === "qr") return qrEnabled;
-                      if (opt.id === "online") return iyzicoEnabled;
+                      if (opt.id === "online") return toslaEnabled;
                       return true;
                     }).map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;

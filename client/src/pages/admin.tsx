@@ -5836,10 +5836,11 @@ function SettingsSection() {
     payment_nakit_enabled: "true",
     payment_qr_enabled: "true",
     payment_pos_enabled: "true",
-    payment_iyzico_enabled: "true",
-    iyzico_api_key: "",
-    iyzico_secret_key: "",
-    iyzico_base_url: "",
+    payment_tosla_enabled: "true",
+    tosla_client_id: "",
+    tosla_api_user: "",
+    tosla_api_pass: "",
+    tosla_base_url: "",
     campaign_hero_title: "",
     campaign_hero_subtitle: "",
     campaign_end_date: "",
@@ -5864,10 +5865,11 @@ function SettingsSection() {
         payment_nakit_enabled: settings.payment_nakit_enabled ?? "true",
         payment_qr_enabled: settings.payment_qr_enabled ?? "true",
         payment_pos_enabled: settings.payment_pos_enabled ?? "true",
-        payment_iyzico_enabled: settings.payment_iyzico_enabled ?? "true",
-        iyzico_api_key: settings.iyzico_api_key || "",
-        iyzico_secret_key: settings.iyzico_secret_key || "",
-        iyzico_base_url: settings.iyzico_base_url || "https://api.iyzipay.com",
+        payment_tosla_enabled: settings.payment_tosla_enabled ?? "0",
+        tosla_client_id: settings.tosla_client_id || "",
+        tosla_api_user: settings.tosla_api_user || "",
+        tosla_api_pass: settings.tosla_api_pass || "",
+        tosla_base_url: settings.tosla_base_url || "https://prepentegrasyon.tosla.com",
         campaign_hero_title: settings.campaign_hero_title || "",
         campaign_hero_subtitle: settings.campaign_hero_subtitle || "",
         campaign_end_date: settings.campaign_end_date || "",
@@ -5902,8 +5904,8 @@ function SettingsSection() {
     },
   });
 
-  const iyzicoOn = form.payment_iyzico_enabled === "true";
-  const iyzicoConfigMissing = iyzicoOn && (!form.iyzico_api_key?.trim() || !form.iyzico_secret_key?.trim());
+  const toslaOn = form.payment_tosla_enabled === "true";
+  const toslaConfigMissing = toslaOn && (!form.tosla_client_id?.trim() || !form.tosla_api_user?.trim() || !form.tosla_api_pass?.trim());
 
   const handleSave = () => {
     saveMutation.mutate(form);
@@ -6067,7 +6069,7 @@ function SettingsSection() {
             { key: "payment_pos_enabled", label: "Kapıda Kredi Kartı", desc: "Kurye gelince fiziksel POS ile ödeme (taksit dahil)", icon: "💳" },
             { key: "payment_qr_enabled", label: "Kapıda QR Ödeme", desc: "Kurye gelince banka uygulamasından QR ile ödeme", icon: "📱" },
             { key: "payment_eft_enabled", label: "Banka Havalesi / EFT", desc: "IBAN ile transfer + havale bildirimi", icon: "🏦" },
-            { key: "payment_iyzico_enabled", label: "Online Kredi Kartı (Iyzico)", desc: "Sipariş anında online kredi kartı ile ödeme — Iyzico Sanal POS", icon: "🌐" },
+            { key: "payment_tosla_enabled", label: "Online Kredi Kartı (Tosla)", desc: "Sipariş anında online kredi kartı ile ödeme — Tosla / İşim Sanal POS (Aktif Bank)", icon: "🌐" },
           ] as const).map(opt => (
             <div key={opt.key} className="flex items-center justify-between gap-3 py-2 border-b last:border-b-0">
               <div className="flex items-start gap-2 min-w-0">
@@ -6090,47 +6092,57 @@ function SettingsSection() {
           ))}
 
           <div className="pt-3 border-t space-y-3">
-            <h4 className="text-sm font-bold flex items-center gap-2">🌐 Iyzico Sanal POS Ayarları</h4>
-            <p className="text-[11px] text-muted-foreground">"Online Kredi Kartı" seçeneği için Iyzico API anahtarları. Üretim için <code>https://api.iyzipay.com</code>, test için <code>https://sandbox-api.iyzipay.com</code>.</p>
+            <h4 className="text-sm font-bold flex items-center gap-2">🌐 Tosla (İşim) Sanal POS Ayarları</h4>
+            <p className="text-[11px] text-muted-foreground">"Online Kredi Kartı" seçeneği için Tosla (Aktif Bank / AKÖDE) API bilgileri. Test için <code>https://prepentegrasyon.tosla.com</code>, üretim için <code>https://entegrasyon.tosla.com</code>.</p>
             <div className="space-y-2">
-              <Label className="text-xs font-bold">API Anahtarı</Label>
-              <Input
-                type="password"
-                placeholder="Iyzico API Key"
-                value={form.iyzico_api_key}
-                onChange={e => setForm(prev => ({ ...prev, iyzico_api_key: e.target.value.trim().slice(0, 200) }))}
-                data-testid="input-iyzico-api-key"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold">Güvenlik Anahtarı</Label>
-              <Input
-                type="password"
-                placeholder="Iyzico Secret Key"
-                value={form.iyzico_secret_key}
-                onChange={e => setForm(prev => ({ ...prev, iyzico_secret_key: e.target.value.trim().slice(0, 200) }))}
-                data-testid="input-iyzico-secret-key"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label className="text-xs font-bold">Iyzico API URL</Label>
+              <Label className="text-xs font-bold">ClientId</Label>
               <Input
                 type="text"
-                placeholder="https://api.iyzipay.com"
-                value={form.iyzico_base_url}
-                onChange={e => setForm(prev => ({ ...prev, iyzico_base_url: e.target.value.trim().slice(0, 100) }))}
-                data-testid="input-iyzico-base-url"
+                placeholder="Tosla Client ID"
+                value={form.tosla_client_id}
+                onChange={e => setForm(prev => ({ ...prev, tosla_client_id: e.target.value.trim().slice(0, 64) }))}
+                data-testid="input-tosla-client-id"
               />
             </div>
-            {iyzicoConfigMissing && (
-              <div className="text-xs bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-800 text-red-800 dark:text-red-200 rounded-md p-3 leading-relaxed font-medium" data-testid="warning-iyzico-missing-keys">
-                ⚠️ <strong>Online Kredi Kartı seçeneği aktif</strong> ama API Anahtarı veya Güvenlik Anahtarı boş. Müşteriler "Online ödeme başlatılamadı" hatası alır. Lütfen Iyzico panelinizden anahtarları kopyalayıp yukarıya girin ve <strong>Ayarları Kaydet</strong>'e basın.
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">ApiUser</Label>
+              <Input
+                type="text"
+                placeholder="Tosla API User"
+                value={form.tosla_api_user}
+                onChange={e => setForm(prev => ({ ...prev, tosla_api_user: e.target.value.trim().slice(0, 64) }))}
+                data-testid="input-tosla-api-user"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">ApiPass</Label>
+              <Input
+                type="password"
+                placeholder="Tosla API Pass"
+                value={form.tosla_api_pass}
+                onChange={e => setForm(prev => ({ ...prev, tosla_api_pass: e.target.value.trim().slice(0, 64) }))}
+                data-testid="input-tosla-api-pass"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">Tosla Base URL</Label>
+              <Input
+                type="text"
+                placeholder="https://prepentegrasyon.tosla.com"
+                value={form.tosla_base_url}
+                onChange={e => setForm(prev => ({ ...prev, tosla_base_url: e.target.value.trim().slice(0, 100) }))}
+                data-testid="input-tosla-base-url"
+              />
+            </div>
+            {toslaConfigMissing && (
+              <div className="text-xs bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-800 text-red-800 dark:text-red-200 rounded-md p-3 leading-relaxed font-medium" data-testid="warning-tosla-missing-keys">
+                ⚠️ <strong>Online Kredi Kartı seçeneği aktif</strong> ama ClientId, ApiUser veya ApiPass boş. Müşteriler "Online ödeme başlatılamadı" hatası alır. Lütfen Tosla İşim panelinden bilgileri kopyalayıp yukarıya girin ve <strong>Ayarları Kaydet</strong>'e basın.
               </div>
             )}
             <div className="text-[11px] text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-2 leading-relaxed">
-              <strong>Callback URL:</strong> Iyzico panelinde "Geri Dönüş URL'si" olarak <code className="font-mono">https://www.jetgomarket.com/api/iyzico/callback</code> adresini ekleyin.
+              <strong>Callback URL:</strong> Tosla İşim panelinde "Callback URL" olarak <code className="font-mono">https://www.jetgomarket.com/api/tosla/callback</code> adresini ekleyin.
               <br />
-              <strong>İşyeri Bildirimleri URL:</strong> <code className="font-mono">https://www.jetgomarket.com/api/iyzico/webhook</code>
+              <strong>Webhook URL (opsiyonel):</strong> <code className="font-mono">https://www.jetgomarket.com/api/tosla/webhook</code>
             </div>
           </div>
         </CardContent>
