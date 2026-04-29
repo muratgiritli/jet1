@@ -2110,7 +2110,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         }
       }
 
-      const success = code === "0" && bankResponseCode === "00" && (mdStatus === "" || mdStatus === "1");
+      const codeOk = code === "" || code === "0" || code === "00";
+      const success = codeOk
+        && bankResponseCode === "00"
+        && (mdStatus === "" || mdStatus === "1")
+        && (requestStatus === "" || requestStatus === "1");
 
       const claim = await sharedPool.query(
         "UPDATE tosla_payment_tokens SET status = $1, transaction_id = COALESCE($2, transaction_id), raw_response = $3::jsonb, updated_at = NOW() WHERE token = $4 AND status = 'pending' RETURNING token",
@@ -2280,7 +2284,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         }
       }
 
-      const success = code === "0" && bankResponseCode === "00" && (mdStatus === "" || mdStatus === "1");
+      const codeOk = code === "" || code === "0" || code === "00";
+      const success = codeOk
+        && bankResponseCode === "00"
+        && (mdStatus === "" || mdStatus === "1")
+        && (requestStatus === "" || requestStatus === "1");
 
       const claim = await sharedPool.query(
         "UPDATE tosla_payment_tokens SET status = $1, transaction_id = COALESCE($2, transaction_id), raw_response = $3::jsonb, updated_at = NOW() WHERE token = $4 AND status = 'pending' RETURNING token",
