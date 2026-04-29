@@ -1636,11 +1636,47 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       }
     }
 
-    const STANDARD_MIN_ORDER = 700;
-    const STANDARD_FREE_SHIP_LIMIT = 1500;
-    const STANDARD_SHIP_FEE = 89;
+    let STANDARD_MIN_ORDER = 700;
+    let STANDARD_FREE_SHIP_LIMIT = 1500;
+    let STANDARD_SHIP_FEE = 89;
+    let matchedNeighborhood: string | null = null;
+    try {
+      const nbRes = await sharedPool.query(
+        "SELECT name, min_order, shipping_fee, free_shipping_limit FROM delivery_neighborhoods WHERE is_active = true"
+      );
+      const addrLower = String(orderData.customerAddress || "").toLocaleLowerCase("tr");
+      let bestMatch: { name: string; min_order: number; shipping_fee: number; free_shipping_limit: number } | null = null;
+      for (const row of nbRes.rows) {
+        const nbName = String(row.name || "").trim();
+        if (!nbName) continue;
+        const nbLower = nbName.toLocaleLowerCase("tr");
+        const compactAddr = addrLower.replace(/\s+/g, " ");
+        const compactNb = nbLower.replace(/\s+/g, " ");
+        const noSpaceAddr = addrLower.replace(/\s+/g, "");
+        const noSpaceNb = nbLower.replace(/\s+/g, "");
+        if (compactAddr.includes(compactNb) || noSpaceAddr.includes(noSpaceNb)) {
+          if (!bestMatch || nbName.length > bestMatch.name.length) {
+            bestMatch = {
+              name: nbName,
+              min_order: Number(row.min_order),
+              shipping_fee: Number(row.shipping_fee),
+              free_shipping_limit: Number(row.free_shipping_limit),
+            };
+          }
+        }
+      }
+      if (bestMatch) {
+        STANDARD_MIN_ORDER = bestMatch.min_order;
+        STANDARD_FREE_SHIP_LIMIT = bestMatch.free_shipping_limit;
+        STANDARD_SHIP_FEE = bestMatch.shipping_fee;
+        matchedNeighborhood = bestMatch.name;
+      }
+    } catch (e) {
+      console.error("Neighborhood lookup error:", e);
+    }
     if (!isCampaignOrder && orderData.subtotal < STANDARD_MIN_ORDER) {
-      return res.status(400).json({ message: `Minimum sipariş tutarı ${STANDARD_MIN_ORDER} TL'dir.` });
+      const where = matchedNeighborhood ? ` (${matchedNeighborhood})` : "";
+      return res.status(400).json({ message: `Minimum sipariş tutarı ${STANDARD_MIN_ORDER} TL'dir${where}.` });
     }
     if (!isCampaignOrder) {
       orderData.shipping = orderData.subtotal >= STANDARD_FREE_SHIP_LIMIT ? 0 : STANDARD_SHIP_FEE;
