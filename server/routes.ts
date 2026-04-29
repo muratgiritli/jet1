@@ -1716,6 +1716,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
     (orderData as any).isCampaign = isCampaignOrder;
 
+    const isOnlinePayment = /tosla|online/i.test(orderData.paymentMethod || "");
+    if (isOnlinePayment) {
+      (orderData as any).paymentStatus = "pending";
+    }
+
     const order = await storage.createOrder(orderData);
 
     if (appliedCoupon) {
