@@ -1755,20 +1755,22 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         }
       }
     }
-    try {
-      const adminPhoneResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'admin_phone'");
-      const smsEnabledResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'order_notification_sms'");
-      const adminPhone = adminPhoneResult.rows[0]?.value;
-      const smsEnabled = smsEnabledResult.rows[0]?.value !== "0";
-      if (adminPhone && smsEnabled) {
-        const customerName = orderData.customerName || "Bilinmeyen";
-        const smsMsg = `YENI SIPARIS #${order.id}\n${customerName}\nTutar: ${orderData.grandTotal} TL\nOdeme: ${orderData.paymentMethod}\n${orderData.items.length} urun`;
-        sendSmsViaNetgsm(adminPhone, smsMsg).catch(err => {
-          console.error("Admin order notification SMS error:", err);
-        });
+    if (!isOnlinePayment) {
+      try {
+        const adminPhoneResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'admin_phone'");
+        const smsEnabledResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'order_notification_sms'");
+        const adminPhone = adminPhoneResult.rows[0]?.value;
+        const smsEnabled = smsEnabledResult.rows[0]?.value !== "0";
+        if (adminPhone && smsEnabled) {
+          const customerName = orderData.customerName || "Bilinmeyen";
+          const smsMsg = `YENI SIPARIS #${order.id}\n${customerName}\nTutar: ${orderData.grandTotal} TL\nOdeme: ${orderData.paymentMethod}\n${orderData.items.length} urun`;
+          sendSmsViaNetgsm(adminPhone, smsMsg).catch(err => {
+            console.error("Admin order notification SMS error:", err);
+          });
+        }
+      } catch (e) {
+        console.error("Admin notification error:", e);
       }
-    } catch (e) {
-      console.error("Admin notification error:", e);
     }
 
     try {
@@ -2076,6 +2078,28 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           "UPDATE orders SET payment_status = 'completed' WHERE id = $1",
           [tok.order_id]
         );
+        try {
+          const oRow = await sharedPool.query(
+            "SELECT id, customer_name, grand_total, payment_method, items FROM orders WHERE id = $1",
+            [tok.order_id]
+          );
+          const ord = oRow.rows[0];
+          if (ord) {
+            const adminPhoneResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'admin_phone'");
+            const smsEnabledResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'order_notification_sms'");
+            const adminPhone = adminPhoneResult.rows[0]?.value;
+            const smsEnabled = smsEnabledResult.rows[0]?.value !== "0";
+            if (adminPhone && smsEnabled) {
+              const itemsArr = Array.isArray(ord.items) ? ord.items : [];
+              const smsMsg = `YENI SIPARIS #${ord.id}\n${ord.customer_name || "Bilinmeyen"}\nTutar: ${ord.grand_total} TL\nOdeme: ${ord.payment_method} (Onaylandi)\n${itemsArr.length} urun`;
+              sendSmsViaNetgsm(adminPhone, smsMsg).catch(err => {
+                console.error("Admin tosla success SMS error:", err);
+              });
+            }
+          }
+        } catch (e) {
+          console.error("Admin tosla success notification error:", e);
+        }
         return res.redirect(303, buildResultUrl(tok.order_id, "success", merchantOrderId));
       }
 
@@ -2386,10 +2410,12 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.get("/api/admin/new-order-check", requireAdmin, async (_req, res) => {
     try {
-      const result = await sharedPool.query("SELECT id, customer_name, grand_total, payment_method, created_at FROM orders ORDER BY id DESC LIMIT 1");
+      const result = await sharedPool.query(
+        "SELECT id, customer_name, grand_total, payment_method, created_at FROM orders WHERE payment_status <> 'pending' AND payment_status <> 'awaiting' ORDER BY id DESC LIMIT 1"
+      );
       const latestOrder = result.rows[0];
       if (!latestOrder) return res.json({ hasNew: false, lastId: 0 });
-      const totalPending = await sharedPool.query("SELECT COUNT(*) as cnt FROM orders WHERE status = 'yeni'");
+      const totalPending = await sharedPool.query("SELECT COUNT(*) as cnt FROM orders WHERE status = 'yeni' AND payment_status <> 'pending' AND payment_status <> 'awaiting'");
       res.json({
         hasNew: true,
         lastId: latestOrder.id,
