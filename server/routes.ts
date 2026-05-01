@@ -1070,7 +1070,7 @@ export async function registerRoutes(
 - **Mağaza adresi:** Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A, Atakum, Samsun (55200)
 - **Domain:** https://www.jetgomarket.com
 - **Telefon:** +90 850 840 39 59
-- **E-posta:** info@jetgomarket.com
+- **E-posta:** info@sizpa.com
 - **Çalışma saatleri:** Pazartesi-Cumartesi 09:00-22:00, Pazar 10:00-22:00 (online sipariş 7/24)
 
 ## Ana Hizmetler

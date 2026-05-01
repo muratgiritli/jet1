@@ -89,7 +89,7 @@ export const LOCAL_BUSINESS_JSONLD = {
   "logo": `${SITE_DOMAIN}/favicon.webp`,
   "image": [`${SITE_DOMAIN}/og-image.webp`, `${SITE_DOMAIN}/favicon.webp`],
   "telephone": "+908508403959",
-  "email": "info@jetgomarket.com",
+  "email": "info@sizpa.com",
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A",
