@@ -939,10 +939,6 @@ export default function Landing() {
         <div className="mt-5 md:hidden">
           <HomeBottomCarousel />
         </div>
-
-        <div className="mt-5 mb-4 md:mb-10">
-          <MobileFooter />
-        </div>
       </main>
     </div>
   );
