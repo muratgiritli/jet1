@@ -97,12 +97,13 @@ export default function InstallBanner() {
 
       {showIOSGuide && (
         <div
-          className="md:hidden fixed inset-0 z-50 flex items-end justify-center bg-black/40"
+          className="md:hidden fixed inset-0 z-[10000] flex items-end justify-center bg-black/40"
           onClick={() => setShowIOSGuide(false)}
           data-testid="ios-install-guide"
         >
           <div
-            className="w-full max-w-lg bg-white rounded-t-2xl px-5 py-6 space-y-3"
+            className="w-full max-w-lg bg-white rounded-t-2xl px-5 pt-6 space-y-3"
+            style={{ paddingBottom: "calc(env(safe-area-inset-bottom, 0px) + 1.5rem)" }}
             onClick={(e) => e.stopPropagation()}
           >
             <h4 className="text-base font-bold text-gray-900 text-center">Ana Ekrana Ekle</h4>
