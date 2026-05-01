@@ -2438,7 +2438,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         return res.status(400).json({ message: "Bu sipariş zaten ödenmiş" });
       }
       const pm = String(o.payment_method || "").toLowerCase();
-      if (!(pm === "online" || pm === "iyzico" || pm === "tosla")) {
+      const isOnline = pm.includes("online") || pm === "iyzico" || pm === "tosla";
+      if (!isOnline) {
         return res.status(400).json({ message: "Bu sipariş online ödeme için uygun değil" });
       }
 
