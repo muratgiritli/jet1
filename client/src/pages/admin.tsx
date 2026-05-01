@@ -5848,6 +5848,10 @@ function SettingsSection() {
     tosla_api_user: "",
     tosla_api_pass: "",
     tosla_base_url: "",
+    payment_iyzico_enabled: "0",
+    iyzico_api_key: "",
+    iyzico_secret_key: "",
+    iyzico_base_url: "",
     campaign_hero_title: "",
     campaign_hero_subtitle: "",
     campaign_end_date: "",
@@ -5877,6 +5881,10 @@ function SettingsSection() {
         tosla_api_user: settings.tosla_api_user || "",
         tosla_api_pass: settings.tosla_api_pass || "",
         tosla_base_url: settings.tosla_base_url || "https://prepentegrasyon.tosla.com",
+        payment_iyzico_enabled: settings.payment_iyzico_enabled ?? "0",
+        iyzico_api_key: settings.iyzico_api_key || "",
+        iyzico_secret_key: settings.iyzico_secret_key || "",
+        iyzico_base_url: settings.iyzico_base_url || "https://sandbox-api.iyzipay.com",
         campaign_hero_title: settings.campaign_hero_title || "",
         campaign_hero_subtitle: settings.campaign_hero_subtitle || "",
         campaign_end_date: settings.campaign_end_date || "",
@@ -5913,6 +5921,8 @@ function SettingsSection() {
 
   const toslaOn = form.payment_tosla_enabled === "true";
   const toslaConfigMissing = toslaOn && (!form.tosla_client_id?.trim() || !form.tosla_api_user?.trim() || !form.tosla_api_pass?.trim());
+  const iyzicoOn = form.payment_iyzico_enabled === "true";
+  const iyzicoConfigMissing = iyzicoOn && (!form.iyzico_api_key?.trim() || !form.iyzico_secret_key?.trim());
 
   const handleSave = () => {
     saveMutation.mutate(form);
@@ -6077,6 +6087,7 @@ function SettingsSection() {
             { key: "payment_qr_enabled", label: "Kapıda QR Ödeme", desc: "Kurye gelince banka uygulamasından QR ile ödeme", icon: "📱" },
             { key: "payment_eft_enabled", label: "Banka Havalesi / EFT", desc: "IBAN ile transfer + havale bildirimi", icon: "🏦" },
             { key: "payment_tosla_enabled", label: "Online Kredi Kartı (Tosla)", desc: "Sipariş anında online kredi kartı ile ödeme — Tosla / İşim Sanal POS (Aktif Bank)", icon: "🌐" },
+            { key: "payment_iyzico_enabled", label: "Online Kredi Kartı (iyzico)", desc: "Sipariş anında online kredi kartı ile ödeme — iyzico Sanal POS (CheckoutForm)", icon: "💎" },
           ] as const).map(opt => (
             <div key={opt.key} className="flex items-center justify-between gap-3 py-2 border-b last:border-b-0">
               <div className="flex items-start gap-2 min-w-0">
@@ -6150,6 +6161,49 @@ function SettingsSection() {
               <strong>Callback URL:</strong> Tosla İşim panelinde "Callback URL" olarak <code className="font-mono">https://www.jetgomarket.com/api/tosla/callback</code> adresini ekleyin.
               <br />
               <strong>Webhook URL (opsiyonel):</strong> <code className="font-mono">https://www.jetgomarket.com/api/tosla/webhook</code>
+            </div>
+          </div>
+
+          <div className="pt-3 border-t space-y-3">
+            <h4 className="text-sm font-bold flex items-center gap-2">💎 iyzico Sanal POS Ayarları</h4>
+            <p className="text-[11px] text-muted-foreground">"Online Kredi Kartı (iyzico)" seçeneği için iyzico API bilgileri. Test için <code>https://sandbox-api.iyzipay.com</code>, üretim için <code>https://api.iyzipay.com</code>.</p>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">API Key</Label>
+              <Input
+                type="text"
+                placeholder="iyzico API Key"
+                value={form.iyzico_api_key}
+                onChange={e => setForm(prev => ({ ...prev, iyzico_api_key: e.target.value.trim().slice(0, 128) }))}
+                data-testid="input-iyzico-api-key"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">Secret Key</Label>
+              <Input
+                type="password"
+                placeholder="iyzico Secret Key"
+                value={form.iyzico_secret_key}
+                onChange={e => setForm(prev => ({ ...prev, iyzico_secret_key: e.target.value.trim().slice(0, 128) }))}
+                data-testid="input-iyzico-secret-key"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-bold">Base URL</Label>
+              <Input
+                type="text"
+                placeholder="https://sandbox-api.iyzipay.com"
+                value={form.iyzico_base_url}
+                onChange={e => setForm(prev => ({ ...prev, iyzico_base_url: e.target.value.trim().slice(0, 100) }))}
+                data-testid="input-iyzico-base-url"
+              />
+            </div>
+            {iyzicoConfigMissing && (
+              <div className="text-xs bg-red-50 dark:bg-red-950/30 border border-red-300 dark:border-red-800 text-red-800 dark:text-red-200 rounded-md p-3 leading-relaxed font-medium" data-testid="warning-iyzico-missing-keys">
+                ⚠️ <strong>iyzico seçeneği aktif</strong> ama API Key veya Secret Key boş. Müşteriler "İyzico ödeme başlatılamadı" hatası alır. Lütfen iyzico merchant panelinden bilgileri kopyalayıp yukarıya girin ve <strong>Ayarları Kaydet</strong>'e basın.
+              </div>
+            )}
+            <div className="text-[11px] text-muted-foreground bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-md p-2 leading-relaxed">
+              <strong>Callback URL:</strong> iyzico merchant panelinde "Callback URL" olarak <code className="font-mono">https://www.jetgomarket.com/api/iyzico/callback</code> adresini ayarlayın (otomatik geri dönüş için).
             </div>
           </div>
         </CardContent>

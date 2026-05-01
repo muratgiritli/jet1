@@ -248,6 +248,27 @@ export async function registerRoutes(
   }
 
   try {
+    await sharedPool.query(`
+      CREATE TABLE IF NOT EXISTS iyzico_payment_tokens (
+        token VARCHAR(256) PRIMARY KEY,
+        order_id INTEGER NOT NULL,
+        conversation_id VARCHAR(64),
+        payment_id VARCHAR(64),
+        amount NUMERIC(10,2),
+        status TEXT NOT NULL DEFAULT 'pending',
+        raw_response JSONB,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_iyzico_token_order ON iyzico_payment_tokens (order_id);`);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_iyzico_token_conversation ON iyzico_payment_tokens (conversation_id);`);
+    await sharedPool.query(`ALTER TABLE iyzico_payment_tokens ADD COLUMN IF NOT EXISTS payment_id VARCHAR(64);`);
+  } catch (e) {
+    console.error("Iyzico payment tokens table setup error:", e);
+  }
+
+  try {
     const defaults: Array<[string, string]> = [
       ["payment_nakit_enabled", "true"],
       ["payment_eft_enabled", "true"],
@@ -258,6 +279,10 @@ export async function registerRoutes(
       ["tosla_api_user", ""],
       ["tosla_api_pass", ""],
       ["tosla_base_url", "https://prepentegrasyon.tosla.com"],
+      ["payment_iyzico_enabled", "0"],
+      ["iyzico_api_key", ""],
+      ["iyzico_secret_key", ""],
+      ["iyzico_base_url", "https://sandbox-api.iyzipay.com"],
     ];
     for (const [key, value] of defaults) {
       await sharedPool.query(
@@ -1543,14 +1568,23 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
     try {
       const pmRow = await sharedPool.query(
-        "SELECT key, value FROM app_settings WHERE key IN ('payment_nakit_enabled','payment_pos_enabled','payment_qr_enabled','payment_eft_enabled','payment_tosla_enabled')"
+        `SELECT key, value FROM app_settings WHERE key IN (
+          'payment_nakit_enabled','payment_pos_enabled','payment_qr_enabled','payment_eft_enabled',
+          'payment_tosla_enabled','payment_iyzico_enabled',
+          'tosla_client_id','tosla_api_user','tosla_api_pass',
+          'iyzico_api_key','iyzico_secret_key'
+        )`
       );
       const pmMap: Record<string, string> = {};
       for (const r of pmRow.rows) pmMap[r.key] = r.value;
-      const isOn = (k: string) => pmMap[k] !== "0" && pmMap[k] !== "false";
+      const isOn = (k: string) => pmMap[k] !== "0" && pmMap[k] !== "false" && pmMap[k] !== undefined;
       const pm = String(orderData.paymentMethod || "").toLowerCase();
-      const requiredKey = /tosla|online/.test(pm)
-        ? "payment_tosla_enabled"
+      const isOnlineCard = /tosla|iyzico|online/.test(pm);
+      const toslaReady = isOn("payment_tosla_enabled") && !!(pmMap.tosla_client_id?.trim() && pmMap.tosla_api_user?.trim() && pmMap.tosla_api_pass?.trim());
+      const iyzicoReady = isOn("payment_iyzico_enabled") && !!(pmMap.iyzico_api_key?.trim() && pmMap.iyzico_secret_key?.trim());
+      const onlineKeyOk = isOnlineCard && (toslaReady || iyzicoReady);
+      const requiredKey = isOnlineCard
+        ? null
         : /havale|eft/.test(pm)
         ? "payment_eft_enabled"
         : /qr/.test(pm)
@@ -1560,6 +1594,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         : /nakit/.test(pm)
         ? "payment_nakit_enabled"
         : null;
+      if (isOnlineCard && !onlineKeyOk) {
+        return res.status(400).json({ message: "Seçtiğiniz ödeme yöntemi şu anda kullanılamıyor. Lütfen başka bir yöntem seçin." });
+      }
       if (requiredKey && !isOn(requiredKey)) {
         return res.status(400).json({ message: "Seçtiğiniz ödeme yöntemi şu anda kullanılamıyor. Lütfen başka bir yöntem seçin." });
       }
@@ -2193,6 +2230,13 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           [token]
         );
         if (tokRow.rows[0]?.order_id === id) allowed = true;
+        if (!allowed) {
+          const iyzRow = await sharedPool.query(
+            "SELECT order_id FROM iyzico_payment_tokens WHERE token = $1",
+            [token]
+          );
+          if (iyzRow.rows[0]?.order_id === id) allowed = true;
+        }
       }
       if (!allowed && customerId) {
         const custRow = await sharedPool.query("SELECT phone FROM customers WHERE id = $1", [customerId]);
@@ -2327,6 +2371,318 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     } catch (err: any) {
       console.error("[tosla-webhook] error:", err?.message || err);
       return sendOk();
+    }
+  });
+
+  // ============ IYZICO PAYMENT ============
+  async function getIyzicoConfig(): Promise<Record<string, string>> {
+    const r = await sharedPool.query(
+      "SELECT key, value FROM app_settings WHERE key IN ('iyzico_api_key','iyzico_secret_key','iyzico_base_url','payment_iyzico_enabled')"
+    );
+    const out: Record<string, string> = {};
+    for (const row of r.rows) out[row.key] = row.value || "";
+    return out;
+  }
+
+  function buildIyzicoClient(cfg: Record<string, string>) {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const Iyzipay = require("iyzipay");
+    return new Iyzipay({
+      apiKey: cfg.iyzico_api_key,
+      secretKey: cfg.iyzico_secret_key,
+      uri: (cfg.iyzico_base_url || "https://sandbox-api.iyzipay.com").trim(),
+    });
+  }
+
+  function splitName(full: string): { name: string; surname: string } {
+    const clean = String(full || "").trim().replace(/\s+/g, " ");
+    if (!clean) return { name: "Müşteri", surname: "-" };
+    const parts = clean.split(" ");
+    if (parts.length === 1) return { name: parts[0], surname: "-" };
+    return { name: parts[0], surname: parts.slice(1).join(" ") };
+  }
+
+  function normalizeGsm(phone: string): string {
+    const digits = String(phone || "").replace(/\D/g, "");
+    if (!digits) return "+905555555555";
+    if (digits.startsWith("90")) return "+" + digits;
+    if (digits.startsWith("0")) return "+9" + digits;
+    if (digits.length === 10) return "+90" + digits;
+    return "+" + digits;
+  }
+
+  app.post("/api/iyzico/init-payment", async (req: Request, res: Response) => {
+    try {
+      const customerId = (req.session as any)?.customerId;
+      if (!customerId) return res.status(401).json({ message: "Giriş gerekli" });
+
+      const orderId = parseInt(String(req.body?.orderId || ""));
+      if (!orderId || isNaN(orderId)) {
+        return res.status(400).json({ message: "Geçersiz sipariş" });
+      }
+      const ordRow = await sharedPool.query(
+        "SELECT id, customer_name, customer_phone, customer_address, items, grand_total, payment_method, payment_status FROM orders WHERE id = $1",
+        [orderId]
+      );
+      const o = ordRow.rows[0];
+      if (!o) return res.status(404).json({ message: "Sipariş bulunamadı" });
+
+      const custRow = await sharedPool.query("SELECT phone FROM customers WHERE id = $1", [customerId]);
+      const sessionPhone = String(custRow.rows[0]?.phone || "").replace(/\D/g, "");
+      const orderPhone = String(o.customer_phone || "").replace(/\D/g, "");
+      if (!sessionPhone || sessionPhone !== orderPhone) {
+        return res.status(403).json({ message: "Yetkisiz" });
+      }
+
+      if (o.payment_status === "completed" || o.payment_status === "paid") {
+        return res.status(400).json({ message: "Bu sipariş zaten ödenmiş" });
+      }
+      const pm = String(o.payment_method || "").toLowerCase();
+      if (!(pm === "online" || pm === "iyzico" || pm === "tosla")) {
+        return res.status(400).json({ message: "Bu sipariş online ödeme için uygun değil" });
+      }
+
+      const cfg = await getIyzicoConfig();
+      if (cfg.payment_iyzico_enabled === "0" || cfg.payment_iyzico_enabled === "false") {
+        return res.status(503).json({ message: "İyzico ödeme şu anda kapalı." });
+      }
+      if (!cfg.iyzico_api_key || !cfg.iyzico_secret_key) {
+        return res.status(503).json({ message: "İyzico yapılandırması eksik." });
+      }
+
+      const baseUrl =
+        process.env.PUBLIC_BASE_URL ||
+        (req.headers["x-forwarded-host"]
+          ? `https://${req.headers["x-forwarded-host"]}`
+          : `${req.protocol}://${req.get("host")}`);
+      const callbackUrl = `${baseUrl}/api/iyzico/callback`;
+
+      const conversationId = `JG${o.id}T${Date.now().toString(36)}`.slice(0, 50);
+      const grandTotal = Number(o.grand_total) || 0;
+      const priceStr = grandTotal.toFixed(2);
+
+      const { name: bName, surname: bSurname } = splitName(o.customer_name || "");
+      const gsm = normalizeGsm(o.customer_phone || "");
+      const address = String(o.customer_address || "Samsun").slice(0, 500) || "Samsun";
+
+      const buyer = {
+        id: `cust-${customerId || o.id}`,
+        name: bName.slice(0, 40) || "Müşteri",
+        surname: bSurname.slice(0, 40) || "-",
+        gsmNumber: gsm,
+        email: `customer+${o.id}@jetgomarket.com`,
+        identityNumber: "11111111111",
+        registrationAddress: address,
+        ip: (req.ip || req.headers["x-forwarded-for"]?.toString() || "127.0.0.1").split(",")[0].trim(),
+        city: "Samsun",
+        country: "Turkey",
+        zipCode: "55200",
+      };
+
+      const addressBlock = {
+        contactName: `${bName} ${bSurname}`.trim().slice(0, 100) || "Müşteri",
+        city: "Samsun",
+        country: "Turkey",
+        address: address,
+        zipCode: "55200",
+      };
+
+      const basketItems = [
+        {
+          id: `order-${o.id}`,
+          name: `JetGo Sipariş #${o.id}`.slice(0, 100),
+          category1: "Pet Shop",
+          itemType: "PHYSICAL",
+          price: priceStr,
+        },
+      ];
+
+      const request = {
+        locale: "tr",
+        conversationId,
+        price: priceStr,
+        paidPrice: priceStr,
+        currency: "TRY",
+        basketId: `order-${o.id}`,
+        paymentGroup: "PRODUCT",
+        callbackUrl,
+        enabledInstallments: [1, 2, 3, 6, 9],
+        buyer,
+        shippingAddress: addressBlock,
+        billingAddress: addressBlock,
+        basketItems,
+      };
+
+      const client = buildIyzicoClient(cfg);
+
+      const result: any = await new Promise((resolve, reject) => {
+        try {
+          client.checkoutFormInitialize.create(request, (err: any, r: any) => {
+            if (err) return reject(err);
+            resolve(r);
+          });
+        } catch (e) {
+          reject(e);
+        }
+      }).catch((err: any) => ({ status: "failure", errorMessage: err?.message || String(err) }));
+
+      if (result.status !== "success" || !result.token || !result.paymentPageUrl) {
+        console.error("[iyzico-init-failed]", JSON.stringify(result).slice(0, 500));
+        await cancelOrderAndRestoreStock(o.id, "iyzico-init-failed");
+        return res.status(400).json({
+          message: result.errorMessage || result.errorCode || "İyzico ödeme başlatılamadı.",
+          cancelled: true,
+        });
+      }
+
+      await sharedPool.query(
+        `INSERT INTO iyzico_payment_tokens (token, order_id, conversation_id, payment_id, amount, status, raw_response, updated_at)
+         VALUES ($1, $2, $3, NULL, $4, 'pending', $5::jsonb, NOW())
+         ON CONFLICT (token) DO UPDATE SET order_id = $2, conversation_id = $3, amount = $4, status = 'pending', raw_response = $5::jsonb, updated_at = NOW()`,
+        [result.token, o.id, conversationId, grandTotal, JSON.stringify(result)]
+      );
+
+      await sharedPool.query(
+        "UPDATE orders SET payment_status = 'awaiting' WHERE id = $1",
+        [o.id]
+      );
+
+      return res.json({
+        paymentPageUrl: result.paymentPageUrl,
+        token: result.token,
+        conversationId,
+      });
+    } catch (err: any) {
+      console.error("[iyzico-init] error:", err?.message || err);
+      return res.status(500).json({ message: "İyzico başlatma hatası" });
+    }
+  });
+
+  app.all("/api/iyzico/callback", async (req: Request, res: Response) => {
+    const baseUrl =
+      process.env.PUBLIC_BASE_URL ||
+      (req.headers["x-forwarded-host"]
+        ? `https://${req.headers["x-forwarded-host"]}`
+        : `${req.protocol}://${req.get("host")}`);
+    const buildResultUrl = (params: Record<string, string>) => {
+      const qp = new URLSearchParams(params);
+      return `${baseUrl}/odeme-sonuc?${qp.toString()}`;
+    };
+
+    try {
+      const payload: any = req.method === "GET" ? req.query : (req.body || {});
+      const token = String(payload.token || payload.Token || "").trim();
+      console.log("[iyzico-callback]", new Date().toISOString(), { token: token.slice(0, 20), keys: Object.keys(payload) });
+
+      if (!token) {
+        return res.redirect(303, buildResultUrl({ status: "failed", msg: "no-token" }));
+      }
+
+      const tokRow = await sharedPool.query(
+        "SELECT order_id, status, conversation_id FROM iyzico_payment_tokens WHERE token = $1",
+        [token]
+      );
+      const tokenRow = tokRow.rows[0];
+      if (!tokenRow) {
+        return res.redirect(303, buildResultUrl({ status: "failed", msg: "token-not-found" }));
+      }
+
+      // Idempotent: already processed
+      if (tokenRow.status === "completed") {
+        return res.redirect(303, buildResultUrl({ status: "success", order: String(tokenRow.order_id), t: token }));
+      }
+      if (tokenRow.status === "failed") {
+        return res.redirect(303, buildResultUrl({ status: "failed", order: String(tokenRow.order_id), t: token, msg: "already-failed" }));
+      }
+
+      const cfg = await getIyzicoConfig();
+      if (!cfg.iyzico_api_key || !cfg.iyzico_secret_key) {
+        return res.redirect(303, buildResultUrl({ status: "failed", order: String(tokenRow.order_id), t: token, msg: "config-missing" }));
+      }
+
+      const client = buildIyzicoClient(cfg);
+      const retrieveResult: any = await new Promise((resolve) => {
+        try {
+          client.checkoutForm.retrieve(
+            { locale: "tr", conversationId: tokenRow.conversation_id || "", token },
+            (err: any, r: any) => resolve(err ? { status: "failure", errorMessage: err?.message || String(err) } : r)
+          );
+        } catch (e: any) {
+          resolve({ status: "failure", errorMessage: e?.message || String(e) });
+        }
+      });
+
+      const success = retrieveResult?.status === "success" && retrieveResult?.paymentStatus === "SUCCESS";
+      const paymentId = String(retrieveResult?.paymentId || "").slice(0, 64) || null;
+      const errorMessage = retrieveResult?.errorMessage || retrieveResult?.errorCode || retrieveResult?.mdStatus || "";
+
+      const claim = await sharedPool.query(
+        "UPDATE iyzico_payment_tokens SET status = $1, payment_id = COALESCE($2, payment_id), raw_response = $3::jsonb, updated_at = NOW() WHERE token = $4 AND status = 'pending' RETURNING token",
+        [success ? "completed" : "failed", paymentId, JSON.stringify(retrieveResult || {}), token]
+      );
+      if (claim.rowCount === 0) {
+        // someone else processed
+        return res.redirect(303, buildResultUrl({ status: success ? "success" : "failed", order: String(tokenRow.order_id), t: token }));
+      }
+
+      if (success) {
+        await sharedPool.query(
+          "UPDATE orders SET payment_status = 'completed' WHERE id = $1",
+          [tokenRow.order_id]
+        );
+        try {
+          const ordR = await sharedPool.query(
+            "SELECT id, customer_name, grand_total, payment_method, items FROM orders WHERE id = $1",
+            [tokenRow.order_id]
+          );
+          const ord = ordR.rows[0];
+          if (ord) {
+            const adminPhoneRow = await sharedPool.query(
+              "SELECT value FROM app_settings WHERE key IN ('admin_phone','order_notification_sms')"
+            );
+            const adminCfg: Record<string, string> = {};
+            for (const r of adminPhoneRow.rows) adminCfg[r.key] = r.value;
+            if (adminCfg.admin_phone && adminCfg.order_notification_sms !== "0") {
+              const itemsArr = ord.items || [];
+              const smsMsg = `YENI SIPARIS #${ord.id}\n${ord.customer_name || "Bilinmeyen"}\nTutar: ${ord.grand_total} TL\nOdeme: ${ord.payment_method} (Onaylandi)\n${itemsArr.length} urun`;
+              sendSmsViaNetgsm(adminCfg.admin_phone, smsMsg).catch((err) => console.error("Admin iyzico success SMS error:", err));
+            }
+          }
+        } catch (e) {
+          console.error("Admin iyzico success notification error:", e);
+        }
+        return res.redirect(303, buildResultUrl({ status: "success", order: String(tokenRow.order_id), t: token }));
+      }
+
+      // failure — atomically transition order; only restore stock if this call performed the cancel
+      const cancelRes = await sharedPool.query(
+        "UPDATE orders SET payment_status = 'failed', status = 'iptal' WHERE id = $1 AND status <> 'iptal' RETURNING id",
+        [tokenRow.order_id]
+      );
+      if ((cancelRes.rowCount ?? 0) > 0) {
+        try {
+          const itemsRow = await sharedPool.query("SELECT items FROM orders WHERE id = $1", [tokenRow.order_id]);
+          const items = itemsRow.rows[0]?.items || [];
+          for (const it of items) {
+            const pid = parseInt(String(it.productId));
+            const qty = parseInt(String(it.quantity)) || 0;
+            if (!isNaN(pid) && qty > 0 && !it.isPreorder) {
+              await sharedPool.query("UPDATE products SET stock = stock + $1 WHERE id = $2", [qty, pid]);
+            }
+          }
+        } catch (e) {
+          console.error("Stock restore error after failed iyzico:", e);
+        }
+      }
+      return res.redirect(303, buildResultUrl({
+        status: "failed",
+        order: String(tokenRow.order_id),
+        t: token,
+        msg: String(errorMessage).slice(0, 100) || "payment-failed",
+      }));
+    } catch (err: any) {
+      console.error("[iyzico-callback] error:", err?.message || err);
+      return res.redirect(303, buildResultUrl({ status: "failed", msg: "callback-error" }));
     }
   });
 
@@ -2507,7 +2863,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const result = await sharedPool.query(`
         SELECT key, value FROM app_settings WHERE key IN (
           'payment_eft_enabled', 'payment_nakit_enabled', 'payment_qr_enabled',
-          'payment_pos_enabled', 'payment_tosla_enabled',
+          'payment_pos_enabled', 'payment_tosla_enabled', 'payment_iyzico_enabled',
           'campaign_hero_title', 'campaign_hero_subtitle', 'campaign_end_date',
           'bank_account_name', 'bank_iban', 'bank_name',
           'daily_cargo_widget_enabled'
@@ -2541,8 +2897,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const textKeys = [
         "admin_phone", "order_notification_sms",
         "payment_eft_enabled", "payment_nakit_enabled", "payment_qr_enabled",
-        "payment_pos_enabled", "payment_tosla_enabled",
+        "payment_pos_enabled", "payment_tosla_enabled", "payment_iyzico_enabled",
         "tosla_client_id", "tosla_api_user", "tosla_api_pass", "tosla_base_url",
+        "iyzico_api_key", "iyzico_secret_key", "iyzico_base_url",
         "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date",
         "bank_account_name", "bank_iban", "bank_name",
         "daily_cargo_widget_enabled",
@@ -2561,6 +2918,23 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         if (!finalClientId || !finalApiUser || !finalApiPass) {
           return res.status(400).json({
             message: "Online Kredi Kartı'nı aktif etmek için Tosla ClientId, ApiUser ve ApiPass zorunludur.",
+          });
+        }
+      }
+
+      const iyzicoFlag = updates.payment_iyzico_enabled;
+      const iyzicoEnabling = iyzicoFlag === "true" || iyzicoFlag === true || iyzicoFlag === "1";
+      if (iyzicoEnabling) {
+        const existing = await sharedPool.query(
+          "SELECT key, value FROM app_settings WHERE key IN ('iyzico_api_key','iyzico_secret_key')"
+        );
+        const cur: Record<string, string> = {};
+        for (const r of existing.rows) cur[r.key] = r.value || "";
+        const finalApiKey = (updates.iyzico_api_key !== undefined ? String(updates.iyzico_api_key).trim() : cur.iyzico_api_key);
+        const finalSecret = (updates.iyzico_secret_key !== undefined ? String(updates.iyzico_secret_key).trim() : cur.iyzico_secret_key);
+        if (!finalApiKey || !finalSecret) {
+          return res.status(400).json({
+            message: "İyzico'yu aktif etmek için API Key ve Secret Key zorunludur.",
           });
         }
       }

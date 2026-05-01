@@ -105,6 +105,8 @@ export default function Checkout() {
   const qrEnabled = isEnabled(publicSettings?.payment_qr_enabled);
   const posEnabled = isEnabled(publicSettings?.payment_pos_enabled);
   const toslaEnabled = isEnabled(publicSettings?.payment_tosla_enabled);
+  const iyzicoEnabled = isEnabled(publicSettings?.payment_iyzico_enabled);
+  const onlineCardEnabled = toslaEnabled || iyzicoEnabled;
   const bankAccountName = publicSettings?.bank_account_name || "";
   const bankIban = publicSettings?.bank_iban || "";
   const bankName = publicSettings?.bank_name || "";
@@ -630,16 +632,13 @@ export default function Checkout() {
       const orderResult: any = await orderRes.json();
 
       if (paymentId === "online" && orderResult?.id) {
-        try {
-          const initRes = await apiRequest("POST", "/api/tosla/init-payment", { orderId: orderResult.id });
+        const tryInit = async (endpoint: string) => {
+          const initRes = await apiRequest("POST", endpoint, { orderId: orderResult.id });
           const initData = await initRes.json();
-          if (initData?.paymentPageUrl) {
-            queryClient.invalidateQueries({ queryKey: ["/api/customer/orders"] });
-            window.location.href = initData.paymentPageUrl;
-            return;
-          }
+          if (initData?.paymentPageUrl) return { ok: true, url: initData.paymentPageUrl };
           throw new Error(initData?.message || "Online ödeme sayfası açılamadı");
-        } catch (e: any) {
+        };
+        const parseErr = (e: any) => {
           let msg = "Online ödeme başlatılamadı, lütfen başka bir ödeme yöntemi seçin.";
           let cancelled = false;
           try {
@@ -649,11 +648,32 @@ export default function Checkout() {
             if (parsed.message) msg = parsed.message;
             if (parsed.cancelled) cancelled = true;
           } catch {}
-          setOrderError(cancelled ? `${msg} Siparişiniz otomatik olarak iptal edildi, ürünleriniz sepete geri eklenebilir.` : msg);
-          setOrderLoading(false);
-          queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-          return;
+          return { msg, cancelled };
+        };
+
+        const providers: string[] = [];
+        if (iyzicoEnabled) providers.push("/api/iyzico/init-payment");
+        if (toslaEnabled) providers.push("/api/tosla/init-payment");
+        if (providers.length === 0) providers.push("/api/tosla/init-payment");
+
+        let lastErr: any = null;
+        for (let i = 0; i < providers.length; i++) {
+          try {
+            const r = await tryInit(providers[i]);
+            queryClient.invalidateQueries({ queryKey: ["/api/customer/orders"] });
+            window.location.href = r.url;
+            return;
+          } catch (e: any) {
+            lastErr = e;
+            const { cancelled } = parseErr(e);
+            if (cancelled) break;
+          }
         }
+        const { msg, cancelled } = parseErr(lastErr);
+        setOrderError(cancelled ? `${msg} Siparişiniz otomatik olarak iptal edildi, ürünleriniz sepete geri eklenebilir.` : msg);
+        setOrderLoading(false);
+        queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+        return;
       }
 
       if (typeof window !== "undefined" && (window as any).gtag) {
@@ -1468,7 +1488,7 @@ export default function Checkout() {
                       if (opt.id === "nakit") return nakitEnabled;
                       if (opt.id === "eft") return eftEnabled;
                       if (opt.id === "qr") return qrEnabled;
-                      if (opt.id === "online") return toslaEnabled;
+                      if (opt.id === "online") return onlineCardEnabled;
                       return true;
                     }).map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
