@@ -805,55 +805,129 @@ function DailyCargoWidget() {
   );
 }
 
-function ComingSoonPopup() {
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
+}
+
+function WelcomeBonusPopup() {
+  const { isLoggedIn } = useCustomer();
   const [open, setOpen] = useState(false);
+  const [canInstall, setCanInstall] = useState(false);
+  const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
+
   useEffect(() => {
     if (typeof window === "undefined") return;
-    if (sessionStorage.getItem("coming_soon_dismissed") === "1") return;
-    const t = setTimeout(() => setOpen(true), 400);
+    if (isLoggedIn) return;
+    if (sessionStorage.getItem("welcome_bonus_dismissed") === "1") return;
+    const t = setTimeout(() => setOpen(true), 600);
     return () => clearTimeout(t);
+  }, [isLoggedIn]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = (e: Event) => {
+      e.preventDefault();
+      deferredPrompt.current = e as BeforeInstallPromptEvent;
+      setCanInstall(true);
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    const standalone = window.matchMedia?.("(display-mode: standalone)").matches
+      || (window.navigator as any).standalone === true;
+    if (standalone) setCanInstall(false);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
+
   if (!open) return null;
+
   const close = () => {
-    try { sessionStorage.setItem("coming_soon_dismissed", "1"); } catch {}
+    try { sessionStorage.setItem("welcome_bonus_dismissed", "1"); } catch {}
     setOpen(false);
   };
+
+  const handleInstall = async () => {
+    if (deferredPrompt.current) {
+      try {
+        await deferredPrompt.current.prompt();
+        await deferredPrompt.current.userChoice;
+      } catch {}
+      deferredPrompt.current = null;
+      setCanInstall(false);
+    }
+    close();
+  };
+
   return (
     <div
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 px-4"
       onClick={close}
-      data-testid="popup-coming-soon-backdrop"
+      data-testid="popup-welcome-bonus-backdrop"
     >
       <div
-        className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+        className="relative w-full max-w-md rounded-2xl bg-gradient-to-br from-orange-50 via-white to-amber-50 p-6 shadow-2xl border-2 border-orange-200"
         onClick={e => e.stopPropagation()}
-        data-testid="popup-coming-soon"
+        data-testid="popup-welcome-bonus"
       >
         <button
           type="button"
           onClick={close}
-          className="absolute right-3 top-3 rounded-full p-1.5 text-gray-500 hover:bg-gray-100"
+          className="absolute right-3 top-3 rounded-full p-1.5 text-gray-500 hover:bg-gray-100 z-10"
           aria-label="Kapat"
-          data-testid="button-close-coming-soon"
+          data-testid="button-close-welcome-bonus"
         >
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
         <div className="flex flex-col items-center text-center">
-          <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-orange-100">
-            <Clock className="h-7 w-7 text-orange-600" />
+          <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-orange-500 to-amber-500 shadow-lg">
+            <Gift className="h-8 w-8 text-white" />
           </div>
-          <h3 className="mb-2 text-lg font-bold text-gray-900">Bilgilendirme</h3>
-          <p className="text-sm leading-relaxed text-gray-700" data-testid="text-coming-soon-message">
-            HİZMETİMİZ YAKIN ZAMANDA FAALİYETE GEÇECEKTİR.
+          <div className="mb-1 inline-block rounded-full bg-orange-100 px-3 py-0.5 text-[11px] font-bold uppercase tracking-wide text-orange-700">
+            Hoş Geldin Hediyesi
+          </div>
+          <h3 className="mb-1 text-2xl font-extrabold text-gray-900" data-testid="text-welcome-bonus-amount">
+            100 TL BONUS
+          </h3>
+          <p className="text-sm font-semibold text-gray-800">
+            Hemen Üye Ol & Uygulamayı İndir
           </p>
-          <button
-            type="button"
-            onClick={close}
-            className="mt-5 w-full rounded-xl bg-orange-500 py-2.5 text-sm font-bold text-white hover:bg-orange-600"
-            data-testid="button-ok-coming-soon"
-          >
-            Tamam
-          </button>
+          <div className="my-3 flex items-center justify-center gap-3 text-xs font-bold">
+            <span className="flex items-center gap-1 text-emerald-700">
+              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">✓</span>
+              Şart Yok
+            </span>
+            <span className="flex items-center gap-1 text-emerald-700">
+              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-emerald-500 text-white">✓</span>
+              Hemen Kullan
+            </span>
+          </div>
+          <div className="mt-2 flex w-full flex-col gap-2">
+            <Link
+              href="/giris"
+              onClick={close}
+              className="w-full rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 py-3 text-sm font-extrabold text-white shadow-md hover:from-orange-600 hover:to-amber-600 transition"
+              data-testid="button-welcome-bonus-signup"
+            >
+              HEMEN ÜYE OL — 100 TL AL
+            </Link>
+            {canInstall && (
+              <button
+                type="button"
+                onClick={handleInstall}
+                className="w-full rounded-xl border-2 border-orange-500 bg-white py-2.5 text-sm font-bold text-orange-600 hover:bg-orange-50 transition"
+                data-testid="button-welcome-bonus-install"
+              >
+                📲 Uygulamayı İndir
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={close}
+              className="text-[11px] text-gray-500 hover:text-gray-700 mt-1"
+              data-testid="button-welcome-bonus-later"
+            >
+              Daha sonra
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -864,7 +938,7 @@ export default function Landing() {
   const { isLoggedIn } = useCustomer();
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
-      <ComingSoonPopup />
+      <WelcomeBonusPopup />
       <SEO
         title="Atakum Petshop & Samsun Pet Shop - Aynı Gün Teslimat | JETGO"
         description="Atakum, Samsun, İlkadım, Canik, Tekkeköy'e aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu, ödül maması kapıda ödeme. JETGO Pet Shop Samsun: 09:00-21:00 hizmet, +90 850 840 39 59. Mahalleye en yakın petshop."
