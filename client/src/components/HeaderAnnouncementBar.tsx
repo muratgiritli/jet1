@@ -50,7 +50,7 @@ export default function HeaderAnnouncementBar() {
   );
 
   return (
-    <div className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 text-white shadow-sm" data-testid="bar-header-announcement">
+    <div className="w-full bg-gradient-to-r from-orange-500 via-amber-500 to-orange-500 text-white shadow-md sticky top-[82px] md:top-[92px] z-[9997]" data-testid="bar-header-announcement">
       {safeUrl ? (
         <a
           href={safeUrl}
