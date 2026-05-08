@@ -269,23 +269,6 @@ export async function registerRoutes(
   }
 
   try {
-    await sharedPool.query(`
-      CREATE TABLE IF NOT EXISTS header_announcements (
-        id SERIAL PRIMARY KEY,
-        message TEXT NOT NULL,
-        link_url TEXT,
-        link_label TEXT,
-        is_active BOOLEAN NOT NULL DEFAULT true,
-        sort_order INTEGER NOT NULL DEFAULT 0,
-        created_at TIMESTAMP NOT NULL DEFAULT NOW()
-      );
-    `);
-    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_header_announcements_active ON header_announcements (is_active, sort_order);`);
-  } catch (e) {
-    console.error("Header announcements table setup error:", e);
-  }
-
-  try {
     const defaults: Array<[string, string]> = [
       ["payment_nakit_enabled", "true"],
       ["payment_eft_enabled", "true"],
@@ -4376,103 +4359,6 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
-  app.get("/api/header-announcements", async (_req, res) => {
-    try {
-      const r = await sharedPool.query(
-        "SELECT id, message, link_url AS \"linkUrl\", link_label AS \"linkLabel\", sort_order AS \"sortOrder\" FROM header_announcements WHERE is_active = true ORDER BY sort_order ASC, id ASC"
-      );
-      res.set("Cache-Control", "public, max-age=30");
-      res.json(r.rows);
-    } catch {
-      res.json([]);
-    }
-  });
-
-  app.get("/api/admin/header-announcements", requireAdmin, async (_req, res) => {
-    try {
-      const r = await sharedPool.query(
-        "SELECT id, message, link_url AS \"linkUrl\", link_label AS \"linkLabel\", is_active AS \"isActive\", sort_order AS \"sortOrder\", created_at AS \"createdAt\" FROM header_announcements ORDER BY sort_order ASC, id DESC"
-      );
-      res.json(r.rows);
-    } catch (err) {
-      res.status(500).json({ message: "Anonslar çekilemedi" });
-    }
-  });
-
-  const sanitizeAnnouncementUrl = (raw: any): string | null => {
-    if (raw === null || raw === undefined) return null;
-    const s = String(raw).trim();
-    if (!s) return null;
-    if (s.length > 500) return null;
-    if (s.startsWith("/") && !s.startsWith("//")) return s;
-    if (/^https?:\/\//i.test(s)) {
-      try { const u = new URL(s); if (u.protocol === "http:" || u.protocol === "https:") return u.toString(); } catch {}
-    }
-    return null;
-  };
-
-  app.post("/api/admin/header-announcements", requireAdmin, async (req, res) => {
-    try {
-      const message = String(req.body?.message || "").trim();
-      if (!message) return res.status(400).json({ message: "Mesaj zorunlu" });
-      const linkUrlRaw = req.body?.linkUrl;
-      if (linkUrlRaw && !sanitizeAnnouncementUrl(linkUrlRaw)) {
-        return res.status(400).json({ message: "Geçersiz link URL. Sadece / ile başlayan ya da http(s):// adresleri kabul edilir." });
-      }
-      const linkUrl = sanitizeAnnouncementUrl(linkUrlRaw);
-      const linkLabel = req.body?.linkLabel ? String(req.body.linkLabel).trim().slice(0, 60) : null;
-      const isActive = req.body?.isActive === false || req.body?.isActive === "false" ? false : true;
-      const sortOrder = parseInt(String(req.body?.sortOrder ?? 0)) || 0;
-      const r = await sharedPool.query(
-        "INSERT INTO header_announcements (message, link_url, link_label, is_active, sort_order) VALUES ($1, $2, $3, $4, $5) RETURNING id, message, link_url AS \"linkUrl\", link_label AS \"linkLabel\", is_active AS \"isActive\", sort_order AS \"sortOrder\", created_at AS \"createdAt\"",
-        [message.slice(0, 500), linkUrl, linkLabel, isActive, sortOrder]
-      );
-      res.json(r.rows[0]);
-    } catch (err) {
-      res.status(500).json({ message: "Anons oluşturulamadı" });
-    }
-  });
-
-  app.patch("/api/admin/header-announcements/:id", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (!id) return res.status(400).json({ message: "Geçersiz id" });
-      const sets: string[] = [];
-      const vals: any[] = [];
-      let i = 1;
-      if (req.body?.message !== undefined) { sets.push(`message = $${i++}`); vals.push(String(req.body.message).slice(0, 500)); }
-      if (req.body?.linkUrl !== undefined) {
-        if (req.body.linkUrl && !sanitizeAnnouncementUrl(req.body.linkUrl)) {
-          return res.status(400).json({ message: "Geçersiz link URL. Sadece / ile başlayan ya da http(s):// adresleri kabul edilir." });
-        }
-        sets.push(`link_url = $${i++}`); vals.push(sanitizeAnnouncementUrl(req.body.linkUrl));
-      }
-      if (req.body?.linkLabel !== undefined) { sets.push(`link_label = $${i++}`); vals.push(req.body.linkLabel ? String(req.body.linkLabel).slice(0, 60) : null); }
-      if (req.body?.isActive !== undefined) { sets.push(`is_active = $${i++}`); vals.push(req.body.isActive === true || req.body.isActive === "true"); }
-      if (req.body?.sortOrder !== undefined) { sets.push(`sort_order = $${i++}`); vals.push(parseInt(String(req.body.sortOrder)) || 0); }
-      if (sets.length === 0) return res.status(400).json({ message: "Güncellenecek alan yok" });
-      vals.push(id);
-      const r = await sharedPool.query(
-        `UPDATE header_announcements SET ${sets.join(", ")} WHERE id = $${i} RETURNING id, message, link_url AS "linkUrl", link_label AS "linkLabel", is_active AS "isActive", sort_order AS "sortOrder"`,
-        vals
-      );
-      if (r.rowCount === 0) return res.status(404).json({ message: "Anons bulunamadı" });
-      res.json(r.rows[0]);
-    } catch (err) {
-      res.status(500).json({ message: "Anons güncellenemedi" });
-    }
-  });
-
-  app.delete("/api/admin/header-announcements/:id", requireAdmin, async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      if (!id) return res.status(400).json({ message: "Geçersiz id" });
-      await sharedPool.query("DELETE FROM header_announcements WHERE id = $1", [id]);
-      res.json({ ok: true });
-    } catch {
-      res.status(500).json({ message: "Anons silinemedi" });
-    }
-  });
 
   app.post("/api/admin/blacklist/:customerId", requireAdmin, async (req, res) => {
     const customerId = parseInt(req.params.customerId);
