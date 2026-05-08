@@ -11,6 +11,7 @@ import ProductImage from "@/components/ProductImage";
 import { useCart } from "@/contexts/CartContext";
 import { productUrl } from "@/lib/data";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface CampaignProduct {
   id: number;
@@ -34,6 +35,7 @@ interface PublicSettings {
 }
 
 function CampaignTopBanner() {
+  const isMobile = useIsMobile();
   const { data: banners = [] } = useQuery<any[]>({
     queryKey: ["/api/banners", { position: "campaign_top" }],
     queryFn: async () => {
@@ -42,8 +44,13 @@ function CampaignTopBanner() {
       return r.json();
     },
   });
-  if (!banners.length) return null;
-  const banner = banners[0];
+  const visible = banners.filter((b: any) => {
+    const d = b.device || "both";
+    if (d === "both") return true;
+    return isMobile ? d === "mobile" : d === "desktop";
+  });
+  if (!visible.length) return null;
+  const banner = visible[0];
   if (!banner.imageData) return null;
   const Img = (
     <img

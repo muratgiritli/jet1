@@ -308,6 +308,7 @@ export const banners = pgTable("banners", {
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
   position: text("position").notNull().default("home_top"),
+  device: text("device").notNull().default("both"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

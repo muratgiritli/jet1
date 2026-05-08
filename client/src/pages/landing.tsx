@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { useCustomer } from "@/contexts/CustomerContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import SEO, { LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import SignupBonusBanner from "@/components/SignupBonusBanner";
 import ContactDialog from "@/components/ContactDialog";
@@ -229,14 +230,21 @@ function QuickActions() {
   );
 }
 
-type BannerItem = { id: number; title: string; imageData: string | null; linkUrl: string | null; sortOrder: number; position?: string };
+type BannerItem = { id: number; title: string; imageData: string | null; linkUrl: string | null; sortOrder: number; position?: string; device?: string };
+
+function matchesDevice(b: BannerItem, isMobile: boolean) {
+  const d = b.device || "both";
+  if (d === "both") return true;
+  return isMobile ? d === "mobile" : d === "desktop";
+}
 
 function BannerStrip({ position, max, gridClass, testId }: { position: string; max: number; gridClass: string; testId: string }) {
+  const isMobile = useIsMobile();
   const { data: banners = [] } = useQuery<BannerItem[]>({
     queryKey: ["/api/banners", position],
     queryFn: () => fetch(`/api/banners?position=${position}`).then(r => r.json()),
   });
-  const items = banners.filter(b => b.imageData).slice(0, max);
+  const items = banners.filter(b => b.imageData && matchesDevice(b, isMobile)).slice(0, max);
   if (items.length === 0) return null;
   return (
     <div className={gridClass} data-testid={testId}>
@@ -265,11 +273,12 @@ function HomeBannersBelowCategory() {
 }
 
 function HomeBottomCarousel() {
+  const isMobile = useIsMobile();
   const { data: banners = [] } = useQuery<BannerItem[]>({
     queryKey: ["/api/banners", "home_bottom_carousel"],
     queryFn: () => fetch(`/api/banners?position=home_bottom_carousel`).then(r => r.json()),
   });
-  const items = banners.filter(b => b.imageData);
+  const items = banners.filter(b => b.imageData && matchesDevice(b, isMobile));
   const [idx, setIdx] = useState(0);
   const touchStartX = useRef<number | null>(null);
   useEffect(() => { if (idx >= items.length) setIdx(0); }, [items.length, idx]);

@@ -269,6 +269,12 @@ export async function registerRoutes(
   }
 
   try {
+    await sharedPool.query(`ALTER TABLE banners ADD COLUMN IF NOT EXISTS device TEXT NOT NULL DEFAULT 'both';`);
+  } catch (e) {
+    console.error("Banner device column migration error:", e);
+  }
+
+  try {
     const defaults: Array<[string, string]> = [
       ["payment_nakit_enabled", "true"],
       ["payment_eft_enabled", "true"],
@@ -4284,10 +4290,12 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.post("/api/admin/banners", requireAdmin, upload.single("image"), async (req, res) => {
     try {
-      const { title, linkUrl, sortOrder, position } = req.body;
+      const { title, linkUrl, sortOrder, position, device } = req.body;
       if (!title) return res.status(400).json({ message: "Başlık gerekli" });
       const allowed = ["home_top", "home_below_category", "home_bottom_carousel", "campaign_top"];
       const pos = allowed.includes(position) ? position : "home_top";
+      const allowedDevices = ["both", "mobile", "desktop"];
+      const dev = allowedDevices.includes(device) ? device : "both";
       let imageData: string | undefined;
       if (req.file) {
         const sharp = (await import("sharp")).default;
@@ -4298,7 +4306,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           .toBuffer();
         imageData = `data:image/webp;base64,${webp.toString("base64")}`;
       }
-      const banner = await storage.createBanner({ title, linkUrl: linkUrl || null, imageData: imageData || null, sortOrder: parseInt(sortOrder || "0"), isActive: true, position: pos });
+      const banner = await storage.createBanner({ title, linkUrl: linkUrl || null, imageData: imageData || null, sortOrder: parseInt(sortOrder || "0"), isActive: true, position: pos, device: dev });
       res.json(banner);
     } catch (err) {
       res.status(500).json({ message: "Banner oluşturma hatası" });
@@ -4331,6 +4339,10 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const allowed = ["home_top", "home_below_category", "home_bottom_carousel", "campaign_top"];
       if (req.body.position !== undefined) {
         if (allowed.includes(req.body.position)) updates.position = req.body.position;
+      }
+      const allowedDevices = ["both", "mobile", "desktop"];
+      if (req.body.device !== undefined && allowedDevices.includes(req.body.device)) {
+        updates.device = req.body.device;
       }
       if (req.file) {
         const sharp = (await import("sharp")).default;

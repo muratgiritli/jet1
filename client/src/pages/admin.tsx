@@ -5370,6 +5370,7 @@ function BannerEditRow({ banner, onCancel }: { banner: any; onCancel: () => void
   const [linkUrl, setLinkUrl] = useState(banner.linkUrl || "");
   const [sortOrder, setSortOrder] = useState(String(banner.sortOrder ?? 0));
   const [position, setPosition] = useState(banner.position || "home_top");
+  const [device, setDevice] = useState(banner.device || "both");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { toast } = useToast();
   const updateMutation = useMutation({
@@ -5379,6 +5380,7 @@ function BannerEditRow({ banner, onCancel }: { banner: any; onCancel: () => void
       formData.append("linkUrl", linkUrl);
       formData.append("sortOrder", sortOrder);
       formData.append("position", position);
+      formData.append("device", device);
       if (imageFile) formData.append("image", imageFile);
       const res = await fetch(`/api/admin/banners/${banner.id}`, { method: "PATCH", body: formData, credentials: "include" });
       if (!res.ok) throw new Error("Failed");
@@ -5408,6 +5410,11 @@ function BannerEditRow({ banner, onCancel }: { banner: any; onCancel: () => void
             <option value="campaign_top">Kampanya Sayfası Üstü (1000x650 px)</option>
           </select>
         </div>
+        <select value={device} onChange={e => setDevice(e.target.value)} className="h-8 text-sm border rounded px-2 bg-background w-full" data-testid={`select-edit-banner-device-${banner.id}`}>
+          <option value="both">Cihaz: Her İkisinde Göster</option>
+          <option value="mobile">Cihaz: Sadece Mobilde Göster</option>
+          <option value="desktop">Cihaz: Sadece Masaüstünde Göster</option>
+        </select>
         <div>
           <p className="text-[10px] text-muted-foreground mb-1">Görseli değiştirmek istersen yeni görsel seç (boş bırakırsan mevcut korunur)</p>
           <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="text-xs w-full" />
@@ -5432,6 +5439,7 @@ function BannersSection() {
   const [linkUrl, setLinkUrl] = useState("");
   const [sortOrder, setSortOrder] = useState("0");
   const [position, setPosition] = useState("home_top");
+  const [device, setDevice] = useState("both");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const { toast } = useToast();
@@ -5443,6 +5451,7 @@ function BannersSection() {
       formData.append("linkUrl", linkUrl);
       formData.append("sortOrder", sortOrder);
       formData.append("position", position);
+      formData.append("device", device);
       if (imageFile) formData.append("image", imageFile);
       const res = await fetch("/api/admin/banners", { method: "POST", body: formData, credentials: "include" });
       if (!res.ok) throw new Error("Failed");
@@ -5450,7 +5459,8 @@ function BannersSection() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
-      setTitle(""); setLinkUrl(""); setSortOrder("0"); setPosition("home_top"); setImageFile(null);
+      queryClient.invalidateQueries({ queryKey: ["/api/banners"] });
+      setTitle(""); setLinkUrl(""); setSortOrder("0"); setPosition("home_top"); setDevice("both"); setImageFile(null);
       toast({ title: "Banner eklendi" });
     },
   });
@@ -5479,13 +5489,18 @@ function BannersSection() {
         <CardContent className="p-3 space-y-2">
           <Input placeholder="Banner başlığı" value={title} onChange={e => setTitle(e.target.value)} className="h-8 text-sm" data-testid="input-banner-title" />
           <Input placeholder="Link URL (opsiyonel)" value={linkUrl} onChange={e => setLinkUrl(e.target.value)} className="h-8 text-sm" />
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Input type="number" placeholder="Sıra" value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="h-8 text-sm w-20" />
             <select value={position} onChange={e => setPosition(e.target.value)} className="h-8 text-sm border rounded px-2 bg-background" data-testid="select-banner-position">
               <option value="home_top">Üst (Kategori Üstü)</option>
               <option value="home_below_category">Alt (Kategori Altı)</option>
               <option value="home_bottom_carousel">Alt Karusel (Footer Üstü, Satın Al Butonlu)</option>
               <option value="campaign_top">Kampanya Sayfası Üstü (1000x650 px)</option>
+            </select>
+            <select value={device} onChange={e => setDevice(e.target.value)} className="h-8 text-sm border rounded px-2 bg-background" data-testid="select-banner-device">
+              <option value="both">Her İkisinde</option>
+              <option value="mobile">Sadece Mobilde</option>
+              <option value="desktop">Sadece Masaüstünde</option>
             </select>
           </div>
           <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="text-xs w-full" />
@@ -5503,7 +5518,12 @@ function BannersSection() {
               {b.imageData && <img src={b.imageData} alt={b.title} className="w-16 h-10 object-cover rounded" />}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{b.title} <span className="text-xs text-muted-foreground">#{b.sortOrder}</span></p>
-                <p className="text-[10px] text-muted-foreground">{positionLabel(b.position)}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {positionLabel(b.position)}
+                  {b.device === "mobile" && " • 📱 Sadece Mobil"}
+                  {b.device === "desktop" && " • 💻 Sadece Masaüstü"}
+                  {(!b.device || b.device === "both") && " • 📱💻 Her İkisi"}
+                </p>
                 {b.linkUrl && <p className="text-xs text-muted-foreground truncate">{b.linkUrl}</p>}
               </div>
               <Badge variant={b.isActive ? "default" : "secondary"} className="cursor-pointer text-xs" onClick={() => toggleMutation.mutate({ id: b.id, isActive: !b.isActive })}>
