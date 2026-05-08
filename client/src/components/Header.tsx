@@ -3,6 +3,7 @@ import { ArrowLeft, User, LogIn, UserPlus } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
+import HeaderAnnouncementBar from "@/components/HeaderAnnouncementBar";
 
 const NAV_ITEMS = [
   { name: "Kedi", href: "/kategori/kedi" },
@@ -109,6 +110,10 @@ export default function Header() {
           </ul>
         </div>
       </nav>
+
+      <div className="sticky top-[82px] md:top-[92px] z-[9997]">
+        <HeaderAnnouncementBar />
+      </div>
     </>
   );
 }

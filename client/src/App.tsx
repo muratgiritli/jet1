@@ -11,7 +11,6 @@ import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import InstallBanner from "@/components/InstallBanner";
-import HeaderAnnouncementBar from "@/components/HeaderAnnouncementBar";
 import SocialProofToast from "@/components/SocialProofToast";
 const Landing = lazy(() => import("@/pages/landing"));
 
@@ -166,7 +165,6 @@ function AppShell() {
     <>
       {!isAdmin && !isDemo && <InstallBanner />}
       {!isAdmin && !isDemo && <Header />}
-      {!isAdmin && !isDemo && <HeaderAnnouncementBar />}
       <ErrorBoundary><Router /></ErrorBoundary>
       {!isAdmin && !isDemo && location === "/" && <Footer />}
       {!isAdmin && !isDemo && <FloatingCartBar />}
