@@ -71,6 +71,7 @@ import {
   LogIn,
   ThumbsUp,
   Mail,
+  Megaphone,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1595,6 +1596,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "bildirim", label: "Bildirim", icon: <Bell className="w-3.5 h-3.5" /> },
             { key: "havale", label: "Havale", icon: <Banknote className="w-3.5 h-3.5" /> },
             { key: "banner", label: "Banner", icon: <ImageLucide className="w-3.5 h-3.5" /> },
+            { key: "anons", label: "Anons", icon: <Megaphone className="w-3.5 h-3.5" /> },
             { key: "raporlama", label: "Raporlama", icon: <BarChart3 className="w-3.5 h-3.5" /> },
             { key: "stoksayim", label: "Stok Sayım", icon: <ScanLine className="w-3.5 h-3.5" /> },
             { key: "skttakip", label: "SKT Takip", icon: <Calendar className="w-3.5 h-3.5" /> },
@@ -1629,6 +1631,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "bildirim" && <NotificationsSection />}
         {activeSection === "havale" && <BankTransferAdminSection />}
         {activeSection === "banner" && <BannersSection />}
+        {activeSection === "anons" && <HeaderAnnouncementsSection />}
         {activeSection === "raporlama" && <ReportsSection />}
         {activeSection === "stoksayim" && <StokSayimSection />}
         {activeSection === "skttakip" && <SktTakipSection />}
@@ -5519,6 +5522,173 @@ function BannersSection() {
           </Card>
         ))}
         {allBanners.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Henüz banner eklenmemiş</p>}
+      </div>
+    </div>
+  );
+}
+
+function HeaderAnnouncementsSection() {
+  const { data: announcements = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/header-announcements"] });
+  const { toast } = useToast();
+  const [message, setMessage] = useState("");
+  const [linkUrl, setLinkUrl] = useState("");
+  const [linkLabel, setLinkLabel] = useState("");
+  const [sortOrder, setSortOrder] = useState("0");
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editVals, setEditVals] = useState<{ message: string; linkUrl: string; linkLabel: string; sortOrder: string }>({ message: "", linkUrl: "", linkLabel: "", sortOrder: "0" });
+
+  const createMut = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/admin/header-announcements", {
+        message: message.trim(),
+        linkUrl: linkUrl.trim() || null,
+        linkLabel: linkLabel.trim() || null,
+        sortOrder: parseInt(sortOrder) || 0,
+        isActive: true,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/header-announcements"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/header-announcements"] });
+      setMessage(""); setLinkUrl(""); setLinkLabel(""); setSortOrder("0");
+      toast({ title: "Anons eklendi" });
+    },
+    onError: () => toast({ title: "Hata", description: "Anons eklenemedi", variant: "destructive" }),
+  });
+
+  const toggleMut = useMutation({
+    mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/header-announcements/${id}`, { isActive });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/header-announcements"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/header-announcements"] });
+    },
+  });
+
+  const updateMut = useMutation({
+    mutationFn: async ({ id, body }: { id: number; body: any }) => {
+      await apiRequest("PATCH", `/api/admin/header-announcements/${id}`, body);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/header-announcements"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/header-announcements"] });
+      setEditingId(null);
+      toast({ title: "Anons güncellendi" });
+    },
+  });
+
+  const deleteMut = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/admin/header-announcements/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/header-announcements"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/header-announcements"] });
+      toast({ title: "Anons silindi" });
+    },
+  });
+
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+
+  return (
+    <div className="space-y-4" data-testid="section-header-announcements">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2"><Megaphone className="w-4 h-4" />Yeni Header Anonsu</CardTitle>
+          <p className="text-[11px] text-muted-foreground">Header'ın hemen altında turuncu bantta görünür. Birden fazla anons varsa 5 sn'de bir döner.</p>
+        </CardHeader>
+        <CardContent className="p-3 space-y-2">
+          <Input
+            placeholder="Anons mesajı (örn: UYGULAMAYI İNDİR, üye ol 100 TL bonus kazan!)"
+            value={message}
+            onChange={e => setMessage(e.target.value)}
+            className="h-8 text-sm"
+            maxLength={500}
+            data-testid="input-announcement-message"
+          />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <Input
+              placeholder="Buton/Link URL (opsiyonel, örn: /giris veya https://...)"
+              value={linkUrl}
+              onChange={e => setLinkUrl(e.target.value)}
+              className="h-8 text-sm"
+              data-testid="input-announcement-url"
+            />
+            <Input
+              placeholder="Buton metni (örn: ŞİMDİ İNDİR)"
+              value={linkLabel}
+              onChange={e => setLinkLabel(e.target.value)}
+              className="h-8 text-sm"
+              maxLength={60}
+              data-testid="input-announcement-label"
+            />
+          </div>
+          <div className="flex gap-2 items-center">
+            <Input
+              type="number"
+              placeholder="Sıra"
+              value={sortOrder}
+              onChange={e => setSortOrder(e.target.value)}
+              className="h-8 text-sm w-24"
+              data-testid="input-announcement-order"
+            />
+            <Button
+              size="sm"
+              onClick={() => createMut.mutate()}
+              disabled={!message.trim() || createMut.isPending}
+              data-testid="btn-add-announcement"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1" />Ekle
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <div className="space-y-2">
+        {announcements.map((a: any) => editingId === a.id ? (
+          <Card key={a.id}>
+            <CardContent className="p-3 space-y-2">
+              <Input value={editVals.message} onChange={e => setEditVals(v => ({ ...v, message: e.target.value }))} className="h-8 text-sm" maxLength={500} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <Input placeholder="Link URL" value={editVals.linkUrl} onChange={e => setEditVals(v => ({ ...v, linkUrl: e.target.value }))} className="h-8 text-sm" />
+                <Input placeholder="Buton metni" value={editVals.linkLabel} onChange={e => setEditVals(v => ({ ...v, linkLabel: e.target.value }))} className="h-8 text-sm" maxLength={60} />
+              </div>
+              <div className="flex gap-2 items-center">
+                <Input type="number" value={editVals.sortOrder} onChange={e => setEditVals(v => ({ ...v, sortOrder: e.target.value }))} className="h-8 text-sm w-24" />
+                <Button size="sm" onClick={() => updateMut.mutate({ id: a.id, body: { message: editVals.message, linkUrl: editVals.linkUrl || null, linkLabel: editVals.linkLabel || null, sortOrder: parseInt(editVals.sortOrder) || 0 } })} disabled={!editVals.message.trim() || updateMut.isPending} data-testid={`btn-save-announcement-${a.id}`}>
+                  <Save className="w-3.5 h-3.5 mr-1" />Kaydet
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingId(null)}>İptal</Button>
+              </div>
+            </CardContent>
+          </Card>
+        ) : (
+          <Card key={a.id}>
+            <CardContent className="p-3 flex items-center gap-3">
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate" data-testid={`text-announcement-${a.id}`}>
+                  {a.message} <span className="text-xs text-muted-foreground">#{a.sortOrder}</span>
+                </p>
+                {a.linkUrl && (
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {a.linkLabel ? <span className="font-semibold">{a.linkLabel} → </span> : null}{a.linkUrl}
+                  </p>
+                )}
+              </div>
+              <Badge variant={a.isActive ? "default" : "secondary"} className="cursor-pointer text-xs" onClick={() => toggleMut.mutate({ id: a.id, isActive: !a.isActive })} data-testid={`btn-toggle-announcement-${a.id}`}>
+                {a.isActive ? "Aktif" : "Pasif"}
+              </Badge>
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" onClick={() => { setEditingId(a.id); setEditVals({ message: a.message, linkUrl: a.linkUrl || "", linkLabel: a.linkLabel || "", sortOrder: String(a.sortOrder ?? 0) }); }} data-testid={`btn-edit-announcement-${a.id}`}>
+                <Pencil className="w-3.5 h-3.5" />
+              </Button>
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500" onClick={() => deleteMut.mutate(a.id)} data-testid={`btn-delete-announcement-${a.id}`}>
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </CardContent>
+          </Card>
+        ))}
+        {announcements.length === 0 && (
+          <p className="text-sm text-muted-foreground text-center py-4">Henüz anons yok. Yukarıdan ekleyebilirsiniz.</p>
+        )}
       </div>
     </div>
   );

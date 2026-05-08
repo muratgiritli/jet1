@@ -315,6 +315,19 @@ export const insertBannerSchema = createInsertSchema(banners).omit({ id: true, c
 export type InsertBanner = z.infer<typeof insertBannerSchema>;
 export type Banner = typeof banners.$inferSelect;
 
+export const headerAnnouncements = pgTable("header_announcements", {
+  id: serial("id").primaryKey(),
+  message: text("message").notNull(),
+  linkUrl: text("link_url"),
+  linkLabel: text("link_label"),
+  isActive: boolean("is_active").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertHeaderAnnouncementSchema = createInsertSchema(headerAnnouncements).omit({ id: true, createdAt: true });
+export type InsertHeaderAnnouncement = z.infer<typeof insertHeaderAnnouncementSchema>;
+export type HeaderAnnouncement = typeof headerAnnouncements.$inferSelect;
+
 export const coupons = pgTable("coupons", {
   id: serial("id").primaryKey(),
   code: text("code").notNull().unique(),
