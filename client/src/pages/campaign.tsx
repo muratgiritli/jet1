@@ -62,11 +62,17 @@ function CampaignTopBanner() {
       data-testid="img-campaign-top-banner"
     />
   );
+  const raw = (banner.linkUrl || "").trim();
+  const sameDomain = raw.match(/^https?:\/\/(www\.)?jetgomarket\.com(\/.*)?$/i);
+  const internalPath = sameDomain ? (sameDomain[2] || "/") : null;
+  const isExternal = !sameDomain && /^https?:\/\//i.test(raw);
   return (
     <div className="mb-4">
-      {banner.linkUrl ? (
-        <Link href={banner.linkUrl} data-testid="link-campaign-top-banner">{Img}</Link>
-      ) : Img}
+      {!raw ? Img : isExternal ? (
+        <a href={raw} target="_blank" rel="noopener noreferrer" className="block" data-testid="link-campaign-top-banner">{Img}</a>
+      ) : (
+        <Link href={internalPath || raw} data-testid="link-campaign-top-banner">{Img}</Link>
+      )}
     </div>
   );
 }

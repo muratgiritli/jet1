@@ -255,11 +255,17 @@ function BannerStrip({ position, max, gridClass, testId }: { position: string; m
             <img src={b.imageData!} alt={b.title} className="w-full h-auto object-cover" loading="lazy" />
           </div>
         );
-        return b.linkUrl ? (
-          <Link key={b.id} href={b.linkUrl}>{inner}</Link>
-        ) : (
-          <div key={b.id}>{inner}</div>
-        );
+        const raw = (b.linkUrl || "").trim();
+        if (!raw) return <div key={b.id}>{inner}</div>;
+        const sameDomain = raw.match(/^https?:\/\/(www\.)?jetgomarket\.com(\/.*)?$/i);
+        if (sameDomain) {
+          const path = sameDomain[2] || "/";
+          return <Link key={b.id} href={path}>{inner}</Link>;
+        }
+        if (/^https?:\/\//i.test(raw)) {
+          return <a key={b.id} href={raw} target="_blank" rel="noopener noreferrer" className="block">{inner}</a>;
+        }
+        return <Link key={b.id} href={raw}>{inner}</Link>;
       })}
     </div>
   );
@@ -300,8 +306,10 @@ function HomeBottomCarousel() {
     touchStartX.current = null;
   };
 
-  const rawLink = (current.linkUrl || "").trim();
-  const isExternal = /^https?:\/\//i.test(rawLink);
+  const rawLinkRaw = (current.linkUrl || "").trim();
+  const sameDomainMatch = rawLinkRaw.match(/^https?:\/\/(www\.)?jetgomarket\.com(\/.*)?$/i);
+  const rawLink = sameDomainMatch ? (sameDomainMatch[2] || "/") : rawLinkRaw;
+  const isExternal = !sameDomainMatch && /^https?:\/\//i.test(rawLink);
   const hasLink = rawLink.length > 0;
 
   const imageEl = (
