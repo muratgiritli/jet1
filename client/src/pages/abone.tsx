@@ -57,24 +57,24 @@ export default function AbonePage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center px-4 py-8">
+      <div className="min-h-[100svh] bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center px-4 py-4">
         <SEO title="Kayıt Başarılı - JETGO" description="100 TL hoşgeldin bonusunuz hesabınıza tanımlandı." />
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-7 text-center" data-testid="abone-success">
-          <div className="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-4">
-            <CheckCircle2 className="w-12 h-12 text-green-600" />
+        <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-5 text-center" data-testid="abone-success">
+          <div className="w-14 h-14 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-3">
+            <CheckCircle2 className="w-9 h-9 text-green-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Teşekkür Ederiz!</h1>
+          <h1 className="text-xl font-bold text-gray-900 mb-3">Teşekkür Ederiz!</h1>
           <p className="text-gray-700 text-sm leading-relaxed">
             Hesabınıza <strong className="text-purple-700">100 TL bonus</strong> eklenecektir.
           </p>
           <p className="text-gray-700 text-sm leading-relaxed mt-2">
             Sitemiz <strong>19.05.2026</strong> tarihinde faaliyete geçecektir.
           </p>
-          <p className="text-gray-700 text-sm leading-relaxed mt-2 mb-6">
+          <p className="text-gray-700 text-sm leading-relaxed mt-2 mb-5">
             Size SMS ile bilgi verilecektir.
           </p>
           <Link href="/">
-            <Button className="w-full h-12 text-base bg-purple-700 hover:bg-purple-800" data-testid="button-home">
+            <Button className="w-full h-11 text-sm bg-purple-700 hover:bg-purple-800" data-testid="button-home">
               Ana Sayfaya Dön
             </Button>
           </Link>
