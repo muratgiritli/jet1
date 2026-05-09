@@ -36,7 +36,8 @@ function ProductCard({ product, quantity, onUpdate }: { product: Product; quanti
       data-testid={`card-acik-product-${pid}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
-          <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative">
+        <Link href={productUrl(product.id, product.name)} className="w-full block" data-testid={`link-acik-product-${pid}`}>
+          <div className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative cursor-pointer">
             <ProductImage
               src={product.img}
               alt={product.name}
@@ -53,9 +54,12 @@ function ProductCard({ product, quantity, onUpdate }: { product: Product; quanti
               </Badge>
             )}
           </div>
-        <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-acik-name-${pid}`}>
-          {product.name}
-        </p>
+        </Link>
+        <Link href={productUrl(product.id, product.name)} className="w-full">
+          <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem] hover:text-primary cursor-pointer" data-testid={`text-acik-name-${pid}`}>
+            {product.name}
+          </p>
+        </Link>
         <div className="flex flex-col items-center gap-0.5">
           {product.originalPrice && product.originalPrice > product.price && (
             <span className="text-[11px] text-muted-foreground line-through">
