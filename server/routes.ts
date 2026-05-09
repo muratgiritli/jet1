@@ -275,6 +275,21 @@ export async function registerRoutes(
   }
 
   try {
+    await sharedPool.query(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id SERIAL PRIMARY KEY,
+        phone TEXT NOT NULL,
+        pet_type TEXT NOT NULL,
+        status TEXT NOT NULL DEFAULT 'new',
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_subscriptions_created ON subscriptions(created_at DESC);`);
+  } catch (e) {
+    console.error("Subscriptions table setup error:", e);
+  }
+
+  try {
     const defaults: Array<[string, string]> = [
       ["payment_nakit_enabled", "true"],
       ["payment_eft_enabled", "true"],
@@ -4285,6 +4300,61 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       res.json(all);
     } catch (err) {
       res.status(500).json({ message: "Banners fetch error" });
+    }
+  });
+
+  app.post("/api/abone", async (req, res) => {
+    try {
+      const ip = (req.headers["x-forwarded-for"] as string)?.split(",")[0]?.trim() || req.ip || "unknown";
+      if (rateLimit(`abone:${ip}`, 5, 60 * 60 * 1000)) {
+        return res.status(429).json({ message: "Çok fazla deneme. Lütfen daha sonra tekrar deneyin." });
+      }
+      const phoneRaw = String(req.body?.phone || "").replace(/\D/g, "");
+      const phone = phoneRaw.startsWith("90") ? phoneRaw.slice(2) : phoneRaw;
+      if (!/^5\d{9}$/.test(phone)) {
+        return res.status(400).json({ message: "Geçerli bir cep numarası giriniz (5XX XXX XX XX)." });
+      }
+      const petType = String(req.body?.petType || "").toLowerCase();
+      if (petType !== "kedi" && petType !== "kopek") {
+        return res.status(400).json({ message: "Evcil hayvan seçimi gerekli." });
+      }
+      const sub = await storage.createSubscription({ phone, petType });
+      res.json({ ok: true, id: sub.id });
+    } catch (err) {
+      console.error("Subscription create error:", err);
+      res.status(500).json({ message: "Kayıt oluşturulamadı" });
+    }
+  });
+
+  app.get("/api/admin/subscriptions", requireAdmin, async (_req, res) => {
+    try {
+      const list = await storage.getAllSubscriptions();
+      res.json(list);
+    } catch {
+      res.status(500).json({ message: "Listeleme hatası" });
+    }
+  });
+
+  app.patch("/api/admin/subscriptions/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const status = String(req.body?.status || "");
+      if (!["new", "contacted", "converted"].includes(status)) {
+        return res.status(400).json({ message: "Geçersiz durum" });
+      }
+      await storage.updateSubscriptionStatus(id, status);
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Güncelleme hatası" });
+    }
+  });
+
+  app.delete("/api/admin/subscriptions/:id", requireAdmin, async (req, res) => {
+    try {
+      await storage.deleteSubscription(parseInt(req.params.id));
+      res.json({ ok: true });
+    } catch {
+      res.status(500).json({ message: "Silme hatası" });
     }
   });
 

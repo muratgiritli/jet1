@@ -20,8 +20,9 @@ import {
   type ReorderReminder, type InsertReorderReminder,
   type DeliveryNeighborhood, type InsertDeliveryNeighborhood,
   type Banner, type InsertBanner,
+  type Subscription, type InsertSubscription,
   type Coupon, type InsertCoupon,
-  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders, deliveryNeighborhoods, banners, coupons, contactMessages,
+  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders, deliveryNeighborhoods, banners, coupons, contactMessages, subscriptions,
   type ContactMessage, type InsertContactMessage,
 } from "@shared/schema";
 
@@ -134,6 +135,11 @@ export interface IStorage {
   createBanner(data: InsertBanner): Promise<Banner>;
   updateBanner(id: number, data: Partial<InsertBanner>): Promise<Banner | undefined>;
   deleteBanner(id: number): Promise<void>;
+
+  createSubscription(data: InsertSubscription): Promise<Subscription>;
+  getAllSubscriptions(): Promise<Subscription[]>;
+  updateSubscriptionStatus(id: number, status: string): Promise<void>;
+  deleteSubscription(id: number): Promise<void>;
 
   getCouponByCode(code: string): Promise<Coupon | undefined>;
   getAllCoupons(): Promise<Coupon[]>;
@@ -572,6 +578,23 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBanner(id: number): Promise<void> {
     await db.delete(banners).where(eq(banners.id, id));
+  }
+
+  async createSubscription(data: InsertSubscription): Promise<Subscription> {
+    const [row] = await db.insert(subscriptions).values(data).returning();
+    return row;
+  }
+
+  async getAllSubscriptions(): Promise<Subscription[]> {
+    return db.select().from(subscriptions).orderBy(desc(subscriptions.createdAt));
+  }
+
+  async updateSubscriptionStatus(id: number, status: string): Promise<void> {
+    await db.update(subscriptions).set({ status }).where(eq(subscriptions.id, id));
+  }
+
+  async deleteSubscription(id: number): Promise<void> {
+    await db.delete(subscriptions).where(eq(subscriptions.id, id));
   }
 
   async getCouponByCode(code: string): Promise<Coupon | undefined> {

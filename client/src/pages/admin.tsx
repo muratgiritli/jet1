@@ -71,6 +71,9 @@ import {
   LogIn,
   ThumbsUp,
   Mail,
+  Gift,
+  Trash2,
+  QrCode,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1595,6 +1598,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "bildirim", label: "Bildirim", icon: <Bell className="w-3.5 h-3.5" /> },
             { key: "havale", label: "Havale", icon: <Banknote className="w-3.5 h-3.5" /> },
             { key: "banner", label: "Banner", icon: <ImageLucide className="w-3.5 h-3.5" /> },
+            { key: "abone", label: "Abone", icon: <Gift className="w-3.5 h-3.5" /> },
             { key: "raporlama", label: "Raporlama", icon: <BarChart3 className="w-3.5 h-3.5" /> },
             { key: "stoksayim", label: "Stok Sayım", icon: <ScanLine className="w-3.5 h-3.5" /> },
             { key: "skttakip", label: "SKT Takip", icon: <Calendar className="w-3.5 h-3.5" /> },
@@ -1629,6 +1633,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "bildirim" && <NotificationsSection />}
         {activeSection === "havale" && <BankTransferAdminSection />}
         {activeSection === "banner" && <BannersSection />}
+        {activeSection === "abone" && <SubscriptionsSection />}
         {activeSection === "raporlama" && <ReportsSection />}
         {activeSection === "stoksayim" && <StokSayimSection />}
         {activeSection === "skttakip" && <SktTakipSection />}
@@ -5540,6 +5545,127 @@ function BannersSection() {
         ))}
         {allBanners.length === 0 && <p className="text-sm text-muted-foreground text-center py-4">Henüz banner eklenmemiş</p>}
       </div>
+    </div>
+  );
+}
+
+function SubscriptionsSection() {
+  const { data: subs = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/subscriptions"] });
+  const { toast } = useToast();
+  const [showQR, setShowQR] = useState(false);
+  const url = `${window.location.origin}/abone`;
+  const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=400x400&margin=10&data=${encodeURIComponent(url)}`;
+
+  const statusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: number; status: string }) => {
+      await apiRequest("PATCH", `/api/admin/subscriptions/${id}`, { status });
+    },
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/subscriptions"] }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/admin/subscriptions/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/subscriptions"] });
+      toast({ title: "Başvuru silindi" });
+    },
+  });
+
+  const newCount = subs.filter(s => s.status === "new").length;
+  const fmtDate = (d: string) => {
+    const date = new Date(d);
+    return date.toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+  };
+  const fmtPhone = (p: string) => {
+    if (!p || p.length !== 10) return p;
+    return `0${p.slice(0, 3)} ${p.slice(3, 6)} ${p.slice(6, 8)} ${p.slice(8, 10)}`;
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <QrCode className="w-4 h-4" /> Abone Olma Sayfası
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 space-y-3">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex-1 min-w-0">
+              <p className="text-xs text-muted-foreground">Sayfa URL</p>
+              <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm font-mono text-purple-700 break-all hover:underline" data-testid="link-abone-url">{url}</a>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => setShowQR(s => !s)} data-testid="button-toggle-qr">
+              <QrCode className="w-3.5 h-3.5 mr-1" /> {showQR ? "QR Gizle" : "QR Göster"}
+            </Button>
+          </div>
+          {showQR && (
+            <div className="flex flex-col items-center bg-gradient-to-br from-purple-50 to-pink-50 rounded-2xl p-4 border-2 border-purple-200">
+              <div className="bg-white p-3 rounded-xl shadow-sm">
+                <img src={qrSrc} alt="Abone Karekod" className="w-64 h-64 block" data-testid="img-qr" />
+              </div>
+              <p className="text-xs text-center text-muted-foreground mt-2">Karekodu okutarak <strong>jetgomarket.com/abone</strong> sayfasına ulaşılır.</p>
+              <div className="flex gap-2 mt-3">
+                <a href={qrSrc} download="jetgo-abone-qr.png">
+                  <Button size="sm" variant="outline" data-testid="button-download-qr">İndir (PNG)</Button>
+                </a>
+                <a href={qrSrc} target="_blank" rel="noopener noreferrer">
+                  <Button size="sm" variant="outline">Yeni Sekmede Aç</Button>
+                </a>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center justify-between">
+            <span>Başvurular ({subs.length})</span>
+            {newCount > 0 && <Badge className="bg-green-600">{newCount} yeni</Badge>}
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 space-y-2">
+          {isLoading && <p className="text-sm text-muted-foreground text-center py-4">Yükleniyor...</p>}
+          {!isLoading && subs.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-6">Henüz başvuru yok.</p>
+          )}
+          {subs.map((s: any) => (
+            <div key={s.id} className="border rounded-xl p-3 flex items-center gap-3 flex-wrap" data-testid={`row-subscription-${s.id}`}>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <a href={`tel:0${s.phone}`} className="font-mono text-sm font-semibold text-purple-700 hover:underline" data-testid={`text-phone-${s.id}`}>{fmtPhone(s.phone)}</a>
+                  <Badge variant="outline" className="text-xs">{s.petType === "kedi" ? "🐱 Kedi" : "🐶 Köpek"}</Badge>
+                  {s.status === "new" && <Badge className="bg-green-600 text-xs">Yeni</Badge>}
+                  {s.status === "contacted" && <Badge className="bg-blue-600 text-xs">Arandı</Badge>}
+                  {s.status === "converted" && <Badge className="bg-purple-700 text-xs">Üye Oldu</Badge>}
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-1">{fmtDate(s.createdAt)}</p>
+              </div>
+              <div className="flex gap-1">
+                <a href={`https://wa.me/90${s.phone}`} target="_blank" rel="noopener noreferrer">
+                  <Button size="sm" variant="outline" className="h-8 px-2 text-xs" data-testid={`button-wa-${s.id}`}>
+                    <SiWhatsapp className="w-3.5 h-3.5 text-green-600" />
+                  </Button>
+                </a>
+                <select
+                  value={s.status}
+                  onChange={(e) => statusMutation.mutate({ id: s.id, status: e.target.value })}
+                  className="h-8 text-xs border rounded px-2 bg-background"
+                  data-testid={`select-status-${s.id}`}
+                >
+                  <option value="new">Yeni</option>
+                  <option value="contacted">Arandı</option>
+                  <option value="converted">Üye Oldu</option>
+                </select>
+                <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600" onClick={() => { if (confirm("Silinsin mi?")) deleteMutation.mutate(s.id); }} data-testid={`button-delete-${s.id}`}>
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
     </div>
   );
 }

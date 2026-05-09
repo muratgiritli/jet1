@@ -473,3 +473,14 @@ export const bankTransferNotifications = pgTable("bank_transfer_notifications", 
 export type BankTransferNotification = typeof bankTransferNotifications.$inferSelect;
 export const insertBankTransferNotificationSchema = createInsertSchema(bankTransferNotifications).omit({ id: true, status: true, createdAt: true });
 export type InsertBankTransferNotification = z.infer<typeof insertBankTransferNotificationSchema>;
+
+export const subscriptions = pgTable("subscriptions", {
+  id: serial("id").primaryKey(),
+  phone: text("phone").notNull(),
+  petType: text("pet_type").notNull(),
+  status: text("status").notNull().default("new"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({ id: true, status: true, createdAt: true });
+export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
+export type Subscription = typeof subscriptions.$inferSelect;
