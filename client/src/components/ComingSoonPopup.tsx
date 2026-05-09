@@ -67,14 +67,14 @@ export default function ComingSoonPopup() {
           <div className="bg-purple-50 border border-purple-100 rounded-xl px-4 py-3 text-xs text-purple-900 leading-relaxed">
             Açılış kampanyalarından ilk siz haberdar olmak için bültenimize abone olun.
           </div>
-          <button
-            type="button"
-            onClick={close}
-            className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-700 to-pink-600 hover:from-purple-800 hover:to-pink-700 text-white font-bold text-base shadow-lg transition-all"
+          <a
+            href="/abone"
+            onClick={() => { try { localStorage.setItem(STORAGE_KEY, String(Date.now())); } catch {} }}
+            className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-700 to-pink-600 hover:from-purple-800 hover:to-pink-700 text-white font-bold text-base shadow-lg transition-all flex items-center justify-center"
             data-testid="button-popup-ok"
           >
-            Anladım
-          </button>
+            Abone Ol 100 TL Kazan
+          </a>
         </div>
       </div>
     </div>
