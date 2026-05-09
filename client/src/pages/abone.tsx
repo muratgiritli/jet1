@@ -59,17 +59,20 @@ export default function AbonePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 flex items-center justify-center px-4 py-8">
         <SEO title="Kayıt Başarılı - JETGO" description="100 TL hoşgeldin bonusunuz hesabınıza tanımlandı." />
-        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-8 text-center" data-testid="abone-success">
+        <div className="w-full max-w-md bg-white rounded-3xl shadow-xl p-7 text-center" data-testid="abone-success">
           <div className="w-20 h-20 mx-auto rounded-full bg-green-100 flex items-center justify-center mb-4">
             <CheckCircle2 className="w-12 h-12 text-green-600" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Tebrikler!</h1>
-          <p className="text-gray-600 mb-2">Kaydınız başarıyla alındı.</p>
-          <div className="bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-2xl py-4 px-4 my-5">
-            <p className="text-3xl font-extrabold">100 TL</p>
-            <p className="text-sm opacity-95">Hoşgeldin Bonusunuz</p>
-          </div>
-          <p className="text-sm text-gray-600 mb-6">Ekibimiz en kısa sürede sizi arayarak bonusunuzu hesabınıza tanımlayacaktır.</p>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">Teşekkür Ederiz!</h1>
+          <p className="text-gray-700 text-sm leading-relaxed">
+            Hesabınıza <strong className="text-purple-700">100 TL bonus</strong> eklenecektir.
+          </p>
+          <p className="text-gray-700 text-sm leading-relaxed mt-2">
+            Sitemiz <strong>19.05.2026</strong> tarihinde faaliyete geçecektir.
+          </p>
+          <p className="text-gray-700 text-sm leading-relaxed mt-2 mb-6">
+            Size SMS ile bilgi verilecektir.
+          </p>
           <Link href="/">
             <Button className="w-full h-12 text-base bg-purple-700 hover:bg-purple-800" data-testid="button-home">
               Ana Sayfaya Dön
@@ -81,31 +84,31 @@ export default function AbonePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 px-4 py-6 sm:py-10">
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 px-3 py-3 sm:py-8">
       <SEO
         title="100 TL Hoşgeldin Bonusu - JETGO Pet Shop"
         description="JETGO'ya yeni üye ol, 100 TL hoşgeldin bonusu kazan. Kedi ve köpek mamalarında geçerli."
       />
       <div className="max-w-md mx-auto">
         <Link href="/">
-          <button className="text-purple-700 text-sm flex items-center gap-1 mb-4" data-testid="link-back">
-            <ArrowLeft className="w-4 h-4" /> Ana Sayfa
+          <button className="text-purple-700 text-xs flex items-center gap-1 mb-2" data-testid="link-back">
+            <ArrowLeft className="w-3.5 h-3.5" /> Ana Sayfa
           </button>
         </Link>
 
-        <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
-          <div className="bg-gradient-to-br from-purple-700 via-purple-600 to-pink-600 text-white p-6 text-center relative overflow-hidden">
-            <Sparkles className="absolute top-3 right-3 w-6 h-6 opacity-40" />
-            <Sparkles className="absolute bottom-3 left-3 w-5 h-5 opacity-40" />
-            <div className="w-16 h-16 mx-auto rounded-full bg-white/20 backdrop-blur flex items-center justify-center mb-3">
-              <Gift className="w-9 h-9" />
+        <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+          <div className="bg-gradient-to-r from-purple-700 via-purple-600 to-pink-600 text-white px-4 py-3 flex items-center gap-3 relative overflow-hidden">
+            <Sparkles className="absolute top-1 right-2 w-4 h-4 opacity-30" />
+            <div className="w-11 h-11 rounded-full bg-white/20 backdrop-blur flex items-center justify-center shrink-0">
+              <Gift className="w-6 h-6" />
             </div>
-            <p className="text-sm opacity-95 mb-1">Yeni Üyelere Özel</p>
-            <h1 className="text-3xl font-extrabold mb-1">100 TL</h1>
-            <p className="text-base font-semibold">Hoşgeldin Bonusu</p>
+            <div className="leading-tight">
+              <p className="text-[10px] opacity-90 uppercase tracking-wide">Yeni Üyelere Özel</p>
+              <p className="text-lg font-extrabold">100 TL Hoşgeldin Bonusu</p>
+            </div>
           </div>
 
-          <form onSubmit={onSubmit} className="p-6 space-y-5">
+          <form onSubmit={onSubmit} className="p-4 sm:p-5 space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Cep Numarası
@@ -180,7 +183,7 @@ export default function AbonePage() {
             <Button
               type="submit"
               disabled={submitting}
-              className="w-full h-14 text-base font-bold bg-gradient-to-r from-purple-700 to-pink-600 hover:from-purple-800 hover:to-pink-700 shadow-lg"
+              className="w-full h-13 py-3.5 text-base font-bold bg-gradient-to-r from-purple-700 to-pink-600 hover:from-purple-800 hover:to-pink-700 shadow-lg"
               data-testid="button-submit"
             >
               {submitting ? (
@@ -189,16 +192,7 @@ export default function AbonePage() {
                 <>Kayıt Ol ve 100 TL Kazan</>
               )}
             </Button>
-
-            <p className="text-[11px] text-center text-gray-500 leading-relaxed">
-              Kaydolarak kampanya bilgilendirmelerini almayı kabul etmiş olursunuz.
-              Bonusunuz ekibimiz tarafından sizi arayarak hesabınıza tanımlanacaktır.
-            </p>
           </form>
-        </div>
-
-        <div className="mt-6 text-center text-xs text-gray-500">
-          JETGO Pet Shop &middot; jetgomarket.com
         </div>
       </div>
     </div>
