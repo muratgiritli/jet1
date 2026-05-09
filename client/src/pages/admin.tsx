@@ -1604,6 +1604,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "skttakip", label: "SKT Takip", icon: <Calendar className="w-3.5 h-3.5" /> },
             { key: "yorumlar", label: "Yorumlar", icon: <MessageSquare className="w-3.5 h-3.5" /> },
             { key: "iletisim", label: "İletişim", icon: <Mail className="w-3.5 h-3.5" /> },
+            { key: "eksik", label: "Eksik Ürünler", icon: <AlertTriangle className="w-3.5 h-3.5" /> },
             { key: "ayarlar", label: "Ayarlar", icon: <Settings className="w-3.5 h-3.5" /> },
           ].map(tab => (
             <button
@@ -1639,6 +1640,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "skttakip" && <SktTakipSection />}
         {activeSection === "yorumlar" && <ReviewManagementSection />}
         {activeSection === "iletisim" && <ContactMessagesSection />}
+        {activeSection === "eksik" && <MissingProductsSection />}
         {activeSection === "ayarlar" && <SettingsSection />}
         {activeSection === "yonetim" && <>
           {!yonetimSub && (
@@ -6420,6 +6422,100 @@ interface ContactMessageRow {
   message: string;
   isRead: boolean;
   createdAt: string;
+}
+
+function MissingProductsSection() {
+  const { toast } = useToast();
+  const [tab, setTab] = useState<"noImage" | "noPrice" | "noStock" | "inactive">("noImage");
+  const { data, isLoading } = useQuery<{
+    counts: { total: number; noImage: number; noPrice: number; noStock: number; inactive: number };
+    noImage: Array<{ id: number; name: string; isActive: boolean; price: number; stock: number }>;
+    noPrice: Array<{ id: number; name: string; isActive: boolean; price: number; stock: number }>;
+    noStock: Array<{ id: number; name: string; isActive: boolean; price: number; stock: number }>;
+    inactive: Array<{ id: number; name: string; isActive: boolean; price: number; stock: number }>;
+  }>({ queryKey: ["/api/admin/missing-products"] });
+
+  const toggleActive = useMutation({
+    mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/products/${id}`, { isActive });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/missing-products"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+      toast({ title: "Güncellendi" });
+    },
+  });
+
+  if (isLoading || !data) {
+    return <div className="flex items-center justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>;
+  }
+
+  const tabs: Array<{ key: typeof tab; label: string; count: number }> = [
+    { key: "noImage", label: "Resimsiz", count: data.counts.noImage },
+    { key: "noPrice", label: "Fiyatsız", count: data.counts.noPrice },
+    { key: "noStock", label: "Stoksuz (Aktif)", count: data.counts.noStock },
+    { key: "inactive", label: "Pasif", count: data.counts.inactive },
+  ];
+  const list = data[tab] || [];
+
+  return (
+    <div className="space-y-4" data-testid="section-missing-products">
+      <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-900">
+        Toplam <strong>{data.counts.total}</strong> ürün. Eksik veya sorunlu ürünleri burada görüp tek tek düzenleyebilir veya yayından kaldırabilirsiniz.
+      </div>
+
+      <div className="flex flex-wrap gap-1.5">
+        {tabs.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${tab === t.key ? "text-white" : "bg-muted/60 text-muted-foreground hover:bg-muted"}`}
+            style={tab === t.key ? { backgroundColor: "#6B3480" } : {}}
+            data-testid={`btn-missing-tab-${t.key}`}
+          >
+            {t.label} ({t.count})
+          </button>
+        ))}
+      </div>
+
+      {list.length === 0 ? (
+        <div className="text-center py-8 text-muted-foreground text-sm" data-testid="text-missing-empty">Bu kategoride ürün yok.</div>
+      ) : (
+        <div className="space-y-2">
+          {list.map(p => (
+            <div key={p.id} className="flex items-center gap-3 p-3 bg-card border rounded-lg" data-testid={`row-missing-${p.id}`}>
+              <div className="flex-1 min-w-0">
+                <div className="text-sm font-medium truncate" data-testid={`text-missing-name-${p.id}`}>{p.name}</div>
+                <div className="text-xs text-muted-foreground">
+                  ID: {p.id} · {p.price > 0 ? `${p.price} TL` : "fiyat yok"} · stok: {p.stock} · {p.isActive ? "aktif" : "pasif"}
+                </div>
+              </div>
+              <a
+                href={`/urun/${p.id}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs px-2.5 py-1.5 rounded-md border hover:bg-muted"
+                data-testid={`link-missing-view-${p.id}`}
+              >
+                Gör
+              </a>
+              <button
+                onClick={() => toggleActive.mutate({ id: p.id, isActive: !p.isActive })}
+                disabled={toggleActive.isPending}
+                className={`text-xs px-2.5 py-1.5 rounded-md font-medium ${p.isActive ? "bg-red-100 text-red-700 hover:bg-red-200" : "bg-green-100 text-green-700 hover:bg-green-200"}`}
+                data-testid={`btn-missing-toggle-${p.id}`}
+              >
+                {p.isActive ? "Pasifleştir" : "Aktifleştir"}
+              </button>
+            </div>
+          ))}
+          {list.length >= 200 && (
+            <div className="text-xs text-center text-muted-foreground py-2">İlk 200 kayıt gösteriliyor.</div>
+          )}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ContactMessagesSection() {

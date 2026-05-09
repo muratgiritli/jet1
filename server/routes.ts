@@ -1228,6 +1228,27 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
+  app.get("/api/admin/missing-products", requireAdmin, async (_req, res) => {
+    const all = await storage.getAllProducts();
+    const noImage = all.filter(p => !p.img || p.img === "");
+    const noPrice = all.filter(p => !p.price || p.price <= 0);
+    const noStock = all.filter(p => p.isActive && (p.stock ?? 0) <= 0);
+    const inactive = all.filter(p => !p.isActive);
+    res.json({
+      counts: {
+        total: all.length,
+        noImage: noImage.length,
+        noPrice: noPrice.length,
+        noStock: noStock.length,
+        inactive: inactive.length,
+      },
+      noImage: noImage.slice(0, 200).map(p => ({ id: p.id, name: p.name, isActive: p.isActive, price: p.price, stock: p.stock })),
+      noPrice: noPrice.slice(0, 200).map(p => ({ id: p.id, name: p.name, isActive: p.isActive, price: p.price, stock: p.stock })),
+      noStock: noStock.slice(0, 200).map(p => ({ id: p.id, name: p.name, isActive: p.isActive, price: p.price, stock: p.stock })),
+      inactive: inactive.slice(0, 200).map(p => ({ id: p.id, name: p.name, isActive: p.isActive, price: p.price, stock: p.stock })),
+    });
+  });
+
   app.get("/api/products/search", async (req, res) => {
     const query = (req.query.q as string || "").trim();
     if (!query || query.length < 2) return res.json([]);
