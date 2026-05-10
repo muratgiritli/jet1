@@ -790,6 +790,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [individualStocks, setIndividualStocks] = useState<Record<number, string>>({});
   const [ordersExpanded, setOrdersExpanded] = useState(false);
   const [campaignExpanded, setCampaignExpanded] = useState(false);
+  const [campaignAddPrice, setCampaignAddPrice] = useState("");
   const [campaignAddType, setCampaignAddType] = useState<"main" | "extra">("main");
   const [campaignProductId, setCampaignProductId] = useState("");
   const [campaignSortOrder, setCampaignSortOrder] = useState("1");
@@ -1396,7 +1397,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   });
 
   const addCampaignItemMutation = useMutation({
-    mutationFn: async (data: { productId: number; itemType: string; sortOrder: number; parentProductId?: number | null }) => {
+    mutationFn: async (data: { productId: number; itemType: string; sortOrder: number; parentProductId?: number | null; campaignPrice?: string | null }) => {
       await apiRequest("POST", "/api/admin/campaign-items", data);
     },
     onSuccess: () => {
@@ -1406,6 +1407,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       setCampaignSortOrder("1");
       setCampaignAddDialogOpen(false);
       setCampaignAddProductId(null);
+      setCampaignAddPrice("");
+      setCampaignAddType("main");
+      setCampaignParentProductId(null);
     },
   });
 
@@ -3817,7 +3821,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
         {campaignAddDialogOpen && campaignAddProductId && (
           <Dialog open={true} onOpenChange={(open) => {
-            if (!open) { setCampaignAddDialogOpen(false); setCampaignAddProductId(null); setCampaignAddType("main"); setCampaignSortOrder("1"); setCampaignParentProductId(null); }
+            if (!open) { setCampaignAddDialogOpen(false); setCampaignAddProductId(null); setCampaignAddType("main"); setCampaignSortOrder("1"); setCampaignParentProductId(null); setCampaignAddPrice(""); }
           }}>
             <DialogContent>
               <DialogHeader>
@@ -3882,16 +3886,40 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         </Select>
                       </div>
                     )}
+                    <div>
+                      <Label className="text-sm font-medium mb-1.5 block">
+                        Kampanya Fiyatı (TL)
+                      </Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        placeholder={`Normal: ${p.price} TL — kampanyada gösterilecek özel fiyat`}
+                        value={campaignAddPrice}
+                        onChange={(e) => setCampaignAddPrice(e.target.value)}
+                        data-testid="input-campaign-add-price"
+                      />
+                      {campaignAddPrice && Number(campaignAddPrice) > 0 && Number(campaignAddPrice) < Number(p.price) && (
+                        <p className="text-[11px] text-green-700 mt-1 font-semibold">
+                          İndirim: %{Math.round((1 - Number(campaignAddPrice) / Number(p.price)) * 100)} — Normal: {Number(p.price).toLocaleString("tr-TR")} TL → Kampanya: {Number(campaignAddPrice).toLocaleString("tr-TR")} TL
+                        </p>
+                      )}
+                      <p className="text-[11px] text-muted-foreground mt-1">
+                        Boş bırakılırsa ürünün normal fiyatı kullanılır (kampanya indirimi olmaz). Sonradan ürünü düzenleyerek de değiştirebilirsiniz.
+                      </p>
+                    </div>
                     <Button
                       className="w-full"
                       style={{ backgroundColor: "#6B3480" }}
                       disabled={addCampaignItemMutation.isPending || (campaignAddType === "extra" && !campaignParentProductId)}
                       onClick={() => {
+                        const cp = campaignAddPrice.trim();
                         addCampaignItemMutation.mutate({
                           productId: p.id,
                           itemType: campaignAddType,
                           sortOrder: parseInt(campaignSortOrder) || 1,
                           parentProductId: campaignAddType === "extra" ? campaignParentProductId : null,
+                          campaignPrice: cp && !isNaN(parseFloat(cp)) && parseFloat(cp) > 0 ? cp : null,
                         });
                       }}
                       data-testid="btn-confirm-campaign-add"
