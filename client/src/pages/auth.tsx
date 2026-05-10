@@ -18,11 +18,7 @@ export default function AuthPage() {
   const [phone, setPhone] = useState("");
   const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
   const [name, setName] = useState("");
-  const [cadde, setCadde] = useState("");
-  const [binaNo, setBinaNo] = useState("");
-  const [apartmanAdi, setApartmanAdi] = useState("");
-  const [kat, setKat] = useState("");
-  const [daireNo, setDaireNo] = useState("");
+  const [adresDetay, setAdresDetay] = useState("");
   const [mahalle, setMahalle] = useState("");
   const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
@@ -196,21 +192,15 @@ export default function AuthPage() {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     const errors: Record<string, string> = {};
-    if (!name.trim()) errors.name = "Ad soyad girin";
+    if (!name.trim()) errors.name = "Ad Soyad zorunludur";
+    if (!mahalle) errors.mahalle = "Mahalle seçimi zorunludur";
+    if (!adresDetay.trim() || adresDetay.trim().length < 10) errors.adres = "Adres bilgisi zorunludur (cadde, sokak, bina vb.)";
     if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
     setFormErrors({});
     setLoading(true);
     const normalized = phone.replace(/\D/g, "");
     const code = otpCode.join("");
-    const addressParts = [
-      mahalle,
-      cadde.trim(),
-      binaNo.trim() ? `No: ${binaNo.trim()}` : "",
-      apartmanAdi.trim(),
-      kat.trim() ? `Kat: ${kat.trim()}` : "",
-      daireNo.trim() ? `Daire: ${daireNo.trim()}` : "",
-    ].filter(Boolean).join(", ");
-    const fullAddress = addressParts;
+    const fullAddress = [mahalle, adresDetay.trim()].filter(Boolean).join(", ");
     try {
       await loginWithOtp(normalized, code, name.trim(), fullAddress || undefined);
       if (mahalle) localStorage.setItem("jet55_mahalle", mahalle);
@@ -380,13 +370,13 @@ export default function AuthPage() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-sm font-medium flex items-center gap-1.5">
+                  <label className="text-sm font-bold flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
-                    Mahalle
+                    Mahalle*
                   </label>
-                  <Select value={mahalle} onValueChange={setMahalle}>
-                    <SelectTrigger data-testid="select-auth-mahalle" className={`h-9 text-sm ${!mahalle ? "text-muted-foreground" : ""}`}>
-                      <SelectValue placeholder="Mahallenizi seçiniz" />
+                  <Select value={mahalle} onValueChange={(v) => { setMahalle(v); setFormErrors((p) => ({ ...p, mahalle: "" })); }}>
+                    <SelectTrigger data-testid="select-auth-mahalle" className={`h-10 text-sm ${!mahalle ? "text-muted-foreground" : ""} ${formErrors.mahalle ? "border-red-400" : ""}`}>
+                      <SelectValue placeholder="Seçiniz" />
                     </SelectTrigger>
                     <SelectContent>
                       {TESLIMAT_MAHALLELERI.map((m) => (
@@ -394,61 +384,26 @@ export default function AuthPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {formErrors.mahalle && <p className="text-[11px] text-red-500 mt-0.5">{formErrors.mahalle}</p>}
                 </div>
 
-                <div className="space-y-1.5">
-                  <label className="text-sm font-medium flex items-center gap-1.5">
+                <div className="space-y-1">
+                  <label className="text-sm font-bold flex items-center gap-1.5">
                     <Home className="w-4 h-4 text-muted-foreground" />
-                    Cadde / Sokak
+                    Adres*
                   </label>
-                  <Input
-                    value={cadde}
-                    onChange={(e) => setCadde(e.target.value)}
-                    placeholder="Cadde veya sokak adı"
-                    data-testid="input-auth-cadde"
+                  <p className="text-[11px] text-muted-foreground leading-snug">
+                    Kargonuzun size sorunsuz bir şekilde ulaşabilmesi için mahalle, cadde, sokak, bina gibi detay bilgileri eksiksiz girdiğinizden emin olun.
+                  </p>
+                  <textarea
+                    value={adresDetay}
+                    onChange={(e) => { setAdresDetay(e.target.value); setFormErrors((p) => ({ ...p, adres: "" })); }}
+                    placeholder="Cadde, Mahalle, Sokak ve diğer bilgileri giriniz."
+                    rows={4}
+                    className={`w-full px-3 py-2 rounded-md border text-sm outline-none resize-none ${formErrors.adres ? "border-red-400" : "border-input"} bg-background`}
+                    data-testid="input-auth-adres"
                   />
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">Bina No</label>
-                    <Input
-                      value={binaNo}
-                      onChange={(e) => setBinaNo(e.target.value)}
-                      placeholder="Bina no"
-                      data-testid="input-auth-bina-no"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">Apartman Adı</label>
-                    <Input
-                      value={apartmanAdi}
-                      onChange={(e) => setApartmanAdi(e.target.value)}
-                      placeholder="Apartman adı"
-                      data-testid="input-auth-apartman"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">Kat</label>
-                    <Input
-                      value={kat}
-                      onChange={(e) => setKat(e.target.value)}
-                      placeholder="Kat"
-                      data-testid="input-auth-kat"
-                    />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium text-muted-foreground">Daire No</label>
-                    <Input
-                      value={daireNo}
-                      onChange={(e) => setDaireNo(e.target.value)}
-                      placeholder="Daire no"
-                      data-testid="input-auth-daire"
-                    />
-                  </div>
+                  {formErrors.adres && <p className="text-[11px] text-red-500 mt-0.5">{formErrors.adres}</p>}
                 </div>
 
                 <div className="space-y-1.5 lg:hidden">

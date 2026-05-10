@@ -18,13 +18,8 @@ export default function SignupBonusBanner() {
   const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
   const [name, setName] = useState("");
   const [mahalle, setMahalle] = useState("");
-  const [cadde, setCadde] = useState("");
-  const [sokak, setSokak] = useState("");
-  const [kapiNo, setKapiNo] = useState("");
-  const [apartmanAdi, setApartmanAdi] = useState("");
-  const [katNo, setKatNo] = useState("");
-  const [daireNo, setDaireNo] = useState("");
-  const [asansor, setAsansor] = useState<"var" | "yok" | "">("");
+  const [adresDetay, setAdresDetay] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<{ name?: string; mahalle?: string; adres?: string }>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [countdown, setCountdown] = useState(0);
@@ -173,19 +168,15 @@ export default function SignupBonusBanner() {
   };
 
   const handleRegister = async () => {
-    if (!name.trim()) { setError("Adı soyadı girin"); return; }
+    const errs: { name?: string; mahalle?: string; adres?: string } = {};
+    if (!name.trim()) errs.name = "Ad Soyad zorunludur";
+    if (!mahalle) errs.mahalle = "Mahalle seçimi zorunludur";
+    if (!adresDetay.trim() || adresDetay.trim().length < 10) errs.adres = "Adres bilgisi zorunludur (cadde, sokak, bina vb.)";
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) { setError(""); return; }
     setError("");
     setLoading(true);
-    const addressParts = [
-      mahalle,
-      cadde.trim() ? `Cadde: ${cadde.trim()}` : "",
-      sokak.trim() ? `Sokak: ${sokak.trim()}` : "",
-      kapiNo.trim() ? `Kapı No: ${kapiNo.trim()}` : "",
-      apartmanAdi.trim() ? `Apartman: ${apartmanAdi.trim()}` : "",
-      katNo.trim() ? `Kat: ${katNo.trim()}` : "",
-      daireNo.trim() ? `Daire: ${daireNo.trim()}` : "",
-      asansor ? `Asansör: ${asansor === "var" ? "Var" : "Yok"}` : "",
-    ].filter(Boolean).join(", ");
+    const addressParts = [mahalle, adresDetay.trim()].filter(Boolean).join(", ");
     try {
       await apiRequest("PATCH", "/api/customer/profile", {
         name: name.trim(),
@@ -392,99 +383,55 @@ export default function SignupBonusBanner() {
             <Check className="w-4 h-4" /> Numara doğrulandı! Bilgilerini tamamla
           </p>
           <div className="space-y-2">
-            <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Adı Soyadı *"
-                className="w-full pl-10 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                autoFocus
-                data-testid="input-bonus-name"
-              />
+            <div>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) => { setName(e.target.value); setFieldErrors((p) => ({ ...p, name: undefined })); }}
+                  placeholder="Adı Soyadı *"
+                  className={`w-full pl-10 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none ${fieldErrors.name ? "ring-2 ring-red-400" : ""}`}
+                  autoFocus
+                  data-testid="input-bonus-name"
+                />
+              </div>
+              {fieldErrors.name && <p className="text-yellow-200 text-xs mt-1">{fieldErrors.name}</p>}
             </div>
 
-            <div className="relative">
-              <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <select
-                value={mahalle}
-                onChange={(e) => setMahalle(e.target.value)}
-                className="w-full pl-10 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none appearance-none bg-white"
-                data-testid="select-bonus-mahalle"
-              >
-                <option value="">Mahalle Seçin</option>
-                {TESLIMAT_MAHALLELERI.map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
+            <div>
+              <label className="block text-sm font-bold mb-1">Mahalle*</label>
+              <div className="relative">
+                <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <select
+                  value={mahalle}
+                  onChange={(e) => { setMahalle(e.target.value); setFieldErrors((p) => ({ ...p, mahalle: undefined })); }}
+                  className={`w-full pl-10 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none appearance-none bg-white ${fieldErrors.mahalle ? "ring-2 ring-red-400" : ""}`}
+                  data-testid="select-bonus-mahalle"
+                >
+                  <option value="">Seçiniz</option>
+                  {TESLIMAT_MAHALLELERI.map((m) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+              </div>
+              {fieldErrors.mahalle && <p className="text-yellow-200 text-xs mt-1">{fieldErrors.mahalle}</p>}
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                value={cadde}
-                onChange={(e) => setCadde(e.target.value)}
-                placeholder="Cadde"
-                className="w-full px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                data-testid="input-bonus-cadde"
+            <div>
+              <label className="block text-sm font-bold">Adres*</label>
+              <p className="text-[11px] text-white/85 leading-snug mb-1.5">
+                Kargonuzun size sorunsuz bir şekilde ulaşabilmesi için mahalle, cadde, sokak, bina gibi detay bilgileri eksiksiz girdiğinizden emin olun.
+              </p>
+              <textarea
+                value={adresDetay}
+                onChange={(e) => { setAdresDetay(e.target.value); setFieldErrors((p) => ({ ...p, adres: undefined })); }}
+                placeholder="Cadde, Mahalle, Sokak ve diğer bilgileri giriniz."
+                rows={4}
+                className={`w-full px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none resize-none ${fieldErrors.adres ? "ring-2 ring-red-400" : ""}`}
+                data-testid="input-bonus-adres"
               />
-              <input
-                type="text"
-                value={sokak}
-                onChange={(e) => setSokak(e.target.value)}
-                placeholder="Sokak"
-                className="w-full px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                data-testid="input-bonus-sokak"
-              />
-            </div>
-
-            <div className="grid grid-cols-2 gap-2">
-              <input
-                type="text"
-                value={kapiNo}
-                onChange={(e) => setKapiNo(e.target.value)}
-                placeholder="Kapı No"
-                className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                data-testid="input-bonus-kapi"
-              />
-              <input
-                type="text"
-                value={apartmanAdi}
-                onChange={(e) => setApartmanAdi(e.target.value)}
-                placeholder="Apartman Adı"
-                className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                data-testid="input-bonus-apartman"
-              />
-            </div>
-
-            <div className="grid grid-cols-3 gap-2">
-              <input
-                type="text"
-                value={katNo}
-                onChange={(e) => setKatNo(e.target.value)}
-                placeholder="Kat No"
-                className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                data-testid="input-bonus-kat"
-              />
-              <input
-                type="text"
-                value={daireNo}
-                onChange={(e) => setDaireNo(e.target.value)}
-                placeholder="Daire No"
-                className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                data-testid="input-bonus-daire"
-              />
-              <select
-                value={asansor}
-                onChange={(e) => setAsansor(e.target.value as "var" | "yok" | "")}
-                className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none appearance-none bg-white"
-                data-testid="select-bonus-asansor"
-              >
-                <option value="">Asansör</option>
-                <option value="var">Var</option>
-                <option value="yok">Yok</option>
-              </select>
+              {fieldErrors.adres && <p className="text-yellow-200 text-xs mt-1">{fieldErrors.adres}</p>}
             </div>
 
             <button

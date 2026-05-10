@@ -275,32 +275,19 @@ export default function Checkout() {
   const handleAuthVerifyOtp = () => doAuthVerify(authOtpCode.join(""));
 
   const [authMahalle, setAuthMahalle] = useState("");
-  const [authCadde, setAuthCadde] = useState("");
-  const [authSokak, setAuthSokak] = useState("");
-  const [authKapiNo, setAuthKapiNo] = useState("");
-  const [authApartmanAdi, setAuthApartmanAdi] = useState("");
-  const [authKatNo, setAuthKatNo] = useState("");
-  const [authDaireNo, setAuthDaireNo] = useState("");
-  const [authAsansor, setAuthAsansor] = useState<"var" | "yok" | "">("");
+  const [authAdresDetay, setAuthAdresDetay] = useState("");
 
   const handleAuthRegister = async () => {
     const errors: Record<string, string> = {};
-    if (!authName.trim()) errors.name = "Ad soyad girin";
+    if (!authName.trim()) errors.name = "Ad Soyad zorunludur";
+    if (!authMahalle) errors.mahalle = "Mahalle seçimi zorunludur";
+    if (!authAdresDetay.trim() || authAdresDetay.trim().length < 10) errors.adres = "Adres bilgisi zorunludur (cadde, sokak, bina vb.)";
     if (Object.keys(errors).length > 0) { setAuthErrors(errors); return; }
     setAuthErrors({});
     setAuthLoading(true);
     const normalized = authPhone.replace(/\D/g, "");
     const code = authOtpCode.join("");
-    const addressParts = [
-      authMahalle,
-      authCadde.trim() ? `Cadde: ${authCadde.trim()}` : "",
-      authSokak.trim() ? `Sokak: ${authSokak.trim()}` : "",
-      authKapiNo.trim() ? `Kapı No: ${authKapiNo.trim()}` : "",
-      authApartmanAdi.trim() ? `Apartman: ${authApartmanAdi.trim()}` : "",
-      authKatNo.trim() ? `Kat: ${authKatNo.trim()}` : "",
-      authDaireNo.trim() ? `Daire: ${authDaireNo.trim()}` : "",
-      authAsansor ? `Asansör: ${authAsansor === "var" ? "Var" : "Yok"}` : "",
-    ].filter(Boolean).join(", ");
+    const addressParts = [authMahalle, authAdresDetay.trim()].filter(Boolean).join(", ");
     try {
       await loginWithOtp(normalized, code, authName.trim(), addressParts || undefined);
       if (authMahalle) localStorage.setItem("jet55_mahalle", authMahalle);
@@ -917,86 +904,39 @@ export default function Checkout() {
                       </div>
                       {authErrors.name && <p className="text-yellow-200 text-xs">{authErrors.name}</p>}
 
-                      <div className="relative">
-                        <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <select
-                          value={authMahalle}
-                          onChange={(e) => setAuthMahalle(e.target.value)}
-                          className="w-full pl-10 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none appearance-none bg-white"
-                          data-testid="select-auth-mahalle"
-                        >
-                          <option value="">Mahalle Seçin</option>
-                          {TESLIMAT_MAHALLELERI.map((m) => (
-                            <option key={m} value={m}>{m}</option>
-                          ))}
-                        </select>
+                      <div>
+                        <label className="block text-sm font-bold mb-1">Mahalle*</label>
+                        <div className="relative">
+                          <Home className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <select
+                            value={authMahalle}
+                            onChange={(e) => { setAuthMahalle(e.target.value); setAuthErrors((p) => ({ ...p, mahalle: "" })); }}
+                            className={`w-full pl-10 pr-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none appearance-none bg-white ${authErrors.mahalle ? "ring-2 ring-red-400" : ""}`}
+                            data-testid="select-auth-mahalle"
+                          >
+                            <option value="">Seçiniz</option>
+                            {TESLIMAT_MAHALLELERI.map((m) => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                          </select>
+                        </div>
+                        {authErrors.mahalle && <p className="text-yellow-200 text-xs mt-1">{authErrors.mahalle}</p>}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          value={authCadde}
-                          onChange={(e) => setAuthCadde(e.target.value)}
-                          placeholder="Cadde"
-                          className="w-full px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                          data-testid="input-auth-cadde"
+                      <div>
+                        <label className="block text-sm font-bold">Adres*</label>
+                        <p className="text-[11px] text-white/85 leading-snug mb-1.5">
+                          Kargonuzun size sorunsuz bir şekilde ulaşabilmesi için mahalle, cadde, sokak, bina gibi detay bilgileri eksiksiz girdiğinizden emin olun.
+                        </p>
+                        <textarea
+                          value={authAdresDetay}
+                          onChange={(e) => { setAuthAdresDetay(e.target.value); setAuthErrors((p) => ({ ...p, adres: "" })); }}
+                          placeholder="Cadde, Mahalle, Sokak ve diğer bilgileri giriniz."
+                          rows={4}
+                          className={`w-full px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none resize-none ${authErrors.adres ? "ring-2 ring-red-400" : ""}`}
+                          data-testid="input-auth-adres"
                         />
-                        <input
-                          type="text"
-                          value={authSokak}
-                          onChange={(e) => setAuthSokak(e.target.value)}
-                          placeholder="Sokak"
-                          className="w-full px-3 py-2.5 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                          data-testid="input-auth-sokak"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <input
-                          type="text"
-                          value={authKapiNo}
-                          onChange={(e) => setAuthKapiNo(e.target.value)}
-                          placeholder="Kapı No"
-                          className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                          data-testid="input-auth-kapi"
-                        />
-                        <input
-                          type="text"
-                          value={authApartmanAdi}
-                          onChange={(e) => setAuthApartmanAdi(e.target.value)}
-                          placeholder="Apartman Adı"
-                          className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                          data-testid="input-auth-apartman"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-3 gap-2">
-                        <input
-                          type="text"
-                          value={authKatNo}
-                          onChange={(e) => setAuthKatNo(e.target.value)}
-                          placeholder="Kat No"
-                          className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                          data-testid="input-auth-kat"
-                        />
-                        <input
-                          type="text"
-                          value={authDaireNo}
-                          onChange={(e) => setAuthDaireNo(e.target.value)}
-                          placeholder="Daire No"
-                          className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none"
-                          data-testid="input-auth-daire"
-                        />
-                        <select
-                          value={authAsansor}
-                          onChange={(e) => setAuthAsansor(e.target.value as "var" | "yok" | "")}
-                          className="w-full px-3 py-2 rounded-xl text-gray-900 text-sm font-medium outline-none appearance-none bg-white"
-                          data-testid="select-auth-asansor"
-                        >
-                          <option value="">Asansör</option>
-                          <option value="var">Var</option>
-                          <option value="yok">Yok</option>
-                        </select>
+                        {authErrors.adres && <p className="text-yellow-200 text-xs mt-1">{authErrors.adres}</p>}
                       </div>
 
                       {authErrors.general && <p className="text-yellow-200 text-xs text-center">{authErrors.general}</p>}
