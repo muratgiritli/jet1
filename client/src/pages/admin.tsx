@@ -1206,6 +1206,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [csNewBrand, setCsNewBrand] = useState("all");
   const [quickCrossSellProductId, setQuickCrossSellProductId] = useState<number | null>(null);
   const [quickCrossSellSearch, setQuickCrossSellSearch] = useState("");
+  const [qcsAnimal, setQcsAnimal] = useState("all");
+  const [qcsSub, setQcsSub] = useState("all");
+  const [qcsBrand, setQcsBrand] = useState("all");
 
   const [breedStatsDialogOpen, setBreedStatsDialogOpen] = useState(false);
   const [breedStatsProductId, setBreedStatsProductId] = useState<number | null>(null);
@@ -3911,7 +3914,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
         {quickCrossSellProductId && (
           <Dialog open={true} onOpenChange={(open) => {
-            if (!open) { setQuickCrossSellProductId(null); setQuickCrossSellSearch(""); }
+            if (!open) { setQuickCrossSellProductId(null); setQuickCrossSellSearch(""); setQcsAnimal("all"); setQcsSub("all"); setQcsBrand("all"); }
           }}>
             <DialogContent className="max-w-lg max-h-[85vh] flex flex-col">
               <DialogHeader>
@@ -3923,13 +3926,27 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               {(() => {
                 const mainProduct = allProducts.find(p => p.id === quickCrossSellProductId);
                 const existingIds = currentProductCrossSellItems.map(i => i.productId);
+                const allowedBrandIds = new Set(
+                  categories
+                    .filter(c =>
+                      (qcsAnimal === "all" || c.animal === qcsAnimal) &&
+                      (qcsSub === "all" || c.subcategory === qcsSub) &&
+                      (qcsBrand === "all" || String(c.id) === qcsBrand)
+                    )
+                    .map(c => c.id)
+                );
                 const availableProducts = allProducts.filter(p =>
                   p.id !== quickCrossSellProductId &&
                   p.isActive &&
                   !existingIds.includes(p.id) &&
+                  allowedBrandIds.has(p.brandCategoryId) &&
                   (quickCrossSellSearch === "" ||
                     p.name.toLowerCase().includes(quickCrossSellSearch.toLowerCase()))
                 );
+                const qcsSubsList = qcsAnimal !== "all" ? (subcategoriesByAnimal[qcsAnimal] || []) : [];
+                const qcsBrandsList = (qcsAnimal !== "all" && qcsSub !== "all")
+                  ? categories.filter(c => c.animal === qcsAnimal && c.subcategory === qcsSub)
+                  : [];
                 return (
                   <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
                     {mainProduct && (
@@ -3979,6 +3996,38 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       </div>
                     )}
 
+                    <div className="grid grid-cols-3 gap-2">
+                      <Select value={qcsAnimal} onValueChange={(v) => { setQcsAnimal(v); setQcsSub("all"); setQcsBrand("all"); }}>
+                        <SelectTrigger className="h-9 text-xs" data-testid="select-qcs-animal"><SelectValue placeholder="Hayvan" /></SelectTrigger>
+                        <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-[200px] overflow-y-auto">
+                          <SelectItem value="all">Tüm Hayvanlar</SelectItem>
+                          <SelectItem value="kedi">Kedi</SelectItem>
+                          <SelectItem value="kopek">Köpek</SelectItem>
+                          <SelectItem value="kus">Kuş</SelectItem>
+                          <SelectItem value="balik">Balık</SelectItem>
+                          <SelectItem value="kemirgen">Kemirgen</SelectItem>
+                          <SelectItem value="surungen">Sürüngen</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select value={qcsSub} onValueChange={(v) => { setQcsSub(v); setQcsBrand("all"); }} disabled={qcsAnimal === "all"}>
+                        <SelectTrigger className="h-9 text-xs" data-testid="select-qcs-sub"><SelectValue placeholder="Alt Kategori" /></SelectTrigger>
+                        <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-[200px] overflow-y-auto">
+                          <SelectItem value="all">Tümü</SelectItem>
+                          {qcsSubsList.map((sc) => (
+                            <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select value={qcsBrand} onValueChange={setQcsBrand} disabled={qcsSub === "all" || qcsBrandsList.length === 0}>
+                        <SelectTrigger className="h-9 text-xs" data-testid="select-qcs-brand"><SelectValue placeholder="Marka" /></SelectTrigger>
+                        <SelectContent position="popper" side="bottom" avoidCollisions={false} className="max-h-[200px] overflow-y-auto">
+                          <SelectItem value="all">Tümü</SelectItem>
+                          {qcsBrandsList.map((c) => (
+                            <SelectItem key={c.id} value={String(c.id)}>{c.brandName}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                     <Input
                       placeholder="Eklenecek ürünü ara..."
                       value={quickCrossSellSearch}
