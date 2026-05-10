@@ -368,7 +368,7 @@ export default function Checkout() {
   const [contactlessDelivery, setContactlessDelivery] = useState(false);
   const [doNotRing, setDoNotRing] = useState(false);
   const [installmentMonths, setInstallmentMonths] = useState<number>(1);
-  const { data: installmentRates = [] } = useQuery<{ id: number; months: number; rate: number; isActive: boolean; sortOrder: number }[]>({
+  const { data: installmentRates = [] } = useQuery<{ id: number; months: number; rate: number; isActive: boolean; sortOrder: number; noInterest?: boolean }[]>({
     queryKey: ["/api/installment-rates"],
   });
   const SLOT_TIMES = ["11:00-12:30", "12:30-14:00", "14:00-15:30", "15:30-17:00", "17:00-18:15", "18:15-19:30"];
@@ -607,14 +607,15 @@ export default function Checkout() {
         deliverySlot: (selectedProducts.some(({ product }) => isPreorderProduct(String(product.id))) || hasCampaignItems) ? undefined : (deliverySlot || undefined),
         campaignProductIds: hasCampaignItems ? Array.from(campaignCartIds) : undefined,
         ...((paymentId === "pos" || paymentId === "online") && installmentMonths > 1 ? (() => {
-          const r = installmentRates.find(x => x.months === installmentMonths);
+          const rRaw = installmentRates.find(x => x.months === installmentMonths);
+          const r = rRaw ? { ...rRaw, rate: rRaw.noInterest ? 0 : rRaw.rate } : rRaw;
           if (!r) return {};
-          const total = displayTotal * (1 + (r.rate || 0) / 100);
+          const grandTotal = displayTotal * (1 + (r.rate || 0) / 100);
           return {
             installmentMonths: r.months,
             installmentRate: r.rate,
-            installmentMonthly: Math.round((total / r.months) * 100) / 100,
-            installmentTotal: Math.round(total * 100) / 100,
+            installmentMonthly: Math.round((grandTotal / r.months) * 100) / 100,
+            installmentTotal: Math.round(grandTotal * 100) / 100,
           };
         })() : {}),
       };
@@ -1489,12 +1490,15 @@ export default function Checkout() {
 
                   {!hasCampaignItems && posEnabled && (
                     <div className="mt-4 border-t pt-4">
-                      <h3 className="text-sm font-bold mb-3 flex items-center gap-2">
+                      <h3 className="text-sm font-bold mb-3 flex items-center gap-2 flex-wrap">
                         <CreditCard className="w-4 h-4 text-blue-600" />
-                        Kapıda Kredi Kartı ile Ödeme Yap
+                        <span>Kapıda Kredi Kartı ile Ödeme Yap</span>
+                        {installmentRates.filter(r => r.isActive).length > 0 && installmentRates.filter(r => r.isActive).every(r => (r as any).noInterest) && (
+                          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-300 px-2 py-0.5 rounded">VADE FARKI YOK</span>
+                        )}
                       </h3>
                       <div className="space-y-2">
-                        {[{ months: 1, rate: 0, isTekCekim: true, noInterest: false }, ...installmentRates.filter(r => r.isActive).sort((a, b) => a.sortOrder - b.sortOrder || a.months - b.months).map(r => ({ months: r.months, rate: r.rate, isTekCekim: false, noInterest: (r as any).noInterest || false }))].map((opt) => {
+                        {[{ months: 1, rate: 0, isTekCekim: true, noInterest: false }, ...installmentRates.filter(r => r.isActive).sort((a, b) => a.sortOrder - b.sortOrder || a.months - b.months).map(r => ({ months: r.months, rate: (r as any).noInterest ? 0 : r.rate, isTekCekim: false, noInterest: (r as any).noInterest || false }))].map((opt) => {
                           const total = subtotal * (1 + (opt.rate || 0) / 100);
                           const monthly = total / opt.months;
                           const active = paymentId === "pos" && installmentMonths === opt.months;
@@ -1536,8 +1540,9 @@ export default function Checkout() {
                         })}
                       </div>
                       {paymentId === "pos" && installmentMonths > 1 && (() => {
-                        const r = installmentRates.find(x => x.months === installmentMonths);
-                        if (!r) return null;
+                        const rRaw = installmentRates.find(x => x.months === installmentMonths);
+                        if (!rRaw) return null;
+                        const r = { ...rRaw, rate: (rRaw as any).noInterest ? 0 : rRaw.rate };
                         const total = subtotal * (1 + (r.rate || 0) / 100);
                         return (
                           <p className="text-[11px] text-muted-foreground mt-2 text-center">

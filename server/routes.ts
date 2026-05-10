@@ -3766,6 +3766,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       rate: z.number().min(0).max(100),
       isActive: z.boolean().optional(),
       sortOrder: z.number().optional(),
+      noInterest: z.boolean().optional(),
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
@@ -3780,6 +3781,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       rate: z.number().min(0).max(100).optional(),
       isActive: z.boolean().optional(),
       sortOrder: z.number().optional(),
+      noInterest: z.boolean().optional(),
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
