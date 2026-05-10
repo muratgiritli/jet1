@@ -712,16 +712,6 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
-              {isCampaignMode && campaignWarning && !hasExtraInCart && (
-                <div
-                  className="mt-3 px-4 py-3 rounded-lg text-center text-sm font-bold animate-pulse"
-                  style={{ backgroundColor: "#ffebee", border: "2px solid #ef5350", color: "#c62828" }}
-                  data-testid="text-campaign-warning"
-                >
-                  ⚠️ Kampanyadan yararlanmak için aşağıdan bir ürün eklemeniz gerekmektedir!
-                </div>
-              )}
-
             </div>
           </div>
         </div>
