@@ -277,11 +277,16 @@ export default function AuthPage() {
 
             {step === "otp" && (
               <div className="space-y-4">
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-purple-50 border border-purple-100">
-                  <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0" />
-                  <span className="text-xs text-purple-700">
-                    +90 {phone} numarasına 6 haneli doğrulama kodu gönderildi
-                  </span>
+                <div className="flex items-start gap-2 p-3 rounded-lg bg-purple-50 border border-purple-100">
+                  <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+                  <div className="text-xs text-purple-700 space-y-1">
+                    <div>+90 {phone} numarasına 6 haneli doğrulama kodu gönderildi</div>
+                    <div className="font-medium" data-testid="text-otp-info">
+                      {isExistingUser
+                        ? "Bu numara kayıtlı. Kodu doğruladıktan sonra otomatik giriş yapılacaktır."
+                        : "Bu numara kayıtlı değil. Kodu doğruladıktan sonra üyelik bilgilerinizi tamamlayacaksınız."}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
