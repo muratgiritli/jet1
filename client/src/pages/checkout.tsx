@@ -178,6 +178,13 @@ export default function Checkout() {
         return;
       }
       setAuthIsExisting(data.isExisting);
+      if (data.isExisting && authMode === "register") {
+        setAuthMode("login");
+        setAuthErrors({ info: "Bu numara zaten kayıtlı. Giriş yapılıyor..." });
+      } else if (!data.isExisting && authMode === "login") {
+        setAuthMode("register");
+        setAuthErrors({ info: "Bu numara kayıtlı değil. Üyelik oluşturulacak." });
+      }
       setAuthStep("otp");
       setAuthCountdown(180);
       setAuthOtpCode(["", "", "", "", "", ""]);
@@ -251,10 +258,8 @@ export default function Checkout() {
         await loginWithOtp(normalized, code);
         setShowAuthModal(false);
         setPendingOrderAfterAuth(true);
-      } else if (authMode === "login") {
-        setAuthErrors({ otp: "Bu numara kayıtlı değil. Lütfen 'Yeni Üye Ol' sekmesinden kayıt olun." });
-        return;
       } else {
+        setAuthMode("register");
         setAuthStep("register");
       }
     } catch (err: any) {
@@ -850,6 +855,11 @@ export default function Checkout() {
                       {authPhone} numarasına gönderildi
                       {authCountdown > 0 && <span className="ml-1">({Math.floor(authCountdown / 60)}:{String(authCountdown % 60).padStart(2, "0")})</span>}
                     </p>
+                    {authErrors.info && (
+                      <p className="text-yellow-300 text-xs text-center mb-1 font-medium" data-testid="text-auth-info">
+                        {authErrors.info}
+                      </p>
+                    )}
                     <div className="flex gap-1.5 justify-center mb-2">
                       {authOtpCode.map((digit, i) => (
                         <input
