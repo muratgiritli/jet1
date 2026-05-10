@@ -3146,11 +3146,13 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       return res.status(400).json({ message: "Doğrulama kodu hatalı" });
     }
 
-    otpStore.delete(normalized);
-
     let customer = await storage.getCustomerByPhone(normalized);
     let isNewUser = false;
     let welcomeCouponCode: string | undefined;
+    if (!customer && !(name && String(name).trim())) {
+      return res.json({ verified: true, isNewUser: true, requiresRegistration: true });
+    }
+    otpStore.delete(normalized);
     if (!customer) {
       isNewUser = true;
       const dummyPass = await bcrypt.hash(Math.random().toString(36), 10);

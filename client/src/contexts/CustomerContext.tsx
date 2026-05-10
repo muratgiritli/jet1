@@ -24,7 +24,7 @@ interface CustomerContextType {
   isLoggedIn: boolean;
   login: (phone: string, password: string) => Promise<void>;
   register: (phone: string, password: string, name: string, address?: string) => Promise<void>;
-  loginWithOtp: (phone: string, code: string, name?: string, address?: string) => Promise<void>;
+  loginWithOtp: (phone: string, code: string, name?: string, address?: string) => Promise<{ requiresRegistration?: boolean; isNewUser?: boolean; id?: number } & Record<string, any>>;
   logout: () => Promise<void>;
   updateProfile: (data: { name?: string; address?: string; email?: string | null; tcNo?: string | null }) => Promise<void>;
   refetch: () => Promise<void>;
@@ -87,6 +87,9 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
   const loginWithOtp = useCallback(async (phone: string, code: string, name?: string, address?: string) => {
     const res = await apiRequest("POST", "/api/otp/verify", { phone, code, name, address });
     const data = await res.json();
+    if (data.requiresRegistration) {
+      return data;
+    }
     if (data.deviceToken) {
       try {
         const tokens = JSON.parse(localStorage.getItem("jetgo_trusted_devices") || "{}");
@@ -96,6 +99,7 @@ export function CustomerProvider({ children }: { children: ReactNode }) {
     }
     setCustomer(data);
     setTimeout(syncLocalFavorites, 500);
+    return data;
   }, [syncLocalFavorites]);
 
   const logout = useCallback(async () => {

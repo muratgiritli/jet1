@@ -157,12 +157,12 @@ export default function AuthPage() {
     setAutoVerifying(true);
     const normalized = phone.replace(/\D/g, "");
     try {
-      await loginWithOtp(normalized, code);
-      if (isExistingUser) {
+      const data = await loginWithOtp(normalized, code);
+      if (data?.requiresRegistration) {
+        setStep("register");
+      } else {
         const params = new URLSearchParams(window.location.search);
         setLocation(params.get("redirect") || "/");
-      } else {
-        setStep("register");
       }
     } catch (err: any) {
       let msg = "Doğrulama kodu hatalı";

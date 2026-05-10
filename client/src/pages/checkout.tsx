@@ -254,13 +254,13 @@ export default function Checkout() {
     setAuthLoading(true);
     const normalized = authPhone.replace(/\D/g, "");
     try {
-      if (authIsExisting) {
-        await loginWithOtp(normalized, code);
-        setShowAuthModal(false);
-        setPendingOrderAfterAuth(true);
-      } else {
+      const data = await loginWithOtp(normalized, code);
+      if (data?.requiresRegistration) {
         setAuthMode("register");
         setAuthStep("register");
+      } else {
+        setShowAuthModal(false);
+        setPendingOrderAfterAuth(true);
       }
     } catch (err: any) {
       let msg = "Doğrulama kodu hatalı";
