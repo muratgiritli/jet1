@@ -447,7 +447,7 @@ export default function ProductDetailPage() {
         />
       )}
       <main className="flex-1 max-w-2xl mx-auto px-4 w-full py-6 pb-28 md:pb-8">
-        <FreeShippingBanner className="mb-4" />
+        {!isCampaignMode && <FreeShippingBanner className="mb-4" />}
         <div>
           <div className="flex flex-col md:flex-row gap-6">
               <ImageZoom src={product.img || ""} alt={`${product.name} - Samsun JETGO Pet Shop`} className="md:w-1/2 w-full">

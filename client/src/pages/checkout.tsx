@@ -477,8 +477,7 @@ export default function Checkout() {
   const categoryHref = dominantAnimal ? `/kategori/${dominantAnimal}` : "/";
   const categoryLabel = dominantAnimal ? `${animalLabels[dominantAnimal] || dominantAnimal} Kategorisine Git` : "Markete Git";
 
-  const CAMPAIGN_SHIP_LIMIT = 4000;
-  const campaignShipping = hasCampaignItems ? (subtotal >= CAMPAIGN_SHIP_LIMIT ? 0 : CONFIG.shipFee) : stdShipping;
+  const campaignShipping = hasCampaignItems ? CONFIG.shipFee : stdShipping;
   const paymentDiscount = hasCampaignItems ? 0 : discount;
   const normalGrandTotal = subtotal - paymentDiscount + stdShipping;
   const campaignGrandTotal = hasCampaignItems ? (subtotal + campaignShipping) : normalGrandTotal;
@@ -1146,8 +1145,10 @@ export default function Checkout() {
                     >
                       <span className="font-medium">{matchedNeighborhood.name} ({matchedNeighborhood.district})</span>
                       <span>Min: <strong>{matchedNeighborhood.minOrder} TL</strong></span>
-                      <span>Kargo: <strong>{matchedNeighborhood.shippingFee} TL</strong></span>
-                      <span>Ücretsiz: <strong>{matchedNeighborhood.freeShippingLimit} TL+</strong></span>
+                      <span>Kargo: <strong>{hasCampaignItems ? CONFIG.shipFee : matchedNeighborhood.shippingFee} TL</strong></span>
+                      {!hasCampaignItems && (
+                        <span>Ücretsiz: <strong>{matchedNeighborhood.freeShippingLimit} TL+</strong></span>
+                      )}
                     </div>
                   )}
                   {isLoggedIn && paymentId === "nakit" && (
