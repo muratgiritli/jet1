@@ -5,6 +5,7 @@ import {
   PAYMENT_OPTIONS,
 } from "@/lib/data";
 import type { Product as DbProduct } from "@shared/schema";
+import { toast } from "@/hooks/use-toast";
 
 interface CartProduct {
   id: string;
@@ -209,9 +210,37 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const dbProductsRef = useRef<DbProduct[]>([]);
   useEffect(() => { dbProductsRef.current = dbProducts; }, [dbProducts]);
 
+  const basketRef = useRef<BasketItems>(basket);
+  useEffect(() => { basketRef.current = basket; }, [basket]);
+
   const updateQty = useCallback((id: string, delta: number, fromCampaign?: boolean): boolean => {
     let blocked = false;
     let actualDelta = 0;
+    if (delta > 0) {
+      const basketNow = basketRef.current;
+      const cartIdsNow = campaignCartIdsRef.current;
+      const hasCampaignInCart = Array.from(cartIdsNow).some((cid) => (basketNow[cid] || 0) > 0);
+      const hasNormalInCart = Object.keys(basketNow).some((bid) => (basketNow[bid] || 0) > 0 && !cartIdsNow.has(bid));
+      const alreadyInCart = (basketNow[id] || 0) > 0;
+      if (!alreadyInCart) {
+        if (fromCampaign && hasNormalInCart) {
+          toast({
+            title: "Sepetinizde normal ürün var",
+            description: "Kampanya ürünü eklemek için önce sepetinizdeki normal ürünleri çıkarın veya siparişi tamamlayın.",
+            variant: "destructive",
+          });
+          return true;
+        }
+        if (!fromCampaign && hasCampaignInCart) {
+          toast({
+            title: "Sepetinizde kampanya ürünü var",
+            description: "Normal ürün eklemek için önce kampanya siparişinizi tamamlayın veya kampanya ürününü sepetten çıkarın.",
+            variant: "destructive",
+          });
+          return true;
+        }
+      }
+    }
     if (fromCampaign && delta > 0) {
       setCampaignCartIds(prev => {
         const next = new Set(prev);
