@@ -393,7 +393,7 @@ export default function AuthPage() {
                     Adres*
                   </label>
                   <p className="text-[11px] text-muted-foreground leading-snug">
-                    Kargonuzun size sorunsuz bir şekilde ulaşabilmesi için mahalle, cadde, sokak, bina gibi detay bilgileri eksiksiz girdiğinizden emin olun.
+                    Siparişinizin size sorunsuz bir şekilde ulaşabilmesi için mahalle, cadde, sokak, bina gibi detay bilgileri eksiksiz girdiğinizden emin olun.
                   </p>
                   <textarea
                     value={adresDetay}

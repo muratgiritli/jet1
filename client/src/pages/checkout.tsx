@@ -925,7 +925,7 @@ export default function Checkout() {
                       <div>
                         <label className="block text-sm font-bold">Adres*</label>
                         <p className="text-[11px] text-white/85 leading-snug mb-1.5">
-                          Kargonuzun size sorunsuz bir şekilde ulaşabilmesi için mahalle, cadde, sokak, bina gibi detay bilgileri eksiksiz girdiğinizden emin olun.
+                          Siparişinizin size sorunsuz bir şekilde ulaşabilmesi için mahalle, cadde, sokak, bina gibi detay bilgileri eksiksiz girdiğinizden emin olun.
                         </p>
                         <textarea
                           value={authAdresDetay}
