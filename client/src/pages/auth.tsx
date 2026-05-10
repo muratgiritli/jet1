@@ -383,7 +383,7 @@ export default function AuthPage() {
                     <SelectTrigger data-testid="select-auth-mahalle" className={`h-10 text-sm ${!mahalle ? "text-muted-foreground" : ""} ${formErrors.mahalle ? "border-red-400" : ""}`}>
                       <SelectValue placeholder="Seçiniz" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent position="popper" side="bottom" align="start" sideOffset={4} className="max-h-[60vh] w-[var(--radix-select-trigger-width)]">
                       {TESLIMAT_MAHALLELERI.map((m) => (
                         <SelectItem key={m} value={m}>{m}</SelectItem>
                       ))}
