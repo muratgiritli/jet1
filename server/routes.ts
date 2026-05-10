@@ -1665,10 +1665,15 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       ? new Set((req.body as any).campaignProductIds.map((id: any) => parseInt(String(id))))
       : null;
 
-    const allCampaignItems = await sharedPool.query("SELECT product_id, item_type FROM campaign_items WHERE is_active = true");
+    const allCampaignItems = await sharedPool.query("SELECT product_id, item_type, campaign_price FROM campaign_items WHERE is_active = true");
     const campaignMap = new Map<number, string>();
+    const campaignPriceLookup = new Map<number, number>();
     for (const row of allCampaignItems.rows) {
       campaignMap.set(row.product_id, row.item_type);
+      if (row.campaign_price !== null && row.campaign_price !== undefined) {
+        const cp = parseFloat(String(row.campaign_price));
+        if (!isNaN(cp) && cp > 0) campaignPriceLookup.set(row.product_id, cp);
+      }
     }
 
     // SECURITY: server-side price recompute to prevent client tampering
@@ -1690,10 +1695,15 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         return res.status(400).json({ message: `Geçersiz ürün: ${item.productId}` });
       }
       const qty = Math.max(1, parseInt(String(item.quantity)) || 1);
-      item.price = p.price;
+      // Kampanya sayfasından eklenen ürünlerde kampanya fiyatını uygula; aksi halde normal fiyat
+      const isFromCampaign = clientCampaignIds !== null && clientCampaignIds.has(pid);
+      const effectivePrice = (isFromCampaign && campaignPriceLookup.has(pid))
+        ? campaignPriceLookup.get(pid)!
+        : p.price;
+      item.price = effectivePrice;
       item.name = p.name;
       item.quantity = qty;
-      serverSubtotal += p.price * qty;
+      serverSubtotal += effectivePrice * qty;
     }
     serverSubtotal = Math.round(serverSubtotal * 100) / 100;
     orderData.subtotal = serverSubtotal;
