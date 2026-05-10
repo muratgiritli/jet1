@@ -606,7 +606,7 @@ export async function registerRoutes(
 
   app.get("/api/export/xlsx", requireAdmin, async (_req, res) => {
     try {
-      const XLSX = await import("xlsx");
+      const ExcelJS = (await import("exceljs")).default;
       const SITE = "https://www.jetgomarket.com";
       const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen" };
 
@@ -620,34 +620,43 @@ export async function registerRoutes(
         ORDER BY p.id
       `);
 
-      const data = rows.map((r: any) => ({
-        "ID": r.id,
-        "Title": r.name,
-        "Description": `${r.brand_name ? r.brand_name + " - " : ""}${r.name}${r.subcategory_name ? " | " + r.subcategory_name : ""}`,
-        "Price": r.price,
-        "Old price": r.original_price || "",
-        "Currency": "TRY",
-        "URL": `${SITE}/urun/${r.id}`,
-        "Image URL": r.img ? `${SITE}${r.img}` : "",
-        "Category": `${ANIMAL_MAP[r.animal] || r.animal || ""} > ${r.subcategory_name || ""}`,
-        "Brand": r.brand_name || "",
-        "Availability": r.stock > 0 ? "in stock" : "out of stock",
-        "Stock": r.stock,
-      }));
-
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(data);
-      ws['!cols'] = [
-        { wch: 6 }, { wch: 60 }, { wch: 70 }, { wch: 12 },
-        { wch: 14 }, { wch: 6 }, { wch: 35 }, { wch: 45 },
-        { wch: 30 }, { wch: 25 }, { wch: 12 }, { wch: 6 },
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet("Ürünler");
+      ws.columns = [
+        { header: "ID", key: "id", width: 6 },
+        { header: "Title", key: "title", width: 60 },
+        { header: "Description", key: "description", width: 70 },
+        { header: "Price", key: "price", width: 12 },
+        { header: "Old price", key: "oldPrice", width: 14 },
+        { header: "Currency", key: "currency", width: 6 },
+        { header: "URL", key: "url", width: 35 },
+        { header: "Image URL", key: "image", width: 45 },
+        { header: "Category", key: "category", width: 30 },
+        { header: "Brand", key: "brand", width: 25 },
+        { header: "Availability", key: "availability", width: 12 },
+        { header: "Stock", key: "stock", width: 6 },
       ];
-      XLSX.utils.book_append_sheet(wb, ws, "Ürünler");
+      for (const r of rows as any[]) {
+        ws.addRow({
+          id: r.id,
+          title: r.name,
+          description: `${r.brand_name ? r.brand_name + " - " : ""}${r.name}${r.subcategory_name ? " | " + r.subcategory_name : ""}`,
+          price: r.price,
+          oldPrice: r.original_price || "",
+          currency: "TRY",
+          url: `${SITE}/urun/${r.id}`,
+          image: r.img ? `${SITE}${r.img}` : "",
+          category: `${ANIMAL_MAP[r.animal] || r.animal || ""} > ${r.subcategory_name || ""}`,
+          brand: r.brand_name || "",
+          availability: r.stock > 0 ? "in stock" : "out of stock",
+          stock: r.stock,
+        });
+      }
 
-      const buf = XLSX.write(wb, { type: "buffer", bookType: "xlsx" });
+      const buf = await wb.xlsx.writeBuffer();
       res.setHeader("Content-Disposition", "attachment; filename=jetgo_urunler.xlsx");
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
-      res.send(buf);
+      res.send(Buffer.from(buf));
     } catch (err) {
       console.error("Export XLSX error:", err);
       res.status(500).json({ error: "Export failed" });
