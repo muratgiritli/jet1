@@ -94,7 +94,7 @@ export default function Header() {
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className={`px-1 md:px-6 py-0.5 md:py-1.5 text-[12.5px] md:text-base font-semibold transition-colors rounded-md md:rounded-lg ${
+                    className={`px-1 md:px-6 py-0.5 md:py-1.5 text-[15px] md:text-base font-semibold transition-colors rounded-md md:rounded-lg ${
                       isHighlight
                         ? `font-bold animate-pulse ${isActive ? "bg-yellow-400 text-gray-900" : "bg-yellow-400 text-gray-900 hover:bg-yellow-300"}`
                         : `text-white/90 hover:text-white hover:bg-white/10 ${isActive ? "text-white bg-white/15 font-semibold" : ""}`
