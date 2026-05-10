@@ -85,8 +85,8 @@ export default function Header() {
       </header>
 
       <nav className="sticky top-[52px] z-[9998]" style={{ backgroundColor: "#7c4dff" }}>
-        <div className="max-w-6xl mx-auto px-4">
-          <ul className="flex items-center justify-start gap-1 md:gap-2 py-1 md:py-1.5 flex-nowrap whitespace-nowrap" data-testid="nav-categories">
+        <div className="max-w-6xl mx-auto px-3 md:px-4">
+          <ul className="flex items-center justify-start gap-0.5 md:gap-2 py-1 md:py-1.5 flex-nowrap whitespace-nowrap" data-testid="nav-categories">
             {NAV_ITEMS.map((item) => {
               const isHighlight = "highlight" in item && item.highlight;
               const isActive = location.startsWith(item.href);
@@ -94,7 +94,7 @@ export default function Header() {
                 <li key={item.name}>
                   <Link
                     href={item.href}
-                    className={`px-1.5 md:px-6 py-0.5 md:py-1.5 text-[14px] md:text-base font-semibold transition-colors rounded-md md:rounded-lg ${
+                    className={`px-1 md:px-6 py-0.5 md:py-1.5 text-[12.5px] md:text-base font-semibold transition-colors rounded-md md:rounded-lg ${
                       isHighlight
                         ? `font-bold animate-pulse ${isActive ? "bg-yellow-400 text-gray-900" : "bg-yellow-400 text-gray-900 hover:bg-yellow-300"}`
                         : `text-white/90 hover:text-white hover:bg-white/10 ${isActive ? "text-white bg-white/15 font-semibold" : ""}`
