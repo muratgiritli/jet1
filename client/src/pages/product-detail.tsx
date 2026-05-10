@@ -86,7 +86,7 @@ function CrossSellProductCard({
   quantity,
   onUpdate,
 }: {
-  product: Product;
+  product: Product & { subcategoryName?: string | null };
   quantity: number;
   onUpdate: (id: string, delta: number) => void;
 }) {
@@ -100,7 +100,12 @@ function CrossSellProductCard({
   return (
     <>
     <Card className={`overflow-visible transition-all duration-200 ${isActive ? "ring-2 ring-primary shadow-md" : ""}`} data-testid={`card-cross-sell-${pid}`}>
-      <CardContent className="p-2 flex flex-col items-center gap-1.5">
+      {product.subcategoryName && (
+        <div className="px-2 pt-1.5 pb-0.5 text-[10px] font-bold uppercase tracking-wide truncate text-center" style={{ color: "#6B3480" }} data-testid={`text-cross-sell-cat-${pid}`}>
+          {product.subcategoryName}
+        </div>
+      )}
+      <CardContent className="p-2 pt-1 flex flex-col items-center gap-1.5">
           <div
             className="w-full aspect-square flex items-center justify-center rounded-md overflow-hidden bg-muted/30 relative cursor-pointer"
             onClick={() => setShowPopup(true)}

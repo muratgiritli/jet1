@@ -1451,13 +1451,19 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         return true;
       })
       .sort((a, b) => a.sortOrder - b.sortOrder);
+    const allSubsForLookup = await storage.getAllSubcategories();
+    const subLookup = new Map<string, string>();
+    for (const s of allSubsForLookup) subLookup.set(`${s.animal}|${s.slug}`, s.displayName.replace(/\n/g, " "));
     const sectionsWithProducts = await Promise.all(
       activeSections.map(async (section) => {
         const items = await storage.getCrossSellItemsBySection(section.id);
         const sectionProducts = (await Promise.all(
           items.sort((a, b) => a.sortOrder - b.sortOrder).map(async (item) => {
             const p = await storage.getProduct(item.productId);
-            return p && p.isActive ? p : null;
+            if (!p || !p.isActive) return null;
+            const cat = await storage.getBrandCategory(p.brandCategoryId);
+            const subcategoryName = cat ? (subLookup.get(`${cat.animal}|${cat.subcategory}`) || null) : null;
+            return { ...p, subcategoryName };
           })
         )).filter(Boolean);
         return { ...section, products: sectionProducts };
