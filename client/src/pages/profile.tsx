@@ -728,7 +728,7 @@ function AddressesSection() {
                 <SelectTrigger data-testid="select-address-mahalle">
                   <SelectValue placeholder="Mahalle seçiniz" />
                 </SelectTrigger>
-                <SelectContent className="max-h-[50vh] w-[var(--radix-select-trigger-width)]">
+                <SelectContent position="popper" side="bottom" align="start" sideOffset={4} avoidCollisions={false} className="max-h-[200px] w-[var(--radix-select-trigger-width)] overflow-y-auto">
                   {TESLIMAT_MAHALLELERI.map((m) => (
                     <SelectItem key={m} value={m}>{m}</SelectItem>
                   ))}
