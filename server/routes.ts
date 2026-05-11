@@ -744,6 +744,159 @@ export async function registerRoutes(
     }
   });
 
+  const MAMA_SUBCATS: Record<string, string[]> = {
+    kedi: ["kedi-mamasi", "acik-mama", "yas-mama"],
+    kopek: ["mama-markalari", "kopek-kuru-mama", "acik-mama", "uygun-cuval", "yas-mama"],
+  };
+
+  async function getMamaStockData() {
+    const allSubcats = Array.from(new Set([...MAMA_SUBCATS.kedi, ...MAMA_SUBCATS.kopek]));
+    const { rows } = await sharedPool.query(
+      `SELECT p.id, p.name, p.price, p.stock, p.skt, p.barcode,
+              bc.brand_name, bc.animal, s.display_name as subcategory_name, s.slug as subcategory_slug
+       FROM products p
+       LEFT JOIN brand_categories bc ON p.brand_category_id = bc.id
+       LEFT JOIN subcategories s ON bc.subcategory = s.slug AND bc.animal = s.animal
+       WHERE p.is_active = true
+         AND p.stock > 0
+         AND bc.animal IN ('kedi','kopek')
+         AND s.slug = ANY($1::text[])
+       ORDER BY bc.animal, bc.brand_name, p.name`,
+      [allSubcats]
+    );
+    const filtered = (rows as any[]).filter(r => MAMA_SUBCATS[r.animal]?.includes(r.subcategory_slug));
+
+    const brandSummary: Record<string, { animal: string; brand: string; itemCount: number; totalStock: number; totalValue: number }> = {};
+    let kediStock = 0, kediValue = 0, kediItems = 0;
+    let kopekStock = 0, kopekValue = 0, kopekItems = 0;
+
+    for (const r of filtered) {
+      const stock = Number(r.stock) || 0;
+      const price = Number(r.price) || 0;
+      const value = stock * price;
+      const key = `${r.animal}|${r.brand_name || "Diğer"}`;
+      if (!brandSummary[key]) brandSummary[key] = { animal: r.animal, brand: r.brand_name || "Diğer", itemCount: 0, totalStock: 0, totalValue: 0 };
+      brandSummary[key].itemCount += 1;
+      brandSummary[key].totalStock += stock;
+      brandSummary[key].totalValue += value;
+      if (r.animal === "kedi") { kediStock += stock; kediValue += value; kediItems += 1; }
+      else { kopekStock += stock; kopekValue += value; kopekItems += 1; }
+    }
+
+    return {
+      details: filtered,
+      brandSummary: Object.values(brandSummary).sort((a, b) => a.animal.localeCompare(b.animal) || b.totalValue - a.totalValue),
+      totals: {
+        kedi: { itemCount: kediItems, totalStock: kediStock, totalValue: kediValue },
+        kopek: { itemCount: kopekItems, totalStock: kopekStock, totalValue: kopekValue },
+        grand: { itemCount: kediItems + kopekItems, totalStock: kediStock + kopekStock, totalValue: kediValue + kopekValue },
+      },
+    };
+  }
+
+  app.get("/api/admin/reports/mama-stock", requireAdmin, async (_req, res) => {
+    try {
+      const data = await getMamaStockData();
+      res.json(data);
+    } catch (err) {
+      console.error("Mama stock report error:", err);
+      res.status(500).json({ error: "Report failed" });
+    }
+  });
+
+  app.get("/api/admin/export/mama-stock-xlsx", requireAdmin, async (_req, res) => {
+    try {
+      const ExcelJS = (await import("exceljs")).default;
+      const data = await getMamaStockData();
+      const ANIMAL_LABEL: Record<string, string> = { kedi: "Kedi", kopek: "Köpek" };
+
+      const wb = new ExcelJS.Workbook();
+      const PURPLE = "FF6B3480";
+
+      const wsSummary = wb.addWorksheet("Özet");
+      wsSummary.columns = [
+        { header: "", key: "label", width: 28 },
+        { header: "Ürün Çeşidi", key: "items", width: 14 },
+        { header: "Toplam Stok (Adet)", key: "stock", width: 22 },
+        { header: "Toplam Değer (TL)", key: "value", width: 22 },
+      ];
+      wsSummary.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+      wsSummary.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } };
+      wsSummary.addRow({ label: "Kedi Maması", items: data.totals.kedi.itemCount, stock: data.totals.kedi.totalStock, value: Math.round(data.totals.kedi.totalValue * 100) / 100 });
+      wsSummary.addRow({ label: "Köpek Maması", items: data.totals.kopek.itemCount, stock: data.totals.kopek.totalStock, value: Math.round(data.totals.kopek.totalValue * 100) / 100 });
+      const totalRow = wsSummary.addRow({ label: "GENEL TOPLAM", items: data.totals.grand.itemCount, stock: data.totals.grand.totalStock, value: Math.round(data.totals.grand.totalValue * 100) / 100 });
+      totalRow.font = { bold: true };
+      totalRow.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEDE7F6" } };
+      wsSummary.getColumn("value").numFmt = '#,##0.00 "TL"';
+
+      const wsBrand = wb.addWorksheet("Marka Bazında");
+      wsBrand.columns = [
+        { header: "Hayvan", key: "animal", width: 10 },
+        { header: "Marka", key: "brand", width: 28 },
+        { header: "Ürün Çeşidi", key: "items", width: 14 },
+        { header: "Toplam Stok (Adet)", key: "stock", width: 22 },
+        { header: "Toplam Değer (TL)", key: "value", width: 22 },
+      ];
+      wsBrand.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+      wsBrand.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } };
+      for (const b of data.brandSummary) {
+        wsBrand.addRow({
+          animal: ANIMAL_LABEL[b.animal] || b.animal,
+          brand: b.brand,
+          items: b.itemCount,
+          stock: b.totalStock,
+          value: Math.round(b.totalValue * 100) / 100,
+        });
+      }
+      wsBrand.getColumn("value").numFmt = '#,##0.00 "TL"';
+
+      const wsDetail = wb.addWorksheet("Detay");
+      wsDetail.columns = [
+        { header: "ID", key: "id", width: 6 },
+        { header: "Hayvan", key: "animal", width: 10 },
+        { header: "Marka", key: "brand", width: 22 },
+        { header: "Kategori", key: "cat", width: 22 },
+        { header: "Ürün Adı", key: "name", width: 60 },
+        { header: "Birim Fiyat (TL)", key: "price", width: 16 },
+        { header: "Stok", key: "stock", width: 8 },
+        { header: "Stok Değeri (TL)", key: "value", width: 18 },
+        { header: "SKT", key: "skt", width: 12 },
+        { header: "Barkod", key: "barcode", width: 18 },
+      ];
+      wsDetail.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+      wsDetail.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: PURPLE } };
+      for (const r of data.details) {
+        const stock = Number(r.stock) || 0;
+        const price = Number(r.price) || 0;
+        wsDetail.addRow({
+          id: r.id,
+          animal: ANIMAL_LABEL[r.animal] || r.animal,
+          brand: r.brand_name || "",
+          cat: r.subcategory_name || "",
+          name: r.name,
+          price,
+          stock,
+          value: Math.round(stock * price * 100) / 100,
+          skt: r.skt || "",
+          barcode: r.barcode || "",
+        });
+      }
+      wsDetail.getColumn("price").numFmt = '#,##0.00 "TL"';
+      wsDetail.getColumn("value").numFmt = '#,##0.00 "TL"';
+
+      wsSummary.addRow({});
+      wsSummary.addRow({ label: `Rapor tarihi: ${new Date().toLocaleString("tr-TR")}` }).font = { italic: true, color: { argb: "FF666666" } };
+
+      const buf = await wb.xlsx.writeBuffer();
+      res.setHeader("Content-Disposition", `attachment; filename=jetgo_mama_stok_raporu.xlsx`);
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.send(Buffer.from(buf));
+    } catch (err) {
+      console.error("Mama stock XLSX error:", err);
+      res.status(500).json({ error: "Export failed" });
+    }
+  });
+
   app.get("/api/export/yml", requireAdmin, async (_req, res) => {
     try {
       const SITE = "https://www.jetgomarket.com";

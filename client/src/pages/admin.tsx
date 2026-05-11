@@ -7786,6 +7786,7 @@ function ReportsSection() {
     { key: "ciro", label: "Ciro" },
     { key: "bestsellers", label: "En Çok Satanlar" },
     { key: "heatmap", label: "Isı Haritası" },
+    { key: "mama-stok", label: "Mama Stoğu" },
     { key: "blacklist", label: "Kara Liste" },
   ];
 
@@ -7992,7 +7993,92 @@ function ReportsSection() {
         )}
       </>}
 
+      {reportTab === "mama-stok" && <MamaStockSection />}
+
       {reportTab === "blacklist" && <BlacklistSection reports={reports} />}
+    </div>
+  );
+}
+
+function MamaStockSection() {
+  const { data, isLoading } = useQuery<any>({ queryKey: ["/api/admin/reports/mama-stock"] });
+  if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>;
+  if (!data) return <p className="text-sm text-muted-foreground">Veri yüklenemedi.</p>;
+  const fmt = (n: number) => Number(n || 0).toLocaleString("tr-TR", { maximumFractionDigits: 2 });
+  return (
+    <div className="space-y-4" data-testid="section-mama-stock">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
+        <h3 className="text-base font-bold">Stoktaki Kedi & Köpek Mamaları</h3>
+        <a
+          href="/api/admin/export/mama-stock-xlsx"
+          download
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+          data-testid="btn-export-mama-stock"
+        >
+          <Download className="w-3.5 h-3.5" />
+          Excel İndir
+        </a>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <Card className="border-orange-200 bg-orange-50/50">
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold text-orange-800 mb-1">🐱 Kedi Maması</p>
+            <p className="text-[11px] text-muted-foreground">{data.totals.kedi.itemCount} çeşit</p>
+            <p className="text-base font-bold text-orange-700 mt-0.5">{fmt(data.totals.kedi.totalStock)} adet</p>
+            <p className="text-xs font-semibold text-foreground">{fmt(data.totals.kedi.totalValue)} TL</p>
+          </CardContent>
+        </Card>
+        <Card className="border-blue-200 bg-blue-50/50">
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold text-blue-800 mb-1">🐶 Köpek Maması</p>
+            <p className="text-[11px] text-muted-foreground">{data.totals.kopek.itemCount} çeşit</p>
+            <p className="text-base font-bold text-blue-700 mt-0.5">{fmt(data.totals.kopek.totalStock)} adet</p>
+            <p className="text-xs font-semibold text-foreground">{fmt(data.totals.kopek.totalValue)} TL</p>
+          </CardContent>
+        </Card>
+        <Card className="border-purple-300 bg-purple-50">
+          <CardContent className="p-3">
+            <p className="text-xs font-semibold text-purple-800 mb-1">📦 Genel Toplam</p>
+            <p className="text-[11px] text-muted-foreground">{data.totals.grand.itemCount} çeşit</p>
+            <p className="text-base font-bold text-purple-700 mt-0.5">{fmt(data.totals.grand.totalStock)} adet</p>
+            <p className="text-xs font-semibold text-foreground">{fmt(data.totals.grand.totalValue)} TL</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card>
+        <CardHeader className="pb-2"><CardTitle className="text-sm">Marka Bazında Dökümü</CardTitle></CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs">
+              <thead className="bg-muted/60 text-muted-foreground">
+                <tr>
+                  <th className="px-3 py-2 text-left font-semibold">Hayvan</th>
+                  <th className="px-3 py-2 text-left font-semibold">Marka</th>
+                  <th className="px-3 py-2 text-right font-semibold">Çeşit</th>
+                  <th className="px-3 py-2 text-right font-semibold">Stok (Adet)</th>
+                  <th className="px-3 py-2 text-right font-semibold">Toplam Değer (TL)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.brandSummary.map((b: any, i: number) => (
+                  <tr key={i} className="border-t hover:bg-muted/30" data-testid={`row-brand-${i}`}>
+                    <td className="px-3 py-1.5">{b.animal === "kedi" ? "🐱 Kedi" : "🐶 Köpek"}</td>
+                    <td className="px-3 py-1.5 font-medium">{b.brand}</td>
+                    <td className="px-3 py-1.5 text-right">{b.itemCount}</td>
+                    <td className="px-3 py-1.5 text-right font-semibold">{fmt(b.totalStock)}</td>
+                    <td className="px-3 py-1.5 text-right font-bold text-emerald-700">{fmt(b.totalValue)}</td>
+                  </tr>
+                ))}
+                {data.brandSummary.length === 0 && (
+                  <tr><td colSpan={5} className="px-3 py-6 text-center text-muted-foreground">Stokta mama ürünü yok.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
