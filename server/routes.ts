@@ -3,7 +3,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { type Server } from "http";
 import { storage, pool as sharedPool, db } from "./storage";
 import { seedDatabase } from "./seed";
-import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders, virtualPets, petContestEntries, petContestVotes, productReviews, insertContactMessageSchema } from "@shared/schema";
+import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders, virtualPets, petContestEntries, petContestVotes, productReviews, insertContactMessageSchema, brandCategories } from "@shared/schema";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -4285,6 +4285,72 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       res.json({ ok: true, cascadedExtras });
     } catch (err) {
       res.status(500).json({ message: "Campaign item delete error" });
+    }
+  });
+
+  app.post("/api/admin/campaign-items/quick-create", requireAdmin, upload.single("image"), async (req, res) => {
+    try {
+      const name = String(req.body.name || "").trim();
+      const campaignPrice = parseFloat(req.body.campaignPrice);
+      const originalPriceRaw = req.body.originalPrice ? parseFloat(req.body.originalPrice) : null;
+      const skt = req.body.skt ? String(req.body.skt).trim() : null;
+      const stock = req.body.stock !== undefined ? parseInt(String(req.body.stock)) : 0;
+      const barcode = req.body.barcode ? String(req.body.barcode).trim() : null;
+      const itemType = (req.body.itemType === "extra" ? "extra" : "main") as "main" | "extra";
+      const sortOrder = req.body.sortOrder ? parseInt(String(req.body.sortOrder)) : 1;
+      const parentProductId = req.body.parentProductId ? parseInt(String(req.body.parentProductId)) : null;
+
+      if (!name) return res.status(400).json({ message: "Ürün adı gerekli" });
+      if (!campaignPrice || campaignPrice <= 0) return res.status(400).json({ message: "Geçerli kampanya fiyatı gerekli" });
+
+      let kampCat = (await storage.getBrandCategories()).find(
+        c => c.animal === "kampanya" && c.subcategory === "kampanya"
+      );
+      if (!kampCat) {
+        const [created] = await db.insert(brandCategories).values({
+          brandName: "Kampanya",
+          brandSlug: "kampanya",
+          animal: "kampanya",
+          subcategory: "kampanya",
+        }).returning();
+        kampCat = created;
+      }
+
+      const product = await storage.createProduct({
+        name,
+        price: campaignPrice,
+        originalPrice: originalPriceRaw && originalPriceRaw > campaignPrice ? originalPriceRaw : null,
+        skt,
+        img: null,
+        originalImg: null,
+        brandCategoryId: kampCat!.id,
+        isActive: true,
+        stock: isNaN(stock) ? 0 : stock,
+        barcode,
+        costPrice: null,
+        mamaType: null,
+        preorderEnabled: false,
+      });
+
+      if (req.file && req.file.mimetype.startsWith("image/")) {
+        try {
+          const imgPath = await saveProductImage(req.file.buffer, product.id);
+          await storage.updateProduct(product.id, { img: imgPath });
+        } catch (e: any) {
+          console.error("[campaign quick-create] image save failed:", e?.message);
+        }
+      }
+
+      const { rows } = await sharedPool.query(
+        `INSERT INTO campaign_items (product_id, item_type, sort_order, parent_product_id, campaign_price)
+         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+        [product.id, itemType, sortOrder, itemType === "extra" ? parentProductId : null, campaignPrice]
+      );
+
+      res.status(201).json({ product, campaignItem: rows[0] });
+    } catch (err: any) {
+      console.error("[/api/admin/campaign-items/quick-create] error:", err?.message, err?.stack);
+      res.status(500).json({ message: "Hızlı kampanya ürünü oluşturulamadı", detail: err?.message });
     }
   });
 

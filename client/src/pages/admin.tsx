@@ -796,6 +796,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [campaignSortOrder, setCampaignSortOrder] = useState("1");
   const [campaignAddDialogOpen, setCampaignAddDialogOpen] = useState(false);
   const [campaignAddProductId, setCampaignAddProductId] = useState<number | null>(null);
+  const [campaignQuickOpen, setCampaignQuickOpen] = useState(false);
+  const [cqName, setCqName] = useState("");
+  const [cqCampaignPrice, setCqCampaignPrice] = useState("");
+  const [cqOriginalPrice, setCqOriginalPrice] = useState("");
+  const [cqSkt, setCqSkt] = useState("");
+  const [cqStock, setCqStock] = useState("10");
+  const [cqBarcode, setCqBarcode] = useState("");
+  const [cqImageFile, setCqImageFile] = useState<File | null>(null);
+  const [cqType, setCqType] = useState<"main" | "extra">("main");
+  const [cqParentProductId, setCqParentProductId] = useState<number | null>(null);
+  const [cqSortOrder, setCqSortOrder] = useState("1");
+  const [cqSubmitting, setCqSubmitting] = useState(false);
   const [campaignParentProductId, setCampaignParentProductId] = useState<number | null>(null);
   const [extraSearchQuery, setExtraSearchQuery] = useState("");
   const [extraAnimalFilter, setExtraAnimalFilter] = useState<string>("all");
@@ -1728,6 +1740,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             const orphanExtras = campaignItems.filter(i => i.item_type === "extra" && (i.parent_product_id == null || !mainProductIds.has(i.parent_product_id)));
             return (
             <div className="space-y-5">
+              <div className="flex items-center justify-end">
+                <Button
+                  size="sm"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={() => setCampaignQuickOpen(true)}
+                  data-testid="btn-quick-create-campaign"
+                >
+                  <Plus className="w-4 h-4 mr-1.5" />
+                  Yeni Kampanya Ürünü Ekle
+                </Button>
+              </div>
               {orphanExtras.length > 0 && (
                 <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-orange-200 bg-orange-50">
                   <div className="text-xs sm:text-sm text-orange-900">
@@ -3881,6 +3904,194 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             )}
           </DialogContent>
         </Dialog>
+
+        {campaignQuickOpen && (
+          <Dialog open={true} onOpenChange={(open) => {
+            if (!open && !cqSubmitting) {
+              setCampaignQuickOpen(false);
+              setCqName(""); setCqCampaignPrice(""); setCqOriginalPrice(""); setCqSkt("");
+              setCqStock("10"); setCqBarcode(""); setCqImageFile(null);
+              setCqType("main"); setCqParentProductId(null); setCqSortOrder("1");
+            }
+          }}>
+            <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle className="flex items-center gap-2">
+                  <Tag className="w-5 h-5 text-emerald-600" />
+                  Yeni Kampanya Ürünü
+                </DialogTitle>
+              </DialogHeader>
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm font-medium mb-1.5 block">Ürün Adı *</Label>
+                  <Input
+                    value={cqName}
+                    onChange={(e) => setCqName(e.target.value)}
+                    placeholder="Örn: Royal Canin Kitten 2 kg"
+                    data-testid="input-cq-name"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm font-medium mb-1.5 block">Kampanya Fiyatı (TL) *</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={cqCampaignPrice}
+                      onChange={(e) => setCqCampaignPrice(e.target.value)}
+                      placeholder="0.00"
+                      data-testid="input-cq-price"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-1.5 block">Normal Fiyat (opsiyonel)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={cqOriginalPrice}
+                      onChange={(e) => setCqOriginalPrice(e.target.value)}
+                      placeholder="İndirim göstermek için"
+                      data-testid="input-cq-original-price"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label className="text-sm font-medium mb-1.5 block">Stok</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      value={cqStock}
+                      onChange={(e) => setCqStock(e.target.value)}
+                      data-testid="input-cq-stock"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-1.5 block">Son Kullanma Tarihi</Label>
+                    <Input
+                      value={cqSkt}
+                      onChange={(e) => setCqSkt(e.target.value)}
+                      placeholder="Örn: 05.2027"
+                      data-testid="input-cq-skt"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium mb-1.5 block">Barkod</Label>
+                  <Input
+                    value={cqBarcode}
+                    onChange={(e) => setCqBarcode(e.target.value)}
+                    placeholder="EAN / SKU"
+                    data-testid="input-cq-barcode"
+                  />
+                </div>
+
+                <div>
+                  <Label className="text-sm font-medium mb-1.5 block">Ürün Görseli</Label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => setCqImageFile(e.target.files?.[0] || null)}
+                    className="block w-full text-xs text-gray-700 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                    data-testid="input-cq-image"
+                  />
+                  {cqImageFile && (
+                    <p className="text-[11px] text-emerald-700 mt-1 font-medium">
+                      Seçildi: {cqImageFile.name}
+                    </p>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 pt-2 border-t">
+                  <div>
+                    <Label className="text-sm font-medium mb-1.5 block">Kampanya Türü</Label>
+                    <Select value={cqType} onValueChange={(v) => setCqType(v as "main" | "extra")}>
+                      <SelectTrigger data-testid="trigger-cq-type"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="main">Ana Ürün</SelectItem>
+                        <SelectItem value="extra">Ek Ürün</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label className="text-sm font-medium mb-1.5 block">Sıra</Label>
+                    <Input
+                      type="number"
+                      value={cqSortOrder}
+                      onChange={(e) => setCqSortOrder(e.target.value)}
+                      data-testid="input-cq-sort"
+                    />
+                  </div>
+                </div>
+
+                {cqType === "extra" && (
+                  <div>
+                    <Label className="text-sm font-medium mb-1.5 block">Bağlı Ana Ürün</Label>
+                    <Select value={cqParentProductId ? String(cqParentProductId) : ""} onValueChange={(v) => setCqParentProductId(v ? parseInt(v) : null)}>
+                      <SelectTrigger data-testid="trigger-cq-parent"><SelectValue placeholder="Ana ürün seçin..." /></SelectTrigger>
+                      <SelectContent>
+                        {campaignItems.filter(ci => ci.item_type === "main" && ci.is_active).map(ci => (
+                          <SelectItem key={ci.product_id} value={String(ci.product_id)}>{ci.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                <Button
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                  disabled={cqSubmitting || !cqName.trim() || !cqCampaignPrice || (cqType === "extra" && !cqParentProductId)}
+                  onClick={async () => {
+                    setCqSubmitting(true);
+                    try {
+                      const fd = new FormData();
+                      fd.append("name", cqName.trim());
+                      fd.append("campaignPrice", cqCampaignPrice);
+                      if (cqOriginalPrice) fd.append("originalPrice", cqOriginalPrice);
+                      if (cqSkt) fd.append("skt", cqSkt);
+                      fd.append("stock", cqStock || "0");
+                      if (cqBarcode) fd.append("barcode", cqBarcode);
+                      fd.append("itemType", cqType);
+                      fd.append("sortOrder", cqSortOrder || "1");
+                      if (cqType === "extra" && cqParentProductId) fd.append("parentProductId", String(cqParentProductId));
+                      if (cqImageFile) fd.append("image", cqImageFile);
+                      const res = await fetch("/api/admin/campaign-items/quick-create", {
+                        method: "POST",
+                        credentials: "include",
+                        body: fd,
+                      });
+                      if (!res.ok) {
+                        const j = await res.json().catch(() => ({}));
+                        throw new Error(j.message || "Hata oluştu");
+                      }
+                      toast({ title: "Eklendi", description: "Kampanya ürünü oluşturuldu" });
+                      queryClient.invalidateQueries({ queryKey: ["/api/admin/campaign-items"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/products"] });
+                      queryClient.invalidateQueries({ queryKey: ["/api/admin/products"] });
+                      setCampaignQuickOpen(false);
+                      setCqName(""); setCqCampaignPrice(""); setCqOriginalPrice(""); setCqSkt("");
+                      setCqStock("10"); setCqBarcode(""); setCqImageFile(null);
+                      setCqType("main"); setCqParentProductId(null); setCqSortOrder("1");
+                    } catch (e: any) {
+                      toast({ title: "Hata", description: e.message, variant: "destructive" });
+                    } finally {
+                      setCqSubmitting(false);
+                    }
+                  }}
+                  data-testid="btn-cq-submit"
+                >
+                  {cqSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Plus className="w-4 h-4 mr-2" />Kampanyaya Ekle</>}
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
 
         {campaignAddDialogOpen && campaignAddProductId && (
           <Dialog open={true} onOpenChange={(open) => {
