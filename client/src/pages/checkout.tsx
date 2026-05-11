@@ -1440,7 +1440,7 @@ export default function Checkout() {
                       if (opt.id === "nakit") return nakitEnabled;
                       if (opt.id === "eft") return eftEnabled;
                       if (opt.id === "qr") return qrEnabled;
-                      if (opt.id === "online") return onlineCardEnabled;
+                      if (opt.id === "online") return onlineCardEnabled && !selectedProducts.some(({ product }) => isPreorderProduct(String(product.id)));
                       return true;
                     }).map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
