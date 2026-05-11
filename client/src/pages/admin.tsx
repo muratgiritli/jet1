@@ -72,8 +72,8 @@ import {
   ThumbsUp,
   Mail,
   Gift,
-  Trash2,
   QrCode,
+  Download,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -3315,6 +3315,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   {f.icon} {f.label}
                 </button>
               ))}
+              <a
+                href="/api/admin/export/products-xlsx?type=preorder"
+                download
+                className="ml-auto inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors bg-blue-50 border-blue-300 text-blue-700 hover:bg-blue-100"
+                data-testid="btn-export-preorder"
+                title="Ön sipariş ürünlerini Excel olarak indir"
+              >
+                <Download className="w-3 h-3" />
+                Ön Sipariş Excel
+              </a>
+              <a
+                href="/api/admin/export/products-xlsx?type=out_of_stock"
+                download
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors bg-red-50 border-red-300 text-red-700 hover:bg-red-100"
+                data-testid="btn-export-out-of-stock"
+                title="Stokta olmayan ürünleri Excel olarak indir"
+              >
+                <Download className="w-3 h-3" />
+                Stokta Yok Excel
+              </a>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">

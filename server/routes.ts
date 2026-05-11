@@ -663,6 +663,87 @@ export async function registerRoutes(
     }
   });
 
+  app.get("/api/admin/export/products-xlsx", requireAdmin, async (req, res) => {
+    try {
+      const ExcelJS = (await import("exceljs")).default;
+      const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen", akvaryum: "Akvaryum" };
+      const type = String(req.query.type || "all");
+
+      let where = "1=1";
+      let title = "Ürünler";
+      let filename = "jetgo_urunler.xlsx";
+      if (type === "preorder") {
+        where = "p.preorder_enabled = true";
+        title = "Ön Sipariş Ürünleri";
+        filename = "jetgo_on_siparis.xlsx";
+      } else if (type === "out_of_stock") {
+        where = "p.stock <= 0 AND p.is_active = true";
+        title = "Stokta Yok Ürünler";
+        filename = "jetgo_stokta_yok.xlsx";
+      }
+
+      const { rows } = await sharedPool.query(`
+        SELECT p.id, p.name, p.price, p.original_price, p.skt, p.stock, p.barcode,
+               p.is_active, p.preorder_enabled,
+               bc.brand_name, bc.animal, s.display_name as subcategory_name
+        FROM products p
+        LEFT JOIN brand_categories bc ON p.brand_category_id = bc.id
+        LEFT JOIN subcategories s ON bc.subcategory = s.slug AND bc.animal = s.animal
+        WHERE ${where}
+        ORDER BY p.name ASC
+      `);
+
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet(title);
+      ws.columns = [
+        { header: "ID", key: "id", width: 6 },
+        { header: "Ürün Adı", key: "name", width: 60 },
+        { header: "Marka", key: "brand", width: 22 },
+        { header: "Hayvan", key: "animal", width: 12 },
+        { header: "Kategori", key: "category", width: 28 },
+        { header: "Fiyat (TL)", key: "price", width: 12 },
+        { header: "Eski Fiyat (TL)", key: "oldPrice", width: 14 },
+        { header: "Stok", key: "stock", width: 8 },
+        { header: "SKT", key: "skt", width: 12 },
+        { header: "Barkod", key: "barcode", width: 20 },
+        { header: "Aktif", key: "active", width: 8 },
+        { header: "Ön Sipariş", key: "preorder", width: 12 },
+      ];
+      ws.getRow(1).font = { bold: true };
+      ws.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF6B3480" } };
+      ws.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
+
+      for (const r of rows as any[]) {
+        ws.addRow({
+          id: r.id,
+          name: r.name,
+          brand: r.brand_name || "",
+          animal: ANIMAL_MAP[r.animal] || r.animal || "",
+          category: r.subcategory_name || "",
+          price: Number(r.price) || 0,
+          oldPrice: r.original_price ? Number(r.original_price) : "",
+          stock: r.stock,
+          skt: r.skt || "",
+          barcode: r.barcode || "",
+          active: r.is_active ? "Evet" : "Hayır",
+          preorder: r.preorder_enabled ? "Evet" : "Hayır",
+        });
+      }
+
+      ws.addRow({});
+      const summaryRow = ws.addRow({ name: `Toplam: ${rows.length} ürün — ${new Date().toLocaleString("tr-TR")}` });
+      summaryRow.font = { italic: true, color: { argb: "FF666666" } };
+
+      const buf = await wb.xlsx.writeBuffer();
+      res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.send(Buffer.from(buf));
+    } catch (err) {
+      console.error("Admin export XLSX error:", err);
+      res.status(500).json({ error: "Export failed" });
+    }
+  });
+
   app.get("/api/export/yml", requireAdmin, async (_req, res) => {
     try {
       const SITE = "https://www.jetgomarket.com";
