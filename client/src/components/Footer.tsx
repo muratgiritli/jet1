@@ -63,19 +63,9 @@ export default function Footer() {
           </div>
 
           <div>
-            <Link href="/iletisim" className="text-white font-bold text-lg mb-4 block hover:underline" data-testid="footer-iletisim">İletişim</Link>
+            <h3 className="text-white font-bold text-lg mb-4">İletişim</h3>
             <ul className="space-y-3">
-              <li className="hidden md:flex items-start gap-2.5 text-sm">
-                <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
-                <span>Yenimahalle Atatürk 3. Kısım Blv. No:113/A, Atakum, Samsun</span>
-              </li>
-              <li className="hidden md:block">
-                <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-sm hover:text-green-400 transition-colors" data-testid="footer-whatsapp">
-                  <SiWhatsapp className="w-4 h-4 flex-shrink-0 text-green-500" />
-                  WhatsApp ile ulaşın
-                </a>
-              </li>
-              <li className="hidden md:block">
+              <li>
                 <button
                   type="button"
                   onClick={() => setContactOpen(true)}
@@ -85,12 +75,6 @@ export default function Footer() {
                   <MessageSquare className="w-4 h-4 flex-shrink-0" />
                   İletişime Geç →
                 </button>
-              </li>
-              <li>
-                <a href="mailto:info@sizpa.com" className="flex items-center gap-2.5 text-sm hover:text-white transition-colors" data-testid="footer-email">
-                  <Mail className="w-4 h-4 flex-shrink-0 text-gray-400" />
-                  info@sizpa.com
-                </a>
               </li>
             </ul>
           </div>
