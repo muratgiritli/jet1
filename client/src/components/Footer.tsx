@@ -154,7 +154,7 @@ export default function Footer() {
               />
             </div>
 
-            <p className="text-xs text-gray-500">JETGO - Samsun Pet Shop</p>
+            <p className="hidden text-xs text-gray-500">JETGO - Samsun Pet Shop</p>
           </div>
 
           <p className="mt-4 text-center text-xs text-gray-500" data-testid="footer-sizpa-credit">
