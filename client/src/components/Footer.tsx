@@ -45,7 +45,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="hidden">
+          <div className="hidden md:block">
             <h3 className="text-white font-bold text-lg mb-4">Kurumsal</h3>
             <ul className="space-y-2">
               {LEGAL_LINKS.map((link) => {
