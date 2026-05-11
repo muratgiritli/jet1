@@ -137,7 +137,7 @@ export default function Footer() {
 
         <div className="border-t border-gray-700 pt-6">
           <div className="flex items-center justify-between flex-wrap gap-4">
-            <p className="text-xs text-gray-500">© {new Date().getFullYear()} Sizpa İnternet Tic. Ltd. Şti. Tüm hakları saklıdır.</p>
+            <p className="hidden text-xs text-gray-500">© {new Date().getFullYear()} Sizpa İnternet Tic. Ltd. Şti. Tüm hakları saklıdır.</p>
 
             <div className="flex items-center gap-4" data-testid="footer-badges">
               <div className="flex items-center gap-1.5 bg-gray-800 rounded px-2.5 py-1.5" data-testid="footer-ssl-badge">
