@@ -1396,6 +1396,21 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     queryKey: ["/api/admin/campaign-items"],
   });
 
+  const cleanupOrphanExtrasMutation = useMutation({
+    mutationFn: async () => {
+      const r = await apiRequest("POST", "/api/admin/campaign-items/cleanup-orphans", {});
+      return r.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/campaign-items"] });
+      toast({ title: "Temizlendi", description: `${data?.deleted || 0} ek ürün kaldırıldı.` });
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Ek ürünler temizlenemedi.", variant: "destructive" });
+    },
+  });
+
   const addCampaignItemMutation = useMutation({
     mutationFn: async (data: { productId: number; itemType: string; sortOrder: number; parentProductId?: number | null; campaignPrice?: string | null }) => {
       await apiRequest("POST", "/api/admin/campaign-items", data);
@@ -1704,8 +1719,31 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <ChevronDown className={`w-5 h-5 ml-auto transition-transform ${campaignExpanded ? "rotate-180" : ""}`} />
           </button>
 
-          {campaignExpanded && (
+          {campaignExpanded && (() => {
+            const mainProductIds = new Set(campaignItems.filter(i => i.item_type === "main" && i.is_active).map(i => i.product_id));
+            const orphanExtras = campaignItems.filter(i => i.item_type === "extra" && (i.parent_product_id == null || !mainProductIds.has(i.parent_product_id)));
+            return (
             <div className="space-y-5">
+              {orphanExtras.length > 0 && (
+                <div className="flex items-center justify-between gap-3 p-3 rounded-lg border border-orange-200 bg-orange-50">
+                  <div className="text-xs sm:text-sm text-orange-900">
+                    <strong>{orphanExtras.length}</strong> sahipsiz ek ürün var (bağlı ana ürünü silinmiş). Bunlar sepete eklendiğinde sorun yaratabilir.
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    disabled={cleanupOrphanExtrasMutation.isPending}
+                    onClick={() => {
+                      if (confirm(`${orphanExtras.length} sahipsiz ek ürün silinecek. Onaylıyor musunuz?`)) {
+                        cleanupOrphanExtrasMutation.mutate();
+                      }
+                    }}
+                    data-testid="btn-cleanup-orphan-extras"
+                  >
+                    {cleanupOrphanExtrasMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Trash2 className="w-4 h-4 mr-1" />Ek Ürünleri Temizle</>}
+                  </Button>
+                </div>
+              )}
               {(() => {
                 const mainItems = campaignItems.filter(i => i.item_type === "main").sort((a, b) => a.sort_order - b.sort_order);
                 if (mainItems.length === 0) {
@@ -1886,7 +1924,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 });
               })()}
             </div>
-          )}
+            );
+          })()}
 
           {campaignParentProductId && (
             <Dialog open={true} onOpenChange={(open) => {

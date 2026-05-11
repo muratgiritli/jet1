@@ -4034,10 +4034,44 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/admin/campaign-items/:id", requireAdmin, async (req, res) => {
     try {
+      const r = await sharedPool.query(
+        `SELECT product_id, item_type FROM campaign_items WHERE id = $1`,
+        [req.params.id]
+      );
+      const row = r.rows[0];
       await sharedPool.query(`DELETE FROM campaign_items WHERE id = $1`, [req.params.id]);
-      res.json({ ok: true });
+      let cascadedExtras = 0;
+      if (row && row.item_type === "main") {
+        const del = await sharedPool.query(
+          `DELETE FROM campaign_items WHERE item_type = 'extra' AND parent_product_id = $1`,
+          [row.product_id]
+        );
+        cascadedExtras = del.rowCount || 0;
+      }
+      res.json({ ok: true, cascadedExtras });
     } catch (err) {
       res.status(500).json({ message: "Campaign item delete error" });
+    }
+  });
+
+  app.post("/api/admin/campaign-items/cleanup-orphans", requireAdmin, async (_req, res) => {
+    try {
+      const del = await sharedPool.query(`
+        DELETE FROM campaign_items ci
+        WHERE ci.item_type = 'extra'
+          AND (
+            ci.parent_product_id IS NULL
+            OR NOT EXISTS (
+              SELECT 1 FROM campaign_items m
+              WHERE m.item_type = 'main'
+                AND m.is_active = true
+                AND m.product_id = ci.parent_product_id
+            )
+          )
+      `);
+      res.json({ ok: true, deleted: del.rowCount || 0 });
+    } catch (err) {
+      res.status(500).json({ message: "Cleanup error" });
     }
   });
 
