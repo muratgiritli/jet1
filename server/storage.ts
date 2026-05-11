@@ -26,7 +26,19 @@ import {
   type ContactMessage, type InsertContactMessage,
 } from "@shared/schema";
 
-export const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, max: 5 });
+export const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  max: 5,
+  idleTimeoutMillis: 30_000,
+  connectionTimeoutMillis: 10_000,
+  keepAlive: true,
+  allowExitOnIdle: false,
+});
+
+pool.on("error", (err) => {
+  console.error("[pg pool error - keeping process alive]", err.message);
+});
+
 export const db = drizzle(pool);
 
 export interface IStorage {
