@@ -6,19 +6,19 @@ import kartLogoPath from "@assets/kart_1775765432584.png";
 import ContactDialog from "@/components/ContactDialog";
 
 const FOOTER_LINKS = [
-  { label: "Sıkça Sorulan Sorular", href: "/sss", icon: HelpCircle },
-  { label: "İşlem Rehberi", href: "/islem-rehberi", icon: Info },
-  { label: "Mağaza & Konum", href: "/magaza", icon: MapPin },
-  { label: "Teslimat ve İade Şartları", href: "/teslimat-iade", icon: Truck },
-  { label: "Mesafeli Satış Sözleşmesi", href: "/mesafeli-satis", icon: ScrollText },
+  { label: "Sıkça Sorulan Sorular", href: "/sss", icon: HelpCircle, mobileHidden: false },
+  { label: "İşlem Rehberi", href: "/islem-rehberi", icon: Info, mobileHidden: false },
+  { label: "Mağaza & Konum", href: "/magaza", icon: MapPin, mobileHidden: true },
+  { label: "Teslimat ve İade Şartları", href: "/teslimat-iade", icon: Truck, mobileHidden: false },
+  { label: "Mesafeli Satış Sözleşmesi", href: "/mesafeli-satis", icon: ScrollText, mobileHidden: true },
 ];
 
 const LEGAL_LINKS = [
-  { label: "Gizlilik Politikası", href: "/gizlilik", icon: Shield },
-  { label: "Çerez Politikası", href: "/cerez-politikasi", icon: Cookie },
-  { label: "KVKK Sözleşmesi", href: "/kvkk", icon: Lock },
-  { label: "Hakkımızda", href: "/hakkimizda", icon: BookOpen },
-  { label: "İletişim", href: "/iletisim", icon: Mail },
+  { label: "Gizlilik Politikası", href: "/gizlilik", icon: Shield, mobileHidden: true },
+  { label: "Çerez Politikası", href: "/cerez-politikasi", icon: Cookie, mobileHidden: true },
+  { label: "KVKK Sözleşmesi", href: "/kvkk", icon: Lock, mobileHidden: true },
+  { label: "Hakkımızda", href: "/hakkimizda", icon: BookOpen, mobileHidden: true },
+  { label: "İletişim", href: "/iletisim", icon: Mail, mobileHidden: false },
 ];
 
 export default function Footer() {
@@ -34,7 +34,7 @@ export default function Footer() {
               {FOOTER_LINKS.map((link) => {
                 const Icon = link.icon;
                 return (
-                  <li key={link.href}>
+                  <li key={link.href} className={link.mobileHidden ? "hidden md:block" : ""}>
                     <Link href={link.href} className="flex items-center gap-2 text-sm hover:text-white transition-colors" data-testid={`footer-link-${link.href.slice(1)}`}>
                       <Icon className="w-4 h-4 flex-shrink-0" />
                       {link.label}
@@ -51,7 +51,7 @@ export default function Footer() {
               {LEGAL_LINKS.map((link) => {
                 const Icon = link.icon;
                 return (
-                  <li key={link.href}>
+                  <li key={link.href} className={link.mobileHidden ? "hidden md:block" : ""}>
                     <Link href={link.href} className="flex items-center gap-2 text-sm hover:text-white transition-colors" data-testid={`footer-link-${link.href.slice(1)}`}>
                       <Icon className="w-4 h-4 flex-shrink-0" />
                       {link.label}
@@ -65,17 +65,17 @@ export default function Footer() {
           <div>
             <Link href="/iletisim" className="text-white font-bold text-lg mb-4 block hover:underline" data-testid="footer-iletisim">İletişim</Link>
             <ul className="space-y-3">
-              <li className="flex items-start gap-2.5 text-sm">
+              <li className="hidden md:flex items-start gap-2.5 text-sm">
                 <MapPin className="w-4 h-4 mt-0.5 flex-shrink-0 text-gray-400" />
                 <span>Yenimahalle Atatürk 3. Kısım Blv. No:113/A, Atakum, Samsun</span>
               </li>
-              <li>
+              <li className="hidden md:block">
                 <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2.5 text-sm hover:text-green-400 transition-colors" data-testid="footer-whatsapp">
                   <SiWhatsapp className="w-4 h-4 flex-shrink-0 text-green-500" />
                   WhatsApp ile ulaşın
                 </a>
               </li>
-              <li>
+              <li className="hidden md:block">
                 <button
                   type="button"
                   onClick={() => setContactOpen(true)}
@@ -95,7 +95,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div>
+          <div className="hidden md:block">
             <h3 className="text-white font-bold text-lg mb-4">Kampanya</h3>
             <Link href="/kampanya">
               <div className="bg-gradient-to-br from-[#6B3480] to-[#9b59b6] rounded-xl p-4 hover:shadow-lg transition-shadow cursor-pointer group" data-testid="footer-campaign-link">
