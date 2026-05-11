@@ -1680,10 +1680,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 { key: "kediturustats", label: "Kedi Türü İstatistikleri", icon: <BarChart3 className="w-6 h-6" />, color: "text-violet-600" },
                 { key: "kopekturustats", label: "Köpek Türü İstatistikleri", icon: <BarChart3 className="w-6 h-6" />, color: "text-blue-600" },
                 { key: "hatirlatmalar", label: "Tekrar Sipariş Hatırlatmaları", icon: <Clock className="w-6 h-6" />, color: "text-teal-600" },
+                { key: "raporlama", label: "Raporlama (Mama Stoğu, Ciro)", icon: <BarChart3 className="w-6 h-6" />, color: "text-emerald-600" },
               ].map(item => (
                 <button
                   key={item.key}
-                  onClick={() => setYonetimSub(item.key)}
+                  onClick={() => {
+                    if (item.key === "raporlama") { setActiveSection("raporlama"); setYonetimSub(null); return; }
+                    setYonetimSub(item.key);
+                  }}
                   className="flex flex-col items-center gap-2 p-4 rounded-2xl border border-gray-100 bg-white shadow-sm hover:shadow-md hover:border-purple-200 transition-all text-center"
                   data-testid={`btn-yonetim-${item.key}`}
                 >
@@ -7775,11 +7779,15 @@ function StokSayimSection() {
 }
 
 function ReportsSection() {
-  const { data: reports, isLoading } = useQuery<any>({ queryKey: ["/api/admin/reports"] });
-  const [reportTab, setReportTab] = useState<string>("genel");
+  const { data: reports, isLoading, error } = useQuery<any>({ queryKey: ["/api/admin/reports"] });
+  const [reportTab, setReportTab] = useState<string>("mama-stok");
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>;
-  if (!reports) return null;
+  if (error || !reports) return (
+    <div className="p-4 rounded-lg border border-orange-200 bg-orange-50 text-sm text-orange-900" data-testid="reports-error">
+      Rapor verisi yüklenemedi. Lütfen sayfayı yenileyin veya tekrar giriş yapın.
+    </div>
+  );
 
   const reportTabs = [
     { key: "genel", label: "Genel" },
