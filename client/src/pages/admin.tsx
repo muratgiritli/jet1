@@ -7783,11 +7783,17 @@ function ReportsSection() {
   const [reportTab, setReportTab] = useState<string>("mama-stok");
 
   if (isLoading) return <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin" /></div>;
-  if (error || !reports) return (
-    <div className="p-4 rounded-lg border border-orange-200 bg-orange-50 text-sm text-orange-900" data-testid="reports-error">
-      Rapor verisi yüklenemedi. Lütfen sayfayı yenileyin veya tekrar giriş yapın.
-    </div>
-  );
+
+  if (error || !reports) {
+    return (
+      <div className="space-y-4">
+        <div className="p-3 rounded-lg border border-orange-200 bg-orange-50 text-xs text-orange-900" data-testid="reports-error">
+          Genel rapor verisi yüklenemedi (sipariş/müşteri analizi gösterilemiyor). Mama Stoğu raporu aşağıda çalışmaya devam ediyor.
+        </div>
+        <MamaStockSection />
+      </div>
+    );
+  }
 
   const reportTabs = [
     { key: "genel", label: "Genel" },

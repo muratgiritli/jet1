@@ -4939,8 +4939,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           .sort((a, b) => b.total - a.total),
         heatmapData,
       });
-    } catch (err) {
-      res.status(500).json({ message: "Reports error" });
+    } catch (err: any) {
+      console.error("[/api/admin/reports] error:", err?.message, err?.stack);
+      res.status(500).json({ message: "Reports error", detail: err?.message });
     }
   });
 
