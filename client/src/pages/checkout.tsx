@@ -1282,32 +1282,6 @@ export default function Checkout() {
                   <div>
                     <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Package className="w-4 h-4 text-amber-500 dark:text-amber-400" />
-                        <span className="text-sm font-medium" data-testid="text-min-label">Minimum Sipariş</span>
-                      </div>
-                      <span className="text-xs font-bold text-muted-foreground" data-testid="text-min-progress">
-                        {Math.round(subtotal)}/{CONFIG.minLimit} TL
-                      </span>
-                    </div>
-                    <Progress
-                      value={Math.min((subtotal / CONFIG.minLimit) * 100, 100)}
-                      className="h-2 [&>div]:bg-amber-500 dark:[&>div]:bg-amber-400"
-                      data-testid="bar-min"
-                    />
-                    <p className="text-xs font-medium mt-1.5 text-muted-foreground" data-testid="text-min-hint">
-                      {subtotal >= CONFIG.minLimit ? (
-                        <span className="text-chart-2 flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Minimum tutar aşıldı
-                        </span>
-                      ) : (
-                        `Minimum sipariş için ${Math.round(CONFIG.minLimit - subtotal)} TL daha ekleyin`
-                      )}
-                    </p>
-                  </div>
-
-                  <div>
-                    <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
-                      <div className="flex items-center gap-2 flex-wrap">
                         <Truck className="w-4 h-4 text-primary" />
                         <span className="text-sm font-medium" data-testid="text-ship-label">Ücretsiz Teslimat</span>
                       </div>
