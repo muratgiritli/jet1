@@ -290,6 +290,26 @@ export async function registerRoutes(
   }
 
   try {
+    await sharedPool.query(`
+      CREATE TABLE IF NOT EXISTS stock_movements (
+        id SERIAL PRIMARY KEY,
+        product_id INTEGER NOT NULL,
+        product_name TEXT NOT NULL,
+        barcode TEXT,
+        delta INTEGER NOT NULL,
+        mode TEXT NOT NULL,
+        new_stock INTEGER NOT NULL,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_stock_movements_created ON stock_movements(created_at DESC);`);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_stock_movements_mode_created ON stock_movements(mode, created_at DESC);`);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);`);
+  } catch (e) {
+    console.error("Stock movements table setup error:", e);
+  }
+
+  try {
     const defaults: Array<[string, string]> = [
       ["payment_nakit_enabled", "true"],
       ["payment_eft_enabled", "true"],
@@ -5295,7 +5315,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.patch("/api/admin/product-quick-update/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ürün ID" });
-    const { stock, skt, barcode } = req.body;
+    const { stock, skt, barcode, mode } = req.body;
     if (stock !== undefined && (typeof stock !== "number" || stock < 0 || stock > 99999)) return res.status(400).json({ message: "Geçersiz stok değeri" });
     if (skt !== undefined && typeof skt !== "string") return res.status(400).json({ message: "Geçersiz SKT" });
     if (barcode !== undefined && typeof barcode !== "string") return res.status(400).json({ message: "Geçersiz barkod" });
@@ -5308,10 +5328,65 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (skt !== undefined) { updates.push(`skt = $${idx++}`); values.push(skt); }
     if (barcode !== undefined) { updates.push(`barcode = $${idx++}`); values.push(barcode); }
     if (updates.length === 0) return res.status(400).json({ message: "Güncellenecek alan yok" });
-    values.push(id);
-    await sharedPool.query(`UPDATE products SET ${updates.join(", ")} WHERE id = $${idx}`, values);
-    const result = await sharedPool.query("SELECT * FROM products WHERE id = $1", [id]);
-    res.json(result.rows[0]);
+    const client = await sharedPool.connect();
+    try {
+      await client.query("BEGIN");
+      const before = await client.query("SELECT stock, name, barcode FROM products WHERE id = $1 FOR UPDATE", [id]);
+      if (before.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({ message: "Ürün bulunamadı" });
+      }
+      const oldStock: number = before.rows[0].stock ?? 0;
+      const upVals = [...values, id];
+      await client.query(`UPDATE products SET ${updates.join(", ")} WHERE id = $${idx}`, upVals);
+      if (stock !== undefined && stock !== oldStock) {
+        const delta = stock - oldStock;
+        const movMode = (mode === "add" || mode === "sub" || mode === "manual") ? mode : (delta > 0 ? "add" : "sub");
+        await client.query(
+          "INSERT INTO stock_movements (product_id, product_name, barcode, delta, mode, new_stock) VALUES ($1,$2,$3,$4,$5,$6)",
+          [id, before.rows[0].name, before.rows[0].barcode, delta, movMode, stock]
+        );
+      }
+      const result = await client.query("SELECT * FROM products WHERE id = $1", [id]);
+      await client.query("COMMIT");
+      res.json(result.rows[0]);
+    } catch (e) {
+      await client.query("ROLLBACK").catch(() => {});
+      console.error("quick-update transaction failed", e);
+      res.status(500).json({ message: "Güncelleme hatası" });
+    } finally {
+      client.release();
+    }
+  });
+
+  app.get("/api/admin/stock-movements", requireAdmin, async (req, res) => {
+    const month = String(req.query.month || "");
+    const mode = String(req.query.mode || "");
+    const conds: string[] = [];
+    const vals: any[] = [];
+    let i = 1;
+    if (/^\d{4}-\d{2}$/.test(month)) {
+      conds.push(`to_char(created_at AT TIME ZONE 'Europe/Istanbul', 'YYYY-MM') = $${i++}`);
+      vals.push(month);
+    }
+    if (mode === "add" || mode === "sub" || mode === "manual") {
+      conds.push(`mode = $${i++}`);
+      vals.push(mode);
+    }
+    const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
+    const rows = await sharedPool.query(
+      `SELECT * FROM stock_movements ${where} ORDER BY created_at DESC LIMIT 1000`,
+      vals
+    );
+    const summary = await sharedPool.query(
+      `SELECT to_char(created_at AT TIME ZONE 'Europe/Istanbul', 'YYYY-MM') AS month,
+              SUM(CASE WHEN delta < 0 THEN -delta ELSE 0 END)::int AS total_out,
+              SUM(CASE WHEN delta > 0 THEN delta ELSE 0 END)::int AS total_in,
+              COUNT(*)::int AS count
+         FROM stock_movements
+         GROUP BY month ORDER BY month DESC LIMIT 24`
+    );
+    res.json({ movements: rows.rows, monthly: summary.rows });
   });
 
   app.get("/api/customer/pet-profiles", async (req, res) => {

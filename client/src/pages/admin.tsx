@@ -7794,6 +7794,40 @@ function StokSayimSection() {
   const { data: allProducts = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
   const { toast } = useToast();
 
+  const istanbulNow = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul", year: "numeric", month: "2-digit" }).format(new Date());
+  const defaultMonth = istanbulNow.slice(0, 7);
+  const [reportMonth, setReportMonth] = useState(defaultMonth);
+  const [reportMode, setReportMode] = useState<"all" | "sub" | "add">("sub");
+  const [reportOpen, setReportOpen] = useState(false);
+  const { data: reportData, isLoading: reportLoading } = useQuery<{ movements: any[]; monthly: any[] }>({
+    queryKey: ["/api/admin/stock-movements", reportMonth, reportMode],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (reportMonth) params.set("month", reportMonth);
+      if (reportMode !== "all") params.set("mode", reportMode);
+      const res = await fetch(`/api/admin/stock-movements?${params}`, { credentials: "include" });
+      if (!res.ok) throw new Error("fail");
+      return res.json();
+    },
+    enabled: reportOpen,
+  });
+
+  const reportTotals = useMemo(() => {
+    const movs = reportData?.movements || [];
+    let totalIn = 0, totalOut = 0;
+    const byProduct: Record<string, { name: string; barcode: string | null; out: number; in: number; count: number }> = {};
+    for (const m of movs) {
+      const d = m.delta as number;
+      if (d > 0) totalIn += d; else totalOut += -d;
+      const k = String(m.product_id);
+      if (!byProduct[k]) byProduct[k] = { name: m.product_name, barcode: m.barcode, out: 0, in: 0, count: 0 };
+      if (d > 0) byProduct[k].in += d; else byProduct[k].out += -d;
+      byProduct[k].count += 1;
+    }
+    const ranked = Object.values(byProduct).sort((a, b) => (b.out + b.in) - (a.out + a.in));
+    return { totalIn, totalOut, ranked };
+  }, [reportData]);
+
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
@@ -7849,10 +7883,12 @@ function StokSayimSection() {
   const applyStock = async (product: any, newStock: number, delta?: number) => {
     if (newStock < 0) { toast({ title: "Stok 0'ın altına düşemez", variant: "destructive" }); return; }
     try {
+      const movMode = delta === undefined ? "manual" : (delta > 0 ? "add" : "sub");
       const res = await apiRequest("PATCH", `/api/admin/product-quick-update/${product.id}`, {
         stock: newStock,
         skt: editSkt || null,
         barcode: editBarcode || null,
+        mode: movMode,
       });
       const updated = await res.json();
       setScanLog(prev => [{
@@ -8058,6 +8094,135 @@ function StokSayimSection() {
           </CardContent>
         </Card>
       )}
+
+      <Card className="border-purple-200">
+        <CardHeader className="pb-2">
+          <button
+            type="button"
+            onClick={() => setReportOpen(o => !o)}
+            className="w-full flex items-center justify-between text-left"
+            data-testid="button-toggle-stock-report"
+          >
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Package className="w-4 h-4 text-purple-600" /> Aylık Stok Hareket Raporu
+            </CardTitle>
+            <ChevronDown className={`w-4 h-4 transition-transform ${reportOpen ? "rotate-180" : ""}`} />
+          </button>
+        </CardHeader>
+        {reportOpen && (
+          <CardContent className="p-3 space-y-3">
+            <div className="flex flex-wrap gap-2 items-end">
+              <div className="flex-1 min-w-[140px]">
+                <label className="text-xs text-muted-foreground block mb-1">Ay</label>
+                <Input
+                  type="month"
+                  value={reportMonth}
+                  onChange={e => setReportMonth(e.target.value)}
+                  className="h-9 text-sm"
+                  data-testid="input-report-month"
+                />
+              </div>
+              <div className="grid grid-cols-3 gap-1 p-1 bg-muted/40 rounded-lg">
+                <button type="button" onClick={() => setReportMode("sub")} className={`text-xs font-semibold px-3 py-1.5 rounded ${reportMode === "sub" ? "bg-red-600 text-white" : "text-muted-foreground"}`} data-testid="button-report-mode-sub">Düşülen</button>
+                <button type="button" onClick={() => setReportMode("add")} className={`text-xs font-semibold px-3 py-1.5 rounded ${reportMode === "add" ? "bg-green-600 text-white" : "text-muted-foreground"}`} data-testid="button-report-mode-add">Eklenen</button>
+                <button type="button" onClick={() => setReportMode("all")} className={`text-xs font-semibold px-3 py-1.5 rounded ${reportMode === "all" ? "bg-white shadow text-foreground" : "text-muted-foreground"}`} data-testid="button-report-mode-all">Tümü</button>
+              </div>
+            </div>
+
+            {reportLoading ? (
+              <div className="text-center py-6 text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin inline mr-2" />Yükleniyor...</div>
+            ) : (
+              <>
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="p-2 rounded-lg bg-red-50 border border-red-200 text-center">
+                    <div className="text-[10px] text-red-700 font-semibold">DÜŞÜLEN</div>
+                    <div className="text-lg font-bold text-red-700" data-testid="text-report-total-out">-{reportTotals.totalOut}</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-green-50 border border-green-200 text-center">
+                    <div className="text-[10px] text-green-700 font-semibold">EKLENEN</div>
+                    <div className="text-lg font-bold text-green-700" data-testid="text-report-total-in">+{reportTotals.totalIn}</div>
+                  </div>
+                  <div className="p-2 rounded-lg bg-blue-50 border border-blue-200 text-center">
+                    <div className="text-[10px] text-blue-700 font-semibold">HAREKET</div>
+                    <div className="text-lg font-bold text-blue-700" data-testid="text-report-count">{reportData?.movements?.length || 0}</div>
+                  </div>
+                </div>
+
+                {reportTotals.ranked.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-muted-foreground mb-1">Ürün Bazlı Özet</div>
+                    <div className="border rounded-lg divide-y max-h-64 overflow-y-auto">
+                      {reportTotals.ranked.map((p, i) => (
+                        <div key={i} className="flex items-center justify-between p-2 text-xs gap-2" data-testid={`row-report-product-${i}`}>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-medium">{p.name}</div>
+                            {p.barcode && <div className="text-[10px] text-muted-foreground font-mono">{p.barcode}</div>}
+                          </div>
+                          <div className="flex gap-1.5 shrink-0">
+                            {p.out > 0 && <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-bold">-{p.out}</span>}
+                            {p.in > 0 && <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-bold">+{p.in}</span>}
+                            <span className="text-muted-foreground">({p.count}x)</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {reportData?.movements && reportData.movements.length > 0 && (
+                  <details>
+                    <summary className="text-xs font-semibold text-muted-foreground cursor-pointer hover:text-foreground">Tüm Hareketler ({reportData.movements.length})</summary>
+                    <div className="border rounded-lg divide-y mt-2 max-h-72 overflow-y-auto">
+                      {reportData.movements.map((m: any) => (
+                        <div key={m.id} className="flex items-center justify-between p-2 text-xs gap-2" data-testid={`row-movement-${m.id}`}>
+                          <div className="min-w-0 flex-1">
+                            <div className="truncate font-medium">{m.product_name}</div>
+                            <div className="text-[10px] text-muted-foreground">{new Date(m.created_at).toLocaleString("tr-TR", { timeZone: "Europe/Istanbul" })}</div>
+                          </div>
+                          <div className="flex gap-1.5 shrink-0 items-center">
+                            <span className={`px-1.5 py-0.5 rounded font-bold ${m.delta > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                              {m.delta > 0 ? `+${m.delta}` : m.delta}
+                            </span>
+                            <span className="text-muted-foreground">→ {m.new_stock}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </details>
+                )}
+
+                {reportData?.monthly && reportData.monthly.length > 0 && (
+                  <details>
+                    <summary className="text-xs font-semibold text-muted-foreground cursor-pointer hover:text-foreground">Aylık Genel Özet</summary>
+                    <div className="border rounded-lg divide-y mt-2">
+                      {reportData.monthly.map((m: any) => (
+                        <button
+                          key={m.month}
+                          type="button"
+                          onClick={() => setReportMonth(m.month)}
+                          className="w-full flex items-center justify-between p-2 text-xs gap-2 hover:bg-muted/50"
+                          data-testid={`button-month-${m.month}`}
+                        >
+                          <span className="font-semibold">{m.month}</span>
+                          <div className="flex gap-1.5">
+                            <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-bold">-{m.total_out}</span>
+                            <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-bold">+{m.total_in}</span>
+                            <span className="text-muted-foreground">({m.count})</span>
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </details>
+                )}
+
+                {(!reportData?.movements || reportData.movements.length === 0) && (
+                  <div className="text-center py-6 text-sm text-muted-foreground">Bu ayda hareket yok.</div>
+                )}
+              </>
+            )}
+          </CardContent>
+        )}
+      </Card>
 
       {scanLog.length > 0 && (
         <Card>

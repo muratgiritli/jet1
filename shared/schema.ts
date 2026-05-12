@@ -474,6 +474,18 @@ export type BankTransferNotification = typeof bankTransferNotifications.$inferSe
 export const insertBankTransferNotificationSchema = createInsertSchema(bankTransferNotifications).omit({ id: true, status: true, createdAt: true });
 export type InsertBankTransferNotification = z.infer<typeof insertBankTransferNotificationSchema>;
 
+export const stockMovements = pgTable("stock_movements", {
+  id: serial("id").primaryKey(),
+  productId: integer("product_id").notNull(),
+  productName: text("product_name").notNull(),
+  barcode: text("barcode"),
+  delta: integer("delta").notNull(),
+  mode: text("mode").notNull(),
+  newStock: integer("new_stock").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export type StockMovement = typeof stockMovements.$inferSelect;
+
 export const subscriptions = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
   phone: text("phone").notNull(),
