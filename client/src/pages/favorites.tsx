@@ -146,6 +146,9 @@ export default function FavoritesPage() {
                           <p className="text-sm font-bold text-primary mt-0.5" data-testid={`text-fav-price-${product.id}`}>
                             {product.price} TL
                           </p>
+                          <span className="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full mt-0.5" data-testid={`text-fav-cash-${product.id}`}>
+                            Nakit: {(product.price * 0.9).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} TL
+                          </span>
                           <div className="flex items-center gap-2 mt-1.5">
                             {qty > 0 ? (
                               <div className="flex items-center gap-0">

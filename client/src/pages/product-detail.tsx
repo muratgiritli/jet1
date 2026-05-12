@@ -512,6 +512,11 @@ export default function ProductDetailPage() {
                     {displayOriginalPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                   </span>
                 )}
+                {!isCampaignMode && !campaignFiyat && (
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full" data-testid="text-cash-price-detail">
+                    Nakit: {(displayPrice * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                  </span>
+                )}
                 {product.skt && (
                   <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid="text-skt-detail">
                     S.K.T: {product.skt}

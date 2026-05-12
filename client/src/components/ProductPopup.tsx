@@ -99,7 +99,7 @@ export default function ProductPopup({ product, quantity, onUpdate, onClose }: P
             {product.name}
           </h3>
 
-          <div className="flex items-baseline gap-2">
+          <div className="flex items-baseline gap-2 flex-wrap">
             <span className="text-xl font-extrabold text-primary" data-testid="product-popup-price">
               {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
             </span>
@@ -109,6 +109,9 @@ export default function ProductPopup({ product, quantity, onUpdate, onClose }: P
               </span>
             )}
           </div>
+          <span className="inline-block text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full" data-testid="product-popup-cash-price">
+            Nakit Fiyatı: {(product.price * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+          </span>
 
           {product.weight && (
             <p className="text-xs text-muted-foreground">{product.weight}</p>
