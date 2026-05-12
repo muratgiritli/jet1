@@ -613,7 +613,10 @@ export default function ProductDetailPage() {
                       <Button
                         className="w-full"
                         style={{ backgroundColor: "#1565c0" }}
-                        onClick={() => updateQty(pid, 1, isCampaignMode)}
+                        onClick={() => {
+                          const blocked = updateQty(pid, 1, isCampaignMode);
+                          if (!blocked) setLocation("/odeme");
+                        }}
                         data-testid="btn-preorder-add"
                       >
                         <ShoppingCart className="w-4 h-4" />
@@ -627,7 +630,7 @@ export default function ProductDetailPage() {
                         data-testid="btn-preorder-go-cart"
                       >
                         <ShoppingCart className="w-4 h-4" />
-                        Sepete Git ({quantity})
+                        Ödemeye Git ({quantity})
                       </Button>
                     )}
                   </div>

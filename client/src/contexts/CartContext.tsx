@@ -239,6 +239,31 @@ export function CartProvider({ children }: { children: ReactNode }) {
           });
           return true;
         }
+        const stockNow = stockMapRef.current;
+        const preorderSet = preorderIdsRef.current;
+        const isPreorderTarget = preorderSet.has(id) && (stockNow.get(id) ?? 0) === 0;
+        const hasPreorderInCart = Object.keys(basketNow).some(
+          (bid) => (basketNow[bid] || 0) > 0 && preorderSet.has(bid) && (stockNow.get(bid) ?? 0) === 0
+        );
+        const hasNonPreorderInCart = Object.keys(basketNow).some(
+          (bid) => (basketNow[bid] || 0) > 0 && !(preorderSet.has(bid) && (stockNow.get(bid) ?? 0) === 0)
+        );
+        if (isPreorderTarget && hasNonPreorderInCart) {
+          toast({
+            title: "Ön sipariş tek başına verilir",
+            description: "Ön sipariş ürünleri sepete başka ürünle birlikte eklenemez. Önce sepetteki diğer ürünlerin siparişini tamamlayın.",
+            variant: "destructive",
+          });
+          return true;
+        }
+        if (!isPreorderTarget && hasPreorderInCart) {
+          toast({
+            title: "Sepetinizde ön sipariş ürünü var",
+            description: "Normal ürün eklemek için önce ön sipariş siparişinizi tamamlayın veya ön sipariş ürününü sepetten çıkarın.",
+            variant: "destructive",
+          });
+          return true;
+        }
       }
     }
     if (fromCampaign && delta > 0) {
