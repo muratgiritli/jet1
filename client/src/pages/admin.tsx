@@ -7785,9 +7785,11 @@ function StokSayimSection() {
   const [editStock, setEditStock] = useState("");
   const [editSkt, setEditSkt] = useState("");
   const [editBarcode, setEditBarcode] = useState("");
-  const [scanLog, setScanLog] = useState<Array<{ id: number; name: string; stock: number; skt: string; time: string }>>([]);
+  const [scanLog, setScanLog] = useState<Array<{ id: number; name: string; stock: number; skt: string; time: string; delta?: number }>>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [cameraOpen, setCameraOpen] = useState(false);
+  const [quickMode, setQuickMode] = useState<"manual" | "add" | "sub">("manual");
+  const [quickQty, setQuickQty] = useState("1");
   const { data: allProducts = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
   const { toast } = useToast();
 
@@ -7813,6 +7815,12 @@ function StokSayimSection() {
         setEditSkt(product.skt || "");
         setEditBarcode(product.barcode || "");
         setLastScannedBarcode(null);
+        if (quickMode === "add" || quickMode === "sub") {
+          const q = Math.max(1, parseInt(quickQty) || 1);
+          const delta = quickMode === "add" ? q : -q;
+          const newStock = Math.max(0, product.stock + delta);
+          await applyStock(product, newStock, delta);
+        }
       } else {
         toast({ title: "Barkod bulunamadı: " + barcode, description: "Ürünü isimle arayıp barkodu atayabilirsiniz.", variant: "destructive" });
         setFoundProduct(null);
@@ -7837,28 +7845,46 @@ function StokSayimSection() {
     setLastScannedBarcode(null);
   };
 
-  const handleUpdate = async () => {
-    if (!foundProduct) return;
+  const applyStock = async (product: any, newStock: number, delta?: number) => {
+    if (newStock < 0) { toast({ title: "Stok 0'ın altına düşemez", variant: "destructive" }); return; }
     try {
-      const res = await apiRequest("PATCH", `/api/admin/product-quick-update/${foundProduct.id}`, {
-        stock: parseInt(editStock),
+      const res = await apiRequest("PATCH", `/api/admin/product-quick-update/${product.id}`, {
+        stock: newStock,
         skt: editSkt || null,
         barcode: editBarcode || null,
       });
       const updated = await res.json();
       setScanLog(prev => [{
         id: updated.id,
-        name: updated.name || foundProduct.name,
-        stock: parseInt(editStock),
+        name: updated.name || product.name,
+        stock: newStock,
         skt: editSkt,
         time: new Date().toLocaleTimeString("tr-TR"),
+        delta,
       }, ...prev].slice(0, 50));
       queryClient.invalidateQueries({ queryKey: ["/api/products"] });
-      toast({ title: "Güncellendi", description: `${foundProduct.name} — Stok: ${editStock}, SKT: ${editSkt || "—"}` });
+      const deltaTxt = delta !== undefined ? ` (${delta > 0 ? "+" : ""}${delta})` : "";
+      toast({ title: "Güncellendi", description: `${product.name} — Stok: ${newStock}${deltaTxt}` });
       setFoundProduct(null);
+      setEditStock("");
     } catch {
       toast({ title: "Güncelleme hatası", variant: "destructive" });
     }
+  };
+
+  const handleQuickAdd = () => {
+    if (!foundProduct) return;
+    const q = Math.max(1, parseInt(quickQty) || 1);
+    applyStock(foundProduct, foundProduct.stock + q, q);
+  };
+  const handleQuickSub = () => {
+    if (!foundProduct) return;
+    const q = Math.max(1, parseInt(quickQty) || 1);
+    applyStock(foundProduct, Math.max(0, foundProduct.stock - q), -q);
+  };
+  const handleUpdate = async () => {
+    if (!foundProduct) return;
+    await applyStock(foundProduct, parseInt(editStock) || 0);
   };
 
   return (
@@ -7868,6 +7894,42 @@ function StokSayimSection() {
           <CardTitle className="text-sm flex items-center gap-2"><ScanLine className="w-4 h-4 text-blue-600" /> Barkod ile Ürün Bul</CardTitle>
         </CardHeader>
         <CardContent className="p-3 space-y-3">
+          <div className="grid grid-cols-3 gap-1.5 p-1 bg-muted/40 rounded-lg">
+            <button
+              type="button"
+              onClick={() => setQuickMode("manual")}
+              className={`text-xs font-semibold py-2 rounded-md transition-colors ${quickMode === "manual" ? "bg-white shadow text-foreground" : "text-muted-foreground"}`}
+              data-testid="btn-mode-manual"
+            >Manuel</button>
+            <button
+              type="button"
+              onClick={() => setQuickMode("add")}
+              className={`text-xs font-semibold py-2 rounded-md transition-colors flex items-center justify-center gap-1 ${quickMode === "add" ? "bg-green-600 shadow text-white" : "text-muted-foreground"}`}
+              data-testid="btn-mode-add"
+            ><Plus className="w-3 h-3" /> Mal Kabul</button>
+            <button
+              type="button"
+              onClick={() => setQuickMode("sub")}
+              className={`text-xs font-semibold py-2 rounded-md transition-colors flex items-center justify-center gap-1 ${quickMode === "sub" ? "bg-red-600 shadow text-white" : "text-muted-foreground"}`}
+              data-testid="btn-mode-sub"
+            ><Minus className="w-3 h-3" /> Satış</button>
+          </div>
+          {quickMode !== "manual" && (
+            <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-md px-2 py-1.5">
+              <Label className="text-xs whitespace-nowrap">Adet:</Label>
+              <Input
+                type="number"
+                min="1"
+                value={quickQty}
+                onChange={(e) => setQuickQty(e.target.value)}
+                className="h-7 w-16 text-center text-sm font-bold"
+                data-testid="input-quick-qty"
+              />
+              <p className="text-[11px] text-amber-800 flex-1">
+                Barkod okutulduğunda otomatik <strong>{quickMode === "add" ? `+${quickQty} eklenecek` : `-${quickQty} düşülecek`}</strong>.
+              </p>
+            </div>
+          )}
           <div className="flex gap-2">
             <Input
               placeholder="Barkod okutun veya girin..."
@@ -7940,9 +8002,39 @@ function StokSayimSection() {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-3 space-y-3">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="bg-muted/30 rounded-lg p-3 text-center">
+              <p className="text-xs text-muted-foreground">Mevcut Stok</p>
+              <p className="text-3xl font-extrabold" data-testid="text-current-stock">{foundProduct.stock}</p>
+            </div>
+            <div className="space-y-2">
+              <Label className="text-xs font-semibold">Hızlı Ekle / Çıkar</Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  type="number"
+                  min="1"
+                  value={quickQty}
+                  onChange={(e) => setQuickQty(e.target.value)}
+                  className="w-20 text-center text-lg font-bold"
+                  data-testid="input-quick-qty-card"
+                />
+                <Button onClick={handleQuickAdd} className="flex-1 bg-green-600 hover:bg-green-700 text-white" data-testid="btn-quick-add">
+                  <Plus className="w-4 h-4 mr-1" /> Ekle (+{quickQty || 1})
+                </Button>
+                <Button onClick={handleQuickSub} className="flex-1 bg-red-600 hover:bg-red-700 text-white" data-testid="btn-quick-sub">
+                  <Minus className="w-4 h-4 mr-1" /> Çıkar (-{quickQty || 1})
+                </Button>
+              </div>
+              <div className="flex gap-1">
+                {[1, 5, 10, 20].map(n => (
+                  <Button key={n} size="sm" variant="outline" className="flex-1 h-7 text-xs" onClick={() => setQuickQty(String(n))} data-testid={`btn-qty-${n}`}>
+                    {n}
+                  </Button>
+                ))}
+              </div>
+            </div>
+            <div className="border-t pt-3 grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div>
-                <Label className="text-xs">Stok Adedi</Label>
+                <Label className="text-xs">Stok Yaz (Manuel)</Label>
                 <Input type="number" value={editStock} onChange={e => setEditStock(e.target.value)} className="mt-1 text-lg font-bold" data-testid="input-edit-stock" />
               </div>
               <div>
@@ -7956,7 +8048,7 @@ function StokSayimSection() {
             </div>
             <div className="flex gap-2">
               <Button onClick={handleUpdate} className="flex-1" style={{ backgroundColor: "#6B3480" }} data-testid="btn-save-product">
-                <Save className="w-4 h-4 mr-2" /> Kaydet
+                <Save className="w-4 h-4 mr-2" /> Manuel Kaydet
               </Button>
               <Button variant="outline" onClick={() => setFoundProduct(null)} data-testid="btn-cancel-edit">
                 <X className="w-4 h-4" />
@@ -7974,7 +8066,12 @@ function StokSayimSection() {
               {scanLog.map((log, i) => (
                 <div key={`${log.id}-${i}`} className="flex flex-col sm:flex-row sm:items-center justify-between text-xs p-1.5 rounded bg-muted/30 gap-0.5">
                   <span className="truncate font-medium">{log.name}</span>
-                  <div className="flex gap-2 text-muted-foreground shrink-0">
+                  <div className="flex gap-2 text-muted-foreground shrink-0 items-center">
+                    {log.delta !== undefined && (
+                      <span className={`px-1.5 py-0.5 rounded font-bold ${log.delta > 0 ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                        {log.delta > 0 ? `+${log.delta}` : log.delta}
+                      </span>
+                    )}
                     <span>Stok: <strong className="text-foreground">{log.stock}</strong></span>
                     {log.skt && <span>SKT: <strong className="text-foreground">{log.skt}</strong></span>}
                     <span>{log.time}</span>
