@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   LogOut,
   Plus,
+  Minus,
   Pencil,
   Trash2,
   Package,
