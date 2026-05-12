@@ -116,6 +116,12 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
+  httpServer.on("error", (err: any) => {
+    console.error("[FATAL] httpServer error:", err?.code, err?.message);
+    if (err?.code === "EADDRINUSE" || err?.code === "EACCES") {
+      process.exit(1);
+    }
+  });
   httpServer.listen(
     {
       port,
