@@ -16,7 +16,6 @@ import SEO, { LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD, SITE_DOMAIN } from "@/compo
 import SignupBonusBanner from "@/components/SignupBonusBanner";
 import ContactDialog from "@/components/ContactDialog";
 import WelcomeCouponBanner from "@/components/WelcomeCouponBanner";
-import ComingSoonPopup from "@/components/ComingSoonPopup";
 import catDog from "@/assets/images/cat-dog.webp";
 import catCat from "@/assets/images/cat-cat.webp";
 import catBird from "@/assets/images/cat-bird.webp";
@@ -963,8 +962,6 @@ export default function Landing() {
         canonical={`${SITE_DOMAIN}/`}
         jsonLd={[LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD]}
       />
-
-      <ComingSoonPopup />
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 md:px-6 lg:px-8">
         {/* MOBILE-ONLY: welcome coupon banner for logged-in users */}
