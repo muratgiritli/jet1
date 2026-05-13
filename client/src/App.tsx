@@ -51,6 +51,7 @@ const OrderTrackingPage = lazy(() => import("@/pages/order-tracking"));
 const FavoritesPage = lazy(() => import("@/pages/favorites"));
 const AuthPage = lazy(() => import("@/pages/auth"));
 const AbonePage = lazy(() => import("@/pages/abone"));
+const SokakCanlariPage = lazy(() => import("@/pages/sokak-canlari"));
 const ProfilePage = lazy(() => import("@/pages/profile"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 const CampaignPage = lazy(() => import("@/pages/campaign"));
@@ -110,6 +111,7 @@ function Router() {
         <Route path="/favoriler" component={FavoritesPage} />
         <Route path="/giris" component={AuthPage} />
         <Route path="/abone" component={AbonePage} />
+        <Route path="/sokak-canlari" component={SokakCanlariPage} />
         <Route path="/hesabim" component={ProfilePage} />
         <Route path="/demo" component={DemoLanding} />
         <Route path="/demo1" component={Demo1Page} />

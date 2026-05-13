@@ -275,6 +275,13 @@ export async function registerRoutes(
   }
 
   try {
+    await sharedPool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS is_street_animal boolean NOT NULL DEFAULT false;`);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_products_street_animal ON products (is_street_animal) WHERE is_street_animal = true;`);
+  } catch (e) {
+    console.error("Products is_street_animal migration error:", e);
+  }
+
+  try {
     await sharedPool.query(`
       CREATE TABLE IF NOT EXISTS subscriptions (
         id SERIAL PRIMARY KEY,
@@ -1520,7 +1527,106 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     const query = (req.query.q as string || "").trim();
     if (!query || query.length < 2) return res.json([]);
     const results = await storage.searchProducts(query);
-    res.json(results.filter(p => p.isActive).slice(0, 20).map(({ costPrice, ...rest }) => rest));
+    res.json(results.filter(p => p.isActive && !(p as any).isStreetAnimal).slice(0, 20).map(({ costPrice, ...rest }) => rest));
+  });
+
+  app.get("/api/street-animals", async (_req, res) => {
+    try {
+      const r = await sharedPool.query(
+        `SELECT id, name, price, original_price AS "originalPrice", img, stock, barcode, is_active AS "isActive", is_street_animal AS "isStreetAnimal"
+         FROM products WHERE is_street_animal = true AND is_active = true ORDER BY id DESC`
+      );
+      res.setHeader("Cache-Control", "public, max-age=30, stale-while-revalidate=120");
+      res.json(r.rows);
+    } catch (e: any) {
+      console.error("[/api/street-animals]", e?.message);
+      res.status(500).json({ message: "Hata" });
+    }
+  });
+
+  app.get("/api/admin/street-animals", requireAdmin, async (_req, res) => {
+    const r = await sharedPool.query(
+      `SELECT id, name, price, original_price AS "originalPrice", img, stock, barcode, is_active AS "isActive"
+       FROM products WHERE is_street_animal = true ORDER BY id DESC`
+    );
+    res.json(r.rows);
+  });
+
+  app.post("/api/admin/street-animals/quick-create", requireAdmin, upload.single("image"), async (req, res) => {
+    try {
+      const name = String(req.body.name || "").trim();
+      const price = parseFloat(req.body.price);
+      const originalPriceRaw = req.body.originalPrice ? parseFloat(req.body.originalPrice) : null;
+      const stock = req.body.stock !== undefined ? parseInt(String(req.body.stock)) : 0;
+      const barcode = req.body.barcode ? String(req.body.barcode).trim() : null;
+      if (!name) return res.status(400).json({ message: "Ürün adı gerekli" });
+      if (!price || price <= 0) return res.status(400).json({ message: "Geçerli fiyat gerekli" });
+
+      let cat = (await storage.getBrandCategories()).find(
+        c => c.animal === "sokak_canlari" && c.subcategory === "sokak_canlari"
+      );
+      if (!cat) {
+        const [created] = await db.insert(brandCategories).values({
+          brandName: "Sokak Canları",
+          brandSlug: "sokak-canlari",
+          animal: "sokak_canlari",
+          subcategory: "sokak_canlari",
+        }).returning();
+        cat = created;
+      }
+
+      const product = await storage.createProduct({
+        name,
+        price,
+        originalPrice: originalPriceRaw && originalPriceRaw > price ? originalPriceRaw : null,
+        skt: null,
+        img: null,
+        originalImg: null,
+        brandCategoryId: cat!.id,
+        isActive: true,
+        stock: isNaN(stock) ? 0 : stock,
+        barcode,
+        costPrice: null,
+        mamaType: null,
+        preorderEnabled: false,
+        isStreetAnimal: true,
+      } as any);
+
+      if (req.file && req.file.mimetype.startsWith("image/")) {
+        try {
+          const imgPath = await saveProductImage(req.file.buffer, product.id);
+          await storage.updateProduct(product.id, { img: imgPath });
+          (product as any).img = imgPath;
+        } catch (e: any) {
+          console.error("[street-animals quick-create] image save failed:", e?.message);
+        }
+      }
+
+      res.status(201).json(product);
+    } catch (err: any) {
+      console.error("[/api/admin/street-animals/quick-create]", err?.message, err?.stack);
+      res.status(500).json({ message: "Oluşturulamadı", detail: err?.message });
+    }
+  });
+
+  app.patch("/api/admin/street-animals/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz id" });
+    const allowed: any = {};
+    if (req.body.isActive !== undefined) allowed.isActive = !!req.body.isActive;
+    if (req.body.price !== undefined) allowed.price = parseFloat(req.body.price);
+    if (req.body.stock !== undefined) allowed.stock = parseInt(String(req.body.stock));
+    if (req.body.name !== undefined) allowed.name = String(req.body.name).trim();
+    if (Object.keys(allowed).length === 0) return res.status(400).json({ message: "Güncellenecek alan yok" });
+    const updated = await storage.updateProduct(id, allowed);
+    res.json(updated);
+  });
+
+  app.delete("/api/admin/street-animals/:id", requireAdmin, async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz id" });
+    await sharedPool.query("DELETE FROM products WHERE id = $1 AND is_street_animal = true", [id]);
+    res.json({ ok: true });
   });
 
   app.post("/api/admin/login", async (req, res) => {

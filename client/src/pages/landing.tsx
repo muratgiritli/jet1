@@ -473,6 +473,23 @@ function CategoryGrid() {
   );
 }
 
+function SokakCanlariBanner() {
+  return (
+    <div className="my-4 md:my-6" data-testid="section-sokak-banner">
+      <Link href="/sokak-canlari">
+        <a className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform" data-testid="link-sokak-canlari">
+          <img
+            src={new URL("@assets/CUVAL_MAMA_1778678246834.png", import.meta.url).href}
+            alt="Sokak Canları için Çuval Mama Kampanyası"
+            className="w-full h-auto block"
+            loading="lazy"
+          />
+        </a>
+      </Link>
+    </div>
+  );
+}
+
 function WhyJetgo() {
   const items = [
     { emoji: "🚚", title: "1 Saat İçinde Kapında", desc: "Sipariş ver, 1 saat içinde kapına gelsin. İnternetten günlerce bekleme derdi yok.", color: "#f59e0b", bg: "from-amber-50 to-orange-50", border: "border-amber-200" },
@@ -991,6 +1008,10 @@ export default function Landing() {
           <div className="md:max-w-4xl md:mx-auto">
             <CategoryGrid />
           </div>
+        </div>
+
+        <div className="md:max-w-5xl md:mx-auto">
+          <SokakCanlariBanner />
         </div>
 
         {/* DESKTOP STATS BAR */}

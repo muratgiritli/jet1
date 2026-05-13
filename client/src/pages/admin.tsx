@@ -75,6 +75,7 @@ import {
   Gift,
   QrCode,
   Download,
+  Heart,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1633,6 +1634,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "bildirim", label: "Bildirim", icon: <Bell className="w-3.5 h-3.5" /> },
             { key: "havale", label: "Havale", icon: <Banknote className="w-3.5 h-3.5" /> },
             { key: "banner", label: "Banner", icon: <ImageLucide className="w-3.5 h-3.5" /> },
+            { key: "sokakcanlari", label: "Sokak Canları", icon: <Heart className="w-3.5 h-3.5" /> },
             { key: "abone", label: "Abone", icon: <Gift className="w-3.5 h-3.5" /> },
             { key: "raporlama", label: "Raporlama", icon: <BarChart3 className="w-3.5 h-3.5" /> },
             { key: "stoksayim", label: "Stok Sayım", icon: <ScanLine className="w-3.5 h-3.5" /> },
@@ -1669,6 +1671,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "bildirim" && <NotificationsSection />}
         {activeSection === "havale" && <BankTransferAdminSection />}
         {activeSection === "banner" && <BannersSection />}
+        {activeSection === "sokakcanlari" && <StreetAnimalsSection />}
         {activeSection === "abone" && <SubscriptionsSection />}
         {activeSection === "raporlama" && <ReportsSection />}
         {activeSection === "stoksayim" && <StokSayimSection />}
@@ -5913,6 +5916,143 @@ function TopPromoBannerAdmin() {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function StreetAnimalsSection() {
+  const { toast } = useToast();
+  const { data: items = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/street-animals"] });
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [originalPrice, setOriginalPrice] = useState("");
+  const [stock, setStock] = useState("0");
+  const [barcode, setBarcode] = useState("");
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const fd = new FormData();
+      fd.append("name", name);
+      fd.append("price", price);
+      if (originalPrice) fd.append("originalPrice", originalPrice);
+      fd.append("stock", stock);
+      if (barcode) fd.append("barcode", barcode);
+      if (imageFile) fd.append("image", imageFile);
+      const res = await fetch("/api/admin/street-animals/quick-create", { method: "POST", body: fd, credentials: "include" });
+      if (!res.ok) throw new Error((await res.json()).message || "Hata");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/street-animals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/street-animals"] });
+      setName(""); setPrice(""); setOriginalPrice(""); setStock("0"); setBarcode(""); setImageFile(null);
+      toast({ title: "Ürün eklendi" });
+    },
+    onError: (e: any) => toast({ title: e?.message || "Hata", variant: "destructive" }),
+  });
+
+  const toggleMutation = useMutation({
+    mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
+      await apiRequest("PATCH", `/api/admin/street-animals/${id}`, { isActive });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/street-animals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/street-animals"] });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/admin/street-animals/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/street-animals"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/street-animals"] });
+      toast({ title: "Silindi" });
+    },
+  });
+
+  return (
+    <div className="space-y-4">
+      <Card className="border-amber-300">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Heart className="w-4 h-4 text-red-500 fill-red-500" /> Sokak Canları - Ürün Ekle
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 space-y-2">
+          <Input placeholder="Ürün adı *" value={name} onChange={e => setName(e.target.value)} className="h-9 text-sm" data-testid="input-sokak-name" />
+          <div className="grid grid-cols-2 gap-2">
+            <Input placeholder="Fiyat (₺) *" value={price} onChange={e => setPrice(e.target.value)} type="number" step="0.01" className="h-9 text-sm" data-testid="input-sokak-price" />
+            <Input placeholder="Eski fiyat (opsiyonel)" value={originalPrice} onChange={e => setOriginalPrice(e.target.value)} type="number" step="0.01" className="h-9 text-sm" data-testid="input-sokak-orig-price" />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Input placeholder="Stok" value={stock} onChange={e => setStock(e.target.value)} type="number" className="h-9 text-sm" data-testid="input-sokak-stock" />
+            <Input placeholder="Barkod (opsiyonel)" value={barcode} onChange={e => setBarcode(e.target.value)} className="h-9 text-sm" data-testid="input-sokak-barcode" />
+          </div>
+          <div>
+            <label className="text-xs text-muted-foreground block mb-1">Ürün görseli</label>
+            <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="text-xs" data-testid="input-sokak-image" />
+            {imageFile && <p className="text-xs text-green-600 mt-1">{imageFile.name}</p>}
+          </div>
+          <Button
+            onClick={() => createMutation.mutate()}
+            disabled={createMutation.isPending || !name || !price}
+            className="w-full bg-amber-600 hover:bg-amber-700"
+            data-testid="button-sokak-create"
+          >
+            {createMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Plus className="w-4 h-4 mr-2" />}
+            Ürün Ekle
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Mevcut Ürünler ({items.length})</CardTitle>
+        </CardHeader>
+        <CardContent className="p-3">
+          {isLoading ? (
+            <div className="text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin inline mr-2" />Yükleniyor...</div>
+          ) : items.length === 0 ? (
+            <p className="text-sm text-muted-foreground text-center py-4">Henüz ürün yok</p>
+          ) : (
+            <div className="space-y-2">
+              {items.map(it => (
+                <div key={it.id} className="flex items-center gap-2 p-2 border rounded-lg" data-testid={`row-sokak-${it.id}`}>
+                  <div className="w-12 h-12 bg-gray-100 rounded overflow-hidden flex-shrink-0 flex items-center justify-center">
+                    {it.img ? <img src={it.img} alt="" className="w-full h-full object-cover" /> : <Package className="w-5 h-5 text-gray-300" />}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium truncate" data-testid={`text-sokak-name-${it.id}`}>{it.name}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {Number(it.price).toFixed(2)}₺ • Stok: {it.stock}
+                      {!it.isActive && <span className="text-red-500 ml-1">(Pasif)</span>}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs"
+                    onClick={() => toggleMutation.mutate({ id: it.id, isActive: !it.isActive })}
+                    data-testid={`button-sokak-toggle-${it.id}`}
+                  >
+                    {it.isActive ? "Pasifleştir" : "Aktifleştir"}
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    className="h-8 text-xs"
+                    onClick={() => { if (confirm("Bu ürünü silmek istediğine emin misin?")) deleteMutation.mutate(it.id); }}
+                    data-testid={`button-sokak-delete-${it.id}`}
+                  >
+                    Sil
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </div>
   );
 }
 
