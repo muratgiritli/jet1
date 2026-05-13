@@ -5810,22 +5810,25 @@ function BannersSection() {
 
 function BreedBannersAdmin() {
   const { toast } = useToast();
-  const { data, isLoading } = useQuery<{ enabled: boolean; b1: any; b2: any }>({
+  const { data, isLoading } = useQuery<{ enabled: boolean; b1: any; b2: any; b3: any; b4: any }>({
     queryKey: ["/api/public/breed-banners"],
   });
   const [enabled, setEnabled] = useState(true);
   const [b1, setB1] = useState({ image: "", link: "", alt: "" });
   const [b2, setB2] = useState({ image: "", link: "", alt: "" });
+  const [b3, setB3] = useState({ image: "", link: "", alt: "" });
+  const [b4, setB4] = useState({ image: "", link: "", alt: "" });
 
   useEffect(() => {
     if (data) {
       setEnabled(data.enabled);
-      setB1({ image: data.b1.image || "", link: data.b1.link || "", alt: data.b1.alt || "" });
-      setB2({ image: data.b2.image || "", link: data.b2.link || "", alt: data.b2.alt || "" });
+      const pick = (b: any) => ({ image: b.image || "", link: b.link || "", alt: b.alt || "" });
+      setB1(pick(data.b1)); setB2(pick(data.b2)); setB3(pick(data.b3)); setB4(pick(data.b4));
     }
   }, [data]);
 
-  const handleFile = (file: File, target: 1 | 2) => {
+  const setters: Record<1 | 2 | 3 | 4, typeof setB1> = { 1: setB1, 2: setB2, 3: setB3, 4: setB4 };
+  const handleFile = (file: File, target: 1 | 2 | 3 | 4) => {
     if (file.size > 2 * 1024 * 1024) {
       toast({ title: "Görsel çok büyük (max 2MB)", variant: "destructive" });
       return;
@@ -5833,15 +5836,14 @@ function BreedBannersAdmin() {
     const r = new FileReader();
     r.onload = () => {
       const url = r.result as string;
-      if (target === 1) setB1(prev => ({ ...prev, image: url }));
-      else setB2(prev => ({ ...prev, image: url }));
+      setters[target](prev => ({ ...prev, image: url }));
     };
     r.readAsDataURL(file);
   };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("PATCH", "/api/admin/breed-banners", { enabled, b1, b2 });
+      await apiRequest("PATCH", "/api/admin/breed-banners", { enabled, b1, b2, b3, b4 });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/public/breed-banners"] });
@@ -5850,7 +5852,7 @@ function BreedBannersAdmin() {
     onError: () => toast({ title: "Kayıt hatası", variant: "destructive" }),
   });
 
-  const renderEditor = (idx: 1 | 2, b: typeof b1, setB: typeof setB1) => (
+  const renderEditor = (idx: 1 | 2 | 3 | 4, b: typeof b1, setB: typeof setB1) => (
     <div className="border rounded-lg p-3 space-y-2">
       <p className="text-xs font-bold text-purple-700">Banner #{idx}</p>
       <div>
@@ -5895,6 +5897,8 @@ function BreedBannersAdmin() {
             <div className="grid md:grid-cols-2 gap-3">
               {renderEditor(1, b1, setB1)}
               {renderEditor(2, b2, setB2)}
+              {renderEditor(3, b3, setB3)}
+              {renderEditor(4, b4, setB4)}
             </div>
             <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full" data-testid="button-save-breed-banners">
               {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Kaydet

@@ -342,6 +342,12 @@ export async function registerRoutes(
       ["breed_banner2_image", ""],
       ["breed_banner2_link", "/kategori/kopek/toy-poodle-mamalari"],
       ["breed_banner2_alt", "Toy Poodle Özel Mamaları"],
+      ["breed_banner3_image", ""],
+      ["breed_banner3_link", "/kategori/kopek/cavalier-king-charles-mamalari"],
+      ["breed_banner3_alt", "Cavalier King Charles Özel Mamaları"],
+      ["breed_banner4_image", ""],
+      ["breed_banner4_link", "/kategori/kopek/shih-tzu-mamalari"],
+      ["breed_banner4_alt", "Shih Tzu Özel Mamaları"],
     ];
     for (const [key, value] of defaults) {
       await sharedPool.query(
@@ -5518,19 +5524,29 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.get("/api/public/breed-banners", async (_req, res) => {
+    const defaults = {
+      b1: { link: "/kategori/kopek/maltese-mamalari", alt: "Maltese Özel Mamaları" },
+      b2: { link: "/kategori/kopek/toy-poodle-mamalari", alt: "Toy Poodle Özel Mamaları" },
+      b3: { link: "/kategori/kopek/cavalier-king-charles-mamalari", alt: "Cavalier King Charles Özel Mamaları" },
+      b4: { link: "/kategori/kopek/shih-tzu-mamalari", alt: "Shih Tzu Özel Mamaları" },
+    };
     try {
       const r = await sharedPool.query(
-        "SELECT key, value FROM app_settings WHERE key IN ('breed_banner_enabled','breed_banner1_image','breed_banner1_link','breed_banner1_alt','breed_banner2_image','breed_banner2_link','breed_banner2_alt')"
+        "SELECT key, value FROM app_settings WHERE key LIKE 'breed_banner%'"
       );
       const m: any = {};
       for (const row of r.rows) m[row.key] = row.value;
+      const build = (i: 1 | 2 | 3 | 4) => ({
+        image: m[`breed_banner${i}_image`] || "",
+        link: m[`breed_banner${i}_link`] || defaults[`b${i}`].link,
+        alt: m[`breed_banner${i}_alt`] || defaults[`b${i}`].alt,
+      });
       res.json({
         enabled: m.breed_banner_enabled === "1",
-        b1: { image: m.breed_banner1_image || "", link: m.breed_banner1_link || "/kategori/kopek/maltese-mamalari", alt: m.breed_banner1_alt || "Maltese Özel Mamaları" },
-        b2: { image: m.breed_banner2_image || "", link: m.breed_banner2_link || "/kategori/kopek/toy-poodle-mamalari", alt: m.breed_banner2_alt || "Toy Poodle Özel Mamaları" },
+        b1: build(1), b2: build(2), b3: build(3), b4: build(4),
       });
     } catch {
-      res.json({ enabled: true, b1: { image: "", link: "/kategori/kopek/maltese-mamalari", alt: "Maltese" }, b2: { image: "", link: "/kategori/kopek/toy-poodle-mamalari", alt: "Toy Poodle" } });
+      res.json({ enabled: true, b1: { image: "", ...defaults.b1 }, b2: { image: "", ...defaults.b2 }, b3: { image: "", ...defaults.b3 }, b4: { image: "", ...defaults.b4 } });
     }
   });
 
@@ -5538,7 +5554,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     const body = req.body || {};
     const updates: Array<[string, string]> = [];
     if (body.enabled !== undefined) updates.push(["breed_banner_enabled", body.enabled ? "1" : "0"]);
-    for (const idx of [1, 2] as const) {
+    for (const idx of [1, 2, 3, 4] as const) {
       const b = body[`b${idx}`];
       if (b && typeof b === "object") {
         if (typeof b.image === "string") {

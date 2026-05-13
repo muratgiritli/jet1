@@ -490,30 +490,27 @@ function SokakCanlariBanner() {
   );
 }
 
+interface BreedBannerItem { image: string; link: string; alt: string }
 interface BreedBannersData {
   enabled: boolean;
-  b1: { image: string; link: string; alt: string };
-  b2: { image: string; link: string; alt: string };
+  b1: BreedBannerItem; b2: BreedBannerItem; b3: BreedBannerItem; b4: BreedBannerItem;
 }
 function BreedBannersRow() {
   const { data } = useQuery<BreedBannersData>({ queryKey: ["/api/public/breed-banners"] });
   if (data && !data.enabled) return null;
-  const defaultImg1 = new URL("@assets/maltase_1778698301344.png", import.meta.url).href;
-  const defaultImg2 = new URL("@assets/poodle_1778698301344.png", import.meta.url).href;
-  const breeds = [
-    {
-      img: data?.b1.image || defaultImg1,
-      alt: data?.b1.alt || "Maltese Özel Mamaları",
-      href: data?.b1.link || "/kategori/kopek/maltese-mamalari",
-      testid: "link-breed-1",
-    },
-    {
-      img: data?.b2.image || defaultImg2,
-      alt: data?.b2.alt || "Toy Poodle Özel Mamaları",
-      href: data?.b2.link || "/kategori/kopek/toy-poodle-mamalari",
-      testid: "link-breed-2",
-    },
+  const defaults = [
+    { img: new URL("@assets/maltase_1778698301344.png", import.meta.url).href, alt: "Maltese Özel Mamaları", href: "/kategori/kopek/maltese-mamalari" },
+    { img: new URL("@assets/poodle_1778698301344.png", import.meta.url).href, alt: "Toy Poodle Özel Mamaları", href: "/kategori/kopek/toy-poodle-mamalari" },
+    { img: new URL("@assets/CAVALIER_KING_1778699500262.png", import.meta.url).href, alt: "Cavalier King Charles Özel Mamaları", href: "/kategori/kopek/cavalier-king-charles-mamalari" },
+    { img: new URL("@assets/SHIH_TZU_1778699500263.png", import.meta.url).href, alt: "Shih Tzu Özel Mamaları", href: "/kategori/kopek/shih-tzu-mamalari" },
   ];
+  const slots: BreedBannerItem[] = data ? [data.b1, data.b2, data.b3, data.b4] : [];
+  const breeds = defaults.map((d, i) => ({
+    img: slots[i]?.image || d.img,
+    alt: slots[i]?.alt || d.alt,
+    href: slots[i]?.link || d.href,
+    testid: `link-breed-${i + 1}`,
+  }));
   return (
     <div className="my-4 md:my-6 grid grid-cols-2 gap-2 md:gap-4" data-testid="section-breed-banners">
       {breeds.map((b, i) => (
