@@ -170,7 +170,7 @@ function AppShell() {
     <>
       {!isAdmin && !isDemo && <InstallBanner />}
       {!isAdmin && !isDemo && <Header />}
-      {!isAdmin && !isDemo && <TopPromoBanner />}
+      {!isAdmin && !isDemo && location === "/" && <TopPromoBanner />}
       <ErrorBoundary><Router /></ErrorBoundary>
       {!isAdmin && !isDemo && location === "/" && <Footer />}
       {!isAdmin && !isDemo && <FloatingCartBar />}

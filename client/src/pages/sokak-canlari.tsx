@@ -62,17 +62,23 @@ export default function SokakCanlariPage() {
                     className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow"
                     data-testid={`card-street-product-${p.id}`}
                   >
-                    <div className="aspect-square bg-gray-50 flex items-center justify-center overflow-hidden">
-                      {p.img ? (
-                        <img src={p.img} alt={p.name} className="w-full h-full object-cover" loading="lazy" />
-                      ) : (
-                        <div className="text-gray-300 text-xs">Görsel yok</div>
-                      )}
-                    </div>
+                    <Link href={`/urun/${p.id}`}>
+                      <a className="block aspect-square bg-white flex items-center justify-center overflow-hidden p-2 cursor-pointer" data-testid={`link-img-${p.id}`}>
+                        {p.img ? (
+                          <img src={p.img} alt={p.name} className="max-w-full max-h-full object-contain" loading="lazy" />
+                        ) : (
+                          <div className="text-gray-300 text-xs">Görsel yok</div>
+                        )}
+                      </a>
+                    </Link>
                     <div className="p-2.5 md:p-3 flex flex-col flex-1">
-                      <h3 className="text-xs md:text-sm font-semibold text-gray-900 line-clamp-2 mb-1.5" data-testid={`text-name-${p.id}`}>
-                        {p.name}
-                      </h3>
+                      <Link href={`/urun/${p.id}`}>
+                        <a className="cursor-pointer hover:text-orange-600 transition-colors" data-testid={`link-name-${p.id}`}>
+                          <h3 className="text-xs md:text-sm font-semibold text-gray-900 line-clamp-2 mb-1.5 hover:text-orange-600" data-testid={`text-name-${p.id}`}>
+                            {p.name}
+                          </h3>
+                        </a>
+                      </Link>
                       <div className="mt-auto">
                         <div className="flex items-baseline gap-1.5 mb-2">
                           {p.originalPrice && p.originalPrice > p.price && (
