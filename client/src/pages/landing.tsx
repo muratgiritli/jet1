@@ -490,6 +490,37 @@ function SokakCanlariBanner() {
   );
 }
 
+function BreedBannersRow() {
+  const breeds = [
+    {
+      img: new URL("@assets/maltase_1778698301344.png", import.meta.url).href,
+      alt: "Maltese Özel Mamaları",
+      href: "/kategori/kopek/maltese-mamalari",
+      testid: "link-breed-maltese",
+    },
+    {
+      img: new URL("@assets/poodle_1778698301344.png", import.meta.url).href,
+      alt: "Toy Poodle Özel Mamaları",
+      href: "/kategori/kopek/toy-poodle-mamalari",
+      testid: "link-breed-poodle",
+    },
+  ];
+  return (
+    <div className="my-4 md:my-6 grid grid-cols-2 gap-2 md:gap-4" data-testid="section-breed-banners">
+      {breeds.map(b => (
+        <Link key={b.href} href={b.href}>
+          <a
+            className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.01] transition-transform"
+            data-testid={b.testid}
+          >
+            <img src={b.img} alt={b.alt} className="w-full h-auto block" loading="lazy" />
+          </a>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 function VeterinerMamaBanner() {
   return (
     <div className="my-4 md:my-6" data-testid="section-veteriner-banner">
@@ -1029,6 +1060,7 @@ export default function Landing() {
 
         <div className="md:max-w-5xl md:mx-auto">
           <SokakCanlariBanner />
+          <BreedBannersRow />
           <VeterinerMamaBanner />
         </div>
 
