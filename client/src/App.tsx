@@ -9,6 +9,7 @@ import { CustomerProvider } from "@/contexts/CustomerContext";
 import BottomTabBar from "@/components/BottomTabBar";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
+import TopPromoBanner from "@/components/TopPromoBanner";
 import Footer from "@/components/Footer";
 import InstallBanner from "@/components/InstallBanner";
 import SocialProofToast from "@/components/SocialProofToast";
@@ -167,6 +168,7 @@ function AppShell() {
     <>
       {!isAdmin && !isDemo && <InstallBanner />}
       {!isAdmin && !isDemo && <Header />}
+      {!isAdmin && !isDemo && <TopPromoBanner />}
       <ErrorBoundary><Router /></ErrorBoundary>
       {!isAdmin && !isDemo && location === "/" && <Footer />}
       {!isAdmin && !isDemo && <FloatingCartBar />}

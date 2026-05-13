@@ -325,6 +325,9 @@ export async function registerRoutes(
       ["iyzico_api_key", ""],
       ["iyzico_secret_key", ""],
       ["iyzico_base_url", "https://sandbox-api.iyzipay.com"],
+      ["top_banner_enabled", "1"],
+      ["top_banner_image", ""],
+      ["top_banner_link", "/giris"],
     ];
     for (const [key, value] of defaults) {
       await sharedPool.query(
@@ -5358,6 +5361,41 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     } finally {
       client.release();
     }
+  });
+
+  app.get("/api/public/top-banner", async (_req, res) => {
+    try {
+      const r = await sharedPool.query(
+        "SELECT key, value FROM app_settings WHERE key IN ('top_banner_enabled','top_banner_image','top_banner_link')"
+      );
+      const map: any = {};
+      for (const row of r.rows) map[row.key] = row.value;
+      res.json({
+        enabled: map.top_banner_enabled === "1",
+        image: map.top_banner_image || "",
+        link: map.top_banner_link || "/giris",
+      });
+    } catch {
+      res.json({ enabled: false, image: "", link: "/giris" });
+    }
+  });
+
+  app.patch("/api/admin/top-banner", requireAdmin, async (req, res) => {
+    const { enabled, image, link } = req.body || {};
+    if (image !== undefined && typeof image !== "string") return res.status(400).json({ message: "Geçersiz görsel" });
+    if (image && image.length > 3 * 1024 * 1024) return res.status(400).json({ message: "Görsel çok büyük (max 2MB)" });
+    if (link !== undefined && (typeof link !== "string" || link.length > 500)) return res.status(400).json({ message: "Geçersiz link" });
+    const updates: Array<[string, string]> = [];
+    if (enabled !== undefined) updates.push(["top_banner_enabled", enabled ? "1" : "0"]);
+    if (image !== undefined) updates.push(["top_banner_image", image]);
+    if (link !== undefined) updates.push(["top_banner_link", link]);
+    for (const [k, v] of updates) {
+      await sharedPool.query(
+        "INSERT INTO app_settings (key, value, updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()",
+        [k, v]
+      );
+    }
+    res.json({ ok: true });
   });
 
   app.get("/api/admin/stock-movements", requireAdmin, async (req, res) => {

@@ -5793,6 +5793,130 @@ function BannerEditRow({ banner, onCancel }: { banner: any; onCancel: () => void
 }
 
 function BannersSection() {
+  return (
+    <div className="space-y-4">
+      <TopPromoBannerAdmin />
+      <BannersListSection />
+    </div>
+  );
+}
+
+function TopPromoBannerAdmin() {
+  const { toast } = useToast();
+  const { data, isLoading } = useQuery<{ enabled: boolean; image: string; link: string }>({
+    queryKey: ["/api/public/top-banner"],
+  });
+  const [enabled, setEnabled] = useState(true);
+  const [link, setLink] = useState("/giris");
+  const [image, setImage] = useState("");
+  const [preview, setPreview] = useState("");
+
+  useEffect(() => {
+    if (data) {
+      setEnabled(data.enabled);
+      setLink(data.link || "/giris");
+      setImage(data.image || "");
+      setPreview(data.image || "");
+    }
+  }, [data]);
+
+  const handleFile = (file: File) => {
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Görsel çok büyük (max 2MB)", variant: "destructive" });
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setImage(dataUrl);
+      setPreview(dataUrl);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PATCH", "/api/admin/top-banner", { enabled, link, image });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/public/top-banner"] });
+      toast({ title: "Üst banner kaydedildi" });
+    },
+    onError: () => toast({ title: "Kayıt hatası", variant: "destructive" }),
+  });
+
+  return (
+    <Card className="border-purple-300">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Package className="w-4 h-4 text-purple-600" /> Üst Promo Banner (Header altı)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-3 space-y-3">
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin inline mr-2" />Yükleniyor...</div>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="top-banner-enabled"
+                checked={enabled}
+                onChange={e => setEnabled(e.target.checked)}
+                className="w-4 h-4"
+                data-testid="checkbox-top-banner-enabled"
+              />
+              <label htmlFor="top-banner-enabled" className="text-sm font-medium cursor-pointer">Banner Aktif</label>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Tıklanınca gidilecek link</label>
+              <Input
+                value={link}
+                onChange={e => setLink(e.target.value)}
+                placeholder="/giris"
+                className="h-9 text-sm"
+                data-testid="input-top-banner-link"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">Örn: /giris (üye ol), /kampanya, https://...</p>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground block mb-1">Görsel (boş bırakılırsa varsayılan görsel kullanılır)</label>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+                className="text-xs"
+                data-testid="input-top-banner-image"
+              />
+              {preview && (
+                <div className="mt-2 border rounded overflow-hidden bg-black">
+                  <img src={preview} alt="önizleme" className="w-full h-auto max-h-32 object-contain" />
+                  <button
+                    type="button"
+                    onClick={() => { setImage(""); setPreview(""); }}
+                    className="text-xs text-red-600 px-2 py-1 hover:underline"
+                    data-testid="button-clear-top-banner-image"
+                  >Görseli sil (varsayılana dön)</button>
+                </div>
+              )}
+            </div>
+            <Button
+              onClick={() => saveMutation.mutate()}
+              disabled={saveMutation.isPending}
+              className="w-full"
+              data-testid="button-save-top-banner"
+            >
+              {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+              Kaydet
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function BannersListSection() {
   const { data: allBanners = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/banners"] });
   const [title, setTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
