@@ -5802,8 +5802,107 @@ function BannersSection() {
   return (
     <div className="space-y-4">
       <TopPromoBannerAdmin />
+      <BreedBannersAdmin />
       <BannersListSection />
     </div>
+  );
+}
+
+function BreedBannersAdmin() {
+  const { toast } = useToast();
+  const { data, isLoading } = useQuery<{ enabled: boolean; b1: any; b2: any }>({
+    queryKey: ["/api/public/breed-banners"],
+  });
+  const [enabled, setEnabled] = useState(true);
+  const [b1, setB1] = useState({ image: "", link: "", alt: "" });
+  const [b2, setB2] = useState({ image: "", link: "", alt: "" });
+
+  useEffect(() => {
+    if (data) {
+      setEnabled(data.enabled);
+      setB1({ image: data.b1.image || "", link: data.b1.link || "", alt: data.b1.alt || "" });
+      setB2({ image: data.b2.image || "", link: data.b2.link || "", alt: data.b2.alt || "" });
+    }
+  }, [data]);
+
+  const handleFile = (file: File, target: 1 | 2) => {
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Görsel çok büyük (max 2MB)", variant: "destructive" });
+      return;
+    }
+    const r = new FileReader();
+    r.onload = () => {
+      const url = r.result as string;
+      if (target === 1) setB1(prev => ({ ...prev, image: url }));
+      else setB2(prev => ({ ...prev, image: url }));
+    };
+    r.readAsDataURL(file);
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PATCH", "/api/admin/breed-banners", { enabled, b1, b2 });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/public/breed-banners"] });
+      toast({ title: "Cins banner'ları kaydedildi" });
+    },
+    onError: () => toast({ title: "Kayıt hatası", variant: "destructive" }),
+  });
+
+  const renderEditor = (idx: 1 | 2, b: typeof b1, setB: typeof setB1) => (
+    <div className="border rounded-lg p-3 space-y-2">
+      <p className="text-xs font-bold text-purple-700">Banner #{idx}</p>
+      <div>
+        <label className="text-[10px] text-muted-foreground block mb-0.5">Açıklama (alt text)</label>
+        <Input value={b.alt} onChange={e => setB({ ...b, alt: e.target.value })} placeholder="Maltese Özel Mamaları" className="h-9 text-sm" data-testid={`input-breed${idx}-alt`} />
+      </div>
+      <div>
+        <label className="text-[10px] text-muted-foreground block mb-0.5">Tıklanınca gidilecek link</label>
+        <Input value={b.link} onChange={e => setB({ ...b, link: e.target.value })} placeholder="/kategori/kopek/maltese-mamalari" className="h-9 text-sm" data-testid={`input-breed${idx}-link`} />
+      </div>
+      <div>
+        <label className="text-[10px] text-muted-foreground block mb-0.5">Görsel (boş = varsayılan)</label>
+        <input type="file" accept="image/*" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0], idx)} className="text-xs" data-testid={`input-breed${idx}-file`} />
+        {b.image && (
+          <div className="mt-2 border rounded overflow-hidden">
+            <img src={b.image} alt="önizleme" className="w-full h-auto max-h-32 object-contain" />
+            <button type="button" onClick={() => setB({ ...b, image: "" })} className="text-xs text-red-600 px-2 py-1 hover:underline" data-testid={`button-clear-breed${idx}`}>
+              Görseli sil (varsayılana dön)
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <Card className="border-purple-300">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Package className="w-4 h-4 text-purple-600" /> Köpek Cinsi Banner'ları (Ana Sayfa - Sokak Canları altında)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-3 space-y-3">
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin inline mr-2" />Yükleniyor...</div>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="breed-banners-enabled" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="w-4 h-4" data-testid="checkbox-breed-banners-enabled" />
+              <label htmlFor="breed-banners-enabled" className="text-sm font-medium cursor-pointer">Banner'lar Aktif</label>
+            </div>
+            <div className="grid md:grid-cols-2 gap-3">
+              {renderEditor(1, b1, setB1)}
+              {renderEditor(2, b2, setB2)}
+            </div>
+            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full" data-testid="button-save-breed-banners">
+              {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Kaydet
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

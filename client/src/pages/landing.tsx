@@ -490,25 +490,34 @@ function SokakCanlariBanner() {
   );
 }
 
+interface BreedBannersData {
+  enabled: boolean;
+  b1: { image: string; link: string; alt: string };
+  b2: { image: string; link: string; alt: string };
+}
 function BreedBannersRow() {
+  const { data } = useQuery<BreedBannersData>({ queryKey: ["/api/public/breed-banners"] });
+  if (data && !data.enabled) return null;
+  const defaultImg1 = new URL("@assets/maltase_1778698301344.png", import.meta.url).href;
+  const defaultImg2 = new URL("@assets/poodle_1778698301344.png", import.meta.url).href;
   const breeds = [
     {
-      img: new URL("@assets/maltase_1778698301344.png", import.meta.url).href,
-      alt: "Maltese Özel Mamaları",
-      href: "/kategori/kopek/maltese-mamalari",
-      testid: "link-breed-maltese",
+      img: data?.b1.image || defaultImg1,
+      alt: data?.b1.alt || "Maltese Özel Mamaları",
+      href: data?.b1.link || "/kategori/kopek/maltese-mamalari",
+      testid: "link-breed-1",
     },
     {
-      img: new URL("@assets/poodle_1778698301344.png", import.meta.url).href,
-      alt: "Toy Poodle Özel Mamaları",
-      href: "/kategori/kopek/toy-poodle-mamalari",
-      testid: "link-breed-poodle",
+      img: data?.b2.image || defaultImg2,
+      alt: data?.b2.alt || "Toy Poodle Özel Mamaları",
+      href: data?.b2.link || "/kategori/kopek/toy-poodle-mamalari",
+      testid: "link-breed-2",
     },
   ];
   return (
     <div className="my-4 md:my-6 grid grid-cols-2 gap-2 md:gap-4" data-testid="section-breed-banners">
-      {breeds.map(b => (
-        <Link key={b.href} href={b.href}>
+      {breeds.map((b, i) => (
+        <Link key={i} href={b.href}>
           <a
             className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.01] transition-transform"
             data-testid={b.testid}

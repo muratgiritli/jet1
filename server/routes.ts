@@ -335,6 +335,13 @@ export async function registerRoutes(
       ["top_banner_enabled", "1"],
       ["top_banner_image", ""],
       ["top_banner_link", "/giris"],
+      ["breed_banner_enabled", "1"],
+      ["breed_banner1_image", ""],
+      ["breed_banner1_link", "/kategori/kopek/maltese-mamalari"],
+      ["breed_banner1_alt", "Maltese Özel Mamaları"],
+      ["breed_banner2_image", ""],
+      ["breed_banner2_link", "/kategori/kopek/toy-poodle-mamalari"],
+      ["breed_banner2_alt", "Toy Poodle Özel Mamaları"],
     ];
     for (const [key, value] of defaults) {
       await sharedPool.query(
@@ -5508,6 +5515,47 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     } catch {
       res.json({ enabled: false, image: "", link: "/giris" });
     }
+  });
+
+  app.get("/api/public/breed-banners", async (_req, res) => {
+    try {
+      const r = await sharedPool.query(
+        "SELECT key, value FROM app_settings WHERE key IN ('breed_banner_enabled','breed_banner1_image','breed_banner1_link','breed_banner1_alt','breed_banner2_image','breed_banner2_link','breed_banner2_alt')"
+      );
+      const m: any = {};
+      for (const row of r.rows) m[row.key] = row.value;
+      res.json({
+        enabled: m.breed_banner_enabled === "1",
+        b1: { image: m.breed_banner1_image || "", link: m.breed_banner1_link || "/kategori/kopek/maltese-mamalari", alt: m.breed_banner1_alt || "Maltese Özel Mamaları" },
+        b2: { image: m.breed_banner2_image || "", link: m.breed_banner2_link || "/kategori/kopek/toy-poodle-mamalari", alt: m.breed_banner2_alt || "Toy Poodle Özel Mamaları" },
+      });
+    } catch {
+      res.json({ enabled: true, b1: { image: "", link: "/kategori/kopek/maltese-mamalari", alt: "Maltese" }, b2: { image: "", link: "/kategori/kopek/toy-poodle-mamalari", alt: "Toy Poodle" } });
+    }
+  });
+
+  app.patch("/api/admin/breed-banners", requireAdmin, async (req, res) => {
+    const body = req.body || {};
+    const updates: Array<[string, string]> = [];
+    if (body.enabled !== undefined) updates.push(["breed_banner_enabled", body.enabled ? "1" : "0"]);
+    for (const idx of [1, 2] as const) {
+      const b = body[`b${idx}`];
+      if (b && typeof b === "object") {
+        if (typeof b.image === "string") {
+          if (b.image.length > 3 * 1024 * 1024) return res.status(400).json({ message: "Görsel çok büyük (max 2MB)" });
+          updates.push([`breed_banner${idx}_image`, b.image]);
+        }
+        if (typeof b.link === "string" && b.link.length <= 500) updates.push([`breed_banner${idx}_link`, b.link]);
+        if (typeof b.alt === "string" && b.alt.length <= 200) updates.push([`breed_banner${idx}_alt`, b.alt]);
+      }
+    }
+    for (const [k, v] of updates) {
+      await sharedPool.query(
+        "INSERT INTO app_settings (key, value, updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()",
+        [k, v]
+      );
+    }
+    res.json({ ok: true });
   });
 
   app.patch("/api/admin/top-banner", requireAdmin, async (req, res) => {
