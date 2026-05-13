@@ -76,6 +76,7 @@ import {
   QrCode,
   Download,
   Heart,
+  Stethoscope,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -88,6 +89,7 @@ const ANIMALS = [
   { id: "kus", name: "Kuş", icon: Bird },
   { id: "kemirgen", name: "Kemirgen", icon: Rabbit },
   { id: "akvaryum", name: "Akvaryum", icon: Fish },
+  { id: "veteriner", name: "Veteriner Mama", icon: Stethoscope },
 ];
 
 const TR_MONTHS_ADMIN = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];

@@ -60,6 +60,12 @@ const ANIMAL_META: Record<string, {
     gradient: "from-cyan-500 to-blue-600",
     bgGradient: "from-cyan-50 to-blue-50",
   },
+  veteriner: {
+    title: "Veteriner Mama",
+    emoji: "🩺",
+    gradient: "from-blue-600 to-indigo-700",
+    bgGradient: "from-blue-50 to-indigo-50",
+  },
 };
 
 const SUBCATEGORY_ICONS: Record<string, string> = {

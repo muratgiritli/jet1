@@ -490,6 +490,23 @@ function SokakCanlariBanner() {
   );
 }
 
+function VeterinerMamaBanner() {
+  return (
+    <div className="my-4 md:my-6" data-testid="section-veteriner-banner">
+      <Link href="/kategori/veteriner">
+        <a className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform" data-testid="link-veteriner-mama">
+          <img
+            src={new URL("@assets/veteriner_mama-web_1778689310732.webp", import.meta.url).href}
+            alt="Veteriner Mamaları - Güvenilir Markalar"
+            className="w-full h-auto block"
+            loading="lazy"
+          />
+        </a>
+      </Link>
+    </div>
+  );
+}
+
 function WhyJetgo() {
   const items = [
     { emoji: "🚚", title: "1 Saat İçinde Kapında", desc: "Sipariş ver, 1 saat içinde kapına gelsin. İnternetten günlerce bekleme derdi yok.", color: "#f59e0b", bg: "from-amber-50 to-orange-50", border: "border-amber-200" },
@@ -1011,6 +1028,7 @@ export default function Landing() {
         </div>
 
         <div className="md:max-w-5xl md:mx-auto">
+          <VeterinerMamaBanner />
           <SokakCanlariBanner />
         </div>
 
