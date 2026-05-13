@@ -90,6 +90,7 @@ const ANIMALS = [
   { id: "kemirgen", name: "Kemirgen", icon: Rabbit },
   { id: "akvaryum", name: "Akvaryum", icon: Fish },
   { id: "veteriner", name: "Veteriner Mama", icon: Stethoscope },
+  { id: "sokak_canlari", name: "Sokak Canları", icon: Heart },
 ];
 
 const TR_MONTHS_ADMIN = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];

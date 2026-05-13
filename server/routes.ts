@@ -1712,7 +1712,14 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.post("/api/admin/products", requireAdmin, async (req, res) => {
     const parsed = insertProductSchema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Invalid data", errors: parsed.error.errors });
-    const product = await storage.createProduct(parsed.data);
+    const data: any = { ...parsed.data };
+    try {
+      if (data.brandCategoryId) {
+        const c = await sharedPool.query(`SELECT animal FROM brand_categories WHERE id = $1`, [data.brandCategoryId]);
+        if (c.rows[0]?.animal === "sokak_canlari") data.isStreetAnimal = true;
+      }
+    } catch {}
+    const product = await storage.createProduct(data);
     if (product.img && product.img.startsWith("http")) {
       const imgPath = await downloadAndSaveImage(product.img, product.id);
       if (imgPath) {
@@ -1736,6 +1743,13 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       if (imgPath) {
         safeBody.img = imgPath;
       }
+    }
+    if (safeBody.brandCategoryId) {
+      try {
+        const c = await sharedPool.query(`SELECT animal FROM brand_categories WHERE id = $1`, [safeBody.brandCategoryId]);
+        if (c.rows[0]?.animal === "sokak_canlari") safeBody.isStreetAnimal = true;
+        else if (c.rows[0]?.animal) safeBody.isStreetAnimal = false;
+      } catch {}
     }
     const product = await storage.updateProduct(id, safeBody);
     if (!product) return res.status(404).json({ message: "Product not found" });
