@@ -1566,18 +1566,20 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       if (!name) return res.status(400).json({ message: "Ürün adı gerekli" });
       if (!price || price <= 0) return res.status(400).json({ message: "Geçerli fiyat gerekli" });
 
-      let cat = (await storage.getBrandCategories()).find(
-        c => c.animal === "sokak_canlari" && c.subcategory === "sokak_canlari"
+      const catRes = await sharedPool.query(
+        `SELECT id FROM brand_categories WHERE animal = 'sokak_canlari' AND subcategory = 'sokak_canlari' LIMIT 1`
       );
-      if (!cat) {
-        const [created] = await db.insert(brandCategories).values({
-          brandName: "Sokak Canları",
-          brandSlug: "sokak-canlari",
-          animal: "sokak_canlari",
-          subcategory: "sokak_canlari",
-        }).returning();
-        cat = created;
+      let catId: number;
+      if (catRes.rows.length > 0) {
+        catId = catRes.rows[0].id;
+      } else {
+        const ins = await sharedPool.query(
+          `INSERT INTO brand_categories (brand_name, brand_slug, animal, subcategory)
+           VALUES ('Sokak Canları', 'sokak-canlari', 'sokak_canlari', 'sokak_canlari') RETURNING id`
+        );
+        catId = ins.rows[0].id;
       }
+      const cat = { id: catId } as any;
 
       const product = await storage.createProduct({
         name,
