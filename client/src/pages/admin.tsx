@@ -5927,6 +5927,9 @@ function StreetAnimalsSection() {
   const [originalPrice, setOriginalPrice] = useState("");
   const [stock, setStock] = useState("0");
   const [barcode, setBarcode] = useState("");
+  const [skt, setSkt] = useState("");
+  const [costPrice, setCostPrice] = useState("");
+  const [isActive, setIsActive] = useState(true);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
   const createMutation = useMutation({
@@ -5937,6 +5940,9 @@ function StreetAnimalsSection() {
       if (originalPrice) fd.append("originalPrice", originalPrice);
       fd.append("stock", stock);
       if (barcode) fd.append("barcode", barcode);
+      if (skt) fd.append("skt", skt);
+      if (costPrice) fd.append("costPrice", costPrice);
+      fd.append("isActive", isActive ? "true" : "false");
       if (imageFile) fd.append("image", imageFile);
       const res = await fetch("/api/admin/street-animals/quick-create", { method: "POST", body: fd, credentials: "include" });
       if (!res.ok) throw new Error((await res.json()).message || "Hata");
@@ -5945,7 +5951,8 @@ function StreetAnimalsSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/street-animals"] });
       queryClient.invalidateQueries({ queryKey: ["/api/street-animals"] });
-      setName(""); setPrice(""); setOriginalPrice(""); setStock("0"); setBarcode(""); setImageFile(null);
+      setName(""); setPrice(""); setOriginalPrice(""); setStock("0"); setBarcode("");
+      setSkt(""); setCostPrice(""); setIsActive(true); setImageFile(null);
       toast({ title: "Ürün eklendi" });
     },
     onError: (e: any) => toast({ title: e?.message || "Hata", variant: "destructive" }),
@@ -5985,8 +5992,37 @@ function StreetAnimalsSection() {
             <Input placeholder="Eski fiyat (opsiyonel)" value={originalPrice} onChange={e => setOriginalPrice(e.target.value)} type="number" step="0.01" className="h-9 text-sm" data-testid="input-sokak-orig-price" />
           </div>
           <div className="grid grid-cols-2 gap-2">
-            <Input placeholder="Stok" value={stock} onChange={e => setStock(e.target.value)} type="number" className="h-9 text-sm" data-testid="input-sokak-stock" />
-            <Input placeholder="Barkod (opsiyonel)" value={barcode} onChange={e => setBarcode(e.target.value)} className="h-9 text-sm" data-testid="input-sokak-barcode" />
+            <div>
+              <label className="text-[10px] text-muted-foreground block mb-0.5">Nakit (Maliyet) ₺</label>
+              <Input placeholder="0.00" value={costPrice} onChange={e => setCostPrice(e.target.value)} type="number" step="0.01" className="h-9 text-sm" data-testid="input-sokak-cost" />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground block mb-0.5">Son Kul. Tarihi (SKT)</label>
+              <Input placeholder="03.2027" value={skt} onChange={e => setSkt(e.target.value)} className="h-9 text-sm" data-testid="input-sokak-skt" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div>
+              <label className="text-[10px] text-muted-foreground block mb-0.5">Stok</label>
+              <Input placeholder="0" value={stock} onChange={e => setStock(e.target.value)} type="number" className="h-9 text-sm" data-testid="input-sokak-stock" />
+            </div>
+            <div>
+              <label className="text-[10px] text-muted-foreground block mb-0.5">Barkod (opsiyonel)</label>
+              <Input placeholder="" value={barcode} onChange={e => setBarcode(e.target.value)} className="h-9 text-sm" data-testid="input-sokak-barcode" />
+            </div>
+          </div>
+          <div className="flex items-center gap-2 p-2 bg-muted/30 rounded">
+            <input
+              type="checkbox"
+              id="sokak-active"
+              checked={isActive}
+              onChange={e => setIsActive(e.target.checked)}
+              className="w-4 h-4"
+              data-testid="checkbox-sokak-active"
+            />
+            <label htmlFor="sokak-active" className="text-sm font-medium cursor-pointer">
+              Yayında {isActive ? "(Aktif)" : "(Pasif - taslak)"}
+            </label>
           </div>
           <div>
             <label className="text-xs text-muted-foreground block mb-1">Ürün görseli</label>

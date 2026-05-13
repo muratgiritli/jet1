@@ -1546,7 +1546,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.get("/api/admin/street-animals", requireAdmin, async (_req, res) => {
     const r = await sharedPool.query(
-      `SELECT id, name, price, original_price AS "originalPrice", img, stock, barcode, is_active AS "isActive"
+      `SELECT id, name, price, original_price AS "originalPrice", img, stock, barcode, is_active AS "isActive",
+              skt, cost_price AS "costPrice"
        FROM products WHERE is_street_animal = true ORDER BY id DESC`
     );
     res.json(r.rows);
@@ -1559,6 +1560,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const originalPriceRaw = req.body.originalPrice ? parseFloat(req.body.originalPrice) : null;
       const stock = req.body.stock !== undefined ? parseInt(String(req.body.stock)) : 0;
       const barcode = req.body.barcode ? String(req.body.barcode).trim() : null;
+      const skt = req.body.skt ? String(req.body.skt).trim() : null;
+      const costPrice = req.body.costPrice ? parseFloat(req.body.costPrice) : null;
+      const isActive = req.body.isActive === undefined ? true : (req.body.isActive === "true" || req.body.isActive === true || req.body.isActive === "1");
       if (!name) return res.status(400).json({ message: "Ürün adı gerekli" });
       if (!price || price <= 0) return res.status(400).json({ message: "Geçerli fiyat gerekli" });
 
@@ -1579,14 +1583,14 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         name,
         price,
         originalPrice: originalPriceRaw && originalPriceRaw > price ? originalPriceRaw : null,
-        skt: null,
+        skt,
         img: null,
         originalImg: null,
         brandCategoryId: cat!.id,
-        isActive: true,
+        isActive,
         stock: isNaN(stock) ? 0 : stock,
         barcode,
-        costPrice: null,
+        costPrice: costPrice && !isNaN(costPrice) ? costPrice : null,
         mamaType: null,
         preorderEnabled: false,
         isStreetAnimal: true,
@@ -1617,6 +1621,10 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (req.body.price !== undefined) allowed.price = parseFloat(req.body.price);
     if (req.body.stock !== undefined) allowed.stock = parseInt(String(req.body.stock));
     if (req.body.name !== undefined) allowed.name = String(req.body.name).trim();
+    if (req.body.skt !== undefined) allowed.skt = req.body.skt ? String(req.body.skt).trim() : null;
+    if (req.body.costPrice !== undefined) allowed.costPrice = req.body.costPrice ? parseFloat(req.body.costPrice) : null;
+    if (req.body.barcode !== undefined) allowed.barcode = req.body.barcode ? String(req.body.barcode).trim() : null;
+    if (req.body.originalPrice !== undefined) allowed.originalPrice = req.body.originalPrice ? parseFloat(req.body.originalPrice) : null;
     if (Object.keys(allowed).length === 0) return res.status(400).json({ message: "Güncellenecek alan yok" });
     const updated = await storage.updateProduct(id, allowed);
     res.json(updated);
