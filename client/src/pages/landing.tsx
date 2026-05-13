@@ -1028,8 +1028,8 @@ export default function Landing() {
         </div>
 
         <div className="md:max-w-5xl md:mx-auto">
-          <VeterinerMamaBanner />
           <SokakCanlariBanner />
+          <VeterinerMamaBanner />
         </div>
 
         {/* DESKTOP STATS BAR */}
