@@ -494,6 +494,7 @@ interface BreedBannerItem { image: string; link: string; alt: string }
 interface BreedBannersData {
   enabled: boolean;
   b1: BreedBannerItem; b2: BreedBannerItem; b3: BreedBannerItem; b4: BreedBannerItem;
+  b5: BreedBannerItem; b6: BreedBannerItem;
 }
 function BreedBannersRow() {
   const { data } = useQuery<BreedBannersData>({ queryKey: ["/api/public/breed-banners"] });
@@ -503,8 +504,10 @@ function BreedBannersRow() {
     { img: new URL("@assets/poodle_1778698301344.png", import.meta.url).href, alt: "Toy Poodle Özel Mamaları", href: "/kategori/kopek/toy-poodle-mamalari" },
     { img: new URL("@assets/CAVALIER_KING_1778699500262.png", import.meta.url).href, alt: "Cavalier King Charles Özel Mamaları", href: "/kategori/kopek/cavalier-king-charles-mamalari" },
     { img: new URL("@assets/SHIH_TZU_1778699500263.png", import.meta.url).href, alt: "Shih Tzu Özel Mamaları", href: "/kategori/kopek/shih-tzu-mamalari" },
+    { img: new URL("@assets/CHIU_1778700169348.png", import.meta.url).href, alt: "Chihuahua Özel Mamaları", href: "/kategori/kopek/chihuahua-mamalari" },
+    { img: new URL("@assets/PEKINESE_1778700169348.png", import.meta.url).href, alt: "Pekinese Özel Mamaları", href: "/kategori/kopek/pekinese-mamalari" },
   ];
-  const slots: BreedBannerItem[] = data ? [data.b1, data.b2, data.b3, data.b4] : [];
+  const slots: BreedBannerItem[] = data ? [data.b1, data.b2, data.b3, data.b4, data.b5, data.b6] : [];
   const breeds = defaults.map((d, i) => ({
     img: slots[i]?.image || d.img,
     alt: slots[i]?.alt || d.alt,
