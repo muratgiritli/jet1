@@ -3386,7 +3386,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
     const hostHeader = (req.headers["x-forwarded-host"] as string) || req.headers.host || "jetgomarket.com";
     const otpHost = String(hostHeader).split(":")[0];
-    const message = `<#> JETGO dogrulama kodunuz: ${code} (3 dakika gecerlidir)\n\n@${otpHost} #${code}`;
+    const message = `<#> ${code} JETGO dogrulama kodu (3 dakika gecerlidir)\n\n@${otpHost} #${code}`;
     const sent = await sendSmsViaNetgsm(normalized, message);
     if (!sent) {
       otpStore.delete(normalized);
