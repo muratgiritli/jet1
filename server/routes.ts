@@ -302,9 +302,10 @@ export async function registerRoutes(
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `);
-    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_stock_movements_created ON stock_movements(created_at DESC);`);
-    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_stock_movements_mode_created ON stock_movements(mode, created_at DESC);`);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_stock_movements_created ON stock_movements(created_at);`);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_stock_movements_mode_created ON stock_movements(mode, created_at);`);
     await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);`);
+    await sharedPool.query(`DROP INDEX IF EXISTS idx_stock_movements_created_at;`);
   } catch (e) {
     console.error("Stock movements table setup error:", e);
   }

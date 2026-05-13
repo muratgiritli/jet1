@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, integer, real, serial, boolean, timestamp, jsonb, numeric } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, integer, real, serial, boolean, timestamp, jsonb, numeric, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -483,7 +483,11 @@ export const stockMovements = pgTable("stock_movements", {
   mode: text("mode").notNull(),
   newStock: integer("new_stock").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => ({
+  createdIdx: index("idx_stock_movements_created").on(t.createdAt),
+  modeCreatedIdx: index("idx_stock_movements_mode_created").on(t.mode, t.createdAt),
+  productIdx: index("idx_stock_movements_product").on(t.productId),
+}));
 export type StockMovement = typeof stockMovements.$inferSelect;
 
 export const subscriptions = pgTable("subscriptions", {
