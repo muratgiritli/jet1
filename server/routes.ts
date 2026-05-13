@@ -354,6 +354,12 @@ export async function registerRoutes(
       ["breed_banner6_image", ""],
       ["breed_banner6_link", "/kategori/kopek/pekinese-mamalari"],
       ["breed_banner6_alt", "Pekinese Özel Mamaları"],
+      ["breed_banner7_image", ""],
+      ["breed_banner7_link", "/kategori/kopek/pug-mamalari"],
+      ["breed_banner7_alt", "Pug Özel Mamaları"],
+      ["breed_banner8_image", ""],
+      ["breed_banner8_link", "/kategori/kopek/yorkshire-terrier-mamalari"],
+      ["breed_banner8_alt", "Yorkshire Terrier Özel Mamaları"],
     ];
     for (const [key, value] of defaults) {
       await sharedPool.query(
@@ -5537,6 +5543,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       b4: { link: "/kategori/kopek/shih-tzu-mamalari", alt: "Shih Tzu Özel Mamaları" },
       b5: { link: "/kategori/kopek/chihuahua-mamalari", alt: "Chihuahua Özel Mamaları" },
       b6: { link: "/kategori/kopek/pekinese-mamalari", alt: "Pekinese Özel Mamaları" },
+      b7: { link: "/kategori/kopek/pug-mamalari", alt: "Pug Özel Mamaları" },
+      b8: { link: "/kategori/kopek/yorkshire-terrier-mamalari", alt: "Yorkshire Terrier Özel Mamaları" },
     };
     try {
       const r = await sharedPool.query(
@@ -5551,7 +5559,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       });
       res.json({
         enabled: m.breed_banner_enabled === "1",
-        b1: build(1), b2: build(2), b3: build(3), b4: build(4), b5: build(5), b6: build(6),
+        b1: build(1), b2: build(2), b3: build(3), b4: build(4),
+        b5: build(5), b6: build(6), b7: build(7), b8: build(8),
       });
     } catch {
       res.json({
@@ -5559,6 +5568,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         b1: { image: "", ...defaults.b1 }, b2: { image: "", ...defaults.b2 },
         b3: { image: "", ...defaults.b3 }, b4: { image: "", ...defaults.b4 },
         b5: { image: "", ...defaults.b5 }, b6: { image: "", ...defaults.b6 },
+        b7: { image: "", ...defaults.b7 }, b8: { image: "", ...defaults.b8 },
       });
     }
   });
@@ -5567,7 +5577,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     const body = req.body || {};
     const updates: Array<[string, string]> = [];
     if (body.enabled !== undefined) updates.push(["breed_banner_enabled", body.enabled ? "1" : "0"]);
-    for (const idx of [1, 2, 3, 4, 5, 6] as const) {
+    for (const idx of [1, 2, 3, 4, 5, 6, 7, 8] as const) {
       const b = body[`b${idx}`];
       if (b && typeof b === "object") {
         if (typeof b.image === "string") {
