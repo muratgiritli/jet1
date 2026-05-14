@@ -262,7 +262,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createProduct(data: InsertProduct): Promise<Product> {
-    const [product] = await db.insert(products).values(data).returning();
+    const patch: InsertProduct = { ...data };
+    if (patch.stock !== undefined) {
+      patch.preorderEnabled = Number(patch.stock) <= 0;
+    }
+    const [product] = await db.insert(products).values(patch).returning();
     return product;
   }
 
