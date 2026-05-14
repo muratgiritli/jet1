@@ -5491,7 +5491,10 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     const updates: string[] = [];
     const values: any[] = [];
     let idx = 1;
-    if (stock !== undefined) { updates.push(`stock = $${idx++}`); values.push(stock); }
+    if (stock !== undefined) {
+      updates.push(`stock = $${idx++}`); values.push(stock);
+      updates.push(`preorder_enabled = $${idx++}`); values.push(stock <= 0);
+    }
     if (skt !== undefined) { updates.push(`skt = $${idx++}`); values.push(skt); }
     if (barcode !== undefined) { updates.push(`barcode = $${idx++}`); values.push(barcode); }
     if (updates.length === 0) return res.status(400).json({ message: "Güncellenecek alan yok" });

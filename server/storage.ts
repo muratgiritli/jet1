@@ -267,7 +267,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async updateProduct(id: number, data: Partial<InsertProduct>): Promise<Product | undefined> {
-    const [product] = await db.update(products).set(data).where(eq(products.id, id)).returning();
+    const patch: Partial<InsertProduct> = { ...data };
+    if (patch.stock !== undefined && patch.preorderEnabled === undefined) {
+      if (Number(patch.stock) <= 0) patch.preorderEnabled = true;
+      else patch.preorderEnabled = false;
+    }
+    const [product] = await db.update(products).set(patch).where(eq(products.id, id)).returning();
     return product;
   }
 
@@ -364,6 +369,9 @@ export class DatabaseStorage implements IStorage {
       .set({ stock: sql`${products.stock} - ${quantity}` })
       .where(and(eq(products.id, productId), gte(products.stock, quantity)))
       .returning();
+    if (result.length > 0 && (result[0].stock ?? 0) <= 0 && !result[0].preorderEnabled) {
+      await db.update(products).set({ preorderEnabled: true }).where(eq(products.id, productId));
+    }
     return result.length > 0;
   }
 
