@@ -5814,7 +5814,7 @@ function BreedBannersAdmin() {
     queryKey: ["/api/public/breed-banners"],
   });
   const [enabled, setEnabled] = useState(true);
-  const initial = { image: "", link: "", alt: "", enabled: true };
+  const initial = { image: "", link: "", alt: "", enabled: true, order: 1 };
   const [b1, setB1] = useState(initial);
   const [b2, setB2] = useState(initial);
   const [b3, setB3] = useState(initial);
@@ -5829,10 +5829,10 @@ function BreedBannersAdmin() {
   useEffect(() => {
     if (data) {
       setEnabled(data.enabled);
-      const pick = (b: any) => ({ image: b.image || "", link: b.link || "", alt: b.alt || "", enabled: b.enabled !== false });
-      setB1(pick(data.b1)); setB2(pick(data.b2)); setB3(pick(data.b3));
-      setB4(pick(data.b4)); setB5(pick(data.b5)); setB6(pick(data.b6));
-      setB7(pick(data.b7)); setB8(pick(data.b8)); setB9(pick(data.b9)); setB10(pick(data.b10));
+      const pick = (b: any, defOrder: number) => ({ image: b.image || "", link: b.link || "", alt: b.alt || "", enabled: b.enabled !== false, order: Number(b.order) || defOrder });
+      setB1(pick(data.b1, 1)); setB2(pick(data.b2, 2)); setB3(pick(data.b3, 3));
+      setB4(pick(data.b4, 4)); setB5(pick(data.b5, 5)); setB6(pick(data.b6, 6));
+      setB7(pick(data.b7, 7)); setB8(pick(data.b8, 8)); setB9(pick(data.b9, 9)); setB10(pick(data.b10, 10));
     }
   }, [data]);
 
@@ -5864,7 +5864,7 @@ function BreedBannersAdmin() {
 
   const renderEditor = (idx: BIdx, b: typeof b1, setB: typeof setB1) => (
     <div className={`border rounded-lg p-3 space-y-2 ${b.enabled ? "" : "opacity-60 bg-muted/40"}`}>
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <p className="text-xs font-bold text-purple-700">Banner #{idx}</p>
         <label className="flex items-center gap-1.5 cursor-pointer text-xs">
           <input
@@ -5878,6 +5878,18 @@ function BreedBannersAdmin() {
             {b.enabled ? "Yayında" : "Yayında değil"}
           </span>
         </label>
+      </div>
+      <div className="flex items-center gap-2">
+        <label className="text-[10px] text-muted-foreground whitespace-nowrap">Sıra (küçük = önce):</label>
+        <Input
+          type="number"
+          min={1}
+          max={999}
+          value={b.order}
+          onChange={e => setB({ ...b, order: Number(e.target.value) || 1 })}
+          className="h-8 text-sm w-20"
+          data-testid={`input-breed${idx}-order`}
+        />
       </div>
       <div>
         <label className="text-[10px] text-muted-foreground block mb-0.5">Açıklama (alt text)</label>

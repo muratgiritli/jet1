@@ -490,7 +490,7 @@ function SokakCanlariBanner() {
   );
 }
 
-interface BreedBannerItem { image: string; link: string; alt: string; enabled?: boolean }
+interface BreedBannerItem { image: string; link: string; alt: string; enabled?: boolean; order?: number }
 interface BreedBannersData {
   enabled: boolean;
   b1: BreedBannerItem; b2: BreedBannerItem; b3: BreedBannerItem; b4: BreedBannerItem;
@@ -520,9 +520,12 @@ function BreedBannersRow() {
       alt: slots[i]?.alt || d.alt,
       href: slots[i]?.link || d.href,
       enabled: slots[i] ? slots[i].enabled !== false : true,
+      order: slots[i]?.order ?? (i + 1),
+      idx: i,
       testid: `link-breed-${i + 1}`,
     }))
-    .filter(b => b.enabled);
+    .filter(b => b.enabled)
+    .sort((a, b) => a.order - b.order || a.idx - b.idx);
   if (breeds.length === 0) return null;
   return (
     <div className="my-4 md:my-6 grid grid-cols-2 gap-2 md:gap-4" data-testid="section-breed-banners">
@@ -1079,8 +1082,8 @@ export default function Landing() {
 
         <div className="md:max-w-5xl md:mx-auto">
           <SokakCanlariBanner />
-          <BreedBannersRow />
           <VeterinerMamaBanner />
+          <BreedBannersRow />
         </div>
 
         {/* DESKTOP STATS BAR */}
