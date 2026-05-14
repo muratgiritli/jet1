@@ -5814,21 +5814,22 @@ function BreedBannersAdmin() {
     queryKey: ["/api/public/breed-banners"],
   });
   const [enabled, setEnabled] = useState(true);
-  const [b1, setB1] = useState({ image: "", link: "", alt: "" });
-  const [b2, setB2] = useState({ image: "", link: "", alt: "" });
-  const [b3, setB3] = useState({ image: "", link: "", alt: "" });
-  const [b4, setB4] = useState({ image: "", link: "", alt: "" });
-  const [b5, setB5] = useState({ image: "", link: "", alt: "" });
-  const [b6, setB6] = useState({ image: "", link: "", alt: "" });
-  const [b7, setB7] = useState({ image: "", link: "", alt: "" });
-  const [b8, setB8] = useState({ image: "", link: "", alt: "" });
-  const [b9, setB9] = useState({ image: "", link: "", alt: "" });
-  const [b10, setB10] = useState({ image: "", link: "", alt: "" });
+  const initial = { image: "", link: "", alt: "", enabled: true };
+  const [b1, setB1] = useState(initial);
+  const [b2, setB2] = useState(initial);
+  const [b3, setB3] = useState(initial);
+  const [b4, setB4] = useState(initial);
+  const [b5, setB5] = useState(initial);
+  const [b6, setB6] = useState(initial);
+  const [b7, setB7] = useState(initial);
+  const [b8, setB8] = useState(initial);
+  const [b9, setB9] = useState(initial);
+  const [b10, setB10] = useState(initial);
 
   useEffect(() => {
     if (data) {
       setEnabled(data.enabled);
-      const pick = (b: any) => ({ image: b.image || "", link: b.link || "", alt: b.alt || "" });
+      const pick = (b: any) => ({ image: b.image || "", link: b.link || "", alt: b.alt || "", enabled: b.enabled !== false });
       setB1(pick(data.b1)); setB2(pick(data.b2)); setB3(pick(data.b3));
       setB4(pick(data.b4)); setB5(pick(data.b5)); setB6(pick(data.b6));
       setB7(pick(data.b7)); setB8(pick(data.b8)); setB9(pick(data.b9)); setB10(pick(data.b10));
@@ -5862,8 +5863,22 @@ function BreedBannersAdmin() {
   });
 
   const renderEditor = (idx: BIdx, b: typeof b1, setB: typeof setB1) => (
-    <div className="border rounded-lg p-3 space-y-2">
-      <p className="text-xs font-bold text-purple-700">Banner #{idx}</p>
+    <div className={`border rounded-lg p-3 space-y-2 ${b.enabled ? "" : "opacity-60 bg-muted/40"}`}>
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-bold text-purple-700">Banner #{idx}</p>
+        <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+          <input
+            type="checkbox"
+            checked={b.enabled}
+            onChange={e => setB({ ...b, enabled: e.target.checked })}
+            className="w-4 h-4"
+            data-testid={`checkbox-breed${idx}-enabled`}
+          />
+          <span className={b.enabled ? "text-green-700 font-medium" : "text-muted-foreground"}>
+            {b.enabled ? "Yayında" : "Yayında değil"}
+          </span>
+        </label>
+      </div>
       <div>
         <label className="text-[10px] text-muted-foreground block mb-0.5">Açıklama (alt text)</label>
         <Input value={b.alt} onChange={e => setB({ ...b, alt: e.target.value })} placeholder="Maltese Özel Mamaları" className="h-9 text-sm" data-testid={`input-breed${idx}-alt`} />

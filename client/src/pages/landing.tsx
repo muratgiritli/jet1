@@ -490,7 +490,7 @@ function SokakCanlariBanner() {
   );
 }
 
-interface BreedBannerItem { image: string; link: string; alt: string }
+interface BreedBannerItem { image: string; link: string; alt: string; enabled?: boolean }
 interface BreedBannersData {
   enabled: boolean;
   b1: BreedBannerItem; b2: BreedBannerItem; b3: BreedBannerItem; b4: BreedBannerItem;
@@ -514,12 +514,16 @@ function BreedBannersRow() {
     { img: new URL("@assets/2POMERAİN_1778700290440.png", import.meta.url).href, alt: "Pomeranian Özel Mamaları", href: "/kategori/kopek/pomeranian-mamalari" },
   ];
   const slots: BreedBannerItem[] = data ? [data.b1, data.b2, data.b3, data.b4, data.b5, data.b6, data.b7, data.b8, data.b9, data.b10] : [];
-  const breeds = defaults.map((d, i) => ({
-    img: slots[i]?.image || d.img,
-    alt: slots[i]?.alt || d.alt,
-    href: slots[i]?.link || d.href,
-    testid: `link-breed-${i + 1}`,
-  }));
+  const breeds = defaults
+    .map((d, i) => ({
+      img: slots[i]?.image || d.img,
+      alt: slots[i]?.alt || d.alt,
+      href: slots[i]?.link || d.href,
+      enabled: slots[i] ? slots[i].enabled !== false : true,
+      testid: `link-breed-${i + 1}`,
+    }))
+    .filter(b => b.enabled);
+  if (breeds.length === 0) return null;
   return (
     <div className="my-4 md:my-6 grid grid-cols-2 gap-2 md:gap-4" data-testid="section-breed-banners">
       {breeds.map((b, i) => (
