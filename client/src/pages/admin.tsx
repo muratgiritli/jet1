@@ -5802,9 +5802,83 @@ function BannersSection() {
   return (
     <div className="space-y-4">
       <TopPromoBannerAdmin />
+      <SimpleBannerVisibilityAdmin />
       <BreedBannersAdmin />
       <BannersListSection />
     </div>
+  );
+}
+
+function SimpleBannerVisibilityAdmin() {
+  const { toast } = useToast();
+  const { data } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
+  const [sokak, setSokak] = useState(true);
+  const [veteriner, setVeteriner] = useState(true);
+
+  useEffect(() => {
+    if (data) {
+      setSokak(!(data.sokak_banner_enabled === "0" || data.sokak_banner_enabled === "false"));
+      setVeteriner(!(data.veteriner_banner_enabled === "0" || data.veteriner_banner_enabled === "false"));
+    }
+  }, [data]);
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PATCH", "/api/admin/settings", {
+        sokak_banner_enabled: sokak ? "1" : "0",
+        veteriner_banner_enabled: veteriner ? "1" : "0",
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/public-settings"] });
+      toast({ title: "Banner görünürlüğü kaydedildi" });
+    },
+    onError: () => toast({ title: "Kayıt hatası", variant: "destructive" }),
+  });
+
+  return (
+    <Card className="border-emerald-300">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Package className="w-4 h-4 text-emerald-600" /> Anasayfa Banner Görünürlüğü
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-3 space-y-3">
+        <label className="flex items-center justify-between gap-2 p-2 rounded border cursor-pointer hover-elevate">
+          <div>
+            <div className="text-sm font-medium">Sokak Canları (Çuval Mama) Banner'ı</div>
+            <div className="text-[11px] text-muted-foreground">Anasayfada Sokak Canları kampanya görseli</div>
+          </div>
+          <input
+            type="checkbox"
+            checked={sokak}
+            onChange={e => setSokak(e.target.checked)}
+            className="w-4 h-4"
+            data-testid="checkbox-sokak-banner-enabled"
+          />
+        </label>
+        <label className="flex items-center justify-between gap-2 p-2 rounded border cursor-pointer hover-elevate">
+          <div>
+            <div className="text-sm font-medium">Veteriner Mama Banner'ı</div>
+            <div className="text-[11px] text-muted-foreground">Anasayfada Veteriner Mamaları görseli</div>
+          </div>
+          <input
+            type="checkbox"
+            checked={veteriner}
+            onChange={e => setVeteriner(e.target.checked)}
+            className="w-4 h-4"
+            data-testid="checkbox-veteriner-banner-enabled"
+          />
+        </label>
+        <div className="text-[11px] text-muted-foreground bg-muted/50 rounded p-2">
+          <strong>Not:</strong> "Yeni Üyeye 100 TL Bonus" banner'ının aç/kapat ayarı yukarıdaki <em>Üst Promo Banner</em> kartından yapılır.
+        </div>
+        <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full" data-testid="button-save-banner-visibility">
+          {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+          Kaydet
+        </Button>
+      </CardContent>
+    </Card>
   );
 }
 

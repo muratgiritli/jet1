@@ -3353,7 +3353,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           'payment_pos_enabled', 'payment_tosla_enabled', 'payment_iyzico_enabled',
           'campaign_hero_title', 'campaign_hero_subtitle', 'campaign_end_date',
           'bank_account_name', 'bank_iban', 'bank_name',
-          'daily_cargo_widget_enabled'
+          'daily_cargo_widget_enabled',
+          'sokak_banner_enabled', 'veteriner_banner_enabled'
         )
       `);
       const settings: Record<string, string> = {};
@@ -3390,6 +3391,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date",
         "bank_account_name", "bank_iban", "bank_name",
         "daily_cargo_widget_enabled",
+        "sokak_banner_enabled", "veteriner_banner_enabled",
       ];
 
       const toslaFlag = updates.payment_tosla_enabled;

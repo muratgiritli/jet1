@@ -474,6 +474,8 @@ function CategoryGrid() {
 }
 
 function SokakCanlariBanner() {
+  const { data: settings } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
+  if (settings && (settings.sokak_banner_enabled === "0" || settings.sokak_banner_enabled === "false")) return null;
   return (
     <div className="my-4 md:my-6" data-testid="section-sokak-banner">
       <Link href="/sokak-canlari">
@@ -544,6 +546,8 @@ function BreedBannersRow() {
 }
 
 function VeterinerMamaBanner() {
+  const { data: settings } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
+  if (settings && (settings.veteriner_banner_enabled === "0" || settings.veteriner_banner_enabled === "false")) return null;
   return (
     <div className="my-4 md:my-6" data-testid="section-veteriner-banner">
       <Link href="/kategori/veteriner">
