@@ -15,6 +15,7 @@ interface CartProduct {
   skt?: string | null;
   originalPrice?: number | null;
   animal?: string | null;
+  isStreetAnimal?: boolean;
 }
 
 type BasketItems = Record<string, number>;
@@ -174,6 +175,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
         skt: p.skt,
         originalPrice: cp ? p.price : p.originalPrice,
         animal: (p as any).animal ?? null,
+        isStreetAnimal: !!(p as any).isStreetAnimal,
       };
     });
   }, [dbProducts, campaignPriceMap, campaignCartIds]);

@@ -365,6 +365,10 @@ export default function Checkout() {
 
   const [orderError, setOrderError] = useState("");
   const [orderNote, setOrderNote] = useState("");
+  const [donationDelivery, setDonationDelivery] = useState(false);
+  const [donationRecipientName, setDonationRecipientName] = useState("");
+  const [donationRecipientPhone, setDonationRecipientPhone] = useState("");
+  const [donationRecipientAddress, setDonationRecipientAddress] = useState("");
   const [contactlessDelivery, setContactlessDelivery] = useState(false);
   const [doNotRing, setDoNotRing] = useState(false);
   const [installmentMonths, setInstallmentMonths] = useState<number>(1);
@@ -458,6 +462,21 @@ export default function Checkout() {
       beginCheckoutFiredRef.current = true;
     } catch {}
   }, [selectedProducts, subtotal]);
+
+  const hasStreetAnimalItems = useMemo(
+    () => selectedProducts.some(({ product }) => (product as any).isStreetAnimal === true),
+    [selectedProducts]
+  );
+
+  useEffect(() => {
+    if (!hasStreetAnimalItems && donationDelivery) setDonationDelivery(false);
+  }, [hasStreetAnimalItems, donationDelivery]);
+
+  useEffect(() => {
+    if (donationDelivery && paymentId !== "eft" && paymentId !== "online") {
+      setPaymentId(onlineCardEnabled ? "online" : "eft");
+    }
+  }, [donationDelivery, paymentId, onlineCardEnabled, setPaymentId]);
 
   const dominantAnimal = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -563,6 +582,12 @@ export default function Checkout() {
       setOrderError("Kampanyadan yararlanmak için sepete en az 1 ana ürün ve 1 ek ürün eklemeniz gerekmektedir.");
       return;
     }
+    if (donationDelivery) {
+      if (!donationRecipientName.trim()) { setOrderError("Lütfen bağış alıcısının adını girin."); return; }
+      if (!donationRecipientPhone.trim() || donationRecipientPhone.replace(/\D/g, "").length < 10) { setOrderError("Lütfen bağış alıcısının telefon numarasını girin."); return; }
+      if (!donationRecipientAddress.trim() || donationRecipientAddress.trim().length < 10) { setOrderError("Lütfen bağış alıcısının Atakum içi adresini girin."); return; }
+      if (paymentId !== "eft" && paymentId !== "online") { setOrderError("Bağış teslimatlarında sadece Banka Havalesi veya Online Kredi Kartı ile ödeme yapılabilir."); return; }
+    }
     if (!effectiveMinReached || selectedProducts.length === 0 || orderLoading) {
       return;
     }
@@ -590,9 +615,9 @@ export default function Checkout() {
         discount: effectiveDiscount,
         grandTotal: finalTotal,
         paymentMethod: payMethod,
-        customerName: customerName.trim(),
-        customerPhone: customerPhone.trim(),
-        customerAddress: customerAddress.trim(),
+        customerName: donationDelivery ? donationRecipientName.trim() : customerName.trim(),
+        customerPhone: donationDelivery ? donationRecipientPhone.trim() : customerPhone.trim(),
+        customerAddress: donationDelivery ? donationRecipientAddress.trim() : customerAddress.trim(),
         usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
         couponCode: appliedCoupon ? appliedCoupon.code : undefined,
         donationAmount: donationAmount > 0 ? donationAmount : undefined,
@@ -600,8 +625,12 @@ export default function Checkout() {
           const flags: string[] = [];
           if (contactlessDelivery) flags.push("Temassız Teslimat");
           if (doNotRing) flags.push("Zile Basma");
+          if (donationDelivery) flags.push("BAĞIŞ TESLİMATI (Atakum içi)");
           const flagText = flags.length ? `[${flags.join(" • ")}]` : "";
-          const combined = [flagText, orderNote.trim()].filter(Boolean).join(" ");
+          const donorText = donationDelivery
+            ? `Bağışçı: ${customerName.trim()} (${customerPhone.trim()}) — Fatura adresi: ${customerAddress.trim()}`
+            : "";
+          const combined = [flagText, donorText, orderNote.trim()].filter(Boolean).join(" | ");
           return combined || undefined;
         })(),
         deliverySlot: (selectedProducts.some(({ product }) => isPreorderProduct(String(product.id))) || hasCampaignItems) ? undefined : (deliverySlot || undefined),
@@ -1109,10 +1138,84 @@ export default function Checkout() {
             </Dialog>
 
 
+            {hasStreetAnimalItems && (
+              <section className="mt-6" data-testid="section-donation-delivery">
+                <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3">
+                  <Gift className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+                  Sokak Canları - Teslimat Tercihi
+                </h2>
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    <RadioGroup
+                      value={donationDelivery ? "donation" : "self"}
+                      onValueChange={(v) => setDonationDelivery(v === "donation")}
+                      data-testid="radio-donation-delivery"
+                    >
+                      <label className={`flex items-start gap-2 p-3 rounded-md cursor-pointer border ${!donationDelivery ? "bg-accent border-primary" : "border-transparent"}`}>
+                        <RadioGroupItem value="self" className="mt-0.5" data-testid="input-donation-self" />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">Kendi adresime teslim edilsin</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">Sipariş yukarıda girdiğiniz adrese gönderilir.</div>
+                        </div>
+                      </label>
+                      <label className={`flex items-start gap-2 p-3 rounded-md cursor-pointer border ${donationDelivery ? "bg-accent border-primary" : "border-transparent"}`}>
+                        <RadioGroupItem value="donation" className="mt-0.5" data-testid="input-donation-other" />
+                        <div className="flex-1">
+                          <div className="text-sm font-medium">Bağış yapmak istediğim kişi/kurumun adresine gönder</div>
+                          <div className="text-xs text-muted-foreground mt-0.5">
+                            Alıcı ad, telefon ve adres bilgisini aşağıya girin. <strong>Sadece Atakum içi teslimat yapılır.</strong>
+                          </div>
+                        </div>
+                      </label>
+                    </RadioGroup>
+
+                    {donationDelivery && (
+                      <div className="space-y-2 border-t pt-3" data-testid="form-donation-recipient">
+                        <div className="rounded-md border border-amber-300 bg-amber-50 dark:bg-amber-950/30 px-3 py-2 text-xs font-medium text-amber-900 dark:text-amber-100">
+                          Bağış teslimatlarında ödeme sadece <strong>Banka Havalesi/EFT</strong> veya <strong>Online Kredi Kartı</strong> ile yapılabilir. Teslimat <strong>sadece Atakum ilçesi</strong> içindir.
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium block mb-1">Alıcı Adı Soyadı</label>
+                          <Input
+                            value={donationRecipientName}
+                            onChange={(e) => setDonationRecipientName(e.target.value)}
+                            placeholder="Örn. Atakum Hayvan Barınağı / Ayşe Yılmaz"
+                            maxLength={100}
+                            data-testid="input-donation-name"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium block mb-1">Alıcı Telefonu</label>
+                          <Input
+                            value={donationRecipientPhone}
+                            onChange={(e) => setDonationRecipientPhone(e.target.value)}
+                            placeholder="05__ ___ __ __"
+                            maxLength={20}
+                            data-testid="input-donation-phone"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium block mb-1">Alıcı Adresi (Atakum içi)</label>
+                          <Textarea
+                            value={donationRecipientAddress}
+                            onChange={(e) => setDonationRecipientAddress(e.target.value)}
+                            placeholder="Mahalle, cadde, sokak, bina no, kat, daire no..."
+                            rows={3}
+                            maxLength={500}
+                            data-testid="input-donation-address"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </section>
+            )}
+
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-address">
                 <MapPin className="w-4 h-4 inline mr-1.5 -mt-0.5" />
-                Teslimat Adresi
+                Teslimat Adresi {donationDelivery && <span className="text-xs font-normal text-muted-foreground">(fatura adresi)</span>}
               </h2>
               <Card>
                 <CardContent className="p-4">
@@ -1411,6 +1514,7 @@ export default function Checkout() {
                   <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
                     {PAYMENT_OPTIONS.filter((opt) => {
                       if (opt.id === "pos") return false;
+                      if (donationDelivery && opt.id !== "eft" && opt.id !== "online") return false;
                       if (opt.id === "nakit") return nakitEnabled;
                       if (opt.id === "eft") return eftEnabled;
                       if (opt.id === "qr") return qrEnabled;
