@@ -6064,18 +6064,21 @@ function CategoryBannersAdmin() {
   const [banners, setBanners] = useState<CatBannerForm[]>(
     Array.from({ length: 20 }, (_, i) => ({ idx: i + 1, image: "", link: "", alt: "", enabled: false, order: i + 1 }))
   );
+  const originalImagesRef = useRef<Record<number, string>>({});
 
   useEffect(() => {
     if (data) {
       setEnabled(data.enabled);
-      setBanners(data.banners.map((b, i) => ({
+      const mapped = data.banners.map((b, i) => ({
         idx: b.idx,
         image: b.image || "",
         link: b.link || "",
         alt: b.alt || "",
         enabled: !!b.enabled,
         order: Number(b.order) || (i + 1),
-      })));
+      }));
+      setBanners(mapped);
+      originalImagesRef.current = Object.fromEntries(mapped.map(b => [b.idx, b.image]));
     }
   }, [data]);
 
@@ -6098,7 +6101,14 @@ function CategoryBannersAdmin() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("PATCH", "/api/admin/category-banners", { enabled, banners });
+      // Görseli değişmeyen banner'larda image alanını göndermeyiz - upload süresini ciddi azaltır
+      const payload = banners.map(b => {
+        const orig = originalImagesRef.current[b.idx] ?? "";
+        const out: any = { idx: b.idx, link: b.link, alt: b.alt, enabled: b.enabled, order: b.order };
+        if (b.image !== orig) out.image = b.image;
+        return out;
+      });
+      await apiRequest("PATCH", "/api/admin/category-banners", { enabled, banners: payload });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/public/category-banners"] });

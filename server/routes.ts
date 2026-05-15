@@ -5671,12 +5671,17 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           updates.push([`cat_banner${i}_order`, String(Math.max(1, Math.min(999, Math.floor(Number(b.order)))))]);
         }
       }
-      console.log(`[cat-banners PATCH] writing ${updates.length} keys`);
-      for (const [k, v] of updates) {
-        await sharedPool.query(
-          "INSERT INTO app_settings (key, value, updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()",
-          [k, v]
-        );
+      if (updates.length > 0) {
+        const params: any[] = [];
+        const values: string[] = [];
+        updates.forEach(([k, v], idx) => {
+          values.push(`($${idx * 2 + 1},$${idx * 2 + 2},NOW())`);
+          params.push(k, v);
+        });
+        const sql = `INSERT INTO app_settings (key, value, updated_at) VALUES ${values.join(",")} ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=NOW()`;
+        const t0 = Date.now();
+        await sharedPool.query(sql, params);
+        console.log(`[cat-banners PATCH] wrote ${updates.length} keys in ${Date.now() - t0}ms`);
       }
       res.json({ ok: true, written: updates.length });
     } catch (err: any) {
