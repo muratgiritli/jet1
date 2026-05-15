@@ -297,6 +297,7 @@ function ProductForm({
   const [barcode, setBarcode] = useState(product?.barcode || "");
   const [costPrice, setCostPrice] = useState(product?.costPrice?.toString() || "");
   const [mamaType, setMamaType] = useState(product?.mamaType || "");
+  const [hiddenPays, setHiddenPays] = useState<string[]>((product as any)?.hiddenPaymentMethods || []);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [brandCategoryId, setBrandCategoryId] = useState(
@@ -359,6 +360,7 @@ function ProductForm({
           stock: parseInt(stock) || 0,
           barcode: barcode.trim() || null,
           mamaType: mamaType || null,
+          hiddenPaymentMethods: hiddenPays,
         });
       }}
       className="space-y-4"
@@ -566,6 +568,31 @@ function ProductForm({
           </Select>
         </div>
       </div>
+      <div className="space-y-2 border rounded-lg p-3 bg-muted/30">
+        <Label className="text-xs font-bold">Bu üründe gizlenecek ödeme yöntemleri</Label>
+        <p className="text-[11px] text-muted-foreground -mt-1">İşaretlediğin yöntemler bu ürün sepette varsa ödeme adımında görünmez.</p>
+        <div className="grid grid-cols-2 gap-1.5">
+          {[
+            { id: "nakit", name: "Kapıda Nakit" },
+            { id: "eft", name: "Banka Havalesi / EFT" },
+            { id: "qr", name: "Kapıda QR" },
+            { id: "pos", name: "Kapıda Kredi Kartı (POS)" },
+            { id: "online", name: "Online Kredi Kartı" },
+          ].map(p => (
+            <label key={p.id} className="flex items-center gap-1.5 cursor-pointer text-xs" data-testid={`label-hide-pay-${p.id}`}>
+              <input
+                type="checkbox"
+                className="w-3.5 h-3.5"
+                checked={hiddenPays.includes(p.id)}
+                onChange={(e) => setHiddenPays(prev => e.target.checked ? [...prev, p.id] : prev.filter(x => x !== p.id))}
+                data-testid={`checkbox-hide-pay-${p.id}`}
+              />
+              <span>{p.name}</span>
+            </label>
+          ))}
+        </div>
+      </div>
+
       <div className="space-y-2">
         <Label>Ürün Görseli</Label>
         <div className="flex gap-2 items-center">

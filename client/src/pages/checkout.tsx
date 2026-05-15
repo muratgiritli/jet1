@@ -1512,15 +1512,23 @@ export default function Checkout() {
                     </div>
                   ) : (
                   <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
-                    {PAYMENT_OPTIONS.filter((opt) => {
-                      if (opt.id === "pos") return false;
-                      if (donationDelivery && opt.id !== "eft" && opt.id !== "online") return false;
-                      if (opt.id === "nakit") return nakitEnabled;
-                      if (opt.id === "eft") return eftEnabled;
-                      if (opt.id === "qr") return qrEnabled;
-                      if (opt.id === "online") return onlineCardEnabled && !selectedProducts.some(({ product }) => isPreorderProduct(String(product.id)));
-                      return true;
-                    }).map((opt) => {
+                    {(() => {
+                      const hiddenByProduct = new Set<string>();
+                      for (const { product } of selectedProducts) {
+                        const arr = (product as any).hiddenPaymentMethods;
+                        if (Array.isArray(arr)) for (const m of arr) hiddenByProduct.add(String(m));
+                      }
+                      return PAYMENT_OPTIONS.filter((opt) => {
+                        if (hiddenByProduct.has(opt.id)) return false;
+                        if (opt.id === "pos") return false;
+                        if (donationDelivery && opt.id !== "eft" && opt.id !== "online") return false;
+                        if (opt.id === "nakit") return nakitEnabled;
+                        if (opt.id === "eft") return eftEnabled;
+                        if (opt.id === "qr") return qrEnabled;
+                        if (opt.id === "online") return onlineCardEnabled && !selectedProducts.some(({ product }) => isPreorderProduct(String(product.id)));
+                        return true;
+                      });
+                    })().map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
                       const optDiscRate = opt.disc < 0 ? Math.abs(opt.disc) : 0;
                       const optDiscAmount = subtotal * optDiscRate;

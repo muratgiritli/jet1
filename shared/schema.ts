@@ -60,6 +60,7 @@ export const products = pgTable("products", {
   mamaType: text("mama_type"),
   preorderEnabled: boolean("preorder_enabled").notNull().default(false),
   isStreetAnimal: boolean("is_street_animal").notNull().default(false),
+  hiddenPaymentMethods: text("hidden_payment_methods").array().notNull().default([]),
 });
 
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
