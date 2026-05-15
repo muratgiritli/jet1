@@ -5644,31 +5644,38 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.patch("/api/admin/category-banners", requireAdmin, async (req, res) => {
-    const body = req.body || {};
-    const updates: Array<[string, string]> = [];
-    if (body.enabled !== undefined) updates.push(["cat_banner_enabled", body.enabled ? "1" : "0"]);
-    const list = Array.isArray(body.banners) ? body.banners : [];
-    for (const b of list) {
-      const i = Number(b?.idx);
-      if (!Number.isInteger(i) || i < 1 || i > 20) continue;
-      if (typeof b.image === "string") {
-        if (b.image.length > 6 * 1024 * 1024) return res.status(400).json({ message: "Görsel çok büyük (max 4MB)" });
-        updates.push([`cat_banner${i}_image`, b.image]);
+    try {
+      const body = req.body || {};
+      const list = Array.isArray(body.banners) ? body.banners : [];
+      console.log(`[cat-banners PATCH] enabled=${body.enabled} bannersLen=${list.length} firstImageLen=${list[0]?.image?.length || 0}`);
+      const updates: Array<[string, string]> = [];
+      if (body.enabled !== undefined) updates.push(["cat_banner_enabled", body.enabled ? "1" : "0"]);
+      for (const b of list) {
+        const i = Number(b?.idx);
+        if (!Number.isInteger(i) || i < 1 || i > 20) continue;
+        if (typeof b.image === "string") {
+          if (b.image.length > 6 * 1024 * 1024) return res.status(400).json({ message: "Görsel çok büyük (max 4MB)" });
+          updates.push([`cat_banner${i}_image`, b.image]);
+        }
+        if (typeof b.link === "string" && b.link.length <= 500) updates.push([`cat_banner${i}_link`, b.link]);
+        if (typeof b.alt === "string" && b.alt.length <= 200) updates.push([`cat_banner${i}_alt`, b.alt]);
+        if (b.enabled !== undefined) updates.push([`cat_banner${i}_enabled`, b.enabled ? "1" : "0"]);
+        if (b.order !== undefined && Number.isFinite(Number(b.order))) {
+          updates.push([`cat_banner${i}_order`, String(Math.max(1, Math.min(999, Math.floor(Number(b.order)))))]);
+        }
       }
-      if (typeof b.link === "string" && b.link.length <= 500) updates.push([`cat_banner${i}_link`, b.link]);
-      if (typeof b.alt === "string" && b.alt.length <= 200) updates.push([`cat_banner${i}_alt`, b.alt]);
-      if (b.enabled !== undefined) updates.push([`cat_banner${i}_enabled`, b.enabled ? "1" : "0"]);
-      if (b.order !== undefined && Number.isFinite(Number(b.order))) {
-        updates.push([`cat_banner${i}_order`, String(Math.max(1, Math.min(999, Math.floor(Number(b.order)))))]);
+      console.log(`[cat-banners PATCH] writing ${updates.length} keys`);
+      for (const [k, v] of updates) {
+        await sharedPool.query(
+          "INSERT INTO app_settings (key, value, updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()",
+          [k, v]
+        );
       }
+      res.json({ ok: true, written: updates.length });
+    } catch (err: any) {
+      console.error("[cat-banners PATCH] error:", err?.message, err?.stack);
+      res.status(500).json({ message: "Kayıt hatası: " + (err?.message || "bilinmeyen") });
     }
-    for (const [k, v] of updates) {
-      await sharedPool.query(
-        "INSERT INTO app_settings (key, value, updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()",
-        [k, v]
-      );
-    }
-    res.json({ ok: true });
   });
 
   app.patch("/api/admin/top-banner", requireAdmin, async (req, res) => {
