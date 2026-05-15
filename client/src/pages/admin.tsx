@@ -8593,12 +8593,13 @@ function StokSayimSection() {
     if (newStock < 0) { toast({ title: "Stok 0'ın altına düşemez", variant: "destructive" }); return; }
     try {
       const movMode = delta === undefined ? "manual" : (delta > 0 ? "add" : "sub");
-      const res = await apiRequest("PATCH", `/api/admin/product-quick-update/${product.id}`, {
-        stock: newStock,
-        skt: editSkt || null,
-        barcode: editBarcode || null,
-        mode: movMode,
-      });
+      // Otomatik (delta var) modda sadece stok gönder — skt/barcode kullanıcının elle ayarladığı (manual) modda gider
+      const body: any = { stock: newStock, mode: movMode };
+      if (delta === undefined) {
+        if (editSkt && editSkt.trim()) body.skt = editSkt.trim();
+        if (editBarcode && editBarcode.trim()) body.barcode = editBarcode.trim();
+      }
+      const res = await apiRequest("PATCH", `/api/admin/product-quick-update/${product.id}`, body);
       const updated = await res.json();
       setScanLog(prev => [{
         id: updated.id,

@@ -5484,8 +5484,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ürün ID" });
     const { stock, skt, barcode, mode } = req.body;
     if (stock !== undefined && (typeof stock !== "number" || stock < 0 || stock > 99999)) return res.status(400).json({ message: "Geçersiz stok değeri" });
-    if (skt !== undefined && typeof skt !== "string") return res.status(400).json({ message: "Geçersiz SKT" });
-    if (barcode !== undefined && typeof barcode !== "string") return res.status(400).json({ message: "Geçersiz barkod" });
+    if (skt !== undefined && skt !== null && typeof skt !== "string") return res.status(400).json({ message: "Geçersiz SKT" });
+    if (barcode !== undefined && barcode !== null && typeof barcode !== "string") return res.status(400).json({ message: "Geçersiz barkod" });
     if (skt && skt.length > 20) return res.status(400).json({ message: "SKT çok uzun" });
     if (barcode && barcode.length > 50) return res.status(400).json({ message: "Barkod çok uzun" });
     const updates: string[] = [];
