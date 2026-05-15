@@ -4490,7 +4490,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       if (!name) return res.status(400).json({ message: "Ürün adı gerekli" });
       if (!campaignPrice || campaignPrice <= 0) return res.status(400).json({ message: "Geçerli kampanya fiyatı gerekli" });
 
-      let kampCat = (await storage.getBrandCategories()).find(
+      let kampCat = (await storage.getAllBrandCategories()).find(
         c => c.animal === "kampanya" && c.subcategory === "kampanya"
       );
       if (!kampCat) {
