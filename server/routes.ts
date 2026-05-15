@@ -5653,13 +5653,16 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       for (const b of list) {
         const i = Number(b?.idx);
         if (!Number.isInteger(i) || i < 1 || i > 20) continue;
+        const hasImage = typeof b.image === "string" && b.image.length > 0;
         if (typeof b.image === "string") {
           if (b.image.length > 6 * 1024 * 1024) return res.status(400).json({ message: "Görsel çok büyük (max 4MB)" });
           updates.push([`cat_banner${i}_image`, b.image]);
         }
         if (typeof b.link === "string" && b.link.length <= 500) updates.push([`cat_banner${i}_link`, b.link]);
         if (typeof b.alt === "string" && b.alt.length <= 200) updates.push([`cat_banner${i}_alt`, b.alt]);
-        if (b.enabled !== undefined) updates.push([`cat_banner${i}_enabled`, b.enabled ? "1" : "0"]);
+        // Otomatik: görsel varsa aktif, yoksa kullanıcının seçimi
+        const finalEnabled = hasImage ? (b.enabled !== false) : !!b.enabled;
+        updates.push([`cat_banner${i}_enabled`, finalEnabled ? "1" : "0"]);
         if (b.order !== undefined && Number.isFinite(Number(b.order))) {
           updates.push([`cat_banner${i}_order`, String(Math.max(1, Math.min(999, Math.floor(Number(b.order)))))]);
         }

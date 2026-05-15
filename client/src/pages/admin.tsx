@@ -6126,21 +6126,17 @@ function CategoryBannersAdmin() {
             </div>
             <div className="grid md:grid-cols-2 gap-3">
               {banners.map(b => (
-                <div key={b.idx} className={`border rounded-lg p-3 space-y-2 ${b.enabled ? "" : "opacity-60 bg-muted/40"}`}>
+                <div key={b.idx} className={`border-2 rounded-lg p-3 space-y-2 ${b.enabled ? "border-green-400 bg-green-50/40" : "border-gray-300 opacity-70 bg-muted/40"}`}>
                   <div className="flex items-center justify-between gap-2 flex-wrap">
-                    <p className="text-xs font-bold text-orange-700">Banner #{b.idx}</p>
-                    <label className="flex items-center gap-1.5 cursor-pointer text-xs">
-                      <input
-                        type="checkbox"
-                        checked={b.enabled}
-                        onChange={e => updateB(b.idx, { enabled: e.target.checked })}
-                        className="w-4 h-4"
-                        data-testid={`checkbox-cat-banner-${b.idx}-enabled`}
-                      />
-                      <span className={b.enabled ? "text-green-700 font-medium" : "text-muted-foreground"}>
-                        {b.enabled ? "Yayında" : "Yayında değil"}
-                      </span>
-                    </label>
+                    <p className="text-sm font-bold text-orange-700">Banner #{b.idx}</p>
+                    <button
+                      type="button"
+                      onClick={() => updateB(b.idx, { enabled: !b.enabled })}
+                      className={`px-4 py-2 rounded-md text-sm font-bold transition-colors ${b.enabled ? "bg-green-600 hover:bg-green-700 text-white" : "bg-gray-300 hover:bg-gray-400 text-gray-700"}`}
+                      data-testid={`checkbox-cat-banner-${b.idx}-enabled`}
+                    >
+                      {b.enabled ? "✓ GÖSTER (Yayında)" : "✕ GİZLE (Kapalı)"}
+                    </button>
                   </div>
                   <div className="flex items-center gap-2">
                     <label className="text-[10px] text-muted-foreground whitespace-nowrap">Sıra (küçük = önce):</label>
