@@ -6099,23 +6099,37 @@ function CategoryBannersAdmin() {
     r.readAsDataURL(file);
   };
 
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      // Görseli değişmeyen banner'larda image alanını göndermeyiz - upload süresini ciddi azaltır
-      const payload = banners.map(b => {
-        const orig = originalImagesRef.current[b.idx] ?? "";
-        const out: any = { idx: b.idx, link: b.link, alt: b.alt, enabled: b.enabled, order: b.order };
-        if (b.image !== orig) out.image = b.image;
-        return out;
-      });
-      await apiRequest("PATCH", "/api/admin/category-banners", { enabled, banners: payload });
+  const [savingIdx, setSavingIdx] = useState<number | null>(null);
+
+  const saveSection = useMutation({
+    mutationFn: async (val: boolean) => {
+      await apiRequest("PATCH", "/api/admin/category-banners", { enabled: val, banners: [] });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/public/category-banners"] });
-      toast({ title: "Kategori banner'ları kaydedildi" });
+      toast({ title: "Bölüm durumu kaydedildi" });
     },
     onError: () => toast({ title: "Kayıt hatası", variant: "destructive" }),
   });
+
+  const saveOne = async (idx: number) => {
+    const b = banners.find(x => x.idx === idx);
+    if (!b) return;
+    setSavingIdx(idx);
+    try {
+      const orig = originalImagesRef.current[b.idx] ?? "";
+      const payload: any = { idx: b.idx, link: b.link, alt: b.alt, enabled: b.enabled, order: b.order };
+      if (b.image !== orig) payload.image = b.image;
+      await apiRequest("PATCH", "/api/admin/category-banners", { banners: [payload] });
+      originalImagesRef.current[b.idx] = b.image;
+      queryClient.invalidateQueries({ queryKey: ["/api/public/category-banners"] });
+      toast({ title: `Banner #${idx} kaydedildi` });
+    } catch {
+      toast({ title: `Banner #${idx} kayıt hatası`, variant: "destructive" });
+    } finally {
+      setSavingIdx(null);
+    }
+  };
 
   return (
     <Card className="border-orange-300">
@@ -6129,10 +6143,10 @@ function CategoryBannersAdmin() {
           <div className="text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin inline mr-2" />Yükleniyor...</div>
         ) : (
           <>
-            <div className="flex items-center gap-2">
-              <input type="checkbox" id="cat-banners-enabled" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="w-4 h-4" data-testid="checkbox-cat-banners-enabled" />
-              <label htmlFor="cat-banners-enabled" className="text-sm font-medium cursor-pointer">Banner Bölümü Aktif</label>
-              <p className="text-xs text-muted-foreground ml-2">Sadece görseli + linki dolu ve "Yayında" olanlar gösterilir.</p>
+            <div className="flex items-center gap-2 flex-wrap p-2 bg-orange-50 rounded">
+              <input type="checkbox" id="cat-banners-enabled" checked={enabled} onChange={e => { setEnabled(e.target.checked); saveSection.mutate(e.target.checked); }} className="w-4 h-4" data-testid="checkbox-cat-banners-enabled" />
+              <label htmlFor="cat-banners-enabled" className="text-sm font-medium cursor-pointer">Banner Bölümü Aktif {saveSection.isPending && <Loader2 className="w-3 h-3 inline animate-spin ml-1" />}</label>
+              <p className="text-xs text-muted-foreground ml-2">Aşağıda her banner kendi KAYDET butonuna sahip.</p>
             </div>
             <div className="grid md:grid-cols-2 gap-3">
               {banners.map(b => (
@@ -6169,7 +6183,7 @@ function CategoryBannersAdmin() {
                     <Input value={b.link} onChange={e => updateB(b.idx, { link: e.target.value })} placeholder="/kategori/kopek/kuru-mama veya /urun/123" className="h-9 text-sm" data-testid={`input-cat-banner-${b.idx}-link`} />
                   </div>
                   <div>
-                    <label className="text-[10px] text-muted-foreground block mb-0.5">Görsel (max 2MB)</label>
+                    <label className="text-[10px] text-muted-foreground block mb-0.5">Görsel (max 4MB)</label>
                     <input type="file" accept="image/*" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0], b.idx)} className="text-xs" data-testid={`input-cat-banner-${b.idx}-file`} />
                     {b.image && (
                       <div className="mt-2 border rounded overflow-hidden">
@@ -6180,12 +6194,18 @@ function CategoryBannersAdmin() {
                       </div>
                     )}
                   </div>
+                  <Button
+                    onClick={() => saveOne(b.idx)}
+                    disabled={savingIdx === b.idx}
+                    className="w-full bg-orange-600 hover:bg-orange-700 text-white"
+                    data-testid={`button-save-cat-banner-${b.idx}`}
+                  >
+                    {savingIdx === b.idx ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                    Banner #{b.idx} KAYDET
+                  </Button>
                 </div>
               ))}
             </div>
-            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full" data-testid="button-save-cat-banners">
-              {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Kaydet
-            </Button>
           </>
         )}
       </CardContent>
