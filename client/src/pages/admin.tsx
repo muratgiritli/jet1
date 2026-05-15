@@ -5804,6 +5804,7 @@ function BannersSection() {
       <TopPromoBannerAdmin />
       <SimpleBannerVisibilityAdmin />
       <BreedBannersAdmin />
+      <CategoryBannersAdmin />
       <BannersListSection />
     </div>
   );
@@ -6017,6 +6018,136 @@ function BreedBannersAdmin() {
               {renderEditor(10, b10, setB10)}
             </div>
             <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full" data-testid="button-save-breed-banners">
+              {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Kaydet
+            </Button>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface CatBannerForm { idx: number; image: string; link: string; alt: string; enabled: boolean; order: number }
+function CategoryBannersAdmin() {
+  const { toast } = useToast();
+  const { data, isLoading } = useQuery<{ enabled: boolean; banners: CatBannerForm[] }>({
+    queryKey: ["/api/public/category-banners"],
+  });
+  const [enabled, setEnabled] = useState(true);
+  const [banners, setBanners] = useState<CatBannerForm[]>(
+    Array.from({ length: 20 }, (_, i) => ({ idx: i + 1, image: "", link: "", alt: "", enabled: false, order: i + 1 }))
+  );
+
+  useEffect(() => {
+    if (data) {
+      setEnabled(data.enabled);
+      setBanners(data.banners.map((b, i) => ({
+        idx: b.idx,
+        image: b.image || "",
+        link: b.link || "",
+        alt: b.alt || "",
+        enabled: !!b.enabled,
+        order: Number(b.order) || (i + 1),
+      })));
+    }
+  }, [data]);
+
+  const updateB = (idx: number, patch: Partial<CatBannerForm>) => {
+    setBanners(prev => prev.map(b => b.idx === idx ? { ...b, ...patch } : b));
+  };
+
+  const handleFile = (file: File, idx: number) => {
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Görsel çok büyük (max 2MB)", variant: "destructive" });
+      return;
+    }
+    const r = new FileReader();
+    r.onload = () => updateB(idx, { image: r.result as string });
+    r.readAsDataURL(file);
+  };
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("PATCH", "/api/admin/category-banners", { enabled, banners });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/public/category-banners"] });
+      toast({ title: "Kategori banner'ları kaydedildi" });
+    },
+    onError: () => toast({ title: "Kayıt hatası", variant: "destructive" }),
+  });
+
+  return (
+    <Card className="border-orange-300">
+      <CardHeader className="pb-2">
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Package className="w-4 h-4 text-orange-600" /> Ana Sayfa Kategori Banner'ları (Kategori altında, alt alta - 20 slot)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="p-3 space-y-3">
+        {isLoading ? (
+          <div className="text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin inline mr-2" />Yükleniyor...</div>
+        ) : (
+          <>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="cat-banners-enabled" checked={enabled} onChange={e => setEnabled(e.target.checked)} className="w-4 h-4" data-testid="checkbox-cat-banners-enabled" />
+              <label htmlFor="cat-banners-enabled" className="text-sm font-medium cursor-pointer">Banner Bölümü Aktif</label>
+              <p className="text-xs text-muted-foreground ml-2">Sadece görseli + linki dolu ve "Yayında" olanlar gösterilir.</p>
+            </div>
+            <div className="grid md:grid-cols-2 gap-3">
+              {banners.map(b => (
+                <div key={b.idx} className={`border rounded-lg p-3 space-y-2 ${b.enabled ? "" : "opacity-60 bg-muted/40"}`}>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <p className="text-xs font-bold text-orange-700">Banner #{b.idx}</p>
+                    <label className="flex items-center gap-1.5 cursor-pointer text-xs">
+                      <input
+                        type="checkbox"
+                        checked={b.enabled}
+                        onChange={e => updateB(b.idx, { enabled: e.target.checked })}
+                        className="w-4 h-4"
+                        data-testid={`checkbox-cat-banner-${b.idx}-enabled`}
+                      />
+                      <span className={b.enabled ? "text-green-700 font-medium" : "text-muted-foreground"}>
+                        {b.enabled ? "Yayında" : "Yayında değil"}
+                      </span>
+                    </label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[10px] text-muted-foreground whitespace-nowrap">Sıra (küçük = önce):</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={999}
+                      value={b.order}
+                      onChange={e => updateB(b.idx, { order: Number(e.target.value) || 1 })}
+                      className="h-8 text-sm w-20"
+                      data-testid={`input-cat-banner-${b.idx}-order`}
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground block mb-0.5">Açıklama (alt text)</label>
+                    <Input value={b.alt} onChange={e => updateB(b.idx, { alt: e.target.value })} placeholder="Örn: Kuru Mama Kampanyası" className="h-9 text-sm" data-testid={`input-cat-banner-${b.idx}-alt`} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground block mb-0.5">Tıklanınca gidilecek ürün/kategori sayfası</label>
+                    <Input value={b.link} onChange={e => updateB(b.idx, { link: e.target.value })} placeholder="/kategori/kopek/kuru-mama veya /urun/123" className="h-9 text-sm" data-testid={`input-cat-banner-${b.idx}-link`} />
+                  </div>
+                  <div>
+                    <label className="text-[10px] text-muted-foreground block mb-0.5">Görsel (max 2MB)</label>
+                    <input type="file" accept="image/*" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0], b.idx)} className="text-xs" data-testid={`input-cat-banner-${b.idx}-file`} />
+                    {b.image && (
+                      <div className="mt-2 border rounded overflow-hidden">
+                        <img src={b.image} alt="önizleme" className="w-full h-auto max-h-32 object-contain" />
+                        <button type="button" onClick={() => updateB(b.idx, { image: "" })} className="text-xs text-red-600 px-2 py-1 hover:underline" data-testid={`button-clear-cat-banner-${b.idx}`}>
+                          Görseli sil
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full" data-testid="button-save-cat-banners">
               {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null} Kaydet
             </Button>
           </>

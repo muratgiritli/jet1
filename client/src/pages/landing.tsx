@@ -545,6 +545,31 @@ function BreedBannersRow() {
   );
 }
 
+interface CategoryBannerItem { idx: number; image: string; link: string; alt: string; enabled: boolean; order: number }
+interface CategoryBannersData { enabled: boolean; banners: CategoryBannerItem[] }
+function CategoryBannersStack() {
+  const { data } = useQuery<CategoryBannersData>({ queryKey: ["/api/public/category-banners"] });
+  if (!data || !data.enabled) return null;
+  const visible = data.banners
+    .filter(b => b.enabled && b.image && b.link)
+    .sort((a, b) => (a.order - b.order) || (a.idx - b.idx));
+  if (visible.length === 0) return null;
+  return (
+    <div className="my-4 md:my-6 flex flex-col gap-2 md:gap-4" data-testid="section-category-banners">
+      {visible.map((b) => (
+        <Link key={b.idx} href={b.link}>
+          <a
+            className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform"
+            data-testid={`link-cat-banner-${b.idx}`}
+          >
+            <img src={b.image} alt={b.alt || `Banner ${b.idx}`} className="w-full h-auto block" loading="lazy" />
+          </a>
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 function VeterinerMamaBanner() {
   const { data: settings } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
   if (settings && (settings.veteriner_banner_enabled === "0" || settings.veteriner_banner_enabled === "false")) return null;
@@ -1085,6 +1110,7 @@ export default function Landing() {
         </div>
 
         <div className="md:max-w-5xl md:mx-auto">
+          <CategoryBannersStack />
           <SokakCanlariBanner />
           <VeterinerMamaBanner />
           <BreedBannersRow />

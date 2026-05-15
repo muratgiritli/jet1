@@ -5615,6 +5615,62 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     res.json({ ok: true });
   });
 
+  // ===== Ana Sayfa Kategori Banner'ları (20 adet, dikey stack) =====
+  app.get("/api/public/category-banners", async (_req, res) => {
+    try {
+      const r = await sharedPool.query(
+        "SELECT key, value FROM app_settings WHERE key LIKE 'cat_banner%'"
+      );
+      const m: any = {};
+      for (const row of r.rows) m[row.key] = row.value;
+      const banners = [];
+      for (let i = 1; i <= 20; i++) {
+        banners.push({
+          idx: i,
+          image: m[`cat_banner${i}_image`] || "",
+          link: m[`cat_banner${i}_link`] || "",
+          alt: m[`cat_banner${i}_alt`] || "",
+          enabled: m[`cat_banner${i}_enabled`] === "1",
+          order: Number(m[`cat_banner${i}_order`]) || i,
+        });
+      }
+      res.json({ enabled: m.cat_banner_enabled !== "0", banners });
+    } catch {
+      const banners = Array.from({ length: 20 }, (_, i) => ({
+        idx: i + 1, image: "", link: "", alt: "", enabled: false, order: i + 1,
+      }));
+      res.json({ enabled: true, banners });
+    }
+  });
+
+  app.patch("/api/admin/category-banners", requireAdmin, async (req, res) => {
+    const body = req.body || {};
+    const updates: Array<[string, string]> = [];
+    if (body.enabled !== undefined) updates.push(["cat_banner_enabled", body.enabled ? "1" : "0"]);
+    const list = Array.isArray(body.banners) ? body.banners : [];
+    for (const b of list) {
+      const i = Number(b?.idx);
+      if (!Number.isInteger(i) || i < 1 || i > 20) continue;
+      if (typeof b.image === "string") {
+        if (b.image.length > 3 * 1024 * 1024) return res.status(400).json({ message: "Görsel çok büyük (max 2MB)" });
+        updates.push([`cat_banner${i}_image`, b.image]);
+      }
+      if (typeof b.link === "string" && b.link.length <= 500) updates.push([`cat_banner${i}_link`, b.link]);
+      if (typeof b.alt === "string" && b.alt.length <= 200) updates.push([`cat_banner${i}_alt`, b.alt]);
+      if (b.enabled !== undefined) updates.push([`cat_banner${i}_enabled`, b.enabled ? "1" : "0"]);
+      if (b.order !== undefined && Number.isFinite(Number(b.order))) {
+        updates.push([`cat_banner${i}_order`, String(Math.max(1, Math.min(999, Math.floor(Number(b.order)))))]);
+      }
+    }
+    for (const [k, v] of updates) {
+      await sharedPool.query(
+        "INSERT INTO app_settings (key, value, updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()",
+        [k, v]
+      );
+    }
+    res.json({ ok: true });
+  });
+
   app.patch("/api/admin/top-banner", requireAdmin, async (req, res) => {
     const { enabled, image, link } = req.body || {};
     if (image !== undefined && typeof image !== "string") return res.status(400).json({ message: "Geçersiz görsel" });
