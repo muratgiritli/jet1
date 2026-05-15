@@ -5652,7 +5652,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const i = Number(b?.idx);
       if (!Number.isInteger(i) || i < 1 || i > 20) continue;
       if (typeof b.image === "string") {
-        if (b.image.length > 3 * 1024 * 1024) return res.status(400).json({ message: "Görsel çok büyük (max 2MB)" });
+        if (b.image.length > 6 * 1024 * 1024) return res.status(400).json({ message: "Görsel çok büyük (max 4MB)" });
         updates.push([`cat_banner${i}_image`, b.image]);
       }
       if (typeof b.link === "string" && b.link.length <= 500) updates.push([`cat_banner${i}_link`, b.link]);

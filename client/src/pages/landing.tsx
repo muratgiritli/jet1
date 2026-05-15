@@ -551,21 +551,24 @@ function CategoryBannersStack() {
   const { data } = useQuery<CategoryBannersData>({ queryKey: ["/api/public/category-banners"] });
   if (!data || !data.enabled) return null;
   const visible = data.banners
-    .filter(b => b.enabled && b.image && b.link)
+    .filter(b => b.enabled && b.image)
     .sort((a, b) => (a.order - b.order) || (a.idx - b.idx));
   if (visible.length === 0) return null;
   return (
     <div className="my-4 md:my-6 flex flex-col gap-2 md:gap-4" data-testid="section-category-banners">
-      {visible.map((b) => (
-        <Link key={b.idx} href={b.link}>
-          <a
-            className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform"
-            data-testid={`link-cat-banner-${b.idx}`}
-          >
-            <img src={b.image} alt={b.alt || `Banner ${b.idx}`} className="w-full h-auto block" loading="lazy" />
-          </a>
-        </Link>
-      ))}
+      {visible.map((b) => {
+        const img = (
+          <img src={b.image} alt={b.alt || `Banner ${b.idx}`} className="w-full h-auto block" loading="lazy" />
+        );
+        const cls = "block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform";
+        return b.link ? (
+          <Link key={b.idx} href={b.link}>
+            <a className={cls} data-testid={`link-cat-banner-${b.idx}`}>{img}</a>
+          </Link>
+        ) : (
+          <div key={b.idx} className={cls} data-testid={`link-cat-banner-${b.idx}`}>{img}</div>
+        );
+      })}
     </div>
   );
 }

@@ -6084,12 +6084,15 @@ function CategoryBannersAdmin() {
   };
 
   const handleFile = (file: File, idx: number) => {
-    if (file.size > 2 * 1024 * 1024) {
-      toast({ title: "Görsel çok büyük (max 2MB)", variant: "destructive" });
+    if (file.size > 4 * 1024 * 1024) {
+      toast({ title: "Görsel çok büyük (max 4MB)", description: "Telefon fotoğraflarını sıkıştırarak yükleyin.", variant: "destructive" });
       return;
     }
     const r = new FileReader();
-    r.onload = () => updateB(idx, { image: r.result as string });
+    r.onload = () => {
+      updateB(idx, { image: r.result as string, enabled: true });
+      toast({ title: `Banner #${idx} görseli yüklendi`, description: "Otomatik olarak yayına alındı. Linki gir ve KAYDET tuşuna bas." });
+    };
     r.readAsDataURL(file);
   };
 
