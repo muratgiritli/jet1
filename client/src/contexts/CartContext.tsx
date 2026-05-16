@@ -16,9 +16,11 @@ interface CartProduct {
   originalPrice?: number | null;
   animal?: string | null;
   isStreetAnimal?: boolean;
+  variantLabel?: string | null;
 }
 
 type BasketItems = Record<string, number>;
+type VariantSelections = Record<string, { label: string; price: number }>;
 
 interface CampaignItemInfo {
   product_id: number;
@@ -32,7 +34,9 @@ interface CartContextType {
   basket: BasketItems;
   paymentId: string;
   setPaymentId: (id: string) => void;
-  updateQty: (id: string, delta: number, fromCampaign?: boolean) => boolean;
+  updateQty: (id: string, delta: number, fromCampaign?: boolean, variant?: { label: string; price: number }) => boolean;
+  setVariant: (id: string, variant: { label: string; price: number } | null) => void;
+  getVariant: (id: string) => { label: string; price: number } | null;
   clearCart: () => void;
   subtotal: number;
   selectedProducts: { product: CartProduct; qty: number }[];
@@ -82,6 +86,21 @@ function saveBasket(b: BasketItems) {
   } catch {}
 }
 
+function loadVariants(): VariantSelections {
+  try {
+    const saved = localStorage.getItem("jet55_variants");
+    if (saved) return JSON.parse(saved);
+  } catch {}
+  return {};
+}
+
+function saveVariants(v: VariantSelections) {
+  try {
+    if (Object.keys(v).length === 0) localStorage.removeItem("jet55_variants");
+    else localStorage.setItem("jet55_variants", JSON.stringify(v));
+  } catch {}
+}
+
 function loadCampaignCartIds(): Set<string> {
   try {
     const saved = localStorage.getItem("jet55_campaign_cart");
@@ -102,6 +121,9 @@ function saveCampaignCartIds(s: Set<string>) {
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [basket, setBasket] = useState<BasketItems>(loadBasket);
+  const [variantMap, setVariantMap] = useState<VariantSelections>(loadVariants);
+  const variantMapRef = useRef<VariantSelections>(variantMap);
+  useEffect(() => { variantMapRef.current = variantMap; }, [variantMap]);
   const [paymentId, setPaymentId] = useState("nakit");
   const [campaignCartIds, setCampaignCartIds] = useState<Set<string>>(loadCampaignCartIds);
   const campaignCartIdsRef = useRef<Set<string>>(campaignCartIds);
@@ -167,18 +189,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     return dbProducts.map((p) => {
       const pid = String(p.id);
       const cp = campaignCartIds.has(pid) ? campaignPriceMap.get(pid) : undefined;
+      const v = variantMap[pid];
+      const basePrice = cp ?? (v?.price ?? p.price);
       return {
         id: pid,
-        name: p.name,
-        price: cp ?? p.price,
+        name: v?.label ? `${p.name} (${v.label})` : p.name,
+        price: basePrice,
         img: p.img,
         skt: p.skt,
         originalPrice: cp ? p.price : p.originalPrice,
         animal: (p as any).animal ?? null,
         isStreetAnimal: !!(p as any).isStreetAnimal,
+        variantLabel: v?.label ?? null,
       };
     });
-  }, [dbProducts, campaignPriceMap, campaignCartIds]);
+  }, [dbProducts, campaignPriceMap, campaignCartIds, variantMap]);
 
   const kediKumuIdsRef = useRef<Set<string>>(new Set());
   const kediKumuIds = useMemo(() => {
@@ -215,7 +240,28 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const basketRef = useRef<BasketItems>(basket);
   useEffect(() => { basketRef.current = basket; }, [basket]);
 
-  const updateQty = useCallback((id: string, delta: number, fromCampaign?: boolean): boolean => {
+  const setVariant = useCallback((id: string, variant: { label: string; price: number } | null) => {
+    setVariantMap(prev => {
+      const next = { ...prev };
+      if (variant) next[id] = variant;
+      else delete next[id];
+      variantMapRef.current = next;
+      saveVariants(next);
+      return next;
+    });
+  }, []);
+
+  const getVariant = useCallback((id: string) => variantMapRef.current[id] || null, []);
+
+  const updateQty = useCallback((id: string, delta: number, fromCampaign?: boolean, variant?: { label: string; price: number }): boolean => {
+    if (variant && delta > 0) {
+      setVariantMap(prev => {
+        const next = { ...prev, [id]: variant };
+        variantMapRef.current = next;
+        saveVariants(next);
+        return next;
+      });
+    }
     let blocked = false;
     let actualDelta = 0;
     if (delta > 0) {
@@ -313,6 +359,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
           saveCampaignCartIds(next2);
           return next2;
         });
+        setVariantMap(prev2 => {
+          if (!prev2[id]) return prev2;
+          const next2 = { ...prev2 };
+          delete next2[id];
+          variantMapRef.current = next2;
+          saveVariants(next2);
+          return next2;
+        });
       } else {
         updated = { ...prev, [id]: next };
       }
@@ -341,6 +395,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCampaignCartIds(new Set());
     campaignCartIdsRef.current = new Set();
     saveCampaignCartIds(new Set());
+    setVariantMap({});
+    variantMapRef.current = {};
+    saveVariants({});
   }, []);
 
   const { subtotal, selectedProducts, shipping, discount, grandTotal, minReached } = useMemo(() => {
@@ -410,6 +467,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
       paymentId,
       setPaymentId,
       updateQty,
+      setVariant,
+      getVariant,
       clearCart,
       subtotal,
       selectedProducts,
@@ -432,7 +491,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       campaignCartIds,
       isPreorderProduct,
     }),
-    [basket, paymentId, updateQty, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock, updateStock, campaignCartIds, isPreorderProduct]
+    [basket, paymentId, updateQty, setVariant, getVariant, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock, updateStock, campaignCartIds, isPreorderProduct]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

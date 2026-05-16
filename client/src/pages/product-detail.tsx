@@ -201,7 +201,7 @@ export default function ProductDetailPage() {
   const searchStr = useSearch();
   const isCampaignMode = new URLSearchParams(searchStr).get("kampanya") === "1";
 
-  const { basket, updateQty, grandTotal, itemCount, updateStock } = useCart();
+  const { basket, updateQty, grandTotal, itemCount, updateStock, setVariant, getVariant } = useCart();
   const [, setLocation] = useLocation();
 
   const staticProduct = useMemo(() => {
@@ -317,6 +317,8 @@ export default function ProductDetailPage() {
 
   const campaignExtras: Product[] = [];
 
+  const [selectedVariantLabel, setSelectedVariantLabel] = useState<string | null>(null);
+  const [variantInitialized, setVariantInitialized] = useState(false);
   const [stockName, setStockName] = useState("");
   const [stockPhone, setStockPhone] = useState("");
   const [stockAlertSent, setStockAlertSent] = useState(false);
@@ -413,8 +415,20 @@ export default function ProductDetailPage() {
 
   const { product, category, crossSellSections, breedStats } = resolvedData;
   const pid = String(product.id);
+  const productVariants = ((product as any).variants || []) as { label: string; price: number }[];
+  const hasVariants = productVariants.length > 0;
+  if (!variantInitialized) {
+    const existingVariant = getVariant(pid);
+    if (existingVariant && productVariants.some(v => v.label === existingVariant.label)) {
+      setSelectedVariantLabel(existingVariant.label);
+    }
+    setVariantInitialized(true);
+  }
+  const selectedVariant = hasVariants
+    ? productVariants.find(v => v.label === selectedVariantLabel) || null
+    : null;
   const campaignFiyat = isCampaignMode && campaignCheck?.campaignPrice ? campaignCheck.campaignPrice : null;
-  const displayPrice = campaignFiyat ?? product.price;
+  const displayPrice = campaignFiyat ?? selectedVariant?.price ?? product.price;
   const displayOriginalPrice = campaignFiyat ? product.price : product.originalPrice;
   const discount = displayOriginalPrice && displayOriginalPrice > displayPrice
     ? Math.round(((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100)
@@ -571,6 +585,45 @@ export default function ProductDetailPage() {
                 <InstallmentBanner variant="compact" pricePerInstallment={displayPrice / 3} />
               )}
 
+              {hasVariants && (
+                <div className="space-y-2" data-testid="section-variants">
+                  <div className="text-sm font-semibold text-gray-700">
+                    Seçenek <span className="text-red-500">*</span>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {productVariants.map((v) => {
+                      const isSel = selectedVariantLabel === v.label;
+                      return (
+                        <button
+                          key={v.label}
+                          type="button"
+                          onClick={() => {
+                            setSelectedVariantLabel(v.label);
+                            if (quantity > 0) setVariant(pid, v);
+                          }}
+                          className={`px-3 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                            isSel
+                              ? "border-orange-600 bg-orange-50 text-orange-900"
+                              : "border-gray-200 bg-white text-gray-700 hover:border-gray-400"
+                          }`}
+                          data-testid={`btn-variant-${v.label.replace(/\s+/g, "-")}`}
+                        >
+                          <span className="font-semibold">{v.label}</span>
+                          <span className="ml-2 text-xs opacity-80">
+                            {v.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                  {!selectedVariant && (
+                    <p className="text-xs text-amber-700" data-testid="text-variant-required">
+                      Lütfen bir seçenek belirleyin.
+                    </p>
+                  )}
+                </div>
+              )}
+
               <Dialog open={paraPuanInfoOpen} onOpenChange={setParaPuanInfoOpen}>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
@@ -691,8 +744,13 @@ export default function ProductDetailPage() {
                     <Button
                       className={isCampaignMode ? "w-full" : "flex-1"}
                       style={{ backgroundColor: "#e65100" }}
+                      disabled={hasVariants && !selectedVariant}
                       onClick={() => {
-                        if (quantity === 0) updateQty(pid, 1, isCampaignMode);
+                        if (hasVariants && !selectedVariant) {
+                          toast({ title: "Lütfen seçenek belirleyin", variant: "destructive" });
+                          return;
+                        }
+                        if (quantity === 0) updateQty(pid, 1, isCampaignMode, selectedVariant ?? undefined);
                         if (isCampaignMode && !hasExtraInCart) {
                           setCampaignWarning(true);
                         }
@@ -715,7 +773,15 @@ export default function ProductDetailPage() {
                       <Button
                           variant="outline"
                           className="w-full flex-1"
-                          onClick={() => { if (quantity === 0) updateQty(pid, 1); setLocation("/odeme"); }}
+                          disabled={hasVariants && !selectedVariant}
+                          onClick={() => {
+                            if (hasVariants && !selectedVariant) {
+                              toast({ title: "Lütfen seçenek belirleyin", variant: "destructive" });
+                              return;
+                            }
+                            if (quantity === 0) updateQty(pid, 1, false, selectedVariant ?? undefined);
+                            setLocation("/odeme");
+                          }}
                           data-testid="btn-buy-now"
                         >
                           HEMEN AL

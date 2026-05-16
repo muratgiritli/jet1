@@ -298,6 +298,9 @@ function ProductForm({
   const [costPrice, setCostPrice] = useState(product?.costPrice?.toString() || "");
   const [mamaType, setMamaType] = useState(product?.mamaType || "");
   const [hiddenPays, setHiddenPays] = useState<string[]>((product as any)?.hiddenPaymentMethods || []);
+  const [variants, setVariants] = useState<{ label: string; price: string }[]>(
+    ((product as any)?.variants || []).map((v: any) => ({ label: String(v.label || ""), price: String(v.price ?? "") }))
+  );
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const [brandCategoryId, setBrandCategoryId] = useState(
@@ -361,6 +364,9 @@ function ProductForm({
           barcode: barcode.trim() || null,
           mamaType: mamaType || null,
           hiddenPaymentMethods: hiddenPays,
+          variants: variants
+            .map(v => ({ label: v.label.trim(), price: parseFloat(v.price) }))
+            .filter(v => v.label && !isNaN(v.price) && v.price > 0),
         });
       }}
       className="space-y-4"
@@ -655,6 +661,56 @@ function ProductForm({
         </div>
         {!product && <p className="text-xs text-muted-foreground">Resim yüklemek için önce ürünü kaydedin, sonra düzenleyin.</p>}
       </div>
+      <div className="space-y-2 border rounded-lg p-3 bg-muted/30">
+        <div className="flex items-center justify-between">
+          <Label className="text-xs font-bold">Varyantlar (Renk / Ölçü)</Label>
+          <button
+            type="button"
+            onClick={() => setVariants(prev => [...prev, { label: "", price: "" }])}
+            className="text-xs font-medium flex items-center gap-1 hover:underline"
+            style={{ color: "#6B3480" }}
+            data-testid="btn-add-variant"
+          >
+            <Plus className="w-3 h-3" /> Satır Ekle
+          </button>
+        </div>
+        <p className="text-[11px] text-muted-foreground -mt-1">
+          Renk veya ölçü ekleyin (örn. "Kırmızı - Small"). Müşteri seçtiğinde fiyat değişir. Boş bırakırsanız varyant olmaz.
+        </p>
+        {variants.length === 0 && (
+          <p className="text-[11px] text-muted-foreground italic">Henüz varyant yok.</p>
+        )}
+        {variants.map((v, i) => (
+          <div key={i} className="flex gap-2 items-center" data-testid={`row-variant-${i}`}>
+            <Input
+              value={v.label}
+              onChange={(e) => setVariants(prev => prev.map((x, idx) => idx === i ? { ...x, label: e.target.value } : x))}
+              placeholder="Örn. Mavi - L"
+              className="flex-1 h-8 text-sm"
+              data-testid={`input-variant-label-${i}`}
+            />
+            <Input
+              type="number"
+              step="0.01"
+              value={v.price}
+              onChange={(e) => setVariants(prev => prev.map((x, idx) => idx === i ? { ...x, price: e.target.value } : x))}
+              placeholder="Fiyat (TL)"
+              className="w-28 h-8 text-sm"
+              data-testid={`input-variant-price-${i}`}
+            />
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => setVariants(prev => prev.filter((_, idx) => idx !== i))}
+              data-testid={`btn-remove-variant-${i}`}
+            >
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+        ))}
+      </div>
+
       <Button type="submit" className="w-full" disabled={isPending || !brandCategoryId} data-testid="btn-save-product">
         {isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : product ? "Güncelle" : "Ekle"}
       </Button>

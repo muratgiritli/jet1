@@ -61,7 +61,10 @@ export const products = pgTable("products", {
   preorderEnabled: boolean("preorder_enabled").notNull().default(false),
   isStreetAnimal: boolean("is_street_animal").notNull().default(false),
   hiddenPaymentMethods: text("hidden_payment_methods").array().notNull().default([]),
+  variants: jsonb("variants").$type<ProductVariant[]>().notNull().default([]),
 });
+
+export type ProductVariant = { label: string; price: number };
 
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export type InsertProduct = z.infer<typeof insertProductSchema>;
