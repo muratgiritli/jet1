@@ -582,7 +582,7 @@ const SUBCATEGORY_SEED_DATA = [
   { animal: "kopek", slug: "acik-mama", displayName: "Açık Mama\nÇeşitleri", color: "#FF9800", hasBrands: true, sortOrder: 2 },
   { animal: "kopek", slug: "tuvalet-malzemeleri", displayName: "Tuvalet\nMalzemeleri", color: "#8BC34A", hasBrands: false, sortOrder: 3 },
   { animal: "kopek", slug: "yas-mama", displayName: "Yaş Mama\nÇeşitleri", color: "#E91E63", hasBrands: false, sortOrder: 4 },
-  { animal: "kopek", slug: "odul-kemik", displayName: "Ödül Kemik\nÇeşitleri", color: "#9C27B0", hasBrands: false, sortOrder: 5 },
+  { animal: "kopek", slug: "odul-kemik", displayName: "Köpek\nÖdülleri", color: "#9C27B0", hasBrands: false, sortOrder: 5 },
   { animal: "kopek", slug: "tasima-kulube", displayName: "Taşıma ve\nKulübeler", color: "#795548", hasBrands: false, sortOrder: 6 },
   { animal: "kopek", slug: "bakim-saglik", displayName: "Bakım ve\nSağlık", color: "#00BCD4", hasBrands: false, sortOrder: 7 },
   { animal: "kopek", slug: "uygun-cuval", displayName: "Uygun Çuval\nMamalar", color: "#607D8B", hasBrands: false, sortOrder: 8 },
