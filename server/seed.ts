@@ -669,6 +669,26 @@ async function seedSubcategories() {
   }
 }
 
+async function seedDefaultBrandCategoriesForSubcategories() {
+  const allBrands = await db.select().from(brandCategories);
+  const existingKeys = new Set(
+    allBrands.map(b => `${b.animal}/${b.subcategory}/${b.brandSlug}`)
+  );
+  for (const sub of SUBCATEGORY_SEED_DATA) {
+    if (sub.hasBrands) continue;
+    const key = `${sub.animal}/${sub.slug}/${sub.slug}`;
+    if (existingKeys.has(key)) continue;
+    const displayName = sub.displayName.replace(/\n/g, " ");
+    await db.insert(brandCategories).values({
+      brandName: displayName,
+      brandSlug: sub.slug,
+      animal: sub.animal,
+      subcategory: sub.slug,
+    });
+    console.log(`Seeded default brand_category: ${sub.animal}/${sub.slug}`);
+  }
+}
+
 async function seedDeliveryNeighborhoods() {
   const existing = await db.select().from(deliveryNeighborhoods).limit(1);
   if (existing.length > 0) {
@@ -750,6 +770,7 @@ async function seedDeliveryNeighborhoods() {
 
 export async function seedDatabase() {
   await seedSubcategories();
+  await seedDefaultBrandCategoriesForSubcategories();
   await seedDeliveryNeighborhoods();
   console.log("Checking database for missing brand data...");
 

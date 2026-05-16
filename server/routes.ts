@@ -1171,6 +1171,18 @@ export async function registerRoutes(
   app.get("/api/brand-products/:animal/:subcategory/:brandSlug", async (req, res) => {
     const { animal, brandSlug } = req.params;
     const subcategory = SUBCATEGORY_SLUG_MAP[req.params.subcategory] || req.params.subcategory;
+    const aggregateAll = brandSlug === subcategory || brandSlug === req.params.subcategory;
+    if (aggregateAll) {
+      const all = await storage.getAllBrandCategories();
+      const subMatches = all.filter(bc => bc.animal === animal && bc.subcategory === subcategory);
+      if (subMatches.length > 0) {
+        const allProducts = await storage.getAllProducts();
+        const ids = subMatches.map(c => c.id);
+        const prods = allProducts.filter(p => p.isActive && p.brandCategoryId && ids.includes(p.brandCategoryId));
+        const defaultCat = subMatches.find(c => c.brandSlug === brandSlug) || subMatches[0];
+        return res.json({ category: defaultCat, products: prods });
+      }
+    }
     let category = await storage.getBrandCategoryBySlug(animal, subcategory, brandSlug);
     if (!category) {
       const all = await storage.getAllBrandCategories();
