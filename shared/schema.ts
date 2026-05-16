@@ -64,7 +64,7 @@ export const products = pgTable("products", {
   variants: jsonb("variants").$type<ProductVariant[]>().notNull().default([]),
 });
 
-export type ProductVariant = { label: string; price: number };
+export type ProductVariant = { label: string; price: number; stock?: number; barcode?: string; skt?: string };
 
 export const insertProductSchema = createInsertSchema(products).omit({ id: true });
 export type InsertProduct = z.infer<typeof insertProductSchema>;

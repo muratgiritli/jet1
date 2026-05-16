@@ -298,8 +298,14 @@ function ProductForm({
   const [costPrice, setCostPrice] = useState(product?.costPrice?.toString() || "");
   const [mamaType, setMamaType] = useState(product?.mamaType || "");
   const [hiddenPays, setHiddenPays] = useState<string[]>((product as any)?.hiddenPaymentMethods || []);
-  const [variants, setVariants] = useState<{ label: string; price: string }[]>(
-    ((product as any)?.variants || []).map((v: any) => ({ label: String(v.label || ""), price: String(v.price ?? "") }))
+  const [variants, setVariants] = useState<{ label: string; price: string; stock: string; barcode: string; skt: string }[]>(
+    ((product as any)?.variants || []).map((v: any) => ({
+      label: String(v.label || ""),
+      price: String(v.price ?? ""),
+      stock: v.stock !== undefined && v.stock !== null ? String(v.stock) : "",
+      barcode: String(v.barcode || ""),
+      skt: String(v.skt || ""),
+    }))
   );
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
@@ -365,7 +371,16 @@ function ProductForm({
           mamaType: mamaType || null,
           hiddenPaymentMethods: hiddenPays,
           variants: variants
-            .map(v => ({ label: v.label.trim(), price: parseFloat(v.price) }))
+            .map(v => {
+              const stockNum = v.stock.trim() === "" ? undefined : parseInt(v.stock);
+              return {
+                label: v.label.trim(),
+                price: parseFloat(v.price),
+                ...(stockNum !== undefined && !isNaN(stockNum) ? { stock: stockNum } : {}),
+                ...(v.barcode.trim() ? { barcode: v.barcode.trim() } : {}),
+                ...(v.skt.trim() ? { skt: v.skt.trim() } : {}),
+              };
+            })
             .filter(v => v.label && !isNaN(v.price) && v.price > 0),
         });
       }}
@@ -666,7 +681,7 @@ function ProductForm({
           <Label className="text-xs font-bold">Varyantlar (Renk / Ölçü)</Label>
           <button
             type="button"
-            onClick={() => setVariants(prev => [...prev, { label: "", price: "" }])}
+            onClick={() => setVariants(prev => [...prev, { label: "", price: "", stock: "", barcode: "", skt: "" }])}
             className="text-xs font-medium flex items-center gap-1 hover:underline"
             style={{ color: "#6B3480" }}
             data-testid="btn-add-variant"
@@ -681,32 +696,58 @@ function ProductForm({
           <p className="text-[11px] text-muted-foreground italic">Henüz varyant yok.</p>
         )}
         {variants.map((v, i) => (
-          <div key={i} className="flex gap-2 items-center" data-testid={`row-variant-${i}`}>
-            <Input
-              value={v.label}
-              onChange={(e) => setVariants(prev => prev.map((x, idx) => idx === i ? { ...x, label: e.target.value } : x))}
-              placeholder="Örn. Mavi - L"
-              className="flex-1 h-8 text-sm"
-              data-testid={`input-variant-label-${i}`}
-            />
-            <Input
-              type="number"
-              step="0.01"
-              value={v.price}
-              onChange={(e) => setVariants(prev => prev.map((x, idx) => idx === i ? { ...x, price: e.target.value } : x))}
-              placeholder="Fiyat (TL)"
-              className="w-28 h-8 text-sm"
-              data-testid={`input-variant-price-${i}`}
-            />
-            <Button
-              type="button"
-              size="sm"
-              variant="outline"
-              onClick={() => setVariants(prev => prev.filter((_, idx) => idx !== i))}
-              data-testid={`btn-remove-variant-${i}`}
-            >
-              <X className="w-3.5 h-3.5" />
-            </Button>
+          <div key={i} className="border rounded-md p-2 bg-white space-y-1.5" data-testid={`row-variant-${i}`}>
+            <div className="flex gap-2 items-center">
+              <Input
+                value={v.label}
+                onChange={(e) => setVariants(prev => prev.map((x, idx) => idx === i ? { ...x, label: e.target.value } : x))}
+                placeholder="Örn. Mavi - L"
+                className="flex-1 h-8 text-sm"
+                data-testid={`input-variant-label-${i}`}
+              />
+              <Input
+                type="number"
+                step="0.01"
+                value={v.price}
+                onChange={(e) => setVariants(prev => prev.map((x, idx) => idx === i ? { ...x, price: e.target.value } : x))}
+                placeholder="Fiyat (TL)"
+                className="w-24 h-8 text-sm"
+                data-testid={`input-variant-price-${i}`}
+              />
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setVariants(prev => prev.filter((_, idx) => idx !== i))}
+                data-testid={`btn-remove-variant-${i}`}
+              >
+                <X className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+            <div className="grid grid-cols-3 gap-2">
+              <Input
+                type="number"
+                value={v.stock}
+                onChange={(e) => setVariants(prev => prev.map((x, idx) => idx === i ? { ...x, stock: e.target.value } : x))}
+                placeholder="Stok"
+                className="h-8 text-xs"
+                data-testid={`input-variant-stock-${i}`}
+              />
+              <Input
+                value={v.barcode}
+                onChange={(e) => setVariants(prev => prev.map((x, idx) => idx === i ? { ...x, barcode: e.target.value } : x))}
+                placeholder="Barkod"
+                className="h-8 text-xs"
+                data-testid={`input-variant-barcode-${i}`}
+              />
+              <Input
+                value={v.skt}
+                onChange={(e) => setVariants(prev => prev.map((x, idx) => idx === i ? { ...x, skt: e.target.value } : x))}
+                placeholder="SKT"
+                className="h-8 text-xs"
+                data-testid={`input-variant-skt-${i}`}
+              />
+            </div>
           </div>
         ))}
       </div>
