@@ -664,7 +664,24 @@ async function seedSubcategories() {
         eq(subcategories.slug, sub.slug)
       )
     );
-    if (existing.length > 0) continue;
+    if (existing.length > 0) {
+      const cur = existing[0];
+      if (
+        cur.displayName !== sub.displayName ||
+        cur.color !== sub.color ||
+        cur.hasBrands !== sub.hasBrands ||
+        cur.sortOrder !== sub.sortOrder
+      ) {
+        await db.update(subcategories).set({
+          displayName: sub.displayName,
+          color: sub.color,
+          hasBrands: sub.hasBrands,
+          sortOrder: sub.sortOrder,
+        }).where(eq(subcategories.id, cur.id));
+        console.log(`Updated subcategory: ${sub.animal}/${sub.slug}`);
+      }
+      continue;
+    }
     await db.insert(subcategories).values(sub);
     console.log(`Seeded subcategory: ${sub.animal}/${sub.slug}`);
   }
@@ -677,9 +694,16 @@ async function seedDefaultBrandCategoriesForSubcategories() {
   );
   for (const sub of SUBCATEGORY_SEED_DATA) {
     if (sub.hasBrands) continue;
-    const key = `${sub.animal}/${sub.slug}/${sub.slug}`;
-    if (existingKeys.has(key)) continue;
     const displayName = sub.displayName.replace(/\n/g, " ");
+    const key = `${sub.animal}/${sub.slug}/${sub.slug}`;
+    const existing = allBrands.find(b => b.animal === sub.animal && b.subcategory === sub.slug && b.brandSlug === sub.slug);
+    if (existing) {
+      if (existing.brandName !== displayName) {
+        await db.update(brandCategories).set({ brandName: displayName }).where(eq(brandCategories.id, existing.id));
+        console.log(`Updated default brand_category name: ${sub.animal}/${sub.slug} -> ${displayName}`);
+      }
+      continue;
+    }
     await db.insert(brandCategories).values({
       brandName: displayName,
       brandSlug: sub.slug,
