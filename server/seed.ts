@@ -600,6 +600,7 @@ const SUBCATEGORY_SEED_DATA = [
   { animal: "kedi", slug: "kedi-konserve", displayName: "Kedi\nKonserve", color: "#F44336", hasBrands: false, sortOrder: 10 },
   { animal: "kedi", slug: "oyuncak", displayName: "Kedi\nOyuncak", color: "#3F51B5", hasBrands: false, sortOrder: 11 },
   { animal: "kedi", slug: "firca-tras", displayName: "Fırça ve\nTraş", color: "#009688", hasBrands: false, sortOrder: 12 },
+  { animal: "kedi", slug: "tirmalama", displayName: "Kedi\nTırmalama", color: "#FF7043", hasBrands: false, sortOrder: 13 },
   { animal: "kus", slug: "kus-yemi", displayName: "Kuş Yemi\nÇeşitleri", color: "#FFC107", hasBrands: false, sortOrder: 1 },
   { animal: "kus", slug: "kus-kafesi", displayName: "Kuş Kafesi\nÇeşitleri", color: "#795548", hasBrands: false, sortOrder: 2 },
   { animal: "kus", slug: "kus-vitamin", displayName: "Kuş\nVitaminleri", color: "#4CAF50", hasBrands: false, sortOrder: 3 },
