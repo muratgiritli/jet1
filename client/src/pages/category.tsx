@@ -368,7 +368,7 @@ export default function CategoryPage() {
                       <span className="text-2xl mb-2">{icon}</span>
                       <div className="flex items-end justify-between">
                         <span
-                          className="text-white font-bold text-sm md:text-base leading-tight pr-4"
+                          className="text-white font-bold text-sm md:text-xs leading-tight pr-4"
                           data-testid={`text-subcategory-${sub.slug}`}
                         >
                           {sub.displayName}
