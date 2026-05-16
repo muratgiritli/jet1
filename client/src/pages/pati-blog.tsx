@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, ChevronUp, AlertTriangle, Heart, BookOpen, Dog, Cat, Bird, Leaf } from "lucide-react";
 import { useLocation } from "wouter";
+import SEO, { SITE_DOMAIN } from "@/components/SEO";
 
 const CATEGORIES = [
   { id: "all", label: "Tümü" },
@@ -196,6 +197,12 @@ export default function PatiBlogPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-4 pb-28 space-y-4">
+      <SEO
+        title="Pati Blog - Evcil Hayvan Bakım Rehberi Samsun | JETGO Pet Shop"
+        description="Kedi köpek bakımı, beslenme, sağlık ve eğitim rehberleri. Samsun'un yerel pet uzmanlarından evcil hayvan bakımıyla ilgili güvenilir bilgiler."
+        keywords="evcil hayvan bakımı, kedi bakımı, köpek bakımı, samsun pet rehberi, evcil hayvan beslenme, kedi sağlığı, köpek sağlığı, pati blog"
+        canonical={`${SITE_DOMAIN}/blog`}
+      />
       <div className="text-center">
         <h1 className="text-xl font-bold" data-testid="text-pati-blog-title">📚 Pati-Blog & Bilgi Bankası</h1>
         <p className="text-sm text-muted-foreground mt-1">Samsun'un yerel pet uzmanlarından tavsiyeler</p>

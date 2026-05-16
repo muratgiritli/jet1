@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Link, useSearch, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
+import SEO, { SITE_DOMAIN, LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD } from "@/components/SEO";
 import {
   ShoppingCart,
   Plus,
@@ -194,6 +195,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background pb-16">
+      <SEO
+        title="JETGO Pet Shop Samsun Atakum - Online Sipariş, Kapıda Ödeme & Aynı Gün Teslimat"
+        description="Samsun Atakum, İlkadım, Canik içi aynı gün teslimat. Kedi maması, köpek maması, kedi kumu, kuş yemi ve pet ürünlerinde online pet shop. Kapıda ödeme, %5 Para Puan kazan."
+        keywords="samsun pet shop, atakum pet shop, samsun kedi maması, samsun köpek maması, atakum online pet shop, samsun kapıda ödeme pet shop, samsun aynı gün teslimat, jetgo pet shop, ilkadım pet shop, canik pet shop, samsun pet ürünleri"
+        canonical={`${SITE_DOMAIN}/`}
+        jsonLd={[LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD]}
+      />
       <header className="sticky top-0 z-50 bg-background/80 backdrop-blur-lg border-b">
         <div className="max-w-2xl mx-auto px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-2 flex-wrap">

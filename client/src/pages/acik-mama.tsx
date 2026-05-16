@@ -12,6 +12,7 @@ import { useCart } from "@/contexts/CartContext";
 import Logo from "@/components/Logo";
 import ProductImage from "@/components/ProductImage";
 import { productUrl } from "@/lib/data";
+import SEO, { SITE_DOMAIN, FAQ_JSONLD } from "@/components/SEO";
 
 const BRAND_COLORS: Record<string, string> = {
   "pro-plan": "#1565C0",
@@ -136,8 +137,20 @@ export default function AcikMamaPage() {
   const isLoading = catLoading || prodLoading;
   const title = animal === "kedi" ? "Kedi Açık Mama" : "Köpek Açık Mama";
 
+  const animalLabel = animal === "kopek" ? "Köpek" : "Kedi";
   return (
     <div className="min-h-screen flex flex-col pb-16 md:pb-0" style={{ backgroundColor: "#f0f2f5" }}>
+      <SEO
+        title={`Samsun Açık ${animalLabel} Maması - Kg ile Satış | JETGO Pet Shop Atakum`}
+        description={`Samsun Atakum'da açık ${animalLabel.toLowerCase()} maması kg ile satış. Pro Plan, Royal Canin, Hill's, N&D, Reflex açık mama çeşitleri. Aynı gün teslimat ve kapıda ödeme.`}
+        keywords={`samsun açık ${animalLabel.toLowerCase()} maması, atakum açık mama, açık ${animalLabel.toLowerCase()} maması kg, ${animalLabel.toLowerCase()} maması samsun, açık mama samsun pet shop`}
+        canonical={`${SITE_DOMAIN}/acik-mama/${animal}`}
+        jsonLd={FAQ_JSONLD([
+          { question: `Samsun'da açık ${animalLabel.toLowerCase()} maması nereden alınır?`, answer: `JETGO Pet Shop Samsun Atakum mağazasından kg ile açık ${animalLabel.toLowerCase()} maması online sipariş edebilirsiniz; Atakum, İlkadım ve Canik içi aynı gün teslimat yapılır.` },
+          { question: "Açık mama nasıl saklanmalı?", answer: "Hava almayan kapaklı bir kapta, serin ve kuru ortamda saklanmalıdır. Bozulma ihtimaline karşı 4-6 hafta içinde tüketilmesi önerilir." },
+          { question: "Kapıda ödeme yapabilir miyim?", answer: "Evet, kapıda nakit, kredi kartı (POS) ve QR ile ödeme seçenekleri mevcuttur." },
+        ])}
+      />
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
         <FreeShippingBanner className="mb-4" />
         <div className="text-center mb-6">

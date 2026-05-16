@@ -1,6 +1,7 @@
 import { Link, useRoute } from "wouter";
 import { FreeShippingBanner } from "@/components/FreeShippingBanner";
 import { useQuery } from "@tanstack/react-query";
+import SEO, { SITE_DOMAIN } from "@/components/SEO";
 
 interface BrandCategory {
   id: number;
@@ -110,8 +111,15 @@ export default function BrandsPage() {
     );
   }
 
+  const subTitle = SUBCATEGORY_TITLES[subSlug] || subSlug;
   return (
     <div className="min-h-screen flex flex-col bg-white pb-16 md:pb-0">
+      <SEO
+        title={`${animalLabel} ${subTitle} Markaları - Samsun Atakum | JETGO Pet Shop`}
+        description={`Samsun Atakum'da ${animalLabel.toLowerCase()} ${subTitle.toLowerCase()} markaları. Pro Plan, Royal Canin, Hill's, N&D ve daha fazlası. Aynı gün teslimat, kapıda ödeme.`}
+        keywords={`${animalLabel.toLowerCase()} ${subTitle.toLowerCase()} markaları, samsun ${animalLabel.toLowerCase()} ${subTitle.toLowerCase()}, atakum pet shop, ${animalLabel.toLowerCase()} maması markaları samsun`}
+        canonical={`${SITE_DOMAIN}/kategori/${animalSlug}/${subSlug}`}
+      />
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
         <FreeShippingBanner className="mb-4" />
         <div className="text-center mb-6">

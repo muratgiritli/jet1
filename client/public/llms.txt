@@ -1,0 +1,86 @@
+# JETGO Pet Shop Samsun
+
+> Samsun'un en hızlı pet shop'u. Atakum, İlkadım ve Canik içinde aynı gün teslimat ve kapıda ödeme imkanı sunan online evcil hayvan ürünleri mağazası. Kedi maması, köpek maması, kedi kumu, kuş yemi, akvaryum ürünleri ve pet aksesuarlarında geniş ürün yelpazesi.
+
+## İşletme Bilgileri
+
+- **İsim:** JETGO Pet Shop Samsun (Sizpa İnternet Tic. Ltd. Şti.)
+- **Adres:** Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A, Atakum, Samsun 55200, Türkiye
+- **Telefon:** +90 850 840 39 59
+- **E-posta:** info@sizpa.com
+- **Web:** https://www.jetgomarket.com
+- **Çalışma saatleri:** Pazartesi-Cumartesi 09:00-21:00, Pazar 10:00-20:00
+- **Hizmet bölgesi:** Samsun (Atakum, İlkadım, Canik) — 20 km yarıçap
+- **Kuruluş:** 2024
+
+## Hizmet Verilen Mahalleler
+
+### Atakum
+Denizevleri, Güzelyalı, Kurupelit, Atakent, İncesu, Mimar Sinan, Körfez, Yeni Mahalle, Altınkum, Balaç, Çakırlar, Soğuksu, Taflan, Çobanlı, Büyükoyumca, Esenevler
+
+### İlkadım
+Kadıköy, Rasathane, Kılıçdede, Baruthane, Kalkancı, Ulugazi, Derecik, Adalet, Çiftlik
+
+### Canik
+Karşıyaka, Gaziosmanpaşa, Yenimahalle, Kuzeyyıldızı
+
+## Öne Çıkan Özellikler
+
+- **Aynı gün teslimat:** Samsun şehir içinde sipariş günü teslimat
+- **Kapıda ödeme:** Nakit, kredi kartı (POS), QR ile kapıda ödeme
+- **Online ödeme:** Iyzico ve Tosla altyapısı ile güvenli kart ödemesi
+- **Para Puan:** Her alışverişte %5 puan kazanma loyalty programı
+- **Hoşgeldin kuponu:** Yeni üyelere otomatik indirim
+- **Akıllı mama hesaplama:** Evcil hayvanın yaş ve kilosuna göre günlük mama miktarı önerisi
+- **Sipariş tekrarı:** Tek tıkla geçmiş siparişi yeniden ver
+- **Askıda mama:** Sokak hayvanları için bağış sistemi
+- **WhatsApp sipariş:** Sesli/yazılı sipariş alma
+
+## Kategoriler
+
+- Kedi maması (kuru, yaş, açık, konserve)
+- Köpek maması (kuru, yaş, açık, ödül kemikleri)
+- Kedi kumu
+- Kuş yemi ve kafes ürünleri
+- Kemirgen yemi (tavşan, hamster, gine pig)
+- Akvaryum ürünleri (filtre, balık yemi, dekor, aydınlatma)
+- Pet aksesuarları (tasma, taşıma, oyuncak, bakım)
+- Veteriner sağlık ve vitamin ürünleri
+- Tıraş makinaları ve bakım ekipmanları
+
+## Markalar
+
+Pro Plan, Royal Canin, Hill's Science Plan, N&D, Reflex, Reflex Plus, ProChoice, Pronature, ProPerformance, Felicia, Enjoy, LaVital, Econature, Wanpy, Molly, GimCat ve daha fazlası.
+
+## Ödeme Seçenekleri
+
+- Kapıda Nakit
+- Kapıda Kredi Kartı (POS)
+- Kapıda QR
+- Banka Havalesi / EFT
+- Online Kredi Kartı (Iyzico, Tosla)
+
+## Sıkça Sorulan Sorular
+
+**Samsun dışına teslimat yapıyor musunuz?**
+Şu an sadece Samsun şehir içi (Atakum, İlkadım, Canik) hizmet veriyoruz.
+
+**Aynı gün teslimat var mı?**
+Evet, Samsun içi siparişlerde aynı gün veya ertesi gün teslimat sağlıyoruz.
+
+**Minimum sipariş tutarı var mı?**
+Belirli tutarın üzerindeki siparişlerde ücretsiz kargo uygulanır; güncel tutar ödeme sayfasında görüntülenir.
+
+**Para Puan nasıl kullanılır?**
+Her alışverişin %5'i Para Puan olarak hesabınıza eklenir, sonraki siparişte indirim olarak kullanılır.
+
+## Site Haritası
+
+- Ana sayfa: https://www.jetgomarket.com/
+- Tüm kategoriler: https://www.jetgomarket.com/kategoriler
+- Kampanyalar: https://www.jetgomarket.com/kampanyalar
+- Pati Blog (evcil hayvan bakımı): https://www.jetgomarket.com/blog
+- Sokak hayvanları (Askıda Mama): https://www.jetgomarket.com/sokak-canlari
+- Kayıp/Bulundu/Sahiplendirme: https://www.jetgomarket.com/kayip-bulundu
+- İletişim: https://www.jetgomarket.com/iletisim
+- Sitemap: https://www.jetgomarket.com/sitemap.xml

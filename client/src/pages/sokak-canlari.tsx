@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Minus, ShoppingCart, Heart, ChevronRight } from "lucide-react";
 import { useEffect } from "react";
 import bannerImg from "@assets/CUVAL_MAMA_1778678246834.png";
+import SEO, { SITE_DOMAIN, FAQ_JSONLD } from "@/components/SEO";
 
 interface StreetProduct {
   id: number;
@@ -22,12 +23,18 @@ export default function SokakCanlariPage() {
   });
   const { basket, updateQty, itemCount } = useCart();
 
-  useEffect(() => {
-    document.title = "Sokak Canları - Çuval Mama Kampanyası | JETGO";
-  }, []);
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-amber-50 to-white pb-32">
+      <SEO
+        title="Sokak Hayvanları için Askıda Mama - Samsun | JETGO Pet Shop"
+        description="Samsun sokak hayvanlarına yardım et. Çuval mama bağışı yap, askıda mama kampanyasına katıl. Atakum, İlkadım, Canik bölgesinde hayvanseverlerin yanındayız."
+        keywords="samsun sokak hayvanları, askıda mama samsun, çuval mama bağışı, atakum sokak hayvanları, samsun hayvan bağışı, sokak kedileri samsun, sokak köpekleri samsun"
+        canonical={`${SITE_DOMAIN}/sokak-canlari`}
+        jsonLd={FAQ_JSONLD([
+          { question: "Askıda mama nedir?", answer: "Müşterilerin sokak hayvanları için bağışladığı mamadır. JETGO bu mamaları Samsun'daki sokak hayvanlarına dağıtır." },
+          { question: "Nasıl bağış yapabilirim?", answer: "Bu sayfadan çuval mama ürünlerini sepete ekleyip sipariş verirsiniz. Bağışınız Samsun'daki sokak hayvanlarına ulaştırılır." },
+        ])}
+      />
       <div className="max-w-6xl mx-auto px-3 md:px-6 pt-3 md:pt-6">
         <div className="rounded-2xl overflow-hidden shadow-md">
           <img src={bannerImg} alt="Sokak Canları için Çuval Mama" className="w-full h-auto block" data-testid="img-sokak-banner" />

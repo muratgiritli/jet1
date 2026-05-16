@@ -14,6 +14,7 @@ import {
   Plus, Phone, MapPin, AlertTriangle, Heart, Search as SearchIcon,
   Check, Camera, Loader2, Dog, Cat, Bird
 } from "lucide-react";
+import SEO, { SITE_DOMAIN } from "@/components/SEO";
 
 const POST_TYPES = [
   { id: "lost", label: "Kayıp", color: "bg-red-100 text-red-700", emoji: "🔴" },
@@ -42,6 +43,12 @@ export default function LostFoundPage() {
 
   return (
     <div className="max-w-lg mx-auto px-4 py-4 pb-28 space-y-4">
+      <SEO
+        title="Samsun Kayıp / Bulundu / Sahiplendirme İlanları - Atakum | JETGO"
+        description="Samsun Atakum, İlkadım, Canik bölgesinde kayıp kedi köpek, bulunan hayvan ve sahiplendirme ilanları. Ücretsiz ilan ver, evcil dostuna sahip çık."
+        keywords="samsun kayıp kedi, samsun kayıp köpek, atakum sahiplendirme, samsun sahiplendirme, ilkadım kayıp hayvan, samsun bulundu hayvan, atakum yavru köpek sahiplendirme"
+        canonical={`${SITE_DOMAIN}/kayip-bulundu`}
+      />
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold" data-testid="text-lost-found-title">🐾 Sahiplendirme & Kayıp</h1>
         {customer && (
