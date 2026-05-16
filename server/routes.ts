@@ -3488,6 +3488,17 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     res.json(enriched);
   });
 
+  app.delete("/api/admin/orders/clear-all", requireAdmin, async (_req, res) => {
+    try {
+      await sharedPool.query(`DELETE FROM orders`);
+      await sharedPool.query(`ALTER SEQUENCE orders_id_seq RESTART WITH 1`);
+      res.json({ ok: true });
+    } catch (err: any) {
+      console.error("[clear-all orders] error:", err?.message);
+      res.status(500).json({ message: "Siparişler silinemedi", detail: err?.message });
+    }
+  });
+
   app.patch("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     const { status } = req.body;

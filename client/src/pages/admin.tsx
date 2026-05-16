@@ -2137,6 +2137,27 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <Badge className="no-default-hover-elevate no-default-active-elevate" data-testid="badge-order-count">
               {allOrders.filter(o => o.status === "yeni").length} yeni / {allOrders.length} toplam
             </Badge>
+            {allOrders.length > 0 && (
+              <button
+                onClick={async (e) => {
+                  e.stopPropagation();
+                  if (!confirm(`${allOrders.length} siparişin TAMAMI silinecek. Bu işlem GERİ ALINAMAZ. Emin misiniz?`)) return;
+                  if (!confirm("Son onay: Tüm siparişler silinsin mi?")) return;
+                  try {
+                    await apiRequest("DELETE", "/api/admin/orders/clear-all");
+                    queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+                    queryClient.invalidateQueries({ queryKey: ["/api/admin/dashboard-stats"] });
+                    toast({ title: "Tüm siparişler silindi" });
+                  } catch (err: any) {
+                    toast({ title: "Hata", description: err?.message || "Silinemedi", variant: "destructive" });
+                  }
+                }}
+                className="ml-2 px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                data-testid="btn-clear-all-orders"
+              >
+                Tümünü Temizle
+              </button>
+            )}
             <ChevronDown className={`w-5 h-5 ml-auto transition-transform ${ordersExpanded ? "rotate-180" : ""}`} />
           </button>
 
