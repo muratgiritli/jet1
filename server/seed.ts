@@ -596,6 +596,7 @@ const SUBCATEGORY_SEED_DATA = [
   { animal: "kopek", slug: "sut-tozu-biberon", displayName: "Süt Tozu ve\nBiberon", color: "#EC407A", hasBrands: false, sortOrder: 16 },
   { animal: "kopek", slug: "bit-pire-parazit", displayName: "Bit Pire\nParazit", color: "#D32F2F", hasBrands: false, sortOrder: 17 },
   { animal: "kopek", slug: "goz-kulak-bakim", displayName: "Göz ve Kulak\nBakımı", color: "#7E57C2", hasBrands: false, sortOrder: 18 },
+  { animal: "kopek", slug: "cigneti-kemik", displayName: "Köpek Çiğneti\nve Kemikler", color: "#8D6E63", hasBrands: false, sortOrder: 19 },
   { animal: "kedi", slug: "kedi-mamasi", displayName: "Kedi\nMaması", color: "#FF5722", hasBrands: true, sortOrder: 1 },
   { animal: "kedi", slug: "acik-mama", displayName: "Açık\nMamalar", color: "#FF9800", hasBrands: true, sortOrder: 2 },
   { animal: "kedi", slug: "kedi-kumu", displayName: "Kedi\nKumu", color: "#8BC34A", hasBrands: false, sortOrder: 3 },
