@@ -81,7 +81,7 @@ export default function SokakCanlariPage() {
                     <div className="p-2.5 md:p-3 flex flex-col flex-1">
                       <Link href={`/urun/${p.id}`}>
                         <a className="cursor-pointer hover:text-orange-600 transition-colors" data-testid={`link-name-${p.id}`}>
-                          <h3 className="text-xs md:text-sm font-semibold text-gray-900 line-clamp-2 mb-1.5 hover:text-orange-600" data-testid={`text-name-${p.id}`}>
+                          <h3 className="text-xs md:text-sm font-semibold text-gray-900 line-clamp-3 mb-1.5 hover:text-orange-600" data-testid={`text-name-${p.id}`}>
                             {p.name}
                           </h3>
                         </a>

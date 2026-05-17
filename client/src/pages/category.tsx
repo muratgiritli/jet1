@@ -153,7 +153,7 @@ function KemirgenProductCard({ product }: { product: Product }) {
               className="absolute bottom-1 right-1 shadow-sm"
             />
           </div>
-          <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem]" data-testid={`text-name-${pid}`}>
+          <p className="text-xs font-semibold text-center leading-tight line-clamp-3 min-h-[3rem]" data-testid={`text-name-${pid}`}>
             {product.name}
           </p>
         </Link>

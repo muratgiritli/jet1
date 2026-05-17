@@ -114,7 +114,7 @@ function ProductCard({
           </Link>
         <Link
           href={productUrl(product.id, product.name)}
-          className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem] hover:underline"
+          className="text-xs font-semibold text-center leading-tight line-clamp-3 min-h-[3rem] hover:underline"
           data-testid={`text-name-${product.id}`}
         >
           {product.name}

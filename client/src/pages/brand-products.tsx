@@ -168,7 +168,7 @@ function BrandProductCard({
               />
             </div>
           </div>
-          <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem] hover:underline" data-testid={`text-name-${pid}`}>
+          <p className="text-xs font-semibold text-center leading-tight line-clamp-3 min-h-[3rem] hover:underline" data-testid={`text-name-${pid}`}>
             {product.name}
           </p>
         </Link>
@@ -270,7 +270,7 @@ function InlineSubcategoryProductCard({
               </Badge>
             )}
           </div>
-          <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem] hover:underline">
+          <p className="text-xs font-semibold text-center leading-tight line-clamp-3 min-h-[3rem] hover:underline">
             {product.name}
           </p>
         </Link>

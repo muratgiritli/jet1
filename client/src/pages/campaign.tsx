@@ -153,7 +153,7 @@ function CampaignProductCard({ item }: { item: CampaignProduct }) {
       <div className="p-2.5 flex flex-col gap-2 flex-1">
         <Link href={href}>
           <h3
-            className="text-xs font-bold text-gray-900 line-clamp-2 min-h-[2.25rem] cursor-pointer hover:text-purple-700"
+            className="text-xs font-bold text-gray-900 line-clamp-3 min-h-[3.375rem] cursor-pointer hover:text-purple-700"
             data-testid={`text-name-${item.product_id}`}
           >
             {item.name}

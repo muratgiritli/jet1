@@ -57,7 +57,7 @@ function ProductCard({ product, quantity, onUpdate }: { product: Product; quanti
           </div>
         </Link>
         <Link href={productUrl(product.id, product.name)} className="w-full">
-          <p className="text-xs font-semibold text-center leading-tight line-clamp-2 min-h-[2rem] hover:text-primary cursor-pointer" data-testid={`text-acik-name-${pid}`}>
+          <p className="text-xs font-semibold text-center leading-tight line-clamp-3 min-h-[3rem] hover:text-primary cursor-pointer" data-testid={`text-acik-name-${pid}`}>
             {product.name}
           </p>
         </Link>
