@@ -34,6 +34,68 @@ type ProductDetailData = {
   breedStats?: BreedStat[];
 };
 
+function LongDescriptionAccordions({ html }: { html: string }) {
+  const sections = useMemo(() => {
+    const clean = DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: ["h2","h3","h4","p","ul","ol","li","strong","em","u","s","a","blockquote","br","span","div"],
+      ALLOWED_ATTR: ["href","target","rel","style","class"],
+      ALLOWED_URI_REGEXP: /^(https?:|mailto:|tel:|\/)/i,
+    });
+    const parts = clean.split(/(<h3[^>]*>[\s\S]*?<\/h3>)/i).filter((p) => p && p.trim());
+    const result: { title: string; body: string }[] = [];
+    let pending: string | null = null;
+    for (const part of parts) {
+      const m = part.match(/^<h3[^>]*>([\s\S]*?)<\/h3>$/i);
+      if (m) {
+        if (pending !== null) result.push({ title: pending, body: "" });
+        pending = m[1].replace(/<[^>]+>/g, "").trim();
+      } else {
+        if (pending !== null) {
+          result.push({ title: pending, body: part });
+          pending = null;
+        } else {
+          result.push({ title: "Ürün Açıklaması", body: part });
+        }
+      }
+    }
+    if (pending !== null) result.push({ title: pending, body: "" });
+    return result;
+  }, [html]);
+
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  if (sections.length === 0) return null;
+
+  return (
+    <section className="mt-6 space-y-2" data-testid="section-long-description">
+      {sections.map((s, i) => {
+        const isOpen = openIndex === i;
+        return (
+          <div key={i} className="border rounded-lg overflow-hidden bg-white" data-testid={`acc-longdesc-${i}`}>
+            <button
+              type="button"
+              onClick={() => setOpenIndex(isOpen ? null : i)}
+              className="w-full flex items-center justify-between px-4 py-3 text-left font-semibold text-sm md:text-base hover:bg-gray-50 transition-colors"
+              data-testid={`btn-longdesc-toggle-${i}`}
+              aria-expanded={isOpen}
+            >
+              <span>{s.title}</span>
+              <ChevronDown className={`w-4 h-4 transition-transform ${isOpen ? "rotate-180" : ""}`} />
+            </button>
+            {isOpen && (
+              <div
+                className="prose-product text-sm md:text-base break-words px-4 pb-4"
+                data-testid={`text-longdesc-${i}`}
+                dangerouslySetInnerHTML={{ __html: s.body }}
+              />
+            )}
+          </div>
+        );
+      })}
+    </section>
+  );
+}
+
 function QuantityControl({
   productId,
   quantity,
@@ -323,7 +385,6 @@ export default function ProductDetailPage() {
 
   const [selectedVariantLabel, setSelectedVariantLabel] = useState<string | null>(null);
   const [variantInitialized, setVariantInitialized] = useState(false);
-  const [longDescOpen, setLongDescOpen] = useState(false);
   const [stockName, setStockName] = useState("");
   const [stockPhone, setStockPhone] = useState("");
   const [stockAlertSent, setStockAlertSent] = useState(false);
@@ -954,33 +1015,7 @@ export default function ProductDetailPage() {
         )}
 
         {!isCampaignMode && (product as any).longDescription && (product as any).longDescription.trim() && (
-          <section className="mt-6 overflow-hidden" data-testid="section-long-description">
-            <div className="border rounded-lg overflow-hidden bg-white">
-              <button
-                type="button"
-                onClick={() => setLongDescOpen((o) => !o)}
-                className="w-full flex items-center justify-between px-4 py-3 text-left font-semibold text-sm md:text-base hover:bg-gray-50 transition-colors"
-                data-testid="btn-toggle-long-description"
-                aria-expanded={longDescOpen}
-              >
-                <span>Ürün Açıklaması</span>
-                <ChevronDown className={`w-4 h-4 transition-transform ${longDescOpen ? "rotate-180" : ""}`} />
-              </button>
-              {longDescOpen && (
-                <div
-                  className="prose-product text-sm md:text-base break-words px-4 pb-4"
-                  data-testid="text-long-description"
-                  dangerouslySetInnerHTML={{
-                    __html: DOMPurify.sanitize((product as any).longDescription, {
-                      ALLOWED_TAGS: ["h2","h3","h4","p","ul","ol","li","strong","em","u","s","a","blockquote","br","span","div"],
-                      ALLOWED_ATTR: ["href","target","rel","style","class"],
-                      ALLOWED_URI_REGEXP: /^(https?:|mailto:|tel:|\/)/i,
-                    }),
-                  }}
-                />
-              )}
-            </div>
-          </section>
+          <LongDescriptionAccordions html={(product as any).longDescription} />
         )}
 
         {!isCampaignMode && (
