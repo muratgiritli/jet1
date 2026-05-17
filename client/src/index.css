@@ -234,7 +234,18 @@
 .prose-product {
   color: hsl(var(--foreground));
   line-height: 1.7;
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
 }
+.prose-product * {
+  max-width: 100%;
+  overflow-wrap: break-word;
+  word-wrap: break-word;
+  word-break: break-word;
+}
+.prose-product img, .prose-product table { max-width: 100%; height: auto; }
 .prose-product h2 { font-size: 1.25rem; font-weight: 700; margin: 1.25rem 0 .5rem; }
 .prose-product h3 { font-size: 1.1rem;  font-weight: 700; margin: 1rem 0 .5rem; }
 .prose-product h4 { font-size: 1rem;    font-weight: 600; margin: .75rem 0 .5rem; }

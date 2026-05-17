@@ -950,11 +950,11 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        {!isCampaignMode && (product as any).longDescription && (product as any).longDescription.trim() ? (
-          <section className="mt-6" data-testid="section-long-description">
+        {!isCampaignMode && (product as any).longDescription && (product as any).longDescription.trim() && (
+          <section className="mt-6 overflow-hidden" data-testid="section-long-description">
             <h2 className="text-base md:text-lg font-extrabold mb-3">Ürün Açıklaması</h2>
             <div
-              className="prose-product text-sm md:text-base"
+              className="prose-product text-sm md:text-base break-words"
               data-testid="text-long-description"
               dangerouslySetInnerHTML={{
                 __html: DOMPurify.sanitize((product as any).longDescription, {
@@ -965,7 +965,9 @@ export default function ProductDetailPage() {
               }}
             />
           </section>
-        ) : !isCampaignMode ? (
+        )}
+
+        {!isCampaignMode && (
           <ProductInfoAccordions
             productName={product.name}
             animal={category?.animal || null}
@@ -975,7 +977,7 @@ export default function ProductDetailPage() {
             variants={productVariants}
             brandName={category?.brandName || null}
           />
-        ) : null}
+        )}
 
         {!isCampaignMode && <ProductReviews productId={product.id} />}
 
