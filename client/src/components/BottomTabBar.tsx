@@ -1,13 +1,16 @@
-import { Home, Grid3X3, ShoppingCart, Gift, User } from "lucide-react";
+import { Home, Grid3X3, ShoppingCart, Mail, User } from "lucide-react";
 import { useLocation } from "wouter";
+import { useState } from "react";
 import { useCart } from "@/contexts/CartContext";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { motion, AnimatePresence } from "framer-motion";
+import ContactDialog from "@/components/ContactDialog";
 
 export default function BottomTabBar() {
   const [location, setLocation] = useLocation();
   const { itemCount } = useCart();
   const { isLoggedIn } = useCustomer();
+  const [contactOpen, setContactOpen] = useState(false);
 
   if (location.startsWith("/admin")) return null;
 
@@ -15,11 +18,12 @@ export default function BottomTabBar() {
     { name: "Ana Sayfa", href: "/", icon: Home, testId: "tab-home" },
     { name: "Kategoriler", href: "/kategori", icon: Grid3X3, testId: "tab-categories" },
     { name: "Sepet", href: "/odeme", icon: ShoppingCart, testId: "tab-cart" },
-    { name: "Kampanya", href: "/kampanya", icon: Gift, testId: "tab-kampanya" },
+    { name: "İletişim", href: "__contact", icon: Mail, testId: "tab-contact" },
     { name: isLoggedIn ? "Hesabım" : "Giriş", href: isLoggedIn ? "/hesabim" : "/giris", icon: User, testId: "tab-account" },
   ];
 
   const isActive = (href: string) => {
+    if (href === "__contact") return false;
     if (href === "/") return location === "/";
     if (href === "/kategori") return location.startsWith("/kategori");
     if (href === "/hesabim" || href === "/giris") return location === "/hesabim" || location === "/giris";
@@ -28,6 +32,8 @@ export default function BottomTabBar() {
   };
 
   return (
+    <>
+    <ContactDialog open={contactOpen} onOpenChange={setContactOpen} />
     <nav
       className="fixed bottom-0 left-0 right-0 z-[9999] bg-background/95 backdrop-blur-lg border-t safe-area-bottom md:hidden"
       data-testid="bottom-tab-bar"
@@ -38,7 +44,7 @@ export default function BottomTabBar() {
           return (
             <button
               key={tab.testId}
-              onClick={() => setLocation(tab.href)}
+              onClick={() => tab.href === "__contact" ? setContactOpen(true) : setLocation(tab.href)}
               className={`flex flex-col items-center justify-center py-2 px-3 min-w-[56px] relative transition-colors ${
                 active ? "text-[#6B3480]" : "text-muted-foreground"
               }`}
@@ -74,5 +80,6 @@ export default function BottomTabBar() {
         })}
       </div>
     </nav>
+    </>
   );
 }
