@@ -358,9 +358,22 @@ function ProductForm({
     <form
       onSubmit={(e) => {
         e.preventDefault();
+        const cleanedVariants = variants
+          .map(v => ({ label: v.label.trim(), price: parseFloat(v.price) }))
+          .filter(v => v.label && !isNaN(v.price) && v.price > 0);
+        const minVariantPrice = cleanedVariants.length > 0
+          ? Math.min(...cleanedVariants.map(v => v.price))
+          : NaN;
+        const effectivePrice = price.trim() === "" && !isNaN(minVariantPrice)
+          ? minVariantPrice
+          : parseFloat(price);
+        if (isNaN(effectivePrice) || effectivePrice <= 0) {
+          toast({ title: "Satış fiyatı girin veya en az bir varyant ekleyin", variant: "destructive" });
+          return;
+        }
         onSave({
           name,
-          price: parseFloat(price),
+          price: effectivePrice,
           originalPrice: originalPrice ? parseFloat(originalPrice) : null,
           costPrice: costPrice ? parseFloat(costPrice) : null,
           skt: skt || null,
@@ -516,8 +529,21 @@ function ProductForm({
       </div>
       <div className="grid grid-cols-3 gap-3">
         <div className="space-y-2">
-          <Label>Satış Fiyatı (TL)</Label>
-          <Input type="number" step="0.01" value={price} onChange={(e) => setPrice(e.target.value)} required data-testid="input-product-price" />
+          <Label>
+            Satış Fiyatı (TL)
+            {variants.some(v => v.label.trim() && v.price.trim()) && (
+              <span className="ml-1 text-[10px] font-normal text-muted-foreground">(varyant varsa opsiyonel)</span>
+            )}
+          </Label>
+          <Input
+            type="number"
+            step="0.01"
+            value={price}
+            onChange={(e) => setPrice(e.target.value)}
+            required={!variants.some(v => v.label.trim() && v.price.trim())}
+            placeholder={variants.some(v => v.label.trim() && v.price.trim()) ? "Otomatik: en düşük varyant" : ""}
+            data-testid="input-product-price"
+          />
         </div>
         <div className="space-y-2">
           <Label>Eski Fiyat (TL)</Label>
