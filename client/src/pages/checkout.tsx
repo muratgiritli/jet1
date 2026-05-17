@@ -1583,13 +1583,18 @@ export default function Checkout() {
                         >
                           <RadioGroupItem value={opt.id} data-testid={`input-radio-${opt.id}`} />
                           <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
-                          <div className="flex-1 min-w-0 flex items-center gap-2 flex-wrap">
-                            <span className="text-sm font-medium" data-testid={`text-payment-name-${opt.id}`}>
+                          <div className="flex-1 min-w-0">
+                            <span className="text-sm font-medium block leading-tight" data-testid={`text-payment-name-${opt.id}`}>
                               {opt.name}
                               {opt.id === "nakit" && (
                                 <span className="ml-1 font-bold" style={{ color: "#dc2626" }}> (%10 indirimli)</span>
                               )}
                             </span>
+                            {opt.id === "online" && (
+                              <span className="text-[10px] text-muted-foreground block leading-tight mt-0.5">
+                                Vade farksız 3-6 taksit
+                              </span>
+                            )}
                           </div>
                           <span className="text-sm font-extrabold text-primary tabular-nums shrink-0" data-testid={`text-payment-price-${opt.id}`}>
                             {optTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
