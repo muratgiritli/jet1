@@ -591,27 +591,55 @@ export default function ProductDetailDemoPage() {
           </CardContent>
         </Card>
 
-        {/* AKERDEON ALANLAR */}
+        {/* AKERDEON ALANLAR — SEO + Mobil */}
         <div className="mt-6 space-y-2" data-testid="section-accordions-demo">
-          <AccordionItem title="Ürün Detayları" defaultOpen testId="accordion-item-details">
-            <ul className="space-y-1.5">
-              <li><strong>Ürün adı:</strong> {product.name}</li>
-              {category && <li><strong>Marka:</strong> {category.brandName}</li>}
-              {product.barcode && <li><strong>Barkod:</strong> {product.barcode}</li>}
-              {product.skt && <li><strong>S.K.T:</strong> {product.skt}</li>}
-              <li><strong>Stok durumu:</strong> {product.stock && product.stock > 0 ? "Stokta" : "Tükendi"}</li>
-              {hasVariants && (
-                <li><strong>Seçenekler:</strong> {productVariants.map((v) => v.label).join(", ")}</li>
-              )}
+          <AccordionItem title="Ne işe yarar?" defaultOpen testId="accordion-ne-ise-yarar">
+            <p>
+              <strong>{product.name}</strong>, evcil hayvanınızın günlük ihtiyaçlarını karşılamak için özel olarak formüle edilmiştir.
+              {category?.animal === "kedi" && " Kedilerde tüy parlaklığı, deri sağlığı ve sindirim sistemine destek olmaya yardımcı olur."}
+              {category?.animal === "kopek" && " Köpeklerde enerji, eklem desteği ve genel sağlık için faydalıdır."}
+            </p>
+            <ul className="mt-2 space-y-1">
+              <li>✅ Günlük bakım rutininize uygun</li>
+              <li>✅ Sindirim sistemini destekler</li>
+              <li>✅ Tüy ve deri sağlığına katkı sağlar</li>
+              <li>✅ {category?.animal === "kedi" ? "Kedi" : category?.animal === "kopek" ? "Köpek" : "Evcil hayvan"} kullanımına uygundur</li>
             </ul>
           </AccordionItem>
 
-          <AccordionItem title="Kargo ve Teslimat" testId="accordion-shipping">
-            <p>Samsun içi siparişler aynı gün veya en geç 1 iş günü içinde teslim edilir. Şehir dışı kargo 2-3 iş günü içinde ulaşır.</p>
+          <AccordionItem title="Kullanım şekli" testId="accordion-kullanim">
+            <p>Üreticinin önerdiği günlük dozu aşmayınız. {category?.animal === "kedi" ? "Kedinin" : "Hayvanın"} kilosuna göre ambalaj üzerindeki tabloyu takip ediniz. Açtıktan sonra serin ve kuru yerde saklayınız.</p>
+            <ul className="mt-2 space-y-1 list-disc list-inside">
+              <li>Yemek saatinde veya mama üstüne ekleyerek kullanabilirsiniz.</li>
+              <li>İlk kullanımda küçük dozdan başlayıp yavaş yavaş artırın.</li>
+              <li>Bol su erişimi sağladığınızdan emin olun.</li>
+            </ul>
           </AccordionItem>
 
-          <AccordionItem title="İade ve Değişim" testId="accordion-returns">
-            <p>Açılmamış ürünleri teslim tarihinden itibaren 14 gün içinde iade edebilirsiniz. Mama ve gıda ürünlerinde ambalajın açılmamış olması gerekmektedir.</p>
+          <AccordionItem title="İçerik" testId="accordion-icerik">
+            <p>Detaylı içerik bilgileri ürün ambalajının arka yüzünde yer almaktadır. Ürünün geldiği parti numarasına göre içerik küçük farklılıklar gösterebilir.</p>
+            <ul className="mt-2 space-y-1 list-disc list-inside">
+              <li>Kaliteli hammadde</li>
+              <li>Yapay renklendirici ve koruyucu içermez</li>
+              <li>Veteriner kontrolünden geçmiş formül</li>
+            </ul>
+          </AccordionItem>
+
+          <AccordionItem title="Kimler kullanmalı?" testId="accordion-kimler">
+            <p>
+              {category?.animal === "kedi" && "Her yaştaki sağlıklı yetişkin kediler için uygundur. Yavru, hamile veya yaşlı kedilerde kullanmadan önce veterinerinize danışınız."}
+              {category?.animal === "kopek" && "Yetişkin köpeklerde günlük kullanıma uygundur. Yavru, hamile ve hasta köpeklerde veteriner kontrolünde kullanılmalıdır."}
+              {!category?.animal && "Evcil hayvanınızın yaşı, kilosu ve sağlık durumuna uygunsa kullanılabilir. Şüpheniz varsa veterinerinize danışınız."}
+            </p>
+          </AccordionItem>
+
+          <AccordionItem title="Veteriner önerisi" testId="accordion-veteriner">
+            <p>
+              Bu ürün <strong>besin desteği / bakım ürünü</strong> niteliğindedir, hastalık tedavisi yerine geçmez. Kronik bir rahatsızlığı olan hayvanlarda veya başka bir tedavi gören evcil hayvanlarda kullanmadan önce mutlaka veterinerinizle görüşünüz.
+            </p>
+            <p className="mt-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded p-2">
+              JETGO Pet Shop, ürün hakkındaki sorularınız için <strong>veteriner danışma hattı</strong> sunmaktadır. Sipariş notuna sorunuzu yazabilirsiniz.
+            </p>
           </AccordionItem>
 
           <AccordionItem title="Sıkça Sorulan Sorular (SSS)" testId="accordion-faq">
@@ -623,6 +651,24 @@ export default function ProductDetailDemoPage() {
                 </div>
               ))}
             </div>
+          </AccordionItem>
+
+          <AccordionItem title="Kargo, İade ve Değişim" testId="accordion-shipping-returns">
+            <p><strong>Kargo:</strong> Samsun içi siparişler aynı gün veya en geç 1 iş günü içinde teslim edilir. Şehir dışı kargo 2-3 iş günü içinde ulaşır.</p>
+            <p className="mt-2"><strong>İade:</strong> Açılmamış ürünleri 14 gün içinde iade edebilirsiniz. Mama ve gıda ürünlerinde ambalajın açılmamış olması gerekmektedir.</p>
+          </AccordionItem>
+
+          <AccordionItem title="Ürün Detayları" testId="accordion-item-details">
+            <ul className="space-y-1.5">
+              <li><strong>Ürün adı:</strong> {product.name}</li>
+              {category && <li><strong>Marka:</strong> {category.brandName}</li>}
+              {product.barcode && <li><strong>Barkod:</strong> {product.barcode}</li>}
+              {product.skt && <li><strong>S.K.T:</strong> {product.skt}</li>}
+              <li><strong>Stok durumu:</strong> {product.stock && product.stock > 0 ? "Stokta" : "Tükendi"}</li>
+              {hasVariants && (
+                <li><strong>Seçenekler:</strong> {productVariants.map((v) => v.label).join(", ")}</li>
+              )}
+            </ul>
           </AccordionItem>
 
           <AccordionItem title="İlgili Aramalar" testId="accordion-related">
