@@ -90,23 +90,7 @@ export default function ProductInfoAccordions({
 
   return (
     <div className="mt-6 space-y-2" data-testid="section-product-accordions">
-      <AccordionItem title="Sıkça Sorulan Sorular (SSS)" defaultOpen testId="accordion-faq">
-        <div className="space-y-3">
-          {faqs.map((f, i) => (
-            <div key={i} data-testid={`faq-item-${i}`}>
-              <p className="font-semibold text-gray-900">{f.q}</p>
-              <p className="text-gray-600 mt-0.5">{f.a}</p>
-            </div>
-          ))}
-        </div>
-      </AccordionItem>
-
-      <AccordionItem title="Kargo, İade ve Değişim" testId="accordion-shipping-returns">
-        <p><strong>Kargo:</strong> Samsun içi siparişler aynı gün veya en geç 1 iş günü içinde teslim edilir. Şehir dışı kargo 2-3 iş günü içinde ulaşır.</p>
-        <p className="mt-2"><strong>İade:</strong> Açılmamış ürünleri 14 gün içinde iade edebilirsiniz. Mama ve gıda ürünlerinde ambalajın açılmamış olması gerekmektedir.</p>
-      </AccordionItem>
-
-      <AccordionItem title="İlgili Aramalar" testId="accordion-related">
+      <AccordionItem title="İlgili Aramalar" defaultOpen testId="accordion-related">
         <div className="flex flex-wrap gap-2">
           {relatedKeywords.map((kw, i) => (
             <span
