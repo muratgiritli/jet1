@@ -710,13 +710,20 @@ export default function ProductDetailPage() {
                                   className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm transition-colors text-left ${active ? "border-blue-600 bg-white" : "border-blue-200 bg-white/60 hover:bg-white"}`}
                                   data-testid={`preorder-pay-${o.id}`}
                                 >
-                                  <span className="flex items-center gap-2">
-                                    <span className={`w-3.5 h-3.5 rounded-full border-2 ${active ? "border-blue-600 bg-blue-600" : "border-gray-400"}`} />
-                                    <span className="font-medium">{o.name}</span>
-                                    {o.id === "nakit" && <span className="text-xs font-bold" style={{ color: "#dc2626" }}>%10 indirim</span>}
-                                    {o.id === "online" && <span className="text-xs font-bold" style={{ color: "#1565c0" }}>Taksitli</span>}
+                                  <span className="flex items-start gap-2 min-w-0 flex-1">
+                                    <span className={`mt-1 w-3.5 h-3.5 shrink-0 rounded-full border-2 ${active ? "border-blue-600 bg-blue-600" : "border-gray-400"}`} />
+                                    <span className="flex flex-col min-w-0">
+                                      <span className="flex items-center gap-2 flex-wrap">
+                                        <span className="font-medium">{o.id === "online" ? "Online Kredi Kartı" : o.name}</span>
+                                        {o.id === "nakit" && <span className="text-xs font-bold" style={{ color: "#dc2626" }}>%10 indirim</span>}
+                                        {o.id === "online" && <span className="text-xs font-bold" style={{ color: "#1565c0" }}>Taksitli</span>}
+                                      </span>
+                                      {o.id === "online" && (
+                                        <span className="text-[10px] text-gray-500 mt-0.5">Vade farksız 3-6 taksit</span>
+                                      )}
+                                    </span>
                                   </span>
-                                  <strong className="tabular-nums" style={{ color: "#0d47a1" }}>{t.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                                  <strong className="tabular-nums shrink-0" style={{ color: "#0d47a1" }}>{t.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
                                 </button>
                               );
                             })}
