@@ -684,13 +684,18 @@ export default function ProductDetailPage() {
                     {(() => {
                       const qty = Math.max(quantity || 1, 1);
                       const baseTotal = displayPrice * qty;
-                      const preorderOpts = PAYMENT_OPTIONS.filter((o) => o.id !== "pos");
+                      const preorderOpts = [
+                        { id: "nakit", name: "Kapıda Nakit", disc: -0.10 },
+                        { id: "eft", name: "Banka Havalesi / EFT", disc: 0 },
+                        { id: "qr", name: "Kapıda QR Ödeme", disc: 0 },
+                        { id: "pos", name: "Kapıda Kredi Kartı (POS)", disc: 0 },
+                      ];
                       const selectedOpt = preorderOpts.find((o) => o.id === preorderPayMethod) || preorderOpts[0];
                       const methodDisc = selectedOpt.disc < 0 ? Math.abs(selectedOpt.disc) : 0;
                       const methodTotal = Math.max(0, baseTotal * (1 - methodDisc));
-                      const isFullOnline = selectedOpt.id === "online";
-                      const deposit = isFullOnline ? methodTotal : methodTotal * 0.25;
-                      const remaining = isFullOnline ? 0 : methodTotal - deposit;
+                      const deposit = methodTotal * 0.25;
+                      const remaining = methodTotal - deposit;
+                      void PAYMENT_OPTIONS;
                       return (
                         <div className="rounded-lg border-2 p-3 space-y-2" style={{ borderColor: "#1565c0", backgroundColor: "#e3f2fd" }} data-testid="preorder-deposit-box">
                           <div className="flex items-center gap-1.5 font-bold text-sm" style={{ color: "#0d47a1" }}>
@@ -710,18 +715,10 @@ export default function ProductDetailPage() {
                                   className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm transition-colors text-left ${active ? "border-blue-600 bg-white" : "border-blue-200 bg-white/60 hover:bg-white"}`}
                                   data-testid={`preorder-pay-${o.id}`}
                                 >
-                                  <span className="flex items-start gap-2 min-w-0 flex-1">
-                                    <span className={`mt-1 w-3.5 h-3.5 shrink-0 rounded-full border-2 ${active ? "border-blue-600 bg-blue-600" : "border-gray-400"}`} />
-                                    <span className="flex flex-col min-w-0">
-                                      <span className="flex items-center gap-2 flex-wrap">
-                                        <span className="font-medium">{o.id === "online" ? "Online Kredi Kartı" : o.name}</span>
-                                        {o.id === "nakit" && <span className="text-xs font-bold" style={{ color: "#dc2626" }}>%10 indirim</span>}
-                                        {o.id === "online" && <span className="text-xs font-bold" style={{ color: "#1565c0" }}>Taksitli</span>}
-                                      </span>
-                                      {o.id === "online" && (
-                                        <span className="text-[10px] text-gray-500 mt-0.5">Vade farksız 3-6 taksit</span>
-                                      )}
-                                    </span>
+                                  <span className="flex items-center gap-2 min-w-0 flex-1">
+                                    <span className={`w-3.5 h-3.5 shrink-0 rounded-full border-2 ${active ? "border-blue-600 bg-blue-600" : "border-gray-400"}`} />
+                                    <span className="font-medium">{o.name}</span>
+                                    {o.id === "nakit" && <span className="text-xs font-bold" style={{ color: "#dc2626" }}>%10 indirim</span>}
                                   </span>
                                   <strong className="tabular-nums shrink-0" style={{ color: "#0d47a1" }}>{t.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
                                 </button>
@@ -733,23 +730,14 @@ export default function ProductDetailPage() {
                               <span className="text-gray-700">Toplam tutar ({selectedOpt.name}):</span>
                               <strong data-testid="text-preorder-total">{methodTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
                             </div>
-                            {isFullOnline ? (
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-700">Şimdi <strong>online kredi kartı</strong> ile (taksit yapılabilir):</span>
-                                <strong style={{ color: "#1565c0" }} data-testid="text-preorder-deposit">{deposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
-                              </div>
-                            ) : (
-                              <>
-                                <div className="flex items-center justify-between text-sm">
-                                  <span className="text-gray-700">Şimdi <strong>%25 kapora</strong> (online kredi kartı, taksitli):</span>
-                                  <strong style={{ color: "#1565c0" }} data-testid="text-preorder-deposit">{deposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
-                                </div>
-                                <div className="flex items-center justify-between text-sm">
-                                  <span className="text-gray-700">Teslimatta <strong>{selectedOpt.name}</strong> ile <strong>%75</strong>:</span>
-                                  <strong style={{ color: "#2e7d32" }} data-testid="text-preorder-remaining">{remaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
-                                </div>
-                              </>
-                            )}
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-700">Şimdi <strong>%25 kapora</strong> (online kredi kartı, vade farksız 3-6 taksit):</span>
+                              <strong style={{ color: "#1565c0" }} data-testid="text-preorder-deposit">{deposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                            </div>
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-700">Teslimatta <strong>{selectedOpt.name}</strong> ile <strong>%75</strong>:</span>
+                              <strong style={{ color: "#2e7d32" }} data-testid="text-preorder-remaining">{remaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                            </div>
                           </div>
                         </div>
                       );

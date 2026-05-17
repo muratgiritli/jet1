@@ -64,7 +64,7 @@ export default function Checkout() {
   const searchStr = useSearch();
   const preorderPm = useMemo(() => {
     const p = new URLSearchParams(searchStr || "").get("pm") || "nakit";
-    return ["nakit", "eft", "qr", "online"].includes(p) ? p : "nakit";
+    return ["nakit", "eft", "qr", "pos"].includes(p) ? p : "nakit";
   }, [searchStr]);
   const [orderLoading, setOrderLoading] = useState(false);
   const [customerPhone, setCustomerPhone] = useState("");
@@ -491,7 +491,7 @@ export default function Checkout() {
   }, [hasPreorderItems, paymentId, onlineCardEnabled, setPaymentId]);
 
   const preorderMethodLabel = useMemo(() => {
-    const m: Record<string, string> = { nakit: "Kapıda Nakit", eft: "Banka Havalesi/EFT", qr: "Kapıda QR", online: "Online Kredi Kartı (Tamamı)" };
+    const m: Record<string, string> = { nakit: "Kapıda Nakit", eft: "Banka Havalesi/EFT", qr: "Kapıda QR", pos: "Kapıda Kredi Kartı (POS)" };
     return m[preorderPm] || "Kapıda Nakit";
   }, [preorderPm]);
   const preorderMethodDisc = preorderPm === "nakit" ? 0.10 : 0;
@@ -528,7 +528,7 @@ export default function Checkout() {
   const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
   const rawDisplayTotal = Math.max(0, effectiveGrandTotal - pointsDiscount) + donationAmount;
   const preorderMethodTotal = hasPreorderItems ? Math.max(0, subtotal * (1 - preorderMethodDisc)) : 0;
-  const preorderDeposit = hasPreorderItems ? (preorderPm === "online" ? preorderMethodTotal : preorderMethodTotal * 0.25) : 0;
+  const preorderDeposit = hasPreorderItems ? preorderMethodTotal * 0.25 : 0;
   const preorderRemaining = hasPreorderItems ? preorderMethodTotal - preorderDeposit : 0;
   const displayTotal = hasPreorderItems ? preorderDeposit : rawDisplayTotal;
 
@@ -653,9 +653,7 @@ export default function Checkout() {
           if (doNotRing) flags.push("Zile Basma");
           if (donationDelivery) flags.push("BAĞIŞ TESLİMATI (Atakum içi)");
           if (hasPreorderItems) {
-            flags.push(preorderPm === "online"
-              ? `ÖN SİPARİŞ • Tamamı Online Kart (Taksitli): ${preorderMethodTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL`
-              : `ÖN SİPARİŞ • Kapora %25: ${preorderDeposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL (Online Kart) • Teslimatta %75: ${preorderRemaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL (${preorderMethodLabel})`);
+            flags.push(`ÖN SİPARİŞ • Kapora %25: ${preorderDeposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL (Online Kart) • Teslimatta %75: ${preorderRemaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL (${preorderMethodLabel})`);
           }
           const flagText = flags.length ? `[${flags.join(" • ")}]` : "";
           const donorText = donationDelivery
@@ -1040,11 +1038,7 @@ export default function Checkout() {
                 <div className="text-xs font-medium space-y-1">
                   <p>Sepetinizde ön siparişli ürün(ler) var. Bu ürünler ortalama <strong>3 iş günü</strong> içinde tedarik edilip teslim edilecektir.</p>
                   <p>Seçtiğiniz ödeme şekli: <strong>{preorderMethodLabel}</strong>{preorderPm === "nakit" && <span> (%10 indirim uygulandı)</span>}.</p>
-                  {preorderPm === "online" ? (
-                    <p>Tamamı <strong>online kredi kartı</strong> ile <strong>taksitli</strong> ödenir. Tutar: <strong>{preorderMethodTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>.</p>
-                  ) : (
-                    <p>Şimdi <strong>%25 kapora</strong> <strong>online kredi kartı</strong> ile (taksitli) alınır: <strong>{preorderDeposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>. Kalan <strong>%75</strong> ({preorderRemaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL) teslimatta <strong>{preorderMethodLabel}</strong> ile ödenir.</p>
-                  )}
+                  <p>Şimdi <strong>%25 kapora</strong> <strong>online kredi kartı</strong> ile (vade farksız 3-6 taksit) alınır: <strong>{preorderDeposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>. Kalan <strong>%75</strong> ({preorderRemaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL) teslimatta <strong>{preorderMethodLabel}</strong> ile ödenir.</p>
                   <p>Ön sipariş onaylandıktan sonra <strong>fiyat değişmez</strong> ve sipariş <strong>iptal edilemez</strong>.</p>
                 </div>
               </div>
@@ -1758,18 +1752,16 @@ export default function Checkout() {
                         <span className="text-muted-foreground">Ürün Toplamı ({preorderMethodLabel}{preorderPm === "nakit" && " - %10 indirimli"})</span>
                         <span className="font-medium">{preorderMethodTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
                       </div>
-                      {preorderPm !== "online" && (
-                        <div className="flex justify-between gap-3 flex-wrap">
-                          <span className="text-muted-foreground">Teslimatta ({preorderMethodLabel}) - %75</span>
-                          <span className="font-medium" style={{ color: "#2e7d32" }}>{preorderRemaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
-                        </div>
-                      )}
+                      <div className="flex justify-between gap-3 flex-wrap">
+                        <span className="text-muted-foreground">Teslimatta ({preorderMethodLabel}) - %75</span>
+                        <span className="font-medium" style={{ color: "#2e7d32" }}>{preorderRemaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</span>
+                      </div>
                     </div>
                   )}
 
                   <div className="mt-4 pt-4 border-t">
                     <div className="flex items-center justify-between gap-3 flex-wrap">
-                      <span className="text-lg font-bold">{hasPreorderItems ? (preorderPm === "online" ? "Şimdi Ödenecek (Taksitli)" : "Şimdi Ödenecek Kapora") : "Ödenecek Tutar"}</span>
+                      <span className="text-lg font-bold">{hasPreorderItems ? "Şimdi Ödenecek Kapora (%25)" : "Ödenecek Tutar"}</span>
                       <span className="text-2xl font-extrabold text-primary" data-testid="text-total">
                         {displayTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                       </span>
