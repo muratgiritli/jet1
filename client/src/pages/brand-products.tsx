@@ -36,6 +36,12 @@ function isFoodSubcategory(slug: string): boolean {
   );
 }
 
+function isStrictMamaSubcategory(slug: string): boolean {
+  if (!slug) return false;
+  const s = slug.toLowerCase();
+  return s.includes("mama") || s.includes("konserve") || s.includes("cuval") || s.includes("yem");
+}
+
 const ANIMAL_SUBCATEGORIES: Record<string, SubcategoryInfo[]> = {
   kopek: [
     { name: "Kopek Kuru Mama", slug: "kopek-kuru-mama", hasBrands: true },
@@ -125,11 +131,13 @@ function BrandProductCard({
   quantity,
   onUpdate,
   showDetailLink,
+  isMama,
 }: {
   product: Product;
   quantity: number;
   onUpdate: (id: string, delta: number) => void;
   showDetailLink?: boolean;
+  isMama?: boolean;
 }) {
   const isActive = quantity > 0;
   const discount = product.originalPrice
@@ -190,7 +198,7 @@ function BrandProductCard({
             </span>
           )}
         </div>
-        {product.stock === 0 && product.preorderEnabled ? (
+        {product.stock === 0 && (product.preorderEnabled || !isMama) ? (
           <Link href={productUrl(product.id, product.name)} className="w-full">
             <Button variant="default" size="sm" className="w-full" style={{ backgroundColor: "#1565c0" }} data-testid={`btn-preorder-${pid}`}>
               <Clock className="w-3.5 h-3.5" />
@@ -228,11 +236,13 @@ function InlineSubcategoryProductCard({
   quantity,
   onUpdate,
   showDetailLink,
+  isMama,
 }: {
-  product: { id: string; name: string; price: number; originalPrice?: number; img?: string; skt?: string };
+  product: { id: string; name: string; price: number; originalPrice?: number; img?: string; skt?: string; stock?: number; preorderEnabled?: boolean };
   quantity: number;
   onUpdate: (id: string, delta: number) => void;
   showDetailLink?: boolean;
+  isMama?: boolean;
 }) {
   const isActive = quantity > 0;
   const discount = product.originalPrice && product.originalPrice > product.price
@@ -287,7 +297,21 @@ function InlineSubcategoryProductCard({
             Nakit: {(product.price * 0.9).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} TL
           </span>
         </div>
-        {showDetailLink ? (
+        {product.stock === 0 && (product.preorderEnabled || !isMama) ? (
+          <Link href={productUrl(product.id, product.name)} className="w-full">
+            <Button variant="default" size="sm" className="w-full" style={{ backgroundColor: "#1565c0" }} data-testid={`btn-preorder-inline-${product.id}`}>
+              <Clock className="w-3.5 h-3.5" />
+              Sipariş Ver
+            </Button>
+          </Link>
+        ) : product.stock === 0 ? (
+          <Link href={productUrl(product.id, product.name)} className="w-full">
+            <Button variant="default" size="sm" className="w-full" style={{ backgroundColor: "#e65100" }} data-testid={`btn-stock-alert-inline-${product.id}`}>
+              <Bell className="w-3.5 h-3.5" />
+              Gelince Haber Ver
+            </Button>
+          </Link>
+        ) : showDetailLink ? (
           <Link href={productUrl(product.id, product.name)} className="w-full">
             <Button variant="default" size="sm" className="w-full" data-testid={`btn-incele-inline-${product.id}`}>
               <Eye className="w-3.5 h-3.5" />
@@ -346,6 +370,8 @@ function InlineSubcategories({
           originalPrice: p.originalPrice ?? undefined,
           img: p.img ?? undefined,
           skt: p.skt ?? undefined,
+          stock: p.stock,
+          preorderEnabled: p.preorderEnabled,
         }));
     }
 
@@ -403,6 +429,7 @@ function InlineSubcategories({
                   quantity={basket[product.id] || 0}
                   onUpdate={updateQty}
                   showDetailLink={!!selectedSc?.hasBrands || !isFoodSubcategory(selectedSc?.slug || "")}
+                  isMama={(animal === "kedi" || animal === "kopek") && isStrictMamaSubcategory(selectedSc?.slug || "")}
                 />
               </div>
             ))}
@@ -544,6 +571,7 @@ export default function BrandProductsPage() {
                 quantity={basket[String(product.id)] || 0}
                 onUpdate={updateQty}
                 showDetailLink={subcategory !== brandSlug || !isFoodSubcategory(subcategory)}
+                isMama={(animal === "kedi" || animal === "kopek") && isStrictMamaSubcategory(subcategory)}
               />
             </div>
           ))}

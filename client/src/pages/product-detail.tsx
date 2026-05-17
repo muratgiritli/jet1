@@ -137,22 +137,17 @@ function CrossSellProductCard({
         <span className="text-xs font-bold text-foreground">
           {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
         </span>
-        {product.stock === 0 && product.preorderEnabled ? (
+        {product.stock === 0 ? (
           <div className="space-y-1">
             <div className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[9px] font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }}>
               <Clock className="w-2.5 h-2.5" />
-              Ön Sipariş
+              Sipariş Ver
             </div>
             <div className="flex items-center gap-0" data-testid={`qty-control-preorder-${pid}`}>
               <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => onUpdate(pid, -1)}><Minus className="w-3 h-3" /></Button>
               <div className="flex items-center justify-center font-bold text-blue-700 w-7 text-sm">{quantity}</div>
               <Button variant="outline" size="sm" className="h-7 w-7 p-0" onClick={() => onUpdate(pid, 1)}><Plus className="w-3 h-3" /></Button>
             </div>
-          </div>
-        ) : product.stock === 0 ? (
-          <div className="flex items-center gap-1 px-2 py-1 rounded-md text-[10px] font-semibold" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>
-            <Bell className="w-3 h-3" />
-            Tukendi
           </div>
         ) : (
           <div className="flex items-center gap-0" data-testid={`qty-control-cross-${pid}`}>
@@ -247,6 +242,12 @@ export default function ProductDetailPage() {
 
   const isKediMama = data?.category?.animal === "kedi" && (data?.category?.subcategory === "kedi-mamasi" || data?.category?.subcategory === "acik-mama");
   const isKediKumu = data?.category?.animal === "kedi" && data?.category?.subcategory === "kedi-kumu";
+  const isMamaCategory = (() => {
+    const a = data?.category?.animal;
+    const s = (data?.category?.subcategory || "").toLowerCase();
+    if (a !== "kedi" && a !== "kopek") return false;
+    return s.includes("mama") || s.includes("konserve") || s.includes("cuval") || s.includes("yem");
+  })();
   const needsCrossSell = isKediMama || isKediKumu;
 
   const { data: kumData } = useQuery<{ category: BrandCategory; products: Product[] }>({
@@ -675,7 +676,7 @@ export default function ProductDetailPage() {
                 </DialogContent>
               </Dialog>
 
-              {product.stock === 0 && product.preorderEnabled ? (
+              {product.stock === 0 && (product.preorderEnabled || !isMamaCategory) ? (
                 <div className="mt-2 space-y-3">
                   <div className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }}>
                     <Clock className="w-4 h-4" />

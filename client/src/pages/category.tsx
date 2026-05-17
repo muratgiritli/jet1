@@ -175,18 +175,11 @@ function KemirgenProductCard({ product }: { product: Product }) {
             </span>
           )}
         </div>
-        {product.stock === 0 && product.preorderEnabled ? (
+        {product.stock === 0 ? (
           <Link href={productUrl(product.id, product.name)} className="w-full">
             <Button variant="default" size="sm" className="w-full" style={{ backgroundColor: "#1565c0" }} data-testid={`btn-preorder-${pid}`}>
               <Clock className="w-3.5 h-3.5" />
               Sipariş Ver
-            </Button>
-          </Link>
-        ) : product.stock === 0 ? (
-          <Link href={productUrl(product.id, product.name)} className="w-full">
-            <Button variant="default" size="sm" className="w-full" style={{ backgroundColor: "#e65100" }} data-testid={`btn-stock-alert-${pid}`}>
-              <Bell className="w-3.5 h-3.5" />
-              Gelince Haber Ver
             </Button>
           </Link>
         ) : quantity > 0 ? (

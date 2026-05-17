@@ -12,9 +12,10 @@ interface ProductPopupProps {
   quantity: number;
   onUpdate: (id: string, delta: number) => void;
   onClose: () => void;
+  isMama?: boolean;
 }
 
-export default function ProductPopup({ product, quantity, onUpdate, onClose }: ProductPopupProps) {
+export default function ProductPopup({ product, quantity, onUpdate, onClose, isMama }: ProductPopupProps) {
   const closeRef = useRef<HTMLButtonElement>(null);
   const prevOverflow = useRef<string>("");
   const [imgZoomed, setImgZoomed] = useState(false);
@@ -117,12 +118,12 @@ export default function ProductPopup({ product, quantity, onUpdate, onClose }: P
             <p className="text-xs text-muted-foreground">{product.weight}</p>
           )}
 
-          {product.stock === 0 && !product.preorderEnabled ? (
+          {product.stock === 0 && !product.preorderEnabled && isMama ? (
             <div className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>
               <Tag className="w-4 h-4" />
               Tükendi
             </div>
-          ) : product.stock === 0 && product.preorderEnabled ? (
+          ) : product.stock === 0 ? (
             <div className="space-y-2">
               <div className="flex items-center justify-center gap-2 py-1.5 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }}>
                 <Clock className="w-3.5 h-3.5" />
