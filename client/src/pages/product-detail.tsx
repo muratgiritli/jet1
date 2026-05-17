@@ -323,6 +323,7 @@ export default function ProductDetailPage() {
 
   const [selectedVariantLabel, setSelectedVariantLabel] = useState<string | null>(null);
   const [variantInitialized, setVariantInitialized] = useState(false);
+  const [longDescOpen, setLongDescOpen] = useState(false);
   const [stockName, setStockName] = useState("");
   const [stockPhone, setStockPhone] = useState("");
   const [stockAlertSent, setStockAlertSent] = useState(false);
@@ -954,18 +955,31 @@ export default function ProductDetailPage() {
 
         {!isCampaignMode && (product as any).longDescription && (product as any).longDescription.trim() && (
           <section className="mt-6 overflow-hidden" data-testid="section-long-description">
-            <h2 className="text-base md:text-lg font-extrabold mb-3">Ürün Açıklaması</h2>
-            <div
-              className="prose-product text-sm md:text-base break-words"
-              data-testid="text-long-description"
-              dangerouslySetInnerHTML={{
-                __html: DOMPurify.sanitize((product as any).longDescription, {
-                  ALLOWED_TAGS: ["h2","h3","h4","p","ul","ol","li","strong","em","u","s","a","blockquote","br","span","div"],
-                  ALLOWED_ATTR: ["href","target","rel","style","class"],
-                  ALLOWED_URI_REGEXP: /^(https?:|mailto:|tel:|\/)/i,
-                }),
-              }}
-            />
+            <div className="border rounded-lg overflow-hidden bg-white">
+              <button
+                type="button"
+                onClick={() => setLongDescOpen((o) => !o)}
+                className="w-full flex items-center justify-between px-4 py-3 text-left font-semibold text-sm md:text-base hover:bg-gray-50 transition-colors"
+                data-testid="btn-toggle-long-description"
+                aria-expanded={longDescOpen}
+              >
+                <span>Ürün Açıklaması</span>
+                <ChevronDown className={`w-4 h-4 transition-transform ${longDescOpen ? "rotate-180" : ""}`} />
+              </button>
+              {longDescOpen && (
+                <div
+                  className="prose-product text-sm md:text-base break-words px-4 pb-4"
+                  data-testid="text-long-description"
+                  dangerouslySetInnerHTML={{
+                    __html: DOMPurify.sanitize((product as any).longDescription, {
+                      ALLOWED_TAGS: ["h2","h3","h4","p","ul","ol","li","strong","em","u","s","a","blockquote","br","span","div"],
+                      ALLOWED_ATTR: ["href","target","rel","style","class"],
+                      ALLOWED_URI_REGEXP: /^(https?:|mailto:|tel:|\/)/i,
+                    }),
+                  }}
+                />
+              )}
+            </div>
           </section>
         )}
 
