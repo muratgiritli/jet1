@@ -282,6 +282,15 @@ export async function registerRoutes(
   }
 
   try {
+    await sharedPool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS long_description text;`);
+    await sharedPool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS meta_title text;`);
+    await sharedPool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS meta_description text;`);
+    await sharedPool.query(`ALTER TABLE products ADD COLUMN IF NOT EXISTS meta_keywords text;`);
+  } catch (e) {
+    console.error("Products rich description / SEO columns migration error:", e);
+  }
+
+  try {
     await sharedPool.query(`
       CREATE TABLE IF NOT EXISTS subscriptions (
         id SERIAL PRIMARY KEY,
@@ -1784,7 +1793,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ürün ID" });
-    const allowedFields = ["name", "price", "originalPrice", "skt", "img", "originalImg", "brandCategoryId", "isActive", "stock", "barcode", "costPrice", "mamaType", "preorderEnabled", "hiddenPaymentMethods", "variants"];
+    const allowedFields = ["name", "price", "originalPrice", "skt", "img", "originalImg", "brandCategoryId", "isActive", "stock", "barcode", "costPrice", "mamaType", "preorderEnabled", "hiddenPaymentMethods", "variants", "longDescription", "metaTitle", "metaDescription", "metaKeywords"];
     const safeBody: Record<string, any> = {};
     for (const key of allowedFields) {
       if (req.body[key] !== undefined) safeBody[key] = req.body[key];

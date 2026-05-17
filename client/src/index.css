@@ -209,6 +209,49 @@
  * Even without handling focused or not, this is six possible combinations that
  * need to be distinguished from eachother visually.
  */
+.rich-editor-wrap .ql-toolbar {
+  border-top-left-radius: 0.5rem;
+  border-top-right-radius: 0.5rem;
+  border-color: hsl(var(--border));
+  background: hsl(var(--muted));
+}
+.rich-editor-wrap .ql-container {
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
+  border-color: hsl(var(--border));
+  min-height: 220px;
+  font-size: 14px;
+  font-family: inherit;
+}
+.rich-editor-wrap .ql-editor {
+  min-height: 220px;
+}
+.rich-editor-wrap .ql-editor.ql-blank::before {
+  color: hsl(var(--muted-foreground));
+  font-style: normal;
+}
+
+.prose-product {
+  color: hsl(var(--foreground));
+  line-height: 1.7;
+}
+.prose-product h2 { font-size: 1.25rem; font-weight: 700; margin: 1.25rem 0 .5rem; }
+.prose-product h3 { font-size: 1.1rem;  font-weight: 700; margin: 1rem 0 .5rem; }
+.prose-product h4 { font-size: 1rem;    font-weight: 600; margin: .75rem 0 .5rem; }
+.prose-product p  { margin: .5rem 0; }
+.prose-product ul { list-style: disc; padding-left: 1.25rem; margin: .5rem 0; }
+.prose-product ol { list-style: decimal; padding-left: 1.25rem; margin: .5rem 0; }
+.prose-product li { margin: .25rem 0; }
+.prose-product strong { font-weight: 700; }
+.prose-product em { font-style: italic; }
+.prose-product a { color: hsl(var(--primary)); text-decoration: underline; }
+.prose-product blockquote {
+  border-left: 3px solid hsl(var(--border));
+  padding-left: .75rem;
+  color: hsl(var(--muted-foreground));
+  margin: .75rem 0;
+}
+
 @layer utilities {
 
   /* Hide ugly search cancel button in Chrome until we can style it properly */

@@ -26,7 +26,12 @@ export default function SEO({ title, description, canonical, ogImage, ogType, js
     };
 
     setMeta("name", "description", description);
-    if (keywords) setMeta("name", "keywords", keywords);
+    if (keywords) {
+      setMeta("name", "keywords", keywords);
+    } else {
+      const kwEl = document.querySelector('meta[name="keywords"]');
+      if (kwEl) kwEl.remove();
+    }
     setMeta("property", "og:title", title);
     setMeta("property", "og:description", description);
     setMeta("property", "og:type", ogType || "website");
@@ -70,7 +75,7 @@ export default function SEO({ title, description, canonical, ogImage, ogType, js
       if (canonicalEl) canonicalEl.remove();
       if (ldScript) ldScript.remove();
     };
-  }, [title, description, canonical, ogImage, ogType, jsonLd, noindex]);
+  }, [title, description, canonical, ogImage, ogType, jsonLd, noindex, keywords]);
 
   return null;
 }

@@ -3,6 +3,8 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import RichTextEditor from "@/components/RichTextEditor";
 import BackNavigation from "@/components/BackNavigation";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -298,6 +300,10 @@ function ProductForm({
   const [costPrice, setCostPrice] = useState(product?.costPrice?.toString() || "");
   const [mamaType, setMamaType] = useState(product?.mamaType || "");
   const [hiddenPays, setHiddenPays] = useState<string[]>((product as any)?.hiddenPaymentMethods || []);
+  const [longDescription, setLongDescription] = useState<string>((product as any)?.longDescription || "");
+  const [metaTitle, setMetaTitle] = useState<string>((product as any)?.metaTitle || "");
+  const [metaDescription, setMetaDescription] = useState<string>((product as any)?.metaDescription || "");
+  const [metaKeywords, setMetaKeywords] = useState<string>((product as any)?.metaKeywords || "");
   const [variants, setVariants] = useState<{ label: string; price: string; stock: string; barcode: string; skt: string }[]>(
     ((product as any)?.variants || []).map((v: any) => ({
       label: String(v.label || ""),
@@ -383,6 +389,10 @@ function ProductForm({
           barcode: barcode.trim() || null,
           mamaType: mamaType || null,
           hiddenPaymentMethods: hiddenPays,
+          longDescription: longDescription.trim() || null,
+          metaTitle: metaTitle.trim() || null,
+          metaDescription: metaDescription.trim() || null,
+          metaKeywords: metaKeywords.trim() || null,
           variants: variants
             .map(v => {
               const stockNum = v.stock.trim() === "" ? undefined : parseInt(v.stock);
@@ -776,6 +786,60 @@ function ProductForm({
             </div>
           </div>
         ))}
+      </div>
+
+      <div className="border-t pt-4 mt-2 space-y-3">
+        <div className="space-y-1">
+          <Label className="text-sm font-bold">Detaylı Açıklama (Zengin Metin)</Label>
+          <p className="text-xs text-muted-foreground">
+            Ürünün özelliklerini, içeriğini ve faydalarını SEO uyumlu, detaylı şekilde yazın. Doluysa otomatik olarak ürün sayfasındaki genel bilgi kutuları yerine bu görünür.
+          </p>
+          <RichTextEditor
+            value={longDescription}
+            onChange={setLongDescription}
+            testId="editor-long-description"
+          />
+        </div>
+      </div>
+
+      <div className="border-t pt-4 mt-2 space-y-3">
+        <Label className="text-sm font-bold">SEO Ayarları (Opsiyonel)</Label>
+        <p className="text-xs text-muted-foreground -mt-2">
+          Boş bırakırsanız ürün adı ve fiyatından otomatik üretilir. Google için özelleştirmek istediğinizde doldurun.
+        </p>
+        <div className="space-y-1">
+          <Label className="text-xs">Meta Başlık (önerilen 50-60 karakter)</Label>
+          <Input
+            value={metaTitle}
+            onChange={(e) => setMetaTitle(e.target.value)}
+            maxLength={120}
+            placeholder="Örn: Royal Canin Indoor 2 Kg Kedi Maması - Samsun Aynı Gün Teslimat"
+            data-testid="input-meta-title"
+          />
+          <div className="text-[10px] text-muted-foreground text-right">{metaTitle.length}/120</div>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Meta Açıklama (önerilen 140-160 karakter)</Label>
+          <Textarea
+            value={metaDescription}
+            onChange={(e) => setMetaDescription(e.target.value)}
+            maxLength={300}
+            rows={3}
+            placeholder="Google arama sonuçlarında görünecek açıklama. Ürünü özetleyin."
+            data-testid="input-meta-description"
+          />
+          <div className="text-[10px] text-muted-foreground text-right">{metaDescription.length}/300</div>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Anahtar Kelimeler (virgülle ayırın)</Label>
+          <Input
+            value={metaKeywords}
+            onChange={(e) => setMetaKeywords(e.target.value)}
+            maxLength={300}
+            placeholder="kedi maması, royal canin, samsun pet shop"
+            data-testid="input-meta-keywords"
+          />
+        </div>
       </div>
 
       <Button type="submit" className="w-full" disabled={isPending || !brandCategoryId} data-testid="btn-save-product">

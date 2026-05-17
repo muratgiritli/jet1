@@ -10,6 +10,7 @@ import { Link, useRoute, useSearch, useLocation } from "wouter";
 import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock, HelpCircle, Star, MessageSquare, Stethoscope, FileText, Users, Package } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import ProductInfoAccordions from "@/components/ProductInfoAccordions";
+import DOMPurify from "dompurify";
 import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
@@ -339,10 +340,13 @@ export default function ProductDetailPage() {
 
   const seoData = useMemo(() => {
     if (!resolvedData) return null;
-    const p = resolvedData.product;
+    const p = resolvedData.product as any;
     const catName = resolvedData.category?.brandName || "";
-    const title = `${p.name} Samsun Fiyatı ${Math.round(p.price)} TL | ${catName ? catName + " - " : ""}JETGO Pet Shop`;
-    const description = `${p.name} Samsun'da en uygun fiyatla ${Math.round(p.price)} TL${p.originalPrice ? ` (liste fiyatı ${Math.round(p.originalPrice)} TL)` : ""}. Samsun içi aynı gün teslimat, kapıda ödeme. Online sipariş JETGO Pet Shop.`;
+    const autoTitle = `${p.name} Samsun Fiyatı ${Math.round(p.price)} TL | ${catName ? catName + " - " : ""}JETGO Pet Shop`;
+    const autoDescription = `${p.name} Samsun'da en uygun fiyatla ${Math.round(p.price)} TL${p.originalPrice ? ` (liste fiyatı ${Math.round(p.originalPrice)} TL)` : ""}. Samsun içi aynı gün teslimat, kapıda ödeme. Online sipariş JETGO Pet Shop.`;
+    const title = (p.metaTitle && p.metaTitle.trim()) || autoTitle;
+    const description = (p.metaDescription && p.metaDescription.trim()) || autoDescription;
+    const keywords = (p.metaKeywords && p.metaKeywords.trim()) || undefined;
     const slug = p.name.toLowerCase().replace(/[^a-z0-9ğüşıöç]+/g, "-").replace(/-+/g, "-").replace(/^-|-$/g, "");
     const canonical = `${SITE_DOMAIN}/urun/${p.id}/${slug}`;
     const jsonLd = {
@@ -381,7 +385,7 @@ export default function ProductDetailPage() {
       ...(catName ? [{ name: catName, url: `${SITE_DOMAIN}/kategori` }] : []),
       { name: p.name, url: canonical },
     ]);
-    return { title, description, canonical, ogImage: p.img || undefined, jsonLd: [jsonLd, breadcrumbLd, LOCAL_BUSINESS_JSONLD] };
+    return { title, description, keywords, canonical, ogImage: p.img || undefined, jsonLd: [jsonLd, breadcrumbLd, LOCAL_BUSINESS_JSONLD] };
   }, [resolvedData]);
 
   useEffect(() => {
@@ -462,6 +466,7 @@ export default function ProductDetailPage() {
         <SEO
           title={seoData.title}
           description={seoData.description}
+          keywords={seoData.keywords}
           canonical={seoData.canonical}
           ogImage={seoData.ogImage}
           jsonLd={seoData.jsonLd}
@@ -945,7 +950,22 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        {!isCampaignMode && (
+        {!isCampaignMode && (product as any).longDescription && (product as any).longDescription.trim() ? (
+          <section className="mt-6" data-testid="section-long-description">
+            <h2 className="text-base md:text-lg font-extrabold mb-3">Ürün Açıklaması</h2>
+            <div
+              className="prose-product text-sm md:text-base"
+              data-testid="text-long-description"
+              dangerouslySetInnerHTML={{
+                __html: DOMPurify.sanitize((product as any).longDescription, {
+                  ALLOWED_TAGS: ["h2","h3","h4","p","ul","ol","li","strong","em","u","s","a","blockquote","br","span","div"],
+                  ALLOWED_ATTR: ["href","target","rel","style","class"],
+                  ALLOWED_URI_REGEXP: /^(https?:|mailto:|tel:|\/)/i,
+                }),
+              }}
+            />
+          </section>
+        ) : !isCampaignMode ? (
           <ProductInfoAccordions
             productName={product.name}
             animal={category?.animal || null}
@@ -955,7 +975,7 @@ export default function ProductDetailPage() {
             variants={productVariants}
             brandName={category?.brandName || null}
           />
-        )}
+        ) : null}
 
         {!isCampaignMode && <ProductReviews productId={product.id} />}
 

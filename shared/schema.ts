@@ -62,6 +62,10 @@ export const products = pgTable("products", {
   isStreetAnimal: boolean("is_street_animal").notNull().default(false),
   hiddenPaymentMethods: text("hidden_payment_methods").array().notNull().default([]),
   variants: jsonb("variants").$type<ProductVariant[]>().notNull().default([]),
+  longDescription: text("long_description"),
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+  metaKeywords: text("meta_keywords"),
 });
 
 export type ProductVariant = { label: string; price: number; stock?: number; barcode?: string; skt?: string };
