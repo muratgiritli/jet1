@@ -497,7 +497,7 @@ export default function ProductDetailPage() {
               </ImageZoom>
 
             <div className="md:w-1/2 w-full flex flex-col gap-3">
-              <h1 className="text-xl font-bold leading-tight" data-testid="text-product-name">
+              <h1 className="text-base md:text-lg font-bold leading-snug" data-testid="text-product-name">
                 {product.name}
               </h1>
 
