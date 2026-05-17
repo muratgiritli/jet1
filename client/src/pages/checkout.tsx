@@ -1006,7 +1006,11 @@ export default function Checkout() {
             {selectedProducts.some(({ product }) => isPreorderProduct(String(product.id))) && (
               <div className="mt-6 flex items-start gap-2 p-3 rounded-lg" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }} data-testid="banner-preorder-checkout">
                 <Clock className="w-4 h-4 mt-0.5 shrink-0" />
-                <p className="text-xs font-medium">Sepetinizde ön siparişli ürün(ler) var. Bu ürünler ortalama 3 iş günü içinde tedarik edilip teslim edilecektir.</p>
+                <div className="text-xs font-medium space-y-1">
+                  <p>Sepetinizde ön siparişli ürün(ler) var. Bu ürünler ortalama <strong>3 iş günü</strong> içinde tedarik edilip teslim edilecektir.</p>
+                  <p>Onay için <strong>%25 oranında ön ödeme (kapora)</strong> <strong>online kredi kartı</strong> ile alınır. Kalan <strong>%75</strong> teslimat sırasında istediğiniz ödeme şekliyle kapıda ödenir.</p>
+                  <p>Ön sipariş onaylandıktan sonra <strong>fiyat değişmez</strong> ve sipariş <strong>iptal edilemez</strong>.</p>
+                </div>
               </div>
             )}
             <section className="mt-6">
@@ -1525,7 +1529,9 @@ export default function Checkout() {
                         if (opt.id === "nakit") return nakitEnabled;
                         if (opt.id === "eft") return eftEnabled;
                         if (opt.id === "qr") return qrEnabled;
-                        if (opt.id === "online") return onlineCardEnabled && !selectedProducts.some(({ product }) => isPreorderProduct(String(product.id)));
+                        const hasPreorder = selectedProducts.some(({ product }) => isPreorderProduct(String(product.id)));
+                        if (hasPreorder) return opt.id === "online" && onlineCardEnabled;
+                        if (opt.id === "online") return onlineCardEnabled;
                         return true;
                       });
                     })().map((opt) => {

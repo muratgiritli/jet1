@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link, useRoute, useSearch, useLocation } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock, HelpCircle } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock, HelpCircle, Star, MessageSquare, Stethoscope, FileText, Users, Package } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import ProductInfoAccordions from "@/components/ProductInfoAccordions";
 import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
@@ -514,77 +515,6 @@ export default function ProductDetailPage() {
                 <FastDeliveryBanner />
               )}
 
-              <div className="flex items-center gap-3 mt-1 flex-wrap">
-                {campaignFiyat && (
-                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#6B3480", color: "#fff" }}>KAMPANYA FİYATI</span>
-                )}
-                <span className="text-2xl font-extrabold text-black dark:text-white" data-testid="text-pesin-price">
-                  {displayPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-                </span>
-                {displayOriginalPrice && displayOriginalPrice > displayPrice && (
-                  <span className="text-base text-gray-400 line-through">
-                    {displayOriginalPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-                  </span>
-                )}
-                {!isCampaignMode && !campaignFiyat && (
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full" data-testid="text-cash-price-detail">
-                    Nakit: {(displayPrice * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-                  </span>
-                )}
-                {product.skt && (
-                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid="text-skt-detail">
-                    S.K.T: {product.skt}
-                  </span>
-                )}
-                {product.barcode && (
-                  <span className="text-[11px] font-medium font-mono px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-200" data-testid="text-barcode-detail">
-                    Barkod: {product.barcode}
-                  </span>
-                )}
-              </div>
-
-              {!isCampaignMode && (
-                <div data-testid="text-loyalty-points-earn">
-                  <div
-                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
-                    style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}
-                  >
-                    <Gift className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
-                    <span style={{ color: "#bf360c" }}>
-                      Bu ürünü satın aldığınızda{" "}
-                      <strong>{(product.price * 0.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
-                      değerinde Para Puan kazanacaksınız.
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setParaPuanInfoOpen(true)}
-                    className="mt-1.5 ml-1 text-xs font-semibold animate-pulse hover:animate-none transition-all"
-                    style={{ color: "#e65100" }}
-                    data-testid="btn-para-puan-info"
-                  >
-                    Para Puan nedir?
-                  </button>
-                </div>
-              )}
-
-              {isCampaignMode && (
-                <div
-                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
-                  style={{ backgroundColor: "#fff3e0", border: "1px solid #ffcc80" }}
-                  data-testid="text-campaign-badge"
-                >
-                  <Tag className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
-                  <span className="font-semibold" style={{ color: "#bf360c" }}>
-                    Kampanya Ürünü — Sadece 1 adet alabilirsiniz.
-                  </span>
-                </div>
-              )}
-
-              {!isCampaignMode && (
-                <InstallmentBanner variant="compact" pricePerInstallment={displayPrice / 3} />
-              )}
-
               {hasVariants && (
                 <div className="space-y-2" data-testid="section-variants">
                   <div className="text-sm font-semibold text-gray-700">
@@ -624,6 +554,83 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
+              <div className="flex items-center gap-3 mt-1 flex-wrap">
+                {campaignFiyat && (
+                  <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#6B3480", color: "#fff" }}>KAMPANYA FİYATI</span>
+                )}
+                <span className="text-2xl font-extrabold text-black dark:text-white" data-testid="text-pesin-price">
+                  {displayPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                </span>
+                {displayOriginalPrice && displayOriginalPrice > displayPrice && (
+                  <span className="text-base text-gray-400 line-through">
+                    {displayOriginalPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                  </span>
+                )}
+                {!isCampaignMode && !campaignFiyat && (
+                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full" data-testid="text-cash-price-detail">
+                    Nakit: {(displayPrice * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                  </span>
+                )}
+                {product.skt && (
+                  <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid="text-skt-detail">
+                    S.K.T: {product.skt}
+                  </span>
+                )}
+                {product.barcode && (
+                  <span className="text-[11px] font-medium font-mono px-2 py-0.5 rounded-full bg-gray-50 text-gray-600 border border-gray-200" data-testid="text-barcode-detail">
+                    Barkod: {product.barcode}
+                  </span>
+                )}
+              </div>
+
+              {!isCampaignMode && (
+                <div data-testid="text-loyalty-points-earn">
+                  <div
+                    className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                    style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}
+                  >
+                    <Gift className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
+                    <span style={{ color: "#bf360c" }}>
+                      {hasVariants && !selectedVariant ? (
+                        <>Seçenek belirleyince <strong>%5</strong> Para Puan kazancınız hesaplanır.</>
+                      ) : (
+                        <>
+                          Bu ürünü satın aldığınızda{" "}
+                          <strong>{(displayPrice * 0.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
+                          değerinde Para Puan kazanacaksınız.
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setParaPuanInfoOpen(true)}
+                    className="mt-1.5 ml-1 text-xs font-semibold animate-pulse hover:animate-none transition-all"
+                    style={{ color: "#e65100" }}
+                    data-testid="btn-para-puan-info"
+                  >
+                    Para Puan nedir?
+                  </button>
+                </div>
+              )}
+
+              {isCampaignMode && (
+                <div
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
+                  style={{ backgroundColor: "#fff3e0", border: "1px solid #ffcc80" }}
+                  data-testid="text-campaign-badge"
+                >
+                  <Tag className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
+                  <span className="font-semibold" style={{ color: "#bf360c" }}>
+                    Kampanya Ürünü — Sadece 1 adet alabilirsiniz.
+                  </span>
+                </div>
+              )}
+
+              {!isCampaignMode && (
+                <InstallmentBanner variant="compact" pricePerInstallment={displayPrice / 3} />
+              )}
+
               <Dialog open={paraPuanInfoOpen} onOpenChange={setParaPuanInfoOpen}>
                 <DialogContent className="max-w-md">
                   <DialogHeader>
@@ -660,59 +667,107 @@ export default function ProductDetailPage() {
                 <div className="mt-2 space-y-3">
                   <div className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }}>
                     <Clock className="w-4 h-4" />
-                    Ön Sipariş — Ortalama 3 gün içinde teslimat
+                    Ön Sipariş — Ortalama 3 iş günü içinde teslimat
                   </div>
                   <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3 flex-wrap">
                       <span className="text-sm text-muted-foreground font-medium">ADET</span>
-                      <QuantityControl productId={pid} quantity={quantity} onUpdate={isCampaignMode ? (id, delta) => updateQty(id, delta, true) : updateQty} />
+                      <QuantityControl productId={pid} quantity={quantity} onUpdate={(id, delta) => {
+                        if (delta > 0 && hasVariants && !selectedVariant) {
+                          toast({ title: "Lütfen önce seçenek belirleyin", variant: "destructive" });
+                          return false;
+                        }
+                        return updateQty(id, delta, isCampaignMode, selectedVariant ?? undefined);
+                      }} />
                     </div>
+                    {(() => {
+                      const lineTotal = displayPrice * Math.max(quantity || 1, 1);
+                      const deposit = lineTotal * 0.25;
+                      const remaining = lineTotal - deposit;
+                      return (
+                        <div className="rounded-lg border-2 p-3 space-y-1.5" style={{ borderColor: "#1565c0", backgroundColor: "#e3f2fd" }} data-testid="preorder-deposit-box">
+                          <div className="flex items-center gap-1.5 font-bold text-sm" style={{ color: "#0d47a1" }}>
+                            <CreditCard className="w-4 h-4" />
+                            Ön Sipariş Ödeme Planı
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-700">Toplam ürün tutarı:</span>
+                            <strong data-testid="text-preorder-total">{lineTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                          </div>
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-gray-700">Şimdi (online kredi kartı ile) <strong>%25 kapora</strong>:</span>
+                            <strong style={{ color: "#1565c0" }} data-testid="text-preorder-deposit">{deposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                          </div>
+                          <div className="flex items-center justify-between text-sm border-t pt-1.5 mt-1.5" style={{ borderColor: "#90caf9" }}>
+                            <span className="text-gray-700">Teslimatta (istediğiniz ödeme şekliyle):</span>
+                            <strong style={{ color: "#2e7d32" }} data-testid="text-preorder-remaining">{remaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                          </div>
+                        </div>
+                      );
+                    })()}
                     {quantity === 0 ? (
                       <Button
                         className="w-full"
                         style={{ backgroundColor: "#1565c0" }}
+                        disabled={hasVariants && !selectedVariant}
                         onClick={() => {
-                          const blocked = updateQty(pid, 1, isCampaignMode);
-                          if (!blocked) setLocation("/odeme");
+                          if (hasVariants && !selectedVariant) {
+                            toast({ title: "Lütfen seçenek belirleyin", variant: "destructive" });
+                            return;
+                          }
+                          const blocked = updateQty(pid, 1, isCampaignMode, selectedVariant ?? undefined);
+                          if (!blocked) setLocation("/odeme?preorder=1");
                         }}
                         data-testid="btn-preorder-add"
                       >
                         <ShoppingCart className="w-4 h-4" />
-                        Sipariş Ver
+                        Ön Sipariş Ver (%25 Kapora ile)
                       </Button>
                     ) : (
                       <Button
                         className="w-full"
                         style={{ backgroundColor: "#2e7d32" }}
-                        onClick={() => setLocation("/odeme")}
+                        onClick={() => setLocation("/odeme?preorder=1")}
                         data-testid="btn-preorder-go-cart"
                       >
                         <ShoppingCart className="w-4 h-4" />
-                        Ödemeye Git ({quantity})
+                        Kaporayı Öde ve Onayla ({quantity})
                       </Button>
                     )}
                   </div>
                   <div className="rounded-lg border p-3 space-y-2" style={{ backgroundColor: "#f5f9ff", borderColor: "#bbdefb" }} data-testid="preorder-info-section">
                     <h4 className="text-sm font-bold flex items-center gap-1.5" style={{ color: "#1565c0" }}>
                       <HelpCircle className="w-4 h-4" />
-                      Ön Sipariş Nedir?
+                      Ön Sipariş Bilgilendirmesi
                     </h4>
                     <p className="text-xs leading-relaxed text-gray-700">
-                      Bu ürünün stokları şu an tükenmiş durumdadır. Ön sipariş vererek ürünü şimdiden satın alabilirsiniz. Siparişiniz alındıktan sonra tedarik sürecimiz başlar ve ortalama <strong>3 iş günü</strong> içinde stoklarımız yenilenir. Stok geldiğinde siparişiniz hazırlanarak tarafınıza teslim edilir.
+                      Bu ürün şu anda <strong>stokta bulunmamaktadır</strong>. Ön sipariş vererek ürün sizin için özel olarak tedarik edilir.
                     </p>
-                    <div className="mt-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#fff3e0", border: "1px solid #ffcc80" }}>
+                    <p className="text-xs leading-relaxed text-gray-700">
+                      ⏳ Ortalama tedarik süresi: <strong>3 iş günüdür</strong>.
+                    </p>
+                    <div className="mt-2 px-3 py-2 rounded-lg space-y-1" style={{ backgroundColor: "#fff3e0", border: "1px solid #ffcc80" }}>
                       <p className="text-xs font-bold" style={{ color: "#e65100" }}>
-                        ⚠ Ödemeyi ürün teslimi sırasında yapacaksınız.
+                        ⚠ Ön sipariş ürünleri müşteri talebine özel tedarik edildiği için sipariş onayı amacıyla <strong>%25 oranında ön ödeme (kapora)</strong> alınmaktadır.
                       </p>
-                      <p className="text-[11px] mt-0.5" style={{ color: "#bf360c" }}>
-                        Ön sipariş verirken ödeme alınmaz. Ürün size teslim edilirken ödemenizi yaparsınız.
+                      <p className="text-[11px]" style={{ color: "#bf360c" }}>
+                        Kapora <strong>online kredi kartı</strong> ile tahsil edilir. Kalan <strong>%75</strong>'lik ödeme, ürün teslimatı sırasında istediğiniz ödeme şekliyle (nakit, kapıda POS, QR vb.) yapılabilir.
                       </p>
                     </div>
-                    <ul className="text-[11px] text-gray-600 space-y-1 list-disc list-inside mt-2">
-                      <li>Ön sipariş ile fiyat avantajını kaçırmadan ürünü garantileyin.</li>
-                      <li>Ortalama teslimat süresi: 3 iş günü.</li>
-                      <li>Sipariş durumunuz hakkında bilgilendirileceksiniz.</li>
-                    </ul>
+                    <div className="mt-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#e8f5e9", border: "1px solid #c8e6c9" }}>
+                      <p className="text-xs" style={{ color: "#2e7d32" }}>
+                        ✅ Ön sipariş onaylandıktan sonra <strong>ürün fiyatı değişmez</strong>. Sipariş verdiğiniz fiyat korunur.
+                      </p>
+                    </div>
+                    <div className="mt-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffebee", border: "1px solid #ffcdd2" }}>
+                      <p className="text-xs font-bold" style={{ color: "#c62828" }}>Önemli:</p>
+                      <p className="text-[11px]" style={{ color: "#b71c1c" }}>
+                        Ön sipariş verilen ürünler size özel tedarik edildiğinden, sipariş onaylandıktan sonra <strong>iptal edilemez</strong>.
+                      </p>
+                    </div>
+                    <p className="text-[11px] text-gray-600 mt-1">
+                      Sipariş süreci boyunca tarafınıza bilgilendirme yapılacaktır.
+                    </p>
                   </div>
                 </div>
               ) : product.stock === 0 ? (
@@ -738,7 +793,13 @@ export default function ProductDetailPage() {
                 <div className="flex flex-col gap-3 mt-2">
                   <div className="flex items-center gap-3 flex-wrap">
                     <span className="text-sm text-muted-foreground font-medium">ADET</span>
-                    <QuantityControl productId={pid} quantity={quantity} onUpdate={isCampaignMode ? (id, delta) => updateQty(id, delta, true) : updateQty} />
+                    <QuantityControl productId={pid} quantity={quantity} onUpdate={(id, delta) => {
+                      if (delta > 0 && hasVariants && !selectedVariant) {
+                        toast({ title: "Lütfen önce seçenek belirleyin", variant: "destructive" });
+                        return false;
+                      }
+                      return updateQty(id, delta, isCampaignMode, selectedVariant ?? undefined);
+                    }} />
                   </div>
                   <div className="flex gap-3 flex-wrap">
                     <Button
@@ -894,6 +955,18 @@ export default function ProductDetailPage() {
           </div>
         )}
 
+
+        {!isCampaignMode && (
+          <ProductInfoAccordions
+            productName={product.name}
+            animal={category?.animal || null}
+            barcode={product.barcode}
+            skt={product.skt}
+            stock={product.stock}
+            variants={productVariants}
+            brandName={category?.brandName || null}
+          />
+        )}
 
         {recentlyViewed.length > 0 && (
           <div className="mt-6">
