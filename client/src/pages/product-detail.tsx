@@ -56,9 +56,18 @@ function LongDescriptionAccordions({ html }: { html: string }) {
       "i"
     );
 
+    const decodeEntities = (s: string) =>
+      s
+        .replace(/&nbsp;/gi, " ")
+        .replace(/&amp;/gi, "&")
+        .replace(/&lt;/gi, "<")
+        .replace(/&gt;/gi, ">")
+        .replace(/&quot;/gi, '"')
+        .replace(/&#39;/gi, "'");
+
     // Convert <p>(<strong>)?HEADING(</strong>)?</p> → <h3>HEADING</h3>
     clean = clean.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (full, inner) => {
-      const stripped = inner.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+      const stripped = decodeEntities(inner.replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
       if (!stripped) return full;
       // Known heading text
       const m = stripped.match(headingRegex);
@@ -66,7 +75,7 @@ function LongDescriptionAccordions({ html }: { html: string }) {
       // Whole-paragraph bold + short → treat as heading
       const onlyBold = inner.trim().match(/^<(strong|b)[^>]*>([\s\S]*?)<\/\1>$/i);
       if (onlyBold) {
-        const text = onlyBold[2].replace(/<[^>]+>/g, "").trim();
+        const text = decodeEntities(onlyBold[2].replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
         const wordCount = text.split(/\s+/).length;
         if (text && wordCount <= 6 && text.length <= 60 && !/[.!?]$/.test(text)) {
           return `<h3>${text}</h3>`;
