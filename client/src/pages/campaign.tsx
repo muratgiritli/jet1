@@ -306,10 +306,6 @@ export default function CampaignPage() {
           style={{ background: "linear-gradient(135deg, #6B3480 0%, #8e44ad 50%, #9b59b6 100%)" }}
           data-testid="campaign-hero"
         >
-          <Badge className="bg-yellow-400 text-yellow-900 font-extrabold mb-2 text-[11px]">
-            <Flame className="w-3 h-3 mr-1" />
-            ÖZEL KAMPANYA
-          </Badge>
           <h1 className="text-xl md:text-3xl font-extrabold text-white mb-1.5" data-testid="text-hero-title">
             {heroTitle}
           </h1>
@@ -325,7 +321,7 @@ export default function CampaignPage() {
         </div>
 
         {/* Animal filters */}
-        <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar" data-testid="campaign-animal-filters">
+        <div className="flex flex-wrap justify-center gap-2 mb-4 md:overflow-x-auto md:no-scrollbar" data-testid="campaign-animal-filters">
           {ANIMAL_FILTERS.filter(f => f.id === "all" || availableAnimals.has(f.id)).map((f) => {
             const Icon = f.icon;
             const isActive = animalFilter === f.id;
