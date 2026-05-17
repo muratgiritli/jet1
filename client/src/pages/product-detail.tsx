@@ -897,6 +897,18 @@ export default function ProductDetailPage() {
           </div>
         )}
 
+        {!isCampaignMode && (
+          <ProductInfoAccordions
+            productName={product.name}
+            animal={category?.animal || null}
+            barcode={product.barcode}
+            skt={product.skt}
+            stock={product.stock}
+            variants={productVariants}
+            brandName={category?.brandName || null}
+          />
+        )}
+
         {!isCampaignMode && <ProductReviews productId={product.id} />}
 
         {!isCampaignMode && needsCrossSell && alsoBoughtCategories.length > 0 && (
@@ -955,18 +967,6 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-
-        {!isCampaignMode && (
-          <ProductInfoAccordions
-            productName={product.name}
-            animal={category?.animal || null}
-            barcode={product.barcode}
-            skt={product.skt}
-            stock={product.stock}
-            variants={productVariants}
-            brandName={category?.brandName || null}
-          />
-        )}
 
         {recentlyViewed.length > 0 && (
           <div className="mt-6">
