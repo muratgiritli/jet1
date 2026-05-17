@@ -300,25 +300,11 @@ export default function CampaignPage() {
 
       <main className="flex-1 max-w-7xl mx-auto w-full px-3 md:px-6 py-4">
         <CampaignTopBanner />
-        {/* Hero */}
-        <div
-          className="rounded-2xl p-5 md:p-6 mb-4 text-center shadow-lg"
-          style={{ background: "linear-gradient(135deg, #6B3480 0%, #8e44ad 50%, #9b59b6 100%)" }}
-          data-testid="campaign-hero"
-        >
-          <h1 className="text-xl md:text-3xl font-extrabold text-white mb-1.5" data-testid="text-hero-title">
-            {heroTitle}
-          </h1>
-          <p className="text-xs md:text-sm text-white/90" data-testid="text-hero-subtitle">{heroSubtitle}</p>
-
-          <CountdownStrip endDate={settings.campaign_end_date} />
-
-          <div className="flex flex-wrap justify-center gap-2 md:gap-3 mt-3 text-[10px] md:text-xs text-white">
-            <span className="inline-flex items-center gap-1 bg-white/20 rounded-full px-2.5 py-1"><Banknote className="w-3 h-3" /> Kapıda Nakit</span>
-            <span className="inline-flex items-center gap-1 bg-white/20 rounded-full px-2.5 py-1"><Truck className="w-3 h-3" /> 3 Gün Teslim</span>
-            <span className="inline-flex items-center gap-1 bg-white/20 rounded-full px-2.5 py-1"><ShieldCheck className="w-3 h-3" /> 1 Adet / Kişi</span>
+        {settings.campaign_end_date && (
+          <div className="mb-4 flex justify-center">
+            <CountdownStrip endDate={settings.campaign_end_date} />
           </div>
-        </div>
+        )}
 
         {/* Animal filters */}
         <div className="flex flex-wrap justify-center gap-2 mb-4 md:overflow-x-auto md:no-scrollbar" data-testid="campaign-animal-filters">
