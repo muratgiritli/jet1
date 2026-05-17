@@ -611,7 +611,7 @@ const SUBCATEGORY_SEED_DATA = [
   { animal: "kedi", slug: "yas-mama", displayName: "Yaş Mama\nÇeşitleri", color: "#E91E63", hasBrands: false, sortOrder: 9 },
   { animal: "kedi", slug: "kedi-konserve", displayName: "Kedi\nKonserve", color: "#F44336", hasBrands: false, sortOrder: 10 },
   { animal: "kedi", slug: "oyuncak", displayName: "Kedi\nOyuncak", color: "#3F51B5", hasBrands: false, sortOrder: 11 },
-  { animal: "kedi", slug: "firca-tras", displayName: "Fırça ve\nTraş", color: "#009688", hasBrands: false, sortOrder: 12 },
+  { animal: "kedi", slug: "firca-tras", displayName: "Tarak ve\nFırçalar", color: "#009688", hasBrands: false, sortOrder: 12 },
   { animal: "kedi", slug: "tirmalama", displayName: "Kedi\nTırmalama", color: "#FF7043", hasBrands: false, sortOrder: 13 },
   { animal: "kedi", slug: "mama-su-kabi", displayName: "Mama Su\nKapları", color: "#0288D1", hasBrands: false, sortOrder: 14 },
   { animal: "kedi", slug: "bel-boyun-tasma", displayName: "Bel Boyun\nTasmaları", color: "#6D4C41", hasBrands: false, sortOrder: 15 },
