@@ -4397,6 +4397,29 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     res.json(reviews);
   });
 
+  app.post("/api/reviews/:productId", async (req, res) => {
+    const productId = parseInt(req.params.productId);
+    if (isNaN(productId)) return res.status(400).json({ message: "Geçersiz ID" });
+    const schema = z.object({
+      reviewerName: z.string().min(1).max(100),
+      rating: z.number().int().min(1).max(5),
+      comment: z.string().min(10).max(2000),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri", errors: parsed.error.errors });
+    const reviewDate = new Date().toLocaleDateString("tr-TR");
+    const [review] = await db.insert(productReviews).values({
+      productId,
+      reviewerName: parsed.data.reviewerName,
+      rating: parsed.data.rating,
+      comment: parsed.data.comment,
+      helpfulCount: 0,
+      reviewDate,
+      isPublished: false,
+    }).returning();
+    res.status(201).json({ ok: true, id: review.id });
+  });
+
   app.get("/api/admin/reviews", requireAdmin, async (req, res) => {
     const reviews = await db.select().from(productReviews).orderBy(desc(productReviews.createdAt));
     res.json(reviews);
