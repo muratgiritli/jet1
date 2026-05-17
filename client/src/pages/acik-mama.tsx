@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRoute } from "wouter";
-import { ShoppingCart, Loader2, Plus, Minus } from "lucide-react";
+import { ShoppingCart, Loader2, Plus, Minus, Clock } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -76,30 +76,45 @@ function ProductCard({ product, quantity, onUpdate }: { product: Product; quanti
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2" data-testid={`qty-control-${pid}`}>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 rounded-full"
-            onClick={() => onUpdate(pid, -1)}
-            disabled={quantity <= 0}
-            data-testid={`btn-minus-${pid}`}
-          >
-            <Minus className="w-4 h-4" />
-          </Button>
-          <span className="w-8 text-center font-bold text-sm" style={{ color: isActive ? "#16a34a" : undefined }} data-testid={`text-qty-${pid}`}>
-            {quantity}
-          </span>
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-8 w-8 rounded-full"
-            onClick={() => onUpdate(pid, 1)}
-            data-testid={`btn-plus-${pid}`}
-          >
-            <Plus className="w-4 h-4" />
-          </Button>
-        </div>
+        {product.stock === 0 ? (
+          <Link href={productUrl(product.id, product.name)} className="w-full">
+            <Button
+              variant="default"
+              size="sm"
+              className="w-full"
+              style={{ backgroundColor: "#1565c0" }}
+              data-testid={`btn-preorder-${pid}`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              Sipariş Ver
+            </Button>
+          </Link>
+        ) : (
+          <div className="flex items-center gap-2" data-testid={`qty-control-${pid}`}>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              onClick={() => onUpdate(pid, -1)}
+              disabled={quantity <= 0}
+              data-testid={`btn-minus-${pid}`}
+            >
+              <Minus className="w-4 h-4" />
+            </Button>
+            <span className="w-8 text-center font-bold text-sm" style={{ color: isActive ? "#16a34a" : undefined }} data-testid={`text-qty-${pid}`}>
+              {quantity}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8 rounded-full"
+              onClick={() => onUpdate(pid, 1)}
+              data-testid={`btn-plus-${pid}`}
+            >
+              <Plus className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
