@@ -90,7 +90,7 @@ export default function ProductInfoAccordions({
 
   return (
     <div className="mt-6 space-y-2" data-testid="section-product-accordions">
-      <AccordionItem title="İlgili Aramalar" defaultOpen testId="accordion-related">
+      <AccordionItem title="İlgili Aramalar" testId="accordion-related">
         <div className="flex flex-wrap gap-2">
           {relatedKeywords.map((kw, i) => (
             <span
