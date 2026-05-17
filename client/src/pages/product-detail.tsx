@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Link, useRoute, useSearch, useLocation } from "wouter";
 import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock, HelpCircle, Star, MessageSquare, Stethoscope, FileText, Users, Package } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import ProductInfoAccordions from "@/components/ProductInfoAccordions";
 import DOMPurify from "dompurify";
 import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -1051,18 +1050,6 @@ export default function ProductDetailPage() {
 
         {!isCampaignMode && (product as any).longDescription && (product as any).longDescription.trim() && (
           <LongDescriptionAccordions html={(product as any).longDescription} />
-        )}
-
-        {!isCampaignMode && (
-          <ProductInfoAccordions
-            productName={product.name}
-            animal={category?.animal || null}
-            barcode={product.barcode}
-            skt={product.skt}
-            stock={product.stock}
-            variants={productVariants}
-            brandName={category?.brandName || null}
-          />
         )}
 
         {!isCampaignMode && <ProductReviews productId={product.id} />}
