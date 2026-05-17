@@ -127,7 +127,7 @@ function LongDescriptionAccordions({ html }: { html: string }) {
             </button>
             {isOpen && (
               <div
-                className="prose-product text-sm md:text-base break-words px-4 pb-4"
+                className="prose-product text-sm md:text-base px-4 pb-4"
                 data-testid={`text-longdesc-${i}`}
                 dangerouslySetInnerHTML={{ __html: s.body }}
               />
