@@ -76,20 +76,19 @@ function ProductCard({ product, quantity, onUpdate }: { product: Product; quanti
             </span>
           )}
         </div>
-        {product.stock === 0 ? (
-          <Link href={productUrl(product.id, product.name)} className="w-full">
-            <Button
-              variant="default"
-              size="sm"
-              className="w-full"
-              style={{ backgroundColor: "#1565c0" }}
-              data-testid={`btn-preorder-${pid}`}
-            >
-              <Clock className="w-3.5 h-3.5" />
-              Sipariş Ver
-            </Button>
-          </Link>
-        ) : (
+        <Link href={productUrl(product.id, product.name)} className="w-full">
+          <Button
+            variant="default"
+            size="sm"
+            className="w-full"
+            style={{ backgroundColor: "#1565c0" }}
+            data-testid={`btn-preorder-${pid}`}
+          >
+            <Clock className="w-3.5 h-3.5" />
+            Sipariş Ver
+          </Button>
+        </Link>
+        {quantity > 0 && (
           <div className="flex items-center gap-2" data-testid={`qty-control-${pid}`}>
             <Button
               variant="outline"
