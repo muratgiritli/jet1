@@ -39,6 +39,7 @@ function isFoodSubcategory(slug: string): boolean {
 function isStrictMamaSubcategory(slug: string): boolean {
   if (!slug) return false;
   const s = slug.toLowerCase();
+  if (s === "acik-mama") return false;
   return s.includes("mama") || s.includes("konserve") || s.includes("cuval") || s.includes("yem");
 }
 

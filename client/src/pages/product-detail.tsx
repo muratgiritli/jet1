@@ -246,6 +246,7 @@ export default function ProductDetailPage() {
     const a = data?.category?.animal;
     const s = (data?.category?.subcategory || "").toLowerCase();
     if (a !== "kedi" && a !== "kopek") return false;
+    if (s === "acik-mama") return false;
     return s.includes("mama") || s.includes("konserve") || s.includes("cuval") || s.includes("yem");
   })();
   const needsCrossSell = isKediMama || isKediKumu;
