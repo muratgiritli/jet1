@@ -736,9 +736,14 @@ export default function ProductDetailPage() {
                               <span className="text-gray-700">Toplam tutar ({selectedOpt.name}):</span>
                               <strong data-testid="text-preorder-total">{methodTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
                             </div>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-700">Şimdi <strong>%25 kapora</strong> (online kredi kartı veya banka havalesi/EFT):</span>
-                              <strong style={{ color: "#1565c0" }} data-testid="text-preorder-deposit">{deposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                            <div>
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-700">Şimdi <strong>%25 kapora</strong>:</span>
+                                <strong style={{ color: "#1565c0" }} data-testid="text-preorder-deposit">{deposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                              </div>
+                              <p className="text-[11px] text-gray-500 leading-snug mt-0.5">
+                                Online Kredi Kartı (vade farksız 3-6 taksit) veya Banka Havalesi / EFT ile ödenir.
+                              </p>
                             </div>
                             <div className="flex items-center justify-between text-sm">
                               <span className="text-gray-700">Teslimatta <strong>{selectedOpt.name}</strong> ile <strong>%75</strong>:</span>
