@@ -53,49 +53,49 @@ export default function ContactDialog({ open, onOpenChange }: ContactDialogProps
 
   return (
     <Dialog open={open} onOpenChange={(v) => { onOpenChange(v); if (!v) setTimeout(reset, 300); }}>
-      <DialogContent className="sm:max-w-md" data-testid="dialog-contact">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Mail className="w-5 h-5 text-primary" />
+      <DialogContent className="sm:max-w-md max-w-[94vw] max-h-[88vh] overflow-y-auto p-4" data-testid="dialog-contact">
+        <DialogHeader className="space-y-1">
+          <DialogTitle className="flex items-center gap-2 text-base">
+            <Mail className="w-4 h-4 text-primary" />
             İletişime Geç
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-xs leading-snug">
             Sorularınız ve önerileriniz için bize ulaşın. En kısa sürede dönüş yapacağız.
           </DialogDescription>
         </DialogHeader>
 
         {success ? (
-          <div className="py-8 text-center" data-testid="contact-success">
-            <CheckCircle2 className="w-14 h-14 text-green-500 mx-auto mb-3" />
-            <p className="text-lg font-bold text-gray-800">Mesajınız iletildi!</p>
-            <p className="text-sm text-muted-foreground mt-1">En kısa sürede sizinle iletişime geçeceğiz.</p>
+          <div className="py-6 text-center" data-testid="contact-success">
+            <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-2" />
+            <p className="text-base font-bold text-gray-800">Mesajınız iletildi!</p>
+            <p className="text-xs text-muted-foreground mt-1">En kısa sürede sizinle iletişime geçeceğiz.</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="space-y-3">
-            <div>
-              <Label htmlFor="contact-name">İsim Soyisim *</Label>
-              <Input id="contact-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required data-testid="input-contact-name" />
+          <form onSubmit={handleSubmit} className="space-y-2.5">
+            <div className="space-y-1">
+              <Label htmlFor="contact-name" className="text-xs">İsim Soyisim *</Label>
+              <Input id="contact-name" className="h-9 text-sm" value={name} onChange={(e) => setName(e.target.value)} maxLength={100} required data-testid="input-contact-name" />
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <Label htmlFor="contact-phone">Telefon *</Label>
-                <Input id="contact-phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={30} placeholder="05XX XXX XX XX" required data-testid="input-contact-phone" />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="contact-phone" className="text-xs">Telefon *</Label>
+                <Input id="contact-phone" className="h-9 text-sm" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={30} placeholder="05XX XXX XX XX" required data-testid="input-contact-phone" />
               </div>
-              <div>
-                <Label htmlFor="contact-email">E-posta</Label>
-                <Input id="contact-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={150} placeholder="opsiyonel" data-testid="input-contact-email" />
+              <div className="space-y-1">
+                <Label htmlFor="contact-email" className="text-xs">E-posta</Label>
+                <Input id="contact-email" className="h-9 text-sm" type="email" value={email} onChange={(e) => setEmail(e.target.value)} maxLength={150} placeholder="opsiyonel" data-testid="input-contact-email" />
               </div>
             </div>
-            <div>
-              <Label htmlFor="contact-subject">Konu</Label>
-              <Input id="contact-subject" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={150} placeholder="Sipariş, ürün, öneri vb." data-testid="input-contact-subject" />
+            <div className="space-y-1">
+              <Label htmlFor="contact-subject" className="text-xs">Konu</Label>
+              <Input id="contact-subject" className="h-9 text-sm" value={subject} onChange={(e) => setSubject(e.target.value)} maxLength={150} placeholder="Sipariş, ürün, öneri vb." data-testid="input-contact-subject" />
             </div>
-            <div>
-              <Label htmlFor="contact-message">Mesajınız *</Label>
-              <Textarea id="contact-message" value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} rows={4} required data-testid="input-contact-message" />
-              <p className="text-[11px] text-muted-foreground text-right mt-1">{message.length}/2000</p>
+            <div className="space-y-1">
+              <Label htmlFor="contact-message" className="text-xs">Mesajınız *</Label>
+              <Textarea id="contact-message" className="text-sm" value={message} onChange={(e) => setMessage(e.target.value)} maxLength={2000} rows={3} required data-testid="input-contact-message" />
+              <p className="text-[10px] text-muted-foreground text-right">{message.length}/2000</p>
             </div>
-            <Button type="submit" className="w-full" disabled={submitting} data-testid="btn-contact-submit">
+            <Button type="submit" size="sm" className="w-full" disabled={submitting} data-testid="btn-contact-submit">
               {submitting ? (
                 <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Gönderiliyor...</>
               ) : (
