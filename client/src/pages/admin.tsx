@@ -1205,7 +1205,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     let products = allProducts;
     if (productSearchQuery.trim()) {
       const q = productSearchQuery.trim().toLowerCase();
-      products = products.filter((p) => p.name.toLowerCase().includes(q));
+      products = products.filter((p) =>
+        p.name.toLowerCase().includes(q) ||
+        (p.barcode && p.barcode.toLowerCase().includes(q)) ||
+        (Array.isArray(p.variants) && p.variants.some((v: any) => v?.barcode && String(v.barcode).toLowerCase().includes(q)))
+      );
     }
     if (selectedAnimalFilter !== "all") {
       const catIds = categories
@@ -3509,7 +3513,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             <div className="relative">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
               <Input
-                placeholder="Ürün adı ile ara..."
+                placeholder="Ürün adı veya barkod ile ara..."
                 value={productSearchQuery}
                 onChange={(e) => setProductSearchQuery(e.target.value)}
                 className="pl-8 h-9 text-sm"
