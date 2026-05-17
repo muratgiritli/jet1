@@ -1,12 +1,11 @@
 import { Link, useRoute, useLocation } from "wouter";
 import { FreeShippingBanner } from "@/components/FreeShippingBanner";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronRight, ShoppingCart, Plus, Minus, Clock, Bell, ArrowLeft } from "lucide-react";
+import { ChevronRight, ShoppingCart, Bell, ArrowLeft } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@shared/schema";
-import { useCart } from "@/contexts/CartContext";
 import { productUrl } from "@/lib/data";
 import ProductImage from "@/components/ProductImage";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -116,17 +115,14 @@ const SUBCATEGORY_ICONS: Record<string, string> = {
 const DIRECT_PRODUCT_ANIMALS = ["kemirgen", "akvaryum"];
 
 function KemirgenProductCard({ product }: { product: Product }) {
-  const { basket, updateQty, isKediKumu } = useCart();
   const pid = String(product.id);
-  const quantity = basket[pid] || 0;
-  const maxQty = isKediKumu(pid) ? 2 : 99;
   const discount = product.originalPrice
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
   return (
     <Card
-      className={`transition-all duration-200 ${quantity > 0 ? "ring-2 ring-inset ring-primary" : ""}`}
+      className="transition-all duration-200"
       data-testid={`card-product-${pid}`}
     >
       <CardContent className="p-3 flex flex-col items-center gap-2">
@@ -175,36 +171,12 @@ function KemirgenProductCard({ product }: { product: Product }) {
             </span>
           )}
         </div>
-        {product.stock === 0 ? (
-          <Link href={productUrl(product.id, product.name)} className="w-full">
-            <Button variant="default" size="sm" className="w-full" style={{ backgroundColor: "#1565c0" }} data-testid={`btn-preorder-${pid}`}>
-              <Clock className="w-3.5 h-3.5" />
-              Sipariş Ver
-            </Button>
-          </Link>
-        ) : quantity > 0 ? (
-          <div className="flex items-center justify-center gap-0 w-full" data-testid={`qty-control-${pid}`}>
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => updateQty(pid, -1)} data-testid={`btn-minus-${pid}`}>
-              <Minus className="w-3.5 h-3.5" />
-            </Button>
-            <div className="flex items-center justify-center font-bold text-primary w-10 text-base">{quantity}</div>
-            <Button variant="outline" size="sm" className="h-8 w-8 p-0" onClick={() => { if (quantity < maxQty) updateQty(pid, 1); }} disabled={quantity >= maxQty} data-testid={`btn-plus-${pid}`}>
-              <Plus className="w-3.5 h-3.5" />
-            </Button>
-          </div>
-        ) : (
-          <Button
-            variant="default"
-            size="sm"
-            className="w-full"
-            style={{ backgroundColor: "#6B3480" }}
-            onClick={() => updateQty(pid, 1)}
-            data-testid={`btn-add-${pid}`}
-          >
+        <Link href={productUrl(product.id, product.name)} className="w-full">
+          <Button variant="default" size="sm" className="w-full" style={{ backgroundColor: "#6B3480" }} data-testid={`btn-order-${pid}`}>
             <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-            Sepete Ekle
+            Sipariş Ver
           </Button>
-        )}
+        </Link>
       </CardContent>
     </Card>
   );
