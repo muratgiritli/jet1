@@ -485,8 +485,8 @@ export default function Checkout() {
 
   const hasPreorderItems = selectedProducts.some(({ product }) => isPreorderProduct(String(product.id)));
   useEffect(() => {
-    if (hasPreorderItems && paymentId !== "online" && onlineCardEnabled) {
-      setPaymentId("online");
+    if (hasPreorderItems && paymentId !== "online" && paymentId !== "eft") {
+      setPaymentId(onlineCardEnabled ? "online" : "eft");
     }
   }, [hasPreorderItems, paymentId, onlineCardEnabled, setPaymentId]);
 
@@ -629,7 +629,7 @@ export default function Checkout() {
       const payMethod = hasCampaignItems
         ? "Kapıda Nakit"
         : hasPreorderItems
-          ? `Ön Sipariş - ${preorderMethodLabel} (Kapora: Online Kredi Kartı)`
+          ? `Ön Sipariş - ${preorderMethodLabel} (Kapora: ${paymentId === "eft" ? "Banka Havalesi/EFT" : "Online Kredi Kartı"})`
           : pay.name;
       const pointsUsed = pointsDiscount;
       const finalTotal = displayTotal;
@@ -653,7 +653,8 @@ export default function Checkout() {
           if (doNotRing) flags.push("Zile Basma");
           if (donationDelivery) flags.push("BAĞIŞ TESLİMATI (Atakum içi)");
           if (hasPreorderItems) {
-            flags.push(`ÖN SİPARİŞ • Kapora %25: ${preorderDeposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL (Online Kart) • Teslimatta %75: ${preorderRemaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL (${preorderMethodLabel})`);
+            const depMethod = paymentId === "eft" ? "Banka Havalesi/EFT" : "Online Kart";
+            flags.push(`ÖN SİPARİŞ • Kapora %25: ${preorderDeposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL (${depMethod}) • Teslimatta %75: ${preorderRemaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL (${preorderMethodLabel})`);
           }
           const flagText = flags.length ? `[${flags.join(" • ")}]` : "";
           const donorText = donationDelivery
@@ -1038,7 +1039,7 @@ export default function Checkout() {
                 <div className="text-xs font-medium space-y-1">
                   <p>Sepetinizde ön siparişli ürün(ler) var. Bu ürünler ortalama <strong>3 iş günü</strong> içinde tedarik edilip teslim edilecektir.</p>
                   <p>Seçtiğiniz ödeme şekli: <strong>{preorderMethodLabel}</strong>{preorderPm === "nakit" && <span> (%10 indirim uygulandı)</span>}.</p>
-                  <p>Şimdi <strong>%25 kapora</strong> <strong>online kredi kartı</strong> ile (vade farksız 3-6 taksit) alınır: <strong>{preorderDeposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>. Kalan <strong>%75</strong> ({preorderRemaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL) teslimatta <strong>{preorderMethodLabel}</strong> ile ödenir.</p>
+                  <p>Şimdi <strong>%25 kapora</strong> <strong>online kredi kartı</strong> (vade farksız 3-6 taksit) <strong>veya banka havalesi/EFT</strong> ile alınır: <strong>{preorderDeposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>. Kalan <strong>%75</strong> ({preorderRemaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL) teslimatta <strong>{preorderMethodLabel}</strong> ile ödenir.</p>
                   <p>Ön sipariş onaylandıktan sonra <strong>fiyat değişmez</strong> ve sipariş <strong>iptal edilemez</strong>.</p>
                 </div>
               </div>
@@ -1121,8 +1122,8 @@ export default function Checkout() {
                       <Gift className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
                       <span style={{ color: "#bf360c" }} data-testid="text-checkout-points-earn">
                         Bu siparişi verdiğinizde{" "}
-                        <strong>{(subtotal * 0.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
-                        değerinde Para Puan kazanacaksınız.
+                        <strong>{((hasPreorderItems ? preorderMethodTotal : (subtotal - paymentDiscount)) * 0.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
+                        değerinde Para Puan kazanacaksınız{hasPreorderItems && preorderPm === "nakit" ? " (Kapıda Nakit - %10 indirimli tutar üzerinden)" : paymentId === "nakit" ? " (Kapıda Nakit - %10 indirimli tutar üzerinden)" : ""}.
                       </span>
                     </div>
                     <button
@@ -1561,7 +1562,11 @@ export default function Checkout() {
                         if (opt.id === "eft") return eftEnabled;
                         if (opt.id === "qr") return qrEnabled;
                         const hasPreorder = selectedProducts.some(({ product }) => isPreorderProduct(String(product.id)));
-                        if (hasPreorder) return opt.id === "online" && onlineCardEnabled;
+                        if (hasPreorder) {
+                          if (opt.id === "online") return onlineCardEnabled;
+                          if (opt.id === "eft") return eftEnabled;
+                          return false;
+                        }
                         if (opt.id === "online") return onlineCardEnabled;
                         return true;
                       });

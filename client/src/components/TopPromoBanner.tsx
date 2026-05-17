@@ -2,11 +2,13 @@ import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
+import { useCustomer } from "@/contexts/CustomerContext";
 import defaultBanner from "@assets/ust_banner_1778677072320.png";
 
 type TopBanner = { enabled: boolean; image: string; link: string };
 
 export default function TopPromoBanner() {
+  const { isLoggedIn } = useCustomer();
   const { data } = useQuery<TopBanner>({ queryKey: ["/api/public/top-banner"] });
   const [closed, setClosed] = useState(false);
 
@@ -14,7 +16,7 @@ export default function TopPromoBanner() {
     if (sessionStorage.getItem("topBannerClosed") === "1") setClosed(true);
   }, []);
 
-  if (!data || !data.enabled || closed) return null;
+  if (isLoggedIn || !data || !data.enabled || closed) return null;
 
   const img = data.image || defaultBanner;
   const link = data.link || "/giris";

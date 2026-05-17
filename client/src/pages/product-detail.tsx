@@ -594,13 +594,19 @@ export default function ProductDetailPage() {
                     <span style={{ color: "#bf360c" }}>
                       {hasVariants && !selectedVariant ? (
                         <>Seçenek belirleyince <strong>%5</strong> Para Puan kazancınız hesaplanır.</>
-                      ) : (
-                        <>
-                          Bu ürünü satın aldığınızda{" "}
-                          <strong>{(displayPrice * 0.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
-                          değerinde Para Puan kazanacaksınız.
-                        </>
-                      )}
+                      ) : (() => {
+                        const isPreorder = product.stock === 0 && product.preorderEnabled;
+                        const ppDisc = isPreorder && preorderPayMethod === "nakit" ? 0.10 : 0;
+                        const ppBase = displayPrice * (1 - ppDisc);
+                        const ppEarn = ppBase * 0.05;
+                        return (
+                          <>
+                            Bu ürünü satın aldığınızda{" "}
+                            <strong>{ppEarn.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
+                            değerinde Para Puan kazanacaksınız{ppDisc > 0 ? " (Kapıda Nakit - %10 indirimli tutar üzerinden)" : ""}.
+                          </>
+                        );
+                      })()}
                     </span>
                   </div>
                   <button
@@ -731,7 +737,7 @@ export default function ProductDetailPage() {
                               <strong data-testid="text-preorder-total">{methodTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
                             </div>
                             <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-700">Şimdi <strong>%25 kapora</strong> (online kredi kartı, vade farksız 3-6 taksit):</span>
+                              <span className="text-gray-700">Şimdi <strong>%25 kapora</strong> (online kredi kartı veya banka havalesi/EFT):</span>
                               <strong style={{ color: "#1565c0" }} data-testid="text-preorder-deposit">{deposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
                             </div>
                             <div className="flex items-center justify-between text-sm">
