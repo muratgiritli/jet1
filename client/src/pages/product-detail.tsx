@@ -36,11 +36,46 @@ type ProductDetailData = {
 
 function LongDescriptionAccordions({ html }: { html: string }) {
   const sections = useMemo(() => {
-    const clean = DOMPurify.sanitize(html, {
+    let clean = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ["h2","h3","h4","p","ul","ol","li","strong","em","u","s","a","blockquote","br","span","div"],
       ALLOWED_ATTR: ["href","target","rel","style","class"],
       ALLOWED_URI_REGEXP: /^(https?:|mailto:|tel:|\/)/i,
     });
+
+    const KNOWN_HEADINGS = [
+      "Genel Bilgiler","Ürün Açıklaması","Ürün Hakkında","Ürün Özellikleri","Özellikler",
+      "İçerik","İçindekiler","Bileşenler","Analiz Raporu","Analiz","Besin Katkı Maddeleri",
+      "Besin Değerleri","Katkı Maddeleri","Besleme Rehberi","Beslenme Rehberi","Beslenme Önerisi",
+      "Kullanım","Kullanım Şekli","Kullanım Talimatı","Uyarılar","Saklama Koşulları",
+      "Faydaları","Yararları","Açıklama","Marka","Kategori","Menşei","Barkod","Ağırlık",
+      "Kilo Yönetimi","Üriner Sistem Sağlığı","Yüksek Protein İçeriği","L-Karnitin ile Zenginleştirilmiş",
+    ];
+    const headingRegex = new RegExp(
+      "^(?:\\s|&nbsp;|:|–|-)*(" +
+        KNOWN_HEADINGS.map((h) => h.replace(/[-/\\^$*+?.()|[\]{}]/g, "\\$&")).join("|") +
+      ")(?:\\s|&nbsp;|:|–|-)*$",
+      "i"
+    );
+
+    // Convert <p>(<strong>)?HEADING(</strong>)?</p> → <h3>HEADING</h3>
+    clean = clean.replace(/<p[^>]*>([\s\S]*?)<\/p>/gi, (full, inner) => {
+      const stripped = inner.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+      if (!stripped) return full;
+      // Known heading text
+      const m = stripped.match(headingRegex);
+      if (m) return `<h3>${m[1]}</h3>`;
+      // Whole-paragraph bold + short → treat as heading
+      const onlyBold = inner.trim().match(/^<(strong|b)[^>]*>([\s\S]*?)<\/\1>$/i);
+      if (onlyBold) {
+        const text = onlyBold[2].replace(/<[^>]+>/g, "").trim();
+        const wordCount = text.split(/\s+/).length;
+        if (text && wordCount <= 6 && text.length <= 60 && !/[.!?]$/.test(text)) {
+          return `<h3>${text}</h3>`;
+        }
+      }
+      return full;
+    });
+
     const parts = clean.split(/(<h3[^>]*>[\s\S]*?<\/h3>)/i).filter((p) => p && p.trim());
     const result: { title: string; body: string }[] = [];
     let pending: string | null = null;
