@@ -22,6 +22,20 @@ interface SubcategoryInfo {
   staticCategory?: string;
 }
 
+function isFoodSubcategory(slug: string): boolean {
+  if (!slug) return false;
+  const s = slug.toLowerCase();
+  return (
+    s.includes("mama") ||
+    s.includes("yem") ||
+    s.includes("konserve") ||
+    s.includes("cuval") ||
+    s.includes("odul-kemik") ||
+    s.includes("odul") ||
+    s.includes("malt-vitamin")
+  );
+}
+
 const ANIMAL_SUBCATEGORIES: Record<string, SubcategoryInfo[]> = {
   kopek: [
     { name: "Kopek Kuru Mama", slug: "kopek-kuru-mama", hasBrands: true },
@@ -388,7 +402,7 @@ function InlineSubcategories({
                   product={product}
                   quantity={basket[product.id] || 0}
                   onUpdate={updateQty}
-                  showDetailLink={!!selectedSc?.hasBrands}
+                  showDetailLink={!!selectedSc?.hasBrands || !isFoodSubcategory(selectedSc?.slug || "")}
                 />
               </div>
             ))}
@@ -529,7 +543,7 @@ export default function BrandProductsPage() {
                 product={product}
                 quantity={basket[String(product.id)] || 0}
                 onUpdate={updateQty}
-                showDetailLink={subcategory !== brandSlug}
+                showDetailLink={subcategory !== brandSlug || !isFoodSubcategory(subcategory)}
               />
             </div>
           ))}
