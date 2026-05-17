@@ -14,7 +14,7 @@ import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@share
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
-import { CATEGORIES, productUrl } from "@/lib/data";
+import { CATEGORIES, productUrl, PAYMENT_OPTIONS } from "@/lib/data";
 import FavoriteButton from "@/components/FavoriteButton";
 import ImageZoom from "@/components/ImageZoom";
 import ProductImage from "@/components/ProductImage";
@@ -326,6 +326,7 @@ export default function ProductDetailPage() {
   const [stockAlertLoading, setStockAlertLoading] = useState(false);
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
   const [paraPuanInfoOpen, setParaPuanInfoOpen] = useState(false);
+  const [preorderPayMethod, setPreorderPayMethod] = useState<string>("nakit");
   const [campaignWarning, setCampaignWarning] = useState(false);
 
   const hasExtraInCart = useMemo(() => {
@@ -681,26 +682,67 @@ export default function ProductDetailPage() {
                       }} />
                     </div>
                     {(() => {
-                      const lineTotal = displayPrice * Math.max(quantity || 1, 1);
-                      const deposit = lineTotal * 0.25;
-                      const remaining = lineTotal - deposit;
+                      const qty = Math.max(quantity || 1, 1);
+                      const baseTotal = displayPrice * qty;
+                      const preorderOpts = PAYMENT_OPTIONS.filter((o) => o.id !== "pos");
+                      const selectedOpt = preorderOpts.find((o) => o.id === preorderPayMethod) || preorderOpts[0];
+                      const methodDisc = selectedOpt.disc < 0 ? Math.abs(selectedOpt.disc) : 0;
+                      const methodTotal = Math.max(0, baseTotal * (1 - methodDisc));
+                      const isFullOnline = selectedOpt.id === "online";
+                      const deposit = isFullOnline ? methodTotal : methodTotal * 0.25;
+                      const remaining = isFullOnline ? 0 : methodTotal - deposit;
                       return (
-                        <div className="rounded-lg border-2 p-3 space-y-1.5" style={{ borderColor: "#1565c0", backgroundColor: "#e3f2fd" }} data-testid="preorder-deposit-box">
+                        <div className="rounded-lg border-2 p-3 space-y-2" style={{ borderColor: "#1565c0", backgroundColor: "#e3f2fd" }} data-testid="preorder-deposit-box">
                           <div className="flex items-center gap-1.5 font-bold text-sm" style={{ color: "#0d47a1" }}>
                             <CreditCard className="w-4 h-4" />
-                            Ön Sipariş Ödeme Planı
+                            Ödeme Şeklini Seçin
                           </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-700">Toplam ürün tutarı:</span>
-                            <strong data-testid="text-preorder-total">{lineTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                          <div className="space-y-1.5" data-testid="preorder-pay-methods">
+                            {preorderOpts.map((o) => {
+                              const d = o.disc < 0 ? Math.abs(o.disc) : 0;
+                              const t = Math.max(0, baseTotal * (1 - d));
+                              const active = preorderPayMethod === o.id;
+                              return (
+                                <button
+                                  key={o.id}
+                                  type="button"
+                                  onClick={() => setPreorderPayMethod(o.id)}
+                                  className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm transition-colors text-left ${active ? "border-blue-600 bg-white" : "border-blue-200 bg-white/60 hover:bg-white"}`}
+                                  data-testid={`preorder-pay-${o.id}`}
+                                >
+                                  <span className="flex items-center gap-2">
+                                    <span className={`w-3.5 h-3.5 rounded-full border-2 ${active ? "border-blue-600 bg-blue-600" : "border-gray-400"}`} />
+                                    <span className="font-medium">{o.name}</span>
+                                    {o.id === "nakit" && <span className="text-xs font-bold" style={{ color: "#dc2626" }}>%10 indirim</span>}
+                                    {o.id === "online" && <span className="text-xs font-bold" style={{ color: "#1565c0" }}>Taksitli</span>}
+                                  </span>
+                                  <strong className="tabular-nums" style={{ color: "#0d47a1" }}>{t.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                                </button>
+                              );
+                            })}
                           </div>
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-gray-700">Şimdi (online kredi kartı ile) <strong>%25 kapora</strong>:</span>
-                            <strong style={{ color: "#1565c0" }} data-testid="text-preorder-deposit">{deposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
-                          </div>
-                          <div className="flex items-center justify-between text-sm border-t pt-1.5 mt-1.5" style={{ borderColor: "#90caf9" }}>
-                            <span className="text-gray-700">Teslimatta (istediğiniz ödeme şekliyle):</span>
-                            <strong style={{ color: "#2e7d32" }} data-testid="text-preorder-remaining">{remaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                          <div className="border-t pt-2 mt-1 space-y-1" style={{ borderColor: "#90caf9" }}>
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-gray-700">Toplam tutar ({selectedOpt.name}):</span>
+                              <strong data-testid="text-preorder-total">{methodTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                            </div>
+                            {isFullOnline ? (
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="text-gray-700">Şimdi <strong>online kredi kartı</strong> ile (taksit yapılabilir):</span>
+                                <strong style={{ color: "#1565c0" }} data-testid="text-preorder-deposit">{deposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                              </div>
+                            ) : (
+                              <>
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-gray-700">Şimdi <strong>%25 kapora</strong> (online kredi kartı, taksitli):</span>
+                                  <strong style={{ color: "#1565c0" }} data-testid="text-preorder-deposit">{deposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                                </div>
+                                <div className="flex items-center justify-between text-sm">
+                                  <span className="text-gray-700">Teslimatta <strong>{selectedOpt.name}</strong> ile <strong>%75</strong>:</span>
+                                  <strong style={{ color: "#2e7d32" }} data-testid="text-preorder-remaining">{remaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
                       );
@@ -716,7 +758,7 @@ export default function ProductDetailPage() {
                             return;
                           }
                           const blocked = updateQty(pid, 1, isCampaignMode, selectedVariant ?? undefined);
-                          if (!blocked) setLocation("/odeme?preorder=1");
+                          if (!blocked) setLocation(`/odeme?preorder=1&pm=${preorderPayMethod}`);
                         }}
                         data-testid="btn-preorder-add"
                       >
@@ -727,7 +769,7 @@ export default function ProductDetailPage() {
                       <Button
                         className="w-full"
                         style={{ backgroundColor: "#2e7d32" }}
-                        onClick={() => setLocation("/odeme?preorder=1")}
+                        onClick={() => setLocation(`/odeme?preorder=1&pm=${preorderPayMethod}`)}
                         data-testid="btn-preorder-go-cart"
                       >
                         <ShoppingCart className="w-4 h-4" />
