@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { exportProductsPdf } from "@/lib/exportProductsPdf";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -3604,6 +3605,43 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <Download className="w-3 h-3" />
                 Stokta Yok Excel
               </a>
+              <button
+                type="button"
+                onClick={() => {
+                  const animalLabel = selectedAnimalFilter === "all" ? undefined : selectedAnimalFilter;
+                  const subLabel = selectedSubcategoryFilter === "all"
+                    ? undefined
+                    : (categories.find((c) => c.subcategory === selectedSubcategoryFilter)?.subcategory || selectedSubcategoryFilter);
+                  const brandLabel = selectedBrandFilter === "all"
+                    ? undefined
+                    : (categories.find((c) => c.brandSlug === selectedBrandFilter)?.brandName || selectedBrandFilter);
+                  const quickLabelMap: Record<string, string> = {
+                    "out-of-stock": "Stokta Yok",
+                    "low-stock": "Az Stok",
+                    "inactive": "Yayında Değil",
+                    "preorder": "Ön Sipariş",
+                    "campaign": "Kampanya",
+                    "has-skt": "SKT'li",
+                  };
+                  exportProductsPdf(
+                    filteredProducts,
+                    categories.map((c) => ({ id: c.id, animal: c.animal, subcategory: c.subcategory, brandName: c.brandName })),
+                    {
+                      animal: animalLabel,
+                      subcategory: subLabel,
+                      brand: brandLabel,
+                      search: productSearchQuery.trim() || undefined,
+                      quickFilter: quickFilter !== "none" ? (quickLabelMap[quickFilter] || quickFilter) : undefined,
+                    }
+                  );
+                }}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold border transition-colors bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100"
+                data-testid="btn-export-pdf"
+                title="Görüntülenen ürünleri PDF olarak indir"
+              >
+                <Download className="w-3 h-3" />
+                PDF İndir
+              </button>
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
