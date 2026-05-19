@@ -1063,7 +1063,7 @@ export default function ProductDetailPage() {
 
         {!isCampaignMode && <ProductReviews productId={product.id} />}
 
-        {!isCampaignMode && needsCrossSell && alsoBoughtCategories.length > 0 && (
+        {!isCampaignMode && !(product.stock === 0 && product.preorderEnabled) && needsCrossSell && alsoBoughtCategories.length > 0 && (
           <div className="mt-8" data-testid="section-also-bought">
             <h3 className="text-lg font-extrabold mb-4" data-testid="text-also-bought-title">
               Bu ürünü alanlar bunları da aldı
@@ -1091,7 +1091,7 @@ export default function ProductDetailPage() {
           </div>
         )}
 
-        {!isCampaignMode && crossSellSections.length > 0 && (
+        {!isCampaignMode && !(product.stock === 0 && product.preorderEnabled) && crossSellSections.length > 0 && (
           <div className="mt-8" data-testid="section-cross-sell-all">
             <h3 className="text-lg font-extrabold mb-4" data-testid="text-cross-sell-title">
               Bu ürünü alanlar bunları da aldı
