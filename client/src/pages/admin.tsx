@@ -5230,8 +5230,38 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     </div>
                   )}
                   {existingSection && existingSection.items.length > 0 && (
-                    <div className="text-xs px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg text-green-700">
-                      Bu ürünün bölümünde zaten {existingSection.items.length} cross-sell ürün var. Yenileri eklenecek.
+                    <div className="border border-green-200 rounded-lg overflow-hidden">
+                      <div className="bg-green-50 px-3 py-1.5 border-b border-green-200 flex items-center justify-between">
+                        <span className="text-xs font-bold text-green-700">MEVCUT CROSS-SELL ÜRÜNLER ({existingSection.items.length})</span>
+                        <span className="text-[10px] text-green-600">Yeni seçilenler aşağıya eklenecek</span>
+                      </div>
+                      <div className="divide-y max-h-[18vh] overflow-y-auto">
+                        {existingSection.items.map((item) => {
+                          const p = allProducts.find(x => x.id === item.productId);
+                          return (
+                            <div key={item.id} className="flex items-center gap-2 p-1.5" data-testid={`existing-cs-item-${item.id}`}>
+                              {p?.img ? (
+                                <img src={p.img} alt="" className="w-7 h-7 rounded object-cover border flex-shrink-0" />
+                              ) : (
+                                <div className="w-7 h-7 rounded bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                  <ImageIcon className="w-3 h-3 text-gray-300" />
+                                </div>
+                              )}
+                              <p className="text-[11px] font-medium truncate flex-1">{p?.name || `Ürün #${item.productId}`}</p>
+                              <button
+                                type="button"
+                                className="w-6 h-6 rounded-full flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors flex-shrink-0"
+                                onClick={() => removeItemMutation.mutate(item.id)}
+                                disabled={removeItemMutation.isPending}
+                                data-testid={`btn-remove-existing-cs-${item.id}`}
+                                title="Kaldır"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          );
+                        })}
+                      </div>
                     </div>
                   )}
                   <div className="grid grid-cols-3 gap-2">
