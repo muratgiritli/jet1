@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { exportProductsPdf } from "@/lib/exportProductsPdf";
+import { exportStockMovementsPdf } from "@/lib/exportStockMovementsPdf";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8787,6 +8788,72 @@ function StokSayimSection() {
     return { totalIn, totalOut, ranked };
   }, [reportData]);
 
+  const dayKeyOf = (iso: string) =>
+    new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+
+  const dailyBreakdown = useMemo(() => {
+    const movs = reportData?.movements || [];
+    type Bucket = {
+      date: string;
+      salesTotal: number; receiptTotal: number;
+      salesCount: number; receiptCount: number;
+      salesByProduct: Record<string, { name: string; barcode: string | null; qty: number; count: number }>;
+      receiptByProduct: Record<string, { name: string; barcode: string | null; qty: number; count: number }>;
+    };
+    const map: Record<string, Bucket> = {};
+    for (const m of movs) {
+      const d = dayKeyOf(m.created_at);
+      if (!map[d]) map[d] = { date: d, salesTotal: 0, receiptTotal: 0, salesCount: 0, receiptCount: 0, salesByProduct: {}, receiptByProduct: {} };
+      const b = map[d];
+      const k = String(m.product_id);
+      if (m.delta < 0) {
+        b.salesTotal += -m.delta; b.salesCount += 1;
+        if (!b.salesByProduct[k]) b.salesByProduct[k] = { name: m.product_name, barcode: m.barcode, qty: 0, count: 0 };
+        b.salesByProduct[k].qty += -m.delta; b.salesByProduct[k].count += 1;
+      } else if (m.delta > 0) {
+        b.receiptTotal += m.delta; b.receiptCount += 1;
+        if (!b.receiptByProduct[k]) b.receiptByProduct[k] = { name: m.product_name, barcode: m.barcode, qty: 0, count: 0 };
+        b.receiptByProduct[k].qty += m.delta; b.receiptByProduct[k].count += 1;
+      }
+    }
+    return Object.values(map)
+      .map(b => ({
+        ...b,
+        salesList: Object.values(b.salesByProduct).sort((a, b) => b.qty - a.qty),
+        receiptList: Object.values(b.receiptByProduct).sort((a, b) => b.qty - a.qty),
+      }))
+      .sort((a, b) => b.date.localeCompare(a.date));
+  }, [reportData]);
+
+  const [pdfLoading, setPdfLoading] = useState<"day" | "week" | "month" | null>(null);
+  const downloadPdf = async (period: "Günlük" | "Haftalık" | "Aylık") => {
+    const key = period === "Günlük" ? "day" : period === "Haftalık" ? "week" : "month";
+    setPdfLoading(key);
+    try {
+      const tzFmt = new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Istanbul", year: "numeric", month: "2-digit", day: "2-digit" });
+      const today = tzFmt.format(new Date());
+      let from = today, to = today;
+      if (period === "Haftalık") {
+        const d = new Date(); d.setDate(d.getDate() - 6);
+        from = tzFmt.format(d);
+      } else if (period === "Aylık") {
+        from = `${reportMonth}-01`;
+        const [y, m] = reportMonth.split("-").map(Number);
+        const last = new Date(y, m, 0).getDate();
+        to = `${reportMonth}-${String(last).padStart(2, "0")}`;
+      }
+      const params = new URLSearchParams({ from, to });
+      const res = await fetch(`/api/admin/stock-movements?${params}`, { credentials: "include" });
+      if (!res.ok) throw new Error("fail");
+      const data = await res.json();
+      exportStockMovementsPdf({ period, from, to, movements: data.movements || [] });
+    } catch {
+      toast({ title: "PDF oluşturulamadı", variant: "destructive" });
+    } finally {
+      setPdfLoading(null);
+    }
+  };
+
   const filteredProducts = useMemo(() => {
     if (!searchQuery.trim()) return [];
     const q = searchQuery.toLowerCase();
@@ -9089,6 +9156,18 @@ function StokSayimSection() {
               </div>
             </div>
 
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" size="sm" variant="outline" className="text-xs h-8" onClick={() => downloadPdf("Günlük")} disabled={pdfLoading !== null} data-testid="button-pdf-day">
+                {pdfLoading === "day" ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}Günlük PDF
+              </Button>
+              <Button type="button" size="sm" variant="outline" className="text-xs h-8" onClick={() => downloadPdf("Haftalık")} disabled={pdfLoading !== null} data-testid="button-pdf-week">
+                {pdfLoading === "week" ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}Haftalık PDF
+              </Button>
+              <Button type="button" size="sm" variant="outline" className="text-xs h-8" onClick={() => downloadPdf("Aylık")} disabled={pdfLoading !== null} data-testid="button-pdf-month">
+                {pdfLoading === "month" ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : null}Aylık PDF (Seçili Ay)
+              </Button>
+            </div>
+
             {reportLoading ? (
               <div className="text-center py-6 text-sm text-muted-foreground"><Loader2 className="w-4 h-4 animate-spin inline mr-2" />Yükleniyor...</div>
             ) : (
@@ -9107,6 +9186,59 @@ function StokSayimSection() {
                     <div className="text-lg font-bold text-blue-700" data-testid="text-report-count">{reportData?.movements?.length || 0}</div>
                   </div>
                 </div>
+
+                {dailyBreakdown.length > 0 && (
+                  <div>
+                    <div className="text-xs font-semibold text-muted-foreground mb-1">Günlük Döküm</div>
+                    <div className="space-y-2 max-h-96 overflow-y-auto">
+                      {dailyBreakdown.map((d) => (
+                        <details key={d.date} className="border rounded-lg" data-testid={`daily-${d.date}`}>
+                          <summary className="cursor-pointer p-2 flex items-center justify-between text-xs gap-2 hover:bg-muted/30">
+                            <span className="font-semibold">{d.date}</span>
+                            <div className="flex gap-1.5 shrink-0">
+                              {d.salesTotal > 0 && <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-bold">Satış -{d.salesTotal} ({d.salesCount})</span>}
+                              {d.receiptTotal > 0 && <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-bold">Mal Kabul +{d.receiptTotal} ({d.receiptCount})</span>}
+                            </div>
+                          </summary>
+                          <div className="px-2 pb-2 space-y-2 border-t">
+                            {d.salesList.length > 0 && (
+                              <div>
+                                <div className="text-[10px] font-bold text-red-700 mt-2 mb-1">SATIŞ</div>
+                                <div className="divide-y">
+                                  {d.salesList.map((p, i) => (
+                                    <div key={`s-${i}`} className="flex items-center justify-between py-1 text-[11px] gap-2">
+                                      <div className="min-w-0 flex-1">
+                                        <div className="truncate">{p.name}</div>
+                                        {p.barcode && <div className="text-[9px] text-muted-foreground font-mono">{p.barcode}</div>}
+                                      </div>
+                                      <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-bold shrink-0">-{p.qty} ({p.count}x)</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {d.receiptList.length > 0 && (
+                              <div>
+                                <div className="text-[10px] font-bold text-green-700 mt-2 mb-1">MAL KABUL</div>
+                                <div className="divide-y">
+                                  {d.receiptList.map((p, i) => (
+                                    <div key={`r-${i}`} className="flex items-center justify-between py-1 text-[11px] gap-2">
+                                      <div className="min-w-0 flex-1">
+                                        <div className="truncate">{p.name}</div>
+                                        {p.barcode && <div className="text-[9px] text-muted-foreground font-mono">{p.barcode}</div>}
+                                      </div>
+                                      <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-bold shrink-0">+{p.qty} ({p.count}x)</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </details>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {reportTotals.ranked.length > 0 && (
                   <div>

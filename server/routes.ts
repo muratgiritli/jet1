@@ -5773,11 +5773,16 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.get("/api/admin/stock-movements", requireAdmin, async (req, res) => {
     const month = String(req.query.month || "");
+    const from = String(req.query.from || "");
+    const to = String(req.query.to || "");
     const mode = String(req.query.mode || "");
     const conds: string[] = [];
     const vals: any[] = [];
     let i = 1;
-    if (/^\d{4}-\d{2}$/.test(month)) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(from) && /^\d{4}-\d{2}-\d{2}$/.test(to)) {
+      conds.push(`to_char(created_at AT TIME ZONE 'Europe/Istanbul', 'YYYY-MM-DD') BETWEEN $${i++} AND $${i++}`);
+      vals.push(from); vals.push(to);
+    } else if (/^\d{4}-\d{2}$/.test(month)) {
       conds.push(`to_char(created_at AT TIME ZONE 'Europe/Istanbul', 'YYYY-MM') = $${i++}`);
       vals.push(month);
     }
@@ -5787,7 +5792,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
     const where = conds.length ? `WHERE ${conds.join(" AND ")}` : "";
     const rows = await sharedPool.query(
-      `SELECT * FROM stock_movements ${where} ORDER BY created_at DESC LIMIT 1000`,
+      `SELECT * FROM stock_movements ${where} ORDER BY created_at DESC LIMIT 5000`,
       vals
     );
     const summary = await sharedPool.query(
