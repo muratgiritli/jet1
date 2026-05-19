@@ -1447,6 +1447,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [qcsAnimal, setQcsAnimal] = useState("all");
   const [qcsSub, setQcsSub] = useState("all");
   const [qcsBrand, setQcsBrand] = useState("all");
+  const [bulkAddSectionId, setBulkAddSectionId] = useState<number | null>(null);
+  const [bulkAnimal, setBulkAnimal] = useState("all");
+  const [bulkSub, setBulkSub] = useState("all");
+  const [bulkBrand, setBulkBrand] = useState("all");
+  const [bulkSearch, setBulkSearch] = useState("");
+  const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<number>>(new Set());
 
   const [breedStatsDialogOpen, setBreedStatsDialogOpen] = useState(false);
   const [breedStatsProductId, setBreedStatsProductId] = useState<number | null>(null);
@@ -1520,6 +1526,29 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       if (quickCrossSellProductId) {
         queryClient.invalidateQueries({ queryKey: ["/api/admin/product-cross-sell", quickCrossSellProductId] });
       }
+    },
+  });
+
+  const bulkAddItemsMutation = useMutation({
+    mutationFn: async (data: { sectionId: number; productIds: number[] }) => {
+      const res = await apiRequest("POST", "/api/admin/cross-sell-items/bulk", data);
+      return res.json();
+    },
+    onSuccess: (result: { added: number; skipped: number }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cross-sell-sections"] });
+      toast({
+        title: "Toplu ekleme tamamlandı",
+        description: `${result.added} ürün eklendi${result.skipped > 0 ? `, ${result.skipped} zaten ekliydi` : ""}.`,
+      });
+      setBulkAddSectionId(null);
+      setBulkAnimal("all");
+      setBulkSub("all");
+      setBulkBrand("all");
+      setBulkSearch("");
+      setBulkSelectedIds(new Set());
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Toplu ekleme başarısız oldu.", variant: "destructive" });
     },
   });
 
@@ -4815,7 +4844,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 flex-wrap">
                         <Button
                           variant="outline"
                           onClick={() => {
@@ -4826,6 +4855,21 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         >
                           <Plus className="w-4 h-4" />
                           Ürün Ekle
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            setBulkAddSectionId(section.id);
+                            setBulkAnimal("all");
+                            setBulkSub("all");
+                            setBulkBrand("all");
+                            setBulkSearch("");
+                            setBulkSelectedIds(new Set());
+                          }}
+                          data-testid={`btn-bulk-add-to-section-${section.id}`}
+                        >
+                          <Package className="w-4 h-4" />
+                          Toplu Ekle
                         </Button>
                         <Button
                           variant="outline"
@@ -4976,6 +5020,194 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 {addItemMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ekle"}
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!bulkAddSectionId} onOpenChange={(open) => {
+          if (!open) {
+            setBulkAddSectionId(null);
+            setBulkAnimal("all");
+            setBulkSub("all");
+            setBulkBrand("all");
+            setBulkSearch("");
+            setBulkSelectedIds(new Set());
+          }
+        }}>
+          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-green-600" />
+                Toplu Ürün Ekle
+              </DialogTitle>
+            </DialogHeader>
+            {(() => {
+              const section = crossSellSections.find(s => s.id === bulkAddSectionId);
+              const existingIds = new Set(section?.items.map(i => i.productId) || []);
+              const bulkSubsList = bulkAnimal !== "all" ? (subcategoriesByAnimal[bulkAnimal] || []) : [];
+              const bulkBrandsList = (bulkAnimal !== "all" && bulkSub !== "all")
+                ? categories.filter(c => c.animal === bulkAnimal && c.subcategory === bulkSub)
+                : [];
+              const filtered = allProducts.filter(p => {
+                if (!p.isActive) return false;
+                if (existingIds.has(p.id)) return false;
+                if (section?.forProductId === p.id) return false;
+                if (bulkAnimal !== "all") {
+                  const cat = categories.find(c => c.id === p.brandCategoryId);
+                  if (!cat || cat.animal !== bulkAnimal) return false;
+                  if (bulkSub !== "all" && cat.subcategory !== bulkSub) return false;
+                  if (bulkBrand !== "all" && String(cat.id) !== bulkBrand) return false;
+                }
+                if (bulkSearch && !p.name.toLowerCase().includes(bulkSearch.toLowerCase())) return false;
+                return true;
+              });
+              const visibleIds = filtered.map(p => p.id);
+              const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => bulkSelectedIds.has(id));
+              return (
+                <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
+                  {section && (
+                    <div className="text-xs px-3 py-2 bg-blue-50 rounded-lg border border-blue-200">
+                      Bölüm: <span className="font-bold">{section.title}</span> ({section.items.length} mevcut ürün)
+                    </div>
+                  )}
+                  <div className="grid grid-cols-3 gap-2">
+                    <Select value={bulkAnimal} onValueChange={(v) => { setBulkAnimal(v); setBulkSub("all"); setBulkBrand("all"); }}>
+                      <SelectTrigger className="h-9 text-xs" data-testid="select-bulk-animal"><SelectValue placeholder="Hayvan" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tüm Hayvanlar</SelectItem>
+                        {ANIMALS.map((a) => (
+                          <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={bulkSub} onValueChange={(v) => { setBulkSub(v); setBulkBrand("all"); }} disabled={bulkAnimal === "all"}>
+                      <SelectTrigger className="h-9 text-xs" data-testid="select-bulk-sub"><SelectValue placeholder="Alt Kategori" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tümü</SelectItem>
+                        {bulkSubsList.map((sc) => (
+                          <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={bulkBrand} onValueChange={setBulkBrand} disabled={bulkSub === "all" || bulkBrandsList.length === 0}>
+                      <SelectTrigger className="h-9 text-xs" data-testid="select-bulk-brand"><SelectValue placeholder="Marka" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tümü</SelectItem>
+                        {bulkBrandsList.map((c) => (
+                          <SelectItem key={c.id} value={String(c.id)}>{c.brandName}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Input
+                    placeholder="Ürün adı ara..."
+                    value={bulkSearch}
+                    onChange={(e) => setBulkSearch(e.target.value)}
+                    data-testid="input-bulk-search"
+                  />
+                  <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
+                    <div className="text-muted-foreground">
+                      {filtered.length} ürün listeleniyor · <span className="font-bold text-green-700">{bulkSelectedIds.size} seçili</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (allVisibleSelected) {
+                            setBulkSelectedIds(prev => {
+                              const next = new Set(prev);
+                              visibleIds.forEach(id => next.delete(id));
+                              return next;
+                            });
+                          } else {
+                            setBulkSelectedIds(prev => {
+                              const next = new Set(prev);
+                              visibleIds.forEach(id => next.add(id));
+                              return next;
+                            });
+                          }
+                        }}
+                        disabled={filtered.length === 0}
+                        data-testid="btn-bulk-toggle-all"
+                      >
+                        {allVisibleSelected ? "Seçimi Kaldır" : `Tümünü Seç (${filtered.length})`}
+                      </Button>
+                      {bulkSelectedIds.size > 0 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setBulkSelectedIds(new Set())}
+                          data-testid="btn-bulk-clear"
+                        >
+                          Temizle
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-y-auto divide-y border rounded-lg" style={{ maxHeight: "45vh" }}>
+                    {filtered.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-6">Ürün bulunamadı</p>
+                    ) : (
+                      filtered.slice(0, 500).map(p => {
+                        const checked = bulkSelectedIds.has(p.id);
+                        return (
+                          <label
+                            key={p.id}
+                            className={`flex items-center gap-3 p-2 cursor-pointer transition-colors ${checked ? "bg-green-50" : "hover:bg-muted/40"}`}
+                            data-testid={`row-bulk-product-${p.id}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                setBulkSelectedIds(prev => {
+                                  const next = new Set(prev);
+                                  if (e.target.checked) next.add(p.id); else next.delete(p.id);
+                                  return next;
+                                });
+                              }}
+                              className="w-4 h-4 flex-shrink-0"
+                              data-testid={`check-bulk-product-${p.id}`}
+                            />
+                            {p.img ? (
+                              <img src={p.img} alt="" className="w-10 h-10 rounded-lg object-cover border flex-shrink-0" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                <ImageIcon className="w-4 h-4 text-gray-300" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold truncate">{p.name}</p>
+                              <p className="text-xs text-gray-500">{p.price} TL</p>
+                            </div>
+                          </label>
+                        );
+                      })
+                    )}
+                    {filtered.length > 500 && (
+                      <p className="text-[11px] text-muted-foreground text-center py-2">İlk 500 ürün gösteriliyor. Daha fazla daraltmak için filtre/arama kullanın.</p>
+                    )}
+                  </div>
+                  <Button
+                    className="w-full"
+                    disabled={bulkSelectedIds.size === 0 || bulkAddItemsMutation.isPending || !bulkAddSectionId}
+                    onClick={() => {
+                      if (bulkAddSectionId && bulkSelectedIds.size > 0) {
+                        bulkAddItemsMutation.mutate({
+                          sectionId: bulkAddSectionId,
+                          productIds: Array.from(bulkSelectedIds),
+                        });
+                      }
+                    }}
+                    data-testid="btn-bulk-confirm"
+                  >
+                    {bulkAddItemsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : `${bulkSelectedIds.size} Ürünü Ekle`}
+                  </Button>
+                </div>
+              );
+            })()}
           </DialogContent>
         </Dialog>
 

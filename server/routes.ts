@@ -1975,6 +1975,37 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     res.status(201).json(item);
   });
 
+  app.post("/api/admin/cross-sell-items/bulk", requireAdmin, async (req, res) => {
+    try {
+      const sectionId = parseInt(String(req.body?.sectionId));
+      const productIds: number[] = Array.isArray(req.body?.productIds)
+        ? Array.from(new Set(req.body.productIds.map((x: any) => parseInt(String(x))).filter((x: number) => !isNaN(x) && x > 0)))
+        : [];
+      if (isNaN(sectionId) || productIds.length === 0) {
+        return res.status(400).json({ message: "sectionId ve productIds zorunlu" });
+      }
+      const section = await storage.getCrossSellSection(sectionId);
+      if (!section) return res.status(404).json({ message: "Bölüm bulunamadı" });
+      const existing = await storage.getCrossSellItemsBySection(sectionId);
+      const existingIds = new Set(existing.map(i => i.productId));
+      const startOrder = existing.length;
+      const toAdd = productIds.filter(id => !existingIds.has(id));
+      let added = 0;
+      for (let i = 0; i < toAdd.length; i++) {
+        try {
+          await storage.addCrossSellItem({ sectionId, productId: toAdd[i], sortOrder: startOrder + i + 1 });
+          added++;
+        } catch (e) {
+          console.error("Bulk add cross-sell item error", toAdd[i], e);
+        }
+      }
+      res.status(201).json({ added, skipped: productIds.length - added });
+    } catch (err) {
+      console.error("Bulk cross-sell error", err);
+      res.status(500).json({ message: "Toplu ekleme hatası" });
+    }
+  });
+
   app.delete("/api/admin/cross-sell-items/:id", requireAdmin, async (req, res) => {
     const id = parseInt(req.params.id);
     await storage.removeCrossSellItem(id);
