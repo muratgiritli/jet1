@@ -1,7 +1,7 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import path from "path";
-import { injectSeoMeta } from "./seo-meta";
+import { injectAllMeta } from "./seo-meta";
 
 export function serveStatic(app: Express) {
   const candidates = [
@@ -19,6 +19,7 @@ export function serveStatic(app: Express) {
   console.log(`[static] serving from: ${distPath}`);
 
   app.use(express.static(distPath, {
+    index: false,
     setHeaders: (res, filePath) => {
       if (filePath.endsWith(".html")) {
         res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
@@ -26,8 +27,23 @@ export function serveStatic(app: Express) {
     }
   }));
 
-  app.use("/{*path}", (_req, res) => {
-    res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-    res.sendFile(path.resolve(distPath, "index.html"));
+  const indexPath = path.resolve(distPath, "index.html");
+  let cachedTemplate: string | null = null;
+  const getTemplate = () => {
+    if (cachedTemplate) return cachedTemplate;
+    cachedTemplate = fs.readFileSync(indexPath, "utf-8");
+    return cachedTemplate;
+  };
+
+  app.use("/{*path}", async (req, res, next) => {
+    try {
+      const template = getTemplate();
+      const html = await injectAllMeta(template, req.originalUrl);
+      res.setHeader("Content-Type", "text/html; charset=utf-8");
+      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+      res.status(200).end(html);
+    } catch (e) {
+      next(e);
+    }
   });
 }
