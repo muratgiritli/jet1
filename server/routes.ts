@@ -2042,6 +2042,45 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
+  app.post("/api/admin/quick-cross-sell/bulk", requireAdmin, async (req, res) => {
+    try {
+      const forProductId = parseInt(String(req.body?.forProductId));
+      const addProductIds: number[] = Array.isArray(req.body?.addProductIds)
+        ? Array.from(new Set(req.body.addProductIds.map((x: any) => parseInt(String(x))).filter((x: number) => !isNaN(x) && x > 0)))
+        : [];
+      if (isNaN(forProductId) || addProductIds.length === 0) {
+        return res.status(400).json({ message: "forProductId ve addProductIds zorunlu" });
+      }
+      const allSections = await storage.getAllCrossSellSections();
+      let section = allSections.find(s => s.forProductId === forProductId);
+      if (!section) {
+        section = await storage.createCrossSellSection({
+          title: "Sıklıkla Birlikte Alınan",
+          forProductId,
+          forAnimal: null,
+          sortOrder: 0,
+          isActive: true,
+        });
+      }
+      const existing = await storage.getCrossSellItemsBySection(section.id);
+      const existingIds = new Set(existing.map(i => i.productId));
+      const toAdd = addProductIds.filter(id => id !== forProductId && !existingIds.has(id));
+      let added = 0;
+      for (let i = 0; i < toAdd.length; i++) {
+        try {
+          await storage.addCrossSellItem({ sectionId: section.id, productId: toAdd[i], sortOrder: existing.length + i + 1 });
+          added++;
+        } catch (e) {
+          console.error("Bulk quick cross-sell add error", toAdd[i], e);
+        }
+      }
+      res.status(201).json({ sectionId: section.id, added, skipped: addProductIds.length - added });
+    } catch (err) {
+      console.error("Bulk quick cross-sell error", err);
+      res.status(500).json({ message: "Toplu ekleme hatası" });
+    }
+  });
+
   app.get("/api/admin/product-cross-sell/:productId", requireAdmin, async (req, res) => {
     try {
       const pid = parseInt(req.params.productId);

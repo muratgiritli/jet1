@@ -1453,6 +1453,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [bulkBrand, setBulkBrand] = useState("all");
   const [bulkSearch, setBulkSearch] = useState("");
   const [bulkSelectedIds, setBulkSelectedIds] = useState<Set<number>>(new Set());
+  const [mainBulkOpen, setMainBulkOpen] = useState(false);
+  const [mainBulkStep, setMainBulkStep] = useState<1 | 2>(1);
+  const [mainBulkProductId, setMainBulkProductId] = useState<number | null>(null);
+  const [mainAnimal, setMainAnimal] = useState("all");
+  const [mainSub, setMainSub] = useState("all");
+  const [mainBrand, setMainBrand] = useState("all");
+  const [mainSearch, setMainSearch] = useState("");
+  const [csAnimal, setCsAnimal] = useState("all");
+  const [csSub, setCsSub] = useState("all");
+  const [csBrand, setCsBrand] = useState("all");
+  const [csSearch, setCsSearch] = useState("");
+  const [csSelectedIds, setCsSelectedIds] = useState<Set<number>>(new Set());
 
   const [breedStatsDialogOpen, setBreedStatsDialogOpen] = useState(false);
   const [breedStatsProductId, setBreedStatsProductId] = useState<number | null>(null);
@@ -1526,6 +1538,29 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       if (quickCrossSellProductId) {
         queryClient.invalidateQueries({ queryKey: ["/api/admin/product-cross-sell", quickCrossSellProductId] });
       }
+    },
+  });
+
+  const mainBulkMutation = useMutation({
+    mutationFn: async (data: { forProductId: number; addProductIds: number[] }) => {
+      const res = await apiRequest("POST", "/api/admin/quick-cross-sell/bulk", data);
+      return res.json();
+    },
+    onSuccess: (result: { added: number; skipped: number }) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/cross-sell-sections"] });
+      toast({
+        title: "Toplu ekleme tamamlandı",
+        description: `${result.added} ürün eklendi${result.skipped > 0 ? `, ${result.skipped} zaten ekliydi` : ""}.`,
+      });
+      setMainBulkOpen(false);
+      setMainBulkStep(1);
+      setMainBulkProductId(null);
+      setMainAnimal("all"); setMainSub("all"); setMainBrand("all"); setMainSearch("");
+      setCsAnimal("all"); setCsSub("all"); setCsBrand("all"); setCsSearch("");
+      setCsSelectedIds(new Set());
+    },
+    onError: () => {
+      toast({ title: "Hata", description: "Toplu ekleme başarısız oldu.", variant: "destructive" });
     },
   });
 
@@ -4692,6 +4727,22 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {yonetimSub === "crosssell" && <section>
           <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
             <h2 className="text-lg font-bold" data-testid="text-section-cross-sell">Sıklıkla Birlikte Alınan Ürünler</h2>
+            <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setMainBulkOpen(true);
+                setMainBulkStep(1);
+                setMainBulkProductId(null);
+                setMainAnimal("all"); setMainSub("all"); setMainBrand("all"); setMainSearch("");
+                setCsAnimal("all"); setCsSub("all"); setCsBrand("all"); setCsSearch("");
+                setCsSelectedIds(new Set());
+              }}
+              data-testid="btn-open-main-bulk"
+            >
+              <Package className="w-4 h-4" />
+              Ana Ürün İçin Toplu Ekle
+            </Button>
             <Dialog open={crossSellDialogOpen} onOpenChange={(open) => {
               setCrossSellDialogOpen(open);
               if (!open) { setCsNewAnimal("all"); setCsNewSub("all"); setCsNewBrand("all"); setNewSectionForProductId(""); }
@@ -4816,6 +4867,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 </form>
               </DialogContent>
             </Dialog>
+            </div>
           </div>
 
           <div className="space-y-3" data-testid="list-cross-sell-sections">
@@ -5020,6 +5072,292 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 {addItemMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : "Ekle"}
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={mainBulkOpen} onOpenChange={(open) => {
+          setMainBulkOpen(open);
+          if (!open) {
+            setMainBulkStep(1);
+            setMainBulkProductId(null);
+            setMainAnimal("all"); setMainSub("all"); setMainBrand("all"); setMainSearch("");
+            setCsAnimal("all"); setCsSub("all"); setCsBrand("all"); setCsSearch("");
+            setCsSelectedIds(new Set());
+          }
+        }}>
+          <DialogContent className="max-w-2xl max-h-[88vh] flex flex-col">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-green-600" />
+                {mainBulkStep === 1 ? "1/2 — Ana Ürünü Seçin" : "2/2 — Sıklıkla Alınan Ürünleri Seçin"}
+              </DialogTitle>
+            </DialogHeader>
+            {mainBulkStep === 1 ? (() => {
+              const subsList = mainAnimal !== "all" ? (subcategoriesByAnimal[mainAnimal] || []) : [];
+              const brandsList = (mainAnimal !== "all" && mainSub !== "all")
+                ? categories.filter(c => c.animal === mainAnimal && c.subcategory === mainSub)
+                : [];
+              const filtered = allProducts.filter(p => {
+                if (!p.isActive) return false;
+                if (mainAnimal !== "all") {
+                  const cat = categories.find(c => c.id === p.brandCategoryId);
+                  if (!cat || cat.animal !== mainAnimal) return false;
+                  if (mainSub !== "all" && cat.subcategory !== mainSub) return false;
+                  if (mainBrand !== "all" && String(cat.id) !== mainBrand) return false;
+                }
+                if (mainSearch && !p.name.toLowerCase().includes(mainSearch.toLowerCase())) return false;
+                return true;
+              });
+              return (
+                <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
+                  <p className="text-xs text-muted-foreground">Sıklıkla birlikte alınan ürünlerin görüneceği <span className="font-bold">ana ürünü</span> seçin.</p>
+                  <div className="grid grid-cols-3 gap-2">
+                    <Select value={mainAnimal} onValueChange={(v) => { setMainAnimal(v); setMainSub("all"); setMainBrand("all"); }}>
+                      <SelectTrigger className="h-9 text-xs" data-testid="select-main-animal"><SelectValue placeholder="Hayvan" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tüm Hayvanlar</SelectItem>
+                        {ANIMALS.map((a) => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={mainSub} onValueChange={(v) => { setMainSub(v); setMainBrand("all"); }} disabled={mainAnimal === "all"}>
+                      <SelectTrigger className="h-9 text-xs" data-testid="select-main-sub"><SelectValue placeholder="Alt Kategori" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tümü</SelectItem>
+                        {subsList.map((sc) => (<SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={mainBrand} onValueChange={setMainBrand} disabled={mainSub === "all" || brandsList.length === 0}>
+                      <SelectTrigger className="h-9 text-xs" data-testid="select-main-brand"><SelectValue placeholder="Marka" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tümü</SelectItem>
+                        {brandsList.map((c) => (<SelectItem key={c.id} value={String(c.id)}>{c.brandName}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Input
+                    placeholder="Ana ürün ara..."
+                    value={mainSearch}
+                    onChange={(e) => setMainSearch(e.target.value)}
+                    data-testid="input-main-search"
+                  />
+                  <div className="text-xs text-muted-foreground">{filtered.length} ürün listeleniyor</div>
+                  <div className="flex-1 overflow-y-auto divide-y border rounded-lg" style={{ maxHeight: "50vh" }}>
+                    {filtered.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-6">Ürün bulunamadı</p>
+                    ) : (
+                      filtered.slice(0, 300).map(p => {
+                        const selected = mainBulkProductId === p.id;
+                        return (
+                          <div
+                            key={p.id}
+                            className={`flex items-center gap-3 p-2 cursor-pointer transition-colors ${selected ? "bg-blue-50 border-l-4 border-blue-500" : "hover:bg-muted/40"}`}
+                            onClick={() => setMainBulkProductId(p.id)}
+                            data-testid={`row-main-product-${p.id}`}
+                          >
+                            <input
+                              type="radio"
+                              checked={selected}
+                              readOnly
+                              className="w-4 h-4 flex-shrink-0"
+                            />
+                            {p.img ? (
+                              <img src={p.img} alt="" className="w-10 h-10 rounded-lg object-cover border flex-shrink-0" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                <ImageIcon className="w-4 h-4 text-gray-300" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold truncate">{p.name}</p>
+                              <p className="text-xs text-gray-500">{p.price} TL</p>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                  <Button
+                    className="w-full"
+                    disabled={!mainBulkProductId}
+                    onClick={() => setMainBulkStep(2)}
+                    data-testid="btn-main-next"
+                  >
+                    Devam Et
+                  </Button>
+                </div>
+              );
+            })() : (() => {
+              const mainProduct = allProducts.find(p => p.id === mainBulkProductId);
+              const existingSection = crossSellSections.find(s => s.forProductId === mainBulkProductId);
+              const existingIds = new Set(existingSection?.items.map(i => i.productId) || []);
+              const subsList = csAnimal !== "all" ? (subcategoriesByAnimal[csAnimal] || []) : [];
+              const brandsList = (csAnimal !== "all" && csSub !== "all")
+                ? categories.filter(c => c.animal === csAnimal && c.subcategory === csSub)
+                : [];
+              const filtered = allProducts.filter(p => {
+                if (!p.isActive) return false;
+                if (p.id === mainBulkProductId) return false;
+                if (existingIds.has(p.id)) return false;
+                if (csAnimal !== "all") {
+                  const cat = categories.find(c => c.id === p.brandCategoryId);
+                  if (!cat || cat.animal !== csAnimal) return false;
+                  if (csSub !== "all" && cat.subcategory !== csSub) return false;
+                  if (csBrand !== "all" && String(cat.id) !== csBrand) return false;
+                }
+                if (csSearch && !p.name.toLowerCase().includes(csSearch.toLowerCase())) return false;
+                return true;
+              });
+              const visibleIds = filtered.map(p => p.id);
+              const allVisibleSelected = visibleIds.length > 0 && visibleIds.every(id => csSelectedIds.has(id));
+              return (
+                <div className="space-y-3 flex-1 overflow-hidden flex flex-col">
+                  {mainProduct && (
+                    <div className="flex items-center gap-3 p-2 bg-blue-50 rounded-lg border border-blue-200">
+                      {mainProduct.img ? (
+                        <img src={mainProduct.img} alt="" className="w-10 h-10 rounded-lg object-cover border" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
+                          <ImageIcon className="w-4 h-4 text-gray-300" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[10px] text-blue-600">Ana Ürün</p>
+                        <p className="text-xs font-bold truncate">{mainProduct.name}</p>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={() => setMainBulkStep(1)} data-testid="btn-main-back">
+                        Değiştir
+                      </Button>
+                    </div>
+                  )}
+                  {existingSection && existingSection.items.length > 0 && (
+                    <div className="text-xs px-3 py-1.5 bg-green-50 border border-green-200 rounded-lg text-green-700">
+                      Bu ürünün bölümünde zaten {existingSection.items.length} cross-sell ürün var. Yenileri eklenecek.
+                    </div>
+                  )}
+                  <div className="grid grid-cols-3 gap-2">
+                    <Select value={csAnimal} onValueChange={(v) => { setCsAnimal(v); setCsSub("all"); setCsBrand("all"); }}>
+                      <SelectTrigger className="h-9 text-xs" data-testid="select-cs-animal-2"><SelectValue placeholder="Hayvan" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tüm Hayvanlar</SelectItem>
+                        {ANIMALS.map((a) => (<SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={csSub} onValueChange={(v) => { setCsSub(v); setCsBrand("all"); }} disabled={csAnimal === "all"}>
+                      <SelectTrigger className="h-9 text-xs" data-testid="select-cs-sub-2"><SelectValue placeholder="Alt Kategori" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tümü</SelectItem>
+                        {subsList.map((sc) => (<SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                    <Select value={csBrand} onValueChange={setCsBrand} disabled={csSub === "all" || brandsList.length === 0}>
+                      <SelectTrigger className="h-9 text-xs" data-testid="select-cs-brand-2"><SelectValue placeholder="Marka" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">Tümü</SelectItem>
+                        {brandsList.map((c) => (<SelectItem key={c.id} value={String(c.id)}>{c.brandName}</SelectItem>))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Input
+                    placeholder="Eklenecek ürünleri ara..."
+                    value={csSearch}
+                    onChange={(e) => setCsSearch(e.target.value)}
+                    data-testid="input-cs-search-2"
+                  />
+                  <div className="flex items-center justify-between gap-2 flex-wrap text-xs">
+                    <div className="text-muted-foreground">
+                      {filtered.length} ürün · <span className="font-bold text-green-700">{csSelectedIds.size} seçili</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          if (allVisibleSelected) {
+                            setCsSelectedIds(prev => { const n = new Set(prev); visibleIds.forEach(id => n.delete(id)); return n; });
+                          } else {
+                            setCsSelectedIds(prev => { const n = new Set(prev); visibleIds.forEach(id => n.add(id)); return n; });
+                          }
+                        }}
+                        disabled={filtered.length === 0}
+                        data-testid="btn-cs-toggle-all"
+                      >
+                        {allVisibleSelected ? "Seçimi Kaldır" : `Tümünü Seç (${filtered.length})`}
+                      </Button>
+                      {csSelectedIds.size > 0 && (
+                        <Button type="button" variant="outline" size="sm" onClick={() => setCsSelectedIds(new Set())} data-testid="btn-cs-clear">
+                          Temizle
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex-1 overflow-y-auto divide-y border rounded-lg" style={{ maxHeight: "40vh" }}>
+                    {filtered.length === 0 ? (
+                      <p className="text-sm text-gray-400 text-center py-6">Ürün bulunamadı</p>
+                    ) : (
+                      filtered.slice(0, 500).map(p => {
+                        const checked = csSelectedIds.has(p.id);
+                        return (
+                          <label
+                            key={p.id}
+                            className={`flex items-center gap-3 p-2 cursor-pointer transition-colors ${checked ? "bg-green-50" : "hover:bg-muted/40"}`}
+                            data-testid={`row-cs-product-${p.id}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                setCsSelectedIds(prev => {
+                                  const n = new Set(prev);
+                                  if (e.target.checked) n.add(p.id); else n.delete(p.id);
+                                  return n;
+                                });
+                              }}
+                              className="w-4 h-4 flex-shrink-0"
+                              data-testid={`check-cs-product-${p.id}`}
+                            />
+                            {p.img ? (
+                              <img src={p.img} alt="" className="w-10 h-10 rounded-lg object-cover border flex-shrink-0" />
+                            ) : (
+                              <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                                <ImageIcon className="w-4 h-4 text-gray-300" />
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-semibold truncate">{p.name}</p>
+                              <p className="text-xs text-gray-500">{p.price} TL</p>
+                            </div>
+                          </label>
+                        );
+                      })
+                    )}
+                    {filtered.length > 500 && (
+                      <p className="text-[11px] text-muted-foreground text-center py-2">İlk 500 ürün gösteriliyor. Filtreyi daraltın.</p>
+                    )}
+                  </div>
+                  <div className="flex gap-2">
+                    <Button variant="outline" onClick={() => setMainBulkStep(1)} data-testid="btn-main-back-2">
+                      Geri
+                    </Button>
+                    <Button
+                      className="flex-1"
+                      disabled={csSelectedIds.size === 0 || mainBulkMutation.isPending || !mainBulkProductId}
+                      onClick={() => {
+                        if (mainBulkProductId && csSelectedIds.size > 0) {
+                          mainBulkMutation.mutate({
+                            forProductId: mainBulkProductId,
+                            addProductIds: Array.from(csSelectedIds),
+                          });
+                        }
+                      }}
+                      data-testid="btn-main-bulk-confirm"
+                    >
+                      {mainBulkMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : `${csSelectedIds.size} Ürünü Ekle`}
+                    </Button>
+                  </div>
+                </div>
+              );
+            })()}
           </DialogContent>
         </Dialog>
 
