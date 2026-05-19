@@ -53,10 +53,11 @@ export function exportStockMovementsPdf(opts: ExportOpts) {
     const dayOut = d.sales.reduce((s, m) => s + -m.delta, 0);
     const dayIn = d.receipts.reduce((s, m) => s + m.delta, 0);
     const aggBy = (list: Movement[]) => {
-      const map = new Map<string, { name: string; barcode: string | null; qty: number; count: number }>();
+      // list is in DESC chronological order (latest first), so first seen = day-end stock
+      const map = new Map<string, { name: string; barcode: string | null; qty: number; count: number; lastStock: number }>();
       for (const m of list) {
         const k = String(m.product_id);
-        if (!map.has(k)) map.set(k, { name: m.product_name, barcode: m.barcode, qty: 0, count: 0 });
+        if (!map.has(k)) map.set(k, { name: m.product_name, barcode: m.barcode, qty: 0, count: 0, lastStock: m.new_stock });
         const r = map.get(k)!;
         r.qty += Math.abs(m.delta);
         r.count += 1;
@@ -71,6 +72,7 @@ export function exportStockMovementsPdf(opts: ExportOpts) {
       <td class="bc">${escapeHtml(p.barcode || "-")}</td>
       <td class="num">${p.qty}</td>
       <td class="num">${p.count}</td>
+      <td class="num kalan">${p.lastStock}</td>
     </tr>`).join("");
     const recRows = recAgg.map((p, i) => `<tr>
       <td class="num">${i + 1}</td>
@@ -78,18 +80,19 @@ export function exportStockMovementsPdf(opts: ExportOpts) {
       <td class="bc">${escapeHtml(p.barcode || "-")}</td>
       <td class="num">${p.qty}</td>
       <td class="num">${p.count}</td>
+      <td class="num kalan">${p.lastStock}</td>
     </tr>`).join("");
     return `
     <section class="day">
       <h2>${escapeHtml(d.date)} <span class="tot">Satış: ${dayOut} adet / ${d.sales.length} işlem &middot; Mal Kabul: ${dayIn} adet / ${d.receipts.length} işlem</span></h2>
       ${salesAgg.length ? `<h3 class="sales-h">SATIŞ (Stoktan Düşülen)</h3>
       <table>
-        <thead><tr><th style="width:30px">#</th><th>Ürün</th><th style="width:120px">Barkod</th><th style="width:60px">Adet</th><th style="width:60px">İşlem</th></tr></thead>
+        <thead><tr><th style="width:30px">#</th><th>Ürün</th><th style="width:120px">Barkod</th><th style="width:60px">Adet</th><th style="width:60px">İşlem</th><th style="width:70px">Kalan Stok</th></tr></thead>
         <tbody>${salesRows}</tbody>
       </table>` : ""}
       ${recAgg.length ? `<h3 class="rec-h">MAL KABUL (Stoğa Eklenen)</h3>
       <table>
-        <thead><tr><th style="width:30px">#</th><th>Ürün</th><th style="width:120px">Barkod</th><th style="width:60px">Adet</th><th style="width:60px">İşlem</th></tr></thead>
+        <thead><tr><th style="width:30px">#</th><th>Ürün</th><th style="width:120px">Barkod</th><th style="width:60px">Adet</th><th style="width:60px">İşlem</th><th style="width:70px">Kalan Stok</th></tr></thead>
         <tbody>${recRows}</tbody>
       </table>` : ""}
     </section>`;

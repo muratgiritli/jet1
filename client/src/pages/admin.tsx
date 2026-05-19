@@ -8797,8 +8797,8 @@ function StokSayimSection() {
       date: string;
       salesTotal: number; receiptTotal: number;
       salesCount: number; receiptCount: number;
-      salesByProduct: Record<string, { name: string; barcode: string | null; qty: number; count: number }>;
-      receiptByProduct: Record<string, { name: string; barcode: string | null; qty: number; count: number }>;
+      salesByProduct: Record<string, { name: string; barcode: string | null; qty: number; count: number; lastStock: number }>;
+      receiptByProduct: Record<string, { name: string; barcode: string | null; qty: number; count: number; lastStock: number }>;
     };
     const map: Record<string, Bucket> = {};
     for (const m of movs) {
@@ -8808,11 +8808,11 @@ function StokSayimSection() {
       const k = String(m.product_id);
       if (m.delta < 0) {
         b.salesTotal += -m.delta; b.salesCount += 1;
-        if (!b.salesByProduct[k]) b.salesByProduct[k] = { name: m.product_name, barcode: m.barcode, qty: 0, count: 0 };
+        if (!b.salesByProduct[k]) b.salesByProduct[k] = { name: m.product_name, barcode: m.barcode, qty: 0, count: 0, lastStock: m.new_stock };
         b.salesByProduct[k].qty += -m.delta; b.salesByProduct[k].count += 1;
       } else if (m.delta > 0) {
         b.receiptTotal += m.delta; b.receiptCount += 1;
-        if (!b.receiptByProduct[k]) b.receiptByProduct[k] = { name: m.product_name, barcode: m.barcode, qty: 0, count: 0 };
+        if (!b.receiptByProduct[k]) b.receiptByProduct[k] = { name: m.product_name, barcode: m.barcode, qty: 0, count: 0, lastStock: m.new_stock };
         b.receiptByProduct[k].qty += m.delta; b.receiptByProduct[k].count += 1;
       }
     }
@@ -9211,7 +9211,10 @@ function StokSayimSection() {
                                         <div className="truncate">{p.name}</div>
                                         {p.barcode && <div className="text-[9px] text-muted-foreground font-mono">{p.barcode}</div>}
                                       </div>
-                                      <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-bold shrink-0">-{p.qty} ({p.count}x)</span>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-bold">-{p.qty} ({p.count}x)</span>
+                                        <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">Kalan: {p.lastStock}</span>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
@@ -9227,7 +9230,10 @@ function StokSayimSection() {
                                         <div className="truncate">{p.name}</div>
                                         {p.barcode && <div className="text-[9px] text-muted-foreground font-mono">{p.barcode}</div>}
                                       </div>
-                                      <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-bold shrink-0">+{p.qty} ({p.count}x)</span>
+                                      <div className="flex items-center gap-1 shrink-0">
+                                        <span className="px-1.5 py-0.5 rounded bg-green-100 text-green-700 font-bold">+{p.qty} ({p.count}x)</span>
+                                        <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">Kalan: {p.lastStock}</span>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
