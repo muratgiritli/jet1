@@ -7319,6 +7319,7 @@ function SettingsSection() {
     bank_iban: "",
     bank_name: "",
     daily_cargo_widget_enabled: "false",
+    cross_sell_enabled: "true",
   });
 
   useEffect(() => {
@@ -7352,6 +7353,7 @@ function SettingsSection() {
         bank_iban: settings.bank_iban || "",
         bank_name: settings.bank_name || "",
         daily_cargo_widget_enabled: settings.daily_cargo_widget_enabled ?? "false",
+        cross_sell_enabled: settings.cross_sell_enabled ?? "true",
       });
     }
   }, [settings]);
@@ -7473,6 +7475,29 @@ function SettingsSection() {
               data-testid="toggle-sms-notification"
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.order_notification_sms === "1" ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+          </div>
+
+          <div className="flex items-start gap-3 pt-3 border-t">
+            <span className="text-xl mt-1">🛒</span>
+            <div className="flex-1 min-w-0">
+              <Label className="text-sm font-bold">Sıklıkla Birlikte Alınan Ürünler</Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Ürün detay sayfasının altındaki kategori sekmeli "Sıklıkla Birlikte Alınan Ürünler" bölümünü göster/gizle.</p>
+              <p className={`text-[11px] font-bold mt-1 ${form.cross_sell_enabled === "true" ? "text-green-600" : "text-red-600"}`} data-testid="text-cross-sell-state">
+                Şu an: {form.cross_sell_enabled === "true" ? "AÇIK (Yayında)" : "KAPALI (Gizli)"}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setForm(prev => ({ ...prev, cross_sell_enabled: prev.cross_sell_enabled === "true" ? "false" : "true" }))}
+              className={`relative inline-flex h-7 items-center rounded-full transition-colors px-1 ${form.cross_sell_enabled === "true" ? "bg-green-500 w-20 justify-start" : "bg-gray-400 w-20 justify-end"}`}
+              data-testid="toggle-cross-sell"
+              aria-label={form.cross_sell_enabled === "true" ? "Kapat" : "Aç"}
+            >
+              <span className={`absolute text-[10px] font-extrabold text-white tracking-wider ${form.cross_sell_enabled === "true" ? "left-2" : "right-2"}`}>
+                {form.cross_sell_enabled === "true" ? "ON" : "OFF"}
+              </span>
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${form.cross_sell_enabled === "true" ? "translate-x-12" : "translate-x-0"}`} />
             </button>
           </div>
 

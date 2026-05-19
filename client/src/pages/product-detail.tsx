@@ -19,6 +19,7 @@ import FavoriteButton from "@/components/FavoriteButton";
 import ImageZoom from "@/components/ImageZoom";
 import ProductImage from "@/components/ProductImage";
 import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed";
 import SEO, { SITE_DOMAIN, PRODUCT_JSONLD, BREADCRUMB_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import ProductReviews from "@/components/ProductReviews";
@@ -386,6 +387,11 @@ export default function ProductDetailPage() {
     return cats;
   }, [needsCrossSell, isKediMama, kumData, odulData, yasMamaData, bakimData]);
 
+  const { data: publicSettings } = useQuery<Record<string, string>>({
+    queryKey: ["/api/public-settings"],
+  });
+  const crossSellEnabled = (publicSettings?.cross_sell_enabled ?? "true") !== "false";
+
   const resolvedData = isNumericId ? data : staticData;
 
   useEffect(() => {
@@ -432,6 +438,7 @@ export default function ProductDetailPage() {
   const [stockPhone, setStockPhone] = useState("");
   const [stockAlertSent, setStockAlertSent] = useState(false);
   const [stockAlertLoading, setStockAlertLoading] = useState(false);
+  const [activeCrossSellTab, setActiveCrossSellTab] = useState<string>("");
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
   const [paraPuanInfoOpen, setParaPuanInfoOpen] = useState(false);
   const [preorderPayMethod, setPreorderPayMethod] = useState<string>("nakit");
@@ -1063,61 +1070,59 @@ export default function ProductDetailPage() {
 
         {!isCampaignMode && <ProductReviews productId={product.id} />}
 
-        {!isCampaignMode && !(product.stock === 0 && product.preorderEnabled) && needsCrossSell && alsoBoughtCategories.length > 0 && (
-          <div className="mt-8" data-testid="section-also-bought">
-            <h3 className="text-lg font-extrabold mb-4" data-testid="text-also-bought-title">
-              Bu ürünü alanlar bunları da aldı
-            </h3>
-            <div className="space-y-6">
-              {alsoBoughtCategories.map((cat) => (
-                <div key={cat.title} data-testid={`section-also-bought-${cat.title}`}>
-                  <h4 className="text-sm font-bold text-white px-3 py-1.5 rounded-t-lg" style={{ backgroundColor: "#6B3480" }} data-testid={`text-cat-title-${cat.title}`}>
-                    {cat.title}
-                  </h4>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
-                    {cat.products.map((p) => (
-                      <div key={p.id}>
-                        <CrossSellProductCard
-                          product={p}
-                          quantity={basket[String(p.id)] || 0}
-                          onUpdate={updateQty}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+        {(() => {
+          if (isCampaignMode) return null;
+          if (product.stock === 0 && product.preorderEnabled) return null;
+          if (!crossSellEnabled) return null;
+          const combined: { id: string; title: string; products: Product[] }[] = [];
+          if (needsCrossSell) {
+            alsoBoughtCategories.forEach((c, i) => {
+              if (c.products.length > 0) combined.push({ id: `ab-${i}`, title: c.title, products: c.products });
+            });
+          }
+          crossSellSections.forEach((s) => {
+            if (s.products.length > 0) combined.push({ id: `cs-${s.id}`, title: s.title, products: s.products as any });
+          });
+          if (combined.length === 0) return null;
+          const currentTab = combined.find((c) => c.id === activeCrossSellTab) ? activeCrossSellTab : combined[0].id;
+          return (
+            <div className="mt-8" data-testid="section-frequently-bought">
+              <h3 className="text-lg font-extrabold mb-4" data-testid="text-frequently-bought-title">
+                Sıklıkla Birlikte Alınan Ürünler
+              </h3>
+              <Tabs value={currentTab} onValueChange={setActiveCrossSellTab}>
+                <TabsList className="w-full h-auto flex flex-wrap gap-1 bg-muted/40 p-1">
+                  {combined.map((cat) => (
+                    <TabsTrigger
+                      key={cat.id}
+                      value={cat.id}
+                      className="text-xs font-bold data-[state=active]:text-white"
+                      style={currentTab === cat.id ? { backgroundColor: "#6B3480" } : undefined}
+                      data-testid={`tab-cross-sell-${cat.id}`}
+                    >
+                      {cat.title}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+                {combined.map((cat) => (
+                  <TabsContent key={cat.id} value={cat.id} className="mt-3">
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2" data-testid={`grid-cross-sell-${cat.id}`}>
+                      {cat.products.map((p) => (
+                        <div key={p.id}>
+                          <CrossSellProductCard
+                            product={p}
+                            quantity={basket[String(p.id)] || 0}
+                            onUpdate={updateQty}
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </TabsContent>
+                ))}
+              </Tabs>
             </div>
-          </div>
-        )}
-
-        {!isCampaignMode && !(product.stock === 0 && product.preorderEnabled) && crossSellSections.length > 0 && (
-          <div className="mt-8" data-testid="section-cross-sell-all">
-            <h3 className="text-lg font-extrabold mb-4" data-testid="text-cross-sell-title">
-              Bu ürünü alanlar bunları da aldı
-            </h3>
-            <div className="space-y-6">
-              {crossSellSections.map((section) => (
-                <div key={section.id} data-testid={`section-cross-sell-${section.id}`}>
-                  <h4 className="text-sm font-bold text-white px-3 py-1.5 rounded-t-lg" style={{ backgroundColor: "#6B3480" }} data-testid={`text-section-title-${section.id}`}>
-                    {section.title}
-                  </h4>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2">
-                    {section.products.map((p) => (
-                      <div key={p.id}>
-                        <CrossSellProductCard
-                          product={p}
-                          quantity={basket[String(p.id)] || 0}
-                          onUpdate={updateQty}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+          );
+        })()}
 
 
         {recentlyViewed.length > 0 && (
