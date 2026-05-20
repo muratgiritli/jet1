@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { exportProductsPdf } from "@/lib/exportProductsPdf";
 import { exportStockMovementsPdf } from "@/lib/exportStockMovementsPdf";
+import { exportSktPdf } from "@/lib/exportSktPdf";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9124,6 +9125,25 @@ function SktTakipSection() {
               {isExpired ? "SÜRESİ DOLMUŞ" : `${diffDays} gün kaldı`}
             </span>
             <span className="text-sm text-gray-500 ml-auto">{filtered.length} ürün</span>
+            <button
+              type="button"
+              onClick={() => {
+                const [mm, yy] = activeMonth.split(".");
+                const monthLabel = `${monthNames[parseInt(mm) - 1]} ${yy}`;
+                exportSktPdf({
+                  monthLabel,
+                  status: isExpired ? "expired" : isNearExpiry ? "near" : "ok",
+                  diffDays,
+                  products: filtered,
+                });
+              }}
+              disabled={filtered.length === 0}
+              className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-red-600 text-white hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed flex items-center gap-1.5"
+              data-testid="btn-skt-pdf"
+            >
+              <Download className="w-3.5 h-3.5" />
+              PDF İndir
+            </button>
           </>
         )}
       </div>
