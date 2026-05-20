@@ -9485,6 +9485,16 @@ function StokSayimSection() {
     return allProducts.filter(p => p.name.toLowerCase().includes(q) || (p.barcode && p.barcode.includes(q))).slice(0, 10);
   }, [searchQuery, allProducts]);
 
+  const barcodeSuffixMatches = useMemo(() => {
+    const q = barcodeInput.trim();
+    if (q.length < 2 || q.length > 13) return [];
+    if (!/^\d+$/.test(q)) return [];
+    const withBarcode = allProducts.filter(p => p.barcode && p.barcode.length > q.length);
+    const endsWith = withBarcode.filter(p => p.barcode!.endsWith(q));
+    if (endsWith.length > 0) return endsWith.slice(0, 10);
+    return withBarcode.filter(p => p.barcode!.includes(q)).slice(0, 10);
+  }, [barcodeInput, allProducts]);
+
   const [lastScannedBarcode, setLastScannedBarcode] = useState<string | null>(null);
 
   const handleBarcodeSearch = async (code?: string) => {
@@ -9619,27 +9629,61 @@ function StokSayimSection() {
               </p>
             </div>
           )}
-          <div className="flex gap-2">
-            <Input
-              placeholder="Barkod okutun veya girin..."
-              value={barcodeInput}
-              onChange={e => setBarcodeInput(e.target.value)}
-              onKeyDown={e => e.key === "Enter" && handleBarcodeSearch()}
-              autoFocus
-              className="flex-1 text-lg font-mono"
-              data-testid="input-barcode"
-            />
-            <Button onClick={() => handleBarcodeSearch()} disabled={searching || !barcodeInput.trim()} style={{ backgroundColor: "#6B3480" }} data-testid="btn-barcode-search">
-              {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
-            </Button>
-            <Button
-              onClick={() => setCameraOpen(true)}
-              variant="outline"
-              className="border-blue-300 text-blue-600 hover:bg-blue-50"
-              data-testid="btn-camera-scan"
-            >
-              <Camera className="w-4 h-4" />
-            </Button>
+          <div className="relative">
+            <div className="flex gap-2">
+              <Input
+                placeholder="Barkod okutun, girin veya son 2-3 rakamı yazın..."
+                value={barcodeInput}
+                onChange={e => setBarcodeInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && handleBarcodeSearch()}
+                autoFocus
+                className="flex-1 text-lg font-mono"
+                data-testid="input-barcode"
+              />
+              <Button onClick={() => handleBarcodeSearch()} disabled={searching || !barcodeInput.trim()} style={{ backgroundColor: "#6B3480" }} data-testid="btn-barcode-search">
+                {searching ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
+              </Button>
+              <Button
+                onClick={() => setCameraOpen(true)}
+                variant="outline"
+                className="border-blue-300 text-blue-600 hover:bg-blue-50"
+                data-testid="btn-camera-scan"
+              >
+                <Camera className="w-4 h-4" />
+              </Button>
+            </div>
+            {barcodeSuffixMatches.length > 0 && barcodeInput.trim().length < 8 && (
+              <div className="absolute z-50 top-full left-0 right-0 bg-white border rounded-md shadow-lg max-h-64 overflow-y-auto mt-1" data-testid="list-barcode-suffix-matches">
+                <div className="px-3 py-1.5 bg-blue-50 border-b text-[11px] font-bold text-blue-700">
+                  "{barcodeInput.trim()}" ile biten/içeren barkodlar ({barcodeSuffixMatches.length})
+                </div>
+                {barcodeSuffixMatches.map(p => {
+                  const bc = p.barcode || "";
+                  const q = barcodeInput.trim();
+                  const idx = bc.lastIndexOf(q);
+                  const before = idx >= 0 ? bc.slice(0, idx) : bc;
+                  const match = idx >= 0 ? bc.slice(idx, idx + q.length) : "";
+                  const after = idx >= 0 ? bc.slice(idx + q.length) : "";
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => selectProductDirect(p)}
+                      className="w-full text-left px-3 py-2 text-sm hover:bg-muted/50 flex justify-between items-center gap-2"
+                      data-testid={`suffix-match-${p.id}`}
+                    >
+                      <span className="truncate flex-1">{p.name}</span>
+                      <div className="flex gap-2 text-xs text-muted-foreground items-center">
+                        <span>Stok: {p.stock}</span>
+                        <span className="font-mono">
+                          {before}<span className="bg-yellow-200 text-black font-bold px-0.5 rounded">{match}</span>{after}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
           {cameraOpen && (
             <CameraBarcodeScanner
