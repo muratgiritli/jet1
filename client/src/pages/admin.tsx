@@ -9500,6 +9500,16 @@ function StokSayimSection() {
   const handleBarcodeSearch = async (code?: string) => {
     const barcode = code || barcodeInput.trim();
     if (!barcode) return;
+    // Kısa giriş (< 8 rakam) ise exact-match yapma — dropdown'daki son-rakam eşleşmelerini göster
+    if (!code && barcode.length < 8 && barcodeSuffixMatches.length > 0) {
+      if (barcodeSuffixMatches.length === 1) {
+        selectProductDirect(barcodeSuffixMatches[0]);
+        setBarcodeInput("");
+      } else {
+        toast({ title: `${barcodeSuffixMatches.length} ürün eşleşti`, description: "Listeden ürünü seçin veya daha fazla rakam yazın." });
+      }
+      return;
+    }
     setSearching(true);
     setLastScannedBarcode(barcode);
     try {
@@ -9511,6 +9521,7 @@ function StokSayimSection() {
         setEditSkt(product.skt || "");
         setEditBarcode(product.barcode || "");
         setLastScannedBarcode(null);
+        setBarcodeInput("");
         if (quickMode === "add" || quickMode === "sub") {
           const q = Math.max(1, parseInt(quickQty) || 1);
           const delta = quickMode === "add" ? q : -q;
@@ -9520,12 +9531,12 @@ function StokSayimSection() {
       } else {
         toast({ title: "Barkod bulunamadı: " + barcode, description: "Ürünü isimle arayıp barkodu atayabilirsiniz.", variant: "destructive" });
         setFoundProduct(null);
+        // barcodeInput'u silme — kullanıcı son rakamları görmeye devam etsin
       }
     } catch {
       toast({ title: "Arama hatası", variant: "destructive" });
     } finally {
       setSearching(false);
-      setBarcodeInput("");
     }
   };
 
