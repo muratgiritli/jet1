@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
 import {
-  Search, ShoppingCart, Heart, User, MapPin, Phone, Clock,
+  Search, ShoppingCart, Heart, User, MapPin, Phone, Mail, Clock,
   Truck, ShieldCheck, Banknote, CreditCard, Zap, Award,
   ChevronRight, Star, Flame, Sparkles, Gift, PackageCheck,
   ArrowRight, Tag,
@@ -140,7 +140,7 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
       <div className="bg-gradient-to-r from-[#4a1d96] via-[#6B3480] to-[#4a1d96] text-white text-[12px] font-medium">
         <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
           <div className="flex items-center gap-5">
-            <span className="flex items-center gap-1.5"><Phone className="w-3.5 h-3.5" /> 0850 XXX XX XX</span>
+            <a href="mailto:info@sizpa.com" className="flex items-center gap-1.5 hover:underline"><Mail className="w-3.5 h-3.5" /> info@sizpa.com</a>
             <span className="flex items-center gap-1.5"><MapPin className="w-3.5 h-3.5" /> Atakum / Samsun</span>
             <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> 09:00 - 22:00</span>
           </div>
@@ -490,7 +490,7 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
               <h4 className="text-white font-bold mb-3 text-sm">İletişim</h4>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-center gap-2"><MapPin className="w-4 h-4 text-[#FFC107]" /> Atakum, Samsun</li>
-                <li className="flex items-center gap-2"><Phone className="w-4 h-4 text-[#FFC107]" /> 0850 XXX XX XX</li>
+                <li className="flex items-center gap-2"><Mail className="w-4 h-4 text-[#FFC107]" /> <a href="mailto:info@sizpa.com" className="hover:text-white">info@sizpa.com</a></li>
                 <li className="flex items-center gap-2"><Clock className="w-4 h-4 text-[#FFC107]" /> 09:00 - 22:00</li>
               </ul>
             </div>
