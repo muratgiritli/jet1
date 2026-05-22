@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import {
   Search, ShoppingCart, Heart, User, MapPin, Phone, Clock,
   Truck, ShieldCheck, Banknote, CreditCard, Zap, Award,
@@ -22,12 +23,24 @@ const BRAND = "#6B3480";
 const ACCENT = "#FFC107";
 
 const categories = [
-  { key: "kopek", name: "Köpek", img: "/images/category-dog.webp", color: "from-amber-50 to-orange-100", ring: "ring-orange-200" },
-  { key: "kedi", name: "Kedi", img: "/images/category-cat.webp", color: "from-purple-50 to-fuchsia-100", ring: "ring-purple-200" },
-  { key: "kus", name: "Kuş", img: "/images/category-bird.webp", color: "from-sky-50 to-cyan-100", ring: "ring-sky-200" },
-  { key: "kemirgen", name: "Kemirgen", img: "/images/category-rabbit.webp", color: "from-rose-50 to-pink-100", ring: "ring-pink-200" },
-  { key: "akvaryum", name: "Akvaryum", img: "/images/cat-fish.webp", color: "from-teal-50 to-emerald-100", ring: "ring-teal-200" },
-  { key: "supurge", name: "Sokak Canlıları", img: "/images/category-dog.webp", color: "from-amber-50 to-yellow-100", ring: "ring-amber-200" },
+  { key: "kopek", name: "Köpek", href: "/kategori/kopek", img: "/images/category-dog.webp", color: "from-amber-50 to-orange-100", ring: "ring-orange-200" },
+  { key: "kedi", name: "Kedi", href: "/kategori/kedi", img: "/images/category-cat.webp", color: "from-purple-50 to-fuchsia-100", ring: "ring-purple-200" },
+  { key: "kus", name: "Kuş", href: "/kategori/kus", img: "/images/category-bird.webp", color: "from-sky-50 to-cyan-100", ring: "ring-sky-200" },
+  { key: "kemirgen", name: "Kemirgen", href: "/kategori/kemirgen", img: "/images/category-rabbit.webp", color: "from-rose-50 to-pink-100", ring: "ring-pink-200" },
+  { key: "akvaryum", name: "Akvaryum", href: "/kategori/akvaryum", img: "/images/cat-fish.webp", color: "from-teal-50 to-emerald-100", ring: "ring-teal-200" },
+  { key: "supurge", name: "Sokak Canlıları", href: "/sokak-canlari", img: "/images/category-dog.webp", color: "from-amber-50 to-yellow-100", ring: "ring-amber-200" },
+];
+
+const navLinks: { label: string; href: string }[] = [
+  { label: "Köpek", href: "/kategori/kopek" },
+  { label: "Kedi", href: "/kategori/kedi" },
+  { label: "Kuş", href: "/kategori/kus" },
+  { label: "Kemirgen", href: "/kategori/kemirgen" },
+  { label: "Akvaryum", href: "/kategori/akvaryum" },
+  { label: "Markalar", href: "/kategori" },
+  { label: "Kampanyalar", href: "/kampanya" },
+  { label: "Sokak Canlıları", href: "/sokak-canlari" },
+  { label: "Blog", href: "/blog" },
 ];
 
 const brands = [
@@ -142,10 +155,10 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
       {/* Main Header */}
       <header className="bg-white border-b border-gray-100 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-6">
-          <a href="/" className="flex items-center gap-1 shrink-0">
+          <Link href="/" className="flex items-center gap-1 shrink-0" data-testid="link-demo-logo">
             <span className="text-[#FFC107] text-3xl leading-none">🐾</span>
             <span className="text-[#6B3480] font-black text-3xl tracking-tight leading-none">jetgo</span>
-          </a>
+          </Link>
 
           <div className="flex-1 max-w-2xl">
             <div className="relative">
@@ -163,15 +176,15 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
           </div>
 
           <div className="flex items-center gap-2">
-            <button className="flex flex-col items-center px-3 py-1.5 hover:bg-purple-50 rounded-xl transition-colors">
+            <Link href="/giris" className="flex flex-col items-center px-3 py-1.5 hover:bg-purple-50 rounded-xl transition-colors" data-testid="link-demo-login">
               <User className="w-5 h-5 text-gray-700" />
               <span className="text-[10px] font-semibold text-gray-700 mt-0.5">Giriş</span>
-            </button>
-            <button className="flex flex-col items-center px-3 py-1.5 hover:bg-purple-50 rounded-xl transition-colors">
+            </Link>
+            <Link href="/favoriler" className="flex flex-col items-center px-3 py-1.5 hover:bg-purple-50 rounded-xl transition-colors" data-testid="link-demo-favorites">
               <Heart className="w-5 h-5 text-gray-700" />
               <span className="text-[10px] font-semibold text-gray-700 mt-0.5">Favori</span>
-            </button>
-            <button className="relative flex items-center gap-2 bg-gradient-to-r from-[#6B3480] to-[#8B47A8] text-white px-4 py-3 rounded-xl shadow-md hover:shadow-lg transition-all">
+            </Link>
+            <Link href="/odeme" className="relative flex items-center gap-2 bg-gradient-to-r from-[#6B3480] to-[#8B47A8] text-white px-4 py-3 rounded-xl shadow-md hover:shadow-lg transition-all" data-testid="link-demo-cart">
               <ShoppingCart className="w-5 h-5" />
               <div className="text-left leading-tight">
                 <div className="text-[10px] font-medium opacity-90">Sepetim</div>
@@ -180,25 +193,26 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
               <span className="absolute -top-1.5 -right-1.5 bg-[#FFC107] text-[#6B3480] text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center">
                 0
               </span>
-            </button>
+            </Link>
           </div>
         </div>
 
         {/* Mega nav */}
         <nav className="border-t border-gray-100 bg-white">
           <div className="max-w-7xl mx-auto px-6 flex items-center gap-1 text-sm">
-            {["Köpek", "Kedi", "Kuş", "Kemirgen", "Akvaryum", "Markalar", "Kampanyalar", "Sokak Canlıları", "Blog"].map((c) => (
-              <a
-                key={c}
-                href="#"
+            {navLinks.map((c) => (
+              <Link
+                key={c.label}
+                href={c.href}
                 className="px-4 py-3 font-semibold text-gray-700 hover:text-[#6B3480] hover:bg-purple-50/60 transition-colors border-b-2 border-transparent hover:border-[#6B3480]"
+                data-testid={`link-demo-nav-${c.label}`}
               >
-                {c}
-              </a>
+                {c.label}
+              </Link>
             ))}
-            <span className="ml-auto bg-gradient-to-r from-red-500 to-rose-600 text-white text-[12px] font-extrabold px-3 py-1 rounded-full">
+            <Link href="/kampanya" className="ml-auto bg-gradient-to-r from-red-500 to-rose-600 text-white text-[12px] font-extrabold px-3 py-1 rounded-full hover:scale-105 transition-transform" data-testid="link-demo-indirimler">
               🔥 İndirimler
-            </span>
+            </Link>
           </div>
         </nav>
       </header>
@@ -225,12 +239,12 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
                 Mama, kum, oyuncak ve daha fazlası kapında 1 saat içinde. 100+ marka, kapıda ödeme, sıfır endişe.
               </p>
               <div className="mt-6 flex items-center gap-3">
-                <button className="bg-[#FFC107] hover:bg-yellow-300 text-[#3b1378] font-black px-7 py-3.5 rounded-2xl shadow-xl shadow-yellow-900/20 transition-all hover:scale-105 flex items-center gap-2">
+                <Link href="/kategori" className="bg-[#FFC107] hover:bg-yellow-300 text-[#3b1378] font-black px-7 py-3.5 rounded-2xl shadow-xl shadow-yellow-900/20 transition-all hover:scale-105 flex items-center gap-2" data-testid="link-demo-hero-cta">
                   Hemen Sipariş Ver <ArrowRight className="w-4 h-4" />
-                </button>
-                <button className="bg-white/10 hover:bg-white/20 backdrop-blur text-white border border-white/20 font-bold px-6 py-3.5 rounded-2xl transition-all">
+                </Link>
+                <Link href="/kampanya" className="bg-white/10 hover:bg-white/20 backdrop-blur text-white border border-white/20 font-bold px-6 py-3.5 rounded-2xl transition-all" data-testid="link-demo-hero-kampanya">
                   Kampanyalar
-                </button>
+                </Link>
               </div>
               <div className="mt-7 flex items-center gap-5 text-white/90 text-[12px] font-medium">
                 <span className="flex items-center gap-1.5"><PackageCheck className="w-4 h-4 text-[#FFC107]" /> 1000+ Ürün</span>
@@ -246,28 +260,28 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
 
           {/* Side promos */}
           <div className="col-span-4 flex flex-col gap-4">
-            <div className="flex-1 rounded-3xl overflow-hidden bg-gradient-to-br from-orange-400 via-rose-500 to-pink-600 p-6 relative shadow-xl shadow-rose-200/50">
+            <Link href="/kategori/kopek" className="flex-1 rounded-3xl overflow-hidden bg-gradient-to-br from-orange-400 via-rose-500 to-pink-600 p-6 relative shadow-xl shadow-rose-200/50 hover:scale-[1.02] transition-transform block" data-testid="link-demo-side-kopek">
               <div className="absolute -right-6 -top-6 text-[120px] opacity-90 select-none">🦴</div>
               <div className="relative z-10">
                 <span className="inline-block bg-white/25 backdrop-blur text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">YENİ GELEN</span>
                 <div className="mt-2 text-white font-black text-2xl leading-tight">Köpek<br />Ödülleri</div>
                 <div className="text-white/90 text-[12px] mt-1">%30'a varan indirim</div>
-                <button className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-white bg-black/20 hover:bg-black/30 px-3 py-1.5 rounded-full">
+                <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-white bg-black/20 px-3 py-1.5 rounded-full">
                   İncele <ChevronRight className="w-3 h-3" />
-                </button>
+                </span>
               </div>
-            </div>
-            <div className="flex-1 rounded-3xl overflow-hidden bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 p-6 relative shadow-xl shadow-teal-200/50">
+            </Link>
+            <Link href="/kategori/kedi" className="flex-1 rounded-3xl overflow-hidden bg-gradient-to-br from-emerald-400 via-teal-500 to-cyan-600 p-6 relative shadow-xl shadow-teal-200/50 hover:scale-[1.02] transition-transform block" data-testid="link-demo-side-kedi">
               <div className="absolute -right-6 -top-6 text-[120px] opacity-90 select-none">🐱</div>
               <div className="relative z-10">
                 <span className="inline-block bg-white/25 backdrop-blur text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">EN ÇOK SATAN</span>
                 <div className="mt-2 text-white font-black text-2xl leading-tight">Kedi<br />Kumları</div>
                 <div className="text-white/90 text-[12px] mt-1">Aynı gün teslim</div>
-                <button className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-white bg-black/20 hover:bg-black/30 px-3 py-1.5 rounded-full">
+                <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-white bg-black/20 px-3 py-1.5 rounded-full">
                   İncele <ChevronRight className="w-3 h-3" />
-                </button>
+                </span>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
       </section>
@@ -301,22 +315,23 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
             <div className="text-[12px] font-bold text-[#6B3480] uppercase tracking-wider mb-1">Kategoriler</div>
             <h2 className="text-3xl font-black text-gray-900">Patin için her şey</h2>
           </div>
-          <a href="#" className="text-sm font-bold text-[#6B3480] hover:underline flex items-center gap-1">
+          <Link href="/kategori" className="text-sm font-bold text-[#6B3480] hover:underline flex items-center gap-1" data-testid="link-demo-all-categories">
             Tüm kategoriler <ChevronRight className="w-4 h-4" />
-          </a>
+          </Link>
         </div>
         <div className="grid grid-cols-6 gap-4">
           {categories.map((c) => (
-            <a
+            <Link
               key={c.key}
-              href="#"
+              href={c.href}
               className={`group bg-gradient-to-br ${c.color} rounded-3xl p-5 flex flex-col items-center justify-center aspect-square hover:scale-105 hover:shadow-xl transition-all duration-300 ring-4 ${c.ring} ring-offset-2`}
+              data-testid={`link-demo-category-${c.key}`}
             >
               <div className="w-20 h-20 rounded-full bg-white shadow-md flex items-center justify-center overflow-hidden group-hover:scale-110 transition-transform">
                 <img src={c.img} alt={c.name} className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }} />
               </div>
               <div className="mt-3 text-sm font-bold text-gray-800">{c.name}</div>
-            </a>
+            </Link>
           ))}
         </div>
       </section>
@@ -381,17 +396,17 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
 
       {/* Banner CTA - feeding calculator */}
       <section className="max-w-7xl mx-auto px-6 mb-12">
-        <div className="rounded-3xl bg-gradient-to-br from-[#6B3480] via-purple-700 to-indigo-800 p-8 relative overflow-hidden min-h-[200px]">
+        <Link href="/ozel-patiler" className="rounded-3xl bg-gradient-to-br from-[#6B3480] via-purple-700 to-indigo-800 p-8 relative overflow-hidden min-h-[200px] block hover:shadow-2xl transition-shadow" data-testid="link-demo-mama-hesapla">
           <div className="absolute -right-4 -bottom-4 text-[150px] opacity-90 select-none">🐾</div>
           <div className="relative z-10 max-w-2xl">
             <div className="inline-block bg-[#FFC107] text-[#3b1378] text-[10px] font-black px-2 py-1 rounded-full">AKILLI ARAÇ</div>
             <h3 className="mt-3 text-white font-black text-2xl leading-tight">Mama Hesaplayıcı</h3>
             <p className="mt-2 text-purple-100 text-sm">Patinin ihtiyacı kadar mama. Tartı + yaş gir, sana özel hesap çıksın.</p>
-            <button className="mt-4 bg-white text-[#6B3480] font-bold text-sm px-5 py-2.5 rounded-xl hover:scale-105 transition-transform">
+            <span className="mt-4 inline-block bg-white text-[#6B3480] font-bold text-sm px-5 py-2.5 rounded-xl">
               Hesapla →
-            </button>
+            </span>
           </div>
-        </div>
+        </Link>
       </section>
 
       {/* Popular products */}
@@ -420,15 +435,15 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
               <div className="text-[12px] font-bold text-[#6B3480] uppercase tracking-wider mb-1">Markalarımız</div>
               <h2 className="text-2xl font-black text-gray-900">Güvenilir 100+ marka</h2>
             </div>
-            <a href="#" className="text-sm font-bold text-[#6B3480] hover:underline flex items-center gap-1">
+            <Link href="/kategori" className="text-sm font-bold text-[#6B3480] hover:underline flex items-center gap-1" data-testid="link-demo-all-brands">
               Tüm markalar <ChevronRight className="w-4 h-4" />
-            </a>
+            </Link>
           </div>
           <div className="grid grid-cols-6 gap-4">
             {brands.map(b => (
-              <a key={b.name} href="#" className="bg-gray-50 hover:bg-purple-50 border border-gray-100 hover:border-purple-200 rounded-2xl p-4 aspect-[3/2] flex items-center justify-center transition-all hover:scale-105">
+              <Link key={b.name} href="/kategori" className="bg-gray-50 hover:bg-purple-50 border border-gray-100 hover:border-purple-200 rounded-2xl p-4 aspect-[3/2] flex items-center justify-center transition-all hover:scale-105" data-testid={`link-demo-brand-${b.name}`}>
                 <img src={b.img} alt={b.name} className="max-h-full max-w-full object-contain" onError={(e) => { const el = e.target as HTMLImageElement; el.outerHTML = `<div class='text-sm font-bold text-gray-600'>${b.name}</div>`; }} />
-              </a>
+              </Link>
             ))}
           </div>
         </div>
@@ -456,19 +471,19 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
             <div>
               <h4 className="text-white font-bold mb-3 text-sm">Kurumsal</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Hakkımızda</a></li>
-                <li><a href="#" className="hover:text-white">İletişim</a></li>
-                <li><a href="#" className="hover:text-white">Mağazamız</a></li>
-                <li><a href="#" className="hover:text-white">Blog</a></li>
+                <li><Link href="/hakkimizda" className="hover:text-white">Hakkımızda</Link></li>
+                <li><Link href="/iletisim" className="hover:text-white">İletişim</Link></li>
+                <li><Link href="/magaza" className="hover:text-white">Mağazamız</Link></li>
+                <li><Link href="/blog" className="hover:text-white">Blog</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-bold mb-3 text-sm">Müşteri Hizmetleri</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white">Sipariş Takip</a></li>
-                <li><a href="#" className="hover:text-white">İade & Teslimat</a></li>
-                <li><a href="#" className="hover:text-white">SSS</a></li>
-                <li><a href="#" className="hover:text-white">Kampanyalar</a></li>
+                <li><Link href="/siparis-takip" className="hover:text-white">Sipariş Takip</Link></li>
+                <li><Link href="/teslimat-iade" className="hover:text-white">İade & Teslimat</Link></li>
+                <li><Link href="/sss" className="hover:text-white">SSS</Link></li>
+                <li><Link href="/kampanya" className="hover:text-white">Kampanyalar</Link></li>
               </ul>
             </div>
             <div>
