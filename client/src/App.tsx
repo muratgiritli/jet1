@@ -79,6 +79,7 @@ const MagazaPage = lazy(() => import("@/pages/static-pages").then(m => ({ defaul
 const DemoLanding = lazy(() => import("@/pages/demo-landing"));
 const Demo1Page = lazy(() => import("@/pages/demo1"));
 const Demo2Page = lazy(() => import("@/pages/demo2"));
+const DemoAnasayfaPage = lazy(() => import("@/pages/demo-anasayfa"));
 const DemoKampanyaPage = lazy(() => import("@/pages/demo-kampanya"));
 const DemoKampanyaUrunPage = lazy(() => import("@/pages/demo-kampanya").then(m => ({ default: m.DemoKampanyaUrun })));
 const SeoPage = lazy(() => import("@/pages/seo-pages"));
@@ -118,6 +119,7 @@ function Router() {
         <Route path="/demo" component={DemoLanding} />
         <Route path="/demo1" component={Demo1Page} />
         <Route path="/demo2" component={Demo2Page} />
+        <Route path="/demo-anasayfa" component={DemoAnasayfaPage} />
         <Route path="/demo-kampanya" component={DemoKampanyaPage} />
         <Route path="/demo-kampanya/urun/:id" component={DemoKampanyaUrunPage} />
         <Route path="/kampanya" component={CampaignPage} />
@@ -151,7 +153,7 @@ function Router() {
 function AppShell() {
   const [location] = useLocation();
   const isAdmin = location.startsWith("/admin");
-  const isDemo = location === "/demo" || location.startsWith("/demo-kampanya") || location === "/demo1" || location === "/demo2";
+  const isDemo = location === "/demo" || location.startsWith("/demo-kampanya") || location === "/demo1" || location === "/demo2" || location === "/demo-anasayfa";
 
   useEffect(() => {
     if (location === "/") {
