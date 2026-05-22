@@ -110,7 +110,7 @@ function ProductCard({ p, badge }: { p: Product; badge?: string }) {
   );
 }
 
-export default function DemoAnasayfa() {
+export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean } = {}) {
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
@@ -122,6 +122,7 @@ export default function DemoAnasayfa() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-purple-50/40 via-white to-white">
+      {!embedded && (<>
       {/* Top promo strip */}
       <div className="bg-gradient-to-r from-[#4a1d96] via-[#6B3480] to-[#4a1d96] text-white text-[12px] font-medium">
         <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
@@ -201,6 +202,7 @@ export default function DemoAnasayfa() {
           </div>
         </nav>
       </header>
+      </>)}
 
       {/* HERO + Side panels */}
       <section className="max-w-7xl mx-auto px-6 py-6">
@@ -445,7 +447,8 @@ export default function DemoAnasayfa() {
         </div>
       </section>
 
-      {/* Footer */}
+      {!embedded && (
+      /* Footer */
       <footer className="bg-gradient-to-b from-gray-900 to-black text-gray-300 mt-12">
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-5 gap-8">
@@ -498,6 +501,7 @@ export default function DemoAnasayfa() {
           </div>
         </div>
       </footer>
+      )}
     </div>
   );
 }
