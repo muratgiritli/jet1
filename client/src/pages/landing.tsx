@@ -17,7 +17,7 @@ const DemoAnasayfa = lazy(() => import("@/pages/demo-anasayfa"));
 function DemoAnasayfaEmbed() {
   return (
     <Suspense fallback={<div className="min-h-[400px] flex items-center justify-center text-gray-400 text-sm">Yükleniyor...</div>}>
-      <DemoAnasayfa embedded />
+      <DemoAnasayfa />
     </Suspense>
   );
 }

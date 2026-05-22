@@ -381,28 +381,15 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
 
       {/* Banner CTA - feeding calculator */}
       <section className="max-w-7xl mx-auto px-6 mb-12">
-        <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-3xl bg-gradient-to-br from-[#6B3480] via-purple-700 to-indigo-800 p-8 relative overflow-hidden min-h-[200px]">
-            <div className="absolute -right-4 -bottom-4 text-[150px] opacity-90 select-none">🐾</div>
-            <div className="relative z-10">
-              <div className="inline-block bg-[#FFC107] text-[#3b1378] text-[10px] font-black px-2 py-1 rounded-full">AKILLI ARAÇ</div>
-              <h3 className="mt-3 text-white font-black text-2xl leading-tight">Mama Hesaplayıcı</h3>
-              <p className="mt-2 text-purple-100 text-sm">Patinin ihtiyacı kadar mama. Tartı + yaş gir, sana özel hesap çıksın.</p>
-              <button className="mt-4 bg-white text-[#6B3480] font-bold text-sm px-5 py-2.5 rounded-xl hover:scale-105 transition-transform">
-                Hesapla →
-              </button>
-            </div>
-          </div>
-          <div className="rounded-3xl bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 p-8 relative overflow-hidden min-h-[200px]">
-            <div className="absolute -right-4 -bottom-4 text-[150px] opacity-90 select-none">🎁</div>
-            <div className="relative z-10">
-              <div className="inline-block bg-white text-orange-700 text-[10px] font-black px-2 py-1 rounded-full">YENİ ÜYELERE ÖZEL</div>
-              <h3 className="mt-3 text-white font-black text-2xl leading-tight">100 TL Hoşgeldin</h3>
-              <p className="mt-2 text-white/95 text-sm">İlk siparişinde kullanabileceğin 100 TL'lik hediye kupon seni bekliyor.</p>
-              <button className="mt-4 bg-white text-orange-600 font-bold text-sm px-5 py-2.5 rounded-xl hover:scale-105 transition-transform">
-                Üye Ol →
-              </button>
-            </div>
+        <div className="rounded-3xl bg-gradient-to-br from-[#6B3480] via-purple-700 to-indigo-800 p-8 relative overflow-hidden min-h-[200px]">
+          <div className="absolute -right-4 -bottom-4 text-[150px] opacity-90 select-none">🐾</div>
+          <div className="relative z-10 max-w-2xl">
+            <div className="inline-block bg-[#FFC107] text-[#3b1378] text-[10px] font-black px-2 py-1 rounded-full">AKILLI ARAÇ</div>
+            <h3 className="mt-3 text-white font-black text-2xl leading-tight">Mama Hesaplayıcı</h3>
+            <p className="mt-2 text-purple-100 text-sm">Patinin ihtiyacı kadar mama. Tartı + yaş gir, sana özel hesap çıksın.</p>
+            <button className="mt-4 bg-white text-[#6B3480] font-bold text-sm px-5 py-2.5 rounded-xl hover:scale-105 transition-transform">
+              Hesapla →
+            </button>
           </div>
         </div>
       </section>

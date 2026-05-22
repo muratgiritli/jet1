@@ -173,10 +173,16 @@ function AppShell() {
   return (
     <>
       {!isAdmin && !isDemo && <InstallBanner />}
-      {!isAdmin && !isDemo && <Header />}
-      {!isAdmin && !isDemo && location === "/" && <TopPromoBanner />}
+      {!isAdmin && !isDemo && (
+        <div className={location === "/" ? "md:hidden" : ""}>
+          <Header />
+          {location === "/" && <TopPromoBanner />}
+        </div>
+      )}
       <ErrorBoundary><Router /></ErrorBoundary>
-      {!isAdmin && !isDemo && location === "/" && <Footer />}
+      {!isAdmin && !isDemo && location === "/" && (
+        <div className="md:hidden"><Footer /></div>
+      )}
       {!isAdmin && !isDemo && <FloatingCartBar />}
       {!isAdmin && !isDemo && <BottomTabBar />}
     </>
