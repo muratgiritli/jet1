@@ -1,11 +1,7 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
 import { useState, useEffect, useRef } from "react";
-import { X, Download } from "lucide-react";
+import { X } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
-import defaultBanner from "@assets/bonus1_1779539150351.avif";
-
-type TopBanner = { enabled: boolean; image: string; link: string };
+import bannerImg from "@assets/bonus1_1779545337524.avif";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -16,15 +12,13 @@ type GuideType = null | "ios-safari" | "ios-other-browser" | "desktop-no-prompt"
 
 export default function TopPromoBanner() {
   const { isLoggedIn } = useCustomer();
-  const { data } = useQuery<TopBanner>({ queryKey: ["/api/public/top-banner"] });
   const [closed, setClosed] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
-  const [canInstall, setCanInstall] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
   const [isIOSSafari, setIsIOSSafari] = useState(false);
   const [guide, setGuide] = useState<GuideType>(null);
-  const [isStandalone, setIsStandalone] = useState(false);
 
   useEffect(() => {
     if (sessionStorage.getItem("topBannerClosed") === "1") setClosed(true);
@@ -38,25 +32,18 @@ export default function TopPromoBanner() {
     const ios = /iPhone|iPad|iPod/i.test(ua);
     setIsIOS(ios);
     setIsIOSSafari(ios && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/i.test(ua));
-    if (ios) setCanInstall(true);
 
     const handler = (e: Event) => {
       e.preventDefault();
       deferredPrompt.current = e as BeforeInstallPromptEvent;
-      setCanInstall(true);
     };
     window.addEventListener("beforeinstallprompt", handler);
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
-  if (isLoggedIn || !data || !data.enabled || closed || isStandalone) return null;
+  if (closed || isStandalone) return null;
 
-  const img = data.image || defaultBanner;
-  const link = data.link || "/giris";
-
-  const handleInstall = async (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
+  const handleInstall = async () => {
     if (isIOS) {
       setGuide(isIOSSafari ? "ios-safari" : "ios-other-browser");
       return;
@@ -74,7 +61,8 @@ export default function TopPromoBanner() {
     }
   };
 
-  const handleClose = () => {
+  const handleClose = (e: React.MouseEvent) => {
+    e.stopPropagation();
     setClosed(true);
     sessionStorage.setItem("topBannerClosed", "1");
   };
@@ -82,28 +70,19 @@ export default function TopPromoBanner() {
   return (
     <>
       <div className="relative w-full bg-black" data-testid="banner-top-promo">
-        <Link href={link}>
-          <a className="block w-full max-w-7xl mx-auto">
-            <img
-              src={img}
-              alt="Yeni üye olana 100 TL bonus"
-              className="w-full h-auto block cursor-pointer"
-              loading="eager"
-            />
-          </a>
-        </Link>
-
-        {canInstall && (
-          <button
-            type="button"
-            onClick={handleInstall}
-            className="absolute bottom-1.5 right-1.5 md:bottom-3 md:right-3 flex items-center gap-1 md:gap-1.5 px-2 py-1 md:px-3 md:py-1.5 rounded-md md:rounded-lg bg-white text-[#6B3480] text-[10px] md:text-xs font-bold shadow-lg active:scale-95 transition-transform"
-            data-testid="btn-install-from-banner"
-          >
-            <Download className="w-3 h-3 md:w-3.5 md:h-3.5" />
-            <span>Uygulamayı İndir</span>
-          </button>
-        )}
+        <button
+          type="button"
+          onClick={handleInstall}
+          className="block w-full max-w-7xl mx-auto cursor-pointer"
+          data-testid="btn-install-banner"
+        >
+          <img
+            src={bannerImg}
+            alt="JETGO Uygulamasını İndir"
+            className="w-full h-auto block"
+            loading="eager"
+          />
+        </button>
 
         <button
           type="button"
@@ -156,7 +135,7 @@ export default function TopPromoBanner() {
                 <div className="space-y-2 text-sm text-gray-700">
                   <p>
                     iPhone'da uygulama indirmek için <span className="font-semibold">Safari</span>{" "}
-                    tarayıcısı kullanılmalı. Şu an Chrome / başka tarayıcı kullanıyorsunuz.
+                    tarayıcısı kullanılmalı.
                   </p>
                   <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-[13px]">
                     <p className="font-semibold mb-1">Yapılacaklar:</p>

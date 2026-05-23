@@ -9,6 +9,7 @@ import { CustomerProvider } from "@/contexts/CustomerContext";
 import BottomTabBar from "@/components/BottomTabBar";
 import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
+import TopPromoBanner from "@/components/TopPromoBanner";
 import Footer from "@/components/Footer";
 import SocialProofToast from "@/components/SocialProofToast";
 const Landing = lazy(() => import("@/pages/landing"));
@@ -173,6 +174,7 @@ function AppShell() {
       {!isAdmin && !isDemo && (
         <div className={location === "/" ? "md:hidden" : ""}>
           <Header />
+          {location === "/" && <TopPromoBanner />}
         </div>
       )}
       <ErrorBoundary><Router /></ErrorBoundary>
