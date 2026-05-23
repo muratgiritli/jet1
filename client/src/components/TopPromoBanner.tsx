@@ -11,6 +11,7 @@ type GuideType = null | "ios-safari" | "ios-other-browser" | "desktop-no-prompt"
 export default function TopPromoBanner() {
   const [closed, setClosed] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [isAndroid, setIsAndroid] = useState(false);
 
   const deferredPrompt = useRef<BeforeInstallPromptEvent | null>(null);
   const [isIOS, setIsIOS] = useState(false);
@@ -29,6 +30,7 @@ export default function TopPromoBanner() {
     const ios = /iPhone|iPad|iPod/i.test(ua);
     setIsIOS(ios);
     setIsIOSSafari(ios && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/i.test(ua));
+    setIsAndroid(/Android/i.test(ua));
 
     const handler = (e: Event) => {
       e.preventDefault();
@@ -38,7 +40,7 @@ export default function TopPromoBanner() {
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
-  if (closed || isStandalone) return null;
+  if (closed || isStandalone || isAndroid) return null;
 
   const handleInstall = async () => {
     if (isIOS) {
