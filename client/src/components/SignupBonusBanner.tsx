@@ -34,7 +34,12 @@ export default function SignupBonusBanner() {
     return () => clearTimeout(t);
   }, [countdown]);
 
-  if (isLoggedIn || dismissed) return null;
+  const isStandaloneMode =
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true);
+
+  if (isLoggedIn || dismissed || isStandaloneMode) return null;
 
   const formatPhone = (val: string) => {
     const digits = val.replace(/\D/g, "");

@@ -3901,6 +3901,42 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
     const customer = await storage.updateCustomer(customerId, updateData);
     if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
+
+    if (updateData.address) {
+      try {
+        const normalizeAddr = (s: string) =>
+          s
+            .toLocaleLowerCase("tr-TR")
+            .replace(/ı/g, "i").replace(/ş/g, "s").replace(/ğ/g, "g")
+            .replace(/ü/g, "u").replace(/ö/g, "o").replace(/ç/g, "c")
+            .replace(/[^a-z0-9]+/g, "")
+            .trim();
+        const myNorm = normalizeAddr(updateData.address);
+        if (myNorm.length >= 12) {
+          const dupCheck = await sharedPool.query(
+            `SELECT 1 FROM customers
+             WHERE id <> $1
+               AND address IS NOT NULL
+               AND regexp_replace(
+                     translate(lower(address), 'ışğüöç', 'isguoc'),
+                     '[^a-z0-9]+', '', 'g'
+                   ) = $2
+             LIMIT 1`,
+            [customerId, myNorm]
+          );
+          if (dupCheck.rows.length > 0) {
+            await sharedPool.query(
+              "UPDATE coupons SET is_active = false WHERE customer_id = $1 AND code LIKE 'HG%' AND is_active = true",
+              [customerId]
+            );
+            console.log(`[fraud-check] Duplicate address detected for customer ${customerId}, welcome coupon deactivated`);
+          }
+        }
+      } catch (e) {
+        console.error("[fraud-check] address dedupe failed:", e);
+      }
+    }
+
     res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, email: customer.email, tcNo: customer.tcNo, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
   });
 
