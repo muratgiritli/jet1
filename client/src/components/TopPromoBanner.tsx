@@ -40,7 +40,7 @@ export default function TopPromoBanner() {
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
-  if (closed || isStandalone || isAndroid) return null;
+  if (closed || isStandalone) return null;
 
   const handleInstall = async () => {
     if (isIOS) {
