@@ -1,7 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X } from "lucide-react";
-import { useCustomer } from "@/contexts/CustomerContext";
-import bannerImg from "@assets/bonus1_1779545337524.avif";
+import { X, Download, Smartphone } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
@@ -11,7 +9,6 @@ interface BeforeInstallPromptEvent extends Event {
 type GuideType = null | "ios-safari" | "ios-other-browser" | "desktop-no-prompt";
 
 export default function TopPromoBanner() {
-  const { isLoggedIn } = useCustomer();
   const [closed, setClosed] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
@@ -61,38 +58,64 @@ export default function TopPromoBanner() {
     }
   };
 
-  const handleClose = (e: React.MouseEvent) => {
-    e.stopPropagation();
+  const handleClose = () => {
     setClosed(true);
     sessionStorage.setItem("topBannerClosed", "1");
   };
 
   return (
     <>
-      <div className="relative w-full bg-black" data-testid="banner-top-promo">
-        <button
-          type="button"
-          onClick={handleInstall}
-          className="block w-full max-w-7xl mx-auto cursor-pointer"
-          data-testid="btn-install-banner"
-        >
-          <img
-            src={bannerImg}
-            alt="JETGO Uygulamasını İndir"
-            className="w-full h-auto block"
-            loading="eager"
-          />
-        </button>
+      <div
+        className="relative w-full overflow-hidden"
+        style={{
+          background:
+            "linear-gradient(110deg, #4A1A6B 0%, #6B2E94 45%, #8B3FB8 100%)",
+        }}
+        data-testid="banner-top-promo"
+      >
+        <div
+          className="absolute inset-0 opacity-20 pointer-events-none"
+          style={{
+            backgroundImage:
+              "radial-gradient(circle at 20% 30%, #FFD700 1.5px, transparent 2px), radial-gradient(circle at 70% 60%, #FF6B9D 1.5px, transparent 2px), radial-gradient(circle at 85% 20%, #FFD700 1px, transparent 1.5px), radial-gradient(circle at 40% 80%, #FFD700 1px, transparent 1.5px), radial-gradient(circle at 10% 70%, #FF6B9D 1.2px, transparent 1.8px)",
+            backgroundSize: "180px 120px",
+          }}
+        />
 
-        <button
-          type="button"
-          onClick={handleClose}
-          className="absolute top-1 right-1 md:top-2 md:right-2 bg-black/50 hover:bg-black/70 text-white rounded-full p-1 transition-colors"
-          aria-label="Kapat"
-          data-testid="button-close-top-banner"
-        >
-          <X className="w-3 h-3 md:w-4 md:h-4" />
-        </button>
+        <div className="relative flex items-center gap-2.5 px-3 py-2.5 max-w-7xl mx-auto">
+          <div className="shrink-0 w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/20">
+            <Smartphone className="w-5 h-5 text-white" strokeWidth={2.4} />
+          </div>
+
+          <div className="flex-1 min-w-0 pr-7">
+            <div className="text-white font-bold text-[13px] leading-tight">
+              JETGO Uygulamasını İndir
+            </div>
+            <div className="text-white/85 text-[11px] leading-tight mt-0.5">
+              Üye ol, <span className="font-bold text-yellow-300">100 TL bonus</span> kazan
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={handleInstall}
+            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white text-[#6B2E94] text-xs font-extrabold shadow-md active:scale-95 transition-transform"
+            data-testid="btn-install-banner"
+          >
+            <Download className="w-3.5 h-3.5" strokeWidth={2.8} />
+            <span>İNDİR</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleClose}
+            className="absolute top-1 right-1.5 text-white/70 hover:text-white p-0.5"
+            aria-label="Kapat"
+            data-testid="button-close-top-banner"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
       </div>
 
       {guide && (
