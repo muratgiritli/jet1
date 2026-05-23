@@ -89,7 +89,7 @@ export default function TopPromoBanner() {
 
           <div className="flex-1 min-w-0 pr-7">
             <div className="text-white font-bold text-[13px] leading-tight">
-              Uygulamadan Hemen Üye Ol
+              Uygulamayı İndir ve Hemen Üye Ol
             </div>
             <div className="text-white/85 text-[11px] leading-tight mt-0.5">
               <span className="font-bold text-yellow-300">100 TL bonus</span> hesabında...
