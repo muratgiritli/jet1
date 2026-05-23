@@ -89,10 +89,10 @@ export default function TopPromoBanner() {
 
           <div className="flex-1 min-w-0 pr-7">
             <div className="text-white font-bold text-[13px] leading-tight">
-              JETGO Uygulamasını İndir
+              Uygulamadan Hemen Üye Ol
             </div>
             <div className="text-white/85 text-[11px] leading-tight mt-0.5">
-              Üye ol, <span className="font-bold text-yellow-300">100 TL bonus</span> kazan
+              <span className="font-bold text-yellow-300">100 TL bonus</span> hesabında...
             </div>
           </div>
 
