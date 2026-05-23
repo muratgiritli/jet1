@@ -11,7 +11,6 @@ import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
 import TopPromoBanner from "@/components/TopPromoBanner";
 import Footer from "@/components/Footer";
-import InstallBanner from "@/components/InstallBanner";
 import SocialProofToast from "@/components/SocialProofToast";
 const Landing = lazy(() => import("@/pages/landing"));
 
@@ -172,7 +171,6 @@ function AppShell() {
 
   return (
     <>
-      {!isAdmin && !isDemo && <InstallBanner />}
       {!isAdmin && !isDemo && (
         <div className={location === "/" ? "md:hidden" : ""}>
           <Header />
