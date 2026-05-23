@@ -3,7 +3,7 @@ import { Link } from "wouter";
 import { useState, useEffect, useRef } from "react";
 import { X, Download } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
-import defaultBanner from "@assets/ust_banner_1778677072320.png";
+import defaultBanner from "@assets/bonus1_1779539150351.avif";
 
 type TopBanner = { enabled: boolean; image: string; link: string };
 
