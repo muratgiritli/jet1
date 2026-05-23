@@ -69,7 +69,7 @@ export default function TopPromoBanner() {
         className="relative w-full overflow-hidden"
         style={{
           background:
-            "linear-gradient(110deg, #4A1A6B 0%, #6B2E94 45%, #8B3FB8 100%)",
+            "linear-gradient(110deg, #8B0000 0%, #C81E1E 45%, #E63946 100%)",
         }}
         data-testid="banner-top-promo"
       >
@@ -99,7 +99,7 @@ export default function TopPromoBanner() {
           <button
             type="button"
             onClick={handleInstall}
-            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white text-[#6B2E94] text-xs font-extrabold shadow-md active:scale-95 transition-transform"
+            className="shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white text-[#C81E1E] text-xs font-extrabold shadow-md active:scale-95 transition-transform"
             data-testid="btn-install-banner"
           >
             <Download className="w-3.5 h-3.5" strokeWidth={2.8} />
