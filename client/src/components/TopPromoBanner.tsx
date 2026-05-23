@@ -84,12 +84,12 @@ export default function TopPromoBanner() {
           }}
         />
 
-        <div className="relative flex items-center gap-2.5 px-3 py-2.5 max-w-7xl mx-auto">
+        <div className="relative flex items-center gap-2.5 px-3 py-2.5 pr-7 max-w-7xl mx-auto">
           <div className="shrink-0 w-9 h-9 rounded-xl bg-white/15 backdrop-blur-sm flex items-center justify-center ring-1 ring-white/20">
             <Smartphone className="w-5 h-5 text-white" strokeWidth={2.4} />
           </div>
 
-          <div className="flex-1 min-w-0 pr-7">
+          <div className="flex-1 min-w-0">
             <div className="text-white font-bold text-[13px] leading-tight">
               Uygulamayı İndir ve Hemen Üye Ol
             </div>
@@ -111,7 +111,7 @@ export default function TopPromoBanner() {
           <button
             type="button"
             onClick={handleClose}
-            className="absolute top-1 right-1.5 text-white/70 hover:text-white p-0.5"
+            className="absolute top-1/2 -translate-y-1/2 right-1 text-white/70 hover:text-white p-1"
             aria-label="Kapat"
             data-testid="button-close-top-banner"
           >
