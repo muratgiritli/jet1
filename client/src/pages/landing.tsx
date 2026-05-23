@@ -964,6 +964,10 @@ function WelcomeBonusPopup() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     if (isLoggedIn) return;
+    const standalone =
+      window.matchMedia?.("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true;
+    if (standalone) return;
     if (sessionStorage.getItem("welcome_bonus_dismissed") === "1") return;
     const t = setTimeout(() => setOpen(true), 600);
     return () => clearTimeout(t);

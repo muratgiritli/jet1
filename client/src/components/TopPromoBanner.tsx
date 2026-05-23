@@ -16,7 +16,12 @@ export default function TopPromoBanner() {
     if (sessionStorage.getItem("topBannerClosed") === "1") setClosed(true);
   }, []);
 
-  if (isLoggedIn || !data || !data.enabled || closed) return null;
+  const isStandalone =
+    typeof window !== "undefined" &&
+    (window.matchMedia?.("(display-mode: standalone)").matches ||
+      (window.navigator as any).standalone === true);
+
+  if (isLoggedIn || !data || !data.enabled || closed || isStandalone) return null;
 
   const img = data.image || defaultBanner;
   const link = data.link || "/giris";
