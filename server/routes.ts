@@ -2258,8 +2258,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       }
     }
 
-    let STANDARD_MIN_ORDER = 700;
-    let STANDARD_FREE_SHIP_LIMIT = 1500;
+    let STANDARD_MIN_ORDER = 0;
+    let STANDARD_FREE_SHIP_LIMIT = 1000;
     let STANDARD_SHIP_FEE = 89;
     let matchedNeighborhood: string | null = null;
     try {
@@ -2288,17 +2288,12 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         }
       }
       if (bestMatch) {
-        STANDARD_MIN_ORDER = bestMatch.min_order;
         STANDARD_FREE_SHIP_LIMIT = bestMatch.free_shipping_limit;
         STANDARD_SHIP_FEE = bestMatch.shipping_fee;
         matchedNeighborhood = bestMatch.name;
       }
     } catch (e) {
       console.error("Neighborhood lookup error:", e);
-    }
-    if (!isCampaignOrder && orderData.subtotal < STANDARD_MIN_ORDER) {
-      const where = matchedNeighborhood ? ` (${matchedNeighborhood})` : "";
-      return res.status(400).json({ message: `Minimum sipariş tutarı ${STANDARD_MIN_ORDER} TL'dir${where}.` });
     }
     if (!isCampaignOrder) {
       orderData.shipping = orderData.subtotal >= STANDARD_FREE_SHIP_LIMIT ? 0 : STANDARD_SHIP_FEE;

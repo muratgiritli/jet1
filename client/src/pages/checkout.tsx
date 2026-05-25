@@ -1794,31 +1794,27 @@ export default function Checkout() {
                     <p className="text-[12px] text-red-500 text-center mt-2">{orderError}</p>
                   )}
 
-                  {!effectiveMinReached && selectedProducts.length > 0 && !hasCampaignItems && (
+                  {subtotal > 0 && subtotal < CONFIG.shipLimit && !hasCampaignItems && (
                     <div
                       className="mt-3 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4"
-                      data-testid="alert-min-order"
-                      role="alert"
+                      data-testid="alert-free-shipping-info"
+                      role="status"
                     >
                       <div className="flex items-start gap-3">
                         <div className="shrink-0 w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
                           <Package className="w-4 h-4 text-amber-600 dark:text-amber-400" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-amber-900 dark:text-amber-200" data-testid="text-min-warning-title">
-                            Minimum Sipariş: {CONFIG.minLimit} TL
+                          <p className="text-sm font-bold text-amber-900 dark:text-amber-200" data-testid="text-free-ship-title">
+                            {CONFIG.shipLimit} TL ve üstü siparişlerde getirme ücreti yoktur
                           </p>
-                          <p className="text-xs text-amber-800/90 dark:text-amber-200/90 mt-1 leading-relaxed" data-testid="text-min-warning-msg">
-                            JETGO için minimum sipariş tutarı <strong>{CONFIG.minLimit} TL</strong>'dir. Sepetinize{" "}
-                            <strong className="text-amber-700 dark:text-amber-300">
-                              {(CONFIG.minLimit - subtotal).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                            </strong>{" "}
-                            değerinde ürün daha eklemeniz gerekmektedir.
+                          <p className="text-xs text-amber-800/90 dark:text-amber-200/90 mt-1 leading-relaxed" data-testid="text-free-ship-msg">
+                            İsterseniz ürün ekleyebilirsiniz.
                           </p>
                           <Link href={categoryHref}>
                             <a
                               className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:underline"
-                              data-testid="link-min-warning-category"
+                              data-testid="link-free-ship-category"
                             >
                               {categoryLabel}
                               <ArrowRight className="w-3.5 h-3.5" />
