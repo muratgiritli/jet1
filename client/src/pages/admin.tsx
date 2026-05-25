@@ -1243,6 +1243,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       products = products.filter((p) => p.skt);
     } else if (quickFilter === "low-stock") {
       products = products.filter((p) => p.stock > 0 && p.stock <= 3);
+    } else if (quickFilter === "no-image") {
+      products = products.filter((p) => p.isActive && !p.img);
     }
     if (sortMode === "skt-asc") {
       const parseSkt = (skt: string | null) => {
@@ -3645,6 +3647,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 { id: "preorder", label: "Ön Sipariş", icon: "🕐" },
                 { id: "campaign", label: "Kampanya", icon: "🏷️" },
                 { id: "has-skt", label: "SKT'li", icon: "📅" },
+                { id: "no-image", label: "Resimsiz (Aktif)", icon: "🖼️" },
               ].map((f) => (
                 <button
                   key={f.id}
@@ -3692,6 +3695,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     "preorder": "Ön Sipariş",
                     "campaign": "Kampanya",
                     "has-skt": "SKT'li",
+                    "no-image": "Resimsiz (Aktif)",
                   };
                   exportProductsPdf(
                     filteredProducts,
