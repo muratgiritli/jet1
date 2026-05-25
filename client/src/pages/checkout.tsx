@@ -1744,7 +1744,7 @@ export default function Checkout() {
                     )}
                     {!hasPreorderItems && (
                     <div className="flex justify-between gap-3 flex-wrap">
-                      <span className="text-muted-foreground">Teslimat Ücreti</span>
+                      <span className="text-muted-foreground">Getirmesi</span>
                       <span className="font-medium" data-testid="text-shipping">
                         {effectiveShipping === 0 ? (
                           <span className="text-chart-2">Ücretsiz</span>
