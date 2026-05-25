@@ -511,8 +511,8 @@ export default function Checkout() {
     return best;
   }, [selectedProducts]);
   const animalLabels: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", akvaryum: "Akvaryum", kemirgen: "Kemirgen" };
-  const categoryHref = dominantAnimal ? `/kategori/${dominantAnimal}` : "/";
-  const categoryLabel = dominantAnimal ? `${animalLabels[dominantAnimal] || dominantAnimal} Kategorisine Git` : "Markete Git";
+  const categoryHref = dominantAnimal ? `/kategori/${dominantAnimal}` : "/kategori";
+  const categoryLabel = dominantAnimal ? `${animalLabels[dominantAnimal] || dominantAnimal} Kategorisine Git` : "Kategorilere Git";
 
   const campaignShipping = hasCampaignItems ? CONFIG.shipFee : stdShipping;
   const paymentDiscount = hasCampaignItems ? 0 : discount;
