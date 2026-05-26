@@ -1089,7 +1089,7 @@ export default function Landing() {
 
   const seoNode = (
     <SEO
-      title="Atakum Petshop & Samsun Pet Shop - Aynı Gün Teslimat | JETGO"
+      title="1 Saat içinde Kapında"
       description="Atakum, Samsun, İlkadım, Canik, Tekkeköy'e aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu, ödül maması kapıda ödeme. JETGO Pet Shop Samsun: 09:00-21:00 hizmet, +90 850 840 39 59. Mahalleye en yakın petshop."
       keywords="atakum petshop, samsun petshop, samsun pet shop, atakum pet shop, samsun kedi maması, samsun köpek maması, samsun kedi kumu, atakum aynı gün petshop teslimatı, samsun acil kedi kumu, ilkadım petshop, canik petshop, tekkeköy petshop, kapıda ödeme petshop samsun, denizevleri petshop, güzelyalı petshop, kurupelit petshop, atakent petshop, mimar sinan petshop"
       canonical={`${SITE_DOMAIN}/`}
