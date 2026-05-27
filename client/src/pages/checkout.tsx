@@ -309,16 +309,6 @@ export default function Checkout() {
     }
   };
 
-  useEffect(() => {
-    if (authAutoShown) return;
-    if (isLoggedIn) { setAuthAutoShown(true); return; }
-    if (selectedProducts.length === 0) return;
-    setShowAuthModal(true);
-    setAuthStep("phone");
-    setAuthErrors({});
-    setAuthAutoShown(true);
-  }, [isLoggedIn, selectedProducts.length, authAutoShown]);
-
   const lookupCustomer = useCallback(async (phone: string) => {
     if (isLoggedIn) return;
     const normalized = phone.replace(/\D/g, "");
@@ -379,6 +369,16 @@ export default function Checkout() {
     campaignCartIds,
     isPreorderProduct,
   } = useCart();
+
+  useEffect(() => {
+    if (authAutoShown) return;
+    if (isLoggedIn) { setAuthAutoShown(true); return; }
+    if (selectedProducts.length === 0) return;
+    setShowAuthModal(true);
+    setAuthStep("phone");
+    setAuthErrors({});
+    setAuthAutoShown(true);
+  }, [isLoggedIn, selectedProducts.length, authAutoShown]);
 
   const [orderError, setOrderError] = useState("");
   const [orderNote, setOrderNote] = useState("");
