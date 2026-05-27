@@ -145,7 +145,7 @@ export default function BrandsPage() {
                   data-testid={`card-brand-${brand.brandSlug}`}
                 >
                   <span className="text-white font-bold text-base tracking-wide" data-testid={`text-brand-name-${brand.brandSlug}`}>
-                    {brand.brandName}
+                    {animalSlug === "veteriner" ? "" : brand.brandName}
                   </span>
                 </div>
               </Link>
