@@ -313,9 +313,11 @@ export default function CategoryPage() {
               if (animalSlug === "kopek" && sub.slug === "mama-markalari") return false;
               return true;
             }).map((sub, i) => {
-              const href = sub.hasBrands
-                ? (sub.slug === "acik-mama" ? `/acik-mama/${animalSlug}` : `/kategori/${animalSlug}/${sub.slug}`)
-                : `/siparis/${animalSlug}/${sub.slug}/${sub.slug}`;
+              const href = animalSlug === "veteriner"
+                ? `/veteriner/${sub.slug}`
+                : sub.hasBrands
+                  ? (sub.slug === "acik-mama" ? `/acik-mama/${animalSlug}` : `/kategori/${animalSlug}/${sub.slug}`)
+                  : `/siparis/${animalSlug}/${sub.slug}/${sub.slug}`;
 
               const icon = SUBCATEGORY_ICONS[sub.slug] || "📦";
 

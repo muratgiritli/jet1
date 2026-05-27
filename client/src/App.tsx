@@ -47,6 +47,7 @@ const AdminPage = lazy(() => import("@/pages/admin"));
 const ProductDetailPage = lazy(() => import("@/pages/product-detail"));
 const ProductDetailDemoPage = lazy(() => import("@/pages/product-detail-demo"));
 const AcikMamaPage = lazy(() => import("@/pages/acik-mama"));
+const VeterinerSubPage = lazy(() => import("@/pages/veteriner-sub"));
 const OrderTrackingPage = lazy(() => import("@/pages/order-tracking"));
 const FavoritesPage = lazy(() => import("@/pages/favorites"));
 const AuthPage = lazy(() => import("@/pages/auth"));
@@ -100,6 +101,7 @@ function Router() {
         <Route path="/" component={Landing} />
         <Route path="/kategori" component={CategoriesOverview} />
         <Route path="/acik-mama/:animal" component={AcikMamaPage} />
+        <Route path="/veteriner/:subcategory" component={VeterinerSubPage} />
         <Route path="/urun/:id/:slug?" component={ProductDetailPage} />
         <Route path="/urun-demo/:id/:slug?" component={ProductDetailDemoPage} />
         <Route path="/siparis/:animal/:subcategory/:brand" component={BrandProductsPage} />
