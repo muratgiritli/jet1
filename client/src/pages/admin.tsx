@@ -1405,11 +1405,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const createSubcategoryMutation = useMutation({
     mutationFn: async (data: any) => {
-      await apiRequest("POST", "/api/admin/subcategories", data);
+      const res = await apiRequest("POST", "/api/admin/subcategories", data);
+      return await res.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/subcategories"] });
       toast({ title: "Alt kategori eklendi" });
+    },
+    onError: (err: any) => {
+      toast({ title: "Alt kategori eklenemedi", description: err?.message || "Hata oluştu (aynı slug olabilir).", variant: "destructive" });
     },
   });
 
