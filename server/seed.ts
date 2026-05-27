@@ -478,7 +478,16 @@ const KEMIRGEN_KUS_BRAND_DATA: BrandProductData[] = [
   { brandName: "Bakım ve Aksesuar", brandSlug: "bakim-aksesuar", animal: "kus", subcategory: "bakim-aksesuar", products: [] },
 ];
 
-const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, ECONATURE_KOPEK, FELICIA_KOPEK, ENJOY_KOPEK, LAVITAL_KOPEK, PROCHOICE_KOPEK, PRONATURE_KOPEK, PROPERFORMANCE_KOPEK, REFLEX_KOPEK, REFLEX_PLUS_KOPEK, WANPY_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX, ...KEMIRGEN_KUS_BRAND_DATA];
+const VETERINER_BRAND_DATA: BrandProductData[] = [
+  { brandName: "Pro Plan", brandSlug: "pro-plan", animal: "veteriner", subcategory: "veteriner-mama", products: [] },
+  { brandName: "Hill's", brandSlug: "hills", animal: "veteriner", subcategory: "veteriner-mama", products: [] },
+  { brandName: "Royal Canin", brandSlug: "royal-canin", animal: "veteriner", subcategory: "veteriner-mama", products: [] },
+  { brandName: "Brit", brandSlug: "brit", animal: "veteriner", subcategory: "veteriner-mama", products: [] },
+  { brandName: "Virbac", brandSlug: "virbac", animal: "veteriner", subcategory: "veteriner-mama", products: [] },
+  { brandName: "Spectrum", brandSlug: "spectrum", animal: "veteriner", subcategory: "veteriner-mama", products: [] },
+];
+
+const ALL_BRAND_DATA = [...SEED_BRAND_DATA, ...EXTRA_BRAND_DATA, KEDI_KUMU_DATA, YAS_MAMA_DATA, MALT_MACUN_DATA, ODUL_DATA, BAKIM_SAGLIK_DATA, KEDI_TUVALETI_DATA, KEDI_TASIMA_DATA, KEDI_KONSERVE_DATA, ECONATURE_KOPEK, FELICIA_KOPEK, ENJOY_KOPEK, LAVITAL_KOPEK, PROCHOICE_KOPEK, PRONATURE_KOPEK, PROPERFORMANCE_KOPEK, REFLEX_KOPEK, REFLEX_PLUS_KOPEK, WANPY_KOPEK, KOPEK_ACIK_MAMA_PROPLAN, KOPEK_ACIK_MAMA_HILLS, KOPEK_ACIK_MAMA_ROYALCANIN, KOPEK_ACIK_MAMA_REFLEX, ...KEMIRGEN_KUS_BRAND_DATA, ...VETERINER_BRAND_DATA];
 
 const KOPEK_CROSS_SELL_SECTIONS = [
   {
@@ -650,6 +659,10 @@ const SUBCATEGORY_SEED_DATA = [
   { animal: "akvaryum", slug: "akvaryum-arka-fon", displayName: "Akvaryum\nArka Fon", color: "#1E88E5", hasBrands: false, sortOrder: 16 },
   { animal: "akvaryum", slug: "akvaryum-ekipmanlari", displayName: "Akvaryum\nEkipmanları", color: "#424242", hasBrands: false, sortOrder: 17 },
   { animal: "akvaryum", slug: "akvaryum-aydinlatma", displayName: "Akvaryum\nAydınlatma", color: "#FBC02D", hasBrands: false, sortOrder: 18 },
+  { animal: "veteriner", slug: "veteriner-mama", displayName: "Veteriner\nMama", color: "#E53935", hasBrands: true, sortOrder: 1 },
+  { animal: "veteriner", slug: "veteriner-kuru-mama", displayName: "Veteriner\nKuru Mama", color: "#1976D2", hasBrands: true, sortOrder: 2 },
+  { animal: "veteriner", slug: "veteriner-yas-mama", displayName: "Veteriner\nYaş Mama", color: "#7B1FA2", hasBrands: true, sortOrder: 3 },
+  { animal: "veteriner", slug: "veteriner-konserve", displayName: "Veteriner\nKonserve", color: "#388E3C", hasBrands: true, sortOrder: 4 },
 ];
 
 async function seedSubcategories() {
