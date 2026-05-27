@@ -1219,64 +1219,6 @@ function SecuritySection({ customer, logout, toast }: { customer: any; logout: (
         </CardContent>
       </Card>
 
-      <Card className="rounded-2xl border-red-100 shadow-sm">
-        <CardContent className="p-5 space-y-4">
-          <h2 className="font-bold text-base text-red-600 flex items-center gap-2">
-            <UserX className="w-4 h-4" /> Hesabı Sil
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            KVKK kapsamında hesabınızı kalıcı olarak silebilirsiniz. Bu işlem geri alınamaz. Tüm kişisel verileriniz, adresleriniz, evcil hayvan bilgileriniz ve para puanlarınız silinir.
-          </p>
-          {!showDeleteConfirm ? (
-            <Button
-              variant="outline"
-              className="w-full border-red-200 text-red-600 hover:bg-red-50 rounded-xl"
-              onClick={() => setShowDeleteConfirm(true)}
-              data-testid="btn-show-delete-account"
-            >
-              <AlertTriangle className="w-4 h-4 mr-1" /> Hesabımı Sil
-            </Button>
-          ) : (
-            <div className="space-y-3 bg-red-50 rounded-xl p-4">
-              <p className="text-xs text-red-700 font-medium">Güvenlik doğrulaması: Mevcut şifrenizi ve onay metnini girin.</p>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-red-700">Mevcut Şifre</label>
-                <Input
-                  type="password"
-                  value={deletePassword}
-                  onChange={(e) => setDeletePassword(e.target.value)}
-                  placeholder="Şifreniz"
-                  className="rounded-xl border-red-200"
-                  data-testid="input-delete-password"
-                />
-              </div>
-              <div className="space-y-1">
-                <label className="text-xs font-medium text-red-700">Onay: "HESABIMI SİL" yazın</label>
-                <Input
-                  value={deleteConfirmText}
-                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder='HESABIMI SİL'
-                  className="rounded-xl border-red-200"
-                  data-testid="input-delete-confirm"
-                />
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  variant="destructive"
-                  className="flex-1 rounded-xl"
-                  disabled={deleteConfirmText !== "HESABIMI SİL" || !deletePassword || deleteAccountMutation.isPending}
-                  onClick={() => deleteAccountMutation.mutate()}
-                  data-testid="btn-confirm-delete-account"
-                >
-                  {deleteAccountMutation.isPending ? <Loader2 className="w-4 h-4 mr-1 animate-spin" /> : <Trash2 className="w-4 h-4 mr-1" />}
-                  Kalıcı Olarak Sil
-                </Button>
-                <Button variant="outline" className="rounded-xl" onClick={() => { setShowDeleteConfirm(false); setDeleteConfirmText(""); setDeletePassword(""); }}>Vazgeç</Button>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
     </div>
   );
 }
