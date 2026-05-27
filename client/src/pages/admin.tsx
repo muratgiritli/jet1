@@ -1168,6 +1168,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const { data: categories = [] } = useQuery<BrandCategory[]>({
     queryKey: ["/api/brand-categories"],
+    queryFn: () => fetch("/api/brand-categories", { cache: "no-store" }).then(r => r.json()),
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: allProducts = [], isLoading } = useQuery<Product[]>({
@@ -6454,7 +6457,12 @@ function NotificationsSection() {
   const { data: customers = [] } = useQuery<any[]>({ queryKey: ["/api/admin/customers"] });
   const { data: orders = [] } = useQuery<any[]>({ queryKey: ["/api/admin/orders"] });
   const { data: allProducts = [] } = useQuery<Product[]>({ queryKey: ["/api/products"] });
-  const { data: categories = [] } = useQuery<BrandCategory[]>({ queryKey: ["/api/brand-categories"] });
+  const { data: categories = [] } = useQuery<BrandCategory[]>({
+    queryKey: ["/api/brand-categories"],
+    queryFn: () => fetch("/api/brand-categories", { cache: "no-store" }).then(r => r.json()),
+    staleTime: 0,
+    gcTime: 0,
+  });
   const [message, setMessage] = useState("");
   const [selectedPhones, setSelectedPhones] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
@@ -8603,9 +8611,15 @@ function ReviewManagementSection() {
   });
   const { data: categories = [] } = useQuery<BrandCategory[]>({
     queryKey: ["/api/brand-categories"],
+    queryFn: () => fetch("/api/brand-categories", { cache: "no-store" }).then(r => r.json()),
+    staleTime: 0,
+    gcTime: 0,
   });
   const { data: subcats = [] } = useQuery<Subcategory[]>({
     queryKey: ["/api/subcategories"],
+    queryFn: () => fetch("/api/subcategories", { cache: "no-store" }).then(r => r.json()),
+    staleTime: 0,
+    gcTime: 0,
   });
   const { data: reviews = [], isLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/reviews"],

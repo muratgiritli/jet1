@@ -690,6 +690,18 @@ async function seedDefaultBrandCategoriesForSubcategories() {
   }
 }
 
+async function cleanupOrphanBrandCategories() {
+  const allSubs = await db.select().from(subcategories);
+  const validKeys = new Set(allSubs.map(s => `${s.animal}/${s.slug}`));
+  const allBrands = await db.select().from(brandCategories);
+  for (const b of allBrands) {
+    if (!validKeys.has(`${b.animal}/${b.subcategory}`)) {
+      await db.delete(brandCategories).where(eq(brandCategories.id, b.id));
+      console.log(`Removed orphan brand_category: ${b.animal}/${b.subcategory}/${b.brandSlug}`);
+    }
+  }
+}
+
 async function seedDeliveryNeighborhoods() {
   const existing = await db.select().from(deliveryNeighborhoods).limit(1);
   if (existing.length > 0) {
@@ -772,6 +784,7 @@ async function seedDeliveryNeighborhoods() {
 export async function seedDatabase() {
   await seedSubcategories();
   await seedDefaultBrandCategoriesForSubcategories();
+  await cleanupOrphanBrandCategories();
   await seedDeliveryNeighborhoods();
   console.log("Checking database for missing brand data...");
 
