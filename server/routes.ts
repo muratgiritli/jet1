@@ -332,6 +332,7 @@ export async function registerRoutes(
       ["payment_eft_enabled", "true"],
       ["payment_qr_enabled", "true"],
       ["payment_pos_enabled", "true"],
+      ["payment_installments_enabled", "true"],
       ["payment_tosla_enabled", "0"],
       ["tosla_client_id", ""],
       ["tosla_api_user", ""],
@@ -3444,7 +3445,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const result = await sharedPool.query(`
         SELECT key, value FROM app_settings WHERE key IN (
           'payment_eft_enabled', 'payment_nakit_enabled', 'payment_qr_enabled',
-          'payment_pos_enabled', 'payment_tosla_enabled', 'payment_iyzico_enabled',
+          'payment_pos_enabled', 'payment_installments_enabled', 'payment_tosla_enabled', 'payment_iyzico_enabled',
           'campaign_hero_title', 'campaign_hero_subtitle', 'campaign_end_date',
           'bank_account_name', 'bank_iban', 'bank_name',
           'daily_cargo_widget_enabled',
@@ -3480,7 +3481,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const textKeys = [
         "admin_phone", "order_notification_sms",
         "payment_eft_enabled", "payment_nakit_enabled", "payment_qr_enabled",
-        "payment_pos_enabled", "payment_tosla_enabled", "payment_iyzico_enabled",
+        "payment_pos_enabled", "payment_installments_enabled", "payment_tosla_enabled", "payment_iyzico_enabled",
         "tosla_client_id", "tosla_api_user", "tosla_api_pass", "tosla_base_url",
         "iyzico_api_key", "iyzico_secret_key", "iyzico_base_url",
         "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date",

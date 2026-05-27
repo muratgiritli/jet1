@@ -7908,6 +7908,7 @@ function SettingsSection() {
     payment_nakit_enabled: "true",
     payment_qr_enabled: "true",
     payment_pos_enabled: "true",
+    payment_installments_enabled: "true",
     payment_tosla_enabled: "true",
     tosla_client_id: "",
     tosla_api_user: "",
@@ -7942,6 +7943,7 @@ function SettingsSection() {
         payment_nakit_enabled: settings.payment_nakit_enabled ?? "true",
         payment_qr_enabled: settings.payment_qr_enabled ?? "true",
         payment_pos_enabled: settings.payment_pos_enabled ?? "true",
+        payment_installments_enabled: settings.payment_installments_enabled ?? "true",
         payment_tosla_enabled: settings.payment_tosla_enabled ?? "0",
         tosla_client_id: settings.tosla_client_id || "",
         tosla_api_user: settings.tosla_api_user || "",
@@ -8173,7 +8175,8 @@ function SettingsSection() {
 
           {([
             { key: "payment_nakit_enabled", label: "Kapıda Nakit", desc: "%10 indirimli, kapıda nakit ödeme", icon: "💵" },
-            { key: "payment_pos_enabled", label: "Kapıda Kredi Kartı", desc: "Kurye gelince fiziksel POS ile ödeme (taksit dahil)", icon: "💳" },
+            { key: "payment_pos_enabled", label: "Kapıda Kredi Kartı (POS)", desc: "Kurye gelince fiziksel POS cihazı ile ödeme (tek çekim)", icon: "💳" },
+            { key: "payment_installments_enabled", label: "Kapıda Kredi Kartı - Taksit", desc: "POS ile taksitli ödeme seçeneklerini göster (2/3/6/9/12 ay vb.). Kapalıyken sadece Tek Çekim görünür.", icon: "📆" },
             { key: "payment_qr_enabled", label: "Kapıda QR Ödeme", desc: "Kurye gelince banka uygulamasından QR ile ödeme", icon: "📱" },
             { key: "payment_eft_enabled", label: "Banka Havalesi / EFT", desc: "IBAN ile transfer + havale bildirimi", icon: "🏦" },
             { key: "payment_tosla_enabled", label: "Online Kredi Kartı (Tosla)", desc: "Sipariş anında online kredi kartı ile ödeme — Tosla / İşim Sanal POS (Aktif Bank)", icon: "🌐" },

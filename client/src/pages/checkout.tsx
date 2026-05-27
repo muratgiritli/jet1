@@ -110,6 +110,7 @@ export default function Checkout() {
   const nakitEnabled = isEnabled(publicSettings?.payment_nakit_enabled);
   const qrEnabled = isEnabled(publicSettings?.payment_qr_enabled);
   const posEnabled = isEnabled(publicSettings?.payment_pos_enabled);
+  const installmentsEnabled = isEnabled(publicSettings?.payment_installments_enabled);
   const toslaEnabled = isEnabled(publicSettings?.payment_tosla_enabled);
   const iyzicoEnabled = isEnabled(publicSettings?.payment_iyzico_enabled);
   const onlineCardEnabled = toslaEnabled || iyzicoEnabled;
@@ -1642,7 +1643,7 @@ export default function Checkout() {
                         )}
                       </h3>
                       <div className="space-y-2">
-                        {[{ months: 1, rate: 0, isTekCekim: true, noInterest: false }, ...installmentRates.filter(r => r.isActive).sort((a, b) => a.sortOrder - b.sortOrder || a.months - b.months).map(r => ({ months: r.months, rate: (r as any).noInterest ? 0 : r.rate, isTekCekim: false, noInterest: (r as any).noInterest || false }))].map((opt) => {
+                        {[{ months: 1, rate: 0, isTekCekim: true, noInterest: false }, ...(installmentsEnabled ? installmentRates.filter(r => r.isActive).sort((a, b) => a.sortOrder - b.sortOrder || a.months - b.months).map(r => ({ months: r.months, rate: (r as any).noInterest ? 0 : r.rate, isTekCekim: false, noInterest: (r as any).noInterest || false })) : [])].map((opt) => {
                           const total = subtotal * (1 + (opt.rate || 0) / 100);
                           const monthly = total / opt.months;
                           const active = paymentId === "pos" && installmentMonths === opt.months;
