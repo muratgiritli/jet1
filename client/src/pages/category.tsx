@@ -307,7 +307,7 @@ export default function CategoryPage() {
             ))}
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3" data-testid="grid-subcategories">
+          <div className={`grid gap-3 ${animalSlug === "veteriner" ? "grid-cols-1 md:grid-cols-2 lg:grid-cols-3" : "grid-cols-2 md:grid-cols-3 lg:grid-cols-4"}`} data-testid="grid-subcategories">
             {subcategories.filter(sub => {
               if (animalSlug === "kedi" && (sub.slug === "malt-vitamin" || sub.slug === "yas-mama")) return false;
               if (animalSlug === "kopek" && sub.slug === "mama-markalari") return false;
@@ -319,12 +319,28 @@ export default function CategoryPage() {
 
               const icon = SUBCATEGORY_ICONS[sub.slug] || "📦";
 
+              const VET_PALETTE = [
+                "linear-gradient(135deg, #A47864 0%, #6B4A38 100%)",
+                "linear-gradient(135deg, #5F8FAF 0%, #2E5C7E 100%)",
+                "linear-gradient(135deg, #9B8FB8 0%, #5848A3 100%)",
+                "linear-gradient(135deg, #3E7C5A 0%, #1F4A33 100%)",
+                "linear-gradient(135deg, #D97757 0%, #A03E1F 100%)",
+                "linear-gradient(135deg, #4C5578 0%, #2A3050 100%)",
+                "linear-gradient(135deg, #C77D9E 0%, #7B1E3C 100%)",
+                "linear-gradient(135deg, #E0B040 0%, #A07418 100%)",
+              ];
+              const isVet = animalSlug === "veteriner";
+              const cardStyle: React.CSSProperties = isVet
+                ? { background: VET_PALETTE[i % VET_PALETTE.length] }
+                : { backgroundColor: sub.color };
+              const cardHeight = isVet ? "h-[130px] md:h-[110px]" : "h-[110px]";
+
               return (
                 <div key={sub.id}>
                   <Link href={href}>
                     <div
-                      className="group cursor-pointer rounded-2xl p-4 h-[110px] flex flex-col justify-between relative overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300"
-                      style={{ backgroundColor: sub.color }}
+                      className={`group cursor-pointer rounded-2xl p-4 ${cardHeight} flex flex-col justify-between relative overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300`}
+                      style={cardStyle}
                       data-testid={`btn-subcategory-${sub.slug}`}
                     >
                       <div className="absolute -right-3 -top-3 text-4xl opacity-20 group-hover:opacity-30 transition-opacity">
