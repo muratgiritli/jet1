@@ -967,7 +967,7 @@ export default function ProductDetailPage() {
                   <div className="flex gap-3 flex-wrap">
                     <Button
                       className={isCampaignMode ? "w-full" : "flex-1"}
-                      style={{ backgroundColor: "#e65100" }}
+                      style={{ backgroundColor: quantity > 0 ? "#2e7d32" : "#e65100" }}
                       disabled={hasVariants && !selectedVariant}
                       onClick={() => {
                         if (hasVariants && !selectedVariant) {
@@ -977,11 +977,13 @@ export default function ProductDetailPage() {
                         if (quantity === 0) updateQty(pid, 1, isCampaignMode, selectedVariant ?? undefined);
                         if (isCampaignMode && !hasExtraInCart) {
                           setCampaignWarning(true);
+                          return;
                         }
+                        setLocation("/odeme");
                       }}
                       data-testid="btn-add-to-cart"
                     >
-                      SEPETE EKLE
+                      {quantity > 0 ? "SEPETE GİT" : "SEPETE EKLE"}
                     </Button>
                     {isCampaignMode && hasExtraInCart && quantity > 0 && (
                       <Button
