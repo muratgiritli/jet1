@@ -18,6 +18,7 @@ const SUBCATEGORY_TITLES: Record<string, string> = {
   "kopek-mamasi": "Köpek Maması",
   "acik-mama": "Açık Mama",
   "yas-mama": "Yaş Mama",
+  "veteriner-mama": "Veteriner Mama",
 };
 
 const SUBCATEGORY_SLUG_MAP: Record<string, string> = {
@@ -44,6 +45,9 @@ const BRAND_COLORS: Record<string, string> = {
   "properformance": "#E91E63",
   "wanpy": "#FF6F00",
   "brit-care": "#0277BD",
+  "brit": "#0277BD",
+  "virbac": "#0D47A1",
+  "spectrum": "#6A1B9A",
   "econature": "#689F38",
   "felicia": "#9C27B0",
   "enjoy": "#E91E63",
@@ -81,7 +85,7 @@ export default function BrandsPage() {
     (c) => c.animal === animalSlug && c.subcategory === mappedSubSlug
   );
 
-  const animalLabel = animalSlug === "kopek" ? "Köpek" : animalSlug === "kedi" ? "Kedi" : animalSlug === "kus" ? "Kuş" : animalSlug === "akvaryum" ? "Akvaryum" : "Kemirgen";
+  const animalLabel = animalSlug === "kopek" ? "Köpek" : animalSlug === "kedi" ? "Kedi" : animalSlug === "kus" ? "Kuş" : animalSlug === "akvaryum" ? "Akvaryum" : animalSlug === "veteriner" ? "" : "Kemirgen";
   const title = SUBCATEGORY_TITLES[subSlug] || subSlug.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase());
 
   if (isLoading) {

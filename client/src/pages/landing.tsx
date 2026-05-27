@@ -587,7 +587,7 @@ function VeterinerMamaBanner() {
   if (settings && (settings.veteriner_banner_enabled === "0" || settings.veteriner_banner_enabled === "false")) return null;
   return (
     <div className="my-4 md:my-6" data-testid="section-veteriner-banner">
-      <Link href="/kategori/veteriner">
+      <Link href="/kategori/veteriner/veteriner-mama">
         <a className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform" data-testid="link-veteriner-mama">
           <img
             src={new URL("@assets/veteriner_mama-web_1778689310732.webp", import.meta.url).href}
