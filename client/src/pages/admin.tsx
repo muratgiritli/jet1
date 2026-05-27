@@ -120,7 +120,9 @@ function formatAdminDeliverySlot(slot: string): string {
 function useSubcategories() {
   const { data: allSubs = [] } = useQuery<Subcategory[]>({
     queryKey: ["/api/subcategories", "all"],
-    queryFn: () => fetch("/api/subcategories?all=true").then(r => r.json()),
+    queryFn: () => fetch("/api/subcategories?all=true", { cache: "no-store" }).then(r => r.json()),
+    staleTime: 0,
+    gcTime: 0,
   });
   const byAnimal: Record<string, { slug: string; name: string }[]> = {};
   for (const s of allSubs) {
