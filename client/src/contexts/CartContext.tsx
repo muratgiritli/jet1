@@ -237,6 +237,46 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const dbProductsRef = useRef<DbProduct[]>([]);
   useEffect(() => { dbProductsRef.current = dbProducts; }, [dbProducts]);
 
+  useEffect(() => {
+    if (!dbProducts || dbProducts.length === 0) return;
+    const valid = new Set(dbProducts.map((p) => String(p.id)));
+    setBasket((prev) => {
+      let changed = false;
+      const copy: BasketItems = {};
+      for (const [id, qty] of Object.entries(prev)) {
+        if (valid.has(id) && qty > 0) copy[id] = qty;
+        else changed = true;
+      }
+      if (!changed) return prev;
+      saveBasket(copy);
+      return copy;
+    });
+    setCampaignCartIds((prev) => {
+      let changed = false;
+      const next = new Set<string>();
+      for (const id of prev) {
+        if (valid.has(id)) next.add(id);
+        else changed = true;
+      }
+      if (!changed) return prev;
+      campaignCartIdsRef.current = next;
+      saveCampaignCartIds(next);
+      return next;
+    });
+    setVariantMap((prev) => {
+      let changed = false;
+      const next: VariantSelections = {};
+      for (const [id, v] of Object.entries(prev)) {
+        if (valid.has(id)) next[id] = v;
+        else changed = true;
+      }
+      if (!changed) return prev;
+      variantMapRef.current = next;
+      saveVariants(next);
+      return next;
+    });
+  }, [dbProducts]);
+
   const basketRef = useRef<BasketItems>(basket);
   useEffect(() => { basketRef.current = basket; }, [basket]);
 
