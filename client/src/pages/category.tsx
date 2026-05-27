@@ -243,9 +243,11 @@ export default function CategoryPage() {
                 Ürünleri
               </span>
             </h1>
-            <p className="text-xs text-muted-foreground mt-1 tracking-wide" data-testid="text-category-subtitle">
-              Samsun'da aynı gün kapıya teslim
-            </p>
+            {animalSlug !== "veteriner" && (
+              <p className="text-xs text-muted-foreground mt-1 tracking-wide" data-testid="text-category-subtitle">
+                Samsun'da aynı gün kapıya teslim
+              </p>
+            )}
           </div>
 
           {productsLoading ? (
