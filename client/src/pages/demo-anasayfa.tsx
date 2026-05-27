@@ -28,6 +28,7 @@ const categories = [
   { key: "kus", name: "Kuş", href: "/kategori/kus", img: "/images/category-bird.webp", color: "from-sky-50 to-cyan-100", ring: "ring-sky-200" },
   { key: "kemirgen", name: "Kemirgen", href: "/kategori/kemirgen", img: "/images/category-rabbit.webp", color: "from-rose-50 to-pink-100", ring: "ring-pink-200" },
   { key: "akvaryum", name: "Akvaryum", href: "/kategori/akvaryum", img: "/images/cat-fish.webp", color: "from-teal-50 to-emerald-100", ring: "ring-teal-200" },
+  { key: "veteriner", name: "Veteriner Maması", href: "/kategori/veteriner", img: "/images/category-dog.webp", color: "from-red-50 to-rose-100", ring: "ring-red-200" },
   { key: "supurge", name: "Sokak Canlıları", href: "/sokak-canlari", img: "/images/category-dog.webp", color: "from-amber-50 to-yellow-100", ring: "ring-amber-200" },
 ];
 
@@ -37,6 +38,7 @@ const navLinks: { label: string; href: string }[] = [
   { label: "Kuş", href: "/kategori/kus" },
   { label: "Kemirgen", href: "/kategori/kemirgen" },
   { label: "Akvaryum", href: "/kategori/akvaryum" },
+  { label: "Veteriner Maması", href: "/kategori/veteriner" },
   { label: "Markalar", href: "/kategori" },
   { label: "Kampanyalar", href: "/kampanya" },
   { label: "Sokak Canlıları", href: "/sokak-canlari" },
