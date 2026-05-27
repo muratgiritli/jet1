@@ -631,10 +631,6 @@ export default function ProductDetailPage() {
               )}
 
 
-              {!isCampaignMode && !(product.stock === 0 && product.preorderEnabled) && category && shouldShowFastDelivery(category.animal, category.subcategory) && (
-                <FastDeliveryBanner />
-              )}
-
               {hasVariants && (
                 <div className="space-y-2" data-testid="section-variants">
                   <div className="text-sm font-semibold text-gray-700">

@@ -547,12 +547,6 @@ export default function BrandProductsPage() {
           </div>
         )}
 
-        {shouldShowFastDelivery(animal, subcategory) && (
-          <div className="mb-4">
-            <FastDeliveryBanner />
-          </div>
-        )}
-
         {(() => {
           const availableTypes = [...new Set(data.products.map(p => p.mamaType).filter(Boolean))] as string[];
           if (availableTypes.length === 0) return null;

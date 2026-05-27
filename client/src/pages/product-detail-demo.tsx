@@ -407,10 +407,6 @@ export default function ProductDetailDemoPage() {
               </span>
             </button>
 
-            {category && shouldShowFastDelivery(category.animal, category.subcategory) && (
-              <FastDeliveryBanner />
-            )}
-
             {/* SEÇENEKLER — Para Puan'dan ÖNCE */}
             {hasVariants && (
               <div className="space-y-2" data-testid="section-variants-demo">
