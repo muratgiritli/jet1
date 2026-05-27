@@ -76,6 +76,7 @@ export default function Checkout() {
   const [editingInfo, setEditingInfo] = useState(false);
   const [usePoints, setUsePoints] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authAutoShown, setAuthAutoShown] = useState(false);
   const [authStep, setAuthStep] = useState<"phone" | "otp" | "register">("phone");
   const [authMode, setAuthMode] = useState<"login" | "register">("login");
   const [authPhone, setAuthPhone] = useState("");
@@ -306,6 +307,16 @@ export default function Checkout() {
       setAuthLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (authAutoShown) return;
+    if (isLoggedIn) { setAuthAutoShown(true); return; }
+    if (selectedProducts.length === 0) return;
+    setShowAuthModal(true);
+    setAuthStep("phone");
+    setAuthErrors({});
+    setAuthAutoShown(true);
+  }, [isLoggedIn, selectedProducts.length, authAutoShown]);
 
   const lookupCustomer = useCallback(async (phone: string) => {
     if (isLoggedIn) return;
@@ -1794,7 +1805,7 @@ export default function Checkout() {
                     <p className="text-[12px] text-red-500 text-center mt-2">{orderError}</p>
                   )}
 
-                  {subtotal > 0 && subtotal < CONFIG.shipLimit && !hasCampaignItems && (
+                  {subtotal > 0 && subtotal < effShipLimit && !hasCampaignItems && (
                     <div
                       className="mt-3 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4"
                       data-testid="alert-free-shipping-info"
@@ -1806,10 +1817,12 @@ export default function Checkout() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-amber-900 dark:text-amber-200" data-testid="text-free-ship-title">
-                            {CONFIG.shipLimit} TL ve üstü siparişlerde getirme ücreti yoktur
+                            {matchedNeighborhood ? `${matchedNeighborhood.name}: ` : ""}{effShipLimit} TL ve üstü siparişlerde getirme ücreti yoktur
                           </p>
                           <p className="text-xs text-amber-800/90 dark:text-amber-200/90 mt-1 leading-relaxed" data-testid="text-free-ship-msg">
-                            İsterseniz ürün ekleyebilirsiniz.
+                            {matchedNeighborhood
+                              ? `Şu an getirmesi ${effShipFee} TL. ${(effShipLimit - subtotal).toLocaleString("tr-TR")} TL daha ekleyin, ücretsiz olsun.`
+                              : "İsterseniz ürün ekleyebilirsiniz."}
                           </p>
                           <Link href={categoryHref}>
                             <a
