@@ -793,19 +793,9 @@ export default function Checkout() {
       />
       {showAuthModal && !isLoggedIn && (
           <div className="fixed inset-0 z-[10000] flex items-end sm:items-center justify-center">
-            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => { setShowAuthModal(false); setAuthStep("phone"); setAuthErrors({}); }} />
+            <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
             <div className="relative w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-b from-blue-500 to-indigo-600 text-white" data-testid="modal-auth">
               <div className="px-5 pt-3 pb-2">
-                <div className="flex justify-end mb-1">
-                  <button
-                    type="button"
-                    onClick={() => { setShowAuthModal(false); setAuthStep("phone"); setAuthErrors({}); }}
-                    className="p-1.5 text-white/70 hover:text-white bg-black/20 hover:bg-black/40 rounded-full transition-colors"
-                    data-testid="btn-close-auth-modal"
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                </div>
                 <div className="flex rounded-xl overflow-hidden mb-3 bg-white/10">
                   <button
                     type="button"
