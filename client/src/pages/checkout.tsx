@@ -267,7 +267,6 @@ export default function Checkout() {
         setAuthStep("register");
       } else {
         setShowAuthModal(false);
-        setPendingOrderAfterAuth(true);
       }
     } catch (err: any) {
       let msg = "Doğrulama kodu hatalı";
@@ -299,7 +298,6 @@ export default function Checkout() {
       await loginWithOtp(normalized, code, authName.trim(), addressParts || undefined);
       if (authMahalle) localStorage.setItem("jet55_mahalle", authMahalle);
       setShowAuthModal(false);
-      setPendingOrderAfterAuth(true);
     } catch (err: any) {
       let msg = "Bir hata oluştu";
       try { msg = JSON.parse(err.message.replace(/^\d+:\s*/, "")).message; } catch {}
@@ -427,7 +425,6 @@ export default function Checkout() {
   }, [deliveryDays]);
   const [deliverySlot, setDeliverySlot] = useState<string>(initialSlot);
   const [selectedDay, setSelectedDay] = useState<string>(deliverySlot.split("|")[0]);
-  const [pendingOrderAfterAuth, setPendingOrderAfterAuth] = useState(false);
   const [donationAmount, setDonationAmount] = useState(0);
   const [showPointsDialog, setShowPointsDialog] = useState(false);
   const [couponCode, setCouponCode] = useState("");
@@ -800,13 +797,6 @@ export default function Checkout() {
       setOrderLoading(false);
     }
   };
-
-  useEffect(() => {
-    if (pendingOrderAfterAuth && isLoggedIn && !showAuthModal && customerName.trim()) {
-      setPendingOrderAfterAuth(false);
-      setTimeout(() => handleOrder(), 300);
-    }
-  }, [pendingOrderAfterAuth, isLoggedIn, showAuthModal, customerName]);
 
   return (
     <div className="min-h-screen bg-background pb-16 md:pb-0">
