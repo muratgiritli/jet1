@@ -917,56 +917,30 @@ export default function ProductDetailPage() {
                       return updateQty(id, delta, isCampaignMode, selectedVariant ?? undefined);
                     }} />
                   </div>
-                  <div className="flex gap-3 flex-wrap">
-                    <Button
-                      className={isCampaignMode ? "w-full" : "flex-1"}
-                      style={{ backgroundColor: quantity > 0 ? "#2e7d32" : "#e65100" }}
-                      disabled={hasVariants && !selectedVariant}
-                      onClick={() => {
-                        if (hasVariants && !selectedVariant) {
-                          toast({ title: "Lütfen seçenek belirleyin", variant: "destructive" });
-                          return;
-                        }
-                        if (quantity === 0) updateQty(pid, 1, isCampaignMode, selectedVariant ?? undefined);
-                        if (isCampaignMode && !hasExtraInCart) {
-                          setCampaignWarning(true);
-                          return;
-                        }
-                        setLocation("/odeme");
-                      }}
-                      data-testid="btn-add-to-cart"
-                    >
-                      {quantity > 0 ? "SEPETE GİT" : "SEPETE EKLE"}
-                    </Button>
-                    {isCampaignMode && hasExtraInCart && quantity > 0 && (
+                  {quantity === 0 && (
+                    <div className="flex gap-3 flex-wrap">
                       <Button
-                          className="w-full"
-                          style={{ backgroundColor: "#2e7d32" }}
-                          data-testid="btn-campaign-go-cart"
-                          onClick={() => setLocation("/odeme")}
-                        >
-                          SEPETE GİT
-                        </Button>
-                    )}
-                    {!isCampaignMode && (
-                      <Button
-                          variant="outline"
-                          className="w-full flex-1"
-                          disabled={hasVariants && !selectedVariant}
-                          onClick={() => {
-                            if (hasVariants && !selectedVariant) {
-                              toast({ title: "Lütfen seçenek belirleyin", variant: "destructive" });
-                              return;
-                            }
-                            if (quantity === 0) updateQty(pid, 1, false, selectedVariant ?? undefined);
-                            setLocation("/odeme");
-                          }}
-                          data-testid="btn-buy-now"
-                        >
-                          HEMEN AL
-                        </Button>
-                    )}
-                  </div>
+                        className="w-full"
+                        style={{ backgroundColor: "#e65100" }}
+                        disabled={hasVariants && !selectedVariant}
+                        onClick={() => {
+                          if (hasVariants && !selectedVariant) {
+                            toast({ title: "Lütfen seçenek belirleyin", variant: "destructive" });
+                            return;
+                          }
+                          updateQty(pid, 1, isCampaignMode, selectedVariant ?? undefined);
+                          if (isCampaignMode && !hasExtraInCart) {
+                            setCampaignWarning(true);
+                            return;
+                          }
+                          setLocation("/odeme");
+                        }}
+                        data-testid="btn-add-to-cart"
+                      >
+                        SEPETE EKLE
+                      </Button>
+                    </div>
+                  )}
                 </div>
               )}
 
