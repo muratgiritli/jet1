@@ -1,15 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "wouter";
-import { useCustomer } from "@/contexts/CustomerContext";
 import { CheckCircle2, XCircle, Loader2, Package } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useCart } from "@/contexts/CartContext";
 
 export default function PaymentResultPage() {
-  const [location, setLocation] = useLocation();
+  const [location] = useLocation();
   const [params, setParams] = useState<URLSearchParams>(new URLSearchParams());
   const { clearCart } = useCart();
-  const { isLoggedIn } = useCustomer();
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -27,14 +25,6 @@ export default function PaymentResultPage() {
       clearCart();
     }
   }, [isSuccess, clearCart]);
-
-  useEffect(() => {
-    if (!isSuccess) return;
-    const t = setTimeout(() => {
-      setLocation(isLoggedIn ? "/hesabim?tab=orders" : "/giris?redirect=" + encodeURIComponent("/hesabim?tab=orders"));
-    }, 2500);
-    return () => clearTimeout(t);
-  }, [isSuccess, isLoggedIn, setLocation]);
 
   const { data: order, isLoading } = useQuery<any>({
     queryKey: ["/api/orders", orderId, "payment-status"],
