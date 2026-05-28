@@ -917,30 +917,6 @@ export default function ProductDetailPage() {
                       return updateQty(id, delta, isCampaignMode, selectedVariant ?? undefined);
                     }} />
                   </div>
-                  {quantity === 0 && (
-                    <div className="flex gap-3 flex-wrap">
-                      <Button
-                        className="w-full"
-                        style={{ backgroundColor: "#e65100" }}
-                        disabled={hasVariants && !selectedVariant}
-                        onClick={() => {
-                          if (hasVariants && !selectedVariant) {
-                            toast({ title: "Lütfen seçenek belirleyin", variant: "destructive" });
-                            return;
-                          }
-                          updateQty(pid, 1, isCampaignMode, selectedVariant ?? undefined);
-                          if (isCampaignMode && !hasExtraInCart) {
-                            setCampaignWarning(true);
-                            return;
-                          }
-                          setLocation("/odeme");
-                        }}
-                        data-testid="btn-add-to-cart"
-                      >
-                        SEPETE EKLE
-                      </Button>
-                    </div>
-                  )}
                 </div>
               )}
 
