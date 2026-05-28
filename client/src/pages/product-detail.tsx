@@ -804,65 +804,21 @@ export default function ProductDetailPage() {
                     </div>
                     {(() => {
                       const qty = Math.max(quantity || 1, 1);
-                      const baseTotal = displayPrice * qty;
-                      const preorderOpts = [
-                        { id: "nakit", name: "Kapıda Nakit", disc: -0.10 },
-                        { id: "eft", name: "Banka Havalesi / EFT", disc: 0 },
-                        { id: "qr", name: "Kapıda QR Ödeme", disc: 0 },
-                        { id: "pos", name: "Kapıda Kredi Kartı (POS)", disc: 0 },
-                      ];
-                      const selectedOpt = preorderOpts.find((o) => o.id === preorderPayMethod) || preorderOpts[0];
-                      const methodDisc = selectedOpt.disc < 0 ? Math.abs(selectedOpt.disc) : 0;
-                      const methodTotal = Math.max(0, baseTotal * (1 - methodDisc));
-                      const deposit = methodTotal * 0.25;
-                      const remaining = methodTotal - deposit;
+                      const total = displayPrice * qty;
                       void PAYMENT_OPTIONS;
                       return (
                         <div className="rounded-lg border-2 p-3 space-y-2" style={{ borderColor: "#1565c0", backgroundColor: "#e3f2fd" }} data-testid="preorder-deposit-box">
                           <div className="flex items-center gap-1.5 font-bold text-sm" style={{ color: "#0d47a1" }}>
                             <CreditCard className="w-4 h-4" />
-                            Ödeme Şeklini Seçin
+                            Ödeme: Online Kredi Kartı
                           </div>
-                          <div className="space-y-1.5" data-testid="preorder-pay-methods">
-                            {preorderOpts.map((o) => {
-                              const d = o.disc < 0 ? Math.abs(o.disc) : 0;
-                              const t = Math.max(0, baseTotal * (1 - d));
-                              const active = preorderPayMethod === o.id;
-                              return (
-                                <button
-                                  key={o.id}
-                                  type="button"
-                                  onClick={() => setPreorderPayMethod(o.id)}
-                                  className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-md border text-sm transition-colors text-left ${active ? "border-blue-600 bg-white" : "border-blue-200 bg-white/60 hover:bg-white"}`}
-                                  data-testid={`preorder-pay-${o.id}`}
-                                >
-                                  <span className="flex items-center gap-2 min-w-0 flex-1">
-                                    <span className={`w-3.5 h-3.5 shrink-0 rounded-full border-2 ${active ? "border-blue-600 bg-blue-600" : "border-gray-400"}`} />
-                                    <span className="font-medium">{o.name}</span>
-                                    {o.id === "nakit" && <span className="text-xs font-bold" style={{ color: "#dc2626" }}>%10 indirim</span>}
-                                  </span>
-                                  <strong className="tabular-nums shrink-0" style={{ color: "#0d47a1" }}>{t.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
-                                </button>
-                              );
-                            })}
-                          </div>
-                          <div className="border-t pt-2 mt-1 space-y-1" style={{ borderColor: "#90caf9" }}>
+                          <p className="text-[11px] text-gray-700 leading-snug">
+                            Ön sipariş ürünleri yalnızca <strong>online kredi kartı</strong> (vade farksız 3-6 taksit) ile ödenir.
+                          </p>
+                          <div className="border-t pt-2 mt-1" style={{ borderColor: "#90caf9" }}>
                             <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-700">Toplam tutar ({selectedOpt.name}):</span>
-                              <strong data-testid="text-preorder-total">{methodTotal.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
-                            </div>
-                            <div>
-                              <div className="flex items-center justify-between text-sm">
-                                <span className="text-gray-700">Şimdi <strong>%25 kapora</strong>:</span>
-                                <strong style={{ color: "#1565c0" }} data-testid="text-preorder-deposit">{deposit.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
-                              </div>
-                              <p className="text-[11px] text-gray-500 leading-snug mt-0.5">
-                                Online Kredi Kartı (vade farksız 3-6 taksit) veya Banka Havalesi / EFT ile ödenir.
-                              </p>
-                            </div>
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="text-gray-700">Teslimatta <strong>{selectedOpt.name}</strong> ile <strong>%75</strong>:</span>
-                              <strong style={{ color: "#2e7d32" }} data-testid="text-preorder-remaining">{remaining.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
+                              <span className="text-gray-700">Ödenecek Tutar:</span>
+                              <strong style={{ color: "#0d47a1" }} data-testid="text-preorder-total">{total.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>
                             </div>
                           </div>
                         </div>
@@ -879,22 +835,22 @@ export default function ProductDetailPage() {
                             return;
                           }
                           const blocked = updateQty(pid, 1, isCampaignMode, selectedVariant ?? undefined);
-                          if (!blocked) setLocation(`/odeme?preorder=1&pm=${preorderPayMethod}`);
+                          if (!blocked) setLocation(`/odeme?preorder=1`);
                         }}
                         data-testid="btn-preorder-add"
                       >
                         <ShoppingCart className="w-4 h-4" />
-                        Ön Sipariş Ver (%25 Kapora ile)
+                        Ön Sipariş Ver
                       </Button>
                     ) : (
                       <Button
                         className="w-full"
                         style={{ backgroundColor: "#2e7d32" }}
-                        onClick={() => setLocation(`/odeme?preorder=1&pm=${preorderPayMethod}`)}
+                        onClick={() => setLocation(`/odeme?preorder=1`)}
                         data-testid="btn-preorder-go-cart"
                       >
                         <ShoppingCart className="w-4 h-4" />
-                        Kaporayı Öde ve Onayla ({quantity})
+                        Ödemeye Geç ({quantity})
                       </Button>
                     )}
                   </div>
@@ -911,10 +867,7 @@ export default function ProductDetailPage() {
                     </p>
                     <div className="mt-2 px-3 py-2 rounded-lg space-y-1" style={{ backgroundColor: "#fff3e0", border: "1px solid #ffcc80" }}>
                       <p className="text-xs font-bold" style={{ color: "#e65100" }}>
-                        ⚠ Ön sipariş ürünleri müşteri talebine özel tedarik edildiği için sipariş onayı amacıyla <strong>%25 oranında ön ödeme (kapora)</strong> alınmaktadır.
-                      </p>
-                      <p className="text-[11px]" style={{ color: "#bf360c" }}>
-                        Kapora <strong>online kredi kartı</strong> ile tahsil edilir. Kalan <strong>%75</strong>'lik ödeme, ürün teslimatı sırasında istediğiniz ödeme şekliyle (nakit, kapıda POS, QR vb.) yapılabilir.
+                        ⚠ Ön sipariş ürünleri yalnızca <strong>online kredi kartı</strong> ile ödenir. Kapıda nakit, POS, QR veya havale/EFT seçenekleri kullanılamaz.
                       </p>
                     </div>
                     <div className="mt-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#e8f5e9", border: "1px solid #c8e6c9" }}>
