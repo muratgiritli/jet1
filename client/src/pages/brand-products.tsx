@@ -137,7 +137,7 @@ function BrandProductCard({
 }: {
   product: Product;
   quantity: number;
-  onUpdate: (id: string, delta: number) => void;
+  onUpdate: (id: string, delta: number) => boolean;
   showDetailLink?: boolean;
   isMama?: boolean;
   forceOrderLink?: boolean;
@@ -251,7 +251,7 @@ function InlineSubcategoryProductCard({
 }: {
   product: { id: string; name: string; price: number; originalPrice?: number; img?: string; skt?: string; stock?: number; preorderEnabled?: boolean };
   quantity: number;
-  onUpdate: (id: string, delta: number) => void;
+  onUpdate: (id: string, delta: number) => boolean;
   showDetailLink?: boolean;
   isMama?: boolean;
   forceOrderLink?: boolean;
@@ -358,7 +358,7 @@ function InlineSubcategories({
   animal: string;
   currentSubcategory: string;
   basket: Record<string, number>;
-  updateQty: (id: string, delta: number) => void;
+  updateQty: (id: string, delta: number) => boolean;
 }) {
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);

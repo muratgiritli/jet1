@@ -120,7 +120,7 @@ function Router() {
         <Route path="/demo" component={DemoLanding} />
         <Route path="/demo1" component={Demo1Page} />
         <Route path="/demo2" component={Demo2Page} />
-        <Route path="/demo-anasayfa" component={DemoAnasayfaPage} />
+        <Route path="/demo-anasayfa" component={DemoAnasayfaPage as any} />
         <Route path="/demo-kampanya" component={DemoKampanyaPage} />
         <Route path="/demo-kampanya/urun/:id" component={DemoKampanyaUrunPage} />
         <Route path="/kampanya" component={CampaignPage} />

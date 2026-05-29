@@ -490,8 +490,8 @@ export async function registerRoutes(
           seenCategories.add(catKey);
           xml += `  <url>\n    <loc>${SITE}/kategori/${cat.animal}/${cat.subcategory}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
         }
-        if (cat.slug) {
-          xml += `  <url>\n    <loc>${SITE}/siparis/${cat.animal}/${cat.subcategory}/${cat.slug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+        if (cat.brandSlug) {
+          xml += `  <url>\n    <loc>${SITE}/siparis/${cat.animal}/${cat.subcategory}/${cat.brandSlug}</loc>\n    <lastmod>${today}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
         }
       }
 
@@ -1084,7 +1084,7 @@ export async function registerRoutes(
   }
 
   app.get("/api/product-image/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).end();
     const buffer = await getProductImage(id);
     if (!buffer) return res.status(404).end();
@@ -1131,7 +1131,7 @@ export async function registerRoutes(
   });
 
   app.patch("/api/admin/subcategories/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
     const allowedKeys = ["animal", "slug", "displayName", "color", "hasBrands", "sortOrder", "isActive"];
     const safeBody: Record<string, any> = {};
@@ -1144,7 +1144,7 @@ export async function registerRoutes(
   });
 
   app.delete("/api/admin/subcategories/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     await storage.deleteSubcategory(id);
     res.json({ message: "Deleted" });
   });
@@ -1156,7 +1156,7 @@ export async function registerRoutes(
   });
 
   app.get("/api/brand-categories/:id/products", async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const category = await storage.getBrandCategory(id);
     if (!category) return res.status(404).json({ message: "Category not found" });
     const prods = await storage.getProductsByBrandCategory(id);
@@ -1677,7 +1677,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.patch("/api/admin/street-animals/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz id" });
     const allowed: any = {};
     if (req.body.isActive !== undefined) allowed.isActive = !!req.body.isActive;
@@ -1694,7 +1694,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.delete("/api/admin/street-animals/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz id" });
     await sharedPool.query("DELETE FROM products WHERE id = $1 AND is_street_animal = true", [id]);
     res.json({ ok: true });
@@ -1752,7 +1752,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.patch("/api/admin/brand-categories/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
     const allowedKeys = ["brandName", "brandSlug", "animal", "subcategory"];
     const safeBody: Record<string, any> = {};
@@ -1765,7 +1765,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.delete("/api/admin/brand-categories/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     await storage.deleteBrandCategory(id);
     res.json({ message: "Deleted" });
   });
@@ -1792,7 +1792,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.patch("/api/admin/products/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ürün ID" });
     const allowedFields = ["name", "price", "originalPrice", "skt", "img", "originalImg", "brandCategoryId", "isActive", "stock", "barcode", "costPrice", "mamaType", "preorderEnabled", "hiddenPaymentMethods", "variants", "longDescription", "metaTitle", "metaDescription", "metaKeywords"];
     const safeBody: Record<string, any> = {};
@@ -1818,7 +1818,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.post("/api/admin/products/:id/image", requireAdmin, upload.single("image"), async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (!req.file) return res.status(400).json({ message: "Resim dosyası gerekli" });
     if (!req.file.mimetype.startsWith("image/")) return res.status(400).json({ message: "Sadece resim dosyaları yüklenebilir" });
     try {
@@ -1833,7 +1833,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.delete("/api/admin/products/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     await storage.deleteProduct(id);
     res.json({ message: "Deleted" });
   });
@@ -1895,7 +1895,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.get("/api/product-detail/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const product = await storage.getProduct(id);
     if (!product) return res.status(404).json({ message: "Product not found" });
     const category = await storage.getBrandCategory(product.brandCategoryId);
@@ -1951,7 +1951,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.patch("/api/admin/cross-sell-sections/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
     const allowedKeys = ["title", "forProductId", "forAnimal", "sortOrder", "isActive"];
     const safeBody: Record<string, any> = {};
@@ -1964,7 +1964,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.delete("/api/admin/cross-sell-sections/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     await storage.deleteCrossSellSection(id);
     res.json({ message: "Deleted" });
   });
@@ -2008,7 +2008,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.delete("/api/admin/cross-sell-items/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     await storage.removeCrossSellItem(id);
     res.json({ message: "Deleted" });
   });
@@ -2084,7 +2084,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.get("/api/admin/product-cross-sell/:productId", requireAdmin, async (req, res) => {
     try {
-      const pid = parseInt(req.params.productId);
+      const pid = parseInt(String(req.params.productId));
       const allSections = await storage.getAllCrossSellSections();
       const section = allSections.find(s => s.forProductId === pid);
       if (!section) return res.json([]);
@@ -2364,7 +2364,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           }
           if (prod.stock < item.quantity) {
             hasPreorderItems = true;
-            item.isPreorder = true;
+            (item as any).isPreorder = true;
           }
         } else {
           const ok = await storage.decrementStock(productId, item.quantity);
@@ -2375,7 +2375,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       }
     }
     if (hasPreorderItems) {
-      orderData.hasPreorder = true;
+      (orderData as any).hasPreorder = true;
     }
 
     (orderData as any).isCampaign = isCampaignOrder;
@@ -2798,7 +2798,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.get("/api/orders/:id/payment-status", async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       if (isNaN(id)) return res.status(400).json({ error: "invalid id" });
 
       const customerId = (req.session as any)?.customerId;
@@ -3378,7 +3378,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.patch("/api/admin/bank-transfer-notifications/:id", requireAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
       const { status } = req.body || {};
       const allowed = ["pending", "confirmed", "rejected"];
@@ -3392,7 +3392,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/admin/bank-transfer-notifications/:id", requireAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
       await sharedPool.query("DELETE FROM bank_transfer_notifications WHERE id = $1", [id]);
       res.json({ success: true });
@@ -3589,7 +3589,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.patch("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const { status } = req.body;
     if (!status) return res.status(400).json({ message: "Status required" });
     const order = await storage.updateOrderStatus(id, status);
@@ -3999,7 +3999,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.get("/api/admin/loyalty-points/:customerId", requireAdmin, async (req, res) => {
-    const customerId = parseInt(req.params.customerId);
+    const customerId = parseInt(String(req.params.customerId));
     const balance = await storage.getCustomerPointsBalance(customerId);
     const history = await storage.getLoyaltyPointsByCustomer(customerId);
     res.json({ balance: Math.round(balance * 100) / 100, history });
@@ -4050,7 +4050,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.patch("/api/admin/reorder-reminders/:id/status", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const { status } = req.body;
     if (!status) return res.status(400).json({ message: "Status gerekli" });
     const updated = await storage.updateReorderReminderStatus(id, status);
@@ -4134,7 +4134,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/customer/favorites/:productId", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
-    const productId = parseInt(req.params.productId);
+    const productId = parseInt(String(req.params.productId));
     await storage.removeCustomerFavorite(customerId, productId);
     const favoriteIds = await storage.getCustomerFavoriteIds(customerId);
     res.json(favoriteIds);
@@ -4196,7 +4196,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.patch("/api/customer/addresses/:id", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const schema = z.object({ label: z.string().min(1).optional(), address: z.string().min(1).optional(), isDefault: z.boolean().optional() });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri" });
@@ -4210,7 +4210,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/customer/addresses/:id", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     await storage.deleteCustomerAddress(id, customerId);
     const addresses = await storage.getCustomerAddresses(customerId);
     res.json(addresses);
@@ -4238,7 +4238,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.patch("/api/customer/pets/:id", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const schema = z.object({ name: z.string().min(1).optional(), type: z.string().min(1).optional(), breed: z.string().optional(), age: z.number().optional(), weight: z.number().optional() });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri" });
@@ -4249,7 +4249,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/customer/pets/:id", requireCustomer, async (req, res) => {
     const customerId = (req as any).customerId;
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     await storage.deletePetProfile(id, customerId);
     const pets = await storage.getPetProfiles(customerId);
     res.json(pets);
@@ -4285,7 +4285,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.get("/api/breed-stats/:productId", async (req, res) => {
-    const productId = parseInt(req.params.productId);
+    const productId = parseInt(String(req.params.productId));
     const stats = await storage.getBreedStatsByProduct(productId);
     res.json(stats.sort((a, b) => a.sortOrder - b.sortOrder));
   });
@@ -4298,7 +4298,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.delete("/api/admin/breed-stats/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     await storage.deleteBreedStat(id);
     res.json({ message: "Deleted" });
   });
@@ -4326,7 +4326,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.post("/api/admin/stock-alerts/:productId/notify", requireAdmin, async (req, res) => {
-    const productId = parseInt(req.params.productId);
+    const productId = parseInt(String(req.params.productId));
     const pending = await storage.getUnnotifiedStockAlerts(productId);
     if (pending.length === 0) return res.json({ message: "Bildirilecek kişi yok", notified: 0, contacts: [] });
     await storage.markStockAlertsNotified(productId);
@@ -4467,7 +4467,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.get("/api/campaign-check/:productId", async (req, res) => {
     try {
-      const pid = parseInt(req.params.productId);
+      const pid = parseInt(String(req.params.productId));
       const { rows } = await sharedPool.query(
         `SELECT item_type, campaign_price FROM campaign_items WHERE product_id = $1 AND is_active = true LIMIT 1`,
         [pid]
@@ -4503,7 +4503,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.get("/api/reviews/:productId", async (req, res) => {
-    const productId = parseInt(req.params.productId);
+    const productId = parseInt(String(req.params.productId));
     if (isNaN(productId)) return res.status(400).json({ message: "Geçersiz ID" });
     const reviews = await db.select().from(productReviews).where(and(eq(productReviews.productId, productId), eq(productReviews.isPublished, true))).orderBy(desc(productReviews.helpfulCount));
     res.setHeader("Cache-Control", "public, max-age=60, stale-while-revalidate=300");
@@ -4511,7 +4511,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.post("/api/reviews/:productId", async (req, res) => {
-    const productId = parseInt(req.params.productId);
+    const productId = parseInt(String(req.params.productId));
     if (isNaN(productId)) return res.status(400).json({ message: "Geçersiz ID" });
     const schema = z.object({
       reviewerName: z.string().min(1).max(100),
@@ -4555,7 +4555,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.patch("/api/admin/reviews/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
     const patchSchema = z.object({
       productId: z.number().int().optional(),
@@ -4576,7 +4576,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.delete("/api/admin/reviews/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
     await db.delete(productReviews).where(eq(productReviews.id, id));
     res.json({ message: "Silindi" });
@@ -4598,7 +4598,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.patch("/api/admin/campaign-items/:id", requireAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       const { isActive, sortOrder, itemType, campaignPrice } = req.body;
       const sets: string[] = [];
       const vals: any[] = [];
@@ -4771,7 +4771,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.patch("/api/admin/delivery-neighborhoods/:id", requireAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       const updates: Record<string, any> = {};
       if (req.body.district !== undefined) updates.district = req.body.district.trim();
       if (req.body.name !== undefined) updates.name = req.body.name.trim();
@@ -4791,7 +4791,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/admin/delivery-neighborhoods/:id", requireAdmin, async (req, res) => {
     try {
-      await storage.deleteDeliveryNeighborhood(parseInt(req.params.id));
+      await storage.deleteDeliveryNeighborhood(parseInt(String(req.params.id)));
       res.json({ ok: true });
     } catch (err) {
       res.status(500).json({ message: "Delivery neighborhood delete error" });
@@ -4864,6 +4864,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       }
       for (const o of allOrders) {
         if (o.status === "iptal") continue;
+        if (!o.customerPhone) continue;
         const entry = customerOrderMap[o.customerPhone];
         if (entry) {
           entry.total += o.grandTotal || 0;
@@ -4888,7 +4889,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const riskyCustomers = (() => {
         const cancelMap: Record<string, number> = {};
         for (const o of allOrders) {
-          if (o.status === "iptal") cancelMap[o.customerPhone] = (cancelMap[o.customerPhone] || 0) + 1;
+          if (o.status === "iptal" && o.customerPhone) cancelMap[o.customerPhone] = (cancelMap[o.customerPhone] || 0) + 1;
         }
         return custEntries.filter(c => (cancelMap[c.phone] || 0) >= 2).map(c => ({ ...c, cancellations: cancelMap[c.phone] || 0 }));
       })();
@@ -4961,7 +4962,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.patch("/api/admin/customers/:id", requireAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       const { name, address } = req.body;
       const updates: any = {};
       if (name !== undefined) updates.name = name;
@@ -4976,7 +4977,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.post("/api/admin/impersonate/:id", requireAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       if (isNaN(id)) return res.status(400).json({ message: "Geçersiz müşteri ID" });
       const customer = await storage.getCustomer(id);
       if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
@@ -4996,7 +4997,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/admin/customers/:id", requireAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       if (isNaN(id)) return res.status(400).json({ message: "Geçersiz müşteri ID" });
       await storage.deleteCustomerAccount(id);
       res.json({ success: true });
@@ -5075,7 +5076,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.patch("/api/admin/subscriptions/:id", requireAdmin, async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       const status = String(req.body?.status || "");
       if (!["new", "contacted", "converted"].includes(status)) {
         return res.status(400).json({ message: "Geçersiz durum" });
@@ -5089,7 +5090,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/admin/subscriptions/:id", requireAdmin, async (req, res) => {
     try {
-      await storage.deleteSubscription(parseInt(req.params.id));
+      await storage.deleteSubscription(parseInt(String(req.params.id)));
       res.json({ ok: true });
     } catch {
       res.status(500).json({ message: "Silme hatası" });
@@ -5138,7 +5139,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.patch("/api/admin/banners/:id", requireAdmin, upload.single("image"), async (req, res) => {
     try {
-      const id = parseInt(req.params.id);
+      const id = parseInt(String(req.params.id));
       const updates: any = {};
       if (req.body.title !== undefined) updates.title = req.body.title;
       if (req.body.linkUrl !== undefined) updates.linkUrl = req.body.linkUrl;
@@ -5172,7 +5173,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/admin/banners/:id", requireAdmin, async (req, res) => {
     try {
-      await storage.deleteBanner(parseInt(req.params.id));
+      await storage.deleteBanner(parseInt(String(req.params.id)));
       res.json({ ok: true });
     } catch (err) {
       res.status(500).json({ message: "Banner silme hatası" });
@@ -5181,14 +5182,14 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
 
   app.post("/api/admin/blacklist/:customerId", requireAdmin, async (req, res) => {
-    const customerId = parseInt(req.params.customerId);
+    const customerId = parseInt(String(req.params.customerId));
     const { reason } = req.body;
     await sharedPool.query("UPDATE customers SET is_blacklisted = true, blacklist_reason = $1 WHERE id = $2", [reason || "Belirtilmemiş", customerId]);
     res.json({ success: true });
   });
 
   app.post("/api/admin/unblacklist/:customerId", requireAdmin, async (req, res) => {
-    const customerId = parseInt(req.params.customerId);
+    const customerId = parseInt(String(req.params.customerId));
     await sharedPool.query("UPDATE customers SET is_blacklisted = false, blacklist_reason = NULL WHERE id = $1", [customerId]);
     res.json({ success: true });
   });
@@ -5203,7 +5204,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const allOrders = await storage.getAllOrders();
       const allProducts = await storage.getAllProducts();
       const allCustomers = await storage.getAllCustomers();
-      const categories = await storage.getBrandCategories();
+      const categories = await storage.getAllBrandCategories();
       const catMap = new Map(categories.map(c => [c.id, c]));
 
       const paymentMethods: Record<string, { count: number; total: number }> = {};
@@ -5465,7 +5466,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.patch("/api/admin/coupons/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
     const allowedKeys = ["code", "discountType", "discountValue", "minOrderAmount", "maxUses", "isActive", "expiresAt", "customerId"];
     const data: any = {};
@@ -5480,7 +5481,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.delete("/api/admin/coupons/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     await storage.deleteCoupon(id);
     res.json({ message: "Silindi" });
   });
@@ -5509,7 +5510,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.patch("/api/admin/contact-messages/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const isRead = req.body?.isRead === true;
     const updated = await storage.markContactMessageRead(id, isRead);
     if (!updated) return res.status(404).json({ message: "Bulunamadı" });
@@ -5517,7 +5518,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.delete("/api/admin/contact-messages/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     await storage.deleteContactMessage(id);
     res.json({ message: "Silindi" });
   });
@@ -5647,7 +5648,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.patch("/api/admin/product-quick-update/:id", requireAdmin, async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ürün ID" });
     const { stock, skt, barcode, mode } = req.body;
     if (stock !== undefined && (typeof stock !== "number" || stock < 0 || stock > 99999)) return res.status(400).json({ message: "Geçersiz stok değeri" });
@@ -5945,7 +5946,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (rateLimit(`petprofup:${ip}`, 15, 60 * 60 * 1000)) {
       return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
     }
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
     const { name, breed, birthday, weight, photoData, notes, favoriteFoodId } = req.body;
     if (name && (typeof name !== "string" || name.length > 50)) return res.status(400).json({ message: "İsim çok uzun" });
@@ -5963,7 +5964,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.delete("/api/customer/pet-profiles/:id", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     await sharedPool.query("DELETE FROM pet_photos WHERE pet_profile_id=$1", [id]);
     await sharedPool.query("DELETE FROM pet_weight_log WHERE pet_profile_id=$1", [id]);
     await sharedPool.query("DELETE FROM pet_health_records WHERE pet_profile_id=$1", [id]);
@@ -5974,7 +5975,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.get("/api/customer/pet-profiles/:id/health", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const pet = await sharedPool.query("SELECT id FROM pet_profiles WHERE id=$1 AND customer_id=$2", [id, customerId]);
     if (pet.rows.length === 0) return res.status(404).json({ message: "Pet bulunamadı" });
     const result = await sharedPool.query("SELECT * FROM pet_health_records WHERE pet_profile_id=$1 ORDER BY date DESC", [id]);
@@ -5993,7 +5994,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (rateLimit(`pethealth:${ip}`, 20, 60 * 60 * 1000)) {
       return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
     }
-    const petId = parseInt(req.params.id);
+    const petId = parseInt(String(req.params.id));
     if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
     const { recordType, title, date, notes, nextDate } = req.body;
     if (!recordType || !title || !date) return res.status(400).json({ message: "Tür, başlık ve tarih gerekli" });
@@ -6009,7 +6010,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.delete("/api/customer/pet-health/:id", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
-    const recordId = parseInt(req.params.id);
+    const recordId = parseInt(String(req.params.id));
     const check = await sharedPool.query(
       "SELECT phr.id FROM pet_health_records phr JOIN pet_profiles pp ON pp.id = phr.pet_profile_id WHERE phr.id=$1 AND pp.customer_id=$2",
       [recordId, customerId]
@@ -6022,7 +6023,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.get("/api/customer/pet-profiles/:id/weight", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
-    const petId = parseInt(req.params.id);
+    const petId = parseInt(String(req.params.id));
     if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
     const result = await sharedPool.query("SELECT * FROM pet_weight_log WHERE pet_profile_id=$1 ORDER BY date DESC", [petId]);
     res.json(result.rows);
@@ -6035,7 +6036,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (rateLimit(`petweight:${ip}`, 20, 60 * 60 * 1000)) {
       return res.status(429).json({ message: "Çok fazla istek. Lütfen daha sonra tekrar deneyin." });
     }
-    const petId = parseInt(req.params.id);
+    const petId = parseInt(String(req.params.id));
     if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
     const { weight, date } = req.body;
     if (!weight || !date) return res.status(400).json({ message: "Kilo ve tarih gerekli" });
@@ -6050,7 +6051,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.get("/api/customer/pet-profiles/:id/photos", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
-    const petId = parseInt(req.params.id);
+    const petId = parseInt(String(req.params.id));
     if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
     const result = await sharedPool.query("SELECT * FROM pet_photos WHERE pet_profile_id=$1 ORDER BY created_at DESC", [petId]);
     res.json(result.rows);
@@ -6063,7 +6064,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (rateLimit(`petphoto:${ip}`, 20, 60 * 60 * 1000)) {
       return res.status(429).json({ message: "Çok fazla fotoğraf yükleme. Lütfen daha sonra tekrar deneyin." });
     }
-    const petId = parseInt(req.params.id);
+    const petId = parseInt(String(req.params.id));
     if (!(await verifyPetOwnership(petId, customerId))) return res.status(403).json({ message: "Erişim reddedildi" });
     const { photoData, caption } = req.body;
     if (!photoData) return res.status(400).json({ message: "Fotoğraf gerekli" });
@@ -6079,7 +6080,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.delete("/api/customer/pet-photos/:id", async (req, res) => {
     const customerId = (req.session as any)?.customerId;
     if (!customerId) return res.status(401).json({ message: "Giriş yapmalısınız" });
-    const photoId = parseInt(req.params.id);
+    const photoId = parseInt(String(req.params.id));
     const check = await sharedPool.query(
       "SELECT pp2.id FROM pet_photos pp2 JOIN pet_profiles pp ON pp.id = pp2.pet_profile_id WHERE pp2.id=$1 AND pp.customer_id=$2",
       [photoId, customerId]
@@ -6133,7 +6134,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (rateLimit(`lfresolve:${ip}`, 10, 60 * 60 * 1000)) {
       return res.status(429).json({ message: "Çok fazla istek." });
     }
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
     await sharedPool.query("UPDATE lost_found_posts SET is_resolved = true WHERE id=$1 AND customer_id=$2", [id, customerId]);
     res.json({ success: true });
@@ -6189,7 +6190,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.get("/api/pet-contest/photo/:id", async (req, res) => {
-    const id = parseInt(req.params.id);
+    const id = parseInt(String(req.params.id));
     const [entry] = await db.select().from(petContestEntries).where(eq(petContestEntries.id, id));
     if (!entry) return res.status(404).json({ message: "Bulunamadı" });
     const match = entry.photoData.match(/^data:([^;]+);base64,(.+)$/);
@@ -6269,7 +6270,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (rateLimit(`vote:${ip}`, 30, 60 * 60 * 1000)) {
       return res.status(429).json({ message: "Çok fazla oy. Lütfen daha sonra tekrar deneyin." });
     }
-    const entryId = parseInt(req.params.id);
+    const entryId = parseInt(String(req.params.id));
     const voterIp = req.ip || req.headers["x-forwarded-for"]?.toString() || "unknown";
     const customerId = (req as any).session?.customerId || null;
 

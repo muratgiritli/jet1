@@ -5609,7 +5609,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <SelectValue placeholder="İstatistik eklemek istediğiniz ürünü seçin" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allProducts.filter(p => p.animal === "kedi").map((p) => (
+                    {allProducts.filter(p => categories.find(c => c.id === p.brandCategoryId)?.animal === "kedi").map((p) => (
                       <SelectItem key={p.id} value={String(p.id)} data-testid={`option-breed-product-${p.id}`}>
                         {p.name}
                       </SelectItem>
@@ -5739,7 +5739,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     <SelectValue placeholder="İstatistik eklemek istediğiniz köpek ürünü seçin" />
                   </SelectTrigger>
                   <SelectContent>
-                    {allProducts.filter(p => p.animal === "kopek").map((p) => (
+                    {allProducts.filter(p => categories.find(c => c.id === p.brandCategoryId)?.animal === "kopek").map((p) => (
                       <SelectItem key={p.id} value={String(p.id)} data-testid={`option-dog-breed-product-${p.id}`}>
                         {p.name}
                       </SelectItem>
@@ -7805,15 +7805,15 @@ function CouponsSection() {
   );
 }
 
-interface InstallmentRateRow { id: number; months: number; rate: number; isActive: boolean; sortOrder: number }
+interface InstallmentRateRow { id: number; months: number; rate: number; isActive: boolean; sortOrder: number; noInterest: boolean }
 
 function InstallmentRatesCard() {
   const { toast } = useToast();
   const { data: rates = [], isLoading } = useQuery<InstallmentRateRow[]>({
     queryKey: ["/api/admin/installment-rates"],
   });
-  const [editing, setEditing] = useState<Record<number, { months: string; rate: string; sortOrder: string; isActive: boolean }>>({});
-  const [newRow, setNewRow] = useState({ months: "", rate: "", sortOrder: "0", isActive: true });
+  const [editing, setEditing] = useState<Record<number, { months: string; rate: string; sortOrder: string; isActive: boolean; noInterest: boolean }>>({});
+  const [newRow, setNewRow] = useState({ months: "", rate: "", sortOrder: "0", isActive: true, noInterest: false });
 
   const refresh = () => {
     queryClient.invalidateQueries({ queryKey: ["/api/admin/installment-rates"] });
@@ -7822,7 +7822,7 @@ function InstallmentRatesCard() {
 
   const createMut = useMutation({
     mutationFn: async (data: any) => (await apiRequest("POST", "/api/admin/installment-rates", data)).json(),
-    onSuccess: () => { refresh(); setNewRow({ months: "", rate: "", sortOrder: "0", isActive: true }); toast({ title: "Eklendi" }); },
+    onSuccess: () => { refresh(); setNewRow({ months: "", rate: "", sortOrder: "0", isActive: true, noInterest: false }); toast({ title: "Eklendi" }); },
     onError: () => toast({ title: "Eklenemedi", variant: "destructive" }),
   });
   const updateMut = useMutation({

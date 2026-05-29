@@ -69,7 +69,7 @@ function ReviewDialog({
   const submit = useMutation({
     mutationFn: async () => {
       return apiRequest("POST", `/api/reviews/${productId}`, {
-        reviewerName: customer?.fullName || "Misafir",
+        reviewerName: customer?.name || "Misafir",
         rating,
         comment: text.trim(),
       });

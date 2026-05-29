@@ -296,7 +296,7 @@ function HealthTab({ petId }: { petId: number }) {
 }
 
 function NutritionTab({ petId, petName, purchaseHistory }: { petId: number; petName: string; purchaseHistory: any[] }) {
-  const { addToCart } = useCart();
+  const { updateQty } = useCart();
   const { data: products = [] } = useQuery<any[]>({ queryKey: ["/api/products"] });
   const { toast } = useToast();
 
@@ -309,14 +309,10 @@ function NutritionTab({ petId, petName, purchaseHistory }: { petId: number; petN
   const handleReorder = (item: any) => {
     const product = products.find(p => p.id === item.productId);
     if (product) {
-      addToCart({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        img: product.img,
-        quantity: 1,
-      });
-      toast({ title: `${product.name} sepete eklendi` });
+      const blocked = updateQty(String(product.id), 1);
+      if (!blocked) {
+        toast({ title: `${product.name} sepete eklendi` });
+      }
     }
   };
 

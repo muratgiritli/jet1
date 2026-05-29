@@ -90,7 +90,7 @@ function ProductCard({
 }: {
   product: Product;
   quantity: number;
-  onUpdate: (id: string, delta: number) => void;
+  onUpdate: (id: string, delta: number) => boolean;
 }) {
   const isActive = quantity > 0;
   return (

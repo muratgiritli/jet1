@@ -340,7 +340,7 @@ export default function ProductDetailPage() {
       },
       category: null,
       crossSellSections: [],
-    } as ProductDetailData;
+    } as unknown as ProductDetailData;
   }, [staticProduct]);
 
   const { data: campaignCheck } = useQuery<{ isCampaign: boolean; campaignPrice?: number | null }>({
