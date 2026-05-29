@@ -1386,76 +1386,6 @@ export default function Checkout() {
               </Card>
             </section>
 
-            <section className="mt-6">
-              <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-progress">
-                İlerleme Durumu
-              </h2>
-              <Card>
-                <CardContent className="p-4 space-y-5">
-                  {!hasCampaignItems && (
-                  <>
-                  <div>
-                    <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <Truck className="w-4 h-4 text-primary" />
-                        <span className="text-sm font-medium" data-testid="text-ship-label">Ücretsiz Teslimat</span>
-                      </div>
-                      <span className="text-xs font-bold text-muted-foreground" data-testid="text-ship-progress">
-                        {Math.round(subtotal)}/{CONFIG.shipLimit} TL
-                      </span>
-                    </div>
-                    <Progress
-                      value={Math.min((subtotal / CONFIG.shipLimit) * 100, 100)}
-                      className="h-2"
-                      data-testid="bar-ship"
-                    />
-                    <p className="text-xs font-medium mt-1.5 text-muted-foreground" data-testid="text-ship-hint">
-                      {subtotal >= CONFIG.shipLimit ? (
-                        <span className="text-chart-2 flex items-center gap-1">
-                          <Check className="w-3 h-3" /> Ücretsiz teslimat kazandınız!
-                        </span>
-                      ) : (
-                        `Ücretsiz teslimat için ${Math.round(CONFIG.shipLimit - subtotal)} TL daha ekleyin`
-                      )}
-                    </p>
-                    {subtotal < CONFIG.shipLimit && (
-                      <Link href="/">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="w-full mt-3 font-bold border-primary text-primary hover:bg-primary hover:text-white"
-                          data-testid="btn-continue-shopping"
-                        >
-                          <ShoppingCart className="w-4 h-4" />
-                          ALIŞVERİŞE DEVAM ET
-                        </Button>
-                      </Link>
-                    )}
-                  </div>
-                  </>
-                  )}
-
-                  {hasCampaignItems && (
-                    <div className="mt-4 pt-4 border-t">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="text-sm font-bold text-orange-600">Kampanya Durumu</span>
-                      </div>
-                      <div className="text-xs space-y-1">
-                        <div className="flex items-center gap-2">
-                          {campaignMainCount >= 1 ? (
-                            <Check className="w-3 h-3 text-chart-2" />
-                          ) : (
-                            <span className="w-3 h-3 rounded-full border border-gray-300 inline-block" />
-                          )}
-                          <span>Ana ürün: {campaignMainCount} adet ({campaignMainCount >= 1 ? "Tamam" : "En az 1 gerekli"})</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
-            </section>
-
             {!hasPreorderItems && (<>
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-coupon">
@@ -1757,6 +1687,76 @@ export default function Checkout() {
                   {orderError && (
                     <p className="text-[12px] text-red-500 text-center mt-2">{orderError}</p>
                   )}
+
+                  <div className="mt-5">
+                    <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-progress">
+                      İlerleme Durumu
+                    </h2>
+                    <Card>
+                      <CardContent className="p-4 space-y-5">
+                        {!hasCampaignItems && (
+                        <>
+                        <div>
+                          <div className="flex items-center justify-between gap-3 mb-2 flex-wrap">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <Truck className="w-4 h-4 text-primary" />
+                              <span className="text-sm font-medium" data-testid="text-ship-label">Ücretsiz Teslimat</span>
+                            </div>
+                            <span className="text-xs font-bold text-muted-foreground" data-testid="text-ship-progress">
+                              {Math.round(subtotal)}/{CONFIG.shipLimit} TL
+                            </span>
+                          </div>
+                          <Progress
+                            value={Math.min((subtotal / CONFIG.shipLimit) * 100, 100)}
+                            className="h-2"
+                            data-testid="bar-ship"
+                          />
+                          <p className="text-xs font-medium mt-1.5 text-muted-foreground" data-testid="text-ship-hint">
+                            {subtotal >= CONFIG.shipLimit ? (
+                              <span className="text-chart-2 flex items-center gap-1">
+                                <Check className="w-3 h-3" /> Ücretsiz teslimat kazandınız!
+                              </span>
+                            ) : (
+                              `Ücretsiz teslimat için ${Math.round(CONFIG.shipLimit - subtotal)} TL daha ekleyin`
+                            )}
+                          </p>
+                          {subtotal < CONFIG.shipLimit && (
+                            <Link href="/">
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full mt-3 font-bold border-primary text-primary hover:bg-primary hover:text-white"
+                                data-testid="btn-continue-shopping"
+                              >
+                                <ShoppingCart className="w-4 h-4" />
+                                ALIŞVERİŞE DEVAM ET
+                              </Button>
+                            </Link>
+                          )}
+                        </div>
+                        </>
+                        )}
+
+                        {hasCampaignItems && (
+                          <div className="mt-4 pt-4 border-t">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="text-sm font-bold text-orange-600">Kampanya Durumu</span>
+                            </div>
+                            <div className="text-xs space-y-1">
+                              <div className="flex items-center gap-2">
+                                {campaignMainCount >= 1 ? (
+                                  <Check className="w-3 h-3 text-chart-2" />
+                                ) : (
+                                  <span className="w-3 h-3 rounded-full border border-gray-300 inline-block" />
+                                )}
+                                <span>Ana ürün: {campaignMainCount} adet ({campaignMainCount >= 1 ? "Tamam" : "En az 1 gerekli"})</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </div>
 
                   {subtotal > 0 && subtotal < effShipLimit && !hasCampaignItems && (
                     <div
