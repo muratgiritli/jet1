@@ -105,22 +105,16 @@ export default function PaymentResultPage() {
       )}
 
       <div className="flex flex-col sm:flex-row gap-2 w-full">
-        <Link href="/hesabim?tab=orders">
-          <a className="flex-1 px-4 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-bold text-center block" data-testid="link-my-orders">
-            Siparişlerim
-          </a>
+        <Link href="/hesabim?tab=orders" className="flex-1 px-4 py-3 rounded-lg bg-primary text-primary-foreground text-sm font-bold text-center block" data-testid="link-my-orders">
+          Siparişlerim
         </Link>
         {!isSuccess && (
-          <Link href="/odeme">
-            <a className="flex-1 px-4 py-3 rounded-lg border text-sm font-bold text-center block" data-testid="link-retry-payment">
-              Tekrar Dene
-            </a>
+          <Link href="/odeme" className="flex-1 px-4 py-3 rounded-lg border text-sm font-bold text-center block" data-testid="link-retry-payment">
+            Tekrar Dene
           </Link>
         )}
-        <Link href="/">
-          <a className="flex-1 px-4 py-3 rounded-lg border text-sm font-bold text-center block" data-testid="link-home">
-            Ana Sayfa
-          </a>
+        <Link href="/" className="flex-1 px-4 py-3 rounded-lg border text-sm font-bold text-center block" data-testid="link-home">
+          Ana Sayfa
         </Link>
       </div>
     </div>

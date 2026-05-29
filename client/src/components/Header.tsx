@@ -32,9 +32,7 @@ export default function Header() {
                 <ArrowLeft className="w-5 h-5" />
               </button>
             )}
-            <Link href="/">
-              <Logo className="text-3xl" />
-            </Link>
+            <Logo className="text-3xl" linkTo="/" />
           </div>
 
           <div className="hidden md:block flex-1 max-w-md mx-8">

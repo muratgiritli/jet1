@@ -69,22 +69,18 @@ export default function SokakCanlariPage() {
                     className="bg-white rounded-xl border border-gray-200 overflow-hidden flex flex-col shadow-sm hover:shadow-md transition-shadow"
                     data-testid={`card-street-product-${p.id}`}
                   >
-                    <Link href={`/urun/${p.id}`}>
-                      <a className="block aspect-square bg-white flex items-center justify-center overflow-hidden p-2 cursor-pointer" data-testid={`link-img-${p.id}`}>
-                        {p.img ? (
-                          <img src={p.img} alt={p.name} className="max-w-full max-h-full object-contain" loading="lazy" />
-                        ) : (
-                          <div className="text-gray-300 text-xs">Görsel yok</div>
-                        )}
-                      </a>
+                    <Link href={`/urun/${p.id}`} className="block aspect-square bg-white flex items-center justify-center overflow-hidden p-2 cursor-pointer" data-testid={`link-img-${p.id}`}>
+                      {p.img ? (
+                        <img src={p.img} alt={p.name} className="max-w-full max-h-full object-contain" loading="lazy" />
+                      ) : (
+                        <div className="text-gray-300 text-xs">Görsel yok</div>
+                      )}
                     </Link>
                     <div className="p-2.5 md:p-3 flex flex-col flex-1">
-                      <Link href={`/urun/${p.id}`}>
-                        <a className="cursor-pointer hover:text-orange-600 transition-colors" data-testid={`link-name-${p.id}`}>
-                          <h3 className="text-xs md:text-sm font-semibold text-gray-900 line-clamp-3 mb-1.5 hover:text-orange-600" data-testid={`text-name-${p.id}`}>
-                            {p.name}
-                          </h3>
-                        </a>
+                      <Link href={`/urun/${p.id}`} className="cursor-pointer hover:text-orange-600 transition-colors" data-testid={`link-name-${p.id}`}>
+                        <h3 className="text-xs md:text-sm font-semibold text-gray-900 line-clamp-3 mb-1.5 hover:text-orange-600" data-testid={`text-name-${p.id}`}>
+                          {p.name}
+                        </h3>
                       </Link>
                       <div className="mt-auto">
                         <div className="flex items-baseline gap-1.5 mb-2">
@@ -141,10 +137,8 @@ export default function SokakCanlariPage() {
 
         {itemCount > 0 && (
           <div className="fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-40">
-            <Link href="/odeme">
-              <a className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-3 rounded-full shadow-lg" data-testid="link-checkout">
-                <ShoppingCart className="w-4 h-4" /> Sepete Git ({itemCount}) <ChevronRight className="w-4 h-4" />
-              </a>
+            <Link href="/odeme" className="flex items-center gap-2 bg-orange-500 hover:bg-orange-600 text-white font-bold px-5 py-3 rounded-full shadow-lg" data-testid="link-checkout">
+              <ShoppingCart className="w-4 h-4" /> Sepete Git ({itemCount}) <ChevronRight className="w-4 h-4" />
             </Link>
           </div>
         )}

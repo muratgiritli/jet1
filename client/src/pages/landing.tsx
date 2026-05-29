@@ -487,15 +487,13 @@ function SokakCanlariBanner() {
   if (settings && (settings.sokak_banner_enabled === "0" || settings.sokak_banner_enabled === "false")) return null;
   return (
     <div className="my-4 md:my-6" data-testid="section-sokak-banner">
-      <Link href="/sokak-canlari">
-        <a className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform" data-testid="link-sokak-canlari">
-          <img
-            src={new URL("@assets/CUVAL_MAMA_1778678246834.png", import.meta.url).href}
-            alt="Sokak Canları için Çuval Mama Kampanyası"
-            className="w-full h-auto block"
-            loading="lazy"
-          />
-        </a>
+      <Link href="/sokak-canlari" className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform" data-testid="link-sokak-canlari">
+        <img
+          src={new URL("@assets/CUVAL_MAMA_1778678246834.png", import.meta.url).href}
+          alt="Sokak Canları için Çuval Mama Kampanyası"
+          className="w-full h-auto block"
+          loading="lazy"
+        />
       </Link>
     </div>
   );
@@ -541,13 +539,13 @@ function BreedBannersRow() {
   return (
     <div className="my-4 md:my-6 grid grid-cols-2 gap-2 md:gap-4" data-testid="section-breed-banners">
       {breeds.map((b, i) => (
-        <Link key={i} href={b.href}>
-          <a
-            className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.01] transition-transform"
-            data-testid={b.testid}
-          >
-            <img src={b.img} alt={b.alt} className="w-full h-auto block" loading="lazy" />
-          </a>
+        <Link
+          key={i}
+          href={b.href}
+          className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.01] transition-transform"
+          data-testid={b.testid}
+        >
+          <img src={b.img} alt={b.alt} className="w-full h-auto block" loading="lazy" />
         </Link>
       ))}
     </div>
@@ -571,9 +569,7 @@ function CategoryBannersStack() {
         );
         const cls = "block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform";
         return b.link ? (
-          <Link key={b.idx} href={b.link}>
-            <a className={cls} data-testid={`link-cat-banner-${b.idx}`}>{img}</a>
-          </Link>
+          <Link key={b.idx} href={b.link} className={cls} data-testid={`link-cat-banner-${b.idx}`}>{img}</Link>
         ) : (
           <div key={b.idx} className={cls} data-testid={`link-cat-banner-${b.idx}`}>{img}</div>
         );
@@ -587,15 +583,13 @@ function VeterinerMamaBanner() {
   if (settings && (settings.veteriner_banner_enabled === "0" || settings.veteriner_banner_enabled === "false")) return null;
   return (
     <div className="my-4 md:my-6" data-testid="section-veteriner-banner">
-      <Link href="/kategori/veteriner">
-        <a className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform" data-testid="link-veteriner-mama">
-          <img
-            src={new URL("@assets/veteriner_mama-web_1778689310732.webp", import.meta.url).href}
-            alt="Veteriner Mamaları - Güvenilir Markalar"
-            className="w-full h-auto block"
-            loading="lazy"
-          />
-        </a>
+      <Link href="/kategori/veteriner" className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform" data-testid="link-veteriner-mama">
+        <img
+          src={new URL("@assets/veteriner_mama-web_1778689310732.webp", import.meta.url).href}
+          alt="Veteriner Mamaları - Güvenilir Markalar"
+          className="w-full h-auto block"
+          loading="lazy"
+        />
       </Link>
     </div>
   );
