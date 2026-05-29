@@ -17,7 +17,6 @@ import {
   Banknote,
   QrCode,
   Wallet,
-  Package,
   Check,
   ArrowLeft,
   Plus,
@@ -494,24 +493,6 @@ export default function Checkout() {
       setPaymentId("online");
     }
   }, [hasPreorderItems, paymentId, setPaymentId]);
-
-  const dominantAnimal = useMemo(() => {
-    const counts: Record<string, number> = {};
-    for (const { product, qty } of selectedProducts) {
-      const a = product.animal;
-      if (!a) continue;
-      counts[a] = (counts[a] || 0) + qty;
-    }
-    let best: string | null = null;
-    let bestN = 0;
-    for (const [a, n] of Object.entries(counts)) {
-      if (n > bestN) { best = a; bestN = n; }
-    }
-    return best;
-  }, [selectedProducts]);
-  const animalLabels: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", akvaryum: "Akvaryum", kemirgen: "Kemirgen" };
-  const categoryHref = dominantAnimal ? `/kategori/${dominantAnimal}` : "/kategori";
-  const categoryLabel = dominantAnimal ? `${animalLabels[dominantAnimal] || dominantAnimal} Kategorisine Git` : "Kategorilere Git";
 
   const campaignShipping = hasCampaignItems ? CONFIG.shipFee : stdShipping;
   const paymentDiscount = hasCampaignItems ? 0 : discount;
@@ -1757,38 +1738,6 @@ export default function Checkout() {
                       </CardContent>
                     </Card>
                   </div>
-
-                  {subtotal > 0 && subtotal < effShipLimit && !hasCampaignItems && (
-                    <div
-                      className="mt-3 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-950/30 dark:border-amber-800 p-4"
-                      data-testid="alert-free-shipping-info"
-                      role="status"
-                    >
-                      <div className="flex items-start gap-3">
-                        <div className="shrink-0 w-8 h-8 rounded-full bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center">
-                          <Package className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-amber-900 dark:text-amber-200" data-testid="text-free-ship-title">
-                            {matchedNeighborhood ? `${matchedNeighborhood.name}: ` : ""}{effShipLimit} TL ve üstü siparişlerde getirme ücreti yoktur
-                          </p>
-                          <p className="text-xs text-amber-800/90 dark:text-amber-200/90 mt-1 leading-relaxed" data-testid="text-free-ship-msg">
-                            {matchedNeighborhood
-                              ? `Şu an getirmesi ${effShipFee} TL. ${(effShipLimit - subtotal).toLocaleString("tr-TR")} TL daha ekleyin, ücretsiz olsun.`
-                              : "İsterseniz ürün ekleyebilirsiniz."}
-                          </p>
-                          <Link
-                            href={categoryHref}
-                            className="inline-flex items-center gap-1 mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300 hover:underline"
-                            data-testid="link-free-ship-category"
-                          >
-                            {categoryLabel}
-                            <ArrowRight className="w-3.5 h-3.5" />
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {!hasCampaignItems && (
                     <Link href="/">
