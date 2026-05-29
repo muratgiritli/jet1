@@ -151,25 +151,27 @@ function QuantityControl({
 }) {
   const [showStockWarn, setShowStockWarn] = useState(false);
   return (
-    <div className="flex flex-col items-start gap-1">
-      <div className="flex items-center gap-0" data-testid={`qty-control-${productId}`}>
+    <div className="flex flex-col items-center md:items-start gap-1">
+      <div className="flex items-center gap-2" data-testid={`qty-control-${productId}`}>
         <Button
           variant="outline"
-          size="sm"
+          size="icon"
+          className="h-12 w-12 md:h-11 md:w-11"
           onClick={() => onUpdate(productId, -1)}
           data-testid={`btn-minus-${productId}`}
         >
-          <Minus />
+          <Minus className="w-6 h-6 md:w-5 md:h-5" />
         </Button>
         <div
-          className="flex items-center justify-center font-bold text-primary w-10 text-base"
+          className="flex items-center justify-center font-bold text-primary w-14 md:w-12 text-2xl md:text-xl"
           data-testid={`text-qty-${productId}`}
         >
           {quantity}
         </div>
         <Button
           variant="outline"
-          size="sm"
+          size="icon"
+          className="h-12 w-12 md:h-11 md:w-11"
           onClick={() => {
             const blocked = onUpdate(productId, 1);
             if (blocked) {
@@ -179,7 +181,7 @@ function QuantityControl({
           }}
           data-testid={`btn-plus-${productId}`}
         >
-          <Plus />
+          <Plus className="w-6 h-6 md:w-5 md:h-5" />
         </Button>
       </div>
       {showStockWarn && (
@@ -792,7 +794,7 @@ export default function ProductDetailPage() {
                     Ön Sipariş — Ortalama 3 iş günü içinde teslimat
                   </div>
                   <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3 flex-wrap">
+                    <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap">
                       <span className="text-sm text-muted-foreground font-medium">ADET</span>
                       <QuantityControl productId={pid} quantity={quantity} onUpdate={(id, delta) => {
                         if (delta > 0 && hasVariants && !selectedVariant) {
@@ -907,7 +909,7 @@ export default function ProductDetailPage() {
                 </div>
               ) : (
                 <div className="flex flex-col gap-3 mt-2">
-                  <div className="flex items-center gap-3 flex-wrap">
+                  <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap">
                     <span className="text-sm text-muted-foreground font-medium">ADET</span>
                     <QuantityControl productId={pid} quantity={quantity} onUpdate={(id, delta) => {
                       if (delta > 0 && hasVariants && !selectedVariant) {
