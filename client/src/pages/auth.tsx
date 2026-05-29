@@ -16,7 +16,7 @@ export default function AuthPage() {
   const searchStr = useSearch();
   const isRegisterTab = new URLSearchParams(searchStr).get("tab") === "register";
   const [phone, setPhone] = useState("");
-  const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
+  const [otpCode, setOtpCode] = useState(["", "", "", ""]);
   const [name, setName] = useState("");
   const [adresDetay, setAdresDetay] = useState("");
   const [mahalle, setMahalle] = useState("");
@@ -85,7 +85,7 @@ export default function AuthPage() {
       setIsExistingUser(data.isExisting);
       setStep("otp");
       setCountdown(180);
-      setOtpCode(["", "", "", "", "", ""]);
+      setOtpCode(["", "", "", ""]);
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
     } catch (err: any) {
       let msg = "SMS gönderilemedi";
@@ -101,11 +101,11 @@ export default function AuthPage() {
     const newCode = [...otpCode];
     if (value.length > 1) {
       const digits = value.replace(/\D/g, "").split("");
-      for (let i = 0; i < 6; i++) {
+      for (let i = 0; i < 4; i++) {
         newCode[i] = digits[i] || "";
       }
       setOtpCode(newCode);
-      const lastFilledIndex = Math.min(digits.length - 1, 5);
+      const lastFilledIndex = Math.min(digits.length - 1, 3);
       otpRefs.current[lastFilledIndex]?.focus();
       if (newCode.every(d => d !== "") && !verifyingRef.current) {
         verifyingRef.current = true;
@@ -115,7 +115,7 @@ export default function AuthPage() {
     }
     newCode[index] = value;
     setOtpCode(newCode);
-    if (value && index < 5) {
+    if (value && index < 3) {
       otpRefs.current[index + 1]?.focus();
     }
     if (newCode.every(d => d !== "") && !verifyingRef.current) {
@@ -138,7 +138,7 @@ export default function AuthPage() {
       .then((otp: any) => {
         if (otp?.code) {
           const digits = otp.code.replace(/\D/g, "");
-          if (digits.length === 6) {
+          if (digits.length === 4) {
             setOtpCode(digits.split(""));
             if (!verifyingRef.current) {
               verifyingRef.current = true;
@@ -176,14 +176,14 @@ export default function AuthPage() {
   };
 
   const autoVerify = (code: string) => {
-    if (code.length === 6) doVerify(code);
+    if (code.length === 4) doVerify(code);
     else verifyingRef.current = false;
   };
 
   const verifyOtp = async () => {
     const code = otpCode.join("");
-    if (code.length !== 6) {
-      setFormErrors({ otp: "6 haneli kodu girin" });
+    if (code.length !== 4) {
+      setFormErrors({ otp: "4 haneli kodu girin" });
       return;
     }
     doVerify(code);
@@ -233,7 +233,7 @@ export default function AuthPage() {
             {step === "phone" && (isRegisterTab
               ? "Hızlı sipariş için üye olun — telefonunuza SMS kodu göndereceğiz"
               : "Telefon numaranıza SMS ile doğrulama kodu göndereceğiz")}
-            {step === "otp" && `+90 ${phone} numarasına gönderilen 6 haneli kodu girin`}
+            {step === "otp" && `+90 ${phone} numarasına gönderilen 4 haneli kodu girin`}
             {step === "register" && "Sipariş için bilgilerinizi girin"}
           </p>
         </div>
@@ -280,7 +280,7 @@ export default function AuthPage() {
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-purple-50 border border-purple-100">
                   <ShieldCheck className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
                   <div className="text-xs text-purple-700 space-y-1">
-                    <div>+90 {phone} numarasına 6 haneli doğrulama kodu gönderildi</div>
+                    <div>+90 {phone} numarasına 4 haneli doğrulama kodu gönderildi</div>
                     <div className="font-medium" data-testid="text-otp-info">
                       {isExistingUser
                         ? "Bu numara kayıtlı. Kodu doğruladıktan sonra otomatik giriş yapılacaktır."
@@ -325,7 +325,7 @@ export default function AuthPage() {
                 <Button
                   onClick={verifyOtp}
                   className="w-full"
-                  disabled={loading || otpCode.join("").length !== 6}
+                  disabled={loading || otpCode.join("").length !== 4}
                   style={{ backgroundColor: "#6B3480" }}
                   data-testid="btn-verify-otp"
                 >
@@ -337,7 +337,7 @@ export default function AuthPage() {
                   <button
                     type="button"
                     className="text-xs text-muted-foreground hover:underline flex items-center gap-1"
-                    onClick={() => { setStep("phone"); setFormErrors({}); setOtpCode(["", "", "", "", "", ""]); }}
+                    onClick={() => { setStep("phone"); setFormErrors({}); setOtpCode(["", "", "", ""]); }}
                     data-testid="btn-back-phone"
                   >
                     <ArrowLeft className="w-3 h-3" /> Numarayı Değiştir
