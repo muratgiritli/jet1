@@ -12,6 +12,7 @@ import pgSession from "connect-pg-simple";
 import { saveProductImage, getProductImage, downloadAndSaveImage } from "./image-service";
 import multer from "multer";
 import OpenAI from "openai";
+import { BRAND_PAGES } from "../client/src/lib/brand-seo-data";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -660,9 +661,11 @@ export async function registerRoutes(
         { url: "/blog/kedi-bakim-ipuclari", priority: "0.7", changefreq: "monthly" },
         { url: "/blog/samsun-evcil-hayvan-gezilecek-yerler", priority: "0.6", changefreq: "monthly" },
       ];
-      const brandSlugs = [
-        { url: "/royal-canin-atakum", priority: "0.7", changefreq: "weekly" },
-      ];
+      const brandSlugs = BRAND_PAGES.map((p) => ({
+        url: `/${p.slug}`,
+        priority: "0.7",
+        changefreq: "weekly",
+      }));
       const seoSlugs = [...coreSlugs, ...mahalleSlugs, ...keywordSlugs, ...blogSlugs, ...brandSlugs];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;

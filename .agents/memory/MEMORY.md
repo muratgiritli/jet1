@@ -1,0 +1,1 @@
+- [Brand SEO landing pages](brand-seo-pages.md) — unique per-brand pages (not doorway); brand_slug varies per animal/subcat; brand pages omit WhatsApp.

@@ -6,7 +6,7 @@ import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD, FAQ_JSONLD, LOCAL_BUSINESS_JSONLD 
 import { SEO_PAGES, type SeoPageData } from "@/lib/seo-data";
 import NotFound from "@/pages/not-found";
 
-function StoreInfoBox() {
+function StoreInfoBox({ hideWhatsapp = false }: { hideWhatsapp?: boolean }) {
   return (
     <section className="border-2 border-[#6B3480]/20 rounded-2xl overflow-hidden" data-testid="store-info-box">
       <div className="bg-[#6B3480]/5 px-5 py-3 border-b border-[#6B3480]/10">
@@ -31,13 +31,15 @@ function StoreInfoBox() {
               <a href="tel:+908508403959" className="text-sm text-[#6B3480] hover:underline">0850 840 39 59</a>
             </div>
           </div>
-          <div className="flex items-start gap-3">
-            <MessageCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
-            <div>
-              <p className="text-sm font-semibold">WhatsApp Sipariş</p>
-              <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="text-sm text-green-600 hover:underline">0850 840 39 59</a>
+          {!hideWhatsapp && (
+            <div className="flex items-start gap-3">
+              <MessageCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold">WhatsApp Sipariş</p>
+                <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="text-sm text-green-600 hover:underline">0850 840 39 59</a>
+              </div>
             </div>
-          </div>
+          )}
         </div>
         <div className="space-y-3">
           <div className="flex items-start gap-3">
@@ -203,7 +205,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
           </section>
         )}
 
-        <StoreInfoBox />
+        <StoreInfoBox hideWhatsapp={page.type === "brand"} />
 
         {page.type === "core" && (
           <section>
@@ -287,12 +289,14 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
                 </Link>
               </>
             )}
-            <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" className="w-full sm:w-auto bg-green-600 hover:bg-green-700" data-testid="cta-whatsapp">
-                <Phone className="w-4 h-4 mr-2" />
-                WhatsApp Sipariş
-              </Button>
-            </a>
+            {page.type !== "brand" && (
+              <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer">
+                <Button size="lg" className="w-full sm:w-auto bg-green-600 hover:bg-green-700" data-testid="cta-whatsapp">
+                  <Phone className="w-4 h-4 mr-2" />
+                  WhatsApp Sipariş
+                </Button>
+              </a>
+            )}
           </div>
         </section>
       </div>
