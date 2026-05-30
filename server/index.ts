@@ -31,6 +31,16 @@ declare module "http" {
 
 app.set("trust proxy", 1);
 
+// Canonical host: 301 redirect apex (non-www) -> www so Google consolidates
+// all signals onto one hostname. Only affects the production domain; dev hosts
+// (replit.dev / replit.app / localhost) are left untouched.
+app.use((req, res, next) => {
+  if (req.hostname.toLowerCase() === "jetgomarket.com") {
+    return res.redirect(301, `https://www.jetgomarket.com${req.originalUrl}`);
+  }
+  next();
+});
+
 app.use((_req, res, next) => {
   res.removeHeader("X-Powered-By");
   next();
