@@ -6,7 +6,7 @@ export interface SeoSection {
 
 export interface SeoPageData {
   slug: string;
-  type: "core" | "district" | "mahalle-block" | "mahalle" | "category" | "blog" | "keyword";
+  type: "core" | "district" | "mahalle-block" | "mahalle" | "category" | "blog" | "keyword" | "brand";
   title: string;
   metaTitle: string;
   metaDescription: string;
@@ -18,6 +18,7 @@ export interface SeoPageData {
   mahalleler?: string[];
   faq: { q: string; a: string }[];
   internalLinks: { text: string; href: string }[];
+  buyLinks?: { text: string; href: string }[];
   parentDistrict?: string;
 }
 
@@ -3487,3 +3488,93 @@ const PRODUCT_SEO_PAGES: SeoPageData[] = [
 ];
 
 SEO_PAGES.push(...MAHALLE_PAGES, ...KEYWORD_PAGES, ...PRODUCT_SEO_PAGES);
+
+const BRAND_PAGES: SeoPageData[] = [
+  {
+    slug: "royal-canin-atakum",
+    type: "brand",
+    title: "Royal Canin Atakum",
+    metaTitle: "Royal Canin Atakum | Kedi & Köpek Maması Aynı Gün Teslimat - JETGO",
+    metaDescription:
+      "Atakum'da Royal Canin kedi ve köpek mamaları kapınıza aynı gün teslim. Indoor, Sterilised, Kitten, Maxi, Mini ve ırka özel formüller. Kapıda ödeme, %5 Para Puan, uygun fiyat.",
+    keywords:
+      "royal canin atakum, royal canin samsun, atakum royal canin mama, royal canin kedi maması atakum, royal canin köpek maması atakum, royal canin sterilised atakum, royal canin indoor samsun, royal canin kitten atakum, royal canin fiyat atakum, royal canin kapıda ödeme samsun",
+    h1: "Royal Canin Atakum: Kedi ve Köpek Mamaları Kapınıza Aynı Gün Teslim",
+    intro: [
+      "Royal Canin, dünya genelinde veteriner hekimlerin önerdiği; kedi ve köpeklerin ırkına, yaşına ve yaşam tarzına göre bilimsel olarak formüle edilmiş premium mama markasıdır. JETGO ile Atakum'un her mahallesine Royal Canin ürünlerini ağır çuval taşıma derdi olmadan aynı gün kapınıza getiriyoruz.",
+      "Royal Canin Indoor, Sterilised, Kitten, Hair & Skin, Maxi Adult, Medium, Mini ve ırka özel (British Shorthair, Persian, German Shepherd) çeşitlerinin tamamı stoklarımızda. Atakum Denizevleri, Güzelyalı, Kurupelit, Atakent ve diğer mahallelerde Royal Canin arıyorsanız doğru yerdesiniz.",
+      "Sipariş vermek çok kolay: ürünü seçin, sepete ekleyin ve kapıda nakit, kredi kartı (POS) veya QR ile ödeyin. Her Royal Canin siparişinde %5 Para Puan kazanır, biriken puanı sonraki alışverişinizde kullanırsınız.",
+    ],
+    sections: [
+      {
+        h2: "Royal Canin Neden Veteriner Hekimlerin İlk Tercihi?",
+        paragraphs: [
+          "Royal Canin, \"tek beden herkese uyar\" yaklaşımını reddeder. Her formül; hayvanın türüne, ırkına, yaşına, boyutuna ve özel ihtiyaçlarına (kısırlaştırılmış, hassas sindirim, tüy sağlığı, kilo kontrolü) göre ayrı ayrı geliştirilir. Bu hassas beslenme yaklaşımı, markayı veteriner kliniklerinin en çok önerdiği seçenek yapar.",
+          "Mamaların kroket boyutu, dokusu ve besin yoğunluğu bile ırka göre değişir; örneğin Persian kedilerin çenesine uygun badem biçimli kroketler ya da Maxi köpekler için eklem sağlığını destekleyen formüller bunun göstergesidir. Atakum'da Royal Canin tercih eden binlerce evcil hayvan sahibi bu farkı görüyor.",
+        ],
+        list: [
+          "Irk, yaş ve boyuta özel bilimsel formüller",
+          "Hassas sindirim ve tüy-deri sağlığını destekleyen içerikler",
+          "Kısırlaştırılmış kedi/köpekler için kilo kontrollü seçenekler",
+          "Veteriner kliniklerinin en çok önerdiği premium marka",
+        ],
+      },
+      {
+        h2: "Atakum'da Bulabileceğiniz Royal Canin Çeşitleri",
+        paragraphs: [
+          "Kediler için: Royal Canin Indoor (ev kedileri), Sterilised (kısırlaştırılmış), Kitten (yavru), Hair & Skin (tüy sağlığı) ve British Shorthair / Persian gibi ırka özel mamalar. Köpekler için: Maxi, Medium, Mini ırk boyutuna göre yetişkin ve yavru (Puppy) formülleri ile German Shepherd gibi ırka özel seçenekler.",
+          "Hem kuru mama hem de açık (gramajla) mama seçenekleriyle bütçenize ve evcil hayvanınızın damak tadına uygun çözümler sunuyoruz. Aşağıdaki butonlardan ilgili Royal Canin kategorisine geçip tüm ürünleri fiyatlarıyla inceleyebilirsiniz.",
+        ],
+      },
+      {
+        h2: "Atakum'a Royal Canin Aynı Gün Teslimat",
+        paragraphs: [
+          "JETGO, Atakum genelinde Royal Canin siparişlerini aynı gün teslim eder. Denizevleri, Güzelyalı, Kurupelit, Atakent, İncesu, Mimar Sinan ve diğer mahallelere kurye ekibimiz ürünü kapınıza kadar getirir. Mama bitmeden sipariş verin, kuyruğunuz aç kalmasın.",
+          "Ödemeyi kapıda nakit, POS ile kredi kartı veya QR kod ile yapabilirsiniz. Online kredi kartı seçeneği de mevcuttur. Her siparişte %5 Para Puan kazanır, bir sonraki Royal Canin alışverişinizde indirim olarak kullanırsınız.",
+        ],
+      },
+    ],
+    features: [
+      "Veteriner hekim önerili, bilimsel formüller",
+      "Irk, yaş ve boyuta özel mama çeşitleri",
+      "Indoor, Sterilised, Kitten, Maxi, Mini ve ırka özel seçenekler",
+      "Atakum'un tüm mahallelerine aynı gün teslimat",
+      "Kapıda nakit, kredi kartı (POS) ve QR ödeme",
+      "Her siparişte %5 Para Puan kazancı",
+    ],
+    buyLinks: [
+      { text: "Royal Canin Köpek Maması", href: "/kategori/kopek/mama-markalari/royal-canin" },
+      { text: "Royal Canin Kedi Maması", href: "/kategori/kedi/kedi-mamasi/royal-canin" },
+    ],
+    faq: [
+      {
+        q: "Atakum'da Royal Canin mama fiyatları ne kadar?",
+        a: "Royal Canin fiyatları ürünün türüne ve gramajına göre değişir. Güncel fiyatları görmek için yukarıdaki \"Royal Canin Köpek Maması\" veya \"Royal Canin Kedi Maması\" butonuna tıklayıp kategori sayfasındaki tüm ürünleri inceleyebilirsiniz. Nakit ödemede ayrıca avantajlı fiyat sunuyoruz.",
+      },
+      {
+        q: "Royal Canin Atakum'a aynı gün teslim ediliyor mu?",
+        a: "Evet. Atakum'un tüm mahallelerine (Denizevleri, Güzelyalı, Kurupelit, Atakent ve diğerleri) Royal Canin siparişlerini aynı gün kapınıza teslim ediyoruz.",
+      },
+      {
+        q: "Royal Canin Indoor ile Sterilised arasındaki fark nedir?",
+        a: "Indoor, az hareket eden ev kedileri için kalori dengelenmiş bir formüldür. Sterilised ise kısırlaştırılmış kedilerin değişen metabolizmasına ve kilo alma eğilimine göre özel olarak geliştirilmiştir. Kısırlaştırılmış ev kedileri için Sterilised tercih edilir.",
+      },
+      {
+        q: "Royal Canin kedi maması köpeklere verilebilir mi?",
+        a: "Hayır. Kedi ve köpeklerin besin ihtiyaçları farklıdır; kedi mamalarında köpekler için yetersiz/uygunsuz oranlar bulunur. Köpeğiniz için Royal Canin köpek maması kategorisinden ırk boyutuna uygun ürünü seçmelisiniz.",
+      },
+      {
+        q: "Royal Canin siparişinde kapıda ödeme var mı?",
+        a: "Evet. Kapıda nakit, kredi kartı (POS) ve QR kod ile ödeme yapabilirsiniz. Dilerseniz online kredi kartı ile de ödeyebilirsiniz.",
+      },
+    ],
+    internalLinks: [
+      { text: "Atakum Pet Shop", href: "/atakum-petshop" },
+      { text: "Kedi Maması", href: "/kedi-mamasi" },
+      { text: "Köpek Maması", href: "/kopek-mamasi" },
+      { text: "Samsun Pet Shop", href: "/samsun-petshop" },
+    ],
+  },
+];
+
+SEO_PAGES.push(...BRAND_PAGES);

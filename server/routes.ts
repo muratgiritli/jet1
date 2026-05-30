@@ -660,7 +660,10 @@ export async function registerRoutes(
         { url: "/blog/kedi-bakim-ipuclari", priority: "0.7", changefreq: "monthly" },
         { url: "/blog/samsun-evcil-hayvan-gezilecek-yerler", priority: "0.6", changefreq: "monthly" },
       ];
-      const seoSlugs = [...coreSlugs, ...mahalleSlugs, ...keywordSlugs, ...blogSlugs];
+      const brandSlugs = [
+        { url: "/royal-canin-atakum", priority: "0.7", changefreq: "weekly" },
+      ];
+      const seoSlugs = [...coreSlugs, ...mahalleSlugs, ...keywordSlugs, ...blogSlugs, ...brandSlugs];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
       for (const page of seoSlugs) {

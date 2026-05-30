@@ -1,5 +1,5 @@
 import { Link, useRoute } from "wouter";
-import { MapPin, Truck, Phone, ChevronRight, Star, ShieldCheck, Clock, Package, CreditCard, MessageCircle } from "lucide-react";
+import { MapPin, Truck, Phone, ChevronRight, Star, ShieldCheck, Clock, Package, CreditCard, MessageCircle, ShoppingCart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD, FAQ_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
@@ -171,7 +171,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
         {page.features && page.features.length > 0 && (
           <section>
             <h2 className="text-xl font-bold mb-4" data-testid="seo-h2-features">
-              {page.type === "blog" ? "Marka Detayları" : page.type === "category" ? "Markalar ve Ürünler" : page.type === "mahalle" ? "Teslimat Avantajları" : page.type === "keyword" ? "Neden JETGO?" : "Hizmetlerimiz"}
+              {page.type === "blog" ? "Marka Detayları" : page.type === "category" ? "Markalar ve Ürünler" : page.type === "mahalle" ? "Teslimat Avantajları" : page.type === "keyword" ? "Neden JETGO?" : page.type === "brand" ? "Marka Avantajları" : "Hizmetlerimiz"}
             </h2>
             <div className="grid gap-3">
               {page.features.map((f, i) => (
@@ -264,16 +264,29 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
             900'den fazla ürün, aynı gün teslimat, nakit ödemede avantajlı fiyat.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/kategori/kedi">
-              <Button variant="secondary" size="lg" className="w-full sm:w-auto" data-testid="cta-kedi">
-                Kedi Ürünleri
-              </Button>
-            </Link>
-            <Link href="/kategori/kopek">
-              <Button variant="secondary" size="lg" className="w-full sm:w-auto" data-testid="cta-kopek">
-                Köpek Ürünleri
-              </Button>
-            </Link>
+            {page.buyLinks && page.buyLinks.length > 0 ? (
+              page.buyLinks.map((b, i) => (
+                <Link key={b.href} href={b.href}>
+                  <Button variant="secondary" size="lg" className="w-full sm:w-auto" data-testid={`cta-buy-${i}`}>
+                    <ShoppingCart className="w-4 h-4 mr-2" />
+                    {b.text}
+                  </Button>
+                </Link>
+              ))
+            ) : (
+              <>
+                <Link href="/kategori/kedi">
+                  <Button variant="secondary" size="lg" className="w-full sm:w-auto" data-testid="cta-kedi">
+                    Kedi Ürünleri
+                  </Button>
+                </Link>
+                <Link href="/kategori/kopek">
+                  <Button variant="secondary" size="lg" className="w-full sm:w-auto" data-testid="cta-kopek">
+                    Köpek Ürünleri
+                  </Button>
+                </Link>
+              </>
+            )}
             <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer">
               <Button size="lg" className="w-full sm:w-auto bg-green-600 hover:bg-green-700" data-testid="cta-whatsapp">
                 <Phone className="w-4 h-4 mr-2" />
