@@ -181,12 +181,25 @@ export default function SignupBonusBanner() {
     if (Object.keys(errs).length > 0) { setError(""); return; }
     setError("");
     setLoading(true);
+    const normalized = phone.replace(/\D/g, "");
+    const code = otpCode.join("");
     const addressParts = [mahalle, adresDetay.trim()].filter(Boolean).join(", ");
     try {
-      await apiRequest("PATCH", "/api/customer/profile", {
+      const res = await apiRequest("POST", "/api/otp/verify", {
+        phone: normalized,
+        code,
         name: name.trim(),
         address: addressParts || undefined,
       });
+      const data = await res.json();
+      if (data.deviceToken) {
+        try {
+          const tokens = JSON.parse(localStorage.getItem("jetgo_trusted_devices") || "{}");
+          tokens[normalized] = data.deviceToken;
+          localStorage.setItem("jetgo_trusted_devices", JSON.stringify(tokens));
+        } catch {}
+      }
+      if (data.welcomeCouponCode) setWelcomeCoupon(data.welcomeCouponCode);
       if (mahalle) localStorage.setItem("jet55_mahalle", mahalle);
       setStep("success");
       setTimeout(() => window.location.reload(), 10000);
