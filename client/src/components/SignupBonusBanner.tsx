@@ -220,12 +220,22 @@ export default function SignupBonusBanner() {
   );
 
   useEffect(() => {
+    const existing = (window as any).__deferredInstallPrompt as BeforeInstallPromptEvent | null;
+    if (existing) deferredPrompt.current = existing;
     const handler = (e: Event) => {
       e.preventDefault();
       deferredPrompt.current = e as BeforeInstallPromptEvent;
     };
+    const readyHandler = () => {
+      const p = (window as any).__deferredInstallPrompt as BeforeInstallPromptEvent | null;
+      if (p) deferredPrompt.current = p;
+    };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    window.addEventListener("pwaInstallReady", readyHandler);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("pwaInstallReady", readyHandler);
+    };
   }, []);
 
   const handleInstallApp = async () => {
@@ -233,10 +243,14 @@ export default function SignupBonusBanner() {
       setShowIOSGuide(true);
       return;
     }
-    if (deferredPrompt.current) {
-      await deferredPrompt.current.prompt();
-      await deferredPrompt.current.userChoice;
+    const promptEvent =
+      deferredPrompt.current ||
+      ((window as any).__deferredInstallPrompt as BeforeInstallPromptEvent | null);
+    if (promptEvent) {
+      await promptEvent.prompt();
+      await promptEvent.userChoice;
       deferredPrompt.current = null;
+      (window as any).__deferredInstallPrompt = null;
     }
   };
 

@@ -9,6 +9,18 @@
     'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
     })(window,document,'script','dataLayer','GTM-5LW8HVSQ');</script>
     <!-- End Google Tag Manager -->
+    <!-- Capture PWA install prompt early (before React mounts) -->
+    <script>
+      window.__deferredInstallPrompt = null;
+      window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        window.__deferredInstallPrompt = e;
+        window.dispatchEvent(new Event('pwaInstallReady'));
+      });
+      window.addEventListener('appinstalled', function () {
+        window.__deferredInstallPrompt = null;
+      });
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>Atakum Petshop & Samsun Pet Shop - Aynı Gün Teslimat | JETGO</title>
     <meta name="description" content="Atakum, Samsun, İlkadım, Canik'e aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu kapıda ödeme. JETGO 09:00-21:00, 0850 840 39 59." />

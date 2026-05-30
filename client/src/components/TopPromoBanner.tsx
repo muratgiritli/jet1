@@ -32,12 +32,23 @@ export default function TopPromoBanner() {
     setIsIOSSafari(ios && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/i.test(ua));
     setIsAndroid(/Android/i.test(ua));
 
+    const existing = (window as any).__deferredInstallPrompt as BeforeInstallPromptEvent | null;
+    if (existing) deferredPrompt.current = existing;
+
     const handler = (e: Event) => {
       e.preventDefault();
       deferredPrompt.current = e as BeforeInstallPromptEvent;
     };
+    const readyHandler = () => {
+      const p = (window as any).__deferredInstallPrompt as BeforeInstallPromptEvent | null;
+      if (p) deferredPrompt.current = p;
+    };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    window.addEventListener("pwaInstallReady", readyHandler);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("pwaInstallReady", readyHandler);
+    };
   }, []);
 
   if (closed || isStandalone) return null;
@@ -47,14 +58,18 @@ export default function TopPromoBanner() {
       setGuide(isIOSSafari ? "ios-safari" : "ios-other-browser");
       return;
     }
-    if (deferredPrompt.current) {
-      await deferredPrompt.current.prompt();
-      const { outcome } = await deferredPrompt.current.userChoice;
+    const promptEvent =
+      deferredPrompt.current ||
+      ((window as any).__deferredInstallPrompt as BeforeInstallPromptEvent | null);
+    if (promptEvent) {
+      await promptEvent.prompt();
+      const { outcome } = await promptEvent.userChoice;
       if (outcome === "accepted") {
         setClosed(true);
         sessionStorage.setItem("topBannerClosed", "1");
       }
       deferredPrompt.current = null;
+      (window as any).__deferredInstallPrompt = null;
     } else {
       setGuide("desktop-no-prompt");
     }

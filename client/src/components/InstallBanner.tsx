@@ -38,14 +38,31 @@ export default function InstallBanner() {
       return;
     }
 
+    const existing = (window as any).__deferredInstallPrompt as BeforeInstallPromptEvent | null;
+    if (existing) {
+      deferredPrompt.current = existing;
+      setDismissed(false);
+    }
+
     const handler = (e: Event) => {
       e.preventDefault();
       deferredPrompt.current = e as BeforeInstallPromptEvent;
       setDismissed(false);
     };
+    const readyHandler = () => {
+      const p = (window as any).__deferredInstallPrompt as BeforeInstallPromptEvent | null;
+      if (p) {
+        deferredPrompt.current = p;
+        setDismissed(false);
+      }
+    };
 
     window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    window.addEventListener("pwaInstallReady", readyHandler);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("pwaInstallReady", readyHandler);
+    };
   }, []);
 
   if (dismissed || isStandalone || isLoggedIn) return null;
@@ -61,11 +78,15 @@ export default function InstallBanner() {
       return;
     }
 
-    if (deferredPrompt.current) {
-      await deferredPrompt.current.prompt();
-      const { outcome } = await deferredPrompt.current.userChoice;
+    const promptEvent =
+      deferredPrompt.current ||
+      ((window as any).__deferredInstallPrompt as BeforeInstallPromptEvent | null);
+    if (promptEvent) {
+      await promptEvent.prompt();
+      const { outcome } = await promptEvent.userChoice;
       if (outcome === "accepted") handleDismiss();
       deferredPrompt.current = null;
+      (window as any).__deferredInstallPrompt = null;
     } else {
       setGuide("desktop-no-prompt");
     }

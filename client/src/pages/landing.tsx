@@ -969,16 +969,32 @@ function WelcomeBonusPopup() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const existing = (window as any).__deferredInstallPrompt as BeforeInstallPromptEvent | null;
+    if (existing) {
+      deferredPrompt.current = existing;
+      setCanInstall(true);
+    }
     const handler = (e: Event) => {
       e.preventDefault();
       deferredPrompt.current = e as BeforeInstallPromptEvent;
       setCanInstall(true);
     };
+    const readyHandler = () => {
+      const p = (window as any).__deferredInstallPrompt as BeforeInstallPromptEvent | null;
+      if (p) {
+        deferredPrompt.current = p;
+        setCanInstall(true);
+      }
+    };
     window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("pwaInstallReady", readyHandler);
     const standalone = window.matchMedia?.("(display-mode: standalone)").matches
       || (window.navigator as any).standalone === true;
     if (standalone) setCanInstall(false);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    return () => {
+      window.removeEventListener("beforeinstallprompt", handler);
+      window.removeEventListener("pwaInstallReady", readyHandler);
+    };
   }, []);
 
   if (!open) return null;
