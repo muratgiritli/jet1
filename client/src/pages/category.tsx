@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link, useRoute, useLocation } from "wouter";
 import { FreeShippingBanner } from "@/components/FreeShippingBanner";
 import { useQuery } from "@tanstack/react-query";
@@ -110,6 +111,22 @@ const SUBCATEGORY_ICONS: Record<string, string> = {
   "akvaryum-arka-fon": "🖼️",
   "akvaryum-ekipmanlari": "🔧",
   "akvaryum-aydinlatma": "💡",
+  "renal-kedi-mamalari": "🫘",
+  "renal-kopek-mamalari": "🫘",
+  "gastrointestinal-kedi-mamalari": "🦠",
+  "gastrointestinal-kopek-mamalari": "🦠",
+  "diabetic-obesity-diyet-kedi-mamalari": "⚖️",
+  "diabetic-obesity-diyet-kopek-mamalari": "⚖️",
+  "uriner-sistem-kedi-mamalari": "💧",
+  "uriner-sistem-kopek-mamalari": "💧",
+  "hepatic-kedi-mamalari": "🩺",
+  "hepatic-kopek-mamalari": "🩺",
+  "hipoalerjik-deri-ve-tuy-sagligi-kedi-mamalari": "🐾",
+  "hipoalerjik-deri-ve-tuy-destegi-kopek-mamalari": "🐾",
+  "cardiac-kedi-mamalari": "❤️",
+  "cardiac-kopek-mamalari": "❤️",
+  "veteriner-seri-kedi-mamalari": "🏥",
+  "veteriner-seri-kopek-mamalari": "🏥",
 };
 
 const DIRECT_PRODUCT_ANIMALS = ["kemirgen", "akvaryum"];
@@ -190,6 +207,7 @@ export default function CategoryPage() {
   const animalMeta = ANIMAL_META[animalSlug];
 
   const [, setLocation] = useLocation();
+  const [vetAnimal, setVetAnimal] = useState<"kedi" | "kopek">("kedi");
 
   const isDirectProductAnimal = DIRECT_PRODUCT_ANIMALS.includes(animalSlug);
 
@@ -298,9 +316,36 @@ export default function CategoryPage() {
             </span>
           </h1>
           <p className="text-xs text-muted-foreground mt-1 tracking-wide" data-testid="text-category-subtitle">
-            Samsun'da aynı gün kapıya teslim - Kategori seçerek ürünleri keşfedin
+            {animalSlug === "veteriner"
+              ? "Önce hayvanınızı seçin, ardından tedavi/diyet türünü belirleyin"
+              : "Samsun'da aynı gün kapıya teslim - Kategori seçerek ürünleri keşfedin"}
           </p>
         </div>
+
+        {animalSlug === "veteriner" && (
+          <div className="grid grid-cols-2 gap-3 mb-6" data-testid="tabs-vet-animal">
+            {([
+              { key: "kedi", label: "Kedi", emoji: "🐈", grad: "linear-gradient(135deg, #9B8FB8 0%, #5848A3 100%)" },
+              { key: "kopek", label: "Köpek", emoji: "🐕", grad: "linear-gradient(135deg, #D9925A 0%, #A0531F 100%)" },
+            ] as const).map((opt) => {
+              const active = vetAnimal === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  type="button"
+                  onClick={() => setVetAnimal(opt.key)}
+                  className={`rounded-2xl py-4 flex flex-col items-center justify-center gap-1 font-bold text-base transition-all duration-200 ${active ? "text-white shadow-lg scale-[1.02]" : "text-foreground bg-white/70 shadow-sm hover:shadow-md"}`}
+                  style={active ? { background: opt.grad } : undefined}
+                  data-testid={`tab-vet-${opt.key}`}
+                  aria-pressed={active}
+                >
+                  <span className="text-3xl">{opt.emoji}</span>
+                  <span>{opt.label}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {isLoading ? (
           <div className="grid grid-cols-2 gap-3">
@@ -313,6 +358,7 @@ export default function CategoryPage() {
             {subcategories.filter(sub => {
               if (animalSlug === "kedi" && (sub.slug === "malt-vitamin" || sub.slug === "yas-mama")) return false;
               if (animalSlug === "kopek" && sub.slug === "mama-markalari") return false;
+              if (animalSlug === "veteriner") return sub.slug.includes(vetAnimal);
               return true;
             }).map((sub, i) => {
               const href = animalSlug === "veteriner"
@@ -338,6 +384,9 @@ export default function CategoryPage() {
                 ? { background: VET_PALETTE[i % VET_PALETTE.length] }
                 : { backgroundColor: sub.color };
               const cardHeight = isVet ? "h-[130px] md:h-[110px]" : "h-[110px]";
+              const cardLabel = isVet
+                ? sub.displayName.replace(/\s*(Kedi|Köpek|Kopek)\s*Maması/i, "").trim()
+                : sub.displayName;
 
               return (
                 <div key={sub.id}>
@@ -358,7 +407,7 @@ export default function CategoryPage() {
                           className="text-white font-bold text-sm md:text-xs leading-tight pr-4"
                           data-testid={`text-subcategory-${sub.slug}`}
                         >
-                          {sub.displayName}
+                          {cardLabel}
                         </span>
                         <div className="bg-white/20 rounded-full p-1 shrink-0 group-hover:bg-white/40 transition-colors">
                           <ChevronRight className="w-3.5 h-3.5 text-white" />
