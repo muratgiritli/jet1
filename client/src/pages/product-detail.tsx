@@ -14,7 +14,7 @@ import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@share
 import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
-import { CATEGORIES, productUrl, PAYMENT_OPTIONS } from "@/lib/data";
+import { CATEGORIES, productUrl } from "@/lib/data";
 import FavoriteButton from "@/components/FavoriteButton";
 import ImageZoom from "@/components/ImageZoom";
 import ProductImage from "@/components/ProductImage";
@@ -798,7 +798,6 @@ export default function ProductDetailPage() {
                     {(() => {
                       const qty = Math.max(quantity || 1, 1);
                       const total = displayPrice * qty;
-                      void PAYMENT_OPTIONS;
                       return (
                         <div className="rounded-lg border-2 p-3 space-y-2" style={{ borderColor: "#1565c0", backgroundColor: "#e3f2fd" }} data-testid="preorder-deposit-box">
                           <div className="flex items-center gap-1.5 font-bold text-sm" style={{ color: "#0d47a1" }}>

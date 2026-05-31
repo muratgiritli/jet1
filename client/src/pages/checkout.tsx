@@ -1630,7 +1630,6 @@ export default function Checkout() {
                         </span>
                       </div>
                     )}
-                    {!hasPreorderItems && (
                     <div className="flex justify-between gap-3 flex-wrap">
                       <span className="text-muted-foreground">Getirmesi</span>
                       <span className="font-medium" data-testid="text-shipping">
@@ -1641,6 +1640,10 @@ export default function Checkout() {
                         )}
                       </span>
                     </div>
+                    {hasPreorderItems && (
+                      <p className="text-[11px] text-muted-foreground leading-snug" data-testid="text-shipping-detail-preorder">
+                        Getirme ücreti, ön sipariş ürününün size özel tedarik edilip adresinize teslim edilmesini kapsar.{effShipLimit > 0 ? ` ${effShipLimit.toLocaleString("tr-TR")} TL ve üzeri siparişlerde getirme ücretsizdir.` : ""}
+                      </p>
                     )}
                   </div>
 
