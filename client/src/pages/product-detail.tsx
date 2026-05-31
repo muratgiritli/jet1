@@ -443,7 +443,6 @@ export default function ProductDetailPage() {
   const [activeCrossSellTab, setActiveCrossSellTab] = useState<string>("");
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
   const [paraPuanInfoOpen, setParaPuanInfoOpen] = useState(false);
-  const [preorderPayMethod, setPreorderPayMethod] = useState<string>("nakit");
   const [campaignWarning, setCampaignWarning] = useState(false);
 
   const hasExtraInCart = useMemo(() => {
@@ -684,11 +683,6 @@ export default function ProductDetailPage() {
                     {displayOriginalPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                   </span>
                 )}
-                {!isCampaignMode && !campaignFiyat && (
-                  <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full" data-testid="text-cash-price-detail">
-                    Nakit: {(displayPrice * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-                  </span>
-                )}
                 {product.skt && (
                   <span className="text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid="text-skt-detail">
                     S.K.T: {product.skt}
@@ -712,15 +706,12 @@ export default function ProductDetailPage() {
                       {hasVariants && !selectedVariant ? (
                         <>Seçenek belirleyince <strong>%5</strong> Para Puan kazancınız hesaplanır.</>
                       ) : (() => {
-                        const isPreorder = product.stock === 0 && product.preorderEnabled;
-                        const ppDisc = isPreorder && preorderPayMethod === "nakit" ? 0.10 : 0;
-                        const ppBase = displayPrice * (1 - ppDisc);
-                        const ppEarn = ppBase * 0.05;
+                        const ppEarn = displayPrice * 0.05;
                         return (
                           <>
                             Bu ürünü satın aldığınızda{" "}
                             <strong>{ppEarn.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
-                            değerinde Para Puan kazanacaksınız{ppDisc > 0 ? " (Kapıda Nakit - %10 indirimli tutar üzerinden)" : ""}.
+                            değerinde Para Puan kazanacaksınız.
                           </>
                         );
                       })()}

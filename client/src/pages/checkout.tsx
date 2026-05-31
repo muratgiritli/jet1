@@ -1741,7 +1741,7 @@ export default function Checkout() {
                   </div>
                   )}
 
-                  {!hasCampaignItems && (
+                  {!hasCampaignItems && !hasPreorderItems && (
                     <Link href="/">
                       <Button
                         className="w-full mt-3"
