@@ -15,7 +15,7 @@ export default function SignupBonusBanner() {
   const { isLoggedIn } = useCustomer();
   const [step, setStep] = useState<BannerStep>("idle");
   const [phone, setPhone] = useState("");
-  const [otpCode, setOtpCode] = useState(["", "", "", "", "", ""]);
+  const [otpCode, setOtpCode] = useState(["", "", "", ""]);
   const [name, setName] = useState("");
   const [mahalle, setMahalle] = useState("");
   const [adresDetay, setAdresDetay] = useState("");
@@ -76,7 +76,7 @@ export default function SignupBonusBanner() {
       }
       setStep("otp");
       setCountdown(180);
-      setOtpCode(["", "", "", "", "", ""]);
+      setOtpCode(["", "", "", ""]);
       setTimeout(() => otpRefs.current[0]?.focus(), 100);
     } catch (err: any) {
       let msg = "SMS gönderilemedi";
@@ -92,9 +92,9 @@ export default function SignupBonusBanner() {
     const newCode = [...otpCode];
     if (value.length > 1) {
       const digits = value.replace(/\D/g, "").split("");
-      for (let i = 0; i < 6; i++) newCode[i] = digits[i] || "";
+      for (let i = 0; i < 4; i++) newCode[i] = digits[i] || "";
       setOtpCode(newCode);
-      const lastIdx = Math.min(digits.length - 1, 5);
+      const lastIdx = Math.min(digits.length - 1, 3);
       otpRefs.current[lastIdx]?.focus();
       if (newCode.every(d => d !== "") && !verifyingRef.current) {
         verifyingRef.current = true;
@@ -104,7 +104,7 @@ export default function SignupBonusBanner() {
     }
     newCode[index] = value;
     setOtpCode(newCode);
-    if (value && index < 5) otpRefs.current[index + 1]?.focus();
+    if (value && index < 3) otpRefs.current[index + 1]?.focus();
     if (newCode.every(d => d !== "") && !verifyingRef.current) {
       verifyingRef.current = true;
       setTimeout(() => doVerify(newCode.join("")), 150);
@@ -125,7 +125,7 @@ export default function SignupBonusBanner() {
       .then((otp: any) => {
         if (otp?.code) {
           const digits = otp.code.replace(/\D/g, "");
-          if (digits.length === 6) {
+          if (digits.length === 4) {
             const newCode = digits.split("");
             setOtpCode(newCode);
             if (!verifyingRef.current) {
@@ -140,7 +140,7 @@ export default function SignupBonusBanner() {
   }, [step]);
 
   const doVerify = async (code: string) => {
-    if (code.length !== 6) { verifyingRef.current = false; return; }
+    if (code.length !== 4) { verifyingRef.current = false; return; }
     setError("");
     setLoading(true);
     const normalized = phone.replace(/\D/g, "");
@@ -378,7 +378,7 @@ export default function SignupBonusBanner() {
 
       {step === "otp" && (
         <div className="px-4 py-4">
-          <p className="font-bold text-sm mb-1">SMS ile gelen 6 haneli kodu gir</p>
+          <p className="font-bold text-sm mb-1">SMS ile gelen 4 haneli kodu gir</p>
           <p className="text-xs text-white/70 mb-2">
             {phone} numarasına gönderildi
             {countdown > 0 && <span className="ml-1">({Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, "0")})</span>}
@@ -390,7 +390,7 @@ export default function SignupBonusBanner() {
                 ref={(el) => { otpRefs.current[i] = el; }}
                 type="text"
                 inputMode="numeric"
-                maxLength={6}
+                maxLength={4}
                 value={digit}
                 onChange={(e) => handleOtpChange(i, e.target.value)}
                 onKeyDown={(e) => handleOtpKeyDown(i, e)}
