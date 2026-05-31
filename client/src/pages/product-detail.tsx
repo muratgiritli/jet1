@@ -394,6 +394,39 @@ export default function ProductDetailPage() {
   });
   const crossSellEnabled = (publicSettings?.cross_sell_enabled ?? "true") !== "false";
 
+  const isVeteriner = data?.category?.animal === "veteriner";
+  const vetSubcategory = data?.category?.subcategory || "";
+  const { data: allProductsForVet } = useQuery<Product[]>({
+    queryKey: ["/api/products"],
+    enabled: isVeteriner,
+  });
+  const { data: allBrandCatsForVet } = useQuery<BrandCategory[]>({
+    queryKey: ["/api/brand-categories"],
+    enabled: isVeteriner,
+  });
+  const similarVetProducts = useMemo(() => {
+    if (!isVeteriner || !allProductsForVet || !allBrandCatsForVet) return [];
+    const sameSubIds = new Set(
+      allBrandCatsForVet
+        .filter((b) => b.animal === "veteriner" && b.subcategory === vetSubcategory)
+        .map((b) => b.id),
+    );
+    const brandNameById = new Map(allBrandCatsForVet.map((b) => [b.id, b.brandName]));
+    const currentBrand = data?.product?.brandCategoryId
+      ? brandNameById.get(data.product.brandCategoryId)
+      : null;
+    return allProductsForVet
+      .filter(
+        (p) =>
+          sameSubIds.has(p.brandCategoryId) &&
+          p.id !== data?.product?.id &&
+          p.isActive &&
+          (!currentBrand || brandNameById.get(p.brandCategoryId) !== currentBrand),
+      )
+      .map((p) => ({ ...p, subcategoryName: brandNameById.get(p.brandCategoryId) || null }))
+      .slice(0, 24);
+  }, [isVeteriner, allProductsForVet, allBrandCatsForVet, vetSubcategory, data?.product?.id, data?.product?.brandCategoryId]);
+
   const resolvedData = isNumericId ? data : staticData;
 
   useEffect(() => {
@@ -946,6 +979,24 @@ export default function ProductDetailPage() {
         )}
 
         {!isCampaignMode && <ProductReviews productId={product.id} />}
+
+        {!isCampaignMode && isVeteriner && similarVetProducts.length > 0 && (
+          <div className="mt-8" data-testid="section-similar-vet">
+            <h3 className="text-lg font-extrabold mb-4" data-testid="text-similar-vet-title">
+              Benzer Veteriner Ürünleri
+            </h3>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2" data-testid="grid-similar-vet">
+              {similarVetProducts.map((p) => (
+                <CrossSellProductCard
+                  key={p.id}
+                  product={p as any}
+                  quantity={basket[String(p.id)] || 0}
+                  onUpdate={updateQty}
+                />
+              ))}
+            </div>
+          </div>
+        )}
 
         {(() => {
           if (isCampaignMode) return null;

@@ -1,1 +1,2 @@
 - [Brand SEO landing pages](brand-seo-pages.md) — unique per-brand pages (not doorway); brand_slug varies per animal/subcat; brand pages omit WhatsApp.
+- [Scraper import pools](scraper-import-pools.md) — concurrent scrape imports need a per-item Promise.race watchdog; fetch-level AbortSignal alone still stalls.

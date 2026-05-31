@@ -139,6 +139,13 @@ export default function VeterinerSubPage() {
 
   const isLoading = catLoading || prodLoading;
 
+  const scrollToBrand = (slug: string) => {
+    const el = document.getElementById(`vet-brand-${slug}`);
+    if (!el) return;
+    const y = el.getBoundingClientRect().top + window.scrollY - 70;
+    window.scrollTo({ top: y, behavior: "smooth" });
+  };
+
   return (
     <div className="min-h-screen flex flex-col pb-16 md:pb-0" style={{ backgroundColor: "#f0f2f5" }}>
       <SEO
@@ -166,10 +173,34 @@ export default function VeterinerSubPage() {
             <p className="text-muted-foreground" data-testid="text-no-products">Henüz marka veya ürün eklenmedi</p>
           </div>
         ) : (
+          <>
+            {brandGroups.length > 1 && (
+              <div
+                className="sticky top-0 z-20 -mx-4 px-4 py-2 mb-5 backdrop-blur border-b border-slate-200"
+                style={{ backgroundColor: "rgba(240,242,245,0.95)" }}
+                data-testid="bar-vet-brands"
+              >
+                <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+                  {brandGroups.map((g, gi) => (
+                    <button
+                      key={g.brand.id}
+                      onClick={() => scrollToBrand(g.brand.brandSlug)}
+                      className="shrink-0 px-3 py-1.5 rounded-full text-white text-xs font-bold shadow-sm active:scale-95 transition-transform"
+                      style={{ backgroundColor: brandColor(g.brand.brandSlug, gi) }}
+                      data-testid={`chip-vet-brand-${g.brand.brandSlug}`}
+                    >
+                      {g.brand.brandName}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           <div className="space-y-8">
             {brandGroups.map((group, gi) => (
               <motion.section
                 key={group.brand.id}
+                id={`vet-brand-${group.brand.brandSlug}`}
+                style={{ scrollMarginTop: 70 }}
                 initial={{ opacity: 0, y: 15 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.3, delay: 0.08 * gi }}
@@ -198,6 +229,7 @@ export default function VeterinerSubPage() {
               </motion.section>
             ))}
           </div>
+          </>
         )}
       </main>
     </div>
