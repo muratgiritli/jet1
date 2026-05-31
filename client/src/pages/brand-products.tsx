@@ -192,9 +192,11 @@ function BrandProductCard({
           <span className="text-sm font-bold text-foreground" data-testid={`text-price-${pid}`}>
             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
+          {!(product.stock === 0 && product.preorderEnabled) && (
           <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full" data-testid={`text-cash-price-${pid}`}>
             Nakit: {(product.price * 0.9).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} TL
           </span>
+          )}
           {product.skt && (
             <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid={`badge-skt-${pid}`}>
               S.K.T: {product.skt}
@@ -305,9 +307,11 @@ function InlineSubcategoryProductCard({
           <span className="text-sm font-bold text-foreground">
             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
+          {!(product.stock === 0 && product.preorderEnabled) && (
           <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full">
             Nakit: {(product.price * 0.9).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} TL
           </span>
+          )}
         </div>
         {forceOrderLink ? (
           <Link href={productUrl(product.id, product.name)} className="w-full">

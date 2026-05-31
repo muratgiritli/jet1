@@ -130,9 +130,11 @@ function ProductCard({
               </span>
             )}
           </div>
+          {!(product.stock === 0 && product.preorderEnabled) && (
           <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full" data-testid={`text-cash-price-${product.id}`}>
             Nakit: {(product.price * 0.9).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} TL
           </span>
+          )}
           {product.skt && (
             <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid={`badge-skt-${product.id}`}>
               S.K.T: {product.skt}
@@ -187,6 +189,8 @@ export default function Home() {
       originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
       skt: p.skt || undefined,
       img: p.img || "",
+      stock: typeof p.stock === "number" ? p.stock : undefined,
+      preorderEnabled: p.preorderEnabled ?? undefined,
     }));
     const staticIds = new Set(staticItems.map(i => i.name.toLowerCase()));
     const uniqueDb = dbMapped.filter(p => !staticIds.has(p.name.toLowerCase()));

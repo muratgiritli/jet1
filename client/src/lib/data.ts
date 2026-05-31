@@ -18,6 +18,8 @@ export interface Product {
   img?: string;
   skt?: string;
   originalPrice?: number;
+  stock?: number;
+  preorderEnabled?: boolean;
 }
 
 export interface Category {
