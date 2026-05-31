@@ -10,6 +10,7 @@ import bcrypt from "bcryptjs";
 import session from "express-session";
 import pgSession from "connect-pg-simple";
 import { saveProductImage, getProductImage, downloadAndSaveImage } from "./image-service";
+import { runVetImport, getVetImportStatus, isVetImportRunning } from "./vet-import";
 import multer from "multer";
 import OpenAI from "openai";
 import { BRAND_PAGES } from "../client/src/lib/brand-seo-data";
@@ -1740,6 +1741,34 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     req.session.destroy(() => {
       res.json({ message: "Logged out" });
     });
+  });
+
+  app.post("/api/admin/import-vet", requireAdmin, async (_req, res) => {
+    if (isVetImportRunning()) {
+      return res.status(409).json({ message: "İçe aktarma zaten çalışıyor" });
+    }
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("X-Accel-Buffering", "no");
+    const write = (msg: string) => {
+      try {
+        res.write(msg + "\n");
+      } catch {
+        /* client gone */
+      }
+    };
+    try {
+      const result = await runVetImport(write);
+      write(`STATUS: ${JSON.stringify(result)}`);
+    } catch (err: any) {
+      write(`[FATAL] ${err?.message || err}`);
+    } finally {
+      res.end();
+    }
+  });
+
+  app.get("/api/admin/import-vet/status", requireAdmin, (_req, res) => {
+    res.json(getVetImportStatus());
   });
 
   app.get("/api/admin/me", async (req, res) => {

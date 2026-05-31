@@ -1,2 +1,3 @@
 - [Brand SEO landing pages](brand-seo-pages.md) — unique per-brand pages (not doorway); brand_slug varies per animal/subcat; brand pages omit WhatsApp.
 - [Scraper import pools](scraper-import-pools.md) — concurrent scrape imports need a per-item Promise.race watchdog; fetch-level AbortSignal alone still stalls.
+- [Dev/prod DB split](dev-prod-db-split.md) — deployed app uses a separate, diverged Postgres; workspace scripts only touch dev. Publish ships code+schema, not data. Write to prod only via the deployed app.
