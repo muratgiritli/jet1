@@ -358,7 +358,10 @@ export default function CategoryPage() {
             {subcategories.filter(sub => {
               if (animalSlug === "kedi" && (sub.slug === "malt-vitamin" || sub.slug === "yas-mama")) return false;
               if (animalSlug === "kopek" && sub.slug === "mama-markalari") return false;
-              if (animalSlug === "veteriner") return sub.slug.includes(vetAnimal);
+              if (animalSlug === "veteriner") {
+                if (sub.slug === "kedi-serisi" || sub.slug === "kopek-serisi") return false;
+                return sub.slug.includes(vetAnimal);
+              }
               return true;
             }).map((sub, i) => {
               const href = animalSlug === "veteriner"
