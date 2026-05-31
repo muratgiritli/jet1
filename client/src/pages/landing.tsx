@@ -1121,6 +1121,12 @@ export default function Landing() {
       {seoNode}
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 md:px-6 lg:px-8">
+        {/* MOBILE-ONLY: signup bonus banner for new users */}
+        {!isLoggedIn && (
+          <div className="mt-2 md:hidden">
+            <SignupBonusBanner />
+          </div>
+        )}
         {/* MOBILE-ONLY: welcome coupon banner for logged-in users */}
         {isLoggedIn && (
           <div className="mt-2 md:hidden">
