@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Link, useRoute } from "wouter";
-import { Loader2, Plus, Minus, Clock } from "lucide-react";
+import { Loader2, Plus, Minus, Clock, ArrowLeft } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import type { Product, BrandCategory, Subcategory } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
@@ -154,6 +154,16 @@ export default function VeterinerSubPage() {
         canonical={`${SITE_DOMAIN}/veteriner/${subSlug}`}
       />
       <main className="flex-1 max-w-lg mx-auto px-4 w-full py-6">
+        <Link href="/kategori/veteriner">
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 mb-4 text-sm font-semibold text-slate-700 hover:text-slate-900 transition-colors"
+            data-testid="btn-back-veteriner"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Veteriner Sayfasına Dön
+          </button>
+        </Link>
         <FreeShippingBanner className="mb-4" />
         <div className="text-center mb-6">
           <h2 className="text-2xl font-extrabold" data-testid="text-vet-title">
