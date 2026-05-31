@@ -22,7 +22,7 @@ function DemoAnasayfaEmbed() {
   );
 }
 import SEO, { LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD, SITE_DOMAIN } from "@/components/SEO";
-import SignupBonusBanner from "@/components/SignupBonusBanner";
+import TopBanner from "@/components/TopBanner";
 import ContactDialog from "@/components/ContactDialog";
 import WelcomeCouponBanner from "@/components/WelcomeCouponBanner";
 import catDog from "@/assets/images/cat-dog.webp";
@@ -1121,10 +1121,10 @@ export default function Landing() {
       {seoNode}
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 md:px-6 lg:px-8">
-        {/* MOBILE-ONLY: signup bonus banner for new users */}
+        {/* MOBILE-ONLY: admin-controlled top promo banner (Header altı) for new users */}
         {!isLoggedIn && (
           <div className="mt-2 md:hidden">
-            <SignupBonusBanner />
+            <TopBanner />
           </div>
         )}
         {/* MOBILE-ONLY: welcome coupon banner for logged-in users */}
