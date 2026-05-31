@@ -555,7 +555,7 @@ export default function BrandProductsPage() {
           const availableTypes = [...new Set(data.products.map(p => p.mamaType).filter(Boolean))] as string[];
           if (availableTypes.length === 0) return null;
           return (
-            <div className="flex gap-1.5 overflow-x-auto no-scrollbar mb-4 pb-1" data-testid="filter-mama-types">
+            <div className="flex flex-wrap gap-1.5 mb-4" data-testid="filter-mama-types">
               <button
                 type="button"
                 onClick={() => setActiveMamaType("")}

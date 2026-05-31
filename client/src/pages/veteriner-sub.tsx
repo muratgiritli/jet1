@@ -186,11 +186,10 @@ export default function VeterinerSubPage() {
           <>
             {brandGroups.length > 1 && (
               <div
-                className="sticky top-0 z-20 -mx-4 px-4 py-2 mb-5 backdrop-blur border-b border-slate-200"
-                style={{ backgroundColor: "rgba(240,242,245,0.95)" }}
+                className="-mx-4 px-4 py-2 mb-5 border-b border-slate-200"
                 data-testid="bar-vet-brands"
               >
-                <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: "none" }}>
+                <div className="flex flex-wrap gap-2">
                   {brandGroups.map((g, gi) => (
                     <button
                       key={g.brand.id}
