@@ -867,22 +867,6 @@ export default function ProductDetailPage() {
                     <p className="text-xs leading-relaxed text-gray-700">
                       ⏳ Ortalama tedarik süresi: <strong>3 iş günüdür</strong>.
                     </p>
-                    <div className="mt-2 px-3 py-2 rounded-lg space-y-1" style={{ backgroundColor: "#fff3e0", border: "1px solid #ffcc80" }}>
-                      <p className="text-xs font-bold" style={{ color: "#e65100" }}>
-                        ⚠ Ön sipariş ürünleri yalnızca <strong>online kredi kartı</strong> ile ödenir. Kapıda nakit, POS, QR veya havale/EFT seçenekleri kullanılamaz.
-                      </p>
-                    </div>
-                    <div className="mt-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#e8f5e9", border: "1px solid #c8e6c9" }}>
-                      <p className="text-xs" style={{ color: "#2e7d32" }}>
-                        ✅ Ön sipariş onaylandıktan sonra <strong>ürün fiyatı değişmez</strong>. Sipariş verdiğiniz fiyat korunur.
-                      </p>
-                    </div>
-                    <div className="mt-2 px-3 py-2 rounded-lg" style={{ backgroundColor: "#ffebee", border: "1px solid #ffcdd2" }}>
-                      <p className="text-xs font-bold" style={{ color: "#c62828" }}>Önemli:</p>
-                      <p className="text-[11px]" style={{ color: "#b71c1c" }}>
-                        Ön sipariş verilen ürünler size özel tedarik edildiğinden, sipariş onaylandıktan sonra <strong>iptal edilemez</strong>.
-                      </p>
-                    </div>
                     <p className="text-[11px] text-gray-600 mt-1">
                       Sipariş süreci boyunca tarafınıza bilgilendirme yapılacaktır.
                     </p>

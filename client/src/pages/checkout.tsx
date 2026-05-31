@@ -1669,6 +1669,7 @@ export default function Checkout() {
                     <p className="text-[12px] text-red-500 text-center mt-2">{orderError}</p>
                   )}
 
+                  {!hasPreorderItems && (
                   <div className="mt-5">
                     <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-progress">
                       İlerleme Durumu
@@ -1738,6 +1739,7 @@ export default function Checkout() {
                       </CardContent>
                     </Card>
                   </div>
+                  )}
 
                   {!hasCampaignItems && (
                     <Link href="/">
