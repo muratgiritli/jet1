@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { name: "Kuş", href: "/kategori/kus" },
   { name: "Kemirgen", href: "/kategori/kemirgen" },
   { name: "Akvaryum", href: "/kategori/akvaryum" },
+  { name: "Veteriner", href: "/kategori/veteriner" },
 ];
 
 export default function Header() {
