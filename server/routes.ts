@@ -11,6 +11,7 @@ import session from "express-session";
 import pgSession from "connect-pg-simple";
 import { saveProductImage, getProductImage, downloadAndSaveImage } from "./image-service";
 import { runVetImport, getVetImportStatus, isVetImportRunning } from "./vet-import";
+import { runSeoFill, getSeoFillStatus, isSeoFillRunning } from "./seo-fill";
 import multer from "multer";
 import OpenAI from "openai";
 import { BRAND_PAGES } from "../client/src/lib/brand-seo-data";
@@ -1769,6 +1770,35 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.get("/api/admin/import-vet/status", requireAdmin, (_req, res) => {
     res.json(getVetImportStatus());
+  });
+
+  app.post("/api/admin/fill-seo", requireAdmin, async (req, res) => {
+    if (isSeoFillRunning()) {
+      return res.status(409).json({ message: "SEO doldurma zaten çalışıyor" });
+    }
+    const overwrite = req.query.overwrite === "1" || req.query.overwrite === "true";
+    res.setHeader("Content-Type", "text/plain; charset=utf-8");
+    res.setHeader("Cache-Control", "no-cache, no-transform");
+    res.setHeader("X-Accel-Buffering", "no");
+    const write = (msg: string) => {
+      try {
+        res.write(msg + "\n");
+      } catch {
+        /* client gone */
+      }
+    };
+    try {
+      const result = await runSeoFill(write, { overwrite });
+      write(`STATUS: ${JSON.stringify(result)}`);
+    } catch (err: any) {
+      write(`[FATAL] ${err?.message || err}`);
+    } finally {
+      res.end();
+    }
+  });
+
+  app.get("/api/admin/fill-seo/status", requireAdmin, (_req, res) => {
+    res.json(getSeoFillStatus());
   });
 
   app.get("/api/admin/me", async (req, res) => {
