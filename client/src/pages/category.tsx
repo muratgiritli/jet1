@@ -373,14 +373,14 @@ export default function CategoryPage() {
               const icon = SUBCATEGORY_ICONS[sub.slug] || "📦";
 
               const VET_PALETTE = [
-                "linear-gradient(135deg, #A47864 0%, #6B4A38 100%)",
-                "linear-gradient(135deg, #5F8FAF 0%, #2E5C7E 100%)",
-                "linear-gradient(135deg, #9B8FB8 0%, #5848A3 100%)",
-                "linear-gradient(135deg, #3E7C5A 0%, #1F4A33 100%)",
-                "linear-gradient(135deg, #D97757 0%, #A03E1F 100%)",
-                "linear-gradient(135deg, #4C5578 0%, #2A3050 100%)",
-                "linear-gradient(135deg, #C77D9E 0%, #7B1E3C 100%)",
-                "linear-gradient(135deg, #E0B040 0%, #A07418 100%)",
+                "linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%)",
+                "linear-gradient(135deg, #F43F5E 0%, #C81E3A 100%)",
+                "linear-gradient(135deg, #FBBF24 0%, #E08C0A 100%)",
+                "linear-gradient(135deg, #34D399 0%, #059669 100%)",
+                "linear-gradient(135deg, #FB923C 0%, #EA580C 100%)",
+                "linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%)",
+                "linear-gradient(135deg, #22D3EE 0%, #0891B2 100%)",
+                "linear-gradient(135deg, #F472B6 0%, #DB2777 100%)",
               ];
               const isVet = animalSlug === "veteriner";
               const cardStyle: React.CSSProperties = isVet
