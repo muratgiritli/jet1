@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { exportProductsPdf } from "@/lib/exportProductsPdf";
 import { exportStockMovementsPdf } from "@/lib/exportStockMovementsPdf";
 import { exportSktPdf } from "@/lib/exportSktPdf";
+import { printOrderReceipt } from "@/lib/printReceipt";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -82,6 +83,7 @@ import {
   Download,
   Heart,
   Stethoscope,
+  Printer,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1058,8 +1060,42 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [yonetimSub, setYonetimSub] = useState<string | null>(null);
   const [notificationEnabled, setNotificationEnabled] = useState(true);
   const [newOrderAlert, setNewOrderAlert] = useState<{id: number; customerName: string; grandTotal: number; paymentMethod: string} | null>(null);
+  const [autoPrintEnabled, setAutoPrintEnabled] = useState<boolean>(() => {
+    try { return localStorage.getItem("jetgo_auto_print") === "1"; } catch { return false; }
+  });
+  const autoPrintRef = useRef(autoPrintEnabled);
+  useEffect(() => {
+    autoPrintRef.current = autoPrintEnabled;
+    try { localStorage.setItem("jetgo_auto_print", autoPrintEnabled ? "1" : "0"); } catch {}
+  }, [autoPrintEnabled]);
   const lastKnownOrderIdRef = useRef<number>(0);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const allOrdersRef = useRef<Order[]>([]);
+
+  const handlePrintReceipt = useCallback((order: Order) => {
+    const slot = (order as any).deliverySlot as string | undefined;
+    printOrderReceipt(order, {
+      deliverySlotText: slot ? formatAdminDeliverySlot(slot) : undefined,
+    });
+  }, []);
+
+  const printOrderById = useCallback(async (id: number) => {
+    let full = allOrdersRef.current.find((o) => o.id === id);
+    if (!full) {
+      try {
+        const res = await fetch("/api/admin/orders", { credentials: "include" });
+        if (res.ok) {
+          const list: Order[] = await res.json();
+          full = list.find((o) => o.id === id);
+        }
+      } catch {}
+    }
+    if (full) {
+      handlePrintReceipt(full);
+    } else {
+      toast({ title: "Fiş yazdırılamadı", description: "Sipariş bulunamadı, lütfen tekrar deneyin.", variant: "destructive" });
+    }
+  }, [handlePrintReceipt, toast]);
 
   const playNotificationSound = useCallback(() => {
     try {
@@ -1106,13 +1142,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
           queryClient.invalidateQueries({ queryKey: ["/api/admin/dashboard-stats"] });
           lastKnownOrderIdRef.current = data.lastId;
           setTimeout(() => setNewOrderAlert(null), 15000);
+          if (autoPrintRef.current) {
+            printOrderById(data.lastId);
+          }
         }
       } catch {}
     };
     checkOrders();
     const interval = setInterval(checkOrders, 10000);
     return () => clearInterval(interval);
-  }, [notificationEnabled, playNotificationSound]);
+  }, [notificationEnabled, playNotificationSound, printOrderById]);
 
   const bulkPriceUpdateMutation = useMutation({
     mutationFn: async ({ productIds, percentage }: { productIds: number[]; percentage: number }) => {
@@ -1156,6 +1195,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const { data: allOrders = [], isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/admin/orders"],
   });
+
+  useEffect(() => {
+    allOrdersRef.current = allOrders;
+  }, [allOrders]);
 
   const updateOrderStatusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: number; status: string }) => {
@@ -1884,6 +1927,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <Bell className="w-4 h-4" />
               {notificationEnabled && <span className="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
             </button>
+            <button
+              type="button"
+              onClick={() => setAutoPrintEnabled(prev => !prev)}
+              className={`relative p-1.5 rounded-full transition-colors ${autoPrintEnabled ? "text-green-600 bg-green-100" : "text-gray-400 bg-gray-100"}`}
+              title={autoPrintEnabled ? "Otomatik fiş yazdırma açık" : "Otomatik fiş yazdırma kapalı"}
+              data-testid="btn-toggle-autoprint"
+            >
+              <Printer className="w-4 h-4" />
+              {autoPrintEnabled && <span className="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full animate-pulse" />}
+            </button>
             <Button variant="outline" size="sm" onClick={() => logoutMutation.mutate()} data-testid="btn-admin-logout">
               <LogOut className="w-4 h-4" />
               <span className="hidden sm:inline ml-1">Çıkış</span>
@@ -1903,6 +1956,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <p className="text-xs opacity-90">{newOrderAlert.customerName}</p>
               <p className="text-xs font-bold">{newOrderAlert.grandTotal.toLocaleString("tr-TR")} ₺ - {newOrderAlert.paymentMethod}</p>
             </div>
+            <button
+              type="button"
+              onClick={() => { printOrderById(newOrderAlert.id); }}
+              className="bg-white/20 hover:bg-white/30 rounded-lg px-3 py-1.5 text-xs font-bold transition-colors flex items-center gap-1"
+              data-testid="btn-print-new-order"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              Fiş
+            </button>
             <button
               type="button"
               onClick={() => {
@@ -2913,6 +2975,16 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       </SelectContent>
                     </Select>
                   </div>
+
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => handlePrintReceipt(order)}
+                    data-testid="btn-print-receipt"
+                  >
+                    <Printer className="w-4 h-4 mr-2" />
+                    Fiş Yazdır
+                  </Button>
                 </div>
               );
             })()}
