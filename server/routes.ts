@@ -1940,6 +1940,22 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     res.json({ message: `${updated} ürün fiyatı güncellendi`, updated });
   });
 
+  app.post("/api/admin/products/rename-hills", requireAdmin, async (_req, res) => {
+    const all = await storage.getAllProducts();
+    const re = /^Hill(?:&#0?39;|')?s\s+Prescription\s+Diet\s+/i;
+    const changes: { id: number; from: string; to: string }[] = [];
+    for (const p of all) {
+      if (re.test(p.name)) {
+        const newName = p.name.replace(re, "Hills ");
+        if (newName !== p.name) {
+          await storage.updateProduct(p.id, { name: newName });
+          changes.push({ id: p.id, from: p.name, to: newName });
+        }
+      }
+    }
+    res.json({ message: `${changes.length} ürün adı güncellendi`, count: changes.length, changes });
+  });
+
   app.post("/api/admin/products/bulk-stock-update", requireAdmin, async (req, res) => {
     const { updates } = req.body;
     if (!Array.isArray(updates) || updates.length === 0 || updates.length > 500) {
