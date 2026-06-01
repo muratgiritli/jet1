@@ -584,6 +584,7 @@ export default function ProductDetailPage() {
   const campaignFiyat = isCampaignMode && campaignCheck?.campaignPrice ? campaignCheck.campaignPrice : null;
   const displayPrice = campaignFiyat ?? selectedVariant?.price ?? product.price;
   const displayOriginalPrice = campaignFiyat ? product.price : product.originalPrice;
+  const isPreorder = product.stock === 0 && product.preorderEnabled;
   const discount = displayOriginalPrice && displayOriginalPrice > displayPrice
     ? Math.round(((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100)
     : 0;
@@ -728,14 +729,16 @@ export default function ProductDetailPage() {
                 )}
               </div>
 
-              <div
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold w-fit bg-emerald-50 text-emerald-700 border border-emerald-200"
-                data-testid="text-nakit-price"
-              >
-                <Banknote className="w-4 h-4" />
-                Kapıda Nakit Fiyatı: {(displayPrice * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                <span className="text-[11px] font-medium text-emerald-600">(%10 indirim)</span>
-              </div>
+              {!isPreorder && (
+                <div
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold w-fit bg-emerald-50 text-emerald-700 border border-emerald-200"
+                  data-testid="text-nakit-price"
+                >
+                  <Banknote className="w-4 h-4" />
+                  Kapıda Nakit Fiyatı: {(displayPrice * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                  <span className="text-[11px] font-medium text-emerald-600">(%10 indirim)</span>
+                </div>
+              )}
 
               {!isCampaignMode && (
                 <div data-testid="text-loyalty-points-earn">
@@ -785,7 +788,11 @@ export default function ProductDetailPage() {
               )}
 
               {!isCampaignMode && (
-                <InstallmentBanner variant="compact" pricePerInstallment={displayPrice / 3} />
+                <InstallmentBanner
+                  variant="compact"
+                  installments={isPreorder ? 6 : 3}
+                  pricePerInstallment={displayPrice / (isPreorder ? 6 : 3)}
+                />
               )}
 
               <Dialog open={paraPuanInfoOpen} onOpenChange={setParaPuanInfoOpen}>

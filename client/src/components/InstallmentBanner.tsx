@@ -5,6 +5,7 @@ interface InstallmentBannerProps {
   variant?: "full" | "compact" | "inline";
   className?: string;
   pricePerInstallment?: number;
+  installments?: number;
 }
 
 const BRAND_STYLES: Record<string, { bg: string; text: string; label: string }> = {
@@ -35,7 +36,7 @@ function BrandLogos() {
   );
 }
 
-export default function InstallmentBanner({ variant = "full", className = "", pricePerInstallment }: InstallmentBannerProps) {
+export default function InstallmentBanner({ variant = "full", className = "", pricePerInstallment, installments = 3 }: InstallmentBannerProps) {
   if (variant === "inline") {
     return (
       <div
@@ -60,11 +61,11 @@ export default function InstallmentBanner({ variant = "full", className = "", pr
           </div>
           <div className="flex-1 min-w-0">
             <p className="font-bold text-[11px] sm:text-xs text-blue-900 whitespace-nowrap">
-              Peşin Fiyatına 3 Taksit + 9 Ay Taksit İmkanı
+              {installments === 3 ? "Peşin Fiyatına 3 Taksit + 9 Ay Taksit İmkanı" : `Peşin Fiyatına ${installments} Taksit`}
             </p>
             {pricePerInstallment !== undefined && (
               <p className="text-[11px] text-blue-800 whitespace-nowrap overflow-hidden text-ellipsis">
-                3 ay x{" "}
+                {installments} ay x{" "}
                 <strong className="text-blue-900">
                   {pricePerInstallment.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                 </strong>
