@@ -1656,6 +1656,30 @@ export default function Checkout() {
                     </div>
                   </div>
 
+                  {hasPreorderItems && (
+                    <div className="mt-4 p-3 rounded-lg border border-blue-200 bg-blue-50" data-testid="box-preorder-installments">
+                      <div className="flex items-center gap-2 mb-2">
+                        <CreditCard className="w-4 h-4 text-blue-700" />
+                        <span className="text-sm font-bold text-blue-900">Peşin Fiyatına Taksit</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex items-center justify-between gap-3" data-testid="row-preorder-installment-3">
+                          <span className="text-sm font-medium text-blue-900">3 Taksit</span>
+                          <span className="text-sm text-blue-800">
+                            3 x <strong className="text-blue-900">{(displayTotal / 3).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</strong>
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between gap-3" data-testid="row-preorder-installment-6">
+                          <span className="text-sm font-medium text-blue-900">6 Taksit</span>
+                          <span className="text-sm text-blue-800">
+                            6 x <strong className="text-blue-900">{(displayTotal / 6).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</strong>
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-[11px] text-blue-700 mt-2 leading-snug">Vade farksız, online kredi kartı ile.</p>
+                    </div>
+                  )}
+
                   <Button
                     className="w-full mt-5"
                     variant="default"
