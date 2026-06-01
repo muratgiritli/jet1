@@ -1293,6 +1293,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       products = products.filter((p) => p.stock > 0 && p.stock <= 3);
     } else if (quickFilter === "no-image") {
       products = products.filter((p) => p.isActive && !p.img);
+    } else if (quickFilter === "no-barcode") {
+      products = products.filter((p) => !p.barcode && !(Array.isArray(p.variants) && p.variants.some((v: any) => v?.barcode)));
     }
     if (sortMode === "skt-asc") {
       const parseSkt = (skt: string | null) => {
@@ -3729,6 +3731,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 { id: "campaign", label: "Kampanya", icon: "🏷️" },
                 { id: "has-skt", label: "SKT'li", icon: "📅" },
                 { id: "no-image", label: "Resimsiz (Aktif)", icon: "🖼️" },
+                { id: "no-barcode", label: "Barkodsuz", icon: "🔖" },
               ].map((f) => (
                 <button
                   key={f.id}
@@ -3777,6 +3780,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                     "campaign": "Kampanya",
                     "has-skt": "SKT'li",
                     "no-image": "Resimsiz (Aktif)",
+                    "no-barcode": "Barkodsuz",
                   };
                   exportProductsPdf(
                     filteredProducts,
