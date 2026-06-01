@@ -1061,7 +1061,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [notificationEnabled, setNotificationEnabled] = useState(true);
   const [newOrderAlert, setNewOrderAlert] = useState<{id: number; customerName: string; grandTotal: number; paymentMethod: string} | null>(null);
   const [autoPrintEnabled, setAutoPrintEnabled] = useState<boolean>(() => {
-    try { return localStorage.getItem("jetgo_auto_print") === "1"; } catch { return false; }
+    try { return localStorage.getItem("jetgo_auto_print") !== "0"; } catch { return true; }
   });
   const autoPrintRef = useRef(autoPrintEnabled);
   useEffect(() => {
