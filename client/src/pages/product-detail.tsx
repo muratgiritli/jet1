@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link, useRoute, useSearch, useLocation } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock, HelpCircle, Star, MessageSquare, Stethoscope, FileText, Users, Package } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock, HelpCircle, Star, MessageSquare, Stethoscope, FileText, Users, Package, Banknote } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
@@ -726,6 +726,15 @@ export default function ProductDetailPage() {
                     Barkod: {product.barcode}
                   </span>
                 )}
+              </div>
+
+              <div
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold w-fit bg-emerald-50 text-emerald-700 border border-emerald-200"
+                data-testid="text-nakit-price"
+              >
+                <Banknote className="w-4 h-4" />
+                Kapıda Nakit Fiyatı: {(displayPrice * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                <span className="text-[11px] font-medium text-emerald-600">(%10 indirim)</span>
               </div>
 
               {!isCampaignMode && (
