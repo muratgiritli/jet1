@@ -1689,7 +1689,7 @@ export default function Checkout() {
                     data-testid="btn-order-submit"
                   >
                     {orderLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShoppingBag className="w-5 h-5" />}
-                    {orderLoading ? "Kaydediliyor..." : "Siparişi Ver"}
+                    {orderLoading ? "Kaydediliyor..." : "Şimdi Öde"}
                   </Button>
 
                   {orderError && (
