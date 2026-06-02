@@ -2331,7 +2331,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         const notExpired = !coupon.expiresAt || new Date(coupon.expiresAt) > now;
         const notMaxed = !coupon.maxUses || coupon.usedCount < coupon.maxUses;
         const minMet = orderData.subtotal >= coupon.minOrderAmount;
-        if (notExpired && notMaxed && minMet) {
+        const ownerOk = !coupon.customerId || coupon.customerId === customerId;
+        if (notExpired && notMaxed && minMet && ownerOk) {
           appliedCoupon = coupon;
           if (coupon.discountType === "percentage") {
             couponDiscount = Math.round(orderData.subtotal * (coupon.discountValue / 100) * 100) / 100;
