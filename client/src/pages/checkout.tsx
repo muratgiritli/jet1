@@ -1514,9 +1514,6 @@ export default function Checkout() {
                       <h3 className="text-sm font-bold mb-3 flex items-center gap-2 flex-wrap">
                         <CreditCard className="w-4 h-4 text-blue-600" />
                         <span>Kapıda Kredi Kartı ile Ödeme Yap</span>
-                        {installmentRates.filter(r => r.isActive).length > 0 && installmentRates.filter(r => r.isActive).every(r => (r as any).noInterest) && (
-                          <span className="text-[11px] font-bold text-emerald-700 bg-emerald-50 dark:bg-emerald-950/30 dark:text-emerald-300 px-2 py-0.5 rounded">VADE FARKI YOK</span>
-                        )}
                       </h3>
                       <div className="space-y-2">
                         {[{ months: 1, rate: 0, isTekCekim: true, noInterest: false }, ...(installmentsEnabled ? installmentRates.filter(r => r.isActive).sort((a, b) => a.sortOrder - b.sortOrder || a.months - b.months).map(r => ({ months: r.months, rate: (r as any).noInterest ? 0 : r.rate, isTekCekim: false, noInterest: (r as any).noInterest || false })) : [])].map((opt) => {
