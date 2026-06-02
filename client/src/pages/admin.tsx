@@ -9507,6 +9507,17 @@ function StokSayimSection() {
   const [reportMonth, setReportMonth] = useState(defaultMonth);
   const [reportMode, setReportMode] = useState<"all" | "sub" | "add">("sub");
   const [reportOpen, setReportOpen] = useState(false);
+  const [orderDetail, setOrderDetail] = useState<any>(null);
+  const { data: allOrders = [] } = useQuery<any[]>({ queryKey: ["/api/admin/orders"], enabled: reportOpen });
+  const ordersById = useMemo(() => {
+    const m: Record<string, any> = {};
+    for (const o of allOrders) m[String(o.id)] = o;
+    return m;
+  }, [allOrders]);
+  const openOrderDetail = (orderId: number) => {
+    const o = ordersById[String(orderId)];
+    if (o) setOrderDetail(o);
+  };
   const { data: reportData, isLoading: reportLoading } = useQuery<{ movements: any[]; monthly: any[] }>({
     queryKey: ["/api/admin/stock-movements", reportMonth, reportMode],
     queryFn: async () => {
@@ -9545,7 +9556,7 @@ function StokSayimSection() {
       date: string;
       salesTotal: number; receiptTotal: number;
       salesCount: number; receiptCount: number;
-      salesByProduct: Record<string, { name: string; barcode: string | null; qty: number; count: number; lastStock: number }>;
+      salesByProduct: Record<string, { name: string; barcode: string | null; qty: number; count: number; lastStock: number; orderIds: number[] }>;
       receiptByProduct: Record<string, { name: string; barcode: string | null; qty: number; count: number; lastStock: number }>;
     };
     const map: Record<string, Bucket> = {};
@@ -9556,8 +9567,9 @@ function StokSayimSection() {
       const k = String(m.product_id);
       if (m.delta < 0) {
         b.salesTotal += -m.delta; b.salesCount += 1;
-        if (!b.salesByProduct[k]) b.salesByProduct[k] = { name: m.product_name, barcode: m.barcode, qty: 0, count: 0, lastStock: m.new_stock };
+        if (!b.salesByProduct[k]) b.salesByProduct[k] = { name: m.product_name, barcode: m.barcode, qty: 0, count: 0, lastStock: m.new_stock, orderIds: [] };
         b.salesByProduct[k].qty += -m.delta; b.salesByProduct[k].count += 1;
+        if (m.order_id != null && !b.salesByProduct[k].orderIds.includes(m.order_id)) b.salesByProduct[k].orderIds.push(m.order_id);
       } else if (m.delta > 0) {
         b.receiptTotal += m.delta; b.receiptCount += 1;
         if (!b.receiptByProduct[k]) b.receiptByProduct[k] = { name: m.product_name, barcode: m.barcode, qty: 0, count: 0, lastStock: m.new_stock };
@@ -10009,15 +10021,32 @@ function StokSayimSection() {
                                 <div className="text-[10px] font-bold text-red-700 mt-2 mb-1">SATIŞ</div>
                                 <div className="divide-y">
                                   {d.salesList.map((p, i) => (
-                                    <div key={`s-${i}`} className="flex items-center justify-between py-1 text-[11px] gap-2">
-                                      <div className="min-w-0 flex-1">
-                                        <div className="truncate">{p.name}</div>
-                                        {p.barcode && <div className="text-[9px] text-muted-foreground font-mono">{p.barcode}</div>}
+                                    <div key={`s-${i}`} className="py-1 text-[11px]">
+                                      <div className="flex items-center justify-between gap-2">
+                                        <div className="min-w-0 flex-1">
+                                          <div className="truncate">{p.name}</div>
+                                          {p.barcode && <div className="text-[9px] text-muted-foreground font-mono">{p.barcode}</div>}
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-bold">-{p.qty} ({p.count}x)</span>
+                                          <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">Kalan: {p.lastStock}</span>
+                                        </div>
                                       </div>
-                                      <div className="flex items-center gap-1 shrink-0">
-                                        <span className="px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-bold">-{p.qty} ({p.count}x)</span>
-                                        <span className="px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 font-semibold">Kalan: {p.lastStock}</span>
-                                      </div>
+                                      {p.orderIds.length > 0 && (
+                                        <div className="flex flex-wrap gap-1 mt-1">
+                                          {p.orderIds.map((oid) => (
+                                            <button
+                                              key={oid}
+                                              type="button"
+                                              onClick={() => openOrderDetail(oid)}
+                                              className="px-1.5 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200 font-semibold hover:bg-blue-100"
+                                              data-testid={`button-order-detail-${oid}`}
+                                            >
+                                              Sipariş #{oid}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      )}
                                     </div>
                                   ))}
                                 </div>
@@ -10149,6 +10178,78 @@ function StokSayimSection() {
           </CardContent>
         </Card>
       )}
+
+      <Dialog open={!!orderDetail} onOpenChange={(open) => { if (!open) setOrderDetail(null); }}>
+        <DialogContent className="max-w-lg max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShoppingBag className="w-5 h-5" /> Sipariş Detayı #{orderDetail?.id}
+            </DialogTitle>
+          </DialogHeader>
+          {orderDetail && (() => {
+            const order = orderDetail;
+            const statusLabels: Record<string, string> = {
+              yeni: "Bekliyor", hazirlaniyor: "Hazırlanıyor", onaylandi: "Onaylandı", tamamlandi: "Tamamlandı", iptal: "İptal",
+            };
+            const num = (v: any) => Number(v || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2 });
+            return (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between gap-2 text-sm">
+                  <span className="flex items-center gap-1.5 text-muted-foreground">
+                    <Clock className="w-4 h-4" />
+                    {new Date(order.createdAt).toLocaleDateString("tr-TR")} {new Date(order.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  <span className="px-2 py-0.5 rounded bg-muted font-semibold text-xs">{statusLabels[order.status] || order.status}</span>
+                </div>
+
+                {(order.customerName || order.customerPhone || order.customerAddress) && (
+                  <div className="bg-muted/30 rounded-lg p-3 space-y-1.5">
+                    <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-1">Müşteri Bilgileri</div>
+                    {order.customerName && <div className="flex items-center gap-2 text-sm"><User className="w-3.5 h-3.5 text-muted-foreground shrink-0" /><span className="font-medium">{order.customerName}</span></div>}
+                    {order.customerPhone && <div className="flex items-center gap-2 text-sm"><Phone className="w-3.5 h-3.5 text-muted-foreground shrink-0" /><span>{order.customerPhone}</span></div>}
+                    {order.customerAddress && <div className="flex items-start gap-2 text-sm"><MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" /><span>{order.customerAddress}</span></div>}
+                  </div>
+                )}
+
+                <div>
+                  <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Ürünler</div>
+                  <div className="space-y-2">
+                    {(order.items || []).map((item: any, idx: number) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm">
+                        {item.img ? (
+                          <img src={item.img} alt={item.name} className="w-12 h-12 rounded-lg object-cover border flex-shrink-0" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-lg bg-muted flex items-center justify-center flex-shrink-0"><Package className="w-5 h-5 text-muted-foreground" /></div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="text-sm leading-tight line-clamp-2">{item.name}</div>
+                          <div className="text-xs text-muted-foreground">{item.quantity} adet × {num(item.price)} TL</div>
+                        </div>
+                        <span className="font-medium whitespace-nowrap">{num(item.price * item.quantity)} TL</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="border-t pt-3 space-y-1.5">
+                  <div className="flex items-center justify-between gap-2 text-sm">
+                    <span className="flex items-center gap-1.5 text-muted-foreground"><CreditCard className="w-3.5 h-3.5" /> Ödeme Yöntemi:</span>
+                    <span className="font-medium">{order.paymentMethod}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 text-sm"><span className="text-muted-foreground">Ara Toplam:</span><span>{num(order.subtotal)} TL</span></div>
+                  <div className="flex items-center justify-between gap-2 text-sm"><span className="text-muted-foreground">Kargo:</span><span>{order.shipping === 0 ? "Ücretsiz" : `${num(order.shipping)} TL`}</span></div>
+                  {order.discount > 0 && <div className="flex items-center justify-between gap-2 text-sm text-green-600"><span>İndirim:</span><span>-{num(order.discount)} TL</span></div>}
+                  <div className="flex items-center justify-between gap-2 font-bold text-base border-t pt-2 mt-2"><span>Genel Toplam:</span><span>{num(order.grandTotal)} TL</span></div>
+                </div>
+
+                {order.customerNote && (
+                  <div className="text-sm bg-yellow-50 dark:bg-yellow-950/30 rounded-lg p-3"><span className="font-medium">Müşteri Notu: </span>{order.customerNote}</div>
+                )}
+              </div>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

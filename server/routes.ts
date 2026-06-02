@@ -324,6 +324,8 @@ export async function registerRoutes(
     await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_stock_movements_created ON stock_movements(created_at);`);
     await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_stock_movements_mode_created ON stock_movements(mode, created_at);`);
     await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_stock_movements_product ON stock_movements(product_id);`);
+    await sharedPool.query(`ALTER TABLE stock_movements ADD COLUMN IF NOT EXISTS order_id INTEGER;`);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_stock_movements_order ON stock_movements(order_id);`);
     await sharedPool.query(`DROP INDEX IF EXISTS idx_stock_movements_created_at;`);
   } catch (e) {
     console.error("Stock movements table setup error:", e);
@@ -2428,6 +2430,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
 
     let hasPreorderItems = false;
+    const saleMovements: Array<{ productId: number; name: string; barcode: string | null; qty: number; newStock: number }> = [];
     for (const item of orderData.items) {
       const productId = parseInt(String(item.productId));
       if (!isNaN(productId)) {
@@ -2439,19 +2442,35 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           }
         }
         if (prod && prod.preorderEnabled) {
-          if (prod.stock > 0) {
-            const deductQty = Math.min(prod.stock, item.quantity);
-            await storage.decrementStock(productId, deductQty);
-          }
-          if (prod.stock < item.quantity) {
-            hasPreorderItems = true;
-            (item as any).isPreorder = true;
+          // Atomically deduct only the available stock (partial), allow backorder for the rest.
+          const upd = await sharedPool.query(
+            "WITH old AS (SELECT stock AS s FROM products WHERE id = $1 FOR UPDATE) UPDATE products p SET stock = GREATEST(0, p.stock - $2) FROM old WHERE p.id = $1 RETURNING p.stock AS new_stock, old.s AS old_stock, p.name, p.barcode",
+            [productId, item.quantity]
+          );
+          if (upd.rows.length > 0) {
+            const row = upd.rows[0];
+            const deducted = (row.old_stock ?? 0) - (row.new_stock ?? 0);
+            (item as any).deductedQty = deducted;
+            if (deducted > 0) {
+              saleMovements.push({ productId, name: row.name, barcode: row.barcode ?? null, qty: deducted, newStock: row.new_stock });
+            }
+            if ((row.old_stock ?? 0) < item.quantity) {
+              hasPreorderItems = true;
+              (item as any).isPreorder = true;
+            }
           }
         } else {
-          const ok = await storage.decrementStock(productId, item.quantity);
-          if (!ok) {
+          // Atomic conditional decrement; the returned stock is the true post-decrement value.
+          const upd = await sharedPool.query(
+            "UPDATE products SET stock = stock - $1 WHERE id = $2 AND stock >= $1 RETURNING stock, name, barcode",
+            [item.quantity, productId]
+          );
+          if (upd.rows.length === 0) {
             return res.status(400).json({ message: `Stok yetersiz: ${item.name}` });
           }
+          const row = upd.rows[0];
+          (item as any).deductedQty = item.quantity;
+          saleMovements.push({ productId, name: row.name, barcode: row.barcode ?? null, qty: item.quantity, newStock: row.stock });
         }
       }
     }
@@ -2467,6 +2486,20 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
 
     const order = await storage.createOrder(orderData);
+
+    if (saleMovements.length > 0) {
+      try {
+        for (const sm of saleMovements) {
+          if (sm.qty <= 0) continue;
+          await sharedPool.query(
+            "INSERT INTO stock_movements (product_id, product_name, barcode, delta, mode, new_stock, order_id) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+            [sm.productId, sm.name, sm.barcode, -sm.qty, "sub", sm.newStock, order.id]
+          );
+        }
+      } catch (e) {
+        console.error("Stock movement record error (order sale):", e);
+      }
+    }
 
     if (appliedCoupon) {
       await storage.incrementCouponUsage(appliedCoupon.id);
@@ -2595,6 +2628,19 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     return `${proto}://${host}`;
   }
 
+  const restoreStockWithMovement = async (pid: number, qty: number, orderId: number) => {
+    const r = await sharedPool.query(
+      "UPDATE products SET stock = stock + $1 WHERE id = $2 RETURNING stock, name, barcode",
+      [qty, pid]
+    );
+    if (r.rows.length > 0) {
+      await sharedPool.query(
+        "INSERT INTO stock_movements (product_id, product_name, barcode, delta, mode, new_stock, order_id) VALUES ($1,$2,$3,$4,$5,$6,$7)",
+        [pid, r.rows[0].name, r.rows[0].barcode, qty, "add", r.rows[0].stock, orderId]
+      );
+    }
+  };
+
   const cancelOrderAndRestoreStock = async (orderId: number, reason: string) => {
     try {
       const upd = await sharedPool.query(
@@ -2605,9 +2651,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const items = upd.rows[0]?.items || [];
       for (const it of items) {
         const pid = parseInt(String(it.productId));
-        const qty = parseInt(String(it.quantity)) || 0;
-        if (!isNaN(pid) && qty > 0 && !it.isPreorder) {
-          await sharedPool.query("UPDATE products SET stock = stock + $1 WHERE id = $2", [qty, pid]);
+        const qty = it.deductedQty != null ? (parseInt(String(it.deductedQty)) || 0) : (it.isPreorder ? 0 : (parseInt(String(it.quantity)) || 0));
+        if (!isNaN(pid) && qty > 0) {
+          await restoreStockWithMovement(pid, qty, orderId);
         }
       }
       console.log(`[order-cancel] order=${orderId} reason=${reason} items_restored=${items.length}`);
@@ -2862,9 +2908,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         const items = itemsRow.rows[0]?.items || [];
         for (const it of items) {
           const pid = parseInt(String(it.productId));
-          const qty = parseInt(String(it.quantity)) || 0;
-          if (!isNaN(pid) && qty > 0 && !it.isPreorder) {
-            await sharedPool.query("UPDATE products SET stock = stock + $1 WHERE id = $2", [qty, pid]);
+          const qty = it.deductedQty != null ? (parseInt(String(it.deductedQty)) || 0) : (it.isPreorder ? 0 : (parseInt(String(it.quantity)) || 0));
+          if (!isNaN(pid) && qty > 0) {
+            await restoreStockWithMovement(pid, qty, tok.order_id);
           }
         }
       } catch (e) {
@@ -3021,9 +3067,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         const items = itemsRow.rows[0]?.items || [];
         for (const it of items) {
           const pid = parseInt(String(it.productId));
-          const qty = parseInt(String(it.quantity)) || 0;
-          if (!isNaN(pid) && qty > 0 && !it.isPreorder) {
-            await sharedPool.query("UPDATE products SET stock = stock + $1 WHERE id = $2", [qty, pid]);
+          const qty = it.deductedQty != null ? (parseInt(String(it.deductedQty)) || 0) : (it.isPreorder ? 0 : (parseInt(String(it.quantity)) || 0));
+          if (!isNaN(pid) && qty > 0) {
+            await restoreStockWithMovement(pid, qty, tokenRow.order_id);
           }
         }
       } catch (e) {
@@ -3328,9 +3374,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           const items = itemsRow.rows[0]?.items || [];
           for (const it of items) {
             const pid = parseInt(String(it.productId));
-            const qty = parseInt(String(it.quantity)) || 0;
-            if (!isNaN(pid) && qty > 0 && !it.isPreorder) {
-              await sharedPool.query("UPDATE products SET stock = stock + $1 WHERE id = $2", [qty, pid]);
+            const qty = it.deductedQty != null ? (parseInt(String(it.deductedQty)) || 0) : (it.isPreorder ? 0 : (parseInt(String(it.quantity)) || 0));
+            if (!isNaN(pid) && qty > 0) {
+              await restoreStockWithMovement(pid, qty, tokenRow.order_id);
             }
           }
         } catch (e) {

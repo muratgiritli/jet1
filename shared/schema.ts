@@ -491,6 +491,7 @@ export const stockMovements = pgTable("stock_movements", {
   delta: integer("delta").notNull(),
   mode: text("mode").notNull(),
   newStock: integer("new_stock").notNull(),
+  orderId: integer("order_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (t) => ({
   createdIdx: index("idx_stock_movements_created").on(t.createdAt),
