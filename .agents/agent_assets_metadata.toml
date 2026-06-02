@@ -65,3 +65,15 @@ id = "bo0AgM-h6mEHVQj1qGCmJ"
 uri = "file://attached_assets/generated_videos/jetgo_reels_petshop.mp4"
 type = "video"
 title = "JETGO Reels - Petshop (9:16, müzikli, 12.5sn)"
+
+[[outputs]]
+id = "aQ0IFWynSzqH_bqTVO4hC"
+uri = "file://attached_assets/generated_audio/jetgo_reels_v3_music.mp3"
+type = "audio"
+title = "jetgo_reels_v3"
+
+[[outputs]]
+id = "9KPWerpoPCkuGCCWhN3Am"
+uri = "file://attached_assets/generated_videos/jetgo_reels_v3.mp4"
+type = "video"
+title = "JETGO Reels (9:16, müzikli, 12.5sn)"
