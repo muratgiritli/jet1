@@ -17,3 +17,9 @@ id = "tCTBZ3-hFo7hNItuoR43i"
 uri = "file://jetgo_urunler.yml"
 type = "unspecified"
 title = "JETGO Ürünler (Yandex Business YML)"
+
+[[outputs]]
+id = "Y4cLKplqdoL-xaznUpBsH"
+uri = "file://attached_assets/generated_videos/jetgo_reel_10s.mp4"
+type = "video"
+title = "JETGO Instagram Reel - 10sn (9:16)"
