@@ -65,3 +65,15 @@ id = "kkQv774QzurgbqGYe_I2p"
 uri = "file://attached_assets/generated_videos/jetgo_post_square.mp4"
 type = "video"
 title = "JETGO Instagram Paylaşım - Kare (1:1, müzikli, 9.5sn)"
+
+[[outputs]]
+id = "xMRE-aerkwY4JAfYBKdKV"
+uri = "file://attached_assets/generated_audio/jetgo_post5_music.mp3"
+type = "audio"
+title = "jetgo_post5"
+
+[[outputs]]
+id = "Wq-EqftYdY_EVlyj7MbX6"
+uri = "file://attached_assets/generated_videos/jetgo_post5_square.mp4"
+type = "video"
+title = "JETGO Instagram Paylaşım - 5 Sahne (1:1, müzikli, 13sn)"
