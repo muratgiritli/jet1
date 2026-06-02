@@ -5573,6 +5573,66 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     res.json(all);
   });
 
+  // Hoş geldin bonusu (100 TL) raporu: yeni üye olup bonus alanlar ve kullananlar
+  app.get("/api/admin/welcome-bonuses", requireAdmin, async (_req, res) => {
+    try {
+      const q = await sharedPool.query(`
+        SELECT
+          c.id,
+          c.code,
+          c.discount_value     AS "discountValue",
+          c.min_order_amount   AS "minOrderAmount",
+          c.used_count         AS "usedCount",
+          c.is_active          AS "isActive",
+          c.expires_at         AS "expiresAt",
+          c.created_at         AS "awardedAt",
+          c.customer_id        AS "customerId",
+          cu.name              AS "customerName",
+          cu.phone             AS "customerPhone",
+          cu.is_blacklisted    AS "customerBlacklisted",
+          ord.id               AS "orderId",
+          ord.created_at       AS "orderDate",
+          ord.subtotal         AS "orderSubtotal",
+          ord.grand_total      AS "orderTotal"
+        FROM coupons c
+        LEFT JOIN customers cu ON cu.id = c.customer_id
+        LEFT JOIN LATERAL (
+          SELECT o.id, o.created_at, o.subtotal, o.grand_total
+          FROM orders o
+          WHERE cu.phone IS NOT NULL
+            AND right(regexp_replace(o.customer_phone, '\\D', '', 'g'), 10) = right(regexp_replace(cu.phone, '\\D', '', 'g'), 10)
+            AND o.discount = c.discount_value
+            AND o.created_at >= c.created_at
+          ORDER BY o.created_at ASC
+          LIMIT 1
+        ) ord ON c.used_count > 0
+        WHERE c.code LIKE 'HG%'
+        ORDER BY c.created_at DESC
+      `);
+      const now = Date.now();
+      const rows = q.rows.map((r: any) => {
+        const used = (r.usedCount ?? 0) > 0;
+        const expired = !used && r.expiresAt && new Date(r.expiresAt).getTime() < now;
+        const status = used ? "used" : expired ? "expired" : (r.isActive ? "active" : "passive");
+        return { ...r, used, status };
+      });
+      const summary = {
+        totalAwarded: rows.length,
+        totalUsed: rows.filter(r => r.used).length,
+        totalActive: rows.filter(r => r.status === "active").length,
+        totalExpired: rows.filter(r => r.status === "expired").length,
+        totalPassive: rows.filter(r => r.status === "passive").length,
+        bonusValueAwarded: rows.reduce((s, r) => s + (r.discountValue || 0), 0),
+        bonusValueRedeemed: rows.filter(r => r.used).reduce((s, r) => s + (r.discountValue || 0), 0),
+        revenueFromRedeemed: rows.filter(r => r.used && r.orderTotal != null).reduce((s, r) => s + (r.orderTotal || 0), 0),
+      };
+      res.json({ summary, rows });
+    } catch (e) {
+      console.error("Welcome bonus report error:", e);
+      res.status(500).json({ message: "Bonus raporu alınamadı" });
+    }
+  });
+
   app.post("/api/admin/coupons", requireAdmin, async (req, res) => {
     const schema = z.object({
       code: z.string().min(3),
