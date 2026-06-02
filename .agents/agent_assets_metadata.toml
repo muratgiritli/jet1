@@ -53,3 +53,15 @@ id = "8z9AZ-oo7LPhEflvXDTZI"
 uri = "file://attached_assets/generated_videos/jetgo_reels_mama.mp4"
 type = "video"
 title = "JETGO Reels - Mama Bitti Mi (9:16, müzikli, 12.5sn)"
+
+[[outputs]]
+id = "4tBTJaEbDhezOI9PuNCB5"
+uri = "file://attached_assets/generated_audio/jetgo_reels_petshop_music.mp3"
+type = "audio"
+title = "jetgo_reels_petshop"
+
+[[outputs]]
+id = "bo0AgM-h6mEHVQj1qGCmJ"
+uri = "file://attached_assets/generated_videos/jetgo_reels_petshop.mp4"
+type = "video"
+title = "JETGO Reels - Petshop (9:16, müzikli, 12.5sn)"
