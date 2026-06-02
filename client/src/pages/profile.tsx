@@ -11,11 +11,10 @@ import {
   User, Phone, MapPin, LogOut, Loader2, Check, Edit2,
   Package, Heart, Home, PawPrint, Bell,
   Plus, Trash2, Star, ChevronRight, Mail, CreditCard, FileText,
-  ShoppingCart, RefreshCw, Eye, TrendingUp, UserX,
+  ShoppingCart, Eye, TrendingUp, UserX,
   AlertTriangle, Lock, ChevronDown, ChevronUp, BarChart3, Banknote
 } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
-import { useCart } from "@/contexts/CartContext";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { formatOrderNo } from "@/lib/utils";
@@ -377,42 +376,12 @@ function OrdersSection() {
   const { data: orders, isLoading } = useQuery<any[]>({
     queryKey: ["/api/customer/orders"],
   });
-  const { updateQty } = useCart();
-  const { toast } = useToast();
   const [expandedId, setExpandedId] = useState<number | null>(null);
-  const [, setLocation] = useLocation();
 
   const PAYMENT_LABELS: Record<string, string> = {
     credit_card: "Kredi Kartı",
     cash: "Kapıda Nakit",
     eft: "EFT / Havale",
-  };
-
-  const handleReorder = (order: any) => {
-    let addedCount = 0;
-    let unavailableCount = 0;
-    const itemsToAdd: { id: string; qty: number }[] = [];
-    for (const item of order.items) {
-      if (item.currentStock > 0) {
-        const qty = Math.min(item.quantity || 1, item.currentStock);
-        itemsToAdd.push({ id: String(item.productId), qty });
-        addedCount++;
-      } else {
-        unavailableCount++;
-      }
-    }
-    if (addedCount > 0) {
-      for (const item of itemsToAdd) {
-        updateQty(item.id, item.qty);
-      }
-      toast({
-        title: `${addedCount} ürün sepete eklendi`,
-        description: unavailableCount > 0 ? `${unavailableCount} ürün stokta yok` : undefined,
-      });
-      setLocation("/");
-    } else {
-      toast({ title: "Ürünler stokta yok", variant: "destructive" });
-    }
   };
 
   if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin text-muted-foreground" /></div>;
@@ -513,17 +482,6 @@ function OrdersSection() {
                   >
                     <Eye className="w-3.5 h-3.5 mr-1" />
                     {isExpanded ? "Gizle" : "Detay"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2 text-xs"
-                    style={{ color: "#6B3480" }}
-                    onClick={() => handleReorder(order)}
-                    data-testid={`btn-reorder-${order.id}`}
-                  >
-                    <RefreshCw className="w-3.5 h-3.5 mr-1" />
-                    Tekrarla
                   </Button>
                 </div>
                 <span className="text-sm font-bold">{order.grandTotal?.toFixed(0)} TL</span>
