@@ -22,4 +22,10 @@ title = "JETGO Ürünler (Yandex Business YML)"
 id = "Y4cLKplqdoL-xaznUpBsH"
 uri = "file://attached_assets/generated_videos/jetgo_reel_10s.mp4"
 type = "video"
-title = "JETGO Instagram Reel - 10sn (9:16)"
+title = "JETGO Instagram Reel - Müzikli 10sn (9:16)"
+
+[[outputs]]
+id = "5cQWDdBhQ08rpUt9_tVhJ"
+uri = "file://attached_assets/generated_audio/jetgo_reel_music.mp3"
+type = "audio"
+title = "jetgo_reel"
