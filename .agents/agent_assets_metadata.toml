@@ -19,12 +19,6 @@ type = "unspecified"
 title = "JETGO Ürünler (Yandex Business YML)"
 
 [[outputs]]
-id = "Y4cLKplqdoL-xaznUpBsH"
-uri = "file://attached_assets/generated_videos/jetgo_reel_10s.mp4"
-type = "video"
-title = "JETGO Instagram Reel - Müzikli 10sn (9:16)"
-
-[[outputs]]
 id = "5cQWDdBhQ08rpUt9_tVhJ"
 uri = "file://attached_assets/generated_audio/jetgo_reel_music.mp3"
 type = "audio"
@@ -37,34 +31,16 @@ type = "audio"
 title = "jetgo_slideshow"
 
 [[outputs]]
-id = "FYJOcdqz9a8Aez2uH6MOR"
-uri = "file://attached_assets/generated_videos/jetgo_slideshow.mp4"
-type = "video"
-title = "JETGO Slayt Reklam Videosu - Müzikli (9:16, 14sn)"
-
-[[outputs]]
 id = "UAFd3JVi1vnS0nBDV02gl"
 uri = "file://attached_assets/generated_audio/jetgo_reels4_music.mp3"
 type = "audio"
 title = "jetgo_reels4"
 
 [[outputs]]
-id = "8z9AZ-oo7LPhEflvXDTZI"
-uri = "file://attached_assets/generated_videos/jetgo_reels_mama.mp4"
-type = "video"
-title = "JETGO Reels - Mama Bitti Mi (9:16, müzikli, 12.5sn)"
-
-[[outputs]]
 id = "4tBTJaEbDhezOI9PuNCB5"
 uri = "file://attached_assets/generated_audio/jetgo_reels_petshop_music.mp3"
 type = "audio"
 title = "jetgo_reels_petshop"
-
-[[outputs]]
-id = "bo0AgM-h6mEHVQj1qGCmJ"
-uri = "file://attached_assets/generated_videos/jetgo_reels_petshop.mp4"
-type = "video"
-title = "JETGO Reels - Petshop (9:16, müzikli, 12.5sn)"
 
 [[outputs]]
 id = "aQ0IFWynSzqH_bqTVO4hC"
@@ -77,3 +53,15 @@ id = "9KPWerpoPCkuGCCWhN3Am"
 uri = "file://attached_assets/generated_videos/jetgo_reels_v3.mp4"
 type = "video"
 title = "JETGO Reels (9:16, müzikli, 12.5sn)"
+
+[[outputs]]
+id = "AxlXYXH-wsWCFtneF_3tN"
+uri = "file://attached_assets/generated_audio/jetgo_post_music.mp3"
+type = "audio"
+title = "jetgo_post"
+
+[[outputs]]
+id = "kkQv774QzurgbqGYe_I2p"
+uri = "file://attached_assets/generated_videos/jetgo_post_square.mp4"
+type = "video"
+title = "JETGO Instagram Paylaşım - Kare (1:1, müzikli, 9.5sn)"
