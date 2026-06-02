@@ -41,3 +41,15 @@ id = "FYJOcdqz9a8Aez2uH6MOR"
 uri = "file://attached_assets/generated_videos/jetgo_slideshow.mp4"
 type = "video"
 title = "JETGO Slayt Reklam Videosu - Müzikli (9:16, 14sn)"
+
+[[outputs]]
+id = "UAFd3JVi1vnS0nBDV02gl"
+uri = "file://attached_assets/generated_audio/jetgo_reels4_music.mp3"
+type = "audio"
+title = "jetgo_reels4"
+
+[[outputs]]
+id = "8z9AZ-oo7LPhEflvXDTZI"
+uri = "file://attached_assets/generated_videos/jetgo_reels_mama.mp4"
+type = "video"
+title = "JETGO Reels - Mama Bitti Mi (9:16, müzikli, 12.5sn)"
