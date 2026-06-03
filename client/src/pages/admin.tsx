@@ -7695,9 +7695,13 @@ function VisitorsSection() {
   const summary = data?.summary;
   const bySource: any[] = data?.bySource || [];
   const byCity: any[] = data?.byCity || [];
-  const recent: any[] = data?.recent || [];
+  const recentAll: any[] = data?.recentAll || [];
   const bots = data?.bots || { total: 0, uniques: 0, byName: [], recent: [] };
   const botByName: any[] = bots.byName || [];
+  const [feedFilter, setFeedFilter] = useState<"all" | "real" | "bot">("all");
+  const feedRows = recentAll.filter((v: any) =>
+    feedFilter === "real" ? !v.is_bot : feedFilter === "bot" ? v.is_bot : true
+  );
   const maxSource = Math.max(1, ...bySource.map(s => s.visits || 0));
   const maxCity = Math.max(1, ...byCity.map(c => c.visits || 0));
   const maxBot = Math.max(1, ...botByName.map((b: any) => b.visits || 0));
@@ -7800,34 +7804,6 @@ function VisitorsSection() {
                   </div>
                 </div>
               </div>
-
-              <div className="rounded-xl border bg-white p-4">
-                <h3 className="text-sm font-bold mb-3">Son Ziyaretler (max 200)</h3>
-                <div className="overflow-auto max-h-[420px]">
-                  <table className="w-full text-xs">
-                    <thead className="text-gray-500 border-b">
-                      <tr>
-                        <th className="text-left py-1.5 pr-2">Saat</th>
-                        <th className="text-left py-1.5 pr-2">IP</th>
-                        <th className="text-left py-1.5 pr-2">Şehir</th>
-                        <th className="text-left py-1.5 pr-2">Kaynak</th>
-                        <th className="text-left py-1.5">Sayfa</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recent.map((v) => (
-                        <tr key={v.id} className="border-b last:border-0" data-testid={`row-visit-${v.id}`}>
-                          <td className="py-1.5 pr-2 whitespace-nowrap">{fmtTime(v.created_at)}</td>
-                          <td className="py-1.5 pr-2 font-mono whitespace-nowrap">{v.ip || "-"}</td>
-                          <td className="py-1.5 pr-2 whitespace-nowrap">{v.city || "Bilinmiyor"}</td>
-                          <td className="py-1.5 pr-2 whitespace-nowrap">{v.source}</td>
-                          <td className="py-1.5 max-w-[160px] truncate" title={v.path || ""}>{v.path || "-"}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
               </>
               )}
 
@@ -7853,6 +7829,64 @@ function VisitorsSection() {
                   </div>
                 </div>
               )}
+
+              <div className="rounded-xl border bg-white p-4" data-testid="panel-visit-feed">
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <h3 className="text-sm font-bold">Tek Tek Ziyaret Listesi (son 300)</h3>
+                  <div className="flex gap-1">
+                    {([
+                      { k: "all", label: `Hepsi (${recentAll.length})` },
+                      { k: "real", label: `Gerçek (${recentAll.filter((v: any) => !v.is_bot).length})` },
+                      { k: "bot", label: `Bot (${recentAll.filter((v: any) => v.is_bot).length})` },
+                    ] as const).map((b) => (
+                      <button
+                        key={b.k}
+                        onClick={() => setFeedFilter(b.k)}
+                        data-testid={`button-feed-${b.k}`}
+                        className={`px-2.5 py-1 rounded-md text-xs font-medium border ${feedFilter === b.k ? "bg-orange-500 text-white border-orange-500" : "bg-white text-gray-600 border-gray-200"}`}
+                      >
+                        {b.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="overflow-auto max-h-[480px]">
+                  <table className="w-full text-xs">
+                    <thead className="text-gray-500 border-b sticky top-0 bg-white">
+                      <tr>
+                        <th className="text-left py-1.5 pr-2">Tür</th>
+                        <th className="text-left py-1.5 pr-2">Saat</th>
+                        <th className="text-left py-1.5 pr-2">IP</th>
+                        <th className="text-left py-1.5 pr-2">Şehir</th>
+                        <th className="text-left py-1.5 pr-2">ISP / Operatör</th>
+                        <th className="text-left py-1.5 pr-2">Kaynak</th>
+                        <th className="text-left py-1.5">Sayfa</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {feedRows.length === 0 ? (
+                        <tr><td colSpan={7} className="py-4 text-center text-gray-400">Kayıt yok.</td></tr>
+                      ) : feedRows.map((v: any) => (
+                        <tr key={v.id} className="border-b last:border-0" data-testid={`row-visit-${v.id}`}>
+                          <td className="py-1.5 pr-2 whitespace-nowrap">
+                            {v.is_bot ? (
+                              <span className="inline-block px-2 py-0.5 rounded-full bg-gray-200 text-gray-600 font-medium">Bot</span>
+                            ) : (
+                              <span className="inline-block px-2 py-0.5 rounded-full bg-green-100 text-green-700 font-medium">Gerçek</span>
+                            )}
+                          </td>
+                          <td className="py-1.5 pr-2 whitespace-nowrap">{fmtTime(v.created_at)}</td>
+                          <td className="py-1.5 pr-2 font-mono whitespace-nowrap">{v.ip || "-"}</td>
+                          <td className="py-1.5 pr-2 whitespace-nowrap">{v.city || "Bilinmiyor"}{v.country ? ` · ${v.country}` : ""}</td>
+                          <td className="py-1.5 pr-2 max-w-[160px] truncate" title={v.isp || ""}>{v.isp || "-"}</td>
+                          <td className="py-1.5 pr-2 whitespace-nowrap">{v.source}</td>
+                          <td className="py-1.5 max-w-[160px] truncate" title={v.path || ""}>{v.path || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
             </>
           )}
         </>

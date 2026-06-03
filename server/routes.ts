@@ -5771,6 +5771,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         `SELECT id, ip, source, isp, city, country, path, created_at FROM site_visits WHERE ${botFilter} ORDER BY created_at DESC LIMIT 100`,
         params
       );
+      // Gerçek + bot birlikte, tek tek detay (is_bot ile işaretli).
+      const allRecentQ = await sharedPool.query(
+        `SELECT id, ip, source, city, region, country, isp, is_bot, path, referrer, created_at FROM site_visits WHERE ${dayFilter} ORDER BY created_at DESC LIMIT 300`,
+        params
+      );
 
       res.json({
         date: params[0],
@@ -5785,6 +5790,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         byCity: byCityQ.rows,
         hourly: hourlyQ.rows,
         recent: recentQ.rows,
+        recentAll: allRecentQ.rows,
         bots: {
           total: botSummaryQ.rows[0]?.total_visits || 0,
           uniques: botSummaryQ.rows[0]?.unique_visitors || 0,
