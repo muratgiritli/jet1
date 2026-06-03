@@ -310,6 +310,36 @@ export async function registerRoutes(
 
   try {
     await sharedPool.query(`
+      CREATE TABLE IF NOT EXISTS site_visits (
+        id SERIAL PRIMARY KEY,
+        ip TEXT,
+        source TEXT NOT NULL DEFAULT 'Direkt',
+        referrer TEXT,
+        path TEXT,
+        city TEXT,
+        region TEXT,
+        country TEXT,
+        user_agent TEXT,
+        created_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_site_visits_created ON site_visits(created_at);`);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_site_visits_source ON site_visits(source);`);
+    await sharedPool.query(`
+      CREATE TABLE IF NOT EXISTS ip_geo_cache (
+        ip TEXT PRIMARY KEY,
+        city TEXT,
+        region TEXT,
+        country TEXT,
+        resolved_at TIMESTAMP NOT NULL DEFAULT NOW()
+      );
+    `);
+  } catch (e) {
+    console.error("Site visits table setup error:", e);
+  }
+
+  try {
+    await sharedPool.query(`
       CREATE TABLE IF NOT EXISTS stock_movements (
         id SERIAL PRIMARY KEY,
         product_id INTEGER NOT NULL,
@@ -5572,6 +5602,145 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.get("/api/admin/coupons", requireAdmin, async (_req, res) => {
     const all = await storage.getAllCoupons();
     res.json(all);
+  });
+
+  // ===== Ziyaretçi Takip Sistemi =====
+  function detectVisitSource(referrer: string | null | undefined, utmSource: string | null | undefined): string {
+    const u = (utmSource || "").toLowerCase().trim();
+    const mapToken = (s: string): string | null => {
+      if (s.includes("google")) return "Google";
+      if (s.includes("youtube") || s.includes("youtu.be")) return "YouTube";
+      if (s.includes("instagram") || s === "ig") return "Instagram";
+      if (s.includes("facebook") || s.includes("fb.com") || s === "fb") return "Facebook";
+      if (s.includes("tiktok")) return "TikTok";
+      if (s.includes("twitter") || s === "t.co" || s === "x.com" || s === "x") return "Twitter/X";
+      if (s.includes("whatsapp") || s.includes("wa.me")) return "WhatsApp";
+      if (s.includes("bing")) return "Bing";
+      if (s.includes("yandex")) return "Yandex";
+      if (s.includes("linkedin")) return "LinkedIn";
+      if (s.includes("pinterest")) return "Pinterest";
+      if (s.includes("telegram") || s === "t.me") return "Telegram";
+      if (s.includes("reddit")) return "Reddit";
+      return null;
+    };
+    if (u) return mapToken(u) || (u.charAt(0).toUpperCase() + u.slice(1));
+    const r = (referrer || "").trim();
+    if (!r) return "Direkt";
+    try {
+      const host = new URL(r).hostname.replace(/^www\./, "").toLowerCase();
+      if (host.includes("jetgomarket") || host.includes("localhost") || host.includes("replit")) return "Direkt";
+      return mapToken(host) || host;
+    } catch {
+      return "Direkt";
+    }
+  }
+
+  function clientIpFrom(req: Request): string {
+    // 'trust proxy' is set in server/index.ts, so req.ip resolves the real
+    // client IP from the proxy chain and is not spoofable via raw XFF header.
+    return (req.ip || "").replace(/^::ffff:/, "") || "unknown";
+  }
+
+  async function resolveVisitGeo(ip: string): Promise<{ city: string | null; region: string | null; country: string | null } | null> {
+    if (!ip || ip === "unknown") return null;
+    if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|127\.|::1|::ffff:127\.|fc|fd)/i.test(ip)) {
+      return { city: "Yerel Ağ", region: null, country: null };
+    }
+    try {
+      const cached = await sharedPool.query("SELECT city, region, country FROM ip_geo_cache WHERE ip = $1", [ip]);
+      if (cached.rows.length > 0) return cached.rows[0];
+    } catch {}
+    try {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 4000);
+      const resp = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,regionName,city&lang=tr`, { signal: controller.signal });
+      clearTimeout(t);
+      const d: any = await resp.json();
+      if (d && d.status === "success") {
+        const geo = { city: d.city || null, region: d.regionName || null, country: d.country || null };
+        try {
+          await sharedPool.query(
+            "INSERT INTO ip_geo_cache (ip, city, region, country, resolved_at) VALUES ($1,$2,$3,$4,NOW()) ON CONFLICT (ip) DO UPDATE SET city=$2, region=$3, country=$4, resolved_at=NOW()",
+            [ip, geo.city, geo.region, geo.country]
+          );
+        } catch {}
+        return geo;
+      }
+    } catch {}
+    return null;
+  }
+
+  // Ziyaret kaydı (public, sayfa açılışında çağrılır)
+  app.post("/api/track/visit", async (req: Request, res: Response) => {
+    res.status(204).end();
+    try {
+      const ua = String(req.headers["user-agent"] || "");
+      if (/bot|crawl|spider|slurp|bingpreview|facebookexternalhit|crawler|fetch|monitor|preview|headless|lighthouse/i.test(ua)) return;
+      const ip = clientIpFrom(req);
+      const referrer = typeof req.body?.referrer === "string" ? req.body.referrer.slice(0, 500) : null;
+      const utmSource = typeof req.body?.utmSource === "string" ? req.body.utmSource.slice(0, 100) : null;
+      const path = typeof req.body?.path === "string" ? req.body.path.slice(0, 300) : null;
+      if (path && /^\/admin/i.test(path)) return;
+      const source = detectVisitSource(referrer, utmSource);
+      const geo = await resolveVisitGeo(ip);
+      await sharedPool.query(
+        "INSERT INTO site_visits (ip, source, referrer, path, city, region, country, user_agent) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
+        [ip, source, referrer, path, geo?.city ?? null, geo?.region ?? null, geo?.country ?? null, ua.slice(0, 300)]
+      );
+    } catch (e) {
+      console.error("track/visit error:", e);
+    }
+  });
+
+  // Ziyaretçi raporu (admin) — günlük tarih seçimli
+  app.get("/api/admin/visitors", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const dateStr = typeof req.query.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)
+        ? req.query.date
+        : null;
+      // Range-based (sargable) so idx_site_visits_created is used. Converts the
+      // selected Istanbul-local day to UTC instants for comparison.
+      const dayFilter = "created_at >= ($1::date::timestamp AT TIME ZONE 'Europe/Istanbul') AND created_at < (($1::date + 1)::timestamp AT TIME ZONE 'Europe/Istanbul')";
+      const params = dateStr ? [dateStr] : [new Date().toISOString().slice(0, 10)];
+
+      const summaryQ = await sharedPool.query(
+        `SELECT COUNT(*)::int AS total_visits, COUNT(DISTINCT ip)::int AS unique_visitors FROM site_visits WHERE ${dayFilter}`,
+        params
+      );
+      const bySourceQ = await sharedPool.query(
+        `SELECT source, COUNT(*)::int AS visits, COUNT(DISTINCT ip)::int AS uniques FROM site_visits WHERE ${dayFilter} GROUP BY source ORDER BY visits DESC`,
+        params
+      );
+      const byCityQ = await sharedPool.query(
+        `SELECT COALESCE(NULLIF(city, ''), 'Bilinmiyor') AS city, region, COUNT(*)::int AS visits, COUNT(DISTINCT ip)::int AS uniques FROM site_visits WHERE ${dayFilter} GROUP BY COALESCE(NULLIF(city, ''), 'Bilinmiyor'), region ORDER BY visits DESC LIMIT 50`,
+        params
+      );
+      const recentQ = await sharedPool.query(
+        `SELECT id, ip, source, city, region, country, path, referrer, created_at FROM site_visits WHERE ${dayFilter} ORDER BY created_at DESC LIMIT 200`,
+        params
+      );
+      const hourlyQ = await sharedPool.query(
+        `SELECT EXTRACT(HOUR FROM (created_at AT TIME ZONE 'Europe/Istanbul'))::int AS hour, COUNT(*)::int AS visits FROM site_visits WHERE ${dayFilter} GROUP BY hour ORDER BY hour`,
+        params
+      );
+
+      res.json({
+        date: params[0],
+        summary: {
+          totalVisits: summaryQ.rows[0]?.total_visits || 0,
+          uniqueVisitors: summaryQ.rows[0]?.unique_visitors || 0,
+          topSource: bySourceQ.rows[0]?.source || "-",
+          topCity: byCityQ.rows[0]?.city || "-",
+        },
+        bySource: bySourceQ.rows,
+        byCity: byCityQ.rows,
+        hourly: hourlyQ.rows,
+        recent: recentQ.rows,
+      });
+    } catch (e) {
+      console.error("admin/visitors error:", e);
+      res.status(500).json({ message: "Ziyaretçi verileri alınamadı" });
+    }
   });
 
   // Hoş geldin bonusu (100 TL) raporu: yeni üye olup bonus alanlar ve kullananlar

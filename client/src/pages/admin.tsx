@@ -1994,6 +1994,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "yonetim", label: "Yönetim", icon: <Package className="w-3.5 h-3.5" /> },
             { key: "kuponlar", label: "Kuponlar", icon: <Tag className="w-3.5 h-3.5" /> },
             { key: "bonus", label: "Bonus", icon: <Gift className="w-3.5 h-3.5" /> },
+            { key: "ziyaretci", label: "Ziyaretçi", icon: <Eye className="w-3.5 h-3.5" /> },
             { key: "musteriler", label: "Müşteri", icon: <Users className="w-3.5 h-3.5" /> },
             { key: "bildirim", label: "Bildirim", icon: <Bell className="w-3.5 h-3.5" /> },
             { key: "havale", label: "Havale", icon: <Banknote className="w-3.5 h-3.5" /> },
@@ -2032,6 +2033,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "dashboard" && <DashboardSection />}
         {activeSection === "kuponlar" && <CouponsSection />}
         {activeSection === "bonus" && <WelcomeBonusSection />}
+        {activeSection === "ziyaretci" && <VisitorsSection />}
         {activeSection === "musteriler" && <CustomersSection />}
         {activeSection === "bildirim" && <NotificationsSection />}
         {activeSection === "havale" && <BankTransferAdminSection />}
@@ -7677,6 +7679,150 @@ function SubscriptionsSection() {
           ))}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function VisitorsSection() {
+  const todayStr = () => {
+    const d = new Date();
+    const off = d.getTimezoneOffset();
+    return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
+  };
+  const [date, setDate] = useState<string>(todayStr());
+  const { data, isLoading } = useQuery<any>({ queryKey: [`/api/admin/visitors?date=${date}`] });
+
+  const summary = data?.summary;
+  const bySource: any[] = data?.bySource || [];
+  const byCity: any[] = data?.byCity || [];
+  const recent: any[] = data?.recent || [];
+  const maxSource = Math.max(1, ...bySource.map(s => s.visits || 0));
+  const maxCity = Math.max(1, ...byCity.map(c => c.visits || 0));
+
+  const sourceColor: Record<string, string> = {
+    Google: "bg-blue-500", YouTube: "bg-red-500", Instagram: "bg-pink-500",
+    Facebook: "bg-blue-700", TikTok: "bg-gray-900", "Twitter/X": "bg-sky-500",
+    WhatsApp: "bg-green-500", Direkt: "bg-purple-500", Bing: "bg-teal-500",
+    Yandex: "bg-orange-500",
+  };
+  const fmtTime = (d: string | null) => d ? new Date(d).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" }) : "-";
+
+  return (
+    <div className="space-y-4" data-testid="section-visitors">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Eye className="w-5 h-5 text-purple-600" />
+          <h2 className="text-lg font-bold">Ziyaretçi Takip</h2>
+        </div>
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={date}
+            max={todayStr()}
+            onChange={(e) => setDate(e.target.value)}
+            className="border rounded-lg px-3 py-1.5 text-sm"
+            data-testid="input-visitor-date"
+          />
+        </div>
+      </div>
+      <p className="text-xs text-gray-500 -mt-2">Seçili güne ait ziyaretçiler: nereden geldiği (Google, YouTube, sosyal medya, direkt), şehir ve IP bilgisiyle.</p>
+
+      {isLoading ? (
+        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-purple-600" /></div>
+      ) : (
+        <>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+            <div className="rounded-xl border bg-white p-3" data-testid="card-visit-total">
+              <p className="text-xs text-gray-500">Toplam Ziyaret</p>
+              <p className="text-xl font-bold text-purple-700">{summary?.totalVisits ?? 0}</p>
+            </div>
+            <div className="rounded-xl border bg-white p-3" data-testid="card-visit-unique">
+              <p className="text-xs text-gray-500">Tekil Ziyaretçi (IP)</p>
+              <p className="text-xl font-bold text-blue-600">{summary?.uniqueVisitors ?? 0}</p>
+            </div>
+            <div className="rounded-xl border bg-white p-3" data-testid="card-visit-source">
+              <p className="text-xs text-gray-500">En Çok Kaynak</p>
+              <p className="text-xl font-bold text-emerald-700 truncate">{summary?.topSource ?? "-"}</p>
+            </div>
+            <div className="rounded-xl border bg-white p-3" data-testid="card-visit-city">
+              <p className="text-xs text-gray-500">En Çok Şehir</p>
+              <p className="text-xl font-bold text-amber-600 truncate">{summary?.topCity ?? "-"}</p>
+            </div>
+          </div>
+
+          {summary?.totalVisits === 0 ? (
+            <div className="text-center py-10 text-sm text-gray-500" data-testid="text-visitors-empty">
+              Bu tarihte ziyaretçi kaydı yok.
+            </div>
+          ) : (
+            <>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="rounded-xl border bg-white p-4">
+                  <h3 className="text-sm font-bold mb-3">Nereden Geliyor (Kaynak)</h3>
+                  <div className="space-y-2">
+                    {bySource.map((s) => (
+                      <div key={s.source} data-testid={`row-source-${s.source}`}>
+                        <div className="flex justify-between text-xs mb-0.5">
+                          <span className="font-medium">{s.source}</span>
+                          <span className="text-gray-500">{s.visits} ziyaret · {s.uniques} tekil</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                          <div className={`h-full rounded-full ${sourceColor[s.source] || "bg-gray-400"}`} style={{ width: `${(s.visits / maxSource) * 100}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border bg-white p-4">
+                  <h3 className="text-sm font-bold mb-3">Şehirler</h3>
+                  <div className="space-y-2 max-h-[320px] overflow-auto">
+                    {byCity.map((c, i) => (
+                      <div key={`${c.city}-${i}`} data-testid={`row-city-${i}`}>
+                        <div className="flex justify-between text-xs mb-0.5">
+                          <span className="font-medium">{c.city}{c.region ? ` (${c.region})` : ""}</span>
+                          <span className="text-gray-500">{c.visits} ziyaret · {c.uniques} tekil</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                          <div className="h-full rounded-full bg-amber-500" style={{ width: `${(c.visits / maxCity) * 100}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="rounded-xl border bg-white p-4">
+                <h3 className="text-sm font-bold mb-3">Son Ziyaretler (max 200)</h3>
+                <div className="overflow-auto max-h-[420px]">
+                  <table className="w-full text-xs">
+                    <thead className="text-gray-500 border-b">
+                      <tr>
+                        <th className="text-left py-1.5 pr-2">Saat</th>
+                        <th className="text-left py-1.5 pr-2">IP</th>
+                        <th className="text-left py-1.5 pr-2">Şehir</th>
+                        <th className="text-left py-1.5 pr-2">Kaynak</th>
+                        <th className="text-left py-1.5">Sayfa</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recent.map((v) => (
+                        <tr key={v.id} className="border-b last:border-0" data-testid={`row-visit-${v.id}`}>
+                          <td className="py-1.5 pr-2 whitespace-nowrap">{fmtTime(v.created_at)}</td>
+                          <td className="py-1.5 pr-2 font-mono whitespace-nowrap">{v.ip || "-"}</td>
+                          <td className="py-1.5 pr-2 whitespace-nowrap">{v.city || "Bilinmiyor"}</td>
+                          <td className="py-1.5 pr-2 whitespace-nowrap">{v.source}</td>
+                          <td className="py-1.5 max-w-[160px] truncate" title={v.path || ""}>{v.path || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
+          )}
+        </>
+      )}
     </div>
   );
 }

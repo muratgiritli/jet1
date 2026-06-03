@@ -93,7 +93,32 @@ function PageLoader() {
   );
 }
 
+function useVisitTracking() {
+  const [location] = useLocation();
+  useEffect(() => {
+    try {
+      if (/^\/admin/i.test(location)) return;
+      let entryReferrer = sessionStorage.getItem("jg_entry_ref");
+      let utmSource = sessionStorage.getItem("jg_utm_src");
+      if (entryReferrer === null) {
+        const params = new URLSearchParams(window.location.search);
+        utmSource = params.get("utm_source") || "";
+        entryReferrer = document.referrer || "";
+        sessionStorage.setItem("jg_entry_ref", entryReferrer);
+        sessionStorage.setItem("jg_utm_src", utmSource);
+      }
+      fetch("/api/track/visit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path: location, referrer: entryReferrer, utmSource }),
+        keepalive: true,
+      }).catch(() => {});
+    } catch {}
+  }, [location]);
+}
+
 function Router() {
+  useVisitTracking();
   return (
     <Suspense fallback={<PageLoader />}>
       <Switch>

@@ -510,3 +510,29 @@ export const subscriptions = pgTable("subscriptions", {
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({ id: true, status: true, createdAt: true });
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
+
+export const siteVisits = pgTable("site_visits", {
+  id: serial("id").primaryKey(),
+  ip: text("ip"),
+  source: text("source").notNull().default("Direkt"),
+  referrer: text("referrer"),
+  path: text("path"),
+  city: text("city"),
+  region: text("region"),
+  country: text("country"),
+  userAgent: text("user_agent"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (t) => ({
+  createdIdx: index("idx_site_visits_created").on(t.createdAt),
+  sourceIdx: index("idx_site_visits_source").on(t.source),
+}));
+export type SiteVisit = typeof siteVisits.$inferSelect;
+
+export const ipGeoCache = pgTable("ip_geo_cache", {
+  ip: text("ip").primaryKey(),
+  city: text("city"),
+  region: text("region"),
+  country: text("country"),
+  resolvedAt: timestamp("resolved_at").notNull().defaultNow(),
+});
+export type IpGeoCache = typeof ipGeoCache.$inferSelect;
