@@ -7739,13 +7739,15 @@ function VisitorsSection() {
       ) : (
         <>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3">
-            <div className="rounded-xl border bg-white p-3" data-testid="card-visit-total">
-              <p className="text-xs text-gray-500">Gerçek Ziyaret</p>
-              <p className="text-xl font-bold text-purple-700">{summary?.totalVisits ?? 0}</p>
-            </div>
             <div className="rounded-xl border bg-white p-3" data-testid="card-visit-unique">
-              <p className="text-xs text-gray-500">Tekil Ziyaretçi (IP)</p>
+              <p className="text-xs text-gray-500">Gerçek Tekil Ziyaretçi (IP)</p>
               <p className="text-xl font-bold text-blue-600">{summary?.uniqueVisitors ?? 0}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">Farklı kişi sayısı</p>
+            </div>
+            <div className="rounded-xl border bg-white p-3" data-testid="card-visit-total">
+              <p className="text-xs text-gray-500">Gerçek Sayfa Görüntüleme</p>
+              <p className="text-xl font-bold text-purple-700">{summary?.totalVisits ?? 0}</p>
+              <p className="text-[10px] text-gray-400 mt-0.5">1 kişi birkaç sayfa gezebilir</p>
             </div>
             <div className="rounded-xl border bg-white p-3" data-testid="card-visit-source">
               <p className="text-xs text-gray-500">En Çok Kaynak</p>
