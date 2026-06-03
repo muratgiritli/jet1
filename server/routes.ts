@@ -328,15 +328,24 @@ export async function registerRoutes(
     `);
     await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_site_visits_created ON site_visits(created_at);`);
     await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_site_visits_source ON site_visits(source);`);
+    await sharedPool.query(`ALTER TABLE site_visits ADD COLUMN IF NOT EXISTS isp TEXT;`);
+    await sharedPool.query(`ALTER TABLE site_visits ADD COLUMN IF NOT EXISTS is_bot BOOLEAN NOT NULL DEFAULT false;`);
+    // One-time cleanup: rows captured before bot/datacenter detection recorded
+    // the GCP/Replit infra IP (34.x / 35.x) instead of the real visitor. Flag them.
+    await sharedPool.query(`UPDATE site_visits SET is_bot = true WHERE is_bot = false AND (ip LIKE '34.%' OR ip LIKE '35.%');`);
     await sharedPool.query(`
       CREATE TABLE IF NOT EXISTS ip_geo_cache (
         ip TEXT PRIMARY KEY,
         city TEXT,
         region TEXT,
         country TEXT,
+        isp TEXT,
+        is_hosting BOOLEAN,
         resolved_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `);
+    await sharedPool.query(`ALTER TABLE ip_geo_cache ADD COLUMN IF NOT EXISTS isp TEXT;`);
+    await sharedPool.query(`ALTER TABLE ip_geo_cache ADD COLUMN IF NOT EXISTS is_hosting BOOLEAN;`);
   } catch (e) {
     console.error("Site visits table setup error:", e);
   }
@@ -5638,33 +5647,53 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   }
 
-  function clientIpFrom(req: Request): string {
-    // 'trust proxy' is set in server/index.ts, so req.ip resolves the real
-    // client IP from the proxy chain and is not spoofable via raw XFF header.
-    return (req.ip || "").replace(/^::ffff:/, "") || "unknown";
+  function isPrivateIp(ip: string): boolean {
+    return /^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|127\.|169\.254\.|::1$|::ffff:127\.|fc|fd|fe80:)/i.test(ip);
   }
 
-  async function resolveVisitGeo(ip: string): Promise<{ city: string | null; region: string | null; country: string | null } | null> {
+  // ISP/org adı bir veri merkezi / bulut sağlayıcısına işaret ediyorsa = bot/otomatik trafik.
+  const CLOUD_ORG_RE = /\b(google|amazon|aws|microsoft|azure|facebook|meta|cloudflare|ovh|digitalocean|hetzner|linode|akamai|fastly|oracle|alibaba|tencent|leaseweb|vultr|m247|contabo|datacamp|scaleway|hosting|datacenter)\b/i;
+  const UA_BOT_RE = /bot|crawl|spider|slurp|bingpreview|facebookexternalhit|crawler|headless|lighthouse|googlebot|applebot|yandex|baidu|semrush|ahrefs|petalbot|python-requests|axios|curl|wget|go-http|java\//i;
+
+  function clientIpFrom(req: Request): string {
+    // En soldaki public IP = gerçek ziyaretçi. Replit/GCP altyapısı X-Forwarded-For'a
+    // sağdan proxy adımları ekler; req.ip (trust proxy=1) bir veri merkezi adımına
+    // çözülebilir, bu yüzden zinciri soldan tarayıp ilk public IP'yi alıyoruz.
+    const xff = (req.headers["x-forwarded-for"] as string) || "";
+    const parts = xff.split(",").map((s) => s.trim().replace(/^::ffff:/, "")).filter(Boolean);
+    for (const ip of parts) {
+      if (ip && !isPrivateIp(ip)) return ip;
+    }
+    const fallback = (req.ip || "").replace(/^::ffff:/, "");
+    return fallback || parts[0] || "unknown";
+  }
+
+  async function resolveVisitGeo(ip: string): Promise<{ city: string | null; region: string | null; country: string | null; isp: string | null; hosting: boolean } | null> {
     if (!ip || ip === "unknown") return null;
-    if (/^(10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|127\.|::1|::ffff:127\.|fc|fd)/i.test(ip)) {
-      return { city: "Yerel Ağ", region: null, country: null };
+    if (isPrivateIp(ip)) {
+      return { city: "Yerel Ağ", region: null, country: null, isp: null, hosting: false };
     }
     try {
-      const cached = await sharedPool.query("SELECT city, region, country FROM ip_geo_cache WHERE ip = $1", [ip]);
-      if (cached.rows.length > 0) return cached.rows[0];
+      const cached = await sharedPool.query("SELECT city, region, country, isp, is_hosting FROM ip_geo_cache WHERE ip = $1", [ip]);
+      if (cached.rows.length > 0) {
+        const r = cached.rows[0];
+        return { city: r.city, region: r.region, country: r.country, isp: r.isp, hosting: !!r.is_hosting };
+      }
     } catch {}
     try {
       const controller = new AbortController();
       const t = setTimeout(() => controller.abort(), 4000);
-      const resp = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,regionName,city&lang=tr`, { signal: controller.signal });
+      const resp = await fetch(`http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,regionName,city,isp,org,as,hosting,proxy&lang=tr`, { signal: controller.signal });
       clearTimeout(t);
       const d: any = await resp.json();
       if (d && d.status === "success") {
-        const geo = { city: d.city || null, region: d.regionName || null, country: d.country || null };
+        const orgStr = `${d.isp || ""} ${d.org || ""} ${d.as || ""}`;
+        const hosting = !!d.hosting || !!d.proxy || CLOUD_ORG_RE.test(orgStr);
+        const geo = { city: d.city || null, region: d.regionName || null, country: d.country || null, isp: d.isp || d.org || null, hosting };
         try {
           await sharedPool.query(
-            "INSERT INTO ip_geo_cache (ip, city, region, country, resolved_at) VALUES ($1,$2,$3,$4,NOW()) ON CONFLICT (ip) DO UPDATE SET city=$2, region=$3, country=$4, resolved_at=NOW()",
-            [ip, geo.city, geo.region, geo.country]
+            "INSERT INTO ip_geo_cache (ip, city, region, country, isp, is_hosting, resolved_at) VALUES ($1,$2,$3,$4,$5,$6,NOW()) ON CONFLICT (ip) DO UPDATE SET city=$2, region=$3, country=$4, isp=$5, is_hosting=$6, resolved_at=NOW()",
+            [ip, geo.city, geo.region, geo.country, geo.isp, geo.hosting]
           );
         } catch {}
         return geo;
@@ -5678,7 +5707,6 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     res.status(204).end();
     try {
       const ua = String(req.headers["user-agent"] || "");
-      if (/bot|crawl|spider|slurp|bingpreview|facebookexternalhit|crawler|fetch|monitor|preview|headless|lighthouse/i.test(ua)) return;
       const ip = clientIpFrom(req);
       const referrer = typeof req.body?.referrer === "string" ? req.body.referrer.slice(0, 500) : null;
       const utmSource = typeof req.body?.utmSource === "string" ? req.body.utmSource.slice(0, 100) : null;
@@ -5686,9 +5714,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       if (path && /^\/admin/i.test(path)) return;
       const source = detectVisitSource(referrer, utmSource);
       const geo = await resolveVisitGeo(ip);
+      // Bot/otomatik: bot user-agent VEYA veri merkezi/bulut IP'si (gerçek kullanıcı değil).
+      const isBot = UA_BOT_RE.test(ua) || !!geo?.hosting;
       await sharedPool.query(
-        "INSERT INTO site_visits (ip, source, referrer, path, city, region, country, user_agent) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)",
-        [ip, source, referrer, path, geo?.city ?? null, geo?.region ?? null, geo?.country ?? null, ua.slice(0, 300)]
+        "INSERT INTO site_visits (ip, source, referrer, path, city, region, country, isp, user_agent, is_bot) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)",
+        [ip, source, referrer, path, geo?.city ?? null, geo?.region ?? null, geo?.country ?? null, geo?.isp ?? null, ua.slice(0, 300), isBot]
       );
     } catch (e) {
       console.error("track/visit error:", e);
@@ -5704,26 +5734,41 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       // Range-based (sargable) so idx_site_visits_created is used. Converts the
       // selected Istanbul-local day to UTC instants for comparison.
       const dayFilter = "created_at >= ($1::date::timestamp AT TIME ZONE 'Europe/Istanbul') AND created_at < (($1::date + 1)::timestamp AT TIME ZONE 'Europe/Istanbul')";
+      // Gerçek ziyaretçiler bot/veri merkezi trafiğinden ayrılır.
+      const realFilter = `${dayFilter} AND is_bot = false`;
+      const botFilter = `${dayFilter} AND is_bot = true`;
       const params = dateStr ? [dateStr] : [new Date().toISOString().slice(0, 10)];
 
       const summaryQ = await sharedPool.query(
-        `SELECT COUNT(*)::int AS total_visits, COUNT(DISTINCT ip)::int AS unique_visitors FROM site_visits WHERE ${dayFilter}`,
+        `SELECT COUNT(*)::int AS total_visits, COUNT(DISTINCT ip)::int AS unique_visitors FROM site_visits WHERE ${realFilter}`,
         params
       );
       const bySourceQ = await sharedPool.query(
-        `SELECT source, COUNT(*)::int AS visits, COUNT(DISTINCT ip)::int AS uniques FROM site_visits WHERE ${dayFilter} GROUP BY source ORDER BY visits DESC`,
+        `SELECT source, COUNT(*)::int AS visits, COUNT(DISTINCT ip)::int AS uniques FROM site_visits WHERE ${realFilter} GROUP BY source ORDER BY visits DESC`,
         params
       );
       const byCityQ = await sharedPool.query(
-        `SELECT COALESCE(NULLIF(city, ''), 'Bilinmiyor') AS city, region, COUNT(*)::int AS visits, COUNT(DISTINCT ip)::int AS uniques FROM site_visits WHERE ${dayFilter} GROUP BY COALESCE(NULLIF(city, ''), 'Bilinmiyor'), region ORDER BY visits DESC LIMIT 50`,
+        `SELECT COALESCE(NULLIF(city, ''), 'Bilinmiyor') AS city, region, COUNT(*)::int AS visits, COUNT(DISTINCT ip)::int AS uniques FROM site_visits WHERE ${realFilter} GROUP BY COALESCE(NULLIF(city, ''), 'Bilinmiyor'), region ORDER BY visits DESC LIMIT 50`,
         params
       );
       const recentQ = await sharedPool.query(
-        `SELECT id, ip, source, city, region, country, path, referrer, created_at FROM site_visits WHERE ${dayFilter} ORDER BY created_at DESC LIMIT 200`,
+        `SELECT id, ip, source, city, region, country, isp, path, referrer, created_at FROM site_visits WHERE ${realFilter} ORDER BY created_at DESC LIMIT 200`,
         params
       );
       const hourlyQ = await sharedPool.query(
-        `SELECT EXTRACT(HOUR FROM (created_at AT TIME ZONE 'Europe/Istanbul'))::int AS hour, COUNT(*)::int AS visits FROM site_visits WHERE ${dayFilter} GROUP BY hour ORDER BY hour`,
+        `SELECT EXTRACT(HOUR FROM (created_at AT TIME ZONE 'Europe/Istanbul'))::int AS hour, COUNT(*)::int AS visits FROM site_visits WHERE ${realFilter} GROUP BY hour ORDER BY hour`,
+        params
+      );
+      const botSummaryQ = await sharedPool.query(
+        `SELECT COUNT(*)::int AS total_visits, COUNT(DISTINCT ip)::int AS unique_visitors FROM site_visits WHERE ${botFilter}`,
+        params
+      );
+      const botByNameQ = await sharedPool.query(
+        `SELECT COALESCE(NULLIF(isp, ''), source) AS name, COUNT(*)::int AS visits, COUNT(DISTINCT ip)::int AS uniques FROM site_visits WHERE ${botFilter} GROUP BY COALESCE(NULLIF(isp, ''), source) ORDER BY visits DESC LIMIT 50`,
+        params
+      );
+      const botRecentQ = await sharedPool.query(
+        `SELECT id, ip, source, isp, city, country, path, created_at FROM site_visits WHERE ${botFilter} ORDER BY created_at DESC LIMIT 100`,
         params
       );
 
@@ -5734,11 +5779,18 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           uniqueVisitors: summaryQ.rows[0]?.unique_visitors || 0,
           topSource: bySourceQ.rows[0]?.source || "-",
           topCity: byCityQ.rows[0]?.city || "-",
+          botVisits: botSummaryQ.rows[0]?.total_visits || 0,
         },
         bySource: bySourceQ.rows,
         byCity: byCityQ.rows,
         hourly: hourlyQ.rows,
         recent: recentQ.rows,
+        bots: {
+          total: botSummaryQ.rows[0]?.total_visits || 0,
+          uniques: botSummaryQ.rows[0]?.unique_visitors || 0,
+          byName: botByNameQ.rows,
+          recent: botRecentQ.rows,
+        },
       });
     } catch (e) {
       console.error("admin/visitors error:", e);

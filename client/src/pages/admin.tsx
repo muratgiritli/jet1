@@ -7696,8 +7696,11 @@ function VisitorsSection() {
   const bySource: any[] = data?.bySource || [];
   const byCity: any[] = data?.byCity || [];
   const recent: any[] = data?.recent || [];
+  const bots = data?.bots || { total: 0, uniques: 0, byName: [], recent: [] };
+  const botByName: any[] = bots.byName || [];
   const maxSource = Math.max(1, ...bySource.map(s => s.visits || 0));
   const maxCity = Math.max(1, ...byCity.map(c => c.visits || 0));
+  const maxBot = Math.max(1, ...botByName.map((b: any) => b.visits || 0));
 
   const sourceColor: Record<string, string> = {
     Google: "bg-blue-500", YouTube: "bg-red-500", Instagram: "bg-pink-500",
@@ -7731,9 +7734,9 @@ function VisitorsSection() {
         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-purple-600" /></div>
       ) : (
         <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 sm:gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-2 sm:gap-3">
             <div className="rounded-xl border bg-white p-3" data-testid="card-visit-total">
-              <p className="text-xs text-gray-500">Toplam Ziyaret</p>
+              <p className="text-xs text-gray-500">Gerçek Ziyaret</p>
               <p className="text-xl font-bold text-purple-700">{summary?.totalVisits ?? 0}</p>
             </div>
             <div className="rounded-xl border bg-white p-3" data-testid="card-visit-unique">
@@ -7748,14 +7751,20 @@ function VisitorsSection() {
               <p className="text-xs text-gray-500">En Çok Şehir</p>
               <p className="text-xl font-bold text-amber-600 truncate">{summary?.topCity ?? "-"}</p>
             </div>
+            <div className="rounded-xl border bg-white p-3" data-testid="card-visit-bot">
+              <p className="text-xs text-gray-500">Bot / Otomatik</p>
+              <p className="text-xl font-bold text-gray-500">{summary?.botVisits ?? 0}</p>
+            </div>
           </div>
 
-          {summary?.totalVisits === 0 ? (
+          {(summary?.totalVisits ?? 0) === 0 && (bots.total ?? 0) === 0 ? (
             <div className="text-center py-10 text-sm text-gray-500" data-testid="text-visitors-empty">
               Bu tarihte ziyaretçi kaydı yok.
             </div>
           ) : (
             <>
+              {(summary?.totalVisits ?? 0) > 0 && (
+              <>
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="rounded-xl border bg-white p-4">
                   <h3 className="text-sm font-bold mb-3">Nereden Geliyor (Kaynak)</h3>
@@ -7819,6 +7828,31 @@ function VisitorsSection() {
                   </table>
                 </div>
               </div>
+              </>
+              )}
+
+              {(bots.total ?? 0) > 0 && (
+                <div className="rounded-xl border bg-white p-4" data-testid="panel-bots">
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="text-sm font-bold">Bot / Otomatik Trafik</h3>
+                    <span className="text-xs text-gray-500">({bots.total} ziyaret · {bots.uniques} tekil IP)</span>
+                  </div>
+                  <p className="text-xs text-gray-500 mb-3">Google, Facebook gibi reklam/önizleme botları ve veri merkezi (bulut) IP'leri. Gerçek ziyaretçi sayılmaz, üstteki istatistiklere dahil değildir.</p>
+                  <div className="space-y-2">
+                    {botByName.map((b: any, i: number) => (
+                      <div key={`${b.name}-${i}`} data-testid={`row-bot-${i}`}>
+                        <div className="flex justify-between text-xs mb-0.5">
+                          <span className="font-medium">{b.name || "Bilinmiyor"}</span>
+                          <span className="text-gray-500">{b.visits} ziyaret · {b.uniques} tekil</span>
+                        </div>
+                        <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                          <div className="h-full rounded-full bg-gray-400" style={{ width: `${(b.visits / maxBot) * 100}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </>
           )}
         </>

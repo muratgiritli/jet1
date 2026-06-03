@@ -520,7 +520,9 @@ export const siteVisits = pgTable("site_visits", {
   city: text("city"),
   region: text("region"),
   country: text("country"),
+  isp: text("isp"),
   userAgent: text("user_agent"),
+  isBot: boolean("is_bot").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 }, (t) => ({
   createdIdx: index("idx_site_visits_created").on(t.createdAt),
@@ -533,6 +535,8 @@ export const ipGeoCache = pgTable("ip_geo_cache", {
   city: text("city"),
   region: text("region"),
   country: text("country"),
+  isp: text("isp"),
+  isHosting: boolean("is_hosting"),
   resolvedAt: timestamp("resolved_at").notNull().defaultNow(),
 });
 export type IpGeoCache = typeof ipGeoCache.$inferSelect;

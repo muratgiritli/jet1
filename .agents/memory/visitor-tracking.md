@@ -1,11 +1,44 @@
 ---
-name: Visitor tracking geo + timezone
-description: Durable constraints for the admin visitor-tracking feature (IP geo provider, day-bucketing).
+name: Visitor tracking geo + bot classification
+description: How the admin visitor analytics derives real client IP, geolocates it, and separates real visitors from datacenter/crawler bots.
 ---
 
-- **ip-api.com is HTTP-only on the free tier** (HTTPS requires a paid key). The visitor geo lookup intentionally calls `http://ip-api.com`. Do not "fix" this to https without a paid key — it will just fail. Free tier ~45 req/min, so results are cached per-IP in `ip_geo_cache`.
-  **Why:** architect flagged the http transport; it is a known provider limitation, not a bug.
+# Visitor tracking: geo + bot classification
 
-- **Client IP must come from `req.ip`, never raw `x-forwarded-for`.** `trust proxy` is set in `server/index.ts`, so `req.ip` is the resolved, non-spoofable client IP. Parsing the raw XFF header is spoofable and pollutes stats/geo cache.
+## Client IP behind Replit/GCP
+- The deployed app sits behind multiple GCP proxy hops. `trust proxy=1` + `req.ip`
+  yields a *datacenter* hop, so geo resolved to Google datacenters
+  (Mountain View / Council Bluffs / Brussels; IPs all `34.*`/`35.*`).
+- **Fix:** take the **leftmost public IP** from `X-Forwarded-For` (skip private/CGNAT
+  ranges via an isPrivateIp check). That is the real client.
+- **Why:** GCP *appends* its hops on the right; the original client is leftmost.
+- Tradeoff: raw XFF is spoofable, so analytics can be poisoned by a crafted header.
+  Accepted for an internal analytics feature; not a security boundary.
 
-- **Daily filtering uses a sargable UTC range, not a function on the column.** Convert the Istanbul-local day to UTC instants: `created_at >= ($1::date::timestamp AT TIME ZONE 'Europe/Istanbul') AND created_at < (($1::date + 1)::timestamp AT TIME ZONE 'Europe/Istanbul')`. Wrapping `created_at` in `AT TIME ZONE ...::date = ...` disables `idx_site_visits_created`.
+## Geo + datacenter detection
+- ip-api.com free tier is **http-only** (don't force https) and rate-limited.
+- Request `isp,org,as,hosting,proxy` fields; cache them in `ip_geo_cache`
+  (cols `isp`, `is_hosting`).
+- A visit is a bot if `UA_BOT_RE.test(ua) || geo.hosting`, where hosting =
+  `d.hosting || d.proxy || CLOUD_ORG_RE.test(org)`.
+
+## Real-vs-bot separation (don't drop bots)
+- `site_visits` has `is_bot` + `isp`. track/visit records *everything*; it no longer
+  discards bot-UA traffic.
+- admin/visitors returns real stats (`is_bot=false`) AND a separate `bots` block
+  (`{total,uniques,byName,recent}`) grouped by ISP. Frontend renders a distinct
+  "Bot / Otomatik Trafik" panel.
+
+## Bot UA regex must stay narrow
+- **Do NOT** include broad tokens like `telegram`, `fetch`, `monitor`, `preview` in
+  `UA_BOT_RE`: real users in Telegram/Facebook in-app browsers contain those strings
+  and would be wrongly excluded from real stats. Keep only genuine crawler
+  signatures (bot/crawl/spider/googlebot/facebookexternalhit/headless/curl/etc.) and
+  lean on the `hosting` signal for the rest.
+
+## Misc
+- Legacy GCP rows are backfilled `is_bot=true WHERE ip LIKE '34.%' OR '35.%'` at
+  startup (idempotent; those ranges are pure cloud, no TR residential traffic).
+- Daily filter must be a sargable UTC `created_at` range.
+- queryClient default fetcher joins queryKey with "/", so use a single-element key
+  like [`/api/admin/visitors?date=${date}`].
