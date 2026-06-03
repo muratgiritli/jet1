@@ -235,7 +235,7 @@ export async function registerRoutes(
       CREATE TABLE IF NOT EXISTS tosla_payment_tokens (
         token VARCHAR(256) PRIMARY KEY,
         order_id INTEGER NOT NULL,
-        tosla_order_id VARCHAR(64),
+        tosla_order_id TEXT,
         transaction_id VARCHAR(64),
         amount NUMERIC(10,2),
         status TEXT NOT NULL DEFAULT 'pending',
@@ -244,6 +244,9 @@ export async function registerRoutes(
         updated_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `);
+    // Widen tosla_order_id to TEXT: prod held values longer than the original
+    // VARCHAR(64), which broke the publish-time schema migration. Idempotent.
+    await sharedPool.query(`ALTER TABLE tosla_payment_tokens ALTER COLUMN tosla_order_id TYPE TEXT;`);
     await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_tosla_token_order ON tosla_payment_tokens (order_id);`);
     await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_tosla_token_tosla_order ON tosla_payment_tokens (tosla_order_id);`);
   } catch (e) {
