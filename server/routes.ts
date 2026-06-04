@@ -697,6 +697,11 @@ export async function registerRoutes(
         { url: "/atakum-guvenilir-petshop", priority: "0.7", changefreq: "weekly" },
         { url: "/samsun-petshop-yorumlari", priority: "0.6", changefreq: "monthly" },
         { url: "/atakum-uygun-fiyatli-mama", priority: "0.7", changefreq: "weekly" },
+        { url: "/en-yakin-petshop", priority: "0.85", changefreq: "weekly" },
+        { url: "/en-yakin-petshoplar", priority: "0.8", changefreq: "weekly" },
+        { url: "/kapida-odeme-petshop", priority: "0.85", changefreq: "weekly" },
+        { url: "/petshop-kapida-odeme", priority: "0.85", changefreq: "weekly" },
+        { url: "/getir-petshop", priority: "0.8", changefreq: "weekly" },
       ];
       const blogSlugs = [
         { url: "/blog", priority: "0.8", changefreq: "weekly" },
