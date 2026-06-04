@@ -123,6 +123,7 @@ function Router() {
     <Suspense fallback={<PageLoader />}>
       <Switch>
         <Route path="/" component={Landing} />
+        <Route path="/petshop" component={Landing} />
         <Route path="/kategori" component={CategoriesOverview} />
         <Route path="/acik-mama/:animal" component={AcikMamaPage} />
         <Route path="/veteriner/:subcategory" component={VeterinerSubPage} />
