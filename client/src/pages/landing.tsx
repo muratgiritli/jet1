@@ -1093,11 +1093,26 @@ function WelcomeBonusPopup() {
   );
 }
 
-export default function Landing() {
+interface LandingSeoOverride {
+  title: string;
+  description: string;
+  keywords?: string;
+  canonical?: string;
+}
+
+export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverride }) {
   const { isLoggedIn } = useCustomer();
   const isMobile = useIsMobile();
 
-  const seoNode = (
+  const seoNode = seoOverride ? (
+    <SEO
+      title={seoOverride.title}
+      description={seoOverride.description}
+      keywords={seoOverride.keywords}
+      canonical={seoOverride.canonical || `${SITE_DOMAIN}/`}
+      jsonLd={[LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD]}
+    />
+  ) : (
     <SEO
       title="1 Saat içinde Kapında"
       description="Atakum, Samsun, İlkadım, Canik, Tekkeköy'e aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu, ödül maması kapıda ödeme. JETGO Pet Shop Samsun: 09:00-21:00 hizmet, +90 850 840 39 59. Mahalleye en yakın petshop."

@@ -12,6 +12,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SocialProofToast from "@/components/SocialProofToast";
 const Landing = lazy(() => import("@/pages/landing"));
+const AdLanding = lazy(() => import("@/pages/ad-landing"));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; errorMsg: string }> {
   state = { hasError: false, errorMsg: "" };
@@ -122,8 +123,13 @@ function Router() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Switch>
-        <Route path="/" component={Landing} />
-        <Route path="/petshop" component={Landing} />
+        <Route path="/">{() => <Landing />}</Route>
+        <Route path="/petshop">{() => <Landing />}</Route>
+        <Route path="/en-yakin-petshop" component={AdLanding} />
+        <Route path="/en-yakin-petshoplar" component={AdLanding} />
+        <Route path="/kapida-odeme-petshop" component={AdLanding} />
+        <Route path="/petshop-kapida-odeme" component={AdLanding} />
+        <Route path="/getir-petshop" component={AdLanding} />
         <Route path="/kategori" component={CategoriesOverview} />
         <Route path="/acik-mama/:animal" component={AcikMamaPage} />
         <Route path="/veteriner/:subcategory" component={VeterinerSubPage} />
@@ -176,13 +182,24 @@ function Router() {
   );
 }
 
+const LANDING_LIKE_ROUTES = new Set([
+  "/",
+  "/petshop",
+  "/en-yakin-petshop",
+  "/en-yakin-petshoplar",
+  "/kapida-odeme-petshop",
+  "/petshop-kapida-odeme",
+  "/getir-petshop",
+]);
+
 function AppShell() {
   const [location] = useLocation();
   const isAdmin = location.startsWith("/admin");
   const isDemo = location === "/demo" || location.startsWith("/demo-kampanya") || location === "/demo1" || location === "/demo2" || location === "/demo-anasayfa";
+  const isLandingLike = LANDING_LIKE_ROUTES.has(location);
 
   useEffect(() => {
-    if (location === "/") {
+    if (isLandingLike) {
       const t = setTimeout(() => {
         importCategory();
         importBrands();
@@ -190,7 +207,7 @@ function AppShell() {
       }, 2000);
       return () => clearTimeout(t);
     }
-  }, [location]);
+  }, [location, isLandingLike]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
@@ -199,12 +216,12 @@ function AppShell() {
   return (
     <>
       {!isAdmin && !isDemo && (
-        <div className={location === "/" ? "md:hidden" : ""}>
+        <div className={isLandingLike ? "md:hidden" : ""}>
           <Header />
         </div>
       )}
       <ErrorBoundary><Router /></ErrorBoundary>
-      {!isAdmin && !isDemo && location === "/" && (
+      {!isAdmin && !isDemo && isLandingLike && (
         <div className="md:hidden"><Footer /></div>
       )}
       {!isAdmin && !isDemo && <FloatingCartBar />}
