@@ -92,7 +92,7 @@ function LongDescriptionAccordions({ html }: { html: string }) {
       const m = part.match(/^<h3[^>]*>([\s\S]*?)<\/h3>$/i);
       if (m) {
         if (pending !== null) result.push({ title: pending, body: "" });
-        pending = m[1].replace(/<[^>]+>/g, "").trim();
+        pending = decodeEntities(m[1].replace(/<[^>]+>/g, "")).replace(/\s+/g, " ").trim();
       } else {
         if (pending !== null) {
           result.push({ title: pending, body: part });
