@@ -3734,7 +3734,14 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   app.get("/api/admin/orders", requireAdmin, async (_req, res) => {
-    const allOrders = await storage.getAllOrders();
+    const rawOrders = await storage.getAllOrders();
+    // Online ödeme siparişleri ödeme tamamlanmadan önce "pending"/"awaiting" olarak
+    // oluşturulur (iyzico/Tosla sayfası açıkken). Ödeme alınmadığı için bunları admin
+    // sipariş listesinde gösterme — bildirim sorgularıyla aynı davranış.
+    const allOrders = rawOrders.filter(o => {
+      const ps = (o as any).paymentStatus;
+      return ps !== "pending" && ps !== "awaiting";
+    });
     const campaignRows = await sharedPool.query("SELECT product_id FROM campaign_items WHERE is_active = true");
     const campaignProductIds = new Set<number>(campaignRows.rows.map((r: any) => r.product_id));
     const productIds = new Set<number>();

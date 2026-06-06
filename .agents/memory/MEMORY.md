@@ -1,1 +1,2 @@
 - [Multi-domain brandify pattern](multi-domain-branding.md) — one codebase, many branded domains; SEO.tsx auto-brandifies all meta/jsonLd, only visible body text needs manual brandify(), preserve shared email/social in JSON-LD.
+- [Order payment_status / visible-order rule](order-payment-status.md) — online orders are created 'pending' before payment (stock decremented early); only show/count orders where payment_status NOT IN (pending,awaiting).
