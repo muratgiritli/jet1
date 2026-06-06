@@ -3,6 +3,7 @@ import { ArrowLeft, User, LogIn, UserPlus } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
+import { CURRENT_STORE } from "@/lib/store";
 
 const NAV_ITEMS = [
   { name: "Kedi", href: "/kategori/kedi" },
@@ -21,7 +22,7 @@ export default function Header() {
 
   return (
     <>
-      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: "#6B3480" }}>
+      <header className="sticky top-0 z-[9999]" style={{ backgroundColor: CURRENT_STORE.theme.topBar }}>
         <div className="max-w-6xl mx-auto px-4 py-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             {!isHome && (
@@ -68,7 +69,8 @@ export default function Header() {
                 </Link>
                 <Link href="/giris?tab=register">
                   <button
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-[#6B3480] text-xs md:text-sm font-semibold hover:bg-white/90 transition-colors"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-xs md:text-sm font-semibold hover:bg-white/90 transition-colors"
+                    style={{ color: CURRENT_STORE.theme.topBar }}
                     data-testid="btn-header-register"
                   >
                     <UserPlus className="w-3.5 h-3.5" />
@@ -82,7 +84,7 @@ export default function Header() {
         </div>
       </header>
 
-      <nav className="sticky top-[52px] z-[9998]" style={{ backgroundColor: "#7c4dff" }}>
+      <nav className="sticky top-[52px] z-[9998]" style={{ backgroundColor: CURRENT_STORE.theme.navBar }}>
         <div className="max-w-6xl mx-auto px-3 md:px-4">
           <ul className="flex items-center justify-start gap-0.5 md:gap-2 py-1 md:py-1.5 flex-nowrap whitespace-nowrap" data-testid="nav-categories">
             {NAV_ITEMS.map((item) => {

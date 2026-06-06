@@ -38,7 +38,7 @@ export function serveStatic(app: Express) {
   app.use("/{*path}", async (req, res, next) => {
     try {
       const template = getTemplate();
-      const html = await injectAllMeta(template, req.originalUrl);
+      const html = await injectAllMeta(template, req.originalUrl, req.hostname);
       res.setHeader("Content-Type", "text/html; charset=utf-8");
       res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
       res.status(200).end(html);

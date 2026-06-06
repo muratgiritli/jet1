@@ -1,6 +1,1 @@
-- [Brand SEO landing pages](brand-seo-pages.md) — unique per-brand pages (not doorway); brand_slug varies per animal/subcat; brand pages omit WhatsApp.
-- [Scraper import pools](scraper-import-pools.md) — concurrent scrape imports need a per-item Promise.race watchdog; fetch-level AbortSignal alone still stalls.
-- [Dev/prod DB split](dev-prod-db-split.md) — deployed app uses a separate, diverged Postgres; workspace scripts only touch dev. Publish ships code+schema, not data. Write to prod only via the deployed app.
-- [Stock movements integrity](stock-movements-integrity.md) — admin stock report reads only stock_movements; every stock change needs a paired row w/ order_id, DB-RETURNING new_stock, and deductedQty-based restore.
-- [Visitor tracking geo](visitor-tracking.md) — behind GCP use leftmost-public XFF (not req.ip) for real client; flag datacenter/crawler as bot & show separately; keep bot UA regex narrow.
-- [Payment & bonus security](payment-bonus-security.md) — coupon-ownership now enforced in /api/orders; OPEN: Tosla hash not enforced (payment bypass), coupon/points races, points on unpaid orders, welcome-bonus farming via delete+re-register.
+- [Multi-domain store registry](multi-domain-stores.md) — one app serves many branded domains via shared/stores.ts; each domain MUST self-canonicalize or it won't rank.

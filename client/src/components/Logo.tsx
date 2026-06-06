@@ -1,4 +1,5 @@
 import { Link } from "wouter";
+import { CURRENT_STORE } from "@/lib/store";
 
 interface LogoProps {
   className?: string;
@@ -9,8 +10,8 @@ interface LogoProps {
 export default function Logo({ className = "h-8", linkTo = "/", testId = "img-brand-logo" }: LogoProps) {
   const logo = (
     <img
-      src="/logo-jetgo.webp"
-      alt="JETGO Pet Shop"
+      src={CURRENT_STORE.logo}
+      alt={CURRENT_STORE.name}
       className={`object-contain select-none cursor-pointer ${className}`}
       style={{ maxWidth: "140px" }}
       data-testid={testId}

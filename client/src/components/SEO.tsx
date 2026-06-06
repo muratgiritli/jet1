@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { CURRENT_STORE } from "@/lib/store";
 
 interface SEOProps {
   title: string;
@@ -11,9 +12,9 @@ interface SEOProps {
   keywords?: string;
 }
 
-export const SITE_DOMAIN = "https://www.jetgomarket.com";
-export const SITE_NAME = "JETGO Pet Shop Samsun";
-export const DEFAULT_OG_IMAGE = `${SITE_DOMAIN}/og-image.webp`;
+export const SITE_DOMAIN = CURRENT_STORE.domain;
+export const SITE_NAME = CURRENT_STORE.name;
+export const DEFAULT_OG_IMAGE = `${SITE_DOMAIN}${CURRENT_STORE.seo.ogImage}`;
 
 export default function SEO({ title, description, canonical, ogImage, ogType, jsonLd, noindex, keywords }: SEOProps) {
   useEffect(() => {
@@ -71,7 +72,7 @@ export default function SEO({ title, description, canonical, ogImage, ogType, js
     }
 
     return () => {
-      document.title = "JETGO Pet Shop Samsun - Kedi Köpek Maması | Online Sipariş & Kapıda Ödeme";
+      document.title = CURRENT_STORE.seo.title;
       if (canonicalEl) canonicalEl.remove();
       if (ldScript) ldScript.remove();
     };
@@ -88,13 +89,13 @@ export const LOCAL_BUSINESS_JSONLD = {
   "@context": "https://schema.org",
   "@type": ["PetStore", "LocalBusiness", "Store"],
   "@id": `${SITE_DOMAIN}/#petstore`,
-  "name": "JETGO Pet Shop Samsun",
-  "alternateName": ["JETGO Samsun Pet Shop", "JetGo Pet", "JETGO Atakum Pet Shop", "JETGO"],
+  "name": SITE_NAME,
+  "alternateName": CURRENT_STORE.alternateNames,
   "url": SITE_DOMAIN,
-  "logo": `${SITE_DOMAIN}/favicon.webp`,
-  "image": [`${SITE_DOMAIN}/og-image.webp`, `${SITE_DOMAIN}/favicon.webp`],
-  "telephone": "+908508403959",
-  "email": "info@sizpa.com",
+  "logo": `${SITE_DOMAIN}${CURRENT_STORE.logo}`,
+  "image": [`${SITE_DOMAIN}${CURRENT_STORE.seo.ogImage}`, `${SITE_DOMAIN}${CURRENT_STORE.logo}`],
+  "telephone": CURRENT_STORE.phone,
+  "email": CURRENT_STORE.email,
   "address": {
     "@type": "PostalAddress",
     "streetAddress": "Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A",
@@ -132,14 +133,14 @@ export const LOCAL_BUSINESS_JSONLD = {
   },
   "contactPoint": [{
     "@type": "ContactPoint",
-    "telephone": "+908508403959",
+    "telephone": CURRENT_STORE.phone,
     "contactType": "customer service",
     "areaServed": "TR",
     "availableLanguage": ["Turkish", "tr-TR"],
     "contactOption": ["TollFree", "HearingImpairedSupported"],
   }],
-  "description": "Samsun'un en hızlı pet shop'u JETGO. Kedi maması, köpek maması, kedi kumu, ödül maması ve evcil hayvan ürünlerinde Atakum, İlkadım, Canik içi aynı gün teslimat ve kapıda ödeme imkanı.",
-  "slogan": "Samsun'un Hızlı Pet Shop'u — Aynı Gün Teslimat",
+  "description": CURRENT_STORE.businessDescription,
+  "slogan": CURRENT_STORE.slogan,
   "foundingDate": "2024",
   "founder": { "@type": "Organization", "name": "Sizpa İnternet Tic. Ltd. Şti." },
   "hasOfferCatalog": {
@@ -168,10 +169,7 @@ export const LOCAL_BUSINESS_JSONLD = {
     { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Kapıda Ödeme" }, "areaServed": "Samsun" },
     { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Para Puan Kazanma (5%)" } },
   ],
-  "sameAs": [
-    "https://www.instagram.com/jetgomarket.com",
-    "https://www.facebook.com/jetgomarket.com",
-  ],
+  "sameAs": CURRENT_STORE.social,
 };
 
 export const WEBSITE_JSONLD = {
@@ -219,7 +217,7 @@ export const PRODUCT_JSONLD = (product: {
   "sku": product.sku || "",
   "brand": {
     "@type": "Brand",
-    "name": "JETGO Pet Shop",
+    "name": SITE_NAME,
   },
   "offers": {
     "@type": "Offer",
@@ -231,7 +229,7 @@ export const PRODUCT_JSONLD = (product: {
     "availability": product.inStock ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
     "seller": {
       "@type": "Organization",
-      "name": "JETGO Pet Shop Samsun",
+      "name": SITE_NAME,
     },
     "shippingDetails": {
       "@type": "OfferShippingDetails",

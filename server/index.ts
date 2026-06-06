@@ -3,6 +3,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import path from "path";
+import { getStoreByExactHost, canonicalHost } from "@shared/stores";
 
 process.on("uncaughtException", (err) => {
   console.error("[uncaughtException - keeping process alive]", err?.message, err?.stack);
@@ -31,12 +32,18 @@ declare module "http" {
 
 app.set("trust proxy", 1);
 
-// Canonical host: 301 redirect apex (non-www) -> www so Google consolidates
-// all signals onto one hostname. Only affects the production domain; dev hosts
-// (replit.dev / replit.app / localhost) are left untouched.
+// Canonical host: 301 redirect each configured store's non-canonical hostname
+// (e.g. apex) to its canonical domain so Google consolidates signals per site.
+// Only configured production hostnames are touched; dev hosts (replit.dev /
+// replit.app / localhost) and unknown hosts pass through untouched.
 app.use((req, res, next) => {
-  if (req.hostname.toLowerCase() === "jetgomarket.com") {
-    return res.redirect(301, `https://www.jetgomarket.com${req.originalUrl}`);
+  const reqHost = req.hostname.toLowerCase();
+  const store = getStoreByExactHost(reqHost);
+  if (store) {
+    const target = canonicalHost(store);
+    if (target && reqHost !== target) {
+      return res.redirect(301, `${store.domain}${req.originalUrl}`);
+    }
   }
   next();
 });

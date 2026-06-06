@@ -50,7 +50,7 @@ export async function setupVite(server: Server, app: Express) {
         `src="/src/main.tsx?v=${nanoid()}"`,
       );
       let page = await vite.transformIndexHtml(url, template);
-      page = await injectAllMeta(page, url);
+      page = await injectAllMeta(page, url, req.hostname);
       res.status(200).set({ "Content-Type": "text/html", "Cache-Control": "no-cache, no-store, must-revalidate" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
