@@ -119,7 +119,7 @@ function AdminStoreProvider({ children }: { children: React.ReactNode }) {
 function AdminStoreSelector() {
   const { store, setStore } = useAdminStore();
   if (STORES.length <= 1) return null;
-  const opts = [{ id: "all", name: "Tüm Siteler" }, ...STORES.map(s => ({ id: s.id, name: s.name }))];
+  const opts = [{ id: "all", name: "Tümü (ortak)" }, ...STORES.map(s => ({ id: s.id, name: s.name }))];
   return (
     <div className="flex items-center gap-1.5 flex-wrap" data-testid="admin-store-selector">
       {opts.map(o => (
@@ -1789,6 +1789,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     stock: number;
     skt: string | null;
     product_active?: boolean;
+    store?: string;
   }
 
   const { data: allCampaignItems = [] } = useQuery<CampaignItem[]>({
@@ -2230,7 +2231,9 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold truncate" data-testid={`text-campaign-item-name-${mainItem.id}`}>{mainItem.name}</p>
+                          <p className="text-sm font-semibold truncate" data-testid={`text-campaign-item-name-${mainItem.id}`}>{mainItem.name}
+                            {STORES.length > 1 && <span className="ml-1 text-[10px] bg-muted px-1.5 py-0.5 rounded align-middle" data-testid={`badge-campaign-store-${mainItem.id}`}>{(mainItem.store ?? "all") === "all" ? "Tümü (ortak)" : (STORES.find(s => s.id === mainItem.store)?.name || mainItem.store)}</span>}
+                          </p>
                           <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <span className="text-xs text-gray-500">Normal: {mainItem.price} TL</span>
                             <div className="flex items-center gap-1">
@@ -3289,6 +3292,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                     <MapPin className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600 shrink-0" />
                                     <span className="font-medium text-xs sm:text-sm truncate">{nh.name}</span>
                                     {nh.distance && <Badge variant="outline" className="text-[10px] shrink-0 hidden sm:inline-flex">{nh.distance} km</Badge>}
+                                    {STORES.length > 1 && <Badge variant="outline" className="text-[10px] shrink-0" data-testid={`badge-nh-store-${nh.id}`}>{(nh.store ?? "all") === "all" ? "Tümü (ortak)" : (STORES.find(s => s.id === nh.store)?.name || nh.store)}</Badge>}
                                     {!nh.isActive && <Badge variant="secondary" className="text-[10px]">Pasif</Badge>}
                                   </div>
                                   <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
@@ -7728,7 +7732,7 @@ function BannersListSection() {
               {b.imageData && <img src={b.imageData} alt={b.title} className="w-16 h-10 object-cover rounded" />}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{b.title} <span className="text-xs text-muted-foreground">#{b.sortOrder}</span>
-                  {STORES.length > 1 && <span className="ml-1 text-[10px] bg-muted px-1.5 py-0.5 rounded">{(b.store ?? "all") === "all" ? "Tüm Siteler" : (STORES.find(s => s.id === b.store)?.name || b.store)}</span>}
+                  {STORES.length > 1 && <span className="ml-1 text-[10px] bg-muted px-1.5 py-0.5 rounded">{(b.store ?? "all") === "all" ? "Tümü (ortak)" : (STORES.find(s => s.id === b.store)?.name || b.store)}</span>}
                 </p>
                 <p className="text-[10px] text-muted-foreground">
                   {positionLabel(b.position)}
@@ -8439,7 +8443,7 @@ function CouponsSection() {
                   </Badge>
                   {STORES.length > 1 && (
                     <Badge variant="outline" className="text-xs">
-                      {(coupon.store ?? "all") === "all" ? "Tüm Siteler" : (STORES.find(s => s.id === coupon.store)?.name || coupon.store)}
+                      {(coupon.store ?? "all") === "all" ? "Tümü (ortak)" : (STORES.find(s => s.id === coupon.store)?.name || coupon.store)}
                     </Badge>
                   )}
                 </div>
