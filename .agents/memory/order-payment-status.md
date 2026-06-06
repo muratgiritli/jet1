@@ -22,6 +22,9 @@ before any payment was taken.
 **How to apply:** any new endpoint that lists/counts orders for admin/reports should filter
 out `pending`/`awaiting` payment_status (consider centralizing this criterion).
 
-## Known unresolved risk
-Abandoned pending/awaiting online orders that never hit a success/failure callback keep their
-decremented stock reserved indefinitely (no TTL cleanup job exists). Fixing needs explicit approval.
+## Stale-pending cleanup (TTL)
+Abandoned pending/awaiting online orders (gateway page closed without paying) keep stock
+reserved. A periodic cleanup in registerRoutes cancels them: orders with payment_status
+IN ('pending','awaiting'), status <> 'iptal', older than STALE_PENDING_MINUTES (30) are
+passed to `cancelOrderAndRestoreStock` (sets failed/iptal + restores stock via stock_movements).
+Runs on startup and every 10 min. Reuses the same restore path as payment-failure callbacks.

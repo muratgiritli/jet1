@@ -2700,7 +2700,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   const cancelOrderAndRestoreStock = async (orderId: number, reason: string) => {
     try {
       const upd = await sharedPool.query(
-        "UPDATE orders SET payment_status = 'failed', status = 'iptal' WHERE id = $1 AND status <> 'iptal' RETURNING items",
+        "UPDATE orders SET payment_status = 'failed', status = 'iptal' WHERE id = $1 AND status <> 'iptal' AND payment_status IN ('pending','awaiting') RETURNING items",
         [orderId]
       );
       if (upd.rowCount === 0) return;
@@ -2717,6 +2717,38 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       console.error("[order-cancel] error:", e);
     }
   };
+
+  // Ödemesi tamamlanmayan online siparişlerin (pending/awaiting) temizliği.
+  // iyzico/Tosla sayfası açılıp ödeme yapılmadan kapatılırsa sipariş "pending"de
+  // kalır ve stoğu rezerve tutar. Belirli süre (TTL) sonra bu siparişleri iptal
+  // edip stoğu geri veriyoruz.
+  const STALE_PENDING_MINUTES = 45;
+  let stalePendingRunning = false;
+  const runStalePendingCleanup = async () => {
+    if (stalePendingRunning) return;
+    stalePendingRunning = true;
+    try {
+      const stale = await sharedPool.query(
+        `SELECT id FROM orders
+         WHERE payment_status IN ('pending','awaiting')
+           AND status <> 'iptal'
+           AND created_at < (now() - ($1 || ' minutes')::interval)`,
+        [String(STALE_PENDING_MINUTES)]
+      );
+      for (const row of stale.rows) {
+        await cancelOrderAndRestoreStock(row.id, "stale-pending-timeout");
+      }
+      if (stale.rows.length > 0) {
+        console.log(`[stale-pending-cleanup] cancelled=${stale.rows.length}`);
+      }
+    } catch (e) {
+      console.error("[stale-pending-cleanup] error:", e);
+    } finally {
+      stalePendingRunning = false;
+    }
+  };
+  setInterval(runStalePendingCleanup, 10 * 60 * 1000);
+  runStalePendingCleanup();
 
   app.post("/api/tosla/init-payment", async (req: Request, res: Response) => {
     try {
@@ -2927,7 +2959,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
       if (success) {
         await sharedPool.query(
-          "UPDATE orders SET payment_status = 'completed' WHERE id = $1",
+          "UPDATE orders SET payment_status = 'completed' WHERE id = $1 AND status <> 'iptal'",
           [tok.order_id]
         );
         try {
@@ -3108,7 +3140,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
       if (success) {
         await sharedPool.query(
-          "UPDATE orders SET payment_status = 'completed' WHERE id = $1",
+          "UPDATE orders SET payment_status = 'completed' WHERE id = $1 AND status <> 'iptal'",
           [tokenRow.order_id]
         );
         return sendOk();
@@ -3392,7 +3424,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
       if (success) {
         await sharedPool.query(
-          "UPDATE orders SET payment_status = 'completed' WHERE id = $1",
+          "UPDATE orders SET payment_status = 'completed' WHERE id = $1 AND status <> 'iptal'",
           [tokenRow.order_id]
         );
         try {
