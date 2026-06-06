@@ -59,3 +59,7 @@ integrations = ["javascript_openai_ai_integrations:2.0.0"]
 [userenv.shared]
 NETGSM_USERCODE = "8508403959"
 NETGSM_MSGHEADER = "SIZPA INT."
+
+[postMerge]
+path = "scripts/post-merge.sh"
+timeoutMs = 20000
