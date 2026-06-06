@@ -4,7 +4,7 @@ import { type Server } from "http";
 import { storage, pool as sharedPool, db } from "./storage";
 import { seedDatabase } from "./seed";
 import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders, virtualPets, petContestEntries, petContestVotes, productReviews, insertContactMessageSchema, brandCategories } from "@shared/schema";
-import { getStoreByHost, STORES, DEFAULT_STORE } from "@shared/stores";
+import { getStoreByHost, STORES } from "@shared/stores";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -214,10 +214,12 @@ export async function registerRoutes(
     const q = req.query?.store ?? req.body?.store;
     return isValidStore(q) ? String(q) : "all";
   };
-  // app_settings için store öneki. Varsayılan store ve "all" temel anahtarları
-  // kullanır (geriye dönük uyumluluk); diğer store'lar "<store>:" önekli yazar.
+  // app_settings için store öneki. Sadece "all" temel (öneksiz) anahtarları
+  // kullanır; jetgo dahil her store kendi "<store>:" önekiyle yazar. Önekli
+  // değer yoksa resolve* fonksiyonları temel ("all") değere geri düşer
+  // (geriye dönük uyumluluk: mevcut öneksiz anahtarlar her domainde görünür).
   const settingsPrefix = (store: string): string =>
-    store === "all" || store === DEFAULT_STORE.id ? "" : `${store}:`;
+    store === "all" ? "" : `${store}:`;
   // Verilen store için app_settings anahtarlarını çöz: önekli değer varsa temel
   // değeri ezer. Liste döner: { key: value }.
   async function resolveSettings(keys: string[], store: string): Promise<Record<string, string>> {
@@ -364,6 +366,22 @@ export async function registerRoutes(
     await sharedPool.query(`ALTER TABLE banners ADD COLUMN IF NOT EXISTS device TEXT NOT NULL DEFAULT 'both';`);
   } catch (e) {
     console.error("Banner device column migration error:", e);
+  }
+
+  // Çoklu domain (store) içerik kapsamı: banner/kampanya/kupon/teslimat
+  // satırlarına 'store' kolonu (varsayılan 'all' = tüm siteler). Mevcut satırlar
+  // 'all' olarak kalır (geriye dönük uyumluluk). Kupon kodu artık (store, code)
+  // bazında benzersizdir; eski global benzersiz kısıt kaldırılır.
+  try {
+    for (const t of ["banners", "campaign_items", "coupons", "delivery_neighborhoods"]) {
+      await sharedPool.query(`ALTER TABLE ${t} ADD COLUMN IF NOT EXISTS store TEXT NOT NULL DEFAULT 'all';`);
+      await sharedPool.query(`UPDATE ${t} SET store = 'all' WHERE store IS NULL OR store = '';`);
+    }
+    await sharedPool.query(`ALTER TABLE coupons DROP CONSTRAINT IF EXISTS coupons_code_unique;`);
+    await sharedPool.query(`ALTER TABLE coupons DROP CONSTRAINT IF EXISTS coupons_code_key;`);
+    await sharedPool.query(`CREATE UNIQUE INDEX IF NOT EXISTS coupons_store_code_unique ON coupons (store, upper(code));`);
+  } catch (e) {
+    console.error("Store-scoped content (store column) migration error:", e);
   }
 
   try {
@@ -6041,8 +6059,20 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (data.expiresAt) data.expiresAt = new Date(data.expiresAt);
     else data.expiresAt = null;
     data.store = isValidStore(data.store) ? data.store : "all";
-    const coupon = await storage.createCoupon(data);
-    res.status(201).json(coupon);
+    const dup = await sharedPool.query(
+      `SELECT id FROM coupons WHERE store = $1 AND upper(code) = upper($2) LIMIT 1`,
+      [data.store, data.code]
+    );
+    if (dup.rows.length > 0) {
+      return res.status(409).json({ message: "Bu kupon kodu bu mağaza için zaten mevcut" });
+    }
+    try {
+      const coupon = await storage.createCoupon(data);
+      res.status(201).json(coupon);
+    } catch (e: any) {
+      if (e?.code === "23505") return res.status(409).json({ message: "Bu kupon kodu bu mağaza için zaten mevcut" });
+      throw e;
+    }
   });
 
   app.patch("/api/admin/coupons/:id", requireAdmin, async (req, res) => {
@@ -6056,9 +6086,27 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (data.store !== undefined && !isValidStore(data.store)) delete data.store;
     if (data.expiresAt) data.expiresAt = new Date(data.expiresAt);
     else if (data.expiresAt === null) data.expiresAt = null;
-    const updated = await storage.updateCoupon(id, data);
-    if (!updated) return res.status(404).json({ message: "Kupon bulunamadı" });
-    res.json(updated);
+    if (data.code !== undefined || data.store !== undefined) {
+      const cur = await sharedPool.query(`SELECT code, store FROM coupons WHERE id = $1`, [id]);
+      if (cur.rows.length === 0) return res.status(404).json({ message: "Kupon bulunamadı" });
+      const newCode = data.code !== undefined ? String(data.code) : cur.rows[0].code;
+      const newStore = data.store !== undefined ? String(data.store) : cur.rows[0].store;
+      const dup = await sharedPool.query(
+        `SELECT id FROM coupons WHERE store = $1 AND upper(code) = upper($2) AND id <> $3 LIMIT 1`,
+        [newStore, newCode, id]
+      );
+      if (dup.rows.length > 0) {
+        return res.status(409).json({ message: "Bu kupon kodu bu mağaza için zaten mevcut" });
+      }
+    }
+    try {
+      const updated = await storage.updateCoupon(id, data);
+      if (!updated) return res.status(404).json({ message: "Kupon bulunamadı" });
+      res.json(updated);
+    } catch (e: any) {
+      if (e?.code === "23505") return res.status(409).json({ message: "Bu kupon kodu bu mağaza için zaten mevcut" });
+      throw e;
+    }
   });
 
   app.delete("/api/admin/coupons/:id", requireAdmin, async (req, res) => {

@@ -1,4 +1,4 @@
 - [Multi-domain brandify pattern](multi-domain-branding.md) — one codebase, many branded domains; SEO.tsx auto-brandifies all meta/jsonLd, only visible body text needs manual brandify(), preserve shared email/social in JSON-LD.
 - [Order payment_status / visible-order rule](order-payment-status.md) — online orders are created 'pending' before payment (stock decremented early); only show/count orders where payment_status NOT IN (pending,awaiting).
-- [Store-scoped content](store-scoped-content.md) — banners/campaigns/coupons/delivery are per-domain via `store` col + `<store>:`-prefixed app_settings; admin CREATE sends store, EDIT must not; store-prefixed GET needs custom queryFn.
+- [Store-scoped content](store-scoped-content.md) — banners/campaigns/coupons/delivery per-domain via `store` col + `<store>:`-prefixed app_settings; only "all" is base, every store (incl jetgo) prefixes; CREATE sends store, EDIT must not.
 - [Mobile homepage banner sources](landing-mobile-banners.md) — landing.tsx is the mobile home; HeroCarousel is dead code; which banners are admin-managed vs settings-driven (Sokak/Veteriner image+link in app_settings).

@@ -1,23 +1,25 @@
 ---
 name: Store-scoped content (banners/campaigns/coupons/delivery)
-description: How per-domain content scoping works across server + admin UI in the multi-domain JETGO/Atakum app.
+description: How per-domain content scoping works in the multi-domain JETGO/Atakum app, and the rules to keep it consistent.
 ---
 
 # Store-scoped content
 
-Four subsystems are domain-specific while products/stock/orders/customers stay shared:
-home banners (table `banners` + settings-based: top promo, breed, category, sokak, veteriner), campaigns, coupons, delivery neighborhoods.
+Four subsystems are per-domain while products/stock/orders/customers stay shared:
+home banners (table + settings-based: top promo, breed, category, sokak, veteriner), campaigns, coupons, delivery.
 
-## Two scoping mechanisms
-- **Table rows** (banners, campaign_items, coupons, delivery_neighborhoods): each has a `store` text column default `"all"`. Public reads filter `store IN ('all', <hostStore>)`. Admin GET returns ALL rows incl `store`; client filters by selected store.
-- **app_settings keys**: store-prefixed override keys `<store>:<key>` fall back to base `<key>`. `settingsPrefix(store)` returns `""` for `all` AND for DEFAULT_STORE (jetgo) → both write base keys (backward-compat). Only `STORE_SCOPED_SETTING_KEYS` get prefixed; everything else (payment, loyalty, pet) stays base/shared even when a store is selected. Breed/category/top banner setting routes use their own `writeStoreSettings`/`settingsPrefix` + `resolveSettingsLike`, NOT the key set.
+## Two scoping mechanisms (keep them consistent)
+- **Table rows**: a `store` text column (default `"all"`). Public reads filter `store IN ('all', <hostStore>)`.
+- **app_settings keys**: store-prefixed override keys `<store>:<key>` fall back to base `<key>`.
 
-## Server helpers (server/routes.ts, top of registerRoutes)
-`publicStoreId(req)` = getStoreByHost(req.hostname).id (public reads). `adminStoreId(req)` reads `?store=` OR `body.store`, defaults `"all"`. Public banner GETs also accept `?store=` override (via isValidStore) so admin can preview a store.
+**Rule — only `"all"` is the unprefixed/base bucket.** Every concrete store, INCLUDING the default store (jetgo), uses its own prefix. Do NOT special-case the default store to the base bucket: that makes "Tümü" and the default store indistinguishable for settings (but distinct for rows), an inconsistency that breaks true per-store overrides. Existing unprefixed keys remain valid as the shared fallback (backward compatibility).
 
-## Admin UI rule (client/src/pages/admin.tsx)
-Global `useAdminStore()` (localStorage "admin-store", default "all"). **CREATE sends `store: adminStore`; EDIT/toggle/PATCH must NOT send store** so a row keeps its existing store (editing an `all` row keeps it shared). Shared (`all`) rows are intentionally shown+editable from every store view with a "Tüm Siteler" badge — editing one affects all stores by design.
+## Admin UI rule
+A global store selector drives every section. **CREATE sends the selected store; EDIT/toggle/PATCH must NOT send store** — so editing preserves a row's existing store (editing an `all`/shared row keeps it shared). Shared (`all`) rows are intentionally shown + editable from every store view, with a badge.
 
 **Why:** prevents accidental store reassignment on edit, and keeps shared content centrally manageable.
 
-**How to apply:** any new store-scoped admin section: store-prefixed GET needs a custom `queryFn` (the default fetcher joins queryKey with "/" so it can't add `?store=`); use key tuple `[base, adminStore]` — base-key invalidation still prefix-matches it. Coupon code validation is app-level scoped to `store IN ('all', currentStore)` (no DB unique(code)).
+## Gotchas
+- Store-prefixed GETs need a custom `queryFn` — the default query fetcher joins the queryKey with "/", so it can't append `?store=`. Use key tuple `[base, store]`; base-key invalidation still prefix-matches it.
+- Coupon codes are unique per `(store, code)` (DB unique index on `(store, upper(code))`), NOT globally; lookup and create/update dup-checks must both be store-scoped or they disagree.
+- New `store` columns + the coupon index are applied via idempotent `ALTER TABLE ... ADD COLUMN IF NOT EXISTS` in the server bootstrap migrations (this app backfills prod that way; `db push` only covers dev), and the old global `unique(code)` constraint must be dropped.
