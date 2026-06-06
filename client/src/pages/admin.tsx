@@ -1796,9 +1796,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     queryKey: ["/api/admin/campaign-items"],
   });
   const campaignItems = useMemo(
-    () => adminStore === "all"
-      ? allCampaignItems
-      : allCampaignItems.filter((i: any) => { const s = i.store ?? "all"; return s === "all" || s === adminStore; }),
+    () => allCampaignItems.filter((i: any) => { const s = i.store ?? "all"; return adminStore === "all" ? s === "all" : (s === "all" || s === adminStore); }),
     [allCampaignItems, adminStore]
   );
 
@@ -1877,9 +1875,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     queryKey: ["/api/admin/delivery-neighborhoods"],
   });
   const adminNeighborhoods = useMemo(
-    () => adminStore === "all"
-      ? allAdminNeighborhoods
-      : allAdminNeighborhoods.filter((n: any) => { const s = n.store ?? "all"; return s === "all" || s === adminStore; }),
+    () => allAdminNeighborhoods.filter((n: any) => { const s = n.store ?? "all"; return adminStore === "all" ? s === "all" : (s === "all" || s === adminStore); }),
     [allAdminNeighborhoods, adminStore]
   );
 
@@ -7643,9 +7639,7 @@ function BannersListSection() {
   const { store: adminStore } = useAdminStore();
   const { data: rawBanners = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/banners"] });
   const allBanners = useMemo(
-    () => adminStore === "all"
-      ? rawBanners
-      : rawBanners.filter((b: any) => { const s = b.store ?? "all"; return s === "all" || s === adminStore; }),
+    () => rawBanners.filter((b: any) => { const s = b.store ?? "all"; return adminStore === "all" ? s === "all" : (s === "all" || s === adminStore); }),
     [rawBanners, adminStore]
   );
   const [title, setTitle] = useState("");
@@ -8264,9 +8258,7 @@ function CouponsSection() {
   const { data: allCoupons, isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/coupons"] });
   const { store: adminStore } = useAdminStore();
   const coupons = useMemo(
-    () => !allCoupons ? allCoupons : (adminStore === "all"
-      ? allCoupons
-      : allCoupons.filter((c: any) => { const s = c.store ?? "all"; return s === "all" || s === adminStore; })),
+    () => !allCoupons ? allCoupons : allCoupons.filter((c: any) => { const s = c.store ?? "all"; return adminStore === "all" ? s === "all" : (s === "all" || s === adminStore); }),
     [allCoupons, adminStore]
   );
   const { toast } = useToast();
