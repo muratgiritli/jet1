@@ -214,6 +214,37 @@ export async function registerRoutes(
     const q = req.query?.store ?? req.body?.store;
     return isValidStore(q) ? String(q) : "all";
   };
+  // Defense-in-depth: belirli bir mağaza bağlamında (storeContext) yapılan
+  // düzenleme/silme işleminin, BAŞKA bir mağazaya ait bir satırı etkilemesini
+  // engeller. Paylaşılan ("all") satırlar her zaman izinlidir (UI'da açık onay
+  // ile düzenlenir); yalnızca farklı bir spesifik mağazanın satırı engellenir.
+  // storeContext gönderilmezse veya "all" ise kısıtlama uygulanmaz.
+  const storeContextConflict = (req: any, rowStore: string | null | undefined): boolean => {
+    const raw = req.query?.storeContext ?? req.body?.storeContext;
+    if (raw === undefined || raw === null || raw === "") return false;
+    const ctx = String(raw);
+    if (ctx === "all" || !isValidStore(ctx)) return false;
+    const rs = rowStore ?? "all";
+    if (rs === "all") return false;
+    return rs !== ctx;
+  };
+  // Verilen tablodaki satırın store'unu okuyup storeContext çakışmasını denetler.
+  // Çakışma varsa 403 döner ve true (engellendi) verir; aksi halde false.
+  const blockedByStoreContext = async (req: any, res: any, table: string, id: number): Promise<boolean> => {
+    try {
+      const { rows } = await sharedPool.query(`SELECT store FROM ${table} WHERE id = $1`, [id]);
+      if (rows.length === 0) return false; // 404'ü rota kendi ele alsın
+      if (storeContextConflict(req, rows[0].store)) {
+        res.status(403).json({ message: "Bu içerik başka bir mağazaya ait; seçili mağaza bağlamında düzenlenemez." });
+        return true;
+      }
+      return false;
+    } catch {
+      // Hata durumunda güvenli tarafta kal (fail-closed): işlemi reddet.
+      res.status(500).json({ message: "Mağaza bağlamı doğrulanamadı; lütfen tekrar deneyin." });
+      return true;
+    }
+  };
   // app_settings için store öneki. Sadece "all" temel (öneksiz) anahtarları
   // kullanır; jetgo dahil her store kendi "<store>:" önekiyle yazar. Önekli
   // değer yoksa resolve* fonksiyonları temel ("all") değere geri düşer
@@ -4942,6 +4973,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.patch("/api/admin/campaign-items/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(String(req.params.id));
+      if (await blockedByStoreContext(req, res, "campaign_items", id)) return;
       const { isActive, sortOrder, itemType, campaignPrice } = req.body;
       const sets: string[] = [];
       const vals: any[] = [];
@@ -4966,6 +4998,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/admin/campaign-items/:id", requireAdmin, async (req, res) => {
     try {
+      if (await blockedByStoreContext(req, res, "campaign_items", parseInt(String(req.params.id)))) return;
       const r = await sharedPool.query(
         `SELECT product_id, item_type FROM campaign_items WHERE id = $1`,
         [req.params.id]
@@ -5118,6 +5151,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.patch("/api/admin/delivery-neighborhoods/:id", requireAdmin, async (req, res) => {
     try {
       const id = parseInt(String(req.params.id));
+      if (await blockedByStoreContext(req, res, "delivery_neighborhoods", id)) return;
       const updates: Record<string, any> = {};
       if (req.body.district !== undefined) updates.district = req.body.district.trim();
       if (req.body.name !== undefined) updates.name = req.body.name.trim();
@@ -5138,7 +5172,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/admin/delivery-neighborhoods/:id", requireAdmin, async (req, res) => {
     try {
-      await storage.deleteDeliveryNeighborhood(parseInt(String(req.params.id)));
+      const id = parseInt(String(req.params.id));
+      if (await blockedByStoreContext(req, res, "delivery_neighborhoods", id)) return;
+      await storage.deleteDeliveryNeighborhood(id);
       res.json({ ok: true });
     } catch (err) {
       res.status(500).json({ message: "Delivery neighborhood delete error" });
@@ -5490,6 +5526,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.patch("/api/admin/banners/:id", requireAdmin, upload.single("image"), async (req, res) => {
     try {
       const id = parseInt(String(req.params.id));
+      if (await blockedByStoreContext(req, res, "banners", id)) return;
       const updates: any = {};
       if (req.body.title !== undefined) updates.title = req.body.title;
       if (req.body.linkUrl !== undefined) updates.linkUrl = req.body.linkUrl;
@@ -5526,7 +5563,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/admin/banners/:id", requireAdmin, async (req, res) => {
     try {
-      await storage.deleteBanner(parseInt(String(req.params.id)));
+      const id = parseInt(String(req.params.id));
+      if (await blockedByStoreContext(req, res, "banners", id)) return;
+      await storage.deleteBanner(id);
       res.json({ ok: true });
     } catch (err) {
       res.status(500).json({ message: "Banner silme hatası" });
@@ -6083,6 +6122,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.patch("/api/admin/coupons/:id", requireAdmin, async (req, res) => {
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
+    if (await blockedByStoreContext(req, res, "coupons", id)) return;
     const allowedKeys = ["code", "discountType", "discountValue", "minOrderAmount", "maxUses", "isActive", "expiresAt", "customerId", "store"];
     const data: any = {};
     for (const key of allowedKeys) {
@@ -6116,6 +6156,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.delete("/api/admin/coupons/:id", requireAdmin, async (req, res) => {
     const id = parseInt(String(req.params.id));
+    if (await blockedByStoreContext(req, res, "coupons", id)) return;
     await storage.deleteCoupon(id);
     res.json({ message: "Silindi" });
   });

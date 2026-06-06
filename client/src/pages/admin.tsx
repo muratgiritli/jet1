@@ -139,6 +139,30 @@ function AdminStoreSelector() {
   );
 }
 
+// Paylaşılan ("Tüm Siteler" / "all") içeriği yanlışlıkla düzenlemeye karşı koruma.
+// Belirli bir mağaza seçiliyken (Tümü değil) "all" kapsamındaki bir satır
+// tüm sitelerde ortaktır; bu satırı düzenlemek/silmek her domaini etkiler.
+function isSharedRowInStoreView(rowStore: string | null | undefined, adminStore: string): boolean {
+  return adminStore !== "all" && (rowStore ?? "all") === "all";
+}
+// Paylaşılan bir satır belirli mağaza görünümünde düzenlenmek istenirse açık onay ister.
+// Onay verilirse (veya satır paylaşılan değilse) true döner.
+function confirmSharedEdit(rowStore: string | null | undefined, adminStore: string): boolean {
+  if (!isSharedRowInStoreView(rowStore, adminStore)) return true;
+  const storeName = STORES.find(s => s.id === adminStore)?.name || adminStore;
+  return confirm(
+    `⚠️ Bu içerik TÜM SİTELERDE ortaktır ("Tüm Siteler").\n\n` +
+    `Şu an "${storeName}" görünümündesiniz, ancak bu değişiklik BÜTÜN sitelerde geçerli olacak.\n\n` +
+    `Yine de devam etmek istiyor musunuz?`
+  );
+}
+// Defense-in-depth: PATCH/DELETE isteklerine seçili mağaza bağlamını ekler.
+// Sunucu, satır başka bir spesifik mağazaya aitse bu bağlamla işlemi reddeder.
+// "all" görünümünde bağlam gönderilmez (kısıtlama yok). store satırına yazılmaz.
+function storeCtxParam(adminStore: string): string {
+  return adminStore && adminStore !== "all" ? `?storeContext=${encodeURIComponent(adminStore)}` : "";
+}
+
 const TR_MONTHS_ADMIN = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 function formatAdminDeliverySlot(slot: string): string {
   const legacy: Record<string, string> = {
@@ -1789,7 +1813,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     stock: number;
     skt: string | null;
     product_active?: boolean;
-    store?: string;
+    store?: string | null;
   }
 
   const { data: allCampaignItems = [] } = useQuery<CampaignItem[]>({
@@ -1837,7 +1861,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       const body: any = {};
       if (isActive !== undefined) body.isActive = isActive;
       if (campaignPrice !== undefined) body.campaignPrice = campaignPrice;
-      await apiRequest("PATCH", `/api/admin/campaign-items/${id}`, body);
+      await apiRequest("PATCH", `/api/admin/campaign-items/${id}${storeCtxParam(adminStore)}`, body);
     },
     onSuccess: (_data, vars) => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
@@ -1853,7 +1877,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const updateCampaignItemMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: number; sortOrder?: number; itemType?: string }) => {
-      await apiRequest("PATCH", `/api/admin/campaign-items/${id}`, data);
+      await apiRequest("PATCH", `/api/admin/campaign-items/${id}${storeCtxParam(adminStore)}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
@@ -1863,7 +1887,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const removeCampaignItemMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/admin/campaign-items/${id}`);
+      await apiRequest("DELETE", `/api/admin/campaign-items/${id}${storeCtxParam(adminStore)}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
@@ -1900,7 +1924,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const updateNhMutation = useMutation({
     mutationFn: async ({ id, ...data }: { id: number; name?: string; minOrder?: number; shippingFee?: number; freeShippingLimit?: number; isActive?: boolean; sortOrder?: number }) => {
-      await apiRequest("PATCH", `/api/admin/delivery-neighborhoods/${id}`, data);
+      await apiRequest("PATCH", `/api/admin/delivery-neighborhoods/${id}${storeCtxParam(adminStore)}`, data);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/delivery-neighborhoods"] });
@@ -1916,7 +1940,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const deleteNhMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/admin/delivery-neighborhoods/${id}`);
+      await apiRequest("DELETE", `/api/admin/delivery-neighborhoods/${id}${storeCtxParam(adminStore)}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/delivery-neighborhoods"] });
@@ -2227,8 +2251,11 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           </div>
                         )}
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-semibold truncate" data-testid={`text-campaign-item-name-${mainItem.id}`}>{mainItem.name}
-                            {STORES.length > 1 && <span className="ml-1 text-[10px] bg-muted px-1.5 py-0.5 rounded align-middle" data-testid={`badge-campaign-store-${mainItem.id}`}>{(mainItem.store ?? "all") === "all" ? "Tümü (ortak)" : (STORES.find(s => s.id === mainItem.store)?.name || mainItem.store)}</span>}
+                          <p className="text-sm font-semibold truncate" data-testid={`text-campaign-item-name-${mainItem.id}`}>
+                            {mainItem.name}
+                            {STORES.length > 1 && (isSharedRowInStoreView(mainItem.store, adminStore)
+                              ? <span className="ml-1 text-[10px] border border-amber-400 bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded font-normal align-middle" data-testid={`badge-shared-campaign-item-${mainItem.id}`}>🌐 Tüm Siteler (ortak)</span>
+                              : <span className="ml-1 text-[10px] bg-muted px-1.5 py-0.5 rounded align-middle" data-testid={`badge-campaign-store-${mainItem.id}`}>{(mainItem.store ?? "all") === "all" ? "Tüm Siteler" : (STORES.find(s => s.id === mainItem.store)?.name || mainItem.store)}</span>)}
                           </p>
                           <div className="flex items-center gap-2 mt-1 flex-wrap">
                             <span className="text-xs text-gray-500">Normal: {mainItem.price} TL</span>
@@ -2244,7 +2271,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 onKeyDown={(e) => {
                                   if (e.key === "Enter") {
                                     const val = (e.target as HTMLInputElement).value;
-                                    toggleCampaignItemMutation.mutate({ id: mainItem.id, campaignPrice: val === "" ? null : val });
+                                    if (confirmSharedEdit(mainItem.store, adminStore)) toggleCampaignItemMutation.mutate({ id: mainItem.id, campaignPrice: val === "" ? null : val });
                                   }
                                 }}
                               />
@@ -2257,7 +2284,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 onClick={() => {
                                   const inp = document.querySelector<HTMLInputElement>(`[data-testid="input-campaign-price-${mainItem.id}"]`);
                                   const val = inp?.value ?? "";
-                                  toggleCampaignItemMutation.mutate({ id: mainItem.id, campaignPrice: val === "" ? null : val });
+                                  if (confirmSharedEdit(mainItem.store, adminStore)) toggleCampaignItemMutation.mutate({ id: mainItem.id, campaignPrice: val === "" ? null : val });
                                 }}
                               >
                                 Kaydet
@@ -2276,7 +2303,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                 ? "bg-green-100 text-green-700 hover:bg-green-200"
                                 : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                             }`}
-                            onClick={() => toggleCampaignItemMutation.mutate({ id: mainItem.id, isActive: !mainItem.is_active })}
+                            onClick={() => { if (confirmSharedEdit(mainItem.store, adminStore)) toggleCampaignItemMutation.mutate({ id: mainItem.id, isActive: !mainItem.is_active }); }}
                             disabled={toggleCampaignItemMutation.isPending}
                             data-testid={`btn-toggle-campaign-item-${mainItem.id}`}
                           >
@@ -2290,7 +2317,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                             type="button"
                             className="w-8 h-8 rounded-full flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                             onClick={() => {
-                              if (confirm(`"${mainItem.name}" kampanyadan silinsin mi?`)) {
+                              if (confirmSharedEdit(mainItem.store, adminStore) && confirm(`"${mainItem.name}" kampanyadan silinsin mi?`)) {
                                 removeCampaignItemMutation.mutate(mainItem.id);
                               }
                             }}
@@ -2335,7 +2362,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                         ? "bg-green-100 text-green-700 hover:bg-green-200"
                                         : "bg-gray-100 text-gray-500 hover:bg-gray-200"
                                     }`}
-                                    onClick={() => toggleCampaignItemMutation.mutate({ id: extra.id, isActive: !extra.is_active })}
+                                    onClick={() => { if (confirmSharedEdit(extra.store, adminStore)) toggleCampaignItemMutation.mutate({ id: extra.id, isActive: !extra.is_active }); }}
                                     disabled={toggleCampaignItemMutation.isPending}
                                     data-testid={`btn-toggle-campaign-item-${extra.id}`}
                                   >
@@ -2345,7 +2372,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                     type="button"
                                     className="w-7 h-7 rounded-full flex items-center justify-center text-red-400 hover:bg-red-50 hover:text-red-600 transition-colors"
                                     onClick={() => {
-                                      if (confirm(`"${extra.name}" bu ana üründen kaldırılsın mı?`)) {
+                                      if (confirmSharedEdit(extra.store, adminStore) && confirm(`"${extra.name}" bu ana üründen kaldırılsın mı?`)) {
                                         removeCampaignItemMutation.mutate(extra.id);
                                       }
                                     }}
@@ -3290,13 +3317,14 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                     {nh.distance && <Badge variant="outline" className="text-[10px] shrink-0 hidden sm:inline-flex">{nh.distance} km</Badge>}
                                     {STORES.length > 1 && <Badge variant="outline" className="text-[10px] shrink-0" data-testid={`badge-nh-store-${nh.id}`}>{(nh.store ?? "all") === "all" ? "Tümü (ortak)" : (STORES.find(s => s.id === nh.store)?.name || nh.store)}</Badge>}
                                     {!nh.isActive && <Badge variant="secondary" className="text-[10px]">Pasif</Badge>}
+                                    {isSharedRowInStoreView(nh.store, adminStore) && <Badge variant="outline" className="text-[10px] shrink-0 border-amber-400 bg-amber-50 text-amber-700" data-testid={`badge-shared-nh-${nh.id}`}>🌐 Tüm Siteler (ortak)</Badge>}
                                   </div>
                                   <div className="flex items-center gap-0.5 sm:gap-1 shrink-0">
                                     <Button
                                       variant="ghost"
                                       size="sm"
                                       className="h-7 px-1.5 sm:px-3 text-[10px] sm:text-xs"
-                                      onClick={() => updateNhMutation.mutate({ id: nh.id, isActive: !nh.isActive })}
+                                      onClick={() => { if (confirmSharedEdit(nh.store, adminStore)) updateNhMutation.mutate({ id: nh.id, isActive: !nh.isActive }); }}
                                       data-testid={`btn-toggle-nh-${nh.id}`}
                                     >
                                       {nh.isActive ? "Pasifle" : "Aktifle"}
@@ -3305,6 +3333,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                       variant="ghost"
                                       size="sm"
                                       onClick={() => {
+                                        if (!confirmSharedEdit(nh.store, adminStore)) return;
                                         setEditingNh(nh);
                                         setNhDistrict(nh.district || "Atakum");
                                         setNhName(nh.name);
@@ -3324,7 +3353,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                                       size="sm"
                                       className="text-red-500 hover:text-red-600"
                                       onClick={() => {
-                                        if (confirm(`"${nh.name}" mahallesini silmek istediğinize emin misiniz?`)) {
+                                        if (confirmSharedEdit(nh.store, adminStore) && confirm(`"${nh.name}" mahallesini silmek istediğinize emin misiniz?`)) {
                                           deleteNhMutation.mutate(nh.id);
                                         }
                                       }}
@@ -4436,6 +4465,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   return { id: ci.id, itemType: ci.item_type, campaignPrice: ci.campaign_price };
                 })()}
                 onCampaignPriceChange={(ciId, val) => {
+                  const ci = campaignItems.find(c => c.id === ciId);
+                  if (!confirmSharedEdit(ci?.store, adminStore)) return;
                   toggleCampaignItemMutation.mutate({ id: ciId, campaignPrice: val });
                 }}
               />
@@ -6811,6 +6842,7 @@ function BannerEditRow({ banner, onCancel }: { banner: any; onCancel: () => void
   const [device, setDevice] = useState(banner.device || "both");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { toast } = useToast();
+  const { store: adminStore } = useAdminStore();
   const updateMutation = useMutation({
     mutationFn: async () => {
       const formData = new FormData();
@@ -6820,7 +6852,7 @@ function BannerEditRow({ banner, onCancel }: { banner: any; onCancel: () => void
       formData.append("position", position);
       formData.append("device", device);
       if (imageFile) formData.append("image", imageFile);
-      const res = await fetch(`/api/admin/banners/${banner.id}`, { method: "PATCH", body: formData, credentials: "include" });
+      const res = await fetch(`/api/admin/banners/${banner.id}${storeCtxParam(adminStore)}`, { method: "PATCH", body: formData, credentials: "include" });
       if (!res.ok) throw new Error("Failed");
       return res.json();
     },
@@ -7675,13 +7707,13 @@ function BannersListSection() {
 
   const toggleMutation = useMutation({
     mutationFn: async ({ id, isActive }: { id: number; isActive: boolean }) => {
-      await apiRequest("PATCH", `/api/admin/banners/${id}`, { isActive });
+      await apiRequest("PATCH", `/api/admin/banners/${id}${storeCtxParam(adminStore)}`, { isActive });
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] }),
   });
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/admin/banners/${id}`); },
+    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/admin/banners/${id}${storeCtxParam(adminStore)}`); },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
       toast({ title: "Banner silindi" });
@@ -7726,7 +7758,9 @@ function BannersListSection() {
               {b.imageData && <img src={b.imageData} alt={b.title} className="w-16 h-10 object-cover rounded" />}
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium truncate">{b.title} <span className="text-xs text-muted-foreground">#{b.sortOrder}</span>
-                  {STORES.length > 1 && <span className="ml-1 text-[10px] bg-muted px-1.5 py-0.5 rounded">{(b.store ?? "all") === "all" ? "Tümü (ortak)" : (STORES.find(s => s.id === b.store)?.name || b.store)}</span>}
+                  {STORES.length > 1 && (isSharedRowInStoreView(b.store, adminStore)
+                    ? <span className="ml-1 text-[10px] border border-amber-400 bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded" data-testid={`badge-shared-banner-${b.id}`}>🌐 Tüm Siteler (ortak)</span>
+                    : <span className="ml-1 text-[10px] bg-muted px-1.5 py-0.5 rounded">{(b.store ?? "all") === "all" ? "Tüm Siteler" : (STORES.find(s => s.id === b.store)?.name || b.store)}</span>)}
                 </p>
                 <p className="text-[10px] text-muted-foreground">
                   {positionLabel(b.position)}
@@ -7736,13 +7770,13 @@ function BannersListSection() {
                 </p>
                 {b.linkUrl && <p className="text-xs text-muted-foreground truncate">{b.linkUrl}</p>}
               </div>
-              <Badge variant={b.isActive ? "default" : "secondary"} className="cursor-pointer text-xs" onClick={() => toggleMutation.mutate({ id: b.id, isActive: !b.isActive })}>
+              <Badge variant={b.isActive ? "default" : "secondary"} className="cursor-pointer text-xs" onClick={() => { if (confirmSharedEdit(b.store, adminStore)) toggleMutation.mutate({ id: b.id, isActive: !b.isActive }); }}>
                 {b.isActive ? "Aktif" : "Pasif"}
               </Badge>
-              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" onClick={() => setEditingId(b.id)} data-testid={`button-edit-banner-${b.id}`}>
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-blue-600" onClick={() => { if (confirmSharedEdit(b.store, adminStore)) setEditingId(b.id); }} data-testid={`button-edit-banner-${b.id}`}>
                 <Pencil className="w-3.5 h-3.5" />
               </Button>
-              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500" onClick={() => deleteMutation.mutate(b.id)}>
+              <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500" onClick={() => { if (confirmSharedEdit(b.store, adminStore)) deleteMutation.mutate(b.id); }}>
                 <Trash2 className="w-3.5 h-3.5" />
               </Button>
             </CardContent>
@@ -8299,7 +8333,7 @@ function CouponsSection() {
   const createMutation = useMutation({
     mutationFn: async (data: any) => {
       if (editId) {
-        await apiRequest("PATCH", `/api/admin/coupons/${editId}`, data);
+        await apiRequest("PATCH", `/api/admin/coupons/${editId}${storeCtxParam(adminStore)}`, data);
       } else {
         await apiRequest("POST", "/api/admin/coupons", data);
       }
@@ -8316,7 +8350,7 @@ function CouponsSection() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      await apiRequest("DELETE", `/api/admin/coupons/${id}`);
+      await apiRequest("DELETE", `/api/admin/coupons/${id}${storeCtxParam(adminStore)}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/coupons"] });
@@ -8329,7 +8363,7 @@ function CouponsSection() {
 
   const toggleActiveMutation = useMutation({
     mutationFn: async ({ id, active }: { id: number; active: boolean }) => {
-      await apiRequest("PATCH", `/api/admin/coupons/${id}`, { isActive: active });
+      await apiRequest("PATCH", `/api/admin/coupons/${id}${storeCtxParam(adminStore)}`, { isActive: active });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/coupons"] });
@@ -8434,19 +8468,25 @@ function CouponsSection() {
                     {coupon.isActive ? "Aktif" : "Pasif"}
                   </Badge>
                   {STORES.length > 1 && (
-                    <Badge variant="outline" className="text-xs">
-                      {(coupon.store ?? "all") === "all" ? "Tümü (ortak)" : (STORES.find(s => s.id === coupon.store)?.name || coupon.store)}
-                    </Badge>
+                    isSharedRowInStoreView(coupon.store, adminStore) ? (
+                      <Badge variant="outline" className="text-xs border-amber-400 bg-amber-50 text-amber-700" data-testid={`badge-shared-coupon-${coupon.id}`}>
+                        🌐 Tüm Siteler (ortak)
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">
+                        {(coupon.store ?? "all") === "all" ? "Tüm Siteler" : (STORES.find(s => s.id === coupon.store)?.name || coupon.store)}
+                      </Badge>
+                    )
                   )}
                 </div>
                 <div className="flex items-center gap-1">
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => toggleActiveMutation.mutate({ id: coupon.id, active: !coupon.isActive })} data-testid={`btn-toggle-coupon-${coupon.id}`}>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => { if (confirmSharedEdit(coupon.store, adminStore)) toggleActiveMutation.mutate({ id: coupon.id, active: !coupon.isActive }); }} data-testid={`btn-toggle-coupon-${coupon.id}`}>
                     {coupon.isActive ? <EyeOff className="w-4 h-4 text-muted-foreground" /> : <Eye className="w-4 h-4 text-muted-foreground" />}
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => startEdit(coupon)} data-testid={`btn-edit-coupon-${coupon.id}`}>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => { if (confirmSharedEdit(coupon.store, adminStore)) startEdit(coupon); }} data-testid={`btn-edit-coupon-${coupon.id}`}>
                     <Pencil className="w-4 h-4 text-muted-foreground" />
                   </Button>
-                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500" onClick={() => deleteMutation.mutate(coupon.id)} data-testid={`btn-delete-coupon-${coupon.id}`}>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-red-500" onClick={() => { if (confirmSharedEdit(coupon.store, adminStore)) deleteMutation.mutate(coupon.id); }} data-testid={`btn-delete-coupon-${coupon.id}`}>
                     <Trash2 className="w-4 h-4" />
                   </Button>
                 </div>
