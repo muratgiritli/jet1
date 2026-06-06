@@ -2418,7 +2418,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       ? new Set((req.body as any).campaignProductIds.map((id: any) => parseInt(String(id))))
       : null;
 
-    const allCampaignItems = await sharedPool.query("SELECT product_id, item_type, campaign_price FROM campaign_items WHERE is_active = true");
+    const orderStore = publicStoreId(req);
+    const allCampaignItems = await sharedPool.query(
+      "SELECT product_id, item_type, campaign_price FROM campaign_items WHERE is_active = true AND (store = 'all' OR store = $1)",
+      [orderStore]
+    );
     const campaignMap = new Map<number, string>();
     const campaignPriceLookup = new Map<number, number>();
     for (const row of allCampaignItems.rows) {
@@ -2500,7 +2504,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     let matchedNeighborhood: string | null = null;
     try {
       const nbRes = await sharedPool.query(
-        "SELECT name, min_order, shipping_fee, free_shipping_limit FROM delivery_neighborhoods WHERE is_active = true"
+        "SELECT name, min_order, shipping_fee, free_shipping_limit FROM delivery_neighborhoods WHERE is_active = true AND (store = 'all' OR store = $1)",
+        [orderStore]
       );
       const addrLower = String(orderData.customerAddress || "").toLocaleLowerCase("tr");
       let bestMatch: { name: string; min_order: number; shipping_fee: number; free_shipping_limit: number } | null = null;
