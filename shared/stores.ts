@@ -96,7 +96,38 @@ const jetgo: StoreConfig = {
   },
 };
 
-export const STORES: StoreConfig[] = [jetgo];
+const atakum: StoreConfig = {
+  id: "atakum",
+  hostnames: ["atakumpetshop.com", "www.atakumpetshop.com"],
+  name: "Atakum Pet Shop",
+  shortName: "Atakum Pet Shop",
+  alternateNames: ["Atakum Petshop", "Atakum Pet", "Atakum Samsun Pet Shop", "Atakum Pet Shop Samsun"],
+  domain: "https://www.atakumpetshop.com",
+  logo: "",
+  favicon: "/favicon-192.png",
+  phone: "+908508403959",
+  phoneDisplay: "0850 840 39 59",
+  email: "info@sizpa.com",
+  businessDescription:
+    "Atakum'un hızlı pet shop'u Atakum Pet Shop. Kedi maması, köpek maması, kedi kumu, ödül maması ve evcil hayvan ürünlerinde Atakum, İlkadım, Canik içi aynı gün teslimat ve kapıda ödeme imkanı.",
+  slogan: "Atakum'un Hızlı Pet Shop'u — Aynı Gün Teslimat",
+  social: [],
+  theme: {
+    primary: "291 64% 42%",
+    topBar: "#4A148C",
+    navBar: "#7B1FA2",
+  },
+  seo: {
+    title: "Atakum Pet Shop - Atakum'a Aynı Gün Petshop Teslimat | Atakum Petshop",
+    description:
+      "Atakum'a aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu kapıda ödeme. Atakum Pet Shop 09:00-21:00, 0850 840 39 59.",
+    keywords:
+      "atakum pet shop, atakum petshop, atakum kedi maması, atakum köpek maması, atakum kedi kumu, atakum aynı gün teslimat, atakum acil petshop, samsun petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop atakum",
+    ogImage: "/og-image.webp",
+  },
+};
+
+export const STORES: StoreConfig[] = [jetgo, atakum];
 export const DEFAULT_STORE: StoreConfig = jetgo;
 
 /** Lowercase host, strip port and a leading "www." */
