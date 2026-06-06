@@ -4,7 +4,7 @@ import { type Server } from "http";
 import { storage, pool as sharedPool, db } from "./storage";
 import { seedDatabase } from "./seed";
 import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders, virtualPets, petContestEntries, petContestVotes, productReviews, insertContactMessageSchema, brandCategories } from "@shared/schema";
-import { getStoreByHost, STORES } from "@shared/stores";
+import { getStoreByHost, STORES, brandifyFor, canonicalHost } from "@shared/stores";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -99,10 +99,10 @@ function normalizeTrSms(s: string): string {
   return s.replace(/[ıİşŞğĞüÜöÖçÇ]/g, (c) => map[c] || c);
 }
 
-async function sendSmsViaNetgsm(phone: string, message: string): Promise<boolean> {
+async function sendSmsViaNetgsm(phone: string, message: string, msgheaderOverride?: string): Promise<boolean> {
   const usercode = process.env.NETGSM_USERCODE;
   const password = process.env.NETGSM_PASSWORD;
-  const msgheader = process.env.NETGSM_MSGHEADER;
+  const msgheader = (msgheaderOverride && msgheaderOverride.trim()) || process.env.NETGSM_MSGHEADER;
   if (!usercode || !password || !msgheader) {
     console.error("NetGSM credentials not configured");
     return false;
@@ -208,12 +208,19 @@ export async function registerRoutes(
   const STORE_IDS = STORES.map((s) => s.id);
   const isValidStore = (s: any): boolean => s === "all" || STORE_IDS.includes(String(s));
   // Public okuma: aktif domain'in store id'si.
-  const publicStoreId = (req: any): string => getStoreByHost(req.hostname).id;
+  const publicStoreId = (req: any): string => reqStore(req).id;
   // Admin yazma/okuma: ?store= veya body.store; geçersizse "all".
   const adminStoreId = (req: any): string => {
     const q = req.query?.store ?? req.body?.store;
     return isValidStore(q) ? String(q) : "all";
   };
+  // Public (SEO/feed) için aktif store config'ini çöz. Proxy arkasında gerçek
+  // host x-forwarded-host'ta gelir; yoksa Host başlığına / req.hostname'e düşer.
+  const reqStore = (req: any) => getStoreByHost(
+    (req.headers?.["x-forwarded-host"] as string) || req.headers?.host || req.hostname,
+  );
+  // Store id'sinden (jetgo/atakum/all) StoreConfig'e; bilinmeyende varsayılan.
+  const storeById = (id?: string | null) => STORES.find((s) => s.id === id) || STORES[0];
   // Defense-in-depth: belirli bir mağaza bağlamında (storeContext) yapılan
   // düzenleme/silme işleminin, BAŞKA bir mağazaya ait bir satırı etkilemesini
   // engeller. Paylaşılan ("all") satırlar her zaman izinlidir (UI'da açık onay
@@ -268,6 +275,18 @@ export async function registerRoutes(
     }
     return { ...base, ...over };
   }
+  // Store'a göre NetGSM gönderici başlığını çöz: önekli (<store>:sms_msgheader)
+  // değer varsa onu, yoksa temel değeri, o da yoksa undefined döner (çağıran
+  // taraf env NETGSM_MSGHEADER'a geri düşer). Hata durumunda da undefined.
+  async function resolveSmsHeader(store: string): Promise<string | undefined> {
+    try {
+      const s = await resolveSettings(["sms_msgheader"], store || "all");
+      const v = s["sms_msgheader"];
+      return v && v.trim() ? v.trim() : undefined;
+    } catch {
+      return undefined;
+    }
+  }
   // Verilen store için LIKE desenine uyan app_settings anahtarlarını çöz.
   async function resolveSettingsLike(basePattern: string, store: string): Promise<Record<string, string>> {
     const prefix = settingsPrefix(store);
@@ -296,6 +315,7 @@ export async function registerRoutes(
   // Domain'e özel olabilecek app_settings anahtarları. Diğer tüm anahtarlar
   // (ödeme, banka, sadakat, pet vb.) tüm domainler için ortaktır.
   const STORE_SCOPED_SETTING_KEYS = new Set<string>([
+    "sms_msgheader",
     "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date",
     "daily_cargo_widget_enabled",
     "sokak_banner_enabled", "veteriner_banner_enabled",
@@ -612,9 +632,9 @@ export async function registerRoutes(
     next();
   });
 
-  app.get("/sitemap.xml", async (_req, res) => {
+  app.get("/sitemap.xml", async (req, res) => {
     try {
-      const SITE = "https://www.jetgomarket.com";
+      const SITE = reqStore(req).domain;
       const today = new Date().toISOString().split("T")[0];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
@@ -633,9 +653,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/sitemap-main.xml", async (_req, res) => {
+  app.get("/sitemap-main.xml", async (req, res) => {
     try {
-      const SITE = "https://www.jetgomarket.com";
+      const SITE = reqStore(req).domain;
       const staticPages = [
         { url: "/", priority: "1.0", changefreq: "daily" },
         { url: "/kategori", priority: "0.9", changefreq: "weekly" },
@@ -687,9 +707,9 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/sitemap-products.xml", async (_req, res) => {
+  app.get("/sitemap-products.xml", async (req, res) => {
     try {
-      const SITE = "https://www.jetgomarket.com";
+      const SITE = reqStore(req).domain;
       const allProducts = await storage.getAllProducts();
       const activeProducts = allProducts.filter((p: any) => p.isActive && p.price > 0);
       const today = new Date().toISOString().split("T")[0];
@@ -710,9 +730,9 @@ export async function registerRoutes(
   });
 
 
-  app.get("/sitemap-seo.xml", async (_req, res) => {
+  app.get("/sitemap-seo.xml", async (req, res) => {
     try {
-      const SITE = "https://www.jetgomarket.com";
+      const SITE = reqStore(req).domain;
       const today = new Date().toISOString().split("T")[0];
       const coreSlugs = [
         { url: "/samsun-petshop", priority: "0.9", changefreq: "weekly" },
@@ -868,10 +888,10 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/export/xlsx", requireAdmin, async (_req, res) => {
+  app.get("/api/export/xlsx", requireAdmin, async (req, res) => {
     try {
       const ExcelJS = (await import("exceljs")).default;
-      const SITE = "https://www.jetgomarket.com";
+      const SITE = storeById(adminStoreId(req)).domain;
       const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen" };
 
       const { rows } = await sharedPool.query(`
@@ -1161,9 +1181,10 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/export/yml", requireAdmin, async (_req, res) => {
+  app.get("/api/export/yml", requireAdmin, async (req, res) => {
     try {
-      const SITE = "https://www.jetgomarket.com";
+      const stCfg = storeById(adminStoreId(req));
+      const SITE = stCfg.domain;
       const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen" };
 
       const { rows } = await sharedPool.query(`
@@ -1187,7 +1208,7 @@ export async function registerRoutes(
 
       const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
-      let yml = `<?xml version="1.0" encoding="UTF-8"?>\n<yml_catalog date="${new Date().toISOString().split("T")[0]}">\n  <shop>\n    <name>JETGO Pet Shop</name>\n    <company>Sizpa İnternet Tic. Ltd. Şti.</company>\n    <url>https://www.jetgomarket.com</url>\n    <currencies>\n      <currency id="TRY" rate="1"/>\n    </currencies>\n    <categories>\n`;
+      let yml = `<?xml version="1.0" encoding="UTF-8"?>\n<yml_catalog date="${new Date().toISOString().split("T")[0]}">\n  <shop>\n    <name>${esc(stCfg.name)}</name>\n    <company>Sizpa İnternet Tic. Ltd. Şti.</company>\n    <url>${SITE}</url>\n    <currencies>\n      <currency id="TRY" rate="1"/>\n    </currencies>\n    <categories>\n`;
 
       for (const [, cat] of categories) {
         yml += `      <category id="${cat.id}">${esc(cat.subcat)} (${ANIMAL_MAP[cat.animal] || cat.animal})</category>\n`;
@@ -1210,7 +1231,7 @@ export async function registerRoutes(
       }
       yml += "    </offers>\n  </shop>\n</yml_catalog>\n";
 
-      res.setHeader("Content-Disposition", "attachment; filename=jetgo_urunler.yml");
+      res.setHeader("Content-Disposition", `attachment; filename=${stCfg.id}_urunler.yml`);
       res.setHeader("Content-Type", "application/xml; charset=utf-8");
       res.send(yml);
     } catch (err) {
@@ -1442,9 +1463,10 @@ export async function registerRoutes(
   });
 
   // Google Merchant Center product feed (RSS 2.0 with g: namespace)
-  app.get("/google-merchant.xml", async (_req, res) => {
+  app.get("/google-merchant.xml", async (req, res) => {
     try {
-      const SITE = "https://www.jetgomarket.com";
+      const stCfg = reqStore(req);
+      const SITE = stCfg.domain;
       const ANIMAL_LABEL: Record<string, string> = {
         kedi: "Kedi", kopek: "Köpek", kus: "Kuş",
         kemirgen: "Kemirgen", akvaryum: "Akvaryum", balik: "Balık",
@@ -1491,7 +1513,7 @@ export async function registerRoutes(
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
       xml += `<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">\n`;
       xml += `  <channel>\n`;
-      xml += `    <title>JETGO Pet Shop</title>\n`;
+      xml += `    <title>${esc(stCfg.name)}</title>\n`;
       xml += `    <link>${SITE}</link>\n`;
       xml += `    <description>Samsun'un en hızlı pet shop'u — kedi maması, köpek maması, kedi kumu ve daha fazlası. Aynı gün teslimat.</description>\n`;
 
@@ -1504,7 +1526,7 @@ export async function registerRoutes(
         const animal = clean(r.animal).toLowerCase();
         const animalLabel = ANIMAL_LABEL[animal] || "";
         const subcatClean = clean(r.subcategory_name);
-        const brandClean = clean(r.brand_name) || "JETGO";
+        const brandClean = clean(r.brand_name) || stCfg.brandWord;
         const nameClean = truncate(clean(r.name), 150);
 
         const productType = [animalLabel, subcatClean, brandClean].filter(Boolean).join(" > ");
@@ -1570,8 +1592,9 @@ export async function registerRoutes(
 
   app.get("/robots.txt", (req, res) => {
     res.set("Content-Type", "text/plain");
+    const robotsStore = reqStore(req);
     const txt = [
-      "# JETGO Pet Shop Samsun - robots.txt",
+      `# ${robotsStore.name} - robots.txt`,
       "User-agent: *",
       "Allow: /",
       "Disallow: /admin",
@@ -1623,15 +1646,15 @@ export async function registerRoutes(
       "User-agent: DuckDuckBot",
       "Allow: /",
       "",
-      "Sitemap: https://www.jetgomarket.com/sitemap.xml",
+      `Sitemap: ${robotsStore.domain}/sitemap.xml`,
       "",
     ].join("\n");
     res.send(txt);
   });
 
   // llms.txt — AI agent / LLM-friendly site summary (emerging standard)
-  app.get("/llms.txt", (_req, res) => {
-    res.type("text/plain").send(`# JETGO Pet Shop Samsun
+  app.get("/llms.txt", (req, res) => {
+    res.type("text/plain").send(brandifyFor(reqStore(req), `# JETGO Pet Shop Samsun
 
 > Samsun'un (Atakum, İlkadım, Canik) en hızlı pet shop'u. Kedi maması, köpek maması, kedi kumu, ödül maması, kuş yemi, kemirgen yemi, akvaryum ve pet aksesuarlarında **aynı gün teslimat** ve **kapıda ödeme** sunan online evcil hayvan mağazası.
 
@@ -1678,7 +1701,7 @@ export async function registerRoutes(
 
 ## İçerik Politikası
 Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bing AI, vb.) tarafından **kullanıcılara yanıt verirken kaynak gösterilerek** kullanılabilir.
-`);
+`));
   });
 
   // IndexNow key file (Bing/Yandex instant indexing)
@@ -2667,7 +2690,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
 
     (orderData as any).isCampaign = isCampaignOrder;
-    (orderData as any).sourceSite = getStoreByHost(req.hostname).id;
+    (orderData as any).sourceSite = reqStore(req).id;
 
     const isOnlinePayment = /tosla|online/i.test(orderData.paymentMethod || "");
     if (isOnlinePayment) {
@@ -2748,9 +2771,10 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         const bank: Record<string, string> = {};
         for (const r of bankRes.rows) bank[r.key] = r.value || "";
         if (bank.bank_iban) {
-          const formUrl = `https://www.jetgomarket.com/hesabim?tab=havale&order=${order.id}`;
+          const stCfg = storeById((orderData as any).sourceSite);
+          const formUrl = `${stCfg.domain}/hesabim?tab=havale&order=${order.id}`;
           const lines = [
-            `JETGO Siparis #${order.id}`,
+            brandifyFor(stCfg, `JETGO Siparis #${order.id}`),
             `Tutar: ${orderData.grandTotal} TL`,
             `Alici: ${bank.bank_account_name || "SIZPA LTD"}`,
             bank.bank_name ? `Banka: ${bank.bank_name}` : "",
@@ -2759,7 +2783,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
             `ONEMLI: Aciklama kismina "${order.id}" yazin.`,
             `Onay icin: ${formUrl}`,
           ].filter(Boolean);
-          sendSmsViaNetgsm(orderData.customerPhone, lines.join("\n")).catch(err => {
+          const stHeader = await resolveSmsHeader(stCfg.id);
+          sendSmsViaNetgsm(orderData.customerPhone, lines.join("\n"), stHeader).catch(err => {
             console.error("Customer havale SMS error:", err);
           });
         }
@@ -3823,7 +3848,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const updates = req.body;
       const numericKeys = ["pet_base_points", "pet_streak_divisor", "pet_max_points", "pet_base_exp", "pet_streak_exp_bonus", "loyalty_percent"];
       const textKeys = [
-        "admin_phone", "order_notification_sms",
+        "admin_phone", "order_notification_sms", "sms_msgheader",
         "payment_eft_enabled", "payment_nakit_enabled", "payment_qr_enabled",
         "payment_pos_enabled", "payment_installments_enabled", "payment_tosla_enabled", "payment_iyzico_enabled",
         "tosla_client_id", "tosla_api_user", "tosla_api_pass", "tosla_base_url",
@@ -3963,8 +3988,13 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     if (status === "tamamlandi" && order.customerPhone) {
-      const smsMessage = `Siparissiniz teslim edildi. Jetgo ile alisveris yaptiginiz icin tesekkurler! Bir sonraki siparissinizde 50 TL indirim icin JETGO50 kodunu kullanin. jetgomarket.com`;
-      sendSmsViaNetgsm(order.customerPhone, smsMessage).catch(err => {
+      const stCfg = storeById((order as any).sourceSite);
+      const apexHost = canonicalHost(stCfg).replace(/^www\./, "");
+      const smsMessage = stCfg.id === "jetgo"
+        ? `Siparissiniz teslim edildi. Jetgo ile alisveris yaptiginiz icin tesekkurler! Bir sonraki siparissinizde 50 TL indirim icin JETGO50 kodunu kullanin. jetgomarket.com`
+        : `Siparissiniz teslim edildi. ${stCfg.shortName} ile alisveris yaptiginiz icin tesekkurler! ${apexHost} adresinden tekrar siparis verebilirsiniz.`;
+      const stHeader = await resolveSmsHeader(stCfg.id);
+      sendSmsViaNetgsm(order.customerPhone, smsMessage, stHeader).catch(err => {
         console.error("Post-delivery SMS error:", err);
       });
     }
@@ -4028,8 +4058,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
     const hostHeader = (req.headers["x-forwarded-host"] as string) || req.headers.host || "jetgomarket.com";
     const otpHost = String(hostHeader).split(":")[0];
-    const message = `${code} dogrulama kodu ile jetgomarket hesabina giris yapabilirsiniz. Kodunu kimseyle paylasma.\n\n@${otpHost} #${code}`;
-    const sent = await sendSmsViaNetgsm(normalized, message);
+    const otpStoreCfg = getStoreByHost(hostHeader);
+    const message = `${code} dogrulama kodu ile ${otpStoreCfg.brandWord} hesabina giris yapabilirsiniz. Kodunu kimseyle paylasma.\n\n@${otpHost} #${code}`;
+    const sent = await sendSmsViaNetgsm(normalized, message, await resolveSmsHeader(otpStoreCfg.id));
     if (!sent) {
       otpStore.delete(normalized);
       return res.status(500).json({ message: "SMS gönderilemedi, lütfen tekrar deneyin" });
@@ -5403,9 +5434,10 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         .filter((p: any) => typeof p === "string" && /^\d{10,15}$/.test(p.replace(/\D/g, "")))
         .slice(0, 100);
       if (validPhones.length === 0) return res.status(400).json({ message: "Geçerli telefon numarası bulunamadı" });
+      const smsHeader = await resolveSmsHeader(adminStoreId(req));
       let sent = 0, failed = 0;
       for (const phone of validPhones) {
-        const ok = await sendSmsViaNetgsm(phone, message);
+        const ok = await sendSmsViaNetgsm(phone, message, smsHeader);
         if (ok) sent++;
         else failed++;
         await new Promise(r => setTimeout(r, 200));

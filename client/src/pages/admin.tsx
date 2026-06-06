@@ -6234,12 +6234,13 @@ function DashboardSection() {
   const [smsText, setSmsText] = useState("");
   const [smsSending, setSmsSending] = useState(false);
   const { toast } = useToast();
+  const { store: adminStore } = useAdminStore();
 
   const sendSingleSms = async () => {
     if (!smsTarget || !smsText.trim()) return;
     setSmsSending(true);
     try {
-      await apiRequest("POST", "/api/admin/send-sms", { phones: [smsTarget.phone], message: smsText });
+      await apiRequest("POST", "/api/admin/send-sms", { phones: [smsTarget.phone], message: smsText, store: adminStore });
       toast({ title: "SMS gönderildi" });
       setSmsTarget(null);
       setSmsText("");
@@ -6677,6 +6678,7 @@ function NotificationsSection() {
   const [result, setResult] = useState<{ sent: number; failed: number } | null>(null);
   const [segment, setSegment] = useState<string>("all");
   const { toast } = useToast();
+  const { store: adminStore } = useAdminStore();
 
   const catMap = useMemo(() => new Map(categories.map(c => [c.id, c])), [categories]);
 
@@ -6724,7 +6726,7 @@ function NotificationsSection() {
     setSending(true);
     setResult(null);
     try {
-      const res = await apiRequest("POST", "/api/admin/send-sms", { phones: selectedPhones, message: message.trim() });
+      const res = await apiRequest("POST", "/api/admin/send-sms", { phones: selectedPhones, message: message.trim(), store: adminStore });
       const data = await res.json();
       setResult(data);
       toast({ title: `${data.sent} SMS gönderildi`, description: data.failed > 0 ? `${data.failed} başarısız` : undefined });
@@ -8626,6 +8628,7 @@ function SettingsSection() {
     loyalty_percent: "",
     admin_phone: "",
     order_notification_sms: "1",
+    sms_msgheader: "",
     payment_eft_enabled: "true",
     payment_nakit_enabled: "true",
     payment_qr_enabled: "true",
@@ -8661,6 +8664,7 @@ function SettingsSection() {
         loyalty_percent: settings.loyalty_percent || "5",
         admin_phone: settings.admin_phone || "",
         order_notification_sms: settings.order_notification_sms ?? "1",
+        sms_msgheader: settings.sms_msgheader || "",
         payment_eft_enabled: settings.payment_eft_enabled ?? "true",
         payment_nakit_enabled: settings.payment_nakit_enabled ?? "true",
         payment_qr_enabled: settings.payment_qr_enabled ?? "true",
@@ -8805,6 +8809,22 @@ function SettingsSection() {
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.order_notification_sms === "1" ? "translate-x-6" : "translate-x-1"}`} />
             </button>
+          </div>
+
+          <div className="flex items-start gap-3 pt-3 border-t">
+            <span className="text-xl mt-1">🏷️</span>
+            <div className="flex-1 min-w-0">
+              <Label className="text-sm font-bold">SMS Gönderici Başlığı</Label>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Bu mağazadan giden SMS'lerde (OTP, sipariş, toplu SMS) görünen NetGSM onaylı gönderici adı. Boş bırakılırsa varsayılan başlık kullanılır. Seçili mağazaya özeldir; NetGSM'de önceden onaylanmış olmalıdır.</p>
+            </div>
+            <Input
+              type="text"
+              placeholder="Varsayılan"
+              value={form.sms_msgheader}
+              onChange={e => setForm(prev => ({ ...prev, sms_msgheader: e.target.value.slice(0, 20) }))}
+              className="w-32 text-center font-bold"
+              data-testid="input-sms-msgheader"
+            />
           </div>
 
           <div className="flex items-start gap-3 pt-3 border-t">
