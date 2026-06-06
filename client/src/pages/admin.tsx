@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef, useCallback } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback, createContext, useContext } from "react";
 import { exportProductsPdf } from "@/lib/exportProductsPdf";
 import { exportStockMovementsPdf } from "@/lib/exportStockMovementsPdf";
 import { exportSktPdf } from "@/lib/exportSktPdf";
@@ -100,6 +100,44 @@ const ANIMALS = [
   { id: "veteriner", name: "Veteriner Mama", icon: Stethoscope },
   { id: "sokak_canlari", name: "Sokak Canları", icon: Heart },
 ];
+
+// Admin panelinde seçili mağaza (store) bağlamı. "all" = Tümü.
+const AdminStoreContext = createContext<{ store: string; setStore: (s: string) => void }>({ store: "all", setStore: () => {} });
+function useAdminStore() {
+  return useContext(AdminStoreContext);
+}
+function AdminStoreProvider({ children }: { children: React.ReactNode }) {
+  const [store, setStoreState] = useState<string>(() => {
+    try { return localStorage.getItem("admin-store") || "all"; } catch { return "all"; }
+  });
+  const setStore = (s: string) => {
+    setStoreState(s);
+    try { localStorage.setItem("admin-store", s); } catch {}
+  };
+  return <AdminStoreContext.Provider value={{ store, setStore }}>{children}</AdminStoreContext.Provider>;
+}
+function AdminStoreSelector() {
+  const { store, setStore } = useAdminStore();
+  if (STORES.length <= 1) return null;
+  const opts = [{ id: "all", name: "Tüm Siteler" }, ...STORES.map(s => ({ id: s.id, name: s.name }))];
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap" data-testid="admin-store-selector">
+      {opts.map(o => (
+        <button
+          key={o.id}
+          onClick={() => setStore(o.id)}
+          className={`px-2.5 py-1 rounded-full text-xs font-medium transition-colors ${
+            store === o.id ? "text-white shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted"
+          }`}
+          style={store === o.id ? { backgroundColor: "#6B3480" } : {}}
+          data-testid={`btn-store-${o.id}`}
+        >
+          {o.name}
+        </button>
+      ))}
+    </div>
+  );
+}
 
 const TR_MONTHS_ADMIN = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 function formatAdminDeliverySlot(slot: string): string {
@@ -996,6 +1034,7 @@ function CategoryForm({
 
 function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const { toast } = useToast();
+  const { store: adminStore } = useAdminStore();
   const { allSubs, byAnimal: subcategoriesByAnimal } = useSubcategories();
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [addDialogOpen, setAddDialogOpen] = useState(false);
@@ -1752,9 +1791,15 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     product_active?: boolean;
   }
 
-  const { data: campaignItems = [] } = useQuery<CampaignItem[]>({
+  const { data: allCampaignItems = [] } = useQuery<CampaignItem[]>({
     queryKey: ["/api/admin/campaign-items"],
   });
+  const campaignItems = useMemo(
+    () => adminStore === "all"
+      ? allCampaignItems
+      : allCampaignItems.filter((i: any) => { const s = i.store ?? "all"; return s === "all" || s === adminStore; }),
+    [allCampaignItems, adminStore]
+  );
 
   const cleanupOrphanExtrasMutation = useMutation({
     mutationFn: async () => {
@@ -1773,7 +1818,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
   const addCampaignItemMutation = useMutation({
     mutationFn: async (data: { productId: number; itemType: string; sortOrder: number; parentProductId?: number | null; campaignPrice?: string | null }) => {
-      await apiRequest("POST", "/api/admin/campaign-items", data);
+      await apiRequest("POST", "/api/admin/campaign-items", { ...data, store: adminStore });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaign-items"] });
@@ -1827,13 +1872,19 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
   });
 
-  const { data: adminNeighborhoods = [] } = useQuery<any[]>({
+  const { data: allAdminNeighborhoods = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/delivery-neighborhoods"],
   });
+  const adminNeighborhoods = useMemo(
+    () => adminStore === "all"
+      ? allAdminNeighborhoods
+      : allAdminNeighborhoods.filter((n: any) => { const s = n.store ?? "all"; return s === "all" || s === adminStore; }),
+    [allAdminNeighborhoods, adminStore]
+  );
 
   const createNhMutation = useMutation({
     mutationFn: async (data: { district: string; name: string; distance?: number; minOrder: number; shippingFee: number; freeShippingLimit: number; sortOrder: number }) => {
-      await apiRequest("POST", "/api/admin/delivery-neighborhoods", data);
+      await apiRequest("POST", "/api/admin/delivery-neighborhoods", { ...data, store: adminStore });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/delivery-neighborhoods"] });
@@ -2032,6 +2083,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
       <BackNavigation />
 
       <main className="max-w-5xl mx-auto px-2 sm:px-4 py-4 sm:py-6 space-y-4 sm:space-y-6">
+        {STORES.length > 1 && ["kuponlar", "banner", "ayarlar", "yonetim"].includes(activeSection) && (
+          <div className="flex items-center gap-2 flex-wrap bg-muted/30 border rounded-lg px-3 py-2" data-testid="store-scope-bar">
+            <span className="text-xs font-semibold text-muted-foreground">Site:</span>
+            <AdminStoreSelector />
+          </div>
+        )}
         {activeSection === "dashboard" && <DashboardSection />}
         {activeSection === "kuponlar" && <CouponsSection />}
         {activeSection === "bonus" && <WelcomeBonusSection />}
@@ -4539,6 +4596,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       if (cqBarcode) fd.append("barcode", cqBarcode);
                       fd.append("itemType", cqType);
                       fd.append("sortOrder", cqSortOrder || "1");
+                      fd.append("store", adminStore);
                       if (cqType === "extra" && cqParentProductId) fd.append("parentProductId", String(cqParentProductId));
                       if (cqImageFile) fd.append("image", cqImageFile);
                       const res = await fetch("/api/admin/campaign-items/quick-create", {
@@ -6827,7 +6885,15 @@ function BannersSection() {
 
 function SimpleBannerVisibilityAdmin() {
   const { toast } = useToast();
-  const { data } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
+  const { store: adminStore } = useAdminStore();
+  const { data } = useQuery<Record<string, string>>({
+    queryKey: ["/api/admin/settings", adminStore],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/settings?store=${adminStore}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Ayarlar yüklenemedi");
+      return res.json();
+    },
+  });
   const [sokak, setSokak] = useState(true);
   const [veteriner, setVeteriner] = useState(true);
   const [sokakImage, setSokakImage] = useState("");
@@ -6859,6 +6925,7 @@ function SimpleBannerVisibilityAdmin() {
   const saveMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("PATCH", "/api/admin/settings", {
+        store: adminStore,
         sokak_banner_enabled: sokak ? "1" : "0",
         veteriner_banner_enabled: veteriner ? "1" : "0",
         sokak_banner_image: sokakImage,
@@ -6868,6 +6935,7 @@ function SimpleBannerVisibilityAdmin() {
       });
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/settings"] });
       queryClient.invalidateQueries({ queryKey: ["/api/public-settings"] });
       toast({ title: "Banner ayarları kaydedildi" });
     },
@@ -6960,8 +7028,14 @@ function SimpleBannerVisibilityAdmin() {
 
 function BreedBannersAdmin() {
   const { toast } = useToast();
+  const { store: adminStore } = useAdminStore();
   const { data, isLoading } = useQuery<{ enabled: boolean; b1: any; b2: any; b3: any; b4: any; b5: any; b6: any; b7: any; b8: any; b9: any; b10: any }>({
-    queryKey: ["/api/public/breed-banners"],
+    queryKey: ["/api/public/breed-banners", adminStore],
+    queryFn: async () => {
+      const res = await fetch(`/api/public/breed-banners?store=${adminStore}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Yüklenemedi");
+      return res.json();
+    },
   });
   const [enabled, setEnabled] = useState(true);
   const initial = { image: "", link: "", alt: "", enabled: true, order: 1 };
@@ -7003,7 +7077,7 @@ function BreedBannersAdmin() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("PATCH", "/api/admin/breed-banners", { enabled, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10 });
+      await apiRequest("PATCH", "/api/admin/breed-banners", { store: adminStore, enabled, b1, b2, b3, b4, b5, b6, b7, b8, b9, b10 });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/public/breed-banners"] });
@@ -7105,8 +7179,14 @@ function BreedBannersAdmin() {
 interface CatBannerForm { idx: number; image: string; link: string; alt: string; enabled: boolean; order: number }
 function CategoryBannersAdmin() {
   const { toast } = useToast();
+  const { store: adminStore } = useAdminStore();
   const { data, isLoading } = useQuery<{ enabled: boolean; banners: CatBannerForm[] }>({
-    queryKey: ["/api/public/category-banners"],
+    queryKey: ["/api/public/category-banners", adminStore],
+    queryFn: async () => {
+      const res = await fetch(`/api/public/category-banners?store=${adminStore}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Yüklenemedi");
+      return res.json();
+    },
   });
   const [enabled, setEnabled] = useState(true);
   const [banners, setBanners] = useState<CatBannerForm[]>(
@@ -7151,7 +7231,7 @@ function CategoryBannersAdmin() {
 
   const saveSection = useMutation({
     mutationFn: async (val: boolean) => {
-      await apiRequest("PATCH", "/api/admin/category-banners", { enabled: val, banners: [] });
+      await apiRequest("PATCH", "/api/admin/category-banners", { store: adminStore, enabled: val, banners: [] });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/public/category-banners"] });
@@ -7168,7 +7248,7 @@ function CategoryBannersAdmin() {
       const orig = originalImagesRef.current[b.idx] ?? "";
       const payload: any = { idx: b.idx, link: b.link, alt: b.alt, enabled: b.enabled, order: b.order };
       if (b.image !== orig) payload.image = b.image;
-      await apiRequest("PATCH", "/api/admin/category-banners", { banners: [payload] });
+      await apiRequest("PATCH", "/api/admin/category-banners", { store: adminStore, banners: [payload] });
       originalImagesRef.current[b.idx] = b.image;
       queryClient.invalidateQueries({ queryKey: ["/api/public/category-banners"] });
       toast({ title: `Banner #${idx} kaydedildi` });
@@ -7263,8 +7343,14 @@ function CategoryBannersAdmin() {
 
 function TopPromoBannerAdmin() {
   const { toast } = useToast();
+  const { store: adminStore } = useAdminStore();
   const { data, isLoading } = useQuery<{ enabled: boolean; image: string; link: string }>({
-    queryKey: ["/api/public/top-banner"],
+    queryKey: ["/api/public/top-banner", adminStore],
+    queryFn: async () => {
+      const res = await fetch(`/api/public/top-banner?store=${adminStore}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Yüklenemedi");
+      return res.json();
+    },
   });
   const [enabled, setEnabled] = useState(true);
   const [link, setLink] = useState("/giris");
@@ -7296,7 +7382,7 @@ function TopPromoBannerAdmin() {
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      await apiRequest("PATCH", "/api/admin/top-banner", { enabled, link, image });
+      await apiRequest("PATCH", "/api/admin/top-banner", { store: adminStore, enabled, link, image });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/public/top-banner"] });
@@ -7550,7 +7636,14 @@ function StreetAnimalsSection() {
 }
 
 function BannersListSection() {
-  const { data: allBanners = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/banners"] });
+  const { store: adminStore } = useAdminStore();
+  const { data: rawBanners = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/banners"] });
+  const allBanners = useMemo(
+    () => adminStore === "all"
+      ? rawBanners
+      : rawBanners.filter((b: any) => { const s = b.store ?? "all"; return s === "all" || s === adminStore; }),
+    [rawBanners, adminStore]
+  );
   const [title, setTitle] = useState("");
   const [linkUrl, setLinkUrl] = useState("");
   const [sortOrder, setSortOrder] = useState("0");
@@ -7568,6 +7661,7 @@ function BannersListSection() {
       formData.append("sortOrder", sortOrder);
       formData.append("position", position);
       formData.append("device", device);
+      formData.append("store", adminStore);
       if (imageFile) formData.append("image", imageFile);
       const res = await fetch("/api/admin/banners", { method: "POST", body: formData, credentials: "include" });
       if (!res.ok) throw new Error("Failed");
@@ -7633,7 +7727,9 @@ function BannersListSection() {
             <CardContent className="p-3 flex items-center gap-3">
               {b.imageData && <img src={b.imageData} alt={b.title} className="w-16 h-10 object-cover rounded" />}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{b.title} <span className="text-xs text-muted-foreground">#{b.sortOrder}</span></p>
+                <p className="text-sm font-medium truncate">{b.title} <span className="text-xs text-muted-foreground">#{b.sortOrder}</span>
+                  {STORES.length > 1 && <span className="ml-1 text-[10px] bg-muted px-1.5 py-0.5 rounded">{(b.store ?? "all") === "all" ? "Tüm Siteler" : (STORES.find(s => s.id === b.store)?.name || b.store)}</span>}
+                </p>
                 <p className="text-[10px] text-muted-foreground">
                   {positionLabel(b.position)}
                   {b.device === "mobile" && " • 📱 Sadece Mobil"}
@@ -8161,7 +8257,14 @@ function WelcomeBonusSection() {
 }
 
 function CouponsSection() {
-  const { data: coupons, isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/coupons"] });
+  const { data: allCoupons, isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/coupons"] });
+  const { store: adminStore } = useAdminStore();
+  const coupons = useMemo(
+    () => !allCoupons ? allCoupons : (adminStore === "all"
+      ? allCoupons
+      : allCoupons.filter((c: any) => { const s = c.store ?? "all"; return s === "all" || s === adminStore; })),
+    [allCoupons, adminStore]
+  );
   const { toast } = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<number | null>(null);
@@ -8253,6 +8356,7 @@ function CouponsSection() {
       maxUses: maxUses ? Number(maxUses) : null,
       expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
       isActive,
+      ...(editId ? {} : { store: adminStore }),
     });
   };
 
@@ -8333,6 +8437,11 @@ function CouponsSection() {
                   <Badge variant={coupon.isActive ? "default" : "secondary"} className="text-xs">
                     {coupon.isActive ? "Aktif" : "Pasif"}
                   </Badge>
+                  {STORES.length > 1 && (
+                    <Badge variant="outline" className="text-xs">
+                      {(coupon.store ?? "all") === "all" ? "Tüm Siteler" : (STORES.find(s => s.id === coupon.store)?.name || coupon.store)}
+                    </Badge>
+                  )}
                 </div>
                 <div className="flex items-center gap-1">
                   <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => toggleActiveMutation.mutate({ id: coupon.id, active: !coupon.isActive })} data-testid={`btn-toggle-coupon-${coupon.id}`}>
@@ -8462,8 +8571,14 @@ function InstallmentRatesCard() {
 
 function SettingsSection() {
   const { toast } = useToast();
+  const { store: adminStore } = useAdminStore();
   const { data: settings, isLoading } = useQuery<Record<string, string>>({
-    queryKey: ["/api/admin/settings"],
+    queryKey: ["/api/admin/settings", adminStore],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/settings?store=${adminStore}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Ayarlar yüklenemedi");
+      return res.json();
+    },
   });
 
   const [form, setForm] = useState({
@@ -8538,7 +8653,7 @@ function SettingsSection() {
 
   const saveMutation = useMutation({
     mutationFn: async (data: Record<string, string>) => {
-      const res = await apiRequest("PATCH", "/api/admin/settings", data);
+      const res = await apiRequest("PATCH", "/api/admin/settings", { ...data, store: adminStore });
       return res.json();
     },
     onSuccess: () => {
@@ -11177,11 +11292,13 @@ export default function AdminPage() {
   }
 
   return (
-    <AdminDashboard
-      onLogout={() => {
-        queryClient.setQueryData(["/api/admin/me"], null);
-      }}
-    />
+    <AdminStoreProvider>
+      <AdminDashboard
+        onLogout={() => {
+          queryClient.setQueryData(["/api/admin/me"], null);
+        }}
+      />
+    </AdminStoreProvider>
   );
 }
 

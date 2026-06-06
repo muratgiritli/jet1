@@ -153,7 +153,7 @@ export interface IStorage {
   updateSubscriptionStatus(id: number, status: string): Promise<void>;
   deleteSubscription(id: number): Promise<void>;
 
-  getCouponByCode(code: string): Promise<Coupon | undefined>;
+  getCouponByCode(code: string, store?: string): Promise<Coupon | undefined>;
   getAllCoupons(): Promise<Coupon[]>;
   createCoupon(data: InsertCoupon): Promise<Coupon>;
   updateCoupon(id: number, data: Partial<InsertCoupon>): Promise<Coupon | undefined>;
@@ -621,9 +621,11 @@ export class DatabaseStorage implements IStorage {
     await db.delete(subscriptions).where(eq(subscriptions.id, id));
   }
 
-  async getCouponByCode(code: string): Promise<Coupon | undefined> {
-    const [coupon] = await db.select().from(coupons).where(eq(coupons.code, code.toUpperCase()));
-    return coupon;
+  async getCouponByCode(code: string, store?: string): Promise<Coupon | undefined> {
+    const rows = await db.select().from(coupons).where(eq(coupons.code, code.toUpperCase()));
+    if (!store) return rows[0];
+    const matches = rows.filter((c: any) => (c.store || "all") === "all" || c.store === store);
+    return matches.find((c: any) => c.store === store) || matches.find((c: any) => (c.store || "all") === "all");
   }
 
   async getAllCoupons(): Promise<Coupon[]> {

@@ -4,7 +4,7 @@ import { type Server } from "http";
 import { storage, pool as sharedPool, db } from "./storage";
 import { seedDatabase } from "./seed";
 import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders, virtualPets, petContestEntries, petContestVotes, productReviews, insertContactMessageSchema, brandCategories } from "@shared/schema";
-import { getStoreByHost } from "@shared/stores";
+import { getStoreByHost, STORES, DEFAULT_STORE } from "@shared/stores";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -204,6 +204,85 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // ===== Domain'e özel içerik (multi-store) yardımcıları =====
+  const STORE_IDS = STORES.map((s) => s.id);
+  const isValidStore = (s: any): boolean => s === "all" || STORE_IDS.includes(String(s));
+  // Public okuma: aktif domain'in store id'si.
+  const publicStoreId = (req: any): string => getStoreByHost(req.hostname).id;
+  // Admin yazma/okuma: ?store= veya body.store; geçersizse "all".
+  const adminStoreId = (req: any): string => {
+    const q = req.query?.store ?? req.body?.store;
+    return isValidStore(q) ? String(q) : "all";
+  };
+  // app_settings için store öneki. Varsayılan store ve "all" temel anahtarları
+  // kullanır (geriye dönük uyumluluk); diğer store'lar "<store>:" önekli yazar.
+  const settingsPrefix = (store: string): string =>
+    store === "all" || store === DEFAULT_STORE.id ? "" : `${store}:`;
+  // Verilen store için app_settings anahtarlarını çöz: önekli değer varsa temel
+  // değeri ezer. Liste döner: { key: value }.
+  async function resolveSettings(keys: string[], store: string): Promise<Record<string, string>> {
+    const prefix = settingsPrefix(store);
+    const want = prefix ? [...keys, ...keys.map((k) => prefix + k)] : keys;
+    const { rows } = await sharedPool.query(
+      `SELECT key, value FROM app_settings WHERE key = ANY($1)`,
+      [want]
+    );
+    const base: Record<string, string> = {};
+    const over: Record<string, string> = {};
+    for (const r of rows) {
+      if (prefix && r.key.startsWith(prefix)) over[r.key.slice(prefix.length)] = r.value;
+      else base[r.key] = r.value;
+    }
+    return { ...base, ...over };
+  }
+  // Verilen store için LIKE desenine uyan app_settings anahtarlarını çöz.
+  async function resolveSettingsLike(basePattern: string, store: string): Promise<Record<string, string>> {
+    const prefix = settingsPrefix(store);
+    const { rows } = await sharedPool.query(
+      `SELECT key, value FROM app_settings WHERE key LIKE $1 OR key LIKE $2`,
+      [basePattern, prefix ? prefix + basePattern : "\u0000__none__"]
+    );
+    const base: Record<string, string> = {};
+    const over: Record<string, string> = {};
+    for (const r of rows) {
+      if (prefix && r.key.startsWith(prefix)) over[r.key.slice(prefix.length)] = r.value;
+      else if (!r.key.includes(":")) base[r.key] = r.value;
+    }
+    return { ...base, ...over };
+  }
+  // Store'a göre app_settings yazımı (önek ile).
+  async function writeStoreSettings(updates: Array<[string, string]>, store: string): Promise<void> {
+    const prefix = settingsPrefix(store);
+    for (const [k, v] of updates) {
+      await sharedPool.query(
+        "INSERT INTO app_settings (key, value, updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()",
+        [prefix + k, v]
+      );
+    }
+  }
+  // Domain'e özel olabilecek app_settings anahtarları. Diğer tüm anahtarlar
+  // (ödeme, banka, sadakat, pet vb.) tüm domainler için ortaktır.
+  const STORE_SCOPED_SETTING_KEYS = new Set<string>([
+    "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date",
+    "daily_cargo_widget_enabled",
+    "sokak_banner_enabled", "veteriner_banner_enabled",
+    "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
+    "top_banner_enabled", "top_banner_text", "top_banner_link", "top_banner_bg", "top_banner_color",
+    "breed_banners", "category_banners",
+  ]);
+  // Tüm app_settings'i verilen store için çöz: temel değerler + store öneki ezmeleri.
+  async function resolveAllSettings(store: string): Promise<Record<string, string>> {
+    const prefix = settingsPrefix(store);
+    const { rows } = await sharedPool.query("SELECT key, value FROM app_settings");
+    const base: Record<string, string> = {};
+    const over: Record<string, string> = {};
+    for (const r of rows) {
+      if (prefix && r.key.startsWith(prefix)) over[r.key.slice(prefix.length)] = r.value;
+      else if (!r.key.includes(":")) base[r.key] = r.value;
+    }
+    return { ...base, ...over };
+  }
+
   try {
     await sharedPool.query(`
       CREATE TABLE IF NOT EXISTS "session" (
@@ -2379,7 +2458,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     let couponDiscount = 0;
     let appliedCoupon: any = null;
     if (couponCode && !isCampaignOrder) {
-      const coupon = await storage.getCouponByCode(couponCode);
+      const coupon = await storage.getCouponByCode(couponCode, publicStoreId(req));
       if (coupon && coupon.isActive) {
         const now = new Date();
         const notExpired = !coupon.expiresAt || new Date(coupon.expiresAt) > now;
@@ -3655,22 +3734,19 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
-  app.get("/api/public-settings", async (_req, res) => {
+  app.get("/api/public-settings", async (req, res) => {
     try {
-      const result = await sharedPool.query(`
-        SELECT key, value FROM app_settings WHERE key IN (
-          'payment_eft_enabled', 'payment_nakit_enabled', 'payment_qr_enabled',
-          'payment_pos_enabled', 'payment_installments_enabled', 'payment_tosla_enabled', 'payment_iyzico_enabled',
-          'campaign_hero_title', 'campaign_hero_subtitle', 'campaign_end_date',
-          'bank_account_name', 'bank_iban', 'bank_name',
-          'daily_cargo_widget_enabled',
-          'sokak_banner_enabled', 'veteriner_banner_enabled',
-          'sokak_banner_image', 'sokak_banner_link', 'veteriner_banner_image', 'veteriner_banner_link',
-          'cross_sell_enabled'
-        )
-      `);
-      const settings: Record<string, string> = {};
-      for (const row of result.rows) settings[row.key] = row.value;
+      const keys = [
+        "payment_eft_enabled", "payment_nakit_enabled", "payment_qr_enabled",
+        "payment_pos_enabled", "payment_installments_enabled", "payment_tosla_enabled", "payment_iyzico_enabled",
+        "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date",
+        "bank_account_name", "bank_iban", "bank_name",
+        "daily_cargo_widget_enabled",
+        "sokak_banner_enabled", "veteriner_banner_enabled",
+        "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
+        "cross_sell_enabled",
+      ];
+      const settings = await resolveSettings(keys, publicStoreId(req));
       res.set("Cache-Control", "no-store");
       res.json(settings);
     } catch {
@@ -3679,11 +3755,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
-  app.get("/api/admin/settings", requireAdmin, async (_req, res) => {
+  app.get("/api/admin/settings", requireAdmin, async (req, res) => {
     try {
-      const result = await sharedPool.query("SELECT key, value FROM app_settings");
-      const settings: Record<string, string> = {};
-      for (const row of result.rows) settings[row.key] = row.value;
+      const settings = await resolveAllSettings(adminStoreId(req));
       res.json(settings);
     } catch {
       res.json({});
@@ -3742,13 +3816,17 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         }
       }
 
+      const store = adminStoreId(req);
+      // Store-scoped anahtarlar için önekli anahtara yaz; diğerleri ortak (temel) kalır.
+      const keyFor = (k: string) => (STORE_SCOPED_SETTING_KEYS.has(k) ? settingsPrefix(store) + k : k);
       for (const [key, value] of Object.entries(updates)) {
+        if (key === "store") continue;
         if (numericKeys.includes(key)) {
           const numVal = Number(value);
           if (isNaN(numVal) || numVal < 0 || numVal > 100) continue;
           await sharedPool.query(
             "INSERT INTO app_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()",
-            [key, String(numVal)]
+            [keyFor(key), String(numVal)]
           );
         } else if (textKeys.includes(key)) {
           let strVal = String(value).trim();
@@ -3767,13 +3845,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           }
           await sharedPool.query(
             "INSERT INTO app_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()",
-            [key, strVal]
+            [keyFor(key), strVal]
           );
         }
       }
-      const result = await sharedPool.query("SELECT key, value FROM app_settings");
-      const settings: Record<string, string> = {};
-      for (const row of result.rows) settings[row.key] = row.value;
+      const settings = await resolveAllSettings(store);
       res.json(settings);
     } catch {
       res.status(500).json({ message: "Ayarlar güncellenemedi" });
@@ -4681,6 +4757,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
   app.get("/api/campaign-items", async (req, res) => {
     try {
+      // scope=all: admin paneli için tüm store'ların kampanyalarını döndür (host filtresi yok).
+      const allScope = req.query.scope === "all";
+      const store = publicStoreId(req);
+      const storeFilter = allScope ? "" : "AND (ci.store = 'all' OR ci.store = $1)";
+      const params = allScope ? [] : [store];
       const { rows } = await sharedPool.query(`
         SELECT ci.*, p.name, p.price, p.original_price, p.img, p.stock, p.is_active, p.skt, p.preorder_enabled,
           bc.animal,
@@ -4688,9 +4769,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         FROM campaign_items ci
         JOIN products p ON p.id = ci.product_id
         LEFT JOIN brand_categories bc ON bc.id = p.brand_category_id
-        WHERE ci.is_active = true AND p.is_active = true
+        WHERE ci.is_active = true AND p.is_active = true ${storeFilter}
         ORDER BY ci.item_type, ci.sort_order
-      `);
+      `, params);
       const mapped = rows.map(r => ({
         ...r,
         original_price: r.campaign_price ? r.price : r.original_price,
@@ -4705,9 +4786,10 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.get("/api/campaign-check/:productId", async (req, res) => {
     try {
       const pid = parseInt(String(req.params.productId));
+      const store = publicStoreId(req);
       const { rows } = await sharedPool.query(
-        `SELECT item_type, campaign_price FROM campaign_items WHERE product_id = $1 AND is_active = true LIMIT 1`,
-        [pid]
+        `SELECT item_type, campaign_price FROM campaign_items WHERE product_id = $1 AND is_active = true AND (store = 'all' OR store = $2) LIMIT 1`,
+        [pid, store]
       );
       if (rows.length > 0) {
         res.json({ isCampaign: true, itemType: rows[0].item_type, campaignPrice: rows[0].campaign_price ? parseFloat(rows[0].campaign_price) : null });
@@ -4723,15 +4805,16 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     try {
       const { productId, itemType, sortOrder, parentProductId, campaignPrice } = req.body;
       if (!productId || !itemType) return res.status(400).json({ message: "productId and itemType required" });
+      const store = adminStoreId(req);
       const existing = await sharedPool.query(
-        `SELECT id FROM campaign_items WHERE product_id = $1`, [productId]
+        `SELECT id FROM campaign_items WHERE product_id = $1 AND store = $2`, [productId, store]
       );
       if (existing.rows.length > 0) {
         return res.status(400).json({ message: "Bu ürün zaten kampanyada" });
       }
       const { rows } = await sharedPool.query(
-        `INSERT INTO campaign_items (product_id, item_type, sort_order, parent_product_id, campaign_price) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [productId, itemType, sortOrder || 0, parentProductId || null, campaignPrice || null]
+        `INSERT INTO campaign_items (product_id, item_type, sort_order, parent_product_id, campaign_price, store) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [productId, itemType, sortOrder || 0, parentProductId || null, campaignPrice || null, store]
       );
       res.json(rows[0]);
     } catch (err) {
@@ -4844,6 +4927,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       if (typeof sortOrder === "number") { sets.push(`sort_order = $${idx++}`); vals.push(sortOrder); }
       if (typeof itemType === "string") { sets.push(`item_type = $${idx++}`); vals.push(itemType); }
       if (campaignPrice !== undefined) { sets.push(`campaign_price = $${idx++}`); vals.push(campaignPrice === "" || campaignPrice === null ? null : campaignPrice); }
+      if (req.body.store !== undefined && isValidStore(req.body.store)) { sets.push(`store = $${idx++}`); vals.push(String(req.body.store)); }
       if (sets.length === 0) return res.status(400).json({ message: "No fields to update" });
       vals.push(id);
       const { rows } = await sharedPool.query(
@@ -4933,9 +5017,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       }
 
       const { rows } = await sharedPool.query(
-        `INSERT INTO campaign_items (product_id, item_type, sort_order, parent_product_id, campaign_price)
-         VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-        [product.id, itemType, sortOrder, itemType === "extra" ? parentProductId : null, campaignPrice]
+        `INSERT INTO campaign_items (product_id, item_type, sort_order, parent_product_id, campaign_price, store)
+         VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
+        [product.id, itemType, sortOrder, itemType === "extra" ? parentProductId : null, campaignPrice, adminStoreId(req)]
       );
 
       res.status(201).json({ product, campaignItem: rows[0] });
@@ -4966,10 +5050,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
-  app.get("/api/delivery-neighborhoods", async (_req, res) => {
+  app.get("/api/delivery-neighborhoods", async (req, res) => {
     try {
+      const store = publicStoreId(req);
       const neighborhoods = await storage.getActiveDeliveryNeighborhoods();
-      res.json(neighborhoods);
+      res.json(neighborhoods.filter((n: any) => (n.store || "all") === "all" || n.store === store));
     } catch (err) {
       res.status(500).json({ message: "Delivery neighborhoods fetch error" });
     }
@@ -4999,6 +5084,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         freeShippingLimit: parseFloat(freeShippingLimit) || 2000,
         isActive: isActive !== false,
         sortOrder: parseInt(sortOrder) || 0,
+        store: adminStoreId(req),
       });
       res.json(nh);
     } catch (err) {
@@ -5018,6 +5104,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       if (req.body.freeShippingLimit !== undefined) updates.freeShippingLimit = parseFloat(req.body.freeShippingLimit);
       if (req.body.isActive !== undefined) updates.isActive = req.body.isActive;
       if (req.body.sortOrder !== undefined) updates.sortOrder = parseInt(req.body.sortOrder);
+      if (req.body.store !== undefined && isValidStore(req.body.store)) updates.store = String(req.body.store);
       const updated = await storage.updateDeliveryNeighborhood(id, updates);
       if (!updated) return res.status(404).json({ message: "Not found" });
       res.json(updated);
@@ -5352,7 +5439,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           .toBuffer();
         imageData = `data:image/webp;base64,${webp.toString("base64")}`;
       }
-      const banner = await storage.createBanner({ title, linkUrl: linkUrl || null, imageData: imageData || null, sortOrder: parseInt(sortOrder || "0"), isActive: true, position: pos, device: dev });
+      const store = adminStoreId(req);
+      const banner = await storage.createBanner({ title, linkUrl: linkUrl || null, imageData: imageData || null, sortOrder: parseInt(sortOrder || "0"), isActive: true, position: pos, device: dev, store });
       res.json(banner);
     } catch (err) {
       res.status(500).json({ message: "Banner oluşturma hatası" });
@@ -5363,11 +5451,13 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     try {
       const all = await storage.getAllBanners();
       const position = typeof req.query.position === "string" ? req.query.position : null;
+      const store = publicStoreId(req);
       const active = all
         .filter((b: any) => b.isActive)
+        .filter((b: any) => (b.store || "all") === "all" || b.store === store)
         .filter((b: any) => !position || (b.position || "home_top") === position)
         .sort((a: any, b: any) => a.sortOrder - b.sortOrder);
-      res.set("Cache-Control", "public, max-age=60");
+      res.set("Cache-Control", "no-store");
       res.json(active);
     } catch (err) {
       res.status(500).json({ message: "Banners fetch error" });
@@ -5389,6 +5479,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const allowedDevices = ["both", "mobile", "desktop"];
       if (req.body.device !== undefined && allowedDevices.includes(req.body.device)) {
         updates.device = req.body.device;
+      }
+      if (req.body.store !== undefined && isValidStore(req.body.store)) {
+        updates.store = String(req.body.store);
       }
       if (req.file) {
         const sharp = (await import("sharp")).default;
@@ -5650,7 +5743,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
     const { code, subtotal } = req.body;
     if (!code || typeof code !== "string" || code.length > 50) return res.status(400).json({ valid: false, message: "Kupon kodu gerekli" });
-    const coupon = await storage.getCouponByCode(code);
+    const coupon = await storage.getCouponByCode(code, publicStoreId(req));
     if (!coupon || !coupon.isActive) return res.json({ valid: false, message: "Geçersiz kupon kodu" });
     const now = new Date();
     if (coupon.expiresAt && new Date(coupon.expiresAt) < now) return res.json({ valid: false, message: "Kupon kodunun süresi dolmuş" });
@@ -5940,12 +6033,14 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       maxUses: z.number().positive().optional().nullable(),
       isActive: z.boolean().optional(),
       expiresAt: z.string().optional().nullable(),
+      store: z.string().optional(),
     });
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ message: "Geçersiz veri" });
     const data: any = { ...parsed.data };
     if (data.expiresAt) data.expiresAt = new Date(data.expiresAt);
     else data.expiresAt = null;
+    data.store = isValidStore(data.store) ? data.store : "all";
     const coupon = await storage.createCoupon(data);
     res.status(201).json(coupon);
   });
@@ -5953,11 +6048,12 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.patch("/api/admin/coupons/:id", requireAdmin, async (req, res) => {
     const id = parseInt(String(req.params.id));
     if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
-    const allowedKeys = ["code", "discountType", "discountValue", "minOrderAmount", "maxUses", "isActive", "expiresAt", "customerId"];
+    const allowedKeys = ["code", "discountType", "discountValue", "minOrderAmount", "maxUses", "isActive", "expiresAt", "customerId", "store"];
     const data: any = {};
     for (const key of allowedKeys) {
       if (req.body[key] !== undefined) data[key] = req.body[key];
     }
+    if (data.store !== undefined && !isValidStore(data.store)) delete data.store;
     if (data.expiresAt) data.expiresAt = new Date(data.expiresAt);
     else if (data.expiresAt === null) data.expiresAt = null;
     const updated = await storage.updateCoupon(id, data);
@@ -6182,13 +6278,12 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
-  app.get("/api/public/top-banner", async (_req, res) => {
+  app.get("/api/public/top-banner", async (req, res) => {
     try {
-      const r = await sharedPool.query(
-        "SELECT key, value FROM app_settings WHERE key IN ('top_banner_enabled','top_banner_image','top_banner_link')"
+      const map = await resolveSettings(
+        ["top_banner_enabled", "top_banner_image", "top_banner_link"],
+        isValidStore(String(req.query.store)) ? String(req.query.store) : publicStoreId(req)
       );
-      const map: any = {};
-      for (const row of r.rows) map[row.key] = row.value;
       res.json({
         enabled: map.top_banner_enabled === "1",
         image: map.top_banner_image || "",
@@ -6199,7 +6294,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
-  app.get("/api/public/breed-banners", async (_req, res) => {
+  app.get("/api/public/breed-banners", async (req, res) => {
     const defaults: Record<string, { link: string; alt: string }> = {
       b1: { link: "/kategori/kopek/maltese-mamalari", alt: "Maltese Özel Mamaları" },
       b2: { link: "/kategori/kopek/toy-poodle-mamalari", alt: "Toy Poodle Özel Mamaları" },
@@ -6213,11 +6308,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       b10: { link: "/kategori/kopek/pomeranian-mamalari", alt: "Pomeranian Özel Mamaları" },
     };
     try {
-      const r = await sharedPool.query(
-        "SELECT key, value FROM app_settings WHERE key LIKE 'breed_banner%'"
-      );
-      const m: any = {};
-      for (const row of r.rows) m[row.key] = row.value;
+      const m = await resolveSettingsLike("breed_banner%", isValidStore(String(req.query.store)) ? String(req.query.store) : publicStoreId(req));
       const build = (i: number) => ({
         image: m[`breed_banner${i}_image`] || "",
         link: m[`breed_banner${i}_link`] || defaults[`b${i}`].link,
@@ -6259,23 +6350,14 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         if (b.order !== undefined && Number.isFinite(Number(b.order))) updates.push([`breed_banner${idx}_order`, String(Math.max(1, Math.min(999, Math.floor(Number(b.order)))))]);
       }
     }
-    for (const [k, v] of updates) {
-      await sharedPool.query(
-        "INSERT INTO app_settings (key, value, updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()",
-        [k, v]
-      );
-    }
+    await writeStoreSettings(updates, adminStoreId(req));
     res.json({ ok: true });
   });
 
   // ===== Ana Sayfa Kategori Banner'ları (20 adet, dikey stack) =====
-  app.get("/api/public/category-banners", async (_req, res) => {
+  app.get("/api/public/category-banners", async (req, res) => {
     try {
-      const r = await sharedPool.query(
-        "SELECT key, value FROM app_settings WHERE key LIKE 'cat_banner%'"
-      );
-      const m: any = {};
-      for (const row of r.rows) m[row.key] = row.value;
+      const m = await resolveSettingsLike("cat_banner%", isValidStore(String(req.query.store)) ? String(req.query.store) : publicStoreId(req));
       const banners = [];
       for (let i = 1; i <= 20; i++) {
         banners.push({
@@ -6325,11 +6407,12 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         }
       }
       if (updates.length > 0) {
+        const prefix = settingsPrefix(adminStoreId(req));
         const params: any[] = [];
         const values: string[] = [];
         updates.forEach(([k, v], idx) => {
           values.push(`($${idx * 2 + 1},$${idx * 2 + 2},NOW())`);
-          params.push(k, v);
+          params.push(prefix + k, v);
         });
         const sql = `INSERT INTO app_settings (key, value, updated_at) VALUES ${values.join(",")} ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_at=NOW()`;
         const t0 = Date.now();
@@ -6352,12 +6435,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (enabled !== undefined) updates.push(["top_banner_enabled", enabled ? "1" : "0"]);
     if (image !== undefined) updates.push(["top_banner_image", image]);
     if (link !== undefined) updates.push(["top_banner_link", link]);
-    for (const [k, v] of updates) {
-      await sharedPool.query(
-        "INSERT INTO app_settings (key, value, updated_at) VALUES ($1,$2,NOW()) ON CONFLICT (key) DO UPDATE SET value=$2, updated_at=NOW()",
-        [k, v]
-      );
-    }
+    await writeStoreSettings(updates, adminStoreId(req));
     res.json({ ok: true });
   });
 

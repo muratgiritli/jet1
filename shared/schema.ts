@@ -290,6 +290,7 @@ export const deliveryNeighborhoods = pgTable("delivery_neighborhoods", {
   freeShippingLimit: real("free_shipping_limit").notNull().default(2000),
   isActive: boolean("is_active").notNull().default(true),
   sortOrder: integer("sort_order").notNull().default(0),
+  store: text("store").notNull().default("all"),
 });
 
 export const insertDeliveryNeighborhoodSchema = createInsertSchema(deliveryNeighborhoods).omit({ id: true });
@@ -304,6 +305,7 @@ export const campaignItems = pgTable("campaign_items", {
   isActive: boolean("is_active").notNull().default(true),
   parentProductId: integer("parent_product_id"),
   campaignPrice: numeric("campaign_price"),
+  store: text("store").notNull().default("all"),
 });
 
 export const insertCampaignItemSchema = createInsertSchema(campaignItems).omit({ id: true });
@@ -319,6 +321,7 @@ export const banners = pgTable("banners", {
   sortOrder: integer("sort_order").notNull().default(0),
   position: text("position").notNull().default("home_top"),
   device: text("device").notNull().default("both"),
+  store: text("store").notNull().default("all"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
@@ -328,7 +331,7 @@ export type Banner = typeof banners.$inferSelect;
 
 export const coupons = pgTable("coupons", {
   id: serial("id").primaryKey(),
-  code: text("code").notNull().unique(),
+  code: text("code").notNull(),
   discountType: text("discount_type").notNull().default("percentage"),
   discountValue: real("discount_value").notNull(),
   minOrderAmount: real("min_order_amount").notNull().default(0),
@@ -337,6 +340,7 @@ export const coupons = pgTable("coupons", {
   isActive: boolean("is_active").notNull().default(true),
   expiresAt: timestamp("expires_at"),
   customerId: integer("customer_id"),
+  store: text("store").notNull().default("all"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
