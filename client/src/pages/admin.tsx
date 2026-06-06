@@ -3,6 +3,7 @@ import { exportProductsPdf } from "@/lib/exportProductsPdf";
 import { exportStockMovementsPdf } from "@/lib/exportStockMovementsPdf";
 import { exportSktPdf } from "@/lib/exportSktPdf";
 import { printOrderReceipt } from "@/lib/printReceipt";
+import { STORES } from "@shared/stores";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -1044,6 +1045,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
   const [phoneHistoryDialog, setPhoneHistoryDialog] = useState<string | null>(null);
   const [orderSearchPhone, setOrderSearchPhone] = useState("");
   const [orderTypeFilter, setOrderTypeFilter] = useState<"all" | "campaign" | "normal">("all");
+  const [orderSiteFilter, setOrderSiteFilter] = useState<string>("all");
   const [orderDetailDialog, setOrderDetailDialog] = useState<Order | null>(null);
   const [neighborhoodExpanded, setNeighborhoodExpanded] = useState(false);
   const [nhDialogOpen, setNhDialogOpen] = useState(false);
@@ -2583,6 +2585,26 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             ))}
           </div>
 
+          {STORES.length > 1 && (
+            <div className="flex items-center gap-2 mb-4 flex-wrap overflow-x-auto">
+              <span className="text-xs text-muted-foreground shrink-0">Site:</span>
+              {([{ id: "all", shortName: "Tüm Siteler" }, ...STORES] as { id: string; shortName: string }[]).map((s) => (
+                <button
+                  key={s.id}
+                  onClick={() => setOrderSiteFilter(s.id)}
+                  className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium border transition-colors ${
+                    orderSiteFilter === s.id
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-background text-muted-foreground border-border hover:bg-muted"
+                  }`}
+                  data-testid={`btn-order-site-${s.id}`}
+                >
+                  {s.shortName}
+                </button>
+              ))}
+            </div>
+          )}
+
           {ordersLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -2607,6 +2629,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 if (orderTypeFilter === "campaign") return (o as any).isCampaign === true;
                 if (orderTypeFilter === "normal") return !(o as any).isCampaign;
                 return true;
+              })
+              .filter((o) => {
+                if (orderSiteFilter === "all") return true;
+                return ((o as any).sourceSite || "jetgo") === orderSiteFilter;
               })
               .filter((o) => {
                 if (!orderSearchPhone) return true;
@@ -2669,6 +2695,18 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               {new Date(order.createdAt).toLocaleDateString("tr-TR")} {new Date(order.createdAt).toLocaleTimeString("tr-TR", { hour: "2-digit", minute: "2-digit" })}
                             </span>
                           </div>
+                          {STORES.length > 1 && (() => {
+                            const st = STORES.find((s) => s.id === ((order as any).sourceSite || "jetgo"));
+                            return (
+                              <span
+                                className="shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold text-white"
+                                style={{ backgroundColor: st?.theme.topBar || "#666" }}
+                                data-testid={`badge-order-site-${order.id}`}
+                              >
+                                {st?.shortName || "Diğer"}
+                              </span>
+                            );
+                          })()}
                           {order.customerName && (
                             <span className="text-xs sm:text-sm font-medium" data-testid={`text-order-customer-name-${order.id}`}>{order.customerName}</span>
                           )}

@@ -4,6 +4,7 @@ import { type Server } from "http";
 import { storage, pool as sharedPool, db } from "./storage";
 import { seedDatabase } from "./seed";
 import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders, virtualPets, petContestEntries, petContestVotes, productReviews, insertContactMessageSchema, brandCategories } from "@shared/schema";
+import { getStoreByHost } from "@shared/stores";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -228,6 +229,12 @@ export async function registerRoutes(
     await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS is_campaign boolean NOT NULL DEFAULT false;`);
   } catch (e) {
     console.error("Orders is_campaign migration error:", e);
+  }
+
+  try {
+    await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS source_site text;`);
+  } catch (e) {
+    console.error("Orders source_site migration error:", e);
   }
 
   try {
@@ -2527,6 +2534,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
 
     (orderData as any).isCampaign = isCampaignOrder;
+    (orderData as any).sourceSite = getStoreByHost(req.hostname).id;
 
     const isOnlinePayment = /tosla|online/i.test(orderData.paymentMethod || "");
     if (isOnlinePayment) {
