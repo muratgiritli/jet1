@@ -486,11 +486,13 @@ function CategoryGrid() {
 function SokakCanlariBanner() {
   const { data: settings } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
   if (settings && (settings.sokak_banner_enabled === "0" || settings.sokak_banner_enabled === "false")) return null;
+  const img = (settings?.sokak_banner_image || "").trim() || new URL("@assets/CUVAL_MAMA_1778678246834.png", import.meta.url).href;
+  const link = (settings?.sokak_banner_link || "").trim() || "/sokak-canlari";
   return (
     <div className="my-4 md:my-6" data-testid="section-sokak-banner">
-      <Link href="/sokak-canlari" className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform" data-testid="link-sokak-canlari">
+      <Link href={link} className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform" data-testid="link-sokak-canlari">
         <img
-          src={new URL("@assets/CUVAL_MAMA_1778678246834.png", import.meta.url).href}
+          src={img}
           alt="Sokak Canları için Çuval Mama Kampanyası"
           className="w-full h-auto block"
           loading="lazy"
@@ -582,11 +584,13 @@ function CategoryBannersStack() {
 function VeterinerMamaBanner() {
   const { data: settings } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
   if (settings && (settings.veteriner_banner_enabled === "0" || settings.veteriner_banner_enabled === "false")) return null;
+  const img = (settings?.veteriner_banner_image || "").trim() || new URL("@assets/veteriner_mama-web_1778689310732.webp", import.meta.url).href;
+  const link = (settings?.veteriner_banner_link || "").trim() || "/kategori/veteriner";
   return (
     <div className="my-4 md:my-6" data-testid="section-veteriner-banner">
-      <Link href="/kategori/veteriner" className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform" data-testid="link-veteriner-mama">
+      <Link href={link} className="block rounded-2xl overflow-hidden shadow-md hover:shadow-lg transition-shadow active:scale-[0.99] md:hover:scale-[1.005] transition-transform" data-testid="link-veteriner-mama">
         <img
-          src={new URL("@assets/veteriner_mama-web_1778689310732.webp", import.meta.url).href}
+          src={img}
           alt="Veteriner Mamaları - Güvenilir Markalar"
           className="w-full h-auto block"
           loading="lazy"

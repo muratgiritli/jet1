@@ -3665,6 +3665,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           'bank_account_name', 'bank_iban', 'bank_name',
           'daily_cargo_widget_enabled',
           'sokak_banner_enabled', 'veteriner_banner_enabled',
+          'sokak_banner_image', 'sokak_banner_link', 'veteriner_banner_image', 'veteriner_banner_link',
           'cross_sell_enabled'
         )
       `);
@@ -3703,6 +3704,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         "bank_account_name", "bank_iban", "bank_name",
         "daily_cargo_widget_enabled",
         "sokak_banner_enabled", "veteriner_banner_enabled",
+        "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
         "cross_sell_enabled",
       ];
 
@@ -3749,7 +3751,20 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
             [key, String(numVal)]
           );
         } else if (textKeys.includes(key)) {
-          const strVal = String(value).trim();
+          let strVal = String(value).trim();
+          const imageKeys = ["sokak_banner_image", "veteriner_banner_image"];
+          const linkKeys = ["sokak_banner_link", "veteriner_banner_link"];
+          if (imageKeys.includes(key)) {
+            // Boş = varsayılana dön. Dolu ise ~2MB base64 sınırı (doğrudan API çağrısı korumasını da kapsar).
+            if (strVal && strVal.length > 3_000_000) {
+              return res.status(400).json({ message: "Banner görseli çok büyük (max ~2MB)" });
+            }
+          } else if (linkKeys.includes(key)) {
+            if (strVal.length > 500) strVal = strVal.slice(0, 500);
+            if (strVal && !/^https?:\/\//i.test(strVal) && !strVal.startsWith("/")) {
+              strVal = "/" + strVal;
+            }
+          }
           await sharedPool.query(
             "INSERT INTO app_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()",
             [key, strVal]

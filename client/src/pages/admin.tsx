@@ -6830,24 +6830,46 @@ function SimpleBannerVisibilityAdmin() {
   const { data } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
   const [sokak, setSokak] = useState(true);
   const [veteriner, setVeteriner] = useState(true);
+  const [sokakImage, setSokakImage] = useState("");
+  const [sokakLink, setSokakLink] = useState("");
+  const [veterinerImage, setVeterinerImage] = useState("");
+  const [veterinerLink, setVeterinerLink] = useState("");
 
   useEffect(() => {
     if (data) {
       setSokak(!(data.sokak_banner_enabled === "0" || data.sokak_banner_enabled === "false"));
       setVeteriner(!(data.veteriner_banner_enabled === "0" || data.veteriner_banner_enabled === "false"));
+      setSokakImage(data.sokak_banner_image || "");
+      setSokakLink(data.sokak_banner_link || "");
+      setVeterinerImage(data.veteriner_banner_image || "");
+      setVeterinerLink(data.veteriner_banner_link || "");
     }
   }, [data]);
+
+  const handleFile = (file: File, setter: (v: string) => void) => {
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "Görsel çok büyük (max 2MB)", variant: "destructive" });
+      return;
+    }
+    const r = new FileReader();
+    r.onload = () => setter(r.result as string);
+    r.readAsDataURL(file);
+  };
 
   const saveMutation = useMutation({
     mutationFn: async () => {
       await apiRequest("PATCH", "/api/admin/settings", {
         sokak_banner_enabled: sokak ? "1" : "0",
         veteriner_banner_enabled: veteriner ? "1" : "0",
+        sokak_banner_image: sokakImage,
+        sokak_banner_link: sokakLink,
+        veteriner_banner_image: veterinerImage,
+        veteriner_banner_link: veterinerLink,
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/public-settings"] });
-      toast({ title: "Banner görünürlüğü kaydedildi" });
+      toast({ title: "Banner ayarları kaydedildi" });
     },
     onError: () => toast({ title: "Kayıt hatası", variant: "destructive" }),
   });
@@ -6856,36 +6878,74 @@ function SimpleBannerVisibilityAdmin() {
     <Card className="border-emerald-300">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Package className="w-4 h-4 text-emerald-600" /> Anasayfa Banner Görünürlüğü
+          <Package className="w-4 h-4 text-emerald-600" /> Anasayfa Banner'ları (Sokak Canları & Veteriner)
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-3 space-y-3">
-        <label className="flex items-center justify-between gap-2 p-2 rounded border cursor-pointer hover-elevate">
+      <CardContent className="p-3 space-y-4">
+        <div className="border rounded-lg p-3 space-y-2">
+          <label className="flex items-center justify-between gap-2 cursor-pointer">
+            <div>
+              <div className="text-sm font-medium">Sokak Canları (Çuval Mama) Banner'ı</div>
+              <div className="text-[11px] text-muted-foreground">Anasayfada Sokak Canları kampanya görseli</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={sokak}
+              onChange={e => setSokak(e.target.checked)}
+              className="w-4 h-4"
+              data-testid="checkbox-sokak-banner-enabled"
+            />
+          </label>
           <div>
-            <div className="text-sm font-medium">Sokak Canları (Çuval Mama) Banner'ı</div>
-            <div className="text-[11px] text-muted-foreground">Anasayfada Sokak Canları kampanya görseli</div>
+            <label className="text-[10px] text-muted-foreground block mb-0.5">Görsel (boş = varsayılan)</label>
+            <input type="file" accept="image/*" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0], setSokakImage)} className="text-xs" data-testid="input-sokak-banner-file" />
+            {sokakImage && (
+              <div className="mt-2 border rounded overflow-hidden">
+                <img src={sokakImage} alt="önizleme" className="w-full h-auto max-h-32 object-contain" />
+                <button type="button" onClick={() => setSokakImage("")} className="text-xs text-red-600 px-2 py-1 hover:underline" data-testid="button-clear-sokak-image">
+                  Görseli sil (varsayılana dön)
+                </button>
+              </div>
+            )}
           </div>
-          <input
-            type="checkbox"
-            checked={sokak}
-            onChange={e => setSokak(e.target.checked)}
-            className="w-4 h-4"
-            data-testid="checkbox-sokak-banner-enabled"
-          />
-        </label>
-        <label className="flex items-center justify-between gap-2 p-2 rounded border cursor-pointer hover-elevate">
           <div>
-            <div className="text-sm font-medium">Veteriner Mama Banner'ı</div>
-            <div className="text-[11px] text-muted-foreground">Anasayfada Veteriner Mamaları görseli</div>
+            <label className="text-[10px] text-muted-foreground block mb-0.5">Tıklanınca gidilecek link (boş = /sokak-canlari)</label>
+            <Input value={sokakLink} onChange={e => setSokakLink(e.target.value)} placeholder="/sokak-canlari" className="h-9 text-sm" data-testid="input-sokak-banner-link" />
           </div>
-          <input
-            type="checkbox"
-            checked={veteriner}
-            onChange={e => setVeteriner(e.target.checked)}
-            className="w-4 h-4"
-            data-testid="checkbox-veteriner-banner-enabled"
-          />
-        </label>
+        </div>
+
+        <div className="border rounded-lg p-3 space-y-2">
+          <label className="flex items-center justify-between gap-2 cursor-pointer">
+            <div>
+              <div className="text-sm font-medium">Veteriner Mama Banner'ı</div>
+              <div className="text-[11px] text-muted-foreground">Anasayfada Veteriner Mamaları görseli</div>
+            </div>
+            <input
+              type="checkbox"
+              checked={veteriner}
+              onChange={e => setVeteriner(e.target.checked)}
+              className="w-4 h-4"
+              data-testid="checkbox-veteriner-banner-enabled"
+            />
+          </label>
+          <div>
+            <label className="text-[10px] text-muted-foreground block mb-0.5">Görsel (boş = varsayılan)</label>
+            <input type="file" accept="image/*" onChange={e => e.target.files?.[0] && handleFile(e.target.files[0], setVeterinerImage)} className="text-xs" data-testid="input-veteriner-banner-file" />
+            {veterinerImage && (
+              <div className="mt-2 border rounded overflow-hidden">
+                <img src={veterinerImage} alt="önizleme" className="w-full h-auto max-h-32 object-contain" />
+                <button type="button" onClick={() => setVeterinerImage("")} className="text-xs text-red-600 px-2 py-1 hover:underline" data-testid="button-clear-veteriner-image">
+                  Görseli sil (varsayılana dön)
+                </button>
+              </div>
+            )}
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground block mb-0.5">Tıklanınca gidilecek link (boş = /kategori/veteriner)</label>
+            <Input value={veterinerLink} onChange={e => setVeterinerLink(e.target.value)} placeholder="/kategori/veteriner" className="h-9 text-sm" data-testid="input-veteriner-banner-link" />
+          </div>
+        </div>
+
         <div className="text-[11px] text-muted-foreground bg-muted/50 rounded p-2">
           <strong>Not:</strong> "Yeni Üyeye 100 TL Bonus" banner'ının aç/kapat ayarı yukarıdaki <em>Üst Promo Banner</em> kartından yapılır.
         </div>
@@ -7548,7 +7608,7 @@ function BannersListSection() {
           <div className="flex gap-2 flex-wrap">
             <Input type="number" placeholder="Sıra" value={sortOrder} onChange={e => setSortOrder(e.target.value)} className="h-8 text-sm w-20" />
             <select value={position} onChange={e => setPosition(e.target.value)} className="h-8 text-sm border rounded px-2 bg-background" data-testid="select-banner-position">
-              <option value="home_top">Üst (Kategori Üstü)</option>
+                <option value="home_top">Üst (Kategori Üstü)</option>
               <option value="home_below_category">Alt (Kategori Altı)</option>
               <option value="home_bottom_carousel">Alt Karusel (Footer Üstü, Satın Al Butonlu)</option>
               <option value="campaign_top">Kampanya Sayfası Üstü (1000x650 px)</option>
