@@ -3,6 +3,7 @@ import { Phone, Mail, MapPin, ChevronDown, ChevronUp, ShoppingCart, Truck, Credi
 import { SiWhatsapp } from "react-icons/si";
 import { useState } from "react";
 import SEO, { SITE_DOMAIN, FAQ_JSONLD } from "@/components/SEO";
+import { brandify } from "@/lib/store";
 
 const COMPANY = {
   name: "Sizpa İnternet Tic. Ltd. Şti.",
@@ -130,7 +131,7 @@ export function SSSPage() {
         canonical={`${SITE_DOMAIN}/sss`}
         jsonLd={FAQ_JSONLD(faqs.map(f => ({ question: f.q, answer: f.a })))}
       />
-      <p className="text-sm text-muted-foreground mb-4">JETGO Pet Shop hakkında en çok sorulan sorular ve detaylı cevapları aşağıda yer almaktadır.</p>
+      <p className="text-sm text-muted-foreground mb-4">{brandify("JETGO Pet Shop")} hakkında en çok sorulan sorular ve detaylı cevapları aşağıda yer almaktadır.</p>
       <div className="space-y-2">
         {faqs.map((faq, i) => (
           <div key={i} className="border rounded-lg overflow-hidden" data-testid={`faq-item-${i}`}>
@@ -170,7 +171,7 @@ export function IslemRehberiPage() {
     <PageWrapper title="İşlem Rehberi">
       <SEO title="İşlem Rehberi - Nasıl Sipariş Verilir | JETGO Samsun Pet Shop" description="JETGO Pet Shop'tan adım adım nasıl sipariş vereceğinizi öğrenin. Üyelik, sepet, ödeme ve teslimat süreçleri hakkında detaylı bilgi." canonical={`${SITE_DOMAIN}/islem-rehberi`} />
 
-      <p className="text-sm text-muted-foreground mb-6">JETGO'dan sipariş vermek çok kolay! Adım adım nasıl yapacağınızı aşağıda bulabilirsiniz.</p>
+      <p className="text-sm text-muted-foreground mb-6">{brandify("JETGO")}'dan sipariş vermek çok kolay! Adım adım nasıl yapacağınızı aşağıda bulabilirsiniz.</p>
 
       <div className="space-y-4">
         {steps.map((step, i) => {
@@ -218,11 +219,11 @@ export function TeslimatIadePage() {
       <SEO title="Teslimat ve İade Şartları | JETGO Samsun Pet Shop" description="JETGO Pet Shop teslimat koşulları, teslimat süreleri, iade politikası ve cayma hakkı hakkında detaylı bilgi." canonical={`${SITE_DOMAIN}/teslimat-iade`} />
 
       <Section>
-        <p><strong>{COMPANY.name}</strong> ("JETGO") olarak müşterilerimize hızlı, güvenilir ve şeffaf bir alışveriş deneyimi sunmayı taahhüt ediyoruz. İşbu sayfa, teslimat koşullarımızı ve 6502 sayılı Tüketicinin Korunması Hakkında Kanun kapsamındaki iade politikamızı detaylı olarak açıklamaktadır.</p>
+        <p><strong>{COMPANY.name}</strong> ("{brandify("JETGO")}") olarak müşterilerimize hızlı, güvenilir ve şeffaf bir alışveriş deneyimi sunmayı taahhüt ediyoruz. İşbu sayfa, teslimat koşullarımızı ve 6502 sayılı Tüketicinin Korunması Hakkında Kanun kapsamındaki iade politikamızı detaylı olarak açıklamaktadır.</p>
       </Section>
 
       <Section title="1. Teslimat Bölgesi">
-        <p>JETGO Pet Shop, Samsun ili Atakum ilçesi ve çevresindeki belirli mahallelere teslimat hizmeti sunmaktadır.</p>
+        <p>{brandify("JETGO Pet Shop")}, Samsun ili Atakum ilçesi ve çevresindeki belirli mahallelere teslimat hizmeti sunmaktadır.</p>
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Teslimat yapılan mahalleler, sipariş oluşturma aşamasında mahalle seçim listesinde gösterilmektedir.</li>
           <li>Listede yer almayan mahallelere teslimat yapılamamaktadır.</li>
@@ -344,7 +345,7 @@ export function MesafeliSatisSozlesmesiPage() {
       </Section>
 
       <Section title="Madde 2 – Sözleşmenin Konusu">
-        <p>İşbu Sözleşme'nin konusu, Alıcı'nın Satıcı'ya ait JETGO Pet Shop web sitesinden ("Site") elektronik ortamda sipariş vererek satın almak istediği aşağıda nitelikleri ve satış fiyatı belirtilen ürün/ürünlerin satışı ve teslimatına ilişkin 6502 sayılı Kanun ve Mesafeli Sözleşmeler Yönetmeliği hükümleri gereğince tarafların hak ve yükümlülüklerinin belirlenmesidir.</p>
+        <p>İşbu Sözleşme'nin konusu, Alıcı'nın Satıcı'ya ait {brandify("JETGO Pet Shop")} web sitesinden ("Site") elektronik ortamda sipariş vererek satın almak istediği aşağıda nitelikleri ve satış fiyatı belirtilen ürün/ürünlerin satışı ve teslimatına ilişkin 6502 sayılı Kanun ve Mesafeli Sözleşmeler Yönetmeliği hükümleri gereğince tarafların hak ve yükümlülüklerinin belirlenmesidir.</p>
         <p>Alıcı, satışa konu ürünün temel nitelikleri, satış fiyatı, ödeme şekli, teslimat koşulları ve süresi ile cayma hakkına ilişkin ön bilgilendirmeyi okuyup bilgi sahibi olduğunu ve elektronik ortamda gerekli onayı verdiğini kabul, beyan ve taahhüt eder.</p>
       </Section>
 
@@ -571,7 +572,7 @@ export function GizlilikPage() {
       <SEO title="Gizlilik Politikası | JETGO Samsun Pet Shop" description="JETGO Pet Shop gizlilik politikası. Kişisel verilerinizin nasıl toplandığı, kullanıldığı, korunduğu ve paylaşıldığı hakkında detaylı bilgi." canonical={`${SITE_DOMAIN}/gizlilik`} />
 
       <Section>
-        <p><strong>{COMPANY.name}</strong> ("JETGO") olarak gizliliğinize saygı duyuyor ve kişisel verilerinizi korumayı taahhüt ediyoruz. İşbu Gizlilik Politikası, web sitemizi ve mobil uygulamamızı kullanırken hangi bilgilerin toplandığını, nasıl kullanıldığını, kimlerle paylaşıldığını ve nasıl korunduğunu detaylı olarak açıklamaktadır.</p>
+        <p><strong>{COMPANY.name}</strong> ("{brandify("JETGO")}") olarak gizliliğinize saygı duyuyor ve kişisel verilerinizi korumayı taahhüt ediyoruz. İşbu Gizlilik Politikası, web sitemizi ve mobil uygulamamızı kullanırken hangi bilgilerin toplandığını, nasıl kullanıldığını, kimlerle paylaşıldığını ve nasıl korunduğunu detaylı olarak açıklamaktadır.</p>
         <p>Sitemizi kullanarak işbu Gizlilik Politikası'nı kabul etmiş sayılırsınız.</p>
       </Section>
 
@@ -680,7 +681,7 @@ export function GizlilikSozlesmesiPage() {
       <SEO title="Gizlilik Sözleşmesi | JETGO Samsun Pet Shop" description="JETGO Pet Shop gizlilik sözleşmesi. Kişisel verilerinizin korunması, veri işleme politikası ve kullanıcı hakları hakkında detaylı sözleşme metni." canonical={`${SITE_DOMAIN}/gizlilik-sozlesmesi`} />
 
       <Section>
-        <p>İşbu Gizlilik Sözleşmesi ("Sözleşme"), <strong>{COMPANY.name}</strong> ("Şirket" veya "Hizmet Sağlayıcı") tarafından işletilen JETGO Pet Shop web sitesini ve mobil uygulamasını ("Site") kullanan kullanıcıların ("Kullanıcı") kişisel verilerinin toplanması, işlenmesi, saklanması, korunması ve imha edilmesine ilişkin koşulları düzenler.</p>
+        <p>İşbu Gizlilik Sözleşmesi ("Sözleşme"), <strong>{COMPANY.name}</strong> ("Şirket" veya "Hizmet Sağlayıcı") tarafından işletilen {brandify("JETGO Pet Shop")} web sitesini ve mobil uygulamasını ("Site") kullanan kullanıcıların ("Kullanıcı") kişisel verilerinin toplanması, işlenmesi, saklanması, korunması ve imha edilmesine ilişkin koşulları düzenler.</p>
         <p>Kullanıcı, Site'yi kullanarak ve/veya üyelik oluşturarak işbu Sözleşme'nin tüm hükümlerini kabul etmiş sayılır.</p>
       </Section>
 
@@ -835,7 +836,7 @@ export function KullanimKosullariPage() {
       <SEO title="Kullanım Koşulları | JETGO Samsun Pet Shop" description="JETGO Pet Shop web sitesi kullanım koşulları ve şartları. Site kullanımı, sipariş, ödeme, fikri mülkiyet ve sorumluluk sınırları hakkında bilgi." canonical={`${SITE_DOMAIN}/kullanim-kosullari`} />
 
       <Section>
-        <p>İşbu Kullanım Koşulları ("Koşullar"), <strong>{COMPANY.name}</strong> tarafından işletilen JETGO Pet Shop web sitesinin ("Site") kullanımına ilişkin kuralları ve koşulları belirler. Site'yi kullanarak işbu Koşulları kabul etmiş sayılırsınız.</p>
+        <p>İşbu Kullanım Koşulları ("Koşullar"), <strong>{COMPANY.name}</strong> tarafından işletilen {brandify("JETGO Pet Shop")} web sitesinin ("Site") kullanımına ilişkin kuralları ve koşulları belirler. Site'yi kullanarak işbu Koşulları kabul etmiş sayılırsınız.</p>
       </Section>
 
       <Section title="1. Hizmet Sağlayıcı Bilgileri">
@@ -843,7 +844,7 @@ export function KullanimKosullariPage() {
       </Section>
 
       <Section title="2. Hizmet Kapsamı">
-        <p>JETGO Pet Shop, Samsun ili Atakum ilçesi ve çevresinde evcil hayvan ürünleri satışı ve teslimat hizmeti sunmaktadır.</p>
+        <p>{brandify("JETGO Pet Shop")}, Samsun ili Atakum ilçesi ve çevresinde evcil hayvan ürünleri satışı ve teslimat hizmeti sunmaktadır.</p>
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Kedi maması, köpek maması, kedi kumu, ödül mamaları, vitamin/takviyeler, bakım ürünleri, aksesuar ve evcil hayvan ekipmanları satışı yapılmaktadır.</li>
           <li>Açık mama (tartarak) satış hizmeti sunulmaktadır.</li>
@@ -879,7 +880,7 @@ export function KullanimKosullariPage() {
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Üye Kullanıcılar, her siparişte sipariş tutarının <strong>%5'i</strong> kadar para puan kazanır.</li>
           <li>Kazanılan puanlar sonraki siparişlerde indirim olarak kullanılabilir.</li>
-          <li>Para puanlar yalnızca JETGO Site'sinde geçerlidir, nakit olarak ödenmez veya transfer edilemez.</li>
+          <li>Para puanlar yalnızca {brandify("JETGO")} Site'sinde geçerlidir, nakit olarak ödenmez veya transfer edilemez.</li>
           <li>Şirket, Para Puan programının koşullarını değiştirme veya sonlandırma hakkını saklı tutar.</li>
           <li>Üyelik iptali halinde birikmiş puanlar sıfırlanır.</li>
         </ul>
@@ -907,7 +908,7 @@ export function KullanimKosullariPage() {
 
       <Section title="8. Fikri Mülkiyet Hakları">
         <ul className="list-disc list-inside space-y-1 ml-2">
-          <li>Site'de yer alan JETGO logosu, tasarım, grafik, metin, yazılım ve diğer tüm içerik {COMPANY.name}'ne aittir ve Fikri ve Sınai Mülkiyet Hakları mevzuatı ile korunmaktadır.</li>
+          <li>Site'de yer alan {brandify("JETGO")} logosu, tasarım, grafik, metin, yazılım ve diğer tüm içerik {COMPANY.name}'ne aittir ve Fikri ve Sınai Mülkiyet Hakları mevzuatı ile korunmaktadır.</li>
           <li>Site içeriği izinsiz kopyalanamaz, çoğaltılamaz, dağıtılamaz, yayınlanamaz veya ticari amaçla kullanılamaz.</li>
           <li>Ürün görselleri, ilgili markaların ve üreticilerin mülkiyetindedir; bilgilendirme amacıyla kullanılmaktadır.</li>
         </ul>
@@ -953,7 +954,7 @@ export function CerezPage() {
       <SEO title="Çerez Politikası | JETGO Samsun Pet Shop" description="JETGO Pet Shop çerez (cookie) kullanımı hakkında detaylı bilgilendirme. Çerez türleri, kullanım amaçları ve yönetimi." canonical={`${SITE_DOMAIN}/cerez-politikasi`} />
 
       <Section>
-        <p><strong>{COMPANY.name}</strong> ("JETGO") olarak web sitemizde çerezler (cookies) kullanmaktayız. İşbu Çerez Politikası, sitemizde hangi çerezlerin kullanıldığını, ne amaçla kullanıldığını ve çerezleri nasıl yönetebileceğinizi açıklamaktadır.</p>
+        <p><strong>{COMPANY.name}</strong> ("{brandify("JETGO")}") olarak web sitemizde çerezler (cookies) kullanmaktayız. İşbu Çerez Politikası, sitemizde hangi çerezlerin kullanıldığını, ne amaçla kullanıldığını ve çerezleri nasıl yönetebileceğinizi açıklamaktadır.</p>
         <p>Sitemizi kullanarak çerez kullanımına onay vermiş sayılırsınız.</p>
       </Section>
 
@@ -1042,11 +1043,11 @@ export function HakkimizdaPage() {
       <SEO title="Hakkımızda | JETGO Samsun Pet Shop" description="JETGO - Samsun Atakum'un güvenilir pet shop'u. Sizpa İnternet Tic. Ltd. Şti. tarafından işletilmektedir. Kedi, köpek, kuş ve kemirgen ürünlerinde kaliteli hizmet." canonical={`${SITE_DOMAIN}/hakkimizda`} />
 
       <Section>
-        <p><strong>{COMPANY.name}</strong> bünyesinde faaliyet gösteren <strong>JETGO Pet Shop</strong> olarak, Samsun Atakum'da evcil hayvan sahiplerine kaliteli ürünleri en uygun fiyatlarla ulaştırmayı hedefliyoruz.</p>
+        <p><strong>{COMPANY.name}</strong> bünyesinde faaliyet gösteren <strong>{brandify("JETGO Pet Shop")}</strong> olarak, Samsun Atakum'da evcil hayvan sahiplerine kaliteli ürünleri en uygun fiyatlarla ulaştırmayı hedefliyoruz.</p>
       </Section>
 
       <Section title="Biz Kimiz?">
-        <p>JETGO, kedi, köpek, kuş ve kemirgen sahiplerinin tüm ihtiyaçlarını tek bir noktadan karşılayan modern bir pet shop platformudur. Geniş ürün yelpazemiz ile evcil hayvanınızın beslenme, bakım ve aksesuar ihtiyaçlarını hızlı ve güvenilir bir şekilde karşılıyoruz.</p>
+        <p>{brandify("JETGO")}, kedi, köpek, kuş ve kemirgen sahiplerinin tüm ihtiyaçlarını tek bir noktadan karşılayan modern bir pet shop platformudur. Geniş ürün yelpazemiz ile evcil hayvanınızın beslenme, bakım ve aksesuar ihtiyaçlarını hızlı ve güvenilir bir şekilde karşılıyoruz.</p>
         <p className="mt-2">Ürün portföyümüzde 900'den fazla ürün çeşidiyle hizmet vermekteyiz:</p>
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Kuru mamalar (yavru, yetişkin, kısırlaştırılmış, ırk bazlı, diyet)</li>
@@ -1068,7 +1069,7 @@ export function HakkimizdaPage() {
         <p className="mt-1">Royal Canin, Pro Plan, Hill's Science Plan, N&D Farmina, Reflex, Reflex Plus, ProChoice, Brit Care, Profine, Acana, Orijen, Gimcat, Gimdog, Felix, Gourmet, Purina, Wahlen, Bioline, M-Pets, Pawise, Nunbell ve daha fazlası.</p>
       </Section>
 
-      <Section title="Neden JETGO?">
+      <Section title={brandify("Neden JETGO?")}>
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li><strong>Uygun fiyat garantisi:</strong> Piyasanın en uygun fiyatlarıyla, kaliteden ödün vermeden hizmet veriyoruz.</li>
           <li><strong>Aynı gün teslimat:</strong> Samsun Atakum bölgesinde aynı gün veya ertesi gün kapınıza teslim.</li>
@@ -1194,7 +1195,7 @@ export function IletisimPage() {
 export function MagazaPage() {
   const storeFaqs = [
     {
-      q: "JETGO Pet Shop mağazası nerede?",
+      q: brandify("JETGO Pet Shop mağazası nerede?"),
       a: `Mağazamız ${COMPANY.address} adresinde, Atakum'un merkezi konumunda Atatürk Bulvarı üzerinde yer almaktadır. OMÜ Eğitim ve Araştırma Hastanesi, Atakum Sahili ve Yenimahalle bölgesine yürüme mesafesindedir.`
     },
     {
@@ -1269,7 +1270,7 @@ export function MagazaPage() {
   };
 
   return (
-    <PageWrapper title="JETGO Pet Shop Atakum Mağazası">
+    <PageWrapper title={brandify("JETGO Pet Shop Atakum Mağazası")}>
       <SEO
         title="JETGO Atakum Mağaza | Samsun Pet Shop Adres, Harita, Çalışma Saatleri"
         description="JETGO Pet Shop Atakum mağazası: Yenimahalle Atatürk 3. Kısım Bulvarı No:113/A. Aynı gün teslimat, kapıda ödeme, 900+ ürün. Pzt-Cmt 09:00-22:00, Pazar 10:00-22:00."
@@ -1283,7 +1284,7 @@ export function MagazaPage() {
           <div className="flex items-start gap-3">
             <Store className="w-7 h-7 text-primary flex-shrink-0 mt-0.5" />
             <div>
-              <h2 className="font-semibold text-base mb-1">JETGO Pet Shop — Atakum, Samsun</h2>
+              <h2 className="font-semibold text-base mb-1">{brandify("JETGO Pet Shop")} — Atakum, Samsun</h2>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 Samsun Atakum'un merkezinde, Atatürk Bulvarı üzerinde hizmet veren mahalle pet shop'unuz.
                 900+ ürün, taze stok, son kullanma tarihi kontrollü mama, kapıda ödeme ve aynı gün teslimat seçenekleriyle
@@ -1310,7 +1311,7 @@ export function MagazaPage() {
             </div>
             <div className="flex gap-2 pt-1">
               <a
-                href={`https://wa.me/${COMPANY.whatsapp}?text=${encodeURIComponent("Merhaba, JETGO Pet Shop hakkında bilgi almak istiyorum.")}`}
+                href={`https://wa.me/${COMPANY.whatsapp}?text=${encodeURIComponent(`Merhaba, ${brandify("JETGO Pet Shop")} hakkında bilgi almak istiyorum.`)}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 inline-flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium px-3 py-2 rounded-lg transition-colors"
@@ -1345,7 +1346,7 @@ export function MagazaPage() {
 
         <div className="border rounded-lg overflow-hidden" data-testid="store-map">
           <iframe
-            title="JETGO Pet Shop Atakum Mağaza Konumu"
+            title={brandify("JETGO Pet Shop Atakum Mağaza Konumu")}
             src="https://maps.google.com/maps?q=Yenimahalle%20Atat%C3%BCrk%203.%20K%C4%B1s%C4%B1m%20Bulvar%C4%B1%20No%3A113%2FA%20Atakum%20Samsun&t=&z=15&ie=UTF8&iwloc=&output=embed"
             width="100%"
             height="320"
@@ -1373,7 +1374,7 @@ export function MagazaPage() {
         <div className="p-5 border rounded-lg space-y-2" data-testid="store-about">
           <h2 className="font-semibold">Mağazamız Hakkında</h2>
           <p className="text-sm text-muted-foreground leading-relaxed">
-            JETGO Pet Shop, Samsun Atakum'da kurulmuş bir mahalle pet shop'tur. Kedi maması, köpek maması, kedi kumu,
+            {brandify("JETGO Pet Shop")}, Samsun Atakum'da kurulmuş bir mahalle pet shop'tur. Kedi maması, köpek maması, kedi kumu,
             açık mama, ödül-ek besin, oyuncak, tasma, kuş yemi, kemirgen yemi, akvaryum ürünleri ve hijyen ürünleri
             kategorilerinde 900+ ürün bulundurmaktayız.
           </p>

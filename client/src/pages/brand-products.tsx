@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
+import { brandify } from "@/lib/store";
 import { FreeShippingBanner } from "@/components/FreeShippingBanner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -546,7 +547,7 @@ export default function BrandProductsPage() {
               Orijinal Urun
             </Badge>
             <span className="text-xs text-muted-foreground">
-              JETGO, {data.category.brandName} yetkili satıcısıdır.
+              {brandify("JETGO")}, {data.category.brandName} yetkili satıcısıdır.
             </span>
           </div>
         )}

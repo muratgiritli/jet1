@@ -5,6 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD, FAQ_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import { BLOG_POSTS, BLOG_CATEGORIES, type BlogPost } from "@/lib/blog-data";
+import { brandify } from "@/lib/store";
 
 const CATEGORY_COLORS: Record<string, string> = {
   "Kedi Bakımı": "bg-purple-100 text-purple-700",
@@ -184,18 +185,18 @@ function BlogPostPage({ slug }: { slug: string }) {
             <span className="text-xs text-white/70 flex items-center gap-1"><Clock className="w-3 h-3" /> {post.readTime}</span>
             <span className="text-xs text-white/70 flex items-center gap-1"><Calendar className="w-3 h-3" /> {new Date(post.date).toLocaleDateString("tr-TR", { day: "numeric", month: "long", year: "numeric" })}</span>
           </div>
-          <h1 className="text-2xl md:text-3xl font-extrabold" data-testid="blog-post-h1">{post.title}</h1>
+          <h1 className="text-2xl md:text-3xl font-extrabold" data-testid="blog-post-h1">{brandify(post.title)}</h1>
         </div>
       </div>
 
       <article className="max-w-3xl mx-auto px-4 py-8">
-        <p className="text-base text-muted-foreground leading-relaxed mb-8 font-medium">{post.excerpt}</p>
+        <p className="text-base text-muted-foreground leading-relaxed mb-8 font-medium">{brandify(post.excerpt)}</p>
 
         {post.sections.map((section, i) => (
           <section key={i} className="mb-8">
-            <h2 className="text-lg font-bold mb-3" data-testid={`blog-section-h2-${i}`}>{section.heading}</h2>
+            <h2 className="text-lg font-bold mb-3" data-testid={`blog-section-h2-${i}`}>{brandify(section.heading)}</h2>
             {section.content.map((p, j) => (
-              <p key={j} className="text-sm text-muted-foreground leading-relaxed mb-3">{p}</p>
+              <p key={j} className="text-sm text-muted-foreground leading-relaxed mb-3">{brandify(p)}</p>
             ))}
           </section>
         ))}
@@ -207,10 +208,10 @@ function BlogPostPage({ slug }: { slug: string }) {
               {post.faq.map((item, i) => (
                 <details key={i} className="group border rounded-lg overflow-hidden">
                   <summary className="flex items-center justify-between p-4 cursor-pointer font-medium text-sm hover:bg-muted/50 transition-colors">
-                    {item.q}
+                    {brandify(item.q)}
                     <ChevronRight className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-90 shrink-0 ml-2" />
                   </summary>
-                  <div className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">{item.a}</div>
+                  <div className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">{brandify(item.a)}</div>
                 </details>
               ))}
             </div>

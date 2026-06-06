@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { CURRENT_STORE } from "@/lib/store";
+import { CURRENT_STORE, brandify } from "@/lib/store";
 
 interface SEOProps {
   title: string;
@@ -18,7 +18,10 @@ export const DEFAULT_OG_IMAGE = `${SITE_DOMAIN}${CURRENT_STORE.seo.ogImage}`;
 
 export default function SEO({ title, description, canonical, ogImage, ogType, jsonLd, noindex, keywords }: SEOProps) {
   useEffect(() => {
-    document.title = title;
+    const bTitle = brandify(title);
+    const bDescription = brandify(description);
+    const bKeywords = keywords ? brandify(keywords) : keywords;
+    document.title = bTitle;
 
     const setMeta = (attr: string, key: string, content: string) => {
       let el = document.querySelector(`meta[${attr}="${key}"]`) as HTMLMetaElement | null;
@@ -26,25 +29,25 @@ export default function SEO({ title, description, canonical, ogImage, ogType, js
       el.content = content;
     };
 
-    setMeta("name", "description", description);
-    if (keywords) {
-      setMeta("name", "keywords", keywords);
+    setMeta("name", "description", bDescription);
+    if (bKeywords) {
+      setMeta("name", "keywords", bKeywords);
     } else {
       const kwEl = document.querySelector('meta[name="keywords"]');
       if (kwEl) kwEl.remove();
     }
-    setMeta("property", "og:title", title);
-    setMeta("property", "og:description", description);
+    setMeta("property", "og:title", bTitle);
+    setMeta("property", "og:description", bDescription);
     setMeta("property", "og:type", ogType || "website");
     setMeta("property", "og:site_name", SITE_NAME);
     setMeta("property", "og:locale", "tr_TR");
     setMeta("property", "og:image", ogImage || DEFAULT_OG_IMAGE);
     setMeta("property", "og:image:width", "1200");
     setMeta("property", "og:image:height", "630");
-    setMeta("property", "og:image:alt", title);
+    setMeta("property", "og:image:alt", bTitle);
     setMeta("name", "twitter:card", "summary_large_image");
-    setMeta("name", "twitter:title", title);
-    setMeta("name", "twitter:description", description);
+    setMeta("name", "twitter:title", bTitle);
+    setMeta("name", "twitter:description", bDescription);
     setMeta("name", "twitter:image", ogImage || DEFAULT_OG_IMAGE);
     setMeta("name", "geo.region", "TR-55");
     setMeta("name", "geo.placename", "Samsun");
@@ -68,7 +71,7 @@ export default function SEO({ title, description, canonical, ogImage, ogType, js
     let ldScript = document.getElementById("json-ld-seo") as HTMLScriptElement | null;
     if (jsonLd) {
       if (!ldScript) { ldScript = document.createElement("script"); ldScript.id = "json-ld-seo"; ldScript.type = "application/ld+json"; document.head.appendChild(ldScript); }
-      ldScript.textContent = Array.isArray(jsonLd) ? JSON.stringify(jsonLd) : JSON.stringify(jsonLd);
+      ldScript.textContent = brandify(JSON.stringify(jsonLd));
     }
 
     return () => {

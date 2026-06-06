@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { brandify } from "@/lib/store";
 import { ChevronDown } from "lucide-react";
 
 interface Variant {
@@ -81,7 +82,7 @@ export default function ProductInfoAccordions({
       `${productName} kullananlar`,
       brandName ? `${brandName} ürünleri` : "pet shop ürünleri",
       "samsun pet shop",
-      "jetgo pet shop",
+      brandify("jetgo pet shop"),
     ];
     if (animal === "kedi") base.push("kedi maması", "kedi bakım ürünleri");
     if (animal === "kopek") base.push("köpek maması", "köpek bakım ürünleri");

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { brandify } from "@/lib/store";
 import { motion, AnimatePresence } from "framer-motion";
 import ProductImage from "@/components/ProductImage";
 import { Card, CardContent } from "@/components/ui/card";
@@ -215,7 +216,7 @@ export default function Home() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-lg font-bold leading-tight" data-testid="text-brand">{directInfo ? directInfo.heading : "JETGO"}</h1>
+              <h1 className="text-lg font-bold leading-tight" data-testid="text-brand">{directInfo ? directInfo.heading : brandify("JETGO")}</h1>
               <p className="text-xs text-muted-foreground" data-testid="text-brand-subtitle">{directInfo ? directInfo.subtitle : "Hızlı Sipariş"}</p>
             </div>
           </div>

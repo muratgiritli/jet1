@@ -1,1 +1,1 @@
-- [Multi-domain store registry](multi-domain-stores.md) — one app serves many branded domains via shared/stores.ts; each domain MUST self-canonicalize or it won't rank.
+- [Multi-domain brandify pattern](multi-domain-branding.md) — one codebase, many branded domains; SEO.tsx auto-brandifies all meta/jsonLd, only visible body text needs manual brandify(), preserve shared email/social in JSON-LD.

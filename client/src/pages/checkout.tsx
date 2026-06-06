@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { brandify } from "@/lib/store";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -1108,7 +1109,7 @@ export default function Checkout() {
                 </DialogHeader>
                 <div className="space-y-2.5 text-xs sm:text-sm text-gray-700">
                   <p>
-                    <strong>Para Puan</strong>, JETGO Pet Shop'ta yaptığınız her alışverişte kazandığınız sadakat puanıdır.
+                    <strong>Para Puan</strong>, {brandify("JETGO Pet Shop")}'ta yaptığınız her alışverişte kazandığınız sadakat puanıdır.
                   </p>
                   <div className="rounded-lg p-2.5" style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}>
                     <p className="font-semibold text-xs sm:text-sm" style={{ color: "#e65100" }}>Nasıl Kazanılır?</p>

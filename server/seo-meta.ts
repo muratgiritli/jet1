@@ -1,6 +1,6 @@
 import { SEO_PAGES, type SeoPageData } from "../client/src/lib/seo-data";
 import { pool as sharedPool } from "./storage";
-import { getStoreByHost, type StoreConfig } from "@shared/stores";
+import { getStoreByHost, brandifyFor, type StoreConfig } from "@shared/stores";
 
 type ProductMeta = {
   id: number;
@@ -92,6 +92,25 @@ function applyGlobalBranding(html: string, store: StoreConfig): string {
   out = replaceTag(out, /<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:image" content="${escapeHtml(ogImage)}" />`);
   out = replaceTag(out, /<meta\s+name="theme-color"\s+content="[^"]*"\s*\/?>/i, `<meta name="theme-color" content="${store.theme.topBar}" />`);
   out = replaceTag(out, /<meta\s+name="apple-mobile-web-app-title"\s+content="[^"]*"\s*\/?>/i, `<meta name="apple-mobile-web-app-title" content="${escapeHtml(store.shortName)}" />`);
+
+  // Brandify the static crawler-visible SEO block (hidden seo-static div) so each
+  // domain shows its own brand name in pre-render/no-JS markup. No-op for default store.
+  out = out.replace(/<div id="seo-static"[^>]*>[\s\S]*?<\/div>/i, (block) => brandifyFor(store, block));
+
+  // Brandify the static JSON-LD fallback block: brand name and self-referential
+  // URLs (url/image/logo) follow the request domain, but contact identifiers
+  // (email + sameAs social handles) are preserved as-is — they point to the single
+  // real business shared across every brand ("tek mutfak, çok tabela"), so they must
+  // NOT be domain-rewritten. No-op for the default store.
+  out = out.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/i, (block) => {
+    const origEmail = block.match(/"email":\s*"[^"]*"/i)?.[0];
+    const origSameAs = block.match(/"sameAs":\s*\[[\s\S]*?\]/i)?.[0];
+    let b = brandifyFor(store, block);
+    if (origEmail) b = b.replace(/"email":\s*"[^"]*"/i, origEmail);
+    if (origSameAs) b = b.replace(/"sameAs":\s*\[[\s\S]*?\]/i, origSameAs);
+    return b;
+  });
+
   return out;
 }
 
@@ -104,10 +123,10 @@ function injectSeoMeta(html: string, urlPath: string, store: StoreConfig): strin
   const data = findSeoData(urlPath);
   if (!data) return html;
 
-  const title = escapeHtml(data.metaTitle || data.title);
-  const description = escapeHtml(data.metaDescription || "");
+  const title = escapeHtml(brandifyFor(store, data.metaTitle || data.title));
+  const description = escapeHtml(brandifyFor(store, data.metaDescription || ""));
   const canonical = `${store.domain}/${data.slug}`;
-  const keywords = data.keywords ? escapeHtml(data.keywords) : "";
+  const keywords = data.keywords ? escapeHtml(brandifyFor(store, data.keywords)) : "";
 
   let out = html;
 
@@ -152,9 +171,9 @@ function injectSeoMeta(html: string, urlPath: string, store: StoreConfig): strin
   }
 
   if (data.h1 && data.intro && data.intro.length > 0) {
-    const h1 = escapeHtml(data.h1);
+    const h1 = escapeHtml(brandifyFor(store, data.h1));
     const introHtml = data.intro
-      .map((p) => `<p>${escapeHtml(p)}</p>`)
+      .map((p) => `<p>${escapeHtml(brandifyFor(store, p))}</p>`)
       .join("\n");
     const noscriptBlock =
       `<noscript>\n` +

@@ -1,4 +1,5 @@
 import { useMemo, useEffect, useState } from "react";
+import { brandify } from "@/lib/store";
 import { FreeShippingBanner } from "@/components/FreeShippingBanner";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -625,7 +626,7 @@ export default function ProductDetailPage() {
         {!isCampaignMode && <FreeShippingBanner className="mb-4" />}
         <div>
           <div className="flex flex-col md:flex-row gap-6">
-              <ImageZoom src={product.img || ""} alt={`${product.name} - Samsun JETGO Pet Shop`} className="md:w-1/2 w-full">
+              <ImageZoom src={product.img || ""} alt={`${product.name} - Samsun ${brandify("JETGO Pet Shop")}`} className="md:w-1/2 w-full">
                 <div className="aspect-square flex items-center justify-center rounded-lg overflow-hidden bg-muted/30 relative" data-testid="img-product-detail">
                   <ProductImage
                     src={product.img}
@@ -805,7 +806,7 @@ export default function ProductDetailPage() {
                   </DialogHeader>
                   <div className="space-y-3 text-sm text-gray-700">
                     <p>
-                      <strong>Para Puan</strong>, JETGO Pet Shop'ta yaptığınız her alışverişte kazandığınız sadakat puanıdır.
+                      <strong>Para Puan</strong>, {brandify("JETGO Pet Shop")}'ta yaptığınız her alışverişte kazandığınız sadakat puanıdır.
                     </p>
                     <div className="rounded-lg p-3" style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}>
                       <p className="font-semibold" style={{ color: "#e65100" }}>Nasıl Kazanılır?</p>

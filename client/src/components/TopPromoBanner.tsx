@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { brandify } from "@/lib/store";
 import { X, Download, Smartphone } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -182,7 +183,7 @@ export default function TopPromoBanner() {
                     <p>1. Bu sayfayı Safari'de açın</p>
                     <p>
                       2. Adres çubuğuna{" "}
-                      <span className="font-mono font-semibold">jetgomarket.com</span> yazın
+                      <span className="font-mono font-semibold">{brandify("jetgomarket.com")}</span> yazın
                     </p>
                     <p>3. Alt menüden Paylaş → Ana Ekrana Ekle</p>
                   </div>
@@ -202,7 +203,7 @@ export default function TopPromoBanner() {
                     olarak kurabilirsiniz.
                   </p>
                   <p className="text-xs text-gray-500">
-                    İkon görünmüyorsa: Tarayıcı menüsü (⋮) → "JETGO'yu Yükle" / "Install JETGO"
+                    İkon görünmüyorsa: Tarayıcı menüsü (⋮) → "{brandify("JETGO")}'yu Yükle" / "Install {brandify("JETGO")}"
                   </p>
                 </div>
               </>

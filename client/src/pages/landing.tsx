@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { brandify } from "@/lib/store";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -48,7 +49,7 @@ import brandBonus from "@/assets/images/brands/bonus.webp";
 
 const HERO_SLIDES = [
   {
-    title: "İnternetten Bekleme\nJetgo'dan Aynı Gün Gelsin 🚀",
+    title: brandify("İnternetten Bekleme\nJetgo'dan Aynı Gün Gelsin 🚀"),
     subtitle: "Orijinal ürün – kapıda kontrol – anında teslim",
     gradient: "from-orange-500 via-amber-500 to-yellow-400",
     badges: true,
@@ -604,7 +605,7 @@ function WhyJetgo() {
 
   return (
     <div data-testid="section-why-jetgo">
-      <h3 className="text-base md:text-2xl font-extrabold text-gray-900 mb-3 md:mb-6">Neden Jetgo?</h3>
+      <h3 className="text-base md:text-2xl font-extrabold text-gray-900 mb-3 md:mb-6">{brandify("Neden Jetgo?")}</h3>
       <div className="space-y-2.5 md:hidden">
         {items.map((item, i) => (
           <div key={i} className={`bg-gradient-to-r ${item.bg} rounded-xl p-3 flex items-center gap-3 border ${item.border}`} data-testid={`why-jetgo-${i}`}>

@@ -38,6 +38,8 @@ export interface StoreConfig {
   name: string;
   /** Short brand name (PWA / app title). */
   shortName: string;
+  /** Distinctive brand word used to swap "JETGO" mentions in shared content. */
+  brandWord: string;
   /** SEO alternateName list. */
   alternateNames: string[];
   /** Canonical absolute base URL, no trailing slash. */
@@ -67,6 +69,7 @@ const jetgo: StoreConfig = {
   hostnames: ["jetgomarket.com", "www.jetgomarket.com"],
   name: "JETGO Pet Shop Samsun",
   shortName: "JETGO",
+  brandWord: "JETGO",
   alternateNames: ["JETGO Samsun Pet Shop", "JetGo Pet", "JETGO Atakum Pet Shop", "JETGO"],
   domain: "https://www.jetgomarket.com",
   logo: "/logo-jetgo.webp",
@@ -101,6 +104,7 @@ const atakum: StoreConfig = {
   hostnames: ["atakumpetshop.com", "www.atakumpetshop.com"],
   name: "Atakum Pet Shop",
   shortName: "Atakum Pet Shop",
+  brandWord: "Atakum",
   alternateNames: ["Atakum Petshop", "Atakum Pet", "Atakum Samsun Pet Shop", "Atakum Pet Shop Samsun"],
   domain: "https://www.atakumpetshop.com",
   logo: "",
@@ -161,6 +165,24 @@ export function getStoreByExactHost(host?: string | null): StoreConfig | undefin
     if (s.hostnames.some((hn) => hn.toLowerCase() === h)) return s;
   }
   return undefined;
+}
+
+/**
+ * Replace shared-content "JETGO" / "jetgomarket.com" brand mentions with the
+ * given store's brand word and domain. No-op for the default (jetgo) store so
+ * its content is never altered. Used by both client (<SEO>, page bodies) and
+ * server (meta injection) so every domain reads as its own brand.
+ */
+export function brandifyFor(store: StoreConfig, text: string): string {
+  if (!text || store.id === DEFAULT_STORE.id) return text;
+  const host = canonicalHost(store);
+  const apex = host.replace(/^www\./, "");
+  return text
+    .replace(/www\.jetgomarket\.com/gi, host)
+    .replace(/jetgomarket\.com/gi, apex)
+    .replace(/JETGO/g, store.brandWord)
+    .replace(/Jetgo/g, store.brandWord)
+    .replace(/jetgo/g, store.brandWord);
 }
 
 /** Canonical hostname (with www if that is the canonical form) for a store. */

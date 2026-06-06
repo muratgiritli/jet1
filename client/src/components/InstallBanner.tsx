@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { brandify } from "@/lib/store";
 import { X, Download, Gift, Sparkles } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 
@@ -109,7 +110,7 @@ export default function InstallBanner() {
             className="text-[13px] sm:text-sm font-bold text-gray-900 leading-tight flex items-center gap-1"
             data-testid="text-install-title"
           >
-            JETGO Uygulamasını İndir
+            {brandify("JETGO")} Uygulamasını İndir
             <Sparkles className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
           </p>
           <p className="text-[11px] sm:text-xs text-gray-700 leading-tight mt-0.5">
@@ -184,7 +185,7 @@ export default function InstallBanner() {
                     <p>1. Bu sayfayı Safari'de açın</p>
                     <p>
                       2. Adres çubuğuna{" "}
-                      <span className="font-mono font-semibold">jetgomarket.com</span> yazın
+                      <span className="font-mono font-semibold">{brandify("jetgomarket.com")}</span> yazın
                     </p>
                     <p>3. Alt menüden Paylaş → Ana Ekrana Ekle</p>
                   </div>
@@ -204,7 +205,7 @@ export default function InstallBanner() {
                     olarak kurabilirsiniz.
                   </p>
                   <p className="text-xs text-gray-500">
-                    İkon görünmüyorsa: Tarayıcı menüsü (⋮) → "JETGO'yu Yükle" / "Install JETGO"
+                    İkon görünmüyorsa: Tarayıcı menüsü (⋮) → "{brandify("JETGO")}'yu Yükle" / "Install {brandify("JETGO")}"
                   </p>
                 </div>
               </>

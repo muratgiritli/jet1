@@ -4,6 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD, FAQ_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import { SEO_PAGES, type SeoPageData } from "@/lib/seo-data";
+import { brandify, CURRENT_STORE } from "@/lib/store";
 import NotFound from "@/pages/not-found";
 
 function StoreInfoBox({ hideWhatsapp = false }: { hideWhatsapp?: boolean }) {
@@ -12,7 +13,7 @@ function StoreInfoBox({ hideWhatsapp = false }: { hideWhatsapp?: boolean }) {
       <div className="bg-[#6B3480]/5 px-5 py-3 border-b border-[#6B3480]/10">
         <h2 className="text-lg font-bold flex items-center gap-2">
           <MapPin className="w-5 h-5 text-[#6B3480]" />
-          JETGO Pet Shop - Mağaza Bilgileri
+          {brandify("JETGO Pet Shop")} - Mağaza Bilgileri
         </h2>
       </div>
       <div className="p-5 grid gap-4 sm:grid-cols-2">
@@ -118,8 +119,8 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
             <ChevronRight className="w-3 h-3" />
             <span className="text-white">{page.title}</span>
           </nav>
-          <h1 className="text-2xl md:text-4xl font-extrabold mb-4" data-testid="seo-h1">{page.h1}</h1>
-          <p className="text-sm md:text-base text-white/80 max-w-2xl">{page.intro[0]}</p>
+          <h1 className="text-2xl md:text-4xl font-extrabold mb-4" data-testid="seo-h1">{brandify(page.h1)}</h1>
+          <p className="text-sm md:text-base text-white/80 max-w-2xl">{brandify(page.intro[0])}</p>
         </div>
       </div>
 
@@ -145,23 +146,23 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
 
         <section>
           {page.intro.slice(1).map((p, i) => (
-            <p key={i} className="text-muted-foreground leading-relaxed mb-4">{p}</p>
+            <p key={i} className="text-muted-foreground leading-relaxed mb-4">{brandify(p)}</p>
           ))}
         </section>
 
         {page.sections && page.sections.length > 0 && (
           page.sections.map((sec, si) => (
             <section key={si}>
-              <h2 className="text-xl font-bold mb-3">{sec.h2}</h2>
+              <h2 className="text-xl font-bold mb-3">{brandify(sec.h2)}</h2>
               {sec.paragraphs.map((p, pi) => (
-                <p key={pi} className="text-muted-foreground leading-relaxed mb-3">{p}</p>
+                <p key={pi} className="text-muted-foreground leading-relaxed mb-3">{brandify(p)}</p>
               ))}
               {sec.list && sec.list.length > 0 && (
                 <ul className="grid gap-1.5 mt-2 mb-3">
                   {sec.list.map((item, li) => (
                     <li key={li} className="flex items-start gap-2 text-sm text-muted-foreground">
                       <ChevronRight className="w-3.5 h-3.5 text-[#6B3480] mt-0.5 shrink-0" />
-                      <span>{item}</span>
+                      <span>{brandify(item)}</span>
                     </li>
                   ))}
                 </ul>
@@ -173,7 +174,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
         {page.features && page.features.length > 0 && (
           <section>
             <h2 className="text-xl font-bold mb-4" data-testid="seo-h2-features">
-              {page.type === "blog" ? "Marka Detayları" : page.type === "category" ? "Markalar ve Ürünler" : page.type === "mahalle" ? "Teslimat Avantajları" : page.type === "keyword" ? "Neden JETGO?" : page.type === "brand" ? "Marka Avantajları" : "Hizmetlerimiz"}
+              {page.type === "blog" ? "Marka Detayları" : page.type === "category" ? "Markalar ve Ürünler" : page.type === "mahalle" ? "Teslimat Avantajları" : page.type === "keyword" ? `Neden ${CURRENT_STORE.brandWord}?` : page.type === "brand" ? "Marka Avantajları" : "Hizmetlerimiz"}
             </h2>
             <div className="grid gap-3">
               {page.features.map((f, i) => (
@@ -181,7 +182,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
                   <div className="w-6 h-6 rounded-full bg-[#6B3480]/10 flex items-center justify-center shrink-0 mt-0.5">
                     <ChevronRight className="w-3.5 h-3.5 text-[#6B3480]" />
                   </div>
-                  <p className="text-sm text-muted-foreground">{f}</p>
+                  <p className="text-sm text-muted-foreground">{brandify(f)}</p>
                 </div>
               ))}
             </div>
@@ -235,11 +236,11 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
             {page.faq.map((item, i) => (
               <details key={i} className="group border rounded-lg overflow-hidden" data-testid={`faq-${i}`}>
                 <summary className="flex items-center justify-between p-4 cursor-pointer font-medium text-sm hover:bg-muted/50 transition-colors">
-                  {item.q}
+                  {brandify(item.q)}
                   <ChevronRight className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-90 shrink-0 ml-2" />
                 </summary>
                 <div className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">
-                  {item.a}
+                  {brandify(item.a)}
                 </div>
               </details>
             ))}
@@ -253,7 +254,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
               <Link key={link.href} href={link.href}>
                 <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#6B3480]/10 text-[#6B3480] text-sm font-medium hover:bg-[#6B3480]/20 transition-colors cursor-pointer">
                   <ChevronRight className="w-3 h-3" />
-                  {link.text}
+                  {brandify(link.text)}
                 </span>
               </Link>
             ))}
@@ -271,7 +272,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
                 <Link key={b.href} href={b.href}>
                   <Button variant="secondary" size="lg" className="w-full sm:w-auto" data-testid={`cta-buy-${i}`}>
                     <ShoppingCart className="w-4 h-4 mr-2" />
-                    {b.text}
+                    {brandify(b.text)}
                   </Button>
                 </Link>
               ))

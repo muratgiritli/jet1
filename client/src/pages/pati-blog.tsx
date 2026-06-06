@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { brandify } from "@/lib/store";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -240,7 +241,7 @@ export default function PatiBlogPage() {
                       <div className="mt-3 p-3 bg-purple-50 rounded-lg">
                         <p className="text-xs font-semibold text-purple-700 mb-1">💡 Uzman İpuçları:</p>
                         {article.tips.map((tip, i) => (
-                          <p key={i} className="text-xs text-purple-600 mt-0.5">• {tip}</p>
+                          <p key={i} className="text-xs text-purple-600 mt-0.5">• {brandify(tip)}</p>
                         ))}
                       </div>
                     )}
