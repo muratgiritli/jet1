@@ -107,7 +107,7 @@ const atakum: StoreConfig = {
   brandWord: "Atakum",
   alternateNames: ["Atakum Petshop", "Atakum Pet", "Atakum Samsun Pet Shop", "Atakum Pet Shop Samsun"],
   domain: "https://www.atakumpetshop.com",
-  logo: "",
+  logo: "/logo-atakum.webp",
   favicon: "/favicon-192.png",
   phone: "+908508403959",
   phoneDisplay: "0850 840 39 59",
