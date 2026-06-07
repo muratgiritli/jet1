@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
-import defaultBanner from "@assets/girisbanner_1780220225762.avif";
 
 interface TopBannerData {
   enabled: boolean;
@@ -11,9 +10,9 @@ interface TopBannerData {
 export default function TopBanner() {
   const { data } = useQuery<TopBannerData>({ queryKey: ["/api/public/top-banner"] });
 
-  if (!data || !data.enabled) return null;
+  if (!data || !data.enabled || !data.image) return null;
 
-  const img = data.image || defaultBanner;
+  const img = data.image;
   const link = data.link || "/giris";
   const isExternal = /^https?:\/\//i.test(link);
 

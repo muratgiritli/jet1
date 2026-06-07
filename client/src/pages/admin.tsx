@@ -6842,6 +6842,7 @@ function BannerEditRow({ banner, onCancel }: { banner: any; onCancel: () => void
   const [sortOrder, setSortOrder] = useState(String(banner.sortOrder ?? 0));
   const [position, setPosition] = useState(banner.position || "home_top");
   const [device, setDevice] = useState(banner.device || "both");
+  const [store, setStore] = useState(banner.store ?? "all");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const { toast } = useToast();
   const { store: adminStore } = useAdminStore();
@@ -6853,6 +6854,7 @@ function BannerEditRow({ banner, onCancel }: { banner: any; onCancel: () => void
       formData.append("sortOrder", sortOrder);
       formData.append("position", position);
       formData.append("device", device);
+      formData.append("store", store);
       if (imageFile) formData.append("image", imageFile);
       const res = await fetch(`/api/admin/banners/${banner.id}${storeCtxParam(adminStore)}`, { method: "PATCH", body: formData, credentials: "include" });
       if (!res.ok) throw new Error("Failed");
@@ -6887,6 +6889,12 @@ function BannerEditRow({ banner, onCancel }: { banner: any; onCancel: () => void
           <option value="mobile">Cihaz: Sadece Mobilde Göster</option>
           <option value="desktop">Cihaz: Sadece Masaüstünde Göster</option>
         </select>
+        {STORES.length > 1 && (
+          <select value={store} onChange={e => setStore(e.target.value)} className="h-8 text-sm border rounded px-2 bg-background w-full" data-testid={`select-edit-banner-store-${banner.id}`}>
+            <option value="all">Site: Tüm Siteler (ortak)</option>
+            {STORES.map(s => <option key={s.id} value={s.id}>Site: Sadece {s.name}</option>)}
+          </select>
+        )}
         <div>
           <p className="text-[10px] text-muted-foreground mb-1">Görseli değiştirmek istersen yeni görsel seç (boş bırakırsan mevcut korunur)</p>
           <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="text-xs w-full" />
@@ -7460,7 +7468,7 @@ function TopPromoBannerAdmin() {
               <p className="text-[10px] text-muted-foreground mt-1">Örn: /giris (üye ol), /kampanya, https://...</p>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">Görsel (boş bırakılırsa varsayılan görsel kullanılır)</label>
+              <label className="text-xs text-muted-foreground block mb-1">Görsel (boş bırakılırsa bu sitede banner gösterilmez)</label>
               <input
                 type="file"
                 accept="image/*"
@@ -7476,7 +7484,7 @@ function TopPromoBannerAdmin() {
                     onClick={() => { setImage(""); setPreview(""); }}
                     className="text-xs text-red-600 px-2 py-1 hover:underline"
                     data-testid="button-clear-top-banner-image"
-                  >Görseli sil (varsayılana dön)</button>
+                  >Görseli sil (banner'ı gizle)</button>
                 </div>
               )}
             </div>
@@ -7681,9 +7689,12 @@ function BannersListSection() {
   const [sortOrder, setSortOrder] = useState("0");
   const [position, setPosition] = useState("home_top");
   const [device, setDevice] = useState("both");
+  const [createStore, setCreateStore] = useState(adminStore);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
   const { toast } = useToast();
+
+  useEffect(() => { setCreateStore(adminStore); }, [adminStore]);
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -7693,7 +7704,7 @@ function BannersListSection() {
       formData.append("sortOrder", sortOrder);
       formData.append("position", position);
       formData.append("device", device);
-      formData.append("store", adminStore);
+      formData.append("store", createStore);
       if (imageFile) formData.append("image", imageFile);
       const res = await fetch("/api/admin/banners", { method: "POST", body: formData, credentials: "include" });
       if (!res.ok) throw new Error("Failed");
@@ -7702,7 +7713,7 @@ function BannersListSection() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/banners"] });
       queryClient.invalidateQueries({ queryKey: ["/api/banners"] });
-      setTitle(""); setLinkUrl(""); setSortOrder("0"); setPosition("home_top"); setDevice("both"); setImageFile(null);
+      setTitle(""); setLinkUrl(""); setSortOrder("0"); setPosition("home_top"); setDevice("both"); setCreateStore(adminStore); setImageFile(null);
       toast({ title: "Banner eklendi" });
     },
   });
@@ -7744,6 +7755,12 @@ function BannersListSection() {
               <option value="mobile">Sadece Mobilde</option>
               <option value="desktop">Sadece Masaüstünde</option>
             </select>
+            {STORES.length > 1 && (
+              <select value={createStore} onChange={e => setCreateStore(e.target.value)} className="h-8 text-sm border rounded px-2 bg-background" data-testid="select-banner-store">
+                <option value="all">Tüm Siteler (ortak)</option>
+                {STORES.map(s => <option key={s.id} value={s.id}>Sadece {s.name}</option>)}
+              </select>
+            )}
           </div>
           <input type="file" accept="image/*" onChange={e => setImageFile(e.target.files?.[0] || null)} className="text-xs w-full" />
           <Button size="sm" onClick={() => createMutation.mutate()} disabled={!title.trim() || createMutation.isPending}>

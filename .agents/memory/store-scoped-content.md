@@ -19,6 +19,11 @@ A global store selector drives every section. **CREATE sends the selected store;
 
 **Why:** prevents accidental store reassignment on edit, and keeps shared content centrally manageable.
 
+**Banners exception:** table banners (BannerEditRow + BannersListSection create form) now expose an EXPLICIT per-site "Site" dropdown that DOES send `store` on edit, so admins can convert a shared `all` banner to a specific site (or back). Server PATCH `/api/admin/banners/:id` accepts `body.store` (validated via `isValidStore`, `all` is valid); `storeContextConflict`/`blockedByStoreContext` still allow reassigning shared (`all`) rows. This deliberate-dropdown reassignment is banner-only; campaigns/coupons/delivery still follow the no-store-on-edit rule.
+
+## Settings-based banner "delete" trap
+The top promo banner (`top_banner_*` app_settings) and similar image-settings banners: clearing the image writes `<store>:top_banner_image=""` but does NOT disable. `TopBanner` requires a non-empty image to render (returns null on empty — no bundled-default fallback), so an empty per-store image hides the banner for that site while base/other sites keep theirs. Admin "Görseli sil" copy says it hides the banner. `enabled` flag is a separate master switch.
+
 ## Gotchas
 - Store-prefixed GETs need a custom `queryFn` — the default query fetcher joins the queryKey with "/", so it can't append `?store=`. Use key tuple `[base, store]`; base-key invalidation still prefix-matches it.
 - Coupon codes are unique per `(store, code)` (DB unique index on `(store, upper(code))`), NOT globally; lookup and create/update dup-checks must both be store-scoped or they disagree.
