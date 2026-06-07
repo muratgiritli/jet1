@@ -50,6 +50,8 @@ const SETTING_KEYS = [
   "jetgo:cat_banner1_image", "atakum:cat_banner1_image",
   // payment method gate (the order endpoint refuses unknown/disabled methods)
   "payment_nakit_enabled",
+  // online card gate (Tosla) — needed so online orders pass the payment gate
+  "payment_tosla_enabled", "tosla_client_id", "tosla_api_user", "tosla_api_pass",
 ];
 
 let server: ReturnType<typeof createServer>;
@@ -271,6 +273,15 @@ before(async () => {
   // ---- Enable cash-on-delivery so the order endpoint accepts the method ----
   await setSetting("payment_nakit_enabled", "1");
 
+  // ---- Enable Tosla online card so the order endpoint accepts "online" ----
+  // The order gate requires the method to be enabled AND configured. We never
+  // hit the real Tosla API in these tests (we drive the callback directly), so
+  // the credentials are throwaway placeholders.
+  await setSetting("payment_tosla_enabled", "1");
+  await setSetting("tosla_client_id", `${MARK}_CLIENT`);
+  await setSetting("tosla_api_user", `${MARK}_USER`);
+  await setSetting("tosla_api_pass", `${MARK}_PASS`);
+
   // ---- Seed a customer and forge its authenticated session ----
   const cust = await pool.query(
     "INSERT INTO customers (phone, password, name, is_blacklisted) VALUES ($1, $2, $3, false) RETURNING id",
@@ -299,6 +310,7 @@ after(async () => {
   // Remove seeded rows. Order-derived rows (stock movements, loyalty points)
   // are cleared before the orders/customer they reference.
   if (ids.orders.length) {
+    await pool.query("DELETE FROM tosla_payment_tokens WHERE order_id = ANY($1)", [ids.orders]);
     await pool.query("DELETE FROM stock_movements WHERE order_id = ANY($1)", [ids.orders]);
     await pool.query("DELETE FROM loyalty_points WHERE order_id = ANY($1)", [ids.orders]);
     await pool.query("DELETE FROM orders WHERE id = ANY($1)", [ids.orders]);
@@ -451,6 +463,99 @@ test("order on atakumpetshop.com is tagged source_site=atakum", async () => {
 
 test("order on an unknown host falls back to source_site=jetgo (default store)", async () => {
   assert.equal(await placeOrderAndReadSource("some-preview.replit.dev"), "jetgo");
+});
+
+// ---- Online card source-site attribution across the payment-completion path ----
+//
+// Online card orders (Tosla / iyzico / "online") take a different path than
+// cash/door orders: they are created with payment_status='pending' (stock
+// already decremented) and only become visible/counted once the payment
+// callback flips them to 'completed'. A regression in that completion path
+// could move confirmed revenue to the wrong storefront. These tests drive a
+// real order through creation -> Tosla callback success and assert source_site
+// (set at creation) survives intact after the order leaves pending/awaiting.
+
+// Online-payment order body (paymentMethod "online" triggers payment_status
+// 'pending' and routes through the online-card gate, which we enabled above).
+const onlineOrderPayload = () => ({ ...orderPayload(), paymentMethod: "online" });
+
+// Drive an online order through the full completion path for a given host and
+// return its source_site read straight from the DB *after* it is marked paid.
+async function completeOnlineOrderAndReadSource(host: string): Promise<{
+  sourceAtCreation: string | null;
+  statusAtCreation: string | null;
+  sourceAfterComplete: string | null;
+  statusAfterComplete: string | null;
+}> {
+  // 1) Create the order — should land as payment_status='pending'.
+  const res = await postAsCustomer("/api/orders", host, onlineOrderPayload());
+  assert.equal(res.status, 201, `online order POST failed: ${JSON.stringify(res.body)}`);
+  const orderId = res.body.id as number;
+  assert.ok(orderId, "order id missing in response");
+  ids.orders.push(orderId);
+
+  const created = await pool.query(
+    "SELECT source_site, payment_status FROM orders WHERE id = $1",
+    [orderId]
+  );
+  const sourceAtCreation = created.rows[0]?.source_site ?? null;
+  const statusAtCreation = created.rows[0]?.payment_status ?? null;
+
+  // 2) Simulate init-payment: register a Tosla payment token (status 'pending')
+  //    for this order. We never hit the real Tosla API; we just create the
+  //    token the callback looks up by merchant order id.
+  const merchantOrderId = `${MARK}TOK${orderId}`;
+  await pool.query(
+    `INSERT INTO tosla_payment_tokens (token, order_id, amount, status, updated_at)
+     VALUES ($1, $2, $3, 'pending', NOW())`,
+    [merchantOrderId, orderId, 100]
+  );
+  // Order moves to 'awaiting' once the hosted-payment page is opened.
+  await pool.query("UPDATE orders SET payment_status = 'awaiting' WHERE id = $1", [orderId]);
+
+  // 3) Drive the bank callback with a success payload (BankResponseCode '00').
+  //    The callback flips both the token and the order to 'completed'. We use
+  //    GET with query params and disable redirect-following (the callback 303s
+  //    to the result page).
+  const cbUrl = `${baseUrl}/api/tosla/callback?OrderId=${encodeURIComponent(merchantOrderId)}` +
+    `&Code=0&BankResponseCode=00&MdStatus=1&RequestStatus=1`;
+  const cbRes = await fetch(cbUrl, { headers: { "X-Forwarded-Host": host }, redirect: "manual" });
+  assert.ok(cbRes.status >= 300 && cbRes.status < 400, `callback expected redirect, got ${cbRes.status}`);
+
+  const completed = await pool.query(
+    "SELECT source_site, payment_status FROM orders WHERE id = $1",
+    [orderId]
+  );
+  return {
+    sourceAtCreation,
+    statusAtCreation,
+    sourceAfterComplete: completed.rows[0]?.source_site ?? null,
+    statusAfterComplete: completed.rows[0]?.payment_status ?? null,
+  };
+}
+
+test("online order on jetgomarket.com stays source_site=jetgo through payment completion", async () => {
+  const r = await completeOnlineOrderAndReadSource(JETGO_HOST);
+  assert.equal(r.statusAtCreation, "pending", "online orders must start pending");
+  assert.equal(r.sourceAtCreation, "jetgo");
+  assert.equal(r.statusAfterComplete, "completed", "callback must mark the order paid");
+  assert.equal(r.sourceAfterComplete, "jetgo", "source_site must survive completion");
+});
+
+test("online order on atakumpetshop.com stays source_site=atakum through payment completion", async () => {
+  const r = await completeOnlineOrderAndReadSource(ATAKUM_HOST);
+  assert.equal(r.statusAtCreation, "pending");
+  assert.equal(r.sourceAtCreation, "atakum");
+  assert.equal(r.statusAfterComplete, "completed");
+  assert.equal(r.sourceAfterComplete, "atakum", "source_site must survive completion");
+});
+
+test("online order on an unknown host stays source_site=jetgo (default store) through completion", async () => {
+  const r = await completeOnlineOrderAndReadSource("some-preview.replit.dev");
+  assert.equal(r.statusAtCreation, "pending");
+  assert.equal(r.sourceAtCreation, "jetgo");
+  assert.equal(r.statusAfterComplete, "completed");
+  assert.equal(r.sourceAfterComplete, "jetgo", "source_site must survive completion");
 });
 
 // ---- Shared-edit protection: server-side blockedByStoreContext (403 guard) ----
