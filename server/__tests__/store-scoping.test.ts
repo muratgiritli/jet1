@@ -20,7 +20,7 @@ import type { AddressInfo } from "node:net";
 import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import * as cookieSignature from "cookie-signature";
-import { registerRoutes } from "../routes";
+import { registerRoutes, isTestOtpBypass } from "../routes";
 import { injectAllMeta } from "../seo-meta";
 import { getStoreByHost, brandifyFor } from "../../shared/stores";
 import { pool } from "../storage";
@@ -339,6 +339,9 @@ after(async () => {
   }
   if (ids.customers.length) {
     await pool.query("DELETE FROM loyalty_points WHERE customer_id = ANY($1)", [ids.customers]);
+    // Registration via the OTP bypass also creates a per-customer welcome coupon
+    // (coupons.customer_id FK); remove it before deleting the customer.
+    await pool.query("DELETE FROM coupons WHERE customer_id = ANY($1)", [ids.customers]);
     await pool.query("DELETE FROM customers WHERE id = ANY($1)", [ids.customers]);
   }
   if (ids.campaignItems.length) await pool.query("DELETE FROM campaign_items WHERE id = ANY($1)", [ids.campaignItems]);
@@ -485,6 +488,106 @@ test("order on atakumpetshop.com is tagged source_site=atakum", async () => {
 
 test("order on an unknown host falls back to source_site=jetgo (default store)", async () => {
   assert.equal(await placeOrderAndReadSource("some-preview.replit.dev"), "jetgo");
+});
+
+// ---- Test-only OTP bypass: full SMS-gated registration + Atakum checkout ----
+//
+// Customer registration is gated behind a real SMS OTP (phone -> OTP -> name +
+// Mahalle/address), which automated tests cannot satisfy. server/routes.ts adds
+// a guarded bypass (isTestOtpBypass): when NODE_ENV !== "production" AND
+// TEST_OTP_BYPASS=1, /api/otp/send skips the SMS and stores a fixed code
+// (TEST_OTP_CODE="0000") that /api/otp/verify accepts. These tests prove the
+// bypass is correctly dual-guarded and that it lets a brand-new customer
+// register and place a real local (Atakum) order end to end — no forged
+// session, no real SMS. This is the server-side complement to the browser smoke.
+
+test("isTestOtpBypass is double-guarded (dev+flag only, never production)", () => {
+  const prevEnv = process.env.NODE_ENV;
+  const prevFlag = process.env.TEST_OTP_BYPASS;
+  try {
+    process.env.NODE_ENV = "development";
+    process.env.TEST_OTP_BYPASS = "1";
+    assert.equal(isTestOtpBypass(), true, "enabled in dev with the flag set");
+
+    process.env.NODE_ENV = "production";
+    process.env.TEST_OTP_BYPASS = "1";
+    assert.equal(isTestOtpBypass(), false, "MUST stay off in production even with the flag");
+
+    process.env.NODE_ENV = "development";
+    delete process.env.TEST_OTP_BYPASS;
+    assert.equal(isTestOtpBypass(), false, "off in dev when the flag is absent");
+
+    process.env.TEST_OTP_BYPASS = "0";
+    assert.equal(isTestOtpBypass(), false, "off in dev when the flag is not exactly '1'");
+  } finally {
+    if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
+    if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
+  }
+});
+
+test("test-OTP bypass lets a NEW customer register and place an Atakum order end to end", async () => {
+  const prevEnv = process.env.NODE_ENV;
+  const prevFlag = process.env.TEST_OTP_BYPASS;
+  process.env.NODE_ENV = "development";
+  process.env.TEST_OTP_BYPASS = "1";
+
+  // A fresh, never-seen numeric phone so the verify flow takes the registration
+  // branch (existing customers would log straight in without registering).
+  const phone = "555" + String(randomBytes(4).readUInt32BE(0)).padStart(7, "0").slice(-7);
+  let createdCustomerId: number | undefined;
+  try {
+    // 1) Request the OTP. The bypass must skip SMS and report this is a new phone.
+    const send = await post("/api/otp/send", ATAKUM_HOST, { phone });
+    assert.equal(send.status, 200, `otp/send failed: ${JSON.stringify(send.body)}`);
+    assert.equal(send.body.isExisting, false, "fresh phone must be reported as new");
+
+    // 2) Verify with just the code (no name) -> server asks for registration.
+    const step1 = await post("/api/otp/verify", ATAKUM_HOST, { phone, code: "0000" });
+    assert.equal(step1.status, 200, `otp/verify step1 failed: ${JSON.stringify(step1.body)}`);
+    assert.equal(step1.body.requiresRegistration, true, "new phone must require registration");
+
+    // 3) Complete registration (name + Mahalle-style address). This creates the
+    //    customer and returns a REAL signed session cookie (no forging).
+    const regRes = await fetch(`${baseUrl}/api/otp/verify`, {
+      method: "POST",
+      headers: { "X-Forwarded-Host": ATAKUM_HOST, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone,
+        code: "0000",
+        name: `${MARK}_OTP_BUYER`,
+        address: `${MARK} Atakum Mah., Test Cad. No 5`,
+      }),
+    });
+    const regBody = await regRes.json() as any;
+    assert.equal(regRes.status, 200, `registration failed: ${JSON.stringify(regBody)}`);
+    assert.ok(regBody.id, "registration must return the new customer id");
+    assert.equal(regBody.isNewUser, true, "registration must create a new customer");
+    createdCustomerId = regBody.id as number;
+    ids.customers.push(createdCustomerId);
+
+    const setCookie = regRes.headers.get("set-cookie");
+    assert.ok(setCookie && setCookie.includes("connect.sid"), "registration must set a session cookie");
+    const realCookie = setCookie!.split(";")[0];
+
+    // 4) Place a local Atakum order as the freshly-registered customer, using the
+    //    real session cookie from registration. Proves the full SMS-gated path
+    //    is now traversable end to end by an automated test.
+    const order = await postWithCookie(
+      "/api/orders",
+      ATAKUM_HOST,
+      { ...orderPayload(), customerName: `${MARK}_OTP_BUYER`, customerPhone: phone },
+      realCookie,
+    );
+    assert.equal(order.status, 201, `order POST failed: ${JSON.stringify(order.body)}`);
+    const orderId = order.body.id as number;
+    assert.ok(orderId, "order id missing in response");
+    ids.orders.push(orderId);
+    const row = await pool.query("SELECT source_site FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0]?.source_site, "atakum", "order must attribute to the Atakum storefront");
+  } finally {
+    if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
+    if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
+  }
 });
 
 // ---- samsun (cargo, online-payment-only) storefront behavior + tracking ----

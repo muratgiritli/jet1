@@ -18,10 +18,17 @@ When verifying per-store branding with the testing skill (Playwright) via the
    content** (the header wordmark = `CURRENT_STORE.shortName` via Logo.tsx), never
    the title or hidden SEO block.
 
-2. **The checkout Mahalle field is OTP-gated and unreachable in automated UI
-   tests.** checkout.tsx register flow is phone -> OTP (real SMS code) -> name +
-   `select-auth-mahalle`. No real OTP in tests, so the Mahalle field can't be
-   reached by the testing agent.
+2. **Checkout registration is SMS-OTP-gated, but a guarded test bypass exists.**
+   The register flow is phone -> OTP -> name + Mahalle, unreachable by automation
+   without a real SMS. server/routes.ts (`isTestOtpBypass`) opens it ONLY when
+   `NODE_ENV !== "production"` AND env `TEST_OTP_BYPASS=1` (set in development):
+   `/api/otp/send` skips SMS and stores the fixed code `0000` that verify accepts.
+   The bypass MUST stay double-guarded — never let one condition alone enable it.
+   The full registration+checkout path through this bypass is covered by a
+   committed integration test in store-scoping.test.ts, so prefer extending that
+   over a fresh ephemeral browser smoke. Note for any browser smoke: the checkout
+   route is `/odeme` (not `/checkout`) and the auth modal auto-opens only with a
+   non-empty cart.
 
 **Where to assert instead:** the data layer that drives the UI, in the validation
 suite server/__tests__/store-scoping.test.ts (run by the `test` workflow):

@@ -90,6 +90,16 @@ function generateOTP(): string {
   return crypto.randomInt(1000, 10000).toString();
 }
 
+// Test-only OTP bypass: lets automated e2e/integration tests complete the
+// SMS-gated registration/checkout without a real SMS code. Double-guarded so it
+// can NEVER run in production: requires NODE_ENV !== "production" AND an explicit
+// TEST_OTP_BYPASS=1 env flag (set only in the development environment).
+// Evaluated per request so tests can toggle the flag at runtime.
+const TEST_OTP_CODE = "0000";
+export function isTestOtpBypass(): boolean {
+  return process.env.NODE_ENV !== "production" && process.env.TEST_OTP_BYPASS === "1";
+}
+
 function normalizeTrSms(s: string): string {
   if (!s) return "";
   const map: Record<string, string> = {
@@ -4091,6 +4101,12 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (!phone) return res.status(400).json({ message: "Telefon numarası gerekli" });
     const normalized = phone.replace(/\D/g, "");
     if (normalized.length < 10) return res.status(400).json({ message: "Geçerli bir telefon numarası girin" });
+
+    if (isTestOtpBypass()) {
+      otpStore.set(normalized, { code: TEST_OTP_CODE, expiresAt: Date.now() + 180000, attempts: 0 });
+      const customerExists = !!(await storage.getCustomerByPhone(normalized));
+      return res.json({ message: "Doğrulama kodu gönderildi (test)", isExisting: customerExists });
+    }
 
     if (deviceToken && typeof deviceToken === "string" && deviceToken.length > 20) {
       try {
