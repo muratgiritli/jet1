@@ -18,9 +18,17 @@ import express from "express";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
 import { randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 import * as cookieSignature from "cookie-signature";
 import { registerRoutes } from "../routes";
 import { pool } from "../storage";
+// The shared-edit protection helpers live in the client lib so they can be unit
+// tested here without booting the React app. STORE_SCOPED_SETTING_KEYS must stay
+// in sync with the server-side copy in routes.ts (asserted by a drift test below).
+import {
+  confirmSharedSettingsSave,
+  STORE_SCOPED_SETTING_KEYS as CLIENT_STORE_SCOPED_SETTING_KEYS,
+} from "../../client/src/lib/storeScope";
 
 const MARK = "__SCOPE_TEST__";
 const JETGO_HOST = "www.jetgomarket.com";
@@ -56,7 +64,8 @@ const ids: {
   brandCategories: number[];
   orders: number[];
   customers: number[];
-} = { banners: [], coupons: [], campaignItems: [], neighborhoods: [], products: [], brandCategories: [], orders: [], customers: [] };
+  users: string[];
+} = { banners: [], coupons: [], campaignItems: [], neighborhoods: [], products: [], brandCategories: [], orders: [], customers: [], users: [] };
 
 // The order endpoint requires an authenticated, non-blacklisted customer.
 // We seed a throwaway customer, forge a PgSession row carrying its id, and sign
@@ -64,6 +73,8 @@ const ids: {
 // exactly as a real logged-in customer would.
 let orderProductId = 0;
 let sessionCookie = "";
+// Forged admin session cookie (requireAdmin only checks session.userId).
+let adminCookie = "";
 
 async function setSetting(key: string, value: string) {
   await pool.query(
@@ -102,6 +113,50 @@ async function postAsCustomer(path: string, host: string, payload: any) {
     body: JSON.stringify(payload),
   });
   return { status: res.status, body: await res.json() as any };
+}
+
+// PATCH/DELETE as the forged admin (sends the admin session cookie). The body
+// (if any) is sent as JSON; the banner PATCH route also tolerates JSON despite
+// its multer middleware because multer only consumes multipart requests.
+async function patchAdmin(path: string, host: string, payload: any) {
+  const res = await fetch(`${baseUrl}${path}`, {
+    method: "PATCH",
+    headers: { "X-Forwarded-Host": host, "Content-Type": "application/json", Cookie: adminCookie },
+    body: JSON.stringify(payload),
+  });
+  return { status: res.status, body: await res.json().catch(() => ({})) as any };
+}
+
+async function deleteAdmin(path: string, host: string) {
+  const res = await fetch(`${baseUrl}${path}`, {
+    method: "DELETE",
+    headers: { "X-Forwarded-Host": host, Cookie: adminCookie },
+  });
+  return { status: res.status, body: await res.json().catch(() => ({})) as any };
+}
+
+// Forge a signed connect.sid cookie for a PgSession row carrying the given
+// session payload (customerId for buyers, userId for admins).
+async function forgeSessionCookie(sessPayload: Record<string, unknown>): Promise<string> {
+  const sid = randomBytes(24).toString("hex");
+  const maxAge = 30 * 24 * 60 * 60 * 1000;
+  const expire = new Date(Date.now() + maxAge);
+  const sess = {
+    cookie: {
+      originalMaxAge: maxAge,
+      expires: expire.toISOString(),
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure: false,
+    },
+    ...sessPayload,
+  };
+  await pool.query(
+    'INSERT INTO "session" (sid, sess, expire) VALUES ($1, $2, $3)',
+    [sid, JSON.stringify(sess), expire]
+  );
+  return `connect.sid=${encodeURIComponent("s:" + cookieSignature.sign(sid, process.env.SESSION_SECRET!))}`;
 }
 
 // Minimal valid order body; server recomputes prices/totals from the DB, so the
@@ -223,26 +278,21 @@ before(async () => {
   );
   const customerId = cust.rows[0].id;
   ids.customers.push(customerId);
+  sessionCookie = await forgeSessionCookie({ customerId });
 
-  const sid = randomBytes(24).toString("hex");
-  const maxAge = 30 * 24 * 60 * 60 * 1000;
-  const expire = new Date(Date.now() + maxAge);
-  const sess = {
-    cookie: {
-      originalMaxAge: maxAge,
-      expires: expire.toISOString(),
-      httpOnly: true,
-      path: "/",
-      sameSite: "lax",
-      secure: false,
-    },
-    customerId,
-  };
-  await pool.query(
-    'INSERT INTO "session" (sid, sess, expire) VALUES ($1, $2, $3)',
-    [sid, JSON.stringify(sess), expire]
-  );
-  sessionCookie = `connect.sid=${encodeURIComponent("s:" + cookieSignature.sign(sid, process.env.SESSION_SECRET!))}`;
+  // ---- Forge an admin session (requireAdmin only checks session.userId) ----
+  // Reuse an existing admin user if present; otherwise seed a throwaway one.
+  const existingUser = await pool.query("SELECT id FROM users LIMIT 1");
+  let adminUserId: string = existingUser.rows[0]?.id;
+  if (!adminUserId) {
+    const u = await pool.query(
+      "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id",
+      [`${MARK}_admin`, `${MARK}_pw`]
+    );
+    adminUserId = u.rows[0].id;
+    ids.users.push(adminUserId);
+  }
+  adminCookie = await forgeSessionCookie({ userId: adminUserId });
 });
 
 after(async () => {
@@ -263,6 +313,7 @@ after(async () => {
   if (ids.banners.length) await pool.query("DELETE FROM banners WHERE id = ANY($1)", [ids.banners]);
   if (ids.coupons.length) await pool.query("DELETE FROM coupons WHERE id = ANY($1)", [ids.coupons]);
   if (ids.neighborhoods.length) await pool.query("DELETE FROM delivery_neighborhoods WHERE id = ANY($1)", [ids.neighborhoods]);
+  if (ids.users.length) await pool.query("DELETE FROM users WHERE id = ANY($1)", [ids.users]);
 
   // Restore app_settings to their pre-test state.
   for (const [key, value] of settingBackup) {
@@ -400,4 +451,137 @@ test("order on atakumpetshop.com is tagged source_site=atakum", async () => {
 
 test("order on an unknown host falls back to source_site=jetgo (default store)", async () => {
   assert.equal(await placeOrderAndReadSource("some-preview.replit.dev"), "jetgo");
+});
+
+// ---- Shared-edit protection: server-side blockedByStoreContext (403 guard) ----
+//
+// Seeded rows are pushed in store order ["all", "jetgo", "atakum"], so index 0
+// is the shared row, index 2 is the atakum-owned row. A PATCH/DELETE issued with
+// ?storeContext=jetgo must be blocked (403) when it targets the atakum row, and
+// allowed when it targets the shared ("all") row.
+
+test("blockedByStoreContext: jetgo context cannot PATCH an atakum-owned banner (403)", async () => {
+  const atakumBannerId = ids.banners[2];
+  const res = await patchAdmin(`/api/admin/banners/${atakumBannerId}?storeContext=jetgo`, JETGO_HOST, { sortOrder: 99 });
+  assert.equal(res.status, 403);
+  // The row must be untouched by the blocked request.
+  const row = await pool.query("SELECT sort_order FROM banners WHERE id = $1", [atakumBannerId]);
+  assert.notEqual(row.rows[0].sort_order, 99);
+});
+
+test("blockedByStoreContext: jetgo context CAN PATCH a shared (all) banner (allowed)", async () => {
+  const sharedBannerId = ids.banners[0];
+  const res = await patchAdmin(`/api/admin/banners/${sharedBannerId}?storeContext=jetgo`, JETGO_HOST, { sortOrder: 7 });
+  assert.equal(res.status, 200);
+  const row = await pool.query("SELECT sort_order FROM banners WHERE id = $1", [sharedBannerId]);
+  assert.equal(row.rows[0].sort_order, 7);
+});
+
+test("blockedByStoreContext: jetgo context cannot DELETE an atakum-owned coupon (403)", async () => {
+  const atakumCouponId = ids.coupons[2];
+  const res = await deleteAdmin(`/api/admin/coupons/${atakumCouponId}?storeContext=jetgo`, JETGO_HOST);
+  assert.equal(res.status, 403);
+  // The blocked delete must not remove the row.
+  const row = await pool.query("SELECT id FROM coupons WHERE id = $1", [atakumCouponId]);
+  assert.equal(row.rows.length, 1);
+});
+
+test("blockedByStoreContext: jetgo context CAN DELETE a shared (all) coupon (allowed)", async () => {
+  const sharedCouponId = ids.coupons[0];
+  const res = await deleteAdmin(`/api/admin/coupons/${sharedCouponId}?storeContext=jetgo`, JETGO_HOST);
+  assert.equal(res.status, 200);
+  const row = await pool.query("SELECT id FROM coupons WHERE id = $1", [sharedCouponId]);
+  assert.equal(row.rows.length, 0);
+  // Already gone; drop it from cleanup tracking so the after hook is a no-op for it.
+  ids.coupons = ids.coupons.filter((id) => id !== sharedCouponId);
+});
+
+// ---- Shared-edit protection: client confirmSharedSettingsSave warning logic ----
+//
+// In a specific-store view, changing a GLOBAL (non store-scoped) setting writes
+// the shared base and affects every site, so the save must prompt for explicit
+// confirmation. Changing only store-scoped keys (e.g. the campaign hero) writes
+// a per-store override and must NOT prompt. The "Tümü" (all) view never prompts.
+
+// confirmSharedSettingsSave calls the browser confirm(); stub it per-test.
+function withConfirm<T>(impl: () => boolean, fn: () => T): { result: T; calls: number } {
+  let calls = 0;
+  const prev = (globalThis as any).confirm;
+  (globalThis as any).confirm = () => { calls++; return impl(); };
+  try {
+    return { result: fn(), calls };
+  } finally {
+    (globalThis as any).confirm = prev;
+  }
+}
+
+test("confirmSharedSettingsSave prompts when a GLOBAL setting changed in a store view", () => {
+  const { result, calls } = withConfirm(() => true, () =>
+    confirmSharedSettingsSave(
+      { payment_nakit_enabled: "0" }, // global key (not store-scoped)
+      { payment_nakit_enabled: "1" },
+      "jetgo",
+    ),
+  );
+  assert.equal(calls, 1, "expected a confirmation prompt for a changed global setting");
+  assert.equal(result, true, "returns the user's confirm() answer");
+});
+
+test("confirmSharedSettingsSave returns false when the user cancels the prompt", () => {
+  const { result, calls } = withConfirm(() => false, () =>
+    confirmSharedSettingsSave(
+      { payment_nakit_enabled: "0" },
+      { payment_nakit_enabled: "1" },
+      "jetgo",
+    ),
+  );
+  assert.equal(calls, 1);
+  assert.equal(result, false, "a cancelled prompt blocks the save");
+});
+
+test("confirmSharedSettingsSave does NOT prompt when only store-scoped keys changed", () => {
+  const { result, calls } = withConfirm(() => false, () =>
+    confirmSharedSettingsSave(
+      { campaign_hero_title: "Yeni Başlık" }, // store-scoped key
+      { campaign_hero_title: "Eski Başlık" },
+      "jetgo",
+    ),
+  );
+  assert.equal(calls, 0, "store-scoped-only changes must not prompt");
+  assert.equal(result, true, "proceeds without confirmation");
+});
+
+test("confirmSharedSettingsSave never prompts in the 'Tümü' (all) view", () => {
+  const { result, calls } = withConfirm(() => false, () =>
+    confirmSharedSettingsSave(
+      { payment_nakit_enabled: "0" },
+      { payment_nakit_enabled: "1" },
+      "all",
+    ),
+  );
+  assert.equal(calls, 0, "the all view edits the shared base directly, no warning needed");
+  assert.equal(result, true);
+});
+
+// ---- Drift guard: client STORE_SCOPED_SETTING_KEYS == server set ----
+//
+// The warning above relies on the client set matching the server's
+// STORE_SCOPED_SETTING_KEYS. If they drift, the client would warn (or stay
+// silent) for keys the server treats differently, misfiring the protection.
+// The server copy is an inline const inside registerRoutes, so we extract it
+// straight from the source text rather than importing it.
+
+function extractServerStoreScopedKeys(): string[] {
+  const src = readFileSync(new URL("../routes.ts", import.meta.url), "utf8");
+  const block = src.match(/STORE_SCOPED_SETTING_KEYS\s*=\s*new Set<string>\(\[([\s\S]*?)\]\)/);
+  assert.ok(block, "could not locate server STORE_SCOPED_SETTING_KEYS in routes.ts");
+  return [...block![1].matchAll(/["'`]([^"'`]+)["'`]/g)].map((m) => m[1]);
+}
+
+test("client STORE_SCOPED_SETTING_KEYS matches the server set (no drift)", () => {
+  const clientKeys = [...CLIENT_STORE_SCOPED_SETTING_KEYS].sort();
+  const serverKeys = extractServerStoreScopedKeys().sort();
+  // No duplicates slipped into the server source.
+  assert.equal(new Set(serverKeys).size, serverKeys.length, "server set has duplicate keys");
+  assert.deepEqual(clientKeys, serverKeys);
 });
