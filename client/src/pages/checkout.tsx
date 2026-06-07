@@ -1572,7 +1572,7 @@ export default function Checkout() {
                     </div>
                   )}
 
-                  {!hasCampaignItems && !hasPreorderItems && posEnabled && (
+                  {!onlinePaymentOnly && !hasCampaignItems && !hasPreorderItems && posEnabled && (
                     <div className="mt-4 border-t pt-4">
                       <h3 className="text-sm font-bold mb-3 flex items-center gap-2 flex-wrap">
                         <CreditCard className="w-4 h-4 text-blue-600" />

@@ -646,6 +646,98 @@ test("online order on samsunpetshop.com is tagged source_site=samsun and starts 
   assert.equal(row.rows[0].payment_status, "pending", "online orders must start pending");
 });
 
+// Persistent, server-side complement to the browser smoke (testing skill runTest)
+// for the cargo storefront: a brand-new customer registers via the OTP bypass on
+// the samsun host and places an online cargo order end to end. Mirrors the Atakum
+// end-to-end test above, but asserts the CARGO contract: no Mahalle needed at
+// registration, city/district are captured and persisted, and the online-only
+// rule is enforced for this fresh customer (door payment rejected). The browser
+// smoke additionally verifies the visual contract (İl/İlçe inputs, "Kargo Ücreti"
+// label, online-only payment UI) which cannot be asserted at the API layer.
+test("test-OTP bypass lets a NEW customer register and place a SAMSUN cargo order end to end", async () => {
+  const prevEnv = process.env.NODE_ENV;
+  const prevFlag = process.env.TEST_OTP_BYPASS;
+  process.env.NODE_ENV = "development";
+  process.env.TEST_OTP_BYPASS = "1";
+
+  // Fresh, never-seen phone so verify takes the registration branch.
+  const phone = "555" + String(randomBytes(4).readUInt32BE(0)).padStart(7, "0").slice(-7);
+  let createdCustomerId: number | undefined;
+  try {
+    // 1) Request the OTP on the cargo host. Bypass skips SMS, reports new phone.
+    const send = await post("/api/otp/send", SAMSUN_HOST, { phone });
+    assert.equal(send.status, 200, `otp/send failed: ${JSON.stringify(send.body)}`);
+    assert.equal(send.body.isExisting, false, "fresh phone must be reported as new");
+
+    // 2) Verify with just the code -> server asks for registration.
+    const step1 = await post("/api/otp/verify", SAMSUN_HOST, { phone, code: "0000" });
+    assert.equal(step1.status, 200, `otp/verify step1 failed: ${JSON.stringify(step1.body)}`);
+    assert.equal(step1.body.requiresRegistration, true, "new phone must require registration");
+
+    // 3) Complete registration with name + address only (cargo collects city/
+    //    district at checkout, NOT a Mahalle at registration). Returns a real
+    //    signed session cookie.
+    const regRes = await fetch(`${baseUrl}/api/otp/verify`, {
+      method: "POST",
+      headers: { "X-Forwarded-Host": SAMSUN_HOST, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone,
+        code: "0000",
+        name: `${MARK}_CARGO_BUYER`,
+        address: `${MARK} Test Mah., Deneme Cad. No 10`,
+      }),
+    });
+    const regBody = await regRes.json() as any;
+    assert.equal(regRes.status, 200, `registration failed: ${JSON.stringify(regBody)}`);
+    assert.ok(regBody.id, "registration must return the new customer id");
+    assert.equal(regBody.isNewUser, true, "registration must create a new customer");
+    createdCustomerId = regBody.id as number;
+    ids.customers.push(createdCustomerId);
+
+    const setCookie = regRes.headers.get("set-cookie");
+    assert.ok(setCookie && setCookie.includes("connect.sid"), "registration must set a session cookie");
+    const realCookie = setCookie!.split(";")[0];
+
+    // 4) Online-only contract: door payment must be rejected for this fresh
+    //    customer on the cargo store.
+    const door = await postWithCookie(
+      "/api/orders",
+      SAMSUN_HOST,
+      { ...samsunOnlineOrder(), customerName: `${MARK}_CARGO_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
+      realCookie,
+    );
+    assert.equal(door.status, 400, `door payment must be rejected on cargo store: ${JSON.stringify(door.body)}`);
+    assert.match(String(door.body.message ?? ""), /online kredi kartı/i);
+
+    // 5) Place the online cargo order with city/district as the freshly-
+    //    registered customer, using the real session cookie from registration.
+    const order = await postWithCookie(
+      "/api/orders",
+      SAMSUN_HOST,
+      { ...samsunOnlineOrder(), customerName: `${MARK}_CARGO_BUYER`, customerPhone: phone },
+      realCookie,
+    );
+    assert.equal(order.status, 201, `cargo order POST failed: ${JSON.stringify(order.body)}`);
+    const orderId = order.body.id as number;
+    assert.ok(orderId, "order id missing in response");
+    ids.orders.push(orderId);
+
+    // 6) Cargo order attributes to samsun, starts pending (online), and persists
+    //    the city/district captured at checkout.
+    const row = await pool.query(
+      "SELECT source_site, payment_status, city, district FROM orders WHERE id = $1",
+      [orderId],
+    );
+    assert.equal(row.rows[0].source_site, "samsun", "order must attribute to the samsun cargo storefront");
+    assert.equal(row.rows[0].payment_status, "pending", "online cargo orders must start pending");
+    assert.equal(row.rows[0].city, "İstanbul", "cargo order must persist the selected city (il)");
+    assert.equal(row.rows[0].district, "Kadıköy", "cargo order must persist the selected district (ilçe)");
+  } finally {
+    if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
+    if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
+  }
+});
+
 test("admin-entered cargo tracking becomes visible to the customer", async () => {
   // 1) Customer places an online order on the samsun storefront.
   const created = await postWithCookie("/api/orders", SAMSUN_HOST, samsunOnlineOrder(), samsunCustomerCookie);
