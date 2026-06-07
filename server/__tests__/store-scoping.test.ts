@@ -27,6 +27,8 @@ import { pool } from "../storage";
 // in sync with the server-side copy in routes.ts (asserted by a drift test below).
 import {
   confirmSharedSettingsSave,
+  confirmSharedEdit,
+  isSharedRowInStoreView,
   STORE_SCOPED_SETTING_KEYS as CLIENT_STORE_SCOPED_SETTING_KEYS,
 } from "../../client/src/lib/storeScope";
 
@@ -665,6 +667,60 @@ test("confirmSharedSettingsSave never prompts in the 'Tümü' (all) view", () =>
     ),
   );
   assert.equal(calls, 0, "the all view edits the shared base directly, no warning needed");
+  assert.equal(result, true);
+});
+
+// ---- Shared-edit protection: client confirmSharedEdit / isSharedRowInStoreView ----
+//
+// The row-level guard fires when a shared ("all") banner/coupon/campaign/delivery
+// row is edited/toggled/deleted from a SPECIFIC-store view, because that single
+// shared row backs every site. A row owned by the current store, or any row in
+// the "Tümü" (all) view, is safe and must not prompt.
+
+test("isSharedRowInStoreView: shared 'all' row in a specific-store view is shared", () => {
+  assert.equal(isSharedRowInStoreView("all", "atakum"), true);
+  // A missing/undefined row store defaults to the shared base.
+  assert.equal(isSharedRowInStoreView(null, "atakum"), true);
+  assert.equal(isSharedRowInStoreView(undefined, "atakum"), true);
+});
+
+test("isSharedRowInStoreView: store-owned row or the 'all' view is NOT shared", () => {
+  // Row owned by the current store -> editing only affects this store.
+  assert.equal(isSharedRowInStoreView("atakum", "atakum"), false);
+  // In the 'all' view every edit is intentionally global -> no special case.
+  assert.equal(isSharedRowInStoreView("all", "all"), false);
+  assert.equal(isSharedRowInStoreView(null, "all"), false);
+});
+
+test("confirmSharedEdit prompts when editing a shared row from a store view", () => {
+  const { result, calls } = withConfirm(() => true, () =>
+    confirmSharedEdit("all", "atakum"),
+  );
+  assert.equal(calls, 1, "expected a confirmation prompt for a shared row in a store view");
+  assert.equal(result, true, "returns the user's confirm() answer");
+});
+
+test("confirmSharedEdit returns false when the user cancels the prompt", () => {
+  const { result, calls } = withConfirm(() => false, () =>
+    confirmSharedEdit(null, "atakum"),
+  );
+  assert.equal(calls, 1);
+  assert.equal(result, false, "a cancelled prompt blocks the edit");
+});
+
+test("confirmSharedEdit does NOT prompt for a row owned by the current store", () => {
+  const { result, calls } = withConfirm(() => false, () =>
+    confirmSharedEdit("atakum", "atakum"),
+  );
+  assert.equal(calls, 0, "editing your own store's row needs no warning");
+  assert.equal(result, true, "proceeds without confirmation");
+});
+
+test("confirmSharedEdit never prompts in the 'Tümü' (all) view", () => {
+  const { result, calls } = withConfirm(() => false, () =>
+    confirmSharedEdit("all", "all"),
+  );
+  assert.equal(calls, 0, "the all view edits shared content on purpose, no warning needed");
   assert.equal(result, true);
 });
 
