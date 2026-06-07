@@ -370,6 +370,7 @@ export async function registerRoutes(
     await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cargo_company text;`);
     await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number text;`);
     await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_url text;`);
+    await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_sms_sent boolean NOT NULL DEFAULT false;`);
   } catch (e) {
     console.error("Orders source_site migration error:", e);
   }
@@ -3999,12 +4000,41 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
+  const SHIPPED_STATUSES = new Set(["kargoda", "kargoya", "kargoya_verildi", "kargoya-verildi", "shipped", "in_transit", "in-transit"]);
+
+  async function notifyShipmentIfNeeded(order: any): Promise<boolean> {
+    if (!order) return false;
+    if (order.shippingSmsSent) return false;
+    const cargoCompany = order.cargoCompany;
+    const trackingNumber = order.trackingNumber;
+    if (!cargoCompany || !trackingNumber || !order.customerPhone) return false;
+    try {
+      const stCfg = storeById(order.sourceSite);
+      const stHeader = await resolveSmsHeader(stCfg.id);
+      const lines = [
+        `Siparisiniz kargoya verildi.`,
+        `Kargo: ${cargoCompany}`,
+        `Takip No: ${trackingNumber}`,
+      ];
+      if (order.trackingUrl) lines.push(`Takip: ${order.trackingUrl}`);
+      sendSmsViaNetgsm(order.customerPhone, lines.join("\n"), stHeader).catch(() => {});
+      await storage.markShippingSmsSent(order.id, true);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   app.patch("/api/admin/orders/:id/status", requireAdmin, async (req, res) => {
     const id = parseInt(String(req.params.id));
     const { status } = req.body;
     if (!status) return res.status(400).json({ message: "Status required" });
     const order = await storage.updateOrderStatus(id, status);
     if (!order) return res.status(404).json({ message: "Order not found" });
+
+    if (SHIPPED_STATUSES.has(String(status).toLowerCase())) {
+      await notifyShipmentIfNeeded(order);
+    }
 
     if (status === "tamamlandi" && order.customerPhone) {
       const stCfg = storeById((order as any).sourceSite);
@@ -4048,19 +4078,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       trackingUrl: trackingUrl || null,
     });
     if (!order) return res.status(404).json({ message: "Sipariş bulunamadı" });
-    if (cargoCompany && trackingNumber && order.customerPhone) {
-      try {
-        const stCfg = storeById((order as any).sourceSite);
-        const stHeader = await resolveSmsHeader(stCfg.id);
-        const lines = [
-          `Siparisiniz kargoya verildi.`,
-          `Kargo: ${cargoCompany}`,
-          `Takip No: ${trackingNumber}`,
-        ];
-        if (trackingUrl) lines.push(`Takip: ${trackingUrl}`);
-        sendSmsViaNetgsm(order.customerPhone, lines.join("\n"), stHeader).catch(() => {});
-      } catch {}
-    }
+    await notifyShipmentIfNeeded(order);
     res.json(order);
   });
 

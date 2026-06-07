@@ -127,6 +127,7 @@ export const orders = pgTable("orders", {
   cargoCompany: text("cargo_company"),
   trackingNumber: text("tracking_number"),
   trackingUrl: text("tracking_url"),
+  shippingSmsSent: boolean("shipping_sms_sent").notNull().default(false),
   installmentMonths: integer("installment_months"),
   installmentRate: real("installment_rate"),
   installmentMonthly: real("installment_monthly"),

@@ -5,3 +5,4 @@
 - [Per-store commerce model](store-commerce-model.md) — StoreConfig.commerce (fulfillment local|cargo, shippingLabel, onlinePaymentOnly, preorderEnabled) drives checkout/preorder/payment; gate both client AND server by store flag, not just product flag.
 - [Publish migration churn](publish-migration-churn.md) — DESC / undeclared imperative indexes make the prod-migration prompt re-propose the same DROP/CREATE forever; use plain ascending + declare in schema.
 - [Per-request store resolution](store-resolution.md) — public/host resolution must use reqStore (x-forwarded-host), not req.hostname; per-domain SMS header + SEO surfaces; never brandify JETGO50.
+- [Shipping tracking SMS dedupe](shipping-sms-dedupe.md) — "kargoya verildi" SMS sent via shared helper from tracking+status routes, deduped by orders.shipping_sms_sent; no admin "shipped" status exists yet.

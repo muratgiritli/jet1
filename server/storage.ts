@@ -83,6 +83,7 @@ export interface IStorage {
   createOrder(data: InsertOrder): Promise<Order>;
   updateOrderTracking(id: number, data: { cargoCompany: string | null; trackingNumber: string | null; trackingUrl: string | null }): Promise<Order | undefined>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
+  markShippingSmsSent(id: number, sent: boolean): Promise<void>;
   getOrdersByPhone(phone: string): Promise<Order[]>;
 
   getBreedStatsByProduct(productId: number): Promise<BreedStat[]>;
@@ -348,8 +349,19 @@ export class DatabaseStorage implements IStorage {
     return order;
   }
 
+  async markShippingSmsSent(id: number, sent: boolean): Promise<void> {
+    await db.update(orders).set({ shippingSmsSent: sent }).where(eq(orders.id, id));
+  }
+
   async updateOrderTracking(id: number, data: { cargoCompany: string | null; trackingNumber: string | null; trackingUrl: string | null }): Promise<Order | undefined> {
-    const [order] = await db.update(orders).set(data).where(eq(orders.id, id)).returning();
+    const [order] = await db
+      .update(orders)
+      .set({
+        ...data,
+        shippingSmsSent: sql`CASE WHEN ${orders.trackingNumber} IS DISTINCT FROM ${data.trackingNumber} THEN false ELSE ${orders.shippingSmsSent} END`,
+      })
+      .where(eq(orders.id, id))
+      .returning();
     return order;
   }
 
