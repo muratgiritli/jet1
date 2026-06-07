@@ -1375,6 +1375,7 @@ export default function Checkout() {
               </section>
             )}
 
+            {!isCargo && (
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-delivery-options">
                 Teslimat Seçenekleri
@@ -1406,6 +1407,7 @@ export default function Checkout() {
                 </CardContent>
               </Card>
             </section>
+            )}
 
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-note">
