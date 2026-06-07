@@ -21,6 +21,8 @@ import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import * as cookieSignature from "cookie-signature";
 import { registerRoutes } from "../routes";
+import { injectAllMeta } from "../seo-meta";
+import { getStoreByHost, brandifyFor } from "../../shared/stores";
 import { pool } from "../storage";
 // The shared-edit protection helpers live in the client lib so they can be unit
 // tested here without booting the React app. STORE_SCOPED_SETTING_KEYS must stay
@@ -852,4 +854,153 @@ test("client STORE_SCOPED_SETTING_KEYS matches the server set (no drift)", () =>
   // No duplicates slipped into the server source.
   assert.equal(new Set(serverKeys).size, serverKeys.length, "server set has duplicate keys");
   assert.deepEqual(clientKeys, serverKeys);
+});
+
+// ---- atakum (local same-day) storefront branding smoke ----
+//
+// atakum (atakumpetshop.com) is the third branded store: like jetgo it is a
+// LOCAL same-day store (fulfillment "local", "Getirmesi" delivery, door payment
+// allowed, preorder on) but it carries its OWN brand name/logo. Because it shares
+// jetgo's local-delivery copy path, a branding regression here would otherwise go
+// unnoticed. These checks pin the per-store identity (server-injected homepage
+// meta + the store config that drives the client UI) so the wordmark, the local
+// same-day delivery copy (not cargo copy) and the Mahalle checkout flow can't
+// silently revert to jetgo's brand or to the samsun cargo behavior.
+//
+// They complement the live `?__store=atakum` browser smoke (homepage wordmark,
+// delivery copy, Mahalle checkout) run via the testing skill — see
+// client/src/lib/store.ts for the override these checks mirror at the data layer.
+
+const ATAKUM_BRAND = "Atakum Pet Shop";
+// Distinctive copy of the SAMSUN (cargo) store. atakum must NEVER show this — it
+// is the signal that local same-day copy was replaced by cargo copy.
+const CARGO_SIGNATURE = /türkiye(?:'nin| geneli)/i;
+const SAME_DAY_SIGNATURE = /aynı gün/i;
+
+// The static template the server brandifies per request host. Read once from the
+// repo so this stays in lockstep with what production serves.
+const INDEX_HTML = readFileSync(new URL("../../client/index.html", import.meta.url), "utf8");
+
+test("atakum host resolves the Atakum Pet Shop brand", () => {
+  const store = getStoreByHost(ATAKUM_HOST);
+  assert.equal(store.id, "atakum");
+  assert.equal(store.name, ATAKUM_BRAND, "homepage wordmark/title brand name");
+  assert.equal(store.shortName, ATAKUM_BRAND);
+});
+
+test("atakum is a LOCAL same-day store (drives Mahalle checkout, not cargo)", () => {
+  const atakum = getStoreByHost(ATAKUM_HOST);
+  const samsun = getStoreByHost(SAMSUN_HOST);
+  // checkout.tsx gates the address flow on `commerce.fulfillment === "cargo"`:
+  // local -> Mahalle picker + door payment; cargo -> il/ilçe + online-only.
+  assert.equal(atakum.commerce.fulfillment, "local", "atakum must use the local (Mahalle) flow");
+  assert.equal(atakum.commerce.shippingLabel, "Getirmesi", "local delivery fee label");
+  assert.equal(atakum.commerce.onlinePaymentOnly, false, "local store accepts door payment");
+  assert.equal(atakum.commerce.preorderEnabled, true);
+  // Guard against atakum accidentally inheriting the samsun cargo model.
+  assert.equal(samsun.commerce.fulfillment, "cargo", "samsun stays the cargo contrast case");
+  assert.notEqual(atakum.commerce.fulfillment, samsun.commerce.fulfillment);
+});
+
+test("brandify swaps shared JETGO body copy to the Atakum brand word", () => {
+  const atakum = getStoreByHost(ATAKUM_HOST);
+  assert.equal(brandifyFor(atakum, "Neden JETGO?"), "Neden Atakum?");
+  assert.match(brandifyFor(atakum, "jetgomarket.com"), /atakumpetshop\.com/);
+});
+
+test("served homepage HTML carries the Atakum brand + local same-day copy (not cargo)", async () => {
+  const html = await injectAllMeta(INDEX_HTML, "/", ATAKUM_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const ogSiteName = html.match(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i)?.[1] ?? "";
+
+  // Wordmark / brand identity.
+  assert.match(title, /Atakum Pet Shop/i, "homepage <title> must brand as Atakum Pet Shop");
+  assert.equal(ogSiteName, ATAKUM_BRAND, "og:site_name must be the Atakum brand");
+  // Must not leak the default jetgo brand into atakum's served meta.
+  assert.ok(!/JETGO/i.test(title), "atakum homepage title must not contain JETGO");
+  // Local same-day delivery copy present, cargo copy absent.
+  assert.match(title, SAME_DAY_SIGNATURE, "local same-day delivery copy expected");
+  assert.ok(!CARGO_SIGNATURE.test(title), "atakum must not show samsun cargo copy");
+});
+
+test("served homepage HTML for the samsun host DOES show cargo copy (contrast)", async () => {
+  // Proves the branding check actually discriminates local vs cargo rather than
+  // passing for every store.
+  const html = await injectAllMeta(INDEX_HTML, "/", SAMSUN_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  assert.match(title, /Samsun Pet Shop/i);
+  assert.match(title, CARGO_SIGNATURE, "samsun homepage title must carry cargo copy");
+});
+
+// ---- atakum storefront UI smoke via the ?__store=atakum client override ----
+//
+// The checks above assert the data/meta layer. This block exercises the actual
+// CLIENT override path the storefront uses in the browser: it drives
+// client/src/lib/store.ts through `?__store=atakum` (the same override a live
+// smoke uses) and server-renders the real <Logo> component to assert the VISIBLE
+// header wordmark, then reads the resolved store the homepage (landing.tsx) and
+// checkout (checkout.tsx) consume to confirm the local same-day branch.
+//
+// Why server-render instead of a browser: the project ships no browser test
+// runner, and a live browser smoke hits two dev-host limitations — the hidden
+// #seo-static crawler block / <title> stay JETGO on the preview host by design,
+// and the checkout Mahalle field is gated behind a real SMS OTP. Rendering the
+// real client components with react-dom/server avoids both while still
+// exercising the genuine client override + wordmark + checkout branch source.
+test("?__store=atakum drives the client UI: wordmark, same-day copy, Mahalle (local) flow", async () => {
+  // 1. Simulate the browser environment the override reads, BEFORE importing the
+  //    client store module (CURRENT_STORE is resolved once at module load).
+  const sessionStore: Record<string, string> = {};
+  (globalThis as any).window = {
+    location: { hostname: "localhost", search: "?__store=atakum" },
+  };
+  (globalThis as any).sessionStorage = {
+    getItem: (k: string) => (k in sessionStore ? sessionStore[k] : null),
+    setItem: (k: string, v: string) => { sessionStore[k] = String(v); },
+    removeItem: (k: string) => { delete sessionStore[k]; },
+    clear: () => { for (const k of Object.keys(sessionStore)) delete sessionStore[k]; },
+  };
+
+  try {
+    const React = (await import("react")).default;
+    // Logo.tsx relies on the automatic JSX runtime; under the test transform the
+    // emitted React.createElement resolves `React` from the global scope.
+    (globalThis as any).React = React;
+    const { renderToStaticMarkup } = await import("react-dom/server");
+
+    // The real client modules the storefront uses (alias @ -> client/src).
+    const storeMod = await import("../../client/src/lib/store");
+    const Logo = (await import("../../client/src/components/Logo")).default;
+
+    // The override must win over the (jetgo) preview host.
+    assert.equal(storeMod.CURRENT_STORE.id, "atakum", "?__store=atakum override must resolve atakum");
+
+    // 2. Visible header wordmark: render the real <Logo> (linkTo:"" skips the
+    //    wouter <Link> wrapper). atakum has a logo, so the brand surfaces as the
+    //    image alt text; a textless store would surface CURRENT_STORE.shortName.
+    const wordmarkHtml = renderToStaticMarkup(React.createElement(Logo, { linkTo: "" }));
+    assert.match(wordmarkHtml, /Atakum Pet Shop/, "visible wordmark must read Atakum Pet Shop");
+    assert.ok(!/JETGO/i.test(wordmarkHtml), "wordmark must not show the default JETGO brand");
+    assert.ok(!/Samsun Pet Shop/i.test(wordmarkHtml), "wordmark must not show the Samsun brand");
+
+    // 3. Same-day copy: the homepage hero is brandified through the same module.
+    //    Shared JETGO copy must surface the atakum brand, never JETGO/jetgo.
+    const hero = storeMod.brandify("Jetgo'dan Aynı Gün Gelsin");
+    assert.match(hero, /Atakum/, "brandified hero must carry the Atakum brand");
+    assert.match(hero, /Aynı Gün/, "homepage must keep local same-day delivery copy");
+    assert.ok(!/Jetgo/i.test(hero), "brandified copy must not leak the JETGO brand");
+
+    // 4. Checkout branch: checkout.tsx derives isCargo from this same resolved
+    //    store. local => Mahalle (neighborhood) flow + "Getirmesi" fee label and
+    //    NO il/ilçe cargo selectors / "Kargo Ücreti".
+    const commerce = storeMod.CURRENT_STORE.commerce;
+    const isCargo = commerce.fulfillment === "cargo";
+    assert.equal(isCargo, false, "atakum checkout must use the local Mahalle flow, not cargo");
+    assert.equal(commerce.shippingLabel, "Getirmesi", "local delivery fee label expected at checkout");
+    assert.ok(!CARGO_SIGNATURE.test(commerce.shippingLabel), "checkout must not show cargo fee label");
+  } finally {
+    delete (globalThis as any).window;
+    delete (globalThis as any).sessionStorage;
+    delete (globalThis as any).React;
+  }
 });
