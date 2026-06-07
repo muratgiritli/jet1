@@ -4,7 +4,7 @@ import {
   Search, ShoppingCart, Heart, User, MapPin, Phone, Mail, Clock,
   Truck, ShieldCheck, Banknote, CreditCard, Zap, Award,
   ChevronRight, Star, Flame, Sparkles, Gift, PackageCheck,
-  ArrowRight, Tag,
+  ArrowRight,
 } from "lucide-react";
 import { brandify, useStore } from "@/lib/store";
 
@@ -517,9 +517,6 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
           </div>
           <div className="mt-10 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-gray-500">
             <div>© 2026 {brandify("JETGO")} — Sizpa LTD. Tüm hakları saklıdır.</div>
-            <div className="flex items-center gap-1.5 bg-purple-500/10 px-3 py-1.5 rounded-full text-purple-300">
-              <Tag className="w-3 h-3" /> DEMO TASARIM • Sadece önizleme
-            </div>
           </div>
         </div>
       </footer>
