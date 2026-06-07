@@ -9,6 +9,17 @@ The mobile homepage is `landing.tsx` (rendered when `isMobile`; desktop returns
 `DemoAnasayfaEmbed`). `HeroCarousel` is **dead code** — defined but never rendered
 (`<HeroCarousel` appears nowhere). Don't wire features into it expecting them to show.
 
+**Desktop homepage = `demo-anasayfa.tsx`** (mounted via `DemoAnasayfaEmbed` with
+`embedded` defaulting to **false**, so its `!embedded` header AND footer DO render in
+production — including a "DEMO TASARIM • Sadece önizleme" footer badge). It began life
+as a static "demo" with hardcoded jetgo branding, so any per-store branding work must
+touch it explicitly: it reads `useStore()` for the wordmark and gates delivery/payment
+copy on `store.commerce.fulfillment === "cargo"` (cargo stores like samsun show
+country-wide-kargo + online-only copy; local stores keep "Atakum içi 1 saatte" copy).
+**Why:** SEO/meta auto-brandify but this visible body did not, so samsun/atakum showed
+jetgo text + false "1 saatte teslim" claims until wired manually. Keep the jetgo
+wordmark lowercase ("jetgo") — `brandify`/`brandWord` uppercases it to "JETGO".
+
 **Admin-managed banners** (already editable): TopBanner, HomeBanners (`home_top`),
 HomeBannersBelowCategory (`home_below_category`), HomeBottomCarousel
 (`home_bottom_carousel`) via the banners CRUD table; BreedBannersRow

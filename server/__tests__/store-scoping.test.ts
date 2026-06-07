@@ -35,6 +35,7 @@ import {
 const MARK = "__SCOPE_TEST__";
 const JETGO_HOST = "www.jetgomarket.com";
 const ATAKUM_HOST = "www.atakumpetshop.com";
+const SAMSUN_HOST = "www.samsunpetshop.com";
 
 // app_settings keys touched by the tests; snapshotted and restored.
 const SETTING_KEYS = [
@@ -79,6 +80,12 @@ let orderProductId = 0;
 let sessionCookie = "";
 // Forged admin session cookie (requireAdmin only checks session.userId).
 let adminCookie = "";
+// A SAMSUN (cargo, online-payment-only) customer + its forged session. Used by
+// the samsun storefront tests, including the admin->customer tracking round-trip
+// (/api/customer/orders looks orders up by the customer's phone, so the order's
+// customerPhone must equal this seeded customer's phone).
+let samsunCustomerCookie = "";
+let samsunCustomerPhone = "";
 
 async function setSetting(key: string, value: string) {
   await pool.query(
@@ -306,6 +313,17 @@ before(async () => {
     ids.users.push(adminUserId);
   }
   adminCookie = await forgeSessionCookie({ userId: adminUserId });
+
+  // ---- Seed a SAMSUN customer with a valid numeric phone + forge its session ----
+  // The phone must be numeric (the order schema validates it) and is reused as the
+  // order's customerPhone so /api/customer/orders can find the order back by phone.
+  samsunCustomerPhone = "555" + String(randomBytes(4).readUInt32BE(0)).padStart(7, "0").slice(-7);
+  const samCust = await pool.query(
+    "INSERT INTO customers (phone, password, name, is_blacklisted) VALUES ($1, $2, $3, false) RETURNING id",
+    [samsunCustomerPhone, `${MARK}_PWD`, `${MARK}_SAMSUN_BUYER`]
+  );
+  ids.customers.push(samCust.rows[0].id);
+  samsunCustomerCookie = await forgeSessionCookie({ customerId: samCust.rows[0].id });
 });
 
 after(async () => {
@@ -465,6 +483,95 @@ test("order on atakumpetshop.com is tagged source_site=atakum", async () => {
 
 test("order on an unknown host falls back to source_site=jetgo (default store)", async () => {
   assert.equal(await placeOrderAndReadSource("some-preview.replit.dev"), "jetgo");
+});
+
+// ---- samsun (cargo, online-payment-only) storefront behavior + tracking ----
+//
+// samsun (samsunpetshop.com) is the cargo store: fulfillment "cargo",
+// onlinePaymentOnly true, preorderEnabled false (shared/stores.ts). These tests
+// exercise the server-enforced store behavior end-to-end and the admin -> customer
+// cargo-tracking round-trip, complementing the client-side UI smoke (home/PDP/
+// checkout branding) run via the testing skill.
+
+// POST as a specific (cookie-identified) customer.
+async function postWithCookie(path: string, host: string, payload: any, cookie: string) {
+  const res = await fetch(`${baseUrl}${path}`, {
+    method: "POST",
+    headers: { "X-Forwarded-Host": host, "Content-Type": "application/json", Cookie: cookie },
+    body: JSON.stringify(payload),
+  });
+  return { status: res.status, body: await res.json() as any };
+}
+
+// GET as a specific (cookie-identified) customer.
+async function getWithCookie(path: string, host: string, cookie: string) {
+  const res = await fetch(`${baseUrl}${path}`, { headers: { "X-Forwarded-Host": host, Cookie: cookie } });
+  return { status: res.status, body: await res.json() as any };
+}
+
+// A valid samsun online order for the seeded samsun customer (online card is the
+// only method this store accepts; the customerPhone must match for the read-back).
+const samsunOnlineOrder = () => ({
+  ...orderPayload(),
+  paymentMethod: "online",
+  customerPhone: samsunCustomerPhone,
+  city: "İstanbul",
+  district: "Kadıköy",
+});
+
+test("samsun rejects door payment — online-payment-only store (400)", async () => {
+  const res = await postWithCookie(
+    "/api/orders",
+    SAMSUN_HOST,
+    { ...samsunOnlineOrder(), paymentMethod: "Kapıda Nakit" },
+    samsunCustomerCookie,
+  );
+  assert.equal(res.status, 400);
+  assert.match(String(res.body.message ?? ""), /online kredi kartı/i);
+});
+
+test("online order on samsunpetshop.com is tagged source_site=samsun and starts pending", async () => {
+  const res = await postWithCookie("/api/orders", SAMSUN_HOST, samsunOnlineOrder(), samsunCustomerCookie);
+  assert.equal(res.status, 201, `samsun order POST failed: ${JSON.stringify(res.body)}`);
+  const orderId = res.body.id as number;
+  assert.ok(orderId, "order id missing in response");
+  ids.orders.push(orderId);
+  const row = await pool.query("SELECT source_site, payment_status FROM orders WHERE id = $1", [orderId]);
+  assert.equal(row.rows[0].source_site, "samsun");
+  assert.equal(row.rows[0].payment_status, "pending", "online orders must start pending");
+});
+
+test("admin-entered cargo tracking becomes visible to the customer", async () => {
+  // 1) Customer places an online order on the samsun storefront.
+  const created = await postWithCookie("/api/orders", SAMSUN_HOST, samsunOnlineOrder(), samsunCustomerCookie);
+  assert.equal(created.status, 201, `samsun order POST failed: ${JSON.stringify(created.body)}`);
+  const orderId = created.body.id as number;
+  assert.ok(orderId, "order id missing in response");
+  ids.orders.push(orderId);
+
+  // 2) Admin enters the cargo company + tracking number for that order.
+  const patched = await patchAdmin(`/api/admin/orders/${orderId}/tracking`, SAMSUN_HOST, {
+    cargoCompany: "Yurtiçi Kargo",
+    trackingNumber: `${MARK}TRACK`,
+  });
+  assert.equal(patched.status, 200, `tracking PATCH failed: ${JSON.stringify(patched.body)}`);
+  assert.equal(patched.body.trackingNumber, `${MARK}TRACK`);
+  assert.ok(
+    String(patched.body.trackingUrl).includes("yurticikargo"),
+    "server should build the tracking URL from the cargo-company template",
+  );
+
+  // 3) The customer reads their own orders and sees the tracking the admin entered.
+  const mine = await getWithCookie("/api/customer/orders", SAMSUN_HOST, samsunCustomerCookie);
+  assert.equal(mine.status, 200);
+  const order = (mine.body as any[]).find((o) => o.id === orderId);
+  assert.ok(order, "customer should see their tracked order");
+  assert.equal(order.cargoCompany, "Yurtiçi Kargo");
+  assert.equal(order.trackingNumber, `${MARK}TRACK`);
+  assert.ok(
+    String(order.trackingUrl).includes(`${MARK}TRACK`),
+    "customer-facing order must carry the tracking URL",
+  );
 });
 
 // ---- Online card source-site attribution across the payment-completion path ----

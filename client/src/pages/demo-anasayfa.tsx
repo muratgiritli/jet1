@@ -6,6 +6,7 @@ import {
   ChevronRight, Star, Flame, Sparkles, Gift, PackageCheck,
   ArrowRight, Tag,
 } from "lucide-react";
+import { brandify, useStore } from "@/lib/store";
 
 type Product = {
   id: number;
@@ -130,6 +131,23 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
     queryKey: ["/api/products"],
   });
 
+  const store = useStore();
+  const isCargo = store.commerce.fulfillment === "cargo";
+  const brandText = store.id === "jetgo" ? "jetgo" : store.shortName;
+  const deliveryBadge = isCargo ? "Türkiye geneli hızlı kargo" : "Atakum içi 1 SAATTE teslim";
+  const heroPill = isCargo ? "TÜRKİYE GENELİ KARGO" : "SADECE ATAKUM İÇİ";
+  const heroSub = isCargo
+    ? "Mama, kum, oyuncak ve daha fazlası hızlı kargoyla kapında. 100+ marka, güvenli ödeme, sıfır endişe."
+    : "Mama, kum, oyuncak ve daha fazlası kapında 1 saat içinde. 100+ marka, kapıda ödeme, sıfır endişe.";
+  const trustDeliveryTitle = isCargo ? "Hızlı Kargo" : "1 Saatte Teslim";
+  const trustDeliverySub = isCargo ? "Türkiye geneli teslimat" : "Atakum içi hızlı kargo";
+  const trustPayTitle = isCargo ? "Güvenli Ödeme" : "Kapıda Ödeme";
+  const trustPaySub = isCargo ? "Online kredi kartı" : "Nakit, kart veya QR";
+  const kediDeliverySub = isCargo ? "Hızlı kargo" : "Aynı gün teslim";
+  const footerDesc = isCargo
+    ? "Türkiye geneli hızlı kargoyla güvenilir pet shop. 1000+ ürün, 100+ marka, kapında."
+    : "Atakum'un en hızlı pet shop teslimatı. 1000+ ürün, 100+ marka, 1 saatte kapında.";
+
   const active = products.filter(p => p.isActive !== false && p.img && p.price > 0);
   const featured = active.slice(0, 10);
   const popular = active.slice(10, 20);
@@ -148,7 +166,7 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
           </div>
           <div className="flex items-center gap-4">
             <span className="text-[#FFC107] font-bold flex items-center gap-1.5">
-              <Zap className="w-3.5 h-3.5 fill-[#FFC107]" /> Atakum içi 1 SAATTE teslim
+              <Zap className="w-3.5 h-3.5 fill-[#FFC107]" /> {deliveryBadge}
             </span>
           </div>
         </div>
@@ -159,7 +177,7 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center gap-6">
           <Link href="/" className="flex items-center gap-1 shrink-0" data-testid="link-demo-logo">
             <span className="text-[#FFC107] text-3xl leading-none">🐾</span>
-            <span className="text-[#6B3480] font-black text-3xl tracking-tight leading-none">jetgo</span>
+            <span className="text-[#6B3480] font-black text-3xl tracking-tight leading-none">{brandText}</span>
           </Link>
 
           <div className="flex-1 max-w-2xl">
@@ -231,14 +249,14 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
 
             <div className="relative z-10 max-w-md">
               <div className="inline-flex items-center gap-1.5 bg-[#FFC107] text-[#3b1378] px-3 py-1 rounded-full text-[11px] font-extrabold tracking-wide mb-4">
-                <Sparkles className="w-3.5 h-3.5" /> SADECE ATAKUM İÇİ
+                <Sparkles className="w-3.5 h-3.5" /> {heroPill}
               </div>
               <h1 className="text-white font-black text-5xl leading-[1.05] tracking-tight">
                 Patilerine en hızlı<br />
                 <span className="text-[#FFC107]">teslimat</span> burada.
               </h1>
               <p className="text-purple-100 mt-4 text-base leading-relaxed">
-                Mama, kum, oyuncak ve daha fazlası kapında 1 saat içinde. 100+ marka, kapıda ödeme, sıfır endişe.
+                {heroSub}
               </p>
               <div className="mt-6 flex items-center gap-3">
                 <Link href="/kategori" className="bg-[#FFC107] hover:bg-yellow-300 text-[#3b1378] font-black px-7 py-3.5 rounded-2xl shadow-xl shadow-yellow-900/20 transition-all hover:scale-105 flex items-center gap-2" data-testid="link-demo-hero-cta">
@@ -278,7 +296,7 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
               <div className="relative z-10">
                 <span className="inline-block bg-white/25 backdrop-blur text-white text-[10px] font-extrabold px-2 py-0.5 rounded-full">EN ÇOK SATAN</span>
                 <div className="mt-2 text-white font-black text-2xl leading-tight">Kedi<br />Kumları</div>
-                <div className="text-white/90 text-[12px] mt-1">Aynı gün teslim</div>
+                <div className="text-white/90 text-[12px] mt-1">{kediDeliverySub}</div>
                 <span className="mt-3 inline-flex items-center gap-1 text-[11px] font-bold text-white bg-black/20 px-3 py-1.5 rounded-full">
                   İncele <ChevronRight className="w-3 h-3" />
                 </span>
@@ -292,8 +310,8 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
       <section className="max-w-7xl mx-auto px-6">
         <div className="grid grid-cols-4 gap-4">
           {[
-            { icon: <Truck className="w-7 h-7" />, t: "1 Saatte Teslim", s: "Atakum içi hızlı kargo" },
-            { icon: <Banknote className="w-7 h-7" />, t: "Kapıda Ödeme", s: "Nakit, kart veya QR" },
+            { icon: <Truck className="w-7 h-7" />, t: trustDeliveryTitle, s: trustDeliverySub },
+            { icon: <Banknote className="w-7 h-7" />, t: trustPayTitle, s: trustPaySub },
             { icon: <ShieldCheck className="w-7 h-7" />, t: "Güvenli Alışveriş", s: "256-bit SSL koruma" },
             { icon: <Gift className="w-7 h-7" />, t: "Para Puan", s: "Her alışverişe %5" },
           ].map((b, i) => (
@@ -459,15 +477,15 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
             <div className="col-span-2">
               <div className="flex items-center gap-1 mb-3">
                 <span className="text-[#FFC107] text-3xl leading-none">🐾</span>
-                <span className="text-white font-black text-3xl tracking-tight">jetgo</span>
+                <span className="text-white font-black text-3xl tracking-tight">{brandText}</span>
               </div>
               <p className="text-sm text-gray-400 leading-relaxed">
-                Atakum'un en hızlı pet shop teslimatı. 1000+ ürün, 100+ marka, 1 saatte kapında.
+                {footerDesc}
               </p>
               <div className="mt-4 flex items-center gap-3">
                 <span className="bg-white/10 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5" /> Visa</span>
                 <span className="bg-white/10 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5"><CreditCard className="w-3.5 h-3.5" /> Mastercard</span>
-                <span className="bg-white/10 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5"><Banknote className="w-3.5 h-3.5" /> Kapıda</span>
+                <span className="bg-white/10 px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1.5"><Banknote className="w-3.5 h-3.5" /> {isCargo ? "Online" : "Kapıda"}</span>
               </div>
             </div>
             <div>
@@ -498,7 +516,7 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
             </div>
           </div>
           <div className="mt-10 pt-6 border-t border-white/10 flex items-center justify-between text-xs text-gray-500">
-            <div>© 2026 JETGO — Sizpa LTD. Tüm hakları saklıdır.</div>
+            <div>© 2026 {brandify("JETGO")} — Sizpa LTD. Tüm hakları saklıdır.</div>
             <div className="flex items-center gap-1.5 bg-purple-500/10 px-3 py-1.5 rounded-full text-purple-300">
               <Tag className="w-3 h-3" /> DEMO TASARIM • Sadece önizleme
             </div>

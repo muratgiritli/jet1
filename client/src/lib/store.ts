@@ -1,10 +1,33 @@
-import { getStoreByHost, brandifyFor, type StoreConfig } from "@shared/stores";
+import { getStoreByHost, getStoreByExactHost, STORES, type StoreConfig, brandifyFor } from "@shared/stores";
+
+// Store override for local/e2e smoke testing. Real branded storefronts can only
+// be served from their custom domains, so on the dev/preview host the resolver
+// always falls back to the default (jetgo) store. To exercise another branded
+// storefront (e.g. samsun) in a browser smoke test, pass `?__store=<id>` once —
+// it is remembered for the rest of the session (sessionStorage) so it survives
+// client-side navigation. The override is ignored whenever the current host is a
+// real configured custom domain (getStoreByExactHost matches), so production
+// branded domains can never be repointed via this param.
+function resolveStoreOverride(): StoreConfig | undefined {
+  if (typeof window === "undefined") return undefined;
+  if (getStoreByExactHost(window.location.hostname)) return undefined;
+  try {
+    const fromQuery = new URLSearchParams(window.location.search).get("__store");
+    if (fromQuery) sessionStorage.setItem("__store_override", fromQuery);
+    const overrideId = fromQuery || sessionStorage.getItem("__store_override");
+    if (!overrideId) return undefined;
+    return STORES.find((s) => s.id === overrideId);
+  } catch {
+    return undefined;
+  }
+}
 
 // The active store is decided once, synchronously, from the browser host.
 // All branding (name, logo, colors, SEO) reads from this single resolved value.
-export const CURRENT_STORE: StoreConfig = getStoreByHost(
-  typeof window !== "undefined" ? window.location.hostname : undefined,
-);
+const __override = resolveStoreOverride();
+export const CURRENT_STORE: StoreConfig =
+  __override ??
+  getStoreByHost(typeof window !== "undefined" ? window.location.hostname : undefined);
 
 export function useStore(): StoreConfig {
   return CURRENT_STORE;
