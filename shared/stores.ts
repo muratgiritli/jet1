@@ -60,6 +60,8 @@ export interface StoreConfig {
   domain: string;
   /** Logo image path. */
   logo: string;
+  /** Optional mobile-only logo (e.g. light/white variant for the dark mobile header). */
+  logoMobile?: string;
   /** Favicon path. */
   favicon: string;
   /** Phone in E.164. */
@@ -136,6 +138,7 @@ const atakum: StoreConfig = {
   alternateNames: ["Atakum Petshop", "Atakum Pet", "Atakum Samsun Pet Shop", "Atakum Pet Shop Samsun"],
   domain: "https://www.atakumpetshop.com",
   logo: "/logo-atakum.webp",
+  logoMobile: "/logo-atakum-mobile.webp",
   favicon: "/favicon-192.png",
   phone: "+908508403959",
   phoneDisplay: "0850 840 39 59",
