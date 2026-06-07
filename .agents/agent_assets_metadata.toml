@@ -18,6 +18,24 @@ uri = "file://attached_assets/generated_images/logo-samsun-gen.png"
 type = "image"
 title = "samsun pet shop logo"
 
+[[generated]]
+id = "8XAse60jyK50OCUt_lsDs"
+uri = "file://attached_assets/generated_images/logo-samsun-white.png"
+type = "image"
+title = "samsun white logo"
+
+[[generated]]
+id = "yG64J-vDWX9WseCJPi8hv"
+uri = "file://attached_assets/generated_images/logo-samsun-white2.png"
+type = "image"
+title = "samsun white solid logo"
+
+[[generated]]
+id = "G7ZRrhrjRmKubQcY3nDRK"
+uri = "file://attached_assets/generated_images/logo-samsun-balanced.png"
+type = "image"
+title = "samsun balanced logo"
+
 [[outputs]]
 id = "9y2QoewR6z_sxq3OzRlmR"
 uri = "file://jetgo_urunler.xlsx"
