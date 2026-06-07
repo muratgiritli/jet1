@@ -17,6 +17,8 @@ import assert from "node:assert/strict";
 import express from "express";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
+import { randomBytes } from "node:crypto";
+import * as cookieSignature from "cookie-signature";
 import { registerRoutes } from "../routes";
 import { pool } from "../storage";
 
@@ -38,6 +40,8 @@ const SETTING_KEYS = [
   // category-banners
   "cat_banner_enabled", "cat_banner1_image", "cat_banner1_enabled",
   "jetgo:cat_banner1_image", "atakum:cat_banner1_image",
+  // payment method gate (the order endpoint refuses unknown/disabled methods)
+  "payment_nakit_enabled",
 ];
 
 let server: ReturnType<typeof createServer>;
@@ -50,7 +54,16 @@ const ids: {
   neighborhoods: number[];
   products: number[];
   brandCategories: number[];
-} = { banners: [], coupons: [], campaignItems: [], neighborhoods: [], products: [], brandCategories: [] };
+  orders: number[];
+  customers: number[];
+} = { banners: [], coupons: [], campaignItems: [], neighborhoods: [], products: [], brandCategories: [], orders: [], customers: [] };
+
+// The order endpoint requires an authenticated, non-blacklisted customer.
+// We seed a throwaway customer, forge a PgSession row carrying its id, and sign
+// the matching connect.sid cookie with SESSION_SECRET so requests authenticate
+// exactly as a real logged-in customer would.
+let orderProductId = 0;
+let sessionCookie = "";
 
 async function setSetting(key: string, value: string) {
   await pool.query(
@@ -76,6 +89,34 @@ async function post(path: string, host: string, payload: any) {
   });
   return { status: res.status, body: await res.json() as any };
 }
+
+// POST as the authenticated test customer (sends the forged session cookie).
+async function postAsCustomer(path: string, host: string, payload: any) {
+  const res = await fetch(`${baseUrl}${path}`, {
+    method: "POST",
+    headers: {
+      "X-Forwarded-Host": host,
+      "Content-Type": "application/json",
+      Cookie: sessionCookie,
+    },
+    body: JSON.stringify(payload),
+  });
+  return { status: res.status, body: await res.json() as any };
+}
+
+// Minimal valid order body; server recomputes prices/totals from the DB, so the
+// numbers here only need to satisfy the request schema.
+const orderPayload = () => ({
+  items: [{ productId: orderProductId, name: `${MARK}_PRODUCT`, price: 100, quantity: 1 }],
+  subtotal: 100,
+  shipping: 0,
+  discount: 0,
+  grandTotal: 100,
+  paymentMethod: "Kapıda Nakit",
+  customerName: `${MARK}_BUYER`,
+  customerPhone: "5550000000",
+  customerAddress: `${MARK} no-match address`,
+});
 
 before(async () => {
   // ---- Boot a fresh app instance against the real (dev) DB ----
@@ -161,6 +202,7 @@ before(async () => {
   );
   const productId = prod.rows[0].id;
   ids.products.push(productId);
+  orderProductId = productId;
 
   // ---- Seed campaign items (one per scope) ----
   for (const store of ["all", "jetgo", "atakum"]) {
@@ -170,10 +212,51 @@ before(async () => {
     );
     ids.campaignItems.push(r.rows[0].id);
   }
+
+  // ---- Enable cash-on-delivery so the order endpoint accepts the method ----
+  await setSetting("payment_nakit_enabled", "1");
+
+  // ---- Seed a customer and forge its authenticated session ----
+  const cust = await pool.query(
+    "INSERT INTO customers (phone, password, name, is_blacklisted) VALUES ($1, $2, $3, false) RETURNING id",
+    [`${MARK}_5550000`, `${MARK}_PWD`, `${MARK}_BUYER`]
+  );
+  const customerId = cust.rows[0].id;
+  ids.customers.push(customerId);
+
+  const sid = randomBytes(24).toString("hex");
+  const maxAge = 30 * 24 * 60 * 60 * 1000;
+  const expire = new Date(Date.now() + maxAge);
+  const sess = {
+    cookie: {
+      originalMaxAge: maxAge,
+      expires: expire.toISOString(),
+      httpOnly: true,
+      path: "/",
+      sameSite: "lax",
+      secure: false,
+    },
+    customerId,
+  };
+  await pool.query(
+    'INSERT INTO "session" (sid, sess, expire) VALUES ($1, $2, $3)',
+    [sid, JSON.stringify(sess), expire]
+  );
+  sessionCookie = `connect.sid=${encodeURIComponent("s:" + cookieSignature.sign(sid, process.env.SESSION_SECRET!))}`;
 });
 
 after(async () => {
-  // Remove seeded rows.
+  // Remove seeded rows. Order-derived rows (stock movements, loyalty points)
+  // are cleared before the orders/customer they reference.
+  if (ids.orders.length) {
+    await pool.query("DELETE FROM stock_movements WHERE order_id = ANY($1)", [ids.orders]);
+    await pool.query("DELETE FROM loyalty_points WHERE order_id = ANY($1)", [ids.orders]);
+    await pool.query("DELETE FROM orders WHERE id = ANY($1)", [ids.orders]);
+  }
+  if (ids.customers.length) {
+    await pool.query("DELETE FROM loyalty_points WHERE customer_id = ANY($1)", [ids.customers]);
+    await pool.query("DELETE FROM customers WHERE id = ANY($1)", [ids.customers]);
+  }
   if (ids.campaignItems.length) await pool.query("DELETE FROM campaign_items WHERE id = ANY($1)", [ids.campaignItems]);
   if (ids.products.length) await pool.query("DELETE FROM products WHERE id = ANY($1)", [ids.products]);
   if (ids.brandCategories.length) await pool.query("DELETE FROM brand_categories WHERE id = ANY($1)", [ids.brandCategories]);
@@ -292,4 +375,29 @@ test("default/unknown host resolves base (unprefixed) jetgo settings", async () 
   assert.equal(dev.body.campaign_hero_title, "JETGO_TITLE");
   // base fallback for keys without a jetgo override.
   assert.equal(dev.body.campaign_hero_subtitle, "BASE_SUB");
+});
+
+// ---- Order source-site attribution (revenue must land on the right store) ----
+
+// Place an order and return the persisted source_site straight from the DB.
+async function placeOrderAndReadSource(host: string): Promise<string | null> {
+  const res = await postAsCustomer("/api/orders", host, orderPayload());
+  assert.equal(res.status, 201, `order POST failed: ${JSON.stringify(res.body)}`);
+  const orderId = res.body.id as number;
+  assert.ok(orderId, "order id missing in response");
+  ids.orders.push(orderId);
+  const row = await pool.query("SELECT source_site FROM orders WHERE id = $1", [orderId]);
+  return row.rows[0]?.source_site ?? null;
+}
+
+test("order on jetgomarket.com is tagged source_site=jetgo", async () => {
+  assert.equal(await placeOrderAndReadSource(JETGO_HOST), "jetgo");
+});
+
+test("order on atakumpetshop.com is tagged source_site=atakum", async () => {
+  assert.equal(await placeOrderAndReadSource(ATAKUM_HOST), "atakum");
+});
+
+test("order on an unknown host falls back to source_site=jetgo (default store)", async () => {
+  assert.equal(await placeOrderAndReadSource("some-preview.replit.dev"), "jetgo");
 });
