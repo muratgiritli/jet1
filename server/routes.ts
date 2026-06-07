@@ -461,7 +461,7 @@ export async function registerRoutes(
         created_at TIMESTAMP NOT NULL DEFAULT NOW()
       );
     `);
-    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_subscriptions_created ON subscriptions(created_at DESC);`);
+    await sharedPool.query(`CREATE INDEX IF NOT EXISTS idx_subscriptions_created ON subscriptions(created_at);`);
   } catch (e) {
     console.error("Subscriptions table setup error:", e);
   }

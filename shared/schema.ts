@@ -511,7 +511,9 @@ export const subscriptions = pgTable("subscriptions", {
   petType: text("pet_type").notNull(),
   status: text("status").notNull().default("new"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => ({
+  createdIdx: index("idx_subscriptions_created").on(t.createdAt),
+}));
 export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({ id: true, status: true, createdAt: true });
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
