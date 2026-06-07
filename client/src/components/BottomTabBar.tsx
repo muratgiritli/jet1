@@ -13,6 +13,7 @@ export default function BottomTabBar() {
   const [contactOpen, setContactOpen] = useState(false);
 
   if (location.startsWith("/admin")) return null;
+  if (location.startsWith("/urun")) return null;
 
   const TABS = [
     { name: "Ana Sayfa", href: "/", icon: Home, testId: "tab-home" },

@@ -13,6 +13,7 @@ import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
 import { useCart } from "@/contexts/CartContext";
+import { useCustomer } from "@/contexts/CustomerContext";
 import { useToast } from "@/hooks/use-toast";
 import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
 import { CATEGORIES, productUrl } from "@/lib/data";
@@ -308,6 +309,7 @@ export default function ProductDetailPage() {
   const isCampaignMode = new URLSearchParams(searchStr).get("kampanya") === "1";
 
   const { basket, updateQty, grandTotal, itemCount, updateStock, setVariant, getVariant } = useCart();
+  const { isLoggedIn } = useCustomer();
   const [, setLocation] = useLocation();
 
   const staticProduct = useMemo(() => {
@@ -476,6 +478,7 @@ export default function ProductDetailPage() {
   const [stockAlertLoading, setStockAlertLoading] = useState(false);
   const [activeCrossSellTab, setActiveCrossSellTab] = useState<string>("");
   const [stockDialogOpen, setStockDialogOpen] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [paraPuanInfoOpen, setParaPuanInfoOpen] = useState(false);
   const [campaignWarning, setCampaignWarning] = useState(false);
 
@@ -1132,6 +1135,101 @@ export default function ProductDetailPage() {
             >
               {stockAlertLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Bell className="w-4 h-4" />}
               Gönder
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {product.stock > 0 && (
+        <div
+          className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 py-3 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]"
+          data-testid="bar-buy"
+        >
+          <div className="max-w-2xl mx-auto flex items-center gap-3">
+            <div className="flex flex-col leading-tight">
+              {displayOriginalPrice && displayOriginalPrice > displayPrice && (
+                <span className="text-xs text-gray-400 line-through" data-testid="text-buy-bar-original-price">
+                  {displayOriginalPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                </span>
+              )}
+              <span className="text-xl font-extrabold text-primary" data-testid="text-buy-bar-price">
+                {displayPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+              </span>
+            </div>
+            <div className="ml-auto">
+              {quantity === 0 ? (
+                <Button
+                  size="lg"
+                  className="font-bold px-8 h-12 text-base"
+                  style={{ backgroundColor: "#e65100", color: "#fff" }}
+                  onClick={() => {
+                    if (hasVariants && !selectedVariant) {
+                      toast({ title: "Lütfen önce bir seçenek belirleyin", variant: "destructive" });
+                      return;
+                    }
+                    const blocked = updateQty(pid, 1, isCampaignMode, selectedVariant ?? undefined);
+                    if (blocked) {
+                      toast({ title: "Stok kalmadı!", variant: "destructive" });
+                    }
+                  }}
+                  data-testid="button-add-to-cart"
+                >
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Sepete Ekle
+                </Button>
+              ) : (
+                <Button
+                  size="lg"
+                  className="font-bold px-8 h-12 text-base"
+                  style={{ backgroundColor: "#e65100", color: "#fff" }}
+                  onClick={() => {
+                    if (isLoggedIn) {
+                      setLocation("/odeme");
+                    } else {
+                      setConfirmDialogOpen(true);
+                    }
+                  }}
+                  data-testid="button-confirm-cart"
+                >
+                  <ShoppingCart className="w-5 h-5 mr-2" />
+                  Sepeti Onayla
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="text-center text-base">Hesabınız yok mu?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground text-center mb-2">
+            Üye olmadan devam edebilir ya da giriş yaparak avantajlardan yararlanabilirsiniz.
+          </p>
+          <div className="space-y-3">
+            <Button
+              className="w-full h-12 font-bold"
+              style={{ backgroundColor: "#e65100", color: "#fff" }}
+              onClick={() => {
+                setConfirmDialogOpen(false);
+                setLocation("/giris");
+              }}
+              data-testid="button-go-login"
+            >
+              Giriş Yap / Üye Ol
+            </Button>
+            <Button
+              variant="outline"
+              className="w-full h-12 font-bold"
+              onClick={() => {
+                setConfirmDialogOpen(false);
+                setLocation("/odeme");
+              }}
+              data-testid="button-guest-checkout"
+            >
+              Üye Olmadan Devam Et
             </Button>
           </div>
         </DialogContent>

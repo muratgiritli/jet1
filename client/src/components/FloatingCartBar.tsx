@@ -33,6 +33,8 @@ export default function FloatingCartBar() {
 
   const minWarningText = `Minimum sipariş tutarı ${CONFIG.minLimit} TL'dir. Sepete ${remaining.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL daha ürün eklemeniz gerekir.`;
 
+  if (location.startsWith("/urun")) return null;
+
   return (
     <AnimatePresence>
       {itemCount > 0 && location !== "/odeme" && (
