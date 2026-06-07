@@ -12,6 +12,12 @@ uri = "file://client/public/logo-samsun.png"
 type = "image"
 title = "samsun pet shop logo"
 
+[[generated]]
+id = "nADRknGbC4XQM03IEJjL4"
+uri = "file://attached_assets/generated_images/logo-samsun-gen.png"
+type = "image"
+title = "samsun pet shop logo"
+
 [[outputs]]
 id = "9y2QoewR6z_sxq3OzRlmR"
 uri = "file://jetgo_urunler.xlsx"
