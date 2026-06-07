@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { brandify } from "@/lib/store";
+import { brandify, useStore } from "@/lib/store";
+import { DEFAULT_STORE } from "@shared/stores";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -7,7 +8,7 @@ import {
   Truck, CreditCard, Banknote, Smartphone, Building2,
   ArrowRight, ChevronRight, ChevronLeft, Star, Clock, Shield,
   Gift, MapPin, Phone, Mail, BookOpen, MessageSquare,
-  PackageCheck, Zap,
+  PackageCheck, Zap, Info,
   Stethoscope, ShoppingBag, Heart, Sparkles
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
@@ -852,6 +853,9 @@ function DesktopDeliveryInfo() {
 }
 
 function DesktopContactStrip() {
+  const store = useStore();
+  const isBranded = store.id !== DEFAULT_STORE.id;
+  const whatsappDigits = store.phone.replace(/\D/g, "");
   return (
     <div className="hidden md:block" data-testid="section-desktop-contact">
       <div className="bg-gray-50 rounded-2xl border border-gray-200 p-6">
@@ -861,26 +865,38 @@ function DesktopContactStrip() {
               <SiWhatsapp className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <p className="text-sm font-bold text-gray-800">WhatsApp</p>
-              <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer" className="text-sm text-gray-500 hover:text-green-600 transition-colors">Hemen yaz</a>
+              <p className="text-sm font-bold text-gray-800">{isBranded ? "WhatsApp (sadece)" : "WhatsApp"}</p>
+              <a href={`https://wa.me/${whatsappDigits}`} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-500 hover:text-green-600 transition-colors" data-testid="desktop-contact-whatsapp">{isBranded ? store.phone : "Hemen yaz"}</a>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
-              <Mail className="w-6 h-6 text-blue-600" />
+          {isBranded ? (
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                <Info className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-800">Şirket</p>
+                <p className="text-sm text-gray-500" data-testid="desktop-contact-company">{store.companyName}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-bold text-gray-800">E-posta</p>
-              <a href="mailto:info@sizpa.com" className="text-sm text-gray-500 hover:text-blue-600 transition-colors">info@sizpa.com</a>
+          ) : (
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center shrink-0">
+                <Mail className="w-6 h-6 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-gray-800">E-posta</p>
+                <a href={`mailto:${store.email}`} className="text-sm text-gray-500 hover:text-blue-600 transition-colors">{store.email}</a>
+              </div>
             </div>
-          </div>
+          )}
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center shrink-0">
               <MapPin className="w-6 h-6 text-[#6B3480]" />
             </div>
             <div>
               <p className="text-sm font-bold text-gray-800">Adres</p>
-              <p className="text-sm text-gray-500">Atakum, Samsun</p>
+              <p className="text-sm text-gray-500" data-testid="desktop-contact-address">{isBranded ? store.address : "Atakum, Samsun"}</p>
             </div>
           </div>
         </div>

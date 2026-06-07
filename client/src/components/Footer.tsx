@@ -4,6 +4,8 @@ import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, In
 import { SiWhatsapp } from "react-icons/si";
 import kartLogoPath from "@assets/kart_1775765432584.png";
 import ContactDialog from "@/components/ContactDialog";
+import { useStore } from "@/lib/store";
+import { DEFAULT_STORE } from "@shared/stores";
 
 const FOOTER_LINKS = [
   { label: "Sıkça Sorulan Sorular", href: "/sss", icon: HelpCircle, mobileHidden: false },
@@ -23,6 +25,9 @@ const LEGAL_LINKS = [
 
 export default function Footer() {
   const [contactOpen, setContactOpen] = useState(false);
+  const store = useStore();
+  const showStoreContact = store.id !== DEFAULT_STORE.id;
+  const whatsappDigits = store.phone.replace(/\D/g, "");
   return (
     <footer className="block bg-gray-900 text-gray-300 mt-8 pb-20 md:pb-0" data-testid="footer-desktop">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-6 md:py-10">
@@ -65,6 +70,30 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-bold text-lg mb-4">İletişim</h3>
             <ul className="space-y-3">
+              {showStoreContact && (
+                <>
+                  <li className="flex items-start gap-2.5 text-sm text-gray-300" data-testid="footer-contact-address">
+                    <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5 text-emerald-400" />
+                    <span>{store.address}</span>
+                  </li>
+                  <li>
+                    <a
+                      href={`https://wa.me/${whatsappDigits}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-2.5 text-sm text-green-400 hover:text-green-300 transition-colors"
+                      data-testid="footer-contact-whatsapp"
+                    >
+                      <SiWhatsapp className="w-4 h-4 flex-shrink-0" />
+                      <span>WhatsApp (sadece) {store.phone}</span>
+                    </a>
+                  </li>
+                  <li className="flex items-start gap-2.5 text-sm text-gray-300" data-testid="footer-contact-company">
+                    <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-gray-400" />
+                    <span>Şirket: {store.companyName}</span>
+                  </li>
+                </>
+              )}
               <li>
                 <button
                   type="button"

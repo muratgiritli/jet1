@@ -54,6 +54,10 @@ export interface StoreConfig {
   phoneDisplay: string;
   /** Contact email. */
   email: string;
+  /** Human-readable street address shown in footer / contact areas. */
+  address: string;
+  /** Legal company / trade name shown in footer / contact areas. */
+  companyName: string;
   /** LocalBusiness description. */
   businessDescription: string;
   /** Brand slogan. */
@@ -77,6 +81,8 @@ const jetgo: StoreConfig = {
   phone: "+908508403959",
   phoneDisplay: "0850 840 39 59",
   email: "info@sizpa.com",
+  address: "Yenimahalle Atatürk 3. Kısım Blv. No:113/A, Atakum, Samsun",
+  companyName: "Sizpa İnternet Tic. Ltd. Şti.",
   businessDescription:
     "Samsun'un en hızlı pet shop'u JETGO. Kedi maması, köpek maması, kedi kumu, ödül maması ve evcil hayvan ürünlerinde Atakum, İlkadım, Canik içi aynı gün teslimat ve kapıda ödeme imkanı.",
   slogan: "Samsun'un Hızlı Pet Shop'u — Aynı Gün Teslimat",
@@ -112,6 +118,8 @@ const atakum: StoreConfig = {
   phone: "+908508403959",
   phoneDisplay: "0850 840 39 59",
   email: "info@sizpa.com",
+  address: "Atatürk 3 kısım bulvarı no 113 ATAKUM SAMSUN",
+  companyName: "Sizpa internet tic.ltd.şti.",
   businessDescription:
     "Atakum'un hızlı pet shop'u Atakum Pet Shop. Kedi maması, köpek maması, kedi kumu, ödül maması ve evcil hayvan ürünlerinde Atakum, İlkadım, Canik içi aynı gün teslimat ve kapıda ödeme imkanı.",
   slogan: "Atakum'un Hızlı Pet Shop'u — Aynı Gün Teslimat",
