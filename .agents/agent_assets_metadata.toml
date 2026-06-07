@@ -6,6 +6,12 @@ uri = "file://attached_assets/cat-fish.png"
 type = "image"
 title = "betta fish geometric background"
 
+[[generated]]
+id = "c2Fw2l8oxT7Y3ouF6Pyxw"
+uri = "file://client/public/logo-samsun.png"
+type = "image"
+title = "samsun pet shop logo"
+
 [[outputs]]
 id = "9y2QoewR6z_sxq3OzRlmR"
 uri = "file://jetgo_urunler.xlsx"

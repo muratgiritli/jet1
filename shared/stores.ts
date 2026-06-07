@@ -29,6 +29,20 @@ export interface StoreSeo {
   ogImage: string;
 }
 
+export interface StoreCommerce {
+  /**
+   * "local" = mahalle içi teslimat modeli ("Getirmesi" + mahalle eşleştirme).
+   * "cargo" = ülke geneli kargo modeli (il/ilçe seçimi + sabit kargo ücreti).
+   */
+  fulfillment: "local" | "cargo";
+  /** Sipariş özetinde teslimat/kargo ücreti satırının etiketi. */
+  shippingLabel: string;
+  /** true ise yalnızca online kredi kartı ödemesi sunulur, diğerleri gizlenir. */
+  onlinePaymentOnly: boolean;
+  /** false ise ön sipariş bu sitede kapalıdır (stok bitince yalnızca "Gelince Haber Ver"). */
+  preorderEnabled: boolean;
+}
+
 export interface StoreConfig {
   /** Stable internal id, also used to tag the order's source site. */
   id: string;
@@ -66,6 +80,8 @@ export interface StoreConfig {
   social: string[];
   theme: StoreTheme;
   seo: StoreSeo;
+  /** Mağazaya özel ticaret / teslimat davranışı. */
+  commerce: StoreCommerce;
 }
 
 const jetgo: StoreConfig = {
@@ -103,6 +119,12 @@ const jetgo: StoreConfig = {
       "atakum petshop, samsun petshop, samsun pet shop, atakum pet shop, samsun kedi maması, samsun köpek maması, samsun kedi kumu, atakum aynı gün teslimat, samsun acil petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop samsun",
     ogImage: "/og-image.webp",
   },
+  commerce: {
+    fulfillment: "local",
+    shippingLabel: "Getirmesi",
+    onlinePaymentOnly: false,
+    preorderEnabled: true,
+  },
 };
 
 const atakum: StoreConfig = {
@@ -137,9 +159,55 @@ const atakum: StoreConfig = {
       "atakum pet shop, atakum petshop, atakum kedi maması, atakum köpek maması, atakum kedi kumu, atakum aynı gün teslimat, atakum acil petshop, samsun petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop atakum",
     ogImage: "/og-image.webp",
   },
+  commerce: {
+    fulfillment: "local",
+    shippingLabel: "Getirmesi",
+    onlinePaymentOnly: false,
+    preorderEnabled: true,
+  },
 };
 
-export const STORES: StoreConfig[] = [jetgo, atakum];
+const samsun: StoreConfig = {
+  id: "samsun",
+  hostnames: ["samsunpetshop.com", "www.samsunpetshop.com"],
+  name: "Samsun Pet Shop",
+  shortName: "Samsun Pet Shop",
+  brandWord: "Samsun Pet Shop",
+  alternateNames: ["Samsun Petshop", "Samsun Pet Shop Online", "Samsun Pet", "samsunpetshop"],
+  domain: "https://www.samsunpetshop.com",
+  logo: "/logo-samsun.webp",
+  favicon: "/favicon-192.png",
+  phone: "+908508403959",
+  phoneDisplay: "0850 840 39 59",
+  email: "info@sizpa.com",
+  address: "Atatürk 3 kısım bulvarı no 113 ATAKUM SAMSUN",
+  companyName: "Sizpa internet tic.ltd.şti.",
+  businessDescription:
+    "Türkiye geneli kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri Samsun Pet Shop'tan güvenli ödeme ve hızlı kargo ile kapınıza gelir.",
+  slogan: "Türkiye'nin Her Yerine Hızlı Kargo",
+  social: [],
+  theme: {
+    primary: "271 65% 56%",
+    topBar: "#7B1FA2",
+    navBar: "#9C27B0",
+  },
+  seo: {
+    title: "Samsun Pet Shop - Türkiye Geneli Kargo | Kedi & Köpek Maması",
+    description:
+      "Türkiye'nin her yerine kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu güvenli online ödeme ve hızlı kargo. Samsun Pet Shop.",
+    keywords:
+      "samsun pet shop, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
+    ogImage: "/og-image.webp",
+  },
+  commerce: {
+    fulfillment: "cargo",
+    shippingLabel: "Kargo Ücreti",
+    onlinePaymentOnly: true,
+    preorderEnabled: false,
+  },
+};
+
+export const STORES: StoreConfig[] = [jetgo, atakum, samsun];
 export const DEFAULT_STORE: StoreConfig = jetgo;
 
 /** Lowercase host, strip port and a leading "www." */

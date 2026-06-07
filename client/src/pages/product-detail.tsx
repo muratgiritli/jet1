@@ -1,5 +1,5 @@
 import { useMemo, useEffect, useState } from "react";
-import { brandify } from "@/lib/store";
+import { brandify, useStore } from "@/lib/store";
 import { FreeShippingBanner } from "@/components/FreeShippingBanner";
 import { motion } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
@@ -585,7 +585,8 @@ export default function ProductDetailPage() {
   const campaignFiyat = isCampaignMode && campaignCheck?.campaignPrice ? campaignCheck.campaignPrice : null;
   const displayPrice = campaignFiyat ?? selectedVariant?.price ?? product.price;
   const displayOriginalPrice = campaignFiyat ? product.price : product.originalPrice;
-  const isPreorder = product.stock === 0 && product.preorderEnabled;
+  const storePreorderEnabled = useStore().commerce.preorderEnabled;
+  const isPreorder = storePreorderEnabled && product.stock === 0 && product.preorderEnabled;
   const discount = displayOriginalPrice && displayOriginalPrice > displayPrice
     ? Math.round(((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100)
     : 0;
@@ -828,7 +829,7 @@ export default function ProductDetailPage() {
                 </DialogContent>
               </Dialog>
 
-              {product.stock === 0 && (product.preorderEnabled || !isMamaCategory) ? (
+              {storePreorderEnabled && product.stock === 0 && (product.preorderEnabled || !isMamaCategory) ? (
                 <div className="mt-2 space-y-3">
                   <div className="flex items-center justify-center gap-2 py-2 rounded-lg text-xs font-semibold" style={{ backgroundColor: "#e3f2fd", color: "#1565c0" }}>
                     <Clock className="w-4 h-4" />

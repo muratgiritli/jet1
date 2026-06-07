@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
-import { brandify } from "@/lib/store";
+import { brandify, useStore } from "@/lib/store";
+import { PROVINCE_NAMES, districtsOf } from "@shared/turkeyLocations";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -86,6 +87,13 @@ export default function Checkout() {
   const authVerifyingRef = useRef(false);
   const { customer, isLoggedIn, loginWithOtp, updateProfile } = useCustomer();
 
+  const store = useStore();
+  const isCargo = store.commerce.fulfillment === "cargo";
+  const onlinePaymentOnly = store.commerce.onlinePaymentOnly;
+  const shippingLabel = store.commerce.shippingLabel;
+  const [cargoCity, setCargoCity] = useState("");
+  const [cargoDistrict, setCargoDistrict] = useState("");
+
   const { data: loyaltyData } = useQuery<{ balance: number }>({
     queryKey: ["/api/customer/loyalty-points"],
     enabled: isLoggedIn,
@@ -113,6 +121,8 @@ export default function Checkout() {
   const bankAccountName = publicSettings?.bank_account_name || "";
   const bankIban = publicSettings?.bank_iban || "";
   const bankName = publicSettings?.bank_name || "";
+  const cargoFee = Number(publicSettings?.cargo_fee ?? 0) || 0;
+  const cargoFreeLimit = Number(publicSettings?.cargo_free_limit ?? 0) || 0;
 
   const { data: deliveryNeighborhoods = [] } = useQuery<{ id: number; name: string; district: string; minOrder: number; shippingFee: number; freeShippingLimit: number; isActive: boolean }[]>({
     queryKey: ["/api/delivery-neighborhoods"],
@@ -282,7 +292,7 @@ export default function Checkout() {
   const handleAuthRegister = async () => {
     const errors: Record<string, string> = {};
     if (!authName.trim()) errors.name = "Ad Soyad zorunludur";
-    if (!authMahalle) errors.mahalle = "Mahalle seçimi zorunludur";
+    if (!isCargo && !authMahalle) errors.mahalle = "Mahalle seçimi zorunludur";
     if (!authAdresDetay.trim() || authAdresDetay.trim().length < 10) errors.adres = "Adres bilgisi zorunludur (cadde, sokak, bina vb.)";
     if (Object.keys(errors).length > 0) { setAuthErrors(errors); return; }
     setAuthErrors({});
@@ -448,9 +458,9 @@ export default function Checkout() {
     return best;
   }, [customerAddress, deliveryNeighborhoods]);
 
-  const effShipFee = matchedNeighborhood ? matchedNeighborhood.shippingFee : CONFIG.shipFee;
-  const effShipLimit = matchedNeighborhood ? matchedNeighborhood.freeShippingLimit : CONFIG.shipLimit;
-  const effMinLimit = matchedNeighborhood ? matchedNeighborhood.minOrder : CONFIG.minLimit;
+  const effShipFee = isCargo ? cargoFee : (matchedNeighborhood ? matchedNeighborhood.shippingFee : CONFIG.shipFee);
+  const effShipLimit = isCargo ? (cargoFreeLimit > 0 ? cargoFreeLimit : Number.POSITIVE_INFINITY) : (matchedNeighborhood ? matchedNeighborhood.freeShippingLimit : CONFIG.shipLimit);
+  const effMinLimit = isCargo ? 0 : (matchedNeighborhood ? matchedNeighborhood.minOrder : CONFIG.minLimit);
   const stdShipping = subtotal >= effShipLimit ? 0 : effShipFee;
   const stdMinReached = subtotal >= effMinLimit;
 
@@ -494,6 +504,14 @@ export default function Checkout() {
       setPaymentId("online");
     }
   }, [hasPreorderItems, paymentId, setPaymentId]);
+
+  useEffect(() => {
+    if (onlinePaymentOnly && paymentId !== "online") {
+      setPaymentId("online");
+    }
+  }, [onlinePaymentOnly, paymentId, setPaymentId]);
+
+  const cargoDistricts = useMemo(() => (cargoCity ? districtsOf(cargoCity) : []), [cargoCity]);
 
   const campaignShipping = hasCampaignItems ? CONFIG.shipFee : stdShipping;
   const paymentDiscount = hasCampaignItems ? 0 : discount;
@@ -574,6 +592,10 @@ export default function Checkout() {
       setOrderError("Lütfen telefon numaranızı girin.");
       return;
     }
+    if (isCargo && (!cargoCity || !cargoDistrict)) {
+      setOrderError("Lütfen il ve ilçe seçiniz.");
+      return;
+    }
     if (!customerAddress.trim()) {
       setOrderError("Lütfen teslimat adresinizi girin.");
       return;
@@ -622,6 +644,8 @@ export default function Checkout() {
         customerName: donationDelivery ? donationRecipientName.trim() : customerName.trim(),
         customerPhone: donationDelivery ? donationRecipientPhone.trim() : customerPhone.trim(),
         customerAddress: donationDelivery ? donationRecipientAddress.trim() : customerAddress.trim(),
+        city: isCargo ? cargoCity : undefined,
+        district: isCargo ? cargoDistrict : undefined,
         usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
         couponCode: appliedCoupon ? appliedCoupon.code : undefined,
         donationAmount: donationAmount > 0 ? donationAmount : undefined,
@@ -923,6 +947,7 @@ export default function Checkout() {
                       </div>
                       {authErrors.name && <p className="text-yellow-200 text-xs">{authErrors.name}</p>}
 
+                      {!isCargo && (
                       <div>
                         <label className="block text-sm font-bold mb-1">Mahalle*</label>
                         <div className="relative">
@@ -941,6 +966,7 @@ export default function Checkout() {
                         </div>
                         {authErrors.mahalle && <p className="text-yellow-200 text-xs mt-1">{authErrors.mahalle}</p>}
                       </div>
+                      )}
 
                       <div>
                         <label className="block text-sm font-bold">Adres*</label>
@@ -1213,6 +1239,39 @@ export default function Checkout() {
               </h2>
               <Card>
                 <CardContent className="p-4">
+                  {isCargo && (
+                    <div className="grid grid-cols-2 gap-2 mb-3">
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">İl*</label>
+                        <select
+                          value={cargoCity}
+                          onChange={(e) => { setCargoCity(e.target.value); setCargoDistrict(""); }}
+                          className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                          data-testid="select-cargo-il"
+                        >
+                          <option value="">İl seçiniz</option>
+                          {PROVINCE_NAMES.map((p) => (
+                            <option key={p} value={p}>{p}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-muted-foreground mb-1">İlçe*</label>
+                        <select
+                          value={cargoDistrict}
+                          onChange={(e) => setCargoDistrict(e.target.value)}
+                          disabled={!cargoCity}
+                          className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
+                          data-testid="select-cargo-ilce"
+                        >
+                          <option value="">İlçe seçiniz</option>
+                          {cargoDistricts.map((d) => (
+                            <option key={d} value={d}>{d}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  )}
                   <Textarea
                     placeholder="Mahalle, cadde, bina no, kat, daire no..."
                     value={customerAddress}
@@ -1236,7 +1295,7 @@ export default function Checkout() {
                     )}
                     <p className="text-xs text-muted-foreground">{customerAddress.length}/500</p>
                   </div>
-                  {matchedNeighborhood && (
+                  {!isCargo && matchedNeighborhood && (
                     <div
                       className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] text-blue-900 dark:bg-blue-950/40 dark:text-blue-100 dark:border-blue-800"
                       data-testid="info-matched-neighborhood"
@@ -1445,6 +1504,7 @@ export default function Checkout() {
                       }
                       return PAYMENT_OPTIONS.filter((opt) => {
                         if (hiddenByProduct.has(opt.id)) return false;
+                        if (onlinePaymentOnly) return opt.id === "online" && onlineCardEnabled;
                         if (opt.id === "pos") return false;
                         if (donationDelivery && opt.id !== "eft" && opt.id !== "online") return false;
                         if (opt.id === "nakit") return nakitEnabled;
@@ -1629,7 +1689,7 @@ export default function Checkout() {
                       </div>
                     )}
                     <div className="flex justify-between gap-3 flex-wrap">
-                      <span className="text-muted-foreground">Getirmesi</span>
+                      <span className="text-muted-foreground">{shippingLabel}</span>
                       <span className="font-medium" data-testid="text-shipping">
                         {effectiveShipping === 0 ? (
                           <span className="text-chart-2">Ücretsiz</span>

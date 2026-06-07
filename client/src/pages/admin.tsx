@@ -86,6 +86,7 @@ import {
   Heart,
   Stethoscope,
   Printer,
+  Truck,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1252,6 +1253,24 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+    },
+  });
+
+  const [trackCompany, setTrackCompany] = useState("");
+  const [trackNumber, setTrackNumber] = useState("");
+  useEffect(() => {
+    setTrackCompany((orderDetailDialog as any)?.cargoCompany || "");
+    setTrackNumber((orderDetailDialog as any)?.trackingNumber || "");
+  }, [(orderDetailDialog as any)?.id]);
+  const updateTrackingMutation = useMutation({
+    mutationFn: async ({ id, cargoCompany, trackingNumber }: { id: number; cargoCompany: string; trackingNumber: string }) => {
+      const res = await apiRequest("PATCH", `/api/admin/orders/${id}/tracking`, { cargoCompany, trackingNumber });
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/orders"] });
+      setOrderDetailDialog((prev: any) => prev ? { ...prev, cargoCompany: data?.cargoCompany, trackingNumber: data?.trackingNumber, trackingUrl: data?.trackingUrl } : prev);
+      toast({ title: "Kargo bilgisi kaydedildi" });
     },
   });
 
@@ -2972,6 +2991,12 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                           <span>{order.customerAddress}</span>
                         </div>
                       )}
+                      {((order as any).city || (order as any).district) && (
+                        <div className="flex items-start gap-2 text-sm">
+                          <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-0.5" />
+                          <span>{[(order as any).city, (order as any).district].filter(Boolean).join(" / ")}</span>
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -3061,6 +3086,58 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <span className="font-medium">Müşteri Notu: </span>{order.customerNote}
                     </div>
                   )}
+
+                  {(() => {
+                    const st = STORES.find((s) => s.id === ((order as any).sourceSite || "jetgo"));
+                    if (st?.commerce?.fulfillment !== "cargo") return null;
+                    return (
+                      <div className="border-t pt-3 space-y-2" data-testid="section-detail-tracking">
+                        <div className="flex items-center gap-1.5 text-sm font-semibold text-purple-700">
+                          <Truck className="w-4 h-4" />
+                          Kargo Takip
+                        </div>
+                        <div className="grid grid-cols-1 gap-2">
+                          <Select value={trackCompany} onValueChange={setTrackCompany}>
+                            <SelectTrigger data-testid="select-cargo-company">
+                              <SelectValue placeholder="Kargo Firması" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Yurtiçi Kargo">Yurtiçi Kargo</SelectItem>
+                              <SelectItem value="Aras Kargo">Aras Kargo</SelectItem>
+                              <SelectItem value="MNG Kargo">MNG Kargo</SelectItem>
+                              <SelectItem value="PTT Kargo">PTT Kargo</SelectItem>
+                              <SelectItem value="Sürat Kargo">Sürat Kargo</SelectItem>
+                              <SelectItem value="UPS Kargo">UPS Kargo</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <Input
+                            value={trackNumber}
+                            onChange={(e) => setTrackNumber(e.target.value)}
+                            placeholder="Takip Numarası"
+                            data-testid="input-tracking-number"
+                          />
+                          <Button
+                            onClick={() => updateTrackingMutation.mutate({ id: order.id, cargoCompany: trackCompany, trackingNumber: trackNumber })}
+                            disabled={updateTrackingMutation.isPending}
+                            data-testid="btn-save-tracking"
+                          >
+                            Kargo Bilgisini Kaydet
+                          </Button>
+                          {(order as any).trackingUrl && (
+                            <a
+                              href={(order as any).trackingUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-xs text-purple-700 underline"
+                              data-testid="link-admin-tracking"
+                            >
+                              Kargoyu Takip Et →
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })()}
 
                   <div className="border-t pt-3 flex items-center justify-between gap-3">
                     <span className="text-sm text-muted-foreground">Durum Değiştir:</span>

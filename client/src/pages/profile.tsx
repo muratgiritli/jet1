@@ -446,6 +446,23 @@ function OrdersSection() {
                   {order.customerAddress && (
                     <div className="text-xs"><span className="text-muted-foreground">Adres:</span> <span className="font-medium">{order.customerAddress}</span></div>
                   )}
+                  {(order.city || order.district) && (
+                    <div className="text-xs"><span className="text-muted-foreground">İl/İlçe:</span> <span className="font-medium">{[order.city, order.district].filter(Boolean).join(" / ")}</span></div>
+                  )}
+                  {order.cargoCompany && (
+                    <div className="rounded-lg p-2.5 text-xs" style={{ backgroundColor: "#f3e8ff" }} data-testid={`section-tracking-${order.id}`}>
+                      <div className="font-semibold mb-1" style={{ color: "#7e22ce" }}>Kargo Bilgisi</div>
+                      <div><span className="text-muted-foreground">Firma:</span> <span className="font-medium">{order.cargoCompany}</span></div>
+                      {order.trackingNumber && (
+                        <div><span className="text-muted-foreground">Takip No:</span> <span className="font-medium">{order.trackingNumber}</span></div>
+                      )}
+                      {order.trackingUrl && (
+                        <a href={order.trackingUrl} target="_blank" rel="noopener noreferrer" className="inline-block mt-1 font-semibold underline" style={{ color: "#7e22ce" }} data-testid={`link-tracking-${order.id}`}>
+                          Kargom nerede? →
+                        </a>
+                      )}
+                    </div>
+                  )}
                   {order.installmentMonths > 0 && (
                     <div className="bg-blue-50 rounded-lg p-2.5 text-xs">
                       <div className="font-semibold text-blue-700 mb-1">Taksit Bilgisi</div>

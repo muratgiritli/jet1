@@ -365,6 +365,11 @@ export async function registerRoutes(
 
   try {
     await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS source_site text;`);
+    await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS city text;`);
+    await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS district text;`);
+    await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS cargo_company text;`);
+    await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number text;`);
+    await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_url text;`);
   } catch (e) {
     console.error("Orders source_site migration error:", e);
   }
@@ -2401,6 +2406,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     customerPhone: z.string().min(7, "Telefon numarası gerekli").max(20, "Telefon numarası çok uzun"),
     customerName: z.string().min(1, "Ad soyad gerekli").max(100, "Ad soyad çok uzun"),
     customerAddress: z.string().min(1, "Adres gerekli").max(500, "Adres çok uzun"),
+    city: z.string().max(60).optional(),
+    district: z.string().max(60).optional(),
     usedPoints: z.number().optional(),
     couponCode: z.string().max(50).optional(),
     donationAmount: z.number().min(0).max(1000).optional(),
@@ -2447,6 +2454,9 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const toslaReady = isOn("payment_tosla_enabled") && !!(pmMap.tosla_client_id?.trim() && pmMap.tosla_api_user?.trim() && pmMap.tosla_api_pass?.trim());
       const iyzicoReady = isOn("payment_iyzico_enabled") && !!(pmMap.iyzico_api_key?.trim() && pmMap.iyzico_secret_key?.trim());
       const onlineKeyOk = isOnlineCard && (toslaReady || iyzicoReady);
+      if (reqStore(req).commerce.onlinePaymentOnly && !isOnlineCard) {
+        return res.status(400).json({ message: "Bu mağazada yalnızca online kredi kartı ile ödeme yapılabilir." });
+      }
       const requiredKey = isOnlineCard
         ? null
         : /havale|eft/.test(pm)
@@ -2591,7 +2601,14 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       console.error("Neighborhood lookup error:", e);
     }
     if (!isCampaignOrder) {
-      orderData.shipping = orderData.subtotal >= STANDARD_FREE_SHIP_LIMIT ? 0 : STANDARD_SHIP_FEE;
+      if (reqStore(req).commerce.fulfillment === "cargo") {
+        const cargoSettings = await resolveSettings(["cargo_fee", "cargo_free_limit"], orderStore);
+        const cFee = Number(cargoSettings.cargo_fee ?? 0) || 0;
+        const cFree = Number(cargoSettings.cargo_free_limit ?? 0) || 0;
+        orderData.shipping = (cFree > 0 && orderData.subtotal >= cFree) ? 0 : cFee;
+      } else {
+        orderData.shipping = orderData.subtotal >= STANDARD_FREE_SHIP_LIMIT ? 0 : STANDARD_SHIP_FEE;
+      }
       orderData.grandTotal = orderData.subtotal - orderData.discount + orderData.shipping;
     }
 
@@ -2652,7 +2669,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
             return res.status(400).json({ message: `${item.name} ürününün son kullanma tarihi geçmiş. Sipariş verilemez.` });
           }
         }
-        if (prod && prod.preorderEnabled) {
+        if (prod && prod.preorderEnabled && reqStore(req).commerce.preorderEnabled) {
           // Atomically deduct only the available stock (partial), allow backorder for the rest.
           const upd = await sharedPool.query(
             "WITH old AS (SELECT stock AS s FROM products WHERE id = $1 FOR UPDATE) UPDATE products p SET stock = GREATEST(0, p.stock - $2) FROM old WHERE p.id = $1 RETURNING p.stock AS new_stock, old.s AS old_stock, p.name, p.barcode",
@@ -3824,6 +3841,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         "sokak_banner_enabled", "veteriner_banner_enabled",
         "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
         "cross_sell_enabled",
+        "cargo_fee", "cargo_free_limit",
       ];
       const settings = await resolveSettings(keys, publicStoreId(req));
       res.set("Cache-Control", "no-store");
@@ -3859,6 +3877,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         "sokak_banner_enabled", "veteriner_banner_enabled",
         "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
         "cross_sell_enabled",
+        "cargo_fee", "cargo_free_limit",
       ];
 
       const toslaFlag = updates.payment_tosla_enabled;
@@ -3999,6 +4018,48 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       });
     }
 
+    res.json(order);
+  });
+
+  app.patch("/api/admin/orders/:id/tracking", requireAdmin, async (req, res) => {
+    const id = parseInt(String(req.params.id));
+    if (isNaN(id)) return res.status(400).json({ message: "Geçersiz sipariş" });
+    const cargoCompany = req.body?.cargoCompany ? String(req.body.cargoCompany).trim() : "";
+    const trackingNumber = req.body?.trackingNumber ? String(req.body.trackingNumber).trim() : "";
+    const CARGO_TRACK_TEMPLATES: Record<string, string> = {
+      "Yurtiçi Kargo": "https://www.yurticikargo.com/tr/online-servisler/gonderi-sorgula?code={code}",
+      "Aras Kargo": "https://kargotakip.araskargo.com.tr/mainpage.aspx?code={code}",
+      "MNG Kargo": "https://kargotakip.mngkargo.com.tr/?takipNo={code}",
+      "PTT Kargo": "https://gonderitakip.ptt.gov.tr/Track/Verify?q={code}",
+      "Sürat Kargo": "https://www.suratkargo.com.tr/KargoTakip/?kargotakipno={code}",
+      "UPS Kargo": "https://www.ups.com/track?trackingNumber={code}",
+    };
+    if (cargoCompany && !CARGO_TRACK_TEMPLATES[cargoCompany]) {
+      return res.status(400).json({ message: "Geçersiz kargo firması" });
+    }
+    let trackingUrl = "";
+    if (cargoCompany && trackingNumber) {
+      const tpl = CARGO_TRACK_TEMPLATES[cargoCompany];
+      if (tpl) trackingUrl = tpl.replace("{code}", encodeURIComponent(trackingNumber));
+    }
+    const order = await storage.updateOrderTracking(id, {
+      cargoCompany: cargoCompany || null,
+      trackingNumber: trackingNumber || null,
+      trackingUrl: trackingUrl || null,
+    });
+    if (!order) return res.status(404).json({ message: "Sipariş bulunamadı" });
+    if (cargoCompany && trackingNumber && order.customerPhone) {
+      try {
+        const stCfg = storeById((order as any).sourceSite);
+        const stHeader = await resolveSmsHeader(stCfg.id);
+        const lines = [
+          `Siparisiniz kargoya verildi.`,
+          `Kargo: ${cargoCompany}`,
+          `Takip No: ${trackingNumber}`,
+        ];
+        sendSmsViaNetgsm(order.customerPhone, lines.join("\n"), stHeader).catch(() => {});
+      } catch {}
+    }
     res.json(order);
   });
 
@@ -4490,6 +4551,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         grandTotal: o.grandTotal, status: o.status, paymentMethod: o.paymentMethod, createdAt: o.createdAt,
         customerNote: o.customerNote, deliverySlot: o.deliverySlot,
         customerAddress: o.customerAddress,
+        city: (o as any).city,
+        district: (o as any).district,
+        cargoCompany: (o as any).cargoCompany,
+        trackingNumber: (o as any).trackingNumber,
+        trackingUrl: (o as any).trackingUrl,
         installmentMonths: (o as any).installmentMonths,
         installmentMonthly: (o as any).installmentMonthly,
         installmentTotal: (o as any).installmentTotal,
