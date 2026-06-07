@@ -13,7 +13,7 @@ export default function Logo({ className = "h-8", linkTo = "/", testId = "img-br
       src={CURRENT_STORE.logo}
       alt={CURRENT_STORE.name}
       className={`object-contain select-none cursor-pointer ${className}`}
-      style={{ maxWidth: "140px" }}
+      style={{ maxWidth: "140px", maxHeight: "42px" }}
       data-testid={testId}
     />
   ) : (
