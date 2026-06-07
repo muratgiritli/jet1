@@ -1186,3 +1186,136 @@ test("product page canonical/og:url bind to the requesting domain (no cross-bran
   assert.ok(!/jetgomarket\.com/i.test(ataCanonical), "atakum canonical must not point at the jetgo domain");
   assert.ok(!/jetgomarket\.com/i.test(samCanonical), "samsun canonical must not point at the jetgo domain");
 });
+
+// ---- Shipped-order tracking SMS auto-send + de-duplication ----
+//
+// Admins set an order to "Kargoda" (Shipped) via PATCH /api/admin/orders/:id/status.
+// When the order already has cargoCompany + trackingNumber + customerPhone, that
+// status change must fire the "Siparisiniz kargoya verildi" tracking SMS exactly
+// ONCE (server/routes.ts: SHIPPED_STATUSES -> notifyShipmentIfNeeded), then set
+// orders.shipping_sms_sent so a repeated status change never re-sends. If tracking
+// info is missing, no SMS may be attempted at all.
+//
+// The send goes through sendSmsViaNetgsm, which POSTs to api.netgsm.com.tr. That
+// helper is module-private, so instead of stubbing it we install temporary NetGSM
+// credentials (so the cred guard passes) and wrap global fetch to COUNT (and short
+// -circuit) outbound NetGSM calls — the real network is never touched. Everything
+// else (the harness's own requests to the local server) passes through unchanged.
+
+// Insert a throwaway order that is eligible (or, when tracking is null, ineligible)
+// for the shipment SMS. source_site=samsun so resolveSmsHeader resolves a real store.
+async function seedShippableOrder(opts?: {
+  cargoCompany?: string | null;
+  trackingNumber?: string | null;
+  shippingSmsSent?: boolean;
+}): Promise<number> {
+  const cargoCompany = opts?.cargoCompany === undefined ? "Yurtici Kargo" : opts.cargoCompany;
+  const trackingNumber = opts?.trackingNumber === undefined ? `${MARK}_TRK_123` : opts.trackingNumber;
+  const shippingSmsSent = opts?.shippingSmsSent ?? false;
+  const items = JSON.stringify([{ productId: orderProductId, name: `${MARK}_PRODUCT`, price: 100, quantity: 1 }]);
+  const r = await pool.query(
+    `INSERT INTO orders
+       (items, subtotal, shipping, grand_total, payment_method, status,
+        customer_phone, customer_name, cargo_company, tracking_number,
+        source_site, shipping_sms_sent, payment_status)
+     VALUES ($1::jsonb, 100, 0, 100, 'Kapıda Nakit', 'hazirlaniyor',
+        '5559990000', $2, $3, $4, 'samsun', $5, 'completed')
+     RETURNING id`,
+    [items, `${MARK}_SHIP_BUYER`, cargoCompany, trackingNumber, shippingSmsSent]
+  );
+  const id = r.rows[0].id as number;
+  ids.orders.push(id);
+  return id;
+}
+
+// Count + short-circuit outbound NetGSM SMS calls, with throwaway credentials so
+// the sendSmsViaNetgsm cred guard passes. restore() puts global fetch + env back.
+function captureNetgsmSms() {
+  const calls: { url: string; body: string }[] = [];
+  const origFetch = globalThis.fetch;
+  const prev = {
+    NETGSM_USERCODE: process.env.NETGSM_USERCODE,
+    NETGSM_PASSWORD: process.env.NETGSM_PASSWORD,
+    NETGSM_MSGHEADER: process.env.NETGSM_MSGHEADER,
+  };
+  process.env.NETGSM_USERCODE = `${MARK}_UC`;
+  process.env.NETGSM_PASSWORD = `${MARK}_PW`;
+  process.env.NETGSM_MSGHEADER = `${MARK}_HDR`;
+  globalThis.fetch = ((input: any, init?: any) => {
+    const url = typeof input === "string" ? input : (input?.url ?? String(input));
+    if (url.includes("netgsm.com.tr")) {
+      calls.push({ url, body: String(init?.body ?? "") });
+      return Promise.resolve(new Response("00", { status: 200 }));
+    }
+    return origFetch(input, init);
+  }) as typeof fetch;
+  return {
+    calls,
+    restore() {
+      globalThis.fetch = origFetch;
+      for (const k of ["NETGSM_USERCODE", "NETGSM_PASSWORD", "NETGSM_MSGHEADER"] as const) {
+        if (prev[k] === undefined) delete process.env[k];
+        else process.env[k] = prev[k]!;
+      }
+    },
+  };
+}
+
+// sendSmsViaNetgsm is fire-and-forget inside the handler; yield one macrotask so
+// the (synchronously-initiated) fetch call is recorded before we assert on it.
+const settle = () => new Promise((r) => setTimeout(r, 0));
+
+test("setting an order to 'kargoda' fires the tracking SMS exactly once (cargo+tracking+phone present)", async () => {
+  const orderId = await seedShippableOrder();
+  const sms = captureNetgsmSms();
+  try {
+    const res = await patchAdmin(`/api/admin/orders/${orderId}/status`, SAMSUN_HOST, { status: "kargoda" });
+    assert.equal(res.status, 200, `status PATCH failed: ${JSON.stringify(res.body)}`);
+    await settle();
+
+    assert.equal(sms.calls.length, 1, "exactly one shipment SMS must be sent");
+    // The sent body must be the tracking SMS and carry the tracking number.
+    assert.match(sms.calls[0].body, /kargoya verildi/i, "SMS body must be the tracking message");
+    assert.match(sms.calls[0].body, new RegExp(`${MARK}_TRK_123`), "SMS body must include the tracking number");
+
+    // De-dup flag persisted so a future status change won't re-send.
+    const row = await pool.query("SELECT shipping_sms_sent FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0].shipping_sms_sent, true, "shipping_sms_sent must be set after sending");
+  } finally {
+    sms.restore();
+  }
+});
+
+test("a second status change does NOT re-send the tracking SMS (deduped by shipping_sms_sent)", async () => {
+  const orderId = await seedShippableOrder();
+  const sms = captureNetgsmSms();
+  try {
+    const first = await patchAdmin(`/api/admin/orders/${orderId}/status`, SAMSUN_HOST, { status: "kargoda" });
+    assert.equal(first.status, 200, `first status PATCH failed: ${JSON.stringify(first.body)}`);
+    await settle();
+    assert.equal(sms.calls.length, 1, "first shipped transition sends one SMS");
+
+    const second = await patchAdmin(`/api/admin/orders/${orderId}/status`, SAMSUN_HOST, { status: "kargoda" });
+    assert.equal(second.status, 200, `second status PATCH failed: ${JSON.stringify(second.body)}`);
+    await settle();
+    assert.equal(sms.calls.length, 1, "repeat shipped transition must NOT re-send (deduped)");
+  } finally {
+    sms.restore();
+  }
+});
+
+test("no tracking SMS is attempted when cargo/tracking info is missing", async () => {
+  const orderId = await seedShippableOrder({ cargoCompany: null, trackingNumber: null });
+  const sms = captureNetgsmSms();
+  try {
+    const res = await patchAdmin(`/api/admin/orders/${orderId}/status`, SAMSUN_HOST, { status: "kargoda" });
+    assert.equal(res.status, 200, `status PATCH failed: ${JSON.stringify(res.body)}`);
+    await settle();
+
+    assert.equal(sms.calls.length, 0, "no SMS may be sent without cargo + tracking number");
+    const row = await pool.query("SELECT shipping_sms_sent FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0].shipping_sms_sent, false, "shipping_sms_sent must stay false when nothing was sent");
+  } finally {
+    sms.restore();
+  }
+});
