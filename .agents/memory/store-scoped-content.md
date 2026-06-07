@@ -24,6 +24,11 @@ A global store selector drives every section. **CREATE sends the selected store;
 ## Settings-based banner "delete" trap
 The top promo banner (`top_banner_*` app_settings) and similar image-settings banners: clearing the image writes `<store>:top_banner_image=""` but does NOT disable. `TopBanner` requires a non-empty image to render (returns null on empty — no bundled-default fallback), so an empty per-store image hides the banner for that site while base/other sites keep theirs. Admin "Görseli sil" copy says it hides the banner. `enabled` flag is a separate master switch.
 
+## Shared-edit protection (two layers + a settings layer)
+- **Row tables** (banners/campaign_items/coupons/delivery_neighborhoods): client `confirmSharedEdit` + amber "Tüm Siteler (ortak)" badge on every edit/toggle/delete control in a specific-store view, plus server `blockedByStoreContext` on every PATCH/DELETE. CREATE assigns `adminStoreId`.
+- **Store-scoped app_settings keys** (the `<store>:`-prefixed set): inherently safe in a specific-store view — writes go to the prefixed override, never the shared base. No silent shared edit possible.
+- **GLOBAL (non-store-scoped) app_settings keys** (payment, bank, loyalty/puan, pet feeding, cross-sell, admin phone): editing these from a specific-store view writes the shared BASE and affects ALL sites. The big admin settings form warns via `confirmSharedSettingsSave` — only when a global key actually changed (store-scoped-only edits don't warn). Keep the client `STORE_SCOPED_SETTING_KEYS` in `admin.tsx` in sync with the server `STORE_SCOPED_SETTING_KEYS` or the warning misfires.
+
 ## Gotchas
 - Store-prefixed GETs need a custom `queryFn` — the default query fetcher joins the queryKey with "/", so it can't append `?store=`. Use key tuple `[base, store]`; base-key invalidation still prefix-matches it.
 - Coupon codes are unique per `(store, code)` (DB unique index on `(store, upper(code))`), NOT globally; lookup and create/update dup-checks must both be store-scoped or they disagree.

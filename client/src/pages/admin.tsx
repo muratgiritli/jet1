@@ -163,6 +163,41 @@ function storeCtxParam(adminStore: string): string {
   return adminStore && adminStore !== "all" ? `?storeContext=${encodeURIComponent(adminStore)}` : "";
 }
 
+// Store-scoped app_settings anahtarları (sunucudaki STORE_SCOPED_SETTING_KEYS ile
+// aynı tutulmalı). Bu anahtarlar belirli bir mağaza görünümünde önekli (mağazaya
+// özel) yazılır; listede OLMAYAN tüm ayarlar temel (öneksiz) anahtara yazılır ve
+// TÜM SİTELER için ortaktır.
+const STORE_SCOPED_SETTING_KEYS = new Set<string>([
+  "sms_msgheader",
+  "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date",
+  "daily_cargo_widget_enabled",
+  "sokak_banner_enabled", "veteriner_banner_enabled",
+  "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
+  "top_banner_enabled", "top_banner_text", "top_banner_link", "top_banner_bg", "top_banner_color",
+  "breed_banners", "category_banners",
+]);
+// Belirli bir mağaza görünümündeyken ORTAK (mağazaya özel olmayan) ayarların
+// kaydedilmek üzere değiştirilmesi BÜTÜN siteleri etkiler. Yalnızca gerçekten
+// değişen ortak anahtarlar için açık onay ister; sadece mağazaya özel anahtarlar
+// değiştiyse (ör. kampanya başlığı) uyarmaz. "all" görünümünde uyarı yoktur.
+function confirmSharedSettingsSave(
+  current: Record<string, string>,
+  baseline: Record<string, string>,
+  adminStore: string,
+): boolean {
+  if (!adminStore || adminStore === "all") return true;
+  const changedShared = Object.keys(current).filter(
+    (k) => !STORE_SCOPED_SETTING_KEYS.has(k) && (current[k] ?? "") !== (baseline[k] ?? ""),
+  );
+  if (changedShared.length === 0) return true;
+  const storeName = STORES.find((s) => s.id === adminStore)?.name || adminStore;
+  return confirm(
+    `⚠️ Değiştirdiğiniz ayarlar TÜM SİTELERDE ortaktır.\n\n` +
+    `Şu an "${storeName}" görünümündesiniz, ancak bu ayarlar (ödeme, banka, sadakat/puan, besleme vb.) BÜTÜN sitelerde geçerli olacak.\n\n` +
+    `Yine de devam etmek istiyor musunuz?`
+  );
+}
+
 const TR_MONTHS_ADMIN = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 function formatAdminDeliverySlot(slot: string): string {
   const legacy: Record<string, string> = {
@@ -8670,9 +8705,11 @@ function SettingsSection() {
     cross_sell_enabled: "true",
   });
 
+  const baselineRef = useRef<Record<string, string>>({});
+
   useEffect(() => {
     if (settings) {
-      setForm({
+      const next = {
         pet_base_points: settings.pet_base_points || "1",
         pet_streak_divisor: settings.pet_streak_divisor || "3",
         pet_max_points: settings.pet_max_points || "5",
@@ -8704,7 +8741,9 @@ function SettingsSection() {
         bank_name: settings.bank_name || "",
         daily_cargo_widget_enabled: settings.daily_cargo_widget_enabled ?? "false",
         cross_sell_enabled: settings.cross_sell_enabled ?? "true",
-      });
+      };
+      setForm(next);
+      baselineRef.current = next;
     }
   }, [settings]);
 
@@ -8737,6 +8776,7 @@ function SettingsSection() {
   const iyzicoConfigMissing = iyzicoOn && (!form.iyzico_api_key?.trim() || !form.iyzico_secret_key?.trim());
 
   const handleSave = () => {
+    if (!confirmSharedSettingsSave(form, baselineRef.current, adminStore)) return;
     saveMutation.mutate(form);
   };
 
