@@ -4057,6 +4057,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           `Kargo: ${cargoCompany}`,
           `Takip No: ${trackingNumber}`,
         ];
+        if (trackingUrl) lines.push(`Takip: ${trackingUrl}`);
         sendSmsViaNetgsm(order.customerPhone, lines.join("\n"), stHeader).catch(() => {});
       } catch {}
     }
