@@ -975,6 +975,7 @@ test("client STORE_SCOPED_SETTING_KEYS matches the server set (no drift)", () =>
 // client/src/lib/store.ts for the override these checks mirror at the data layer.
 
 const ATAKUM_BRAND = "Atakum Pet Shop";
+const SAMSUN_BRAND = "Samsun Pet Shop";
 // Distinctive copy of the SAMSUN (cargo) store. atakum must NEVER show this — it
 // is the signal that local same-day copy was replaced by cargo copy.
 const CARGO_SIGNATURE = /türkiye(?:'nin| geneli)/i;
@@ -1106,4 +1107,82 @@ test("?__store=atakum drives the client UI: wordmark, same-day copy, Mahalle (lo
     delete (globalThis as any).sessionStorage;
     delete (globalThis as any).React;
   }
+});
+
+// ---- Product detail page (/urun/:id) per-store branding ----
+//
+// The homepage checks above prove the brand follows the host on "/". Product
+// pages take a DIFFERENT server path: injectAllMeta matches /urun/:id, loads the
+// product, and calls injectProductMeta, which mints its OWN <title>, og tags and
+// a Product JSON-LD block (brand + offers.seller). A regression there would let
+// a product share preview / structured data leak the default JETGO brand on a
+// non-default host even while the homepage stays correctly branded. These tests
+// exercise that exact path for the atakum and samsun hosts using the throwaway
+// product seeded in before() (orderProductId).
+
+// Pull the Product (@type:"Product") JSON-LD block out of served HTML. The
+// homepage/global JSON-LD is also present, so we must select the product one.
+function extractProductJsonLd(html: string): any {
+  const re = /<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(html)) !== null) {
+    try {
+      const parsed = JSON.parse(m[1].replace(/\\u003c/g, "<"));
+      if (parsed && parsed["@type"] === "Product") return parsed;
+    } catch {
+      // skip blocks that aren't valid JSON
+    }
+  }
+  return null;
+}
+
+test("product page (/urun/:id) brands <title>, og:site_name and JSON-LD per host (atakum)", async () => {
+  const html = await injectAllMeta(INDEX_HTML, `/urun/${orderProductId}`, ATAKUM_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const ogSiteName = html.match(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i)?.[1] ?? "";
+  const ld = extractProductJsonLd(html);
+
+  // Title carries the atakum brand and never the default JETGO brand.
+  assert.match(title, /Atakum Pet Shop/i, "product <title> must brand as Atakum Pet Shop");
+  assert.ok(!/JETGO/i.test(title), "atakum product title must not leak the JETGO brand");
+  // Global og:site_name follows the requesting store.
+  assert.equal(ogSiteName, ATAKUM_BRAND, "og:site_name must be the Atakum brand");
+  // JSON-LD brand + seller follow the store and never default to JETGO.
+  assert.ok(ld, "a Product JSON-LD block must be present on the product page");
+  assert.equal(ld.brand?.name, ATAKUM_BRAND, "JSON-LD brand.name must be the Atakum brand");
+  assert.equal(ld.offers?.seller?.name, ATAKUM_BRAND, "JSON-LD seller.name must be the Atakum brand");
+  assert.ok(!/JETGO/i.test(JSON.stringify(ld)), "atakum product JSON-LD must not leak the JETGO brand");
+});
+
+test("product page (/urun/:id) brands <title>, og:site_name and JSON-LD per host (samsun)", async () => {
+  const html = await injectAllMeta(INDEX_HTML, `/urun/${orderProductId}`, SAMSUN_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const ogSiteName = html.match(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i)?.[1] ?? "";
+  const ld = extractProductJsonLd(html);
+
+  assert.match(title, /Samsun Pet Shop/i, "product <title> must brand as Samsun Pet Shop");
+  assert.ok(!/JETGO/i.test(title), "samsun product title must not leak the JETGO brand");
+  assert.equal(ogSiteName, SAMSUN_BRAND, "og:site_name must be the Samsun brand");
+  assert.ok(ld, "a Product JSON-LD block must be present on the product page");
+  assert.equal(ld.brand?.name, SAMSUN_BRAND, "JSON-LD brand.name must be the Samsun brand");
+  assert.equal(ld.offers?.seller?.name, SAMSUN_BRAND, "JSON-LD seller.name must be the Samsun brand");
+  assert.ok(!/JETGO/i.test(JSON.stringify(ld)), "samsun product JSON-LD must not leak the JETGO brand");
+});
+
+test("product page canonical/og:url bind to the requesting domain (no cross-brand leak)", async () => {
+  // Self-canonicalization: each brand's product page must point back to its OWN
+  // domain so the stores rank independently and never canonicalize to JETGO.
+  const atakumStore = getStoreByHost(ATAKUM_HOST);
+  const samsunStore = getStoreByHost(SAMSUN_HOST);
+
+  const ataHtml = await injectAllMeta(INDEX_HTML, `/urun/${orderProductId}`, ATAKUM_HOST);
+  const samHtml = await injectAllMeta(INDEX_HTML, `/urun/${orderProductId}`, SAMSUN_HOST);
+
+  const ataCanonical = ataHtml.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+  const samCanonical = samHtml.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+
+  assert.ok(ataCanonical.startsWith(`${atakumStore.domain}/urun/${orderProductId}`), "atakum product canonical must bind to the atakum domain");
+  assert.ok(samCanonical.startsWith(`${samsunStore.domain}/urun/${orderProductId}`), "samsun product canonical must bind to the samsun domain");
+  assert.ok(!/jetgomarket\.com/i.test(ataCanonical), "atakum canonical must not point at the jetgo domain");
+  assert.ok(!/jetgomarket\.com/i.test(samCanonical), "samsun canonical must not point at the jetgo domain");
 });
