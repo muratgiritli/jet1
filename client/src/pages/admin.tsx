@@ -2589,7 +2589,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               {([
                 { key: "gelen" as const, label: "Gelen", statuses: ["yeni"] },
                 { key: "bekleyen" as const, label: "Bekleyen", statuses: ["onaylandi", "hazirlaniyor"] },
-                { key: "giden" as const, label: "Giden", statuses: ["tamamlandi", "iptal"] },
+                { key: "giden" as const, label: "Giden", statuses: ["kargoda", "tamamlandi", "iptal"] },
               ]).map((tab) => {
                 const count = allOrders.filter((o) => tab.statuses.includes(o.status)).length;
                 return (
@@ -2696,7 +2696,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             const tabStatuses: Record<string, string[]> = {
               gelen: ["yeni"],
               bekleyen: ["onaylandi", "hazirlaniyor"],
-              giden: ["tamamlandi", "iptal"],
+              giden: ["kargoda", "tamamlandi", "iptal"],
             };
             const filteredOrders = allOrders
               .filter((o) => tabStatuses[orderTab]?.includes(o.status))
@@ -2742,6 +2742,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               yeni: "#2196F3",
               onaylandi: "#00BFA5",
               hazirlaniyor: "#FF9800",
+              kargoda: "#9C27B0",
               tamamlandi: "#4CAF50",
               iptal: "#F44336",
             };
@@ -2749,6 +2750,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               yeni: "Bekliyor",
               onaylandi: "Onaylandı",
               hazirlaniyor: "Hazırlanıyor",
+              kargoda: "Kargoda",
               tamamlandi: "Tamamlandı",
               iptal: "İptal",
             };
@@ -2825,6 +2827,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                               <SelectItem value="yeni">Bekliyor</SelectItem>
                               <SelectItem value="onaylandi">Onaylandı</SelectItem>
                               <SelectItem value="hazirlaniyor">Hazırlanıyor</SelectItem>
+                              <SelectItem value="kargoda">Kargoda</SelectItem>
                               <SelectItem value="tamamlandi">Tamamlandı</SelectItem>
                               <SelectItem value="iptal">İptal</SelectItem>
                             </SelectContent>
@@ -2886,10 +2889,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
                   {customerOrders.map((order) => {
                     const statusColors: Record<string, string> = {
-                      yeni: "#2196F3", hazirlaniyor: "#FF9800", onaylandi: "#00BFA5", tamamlandi: "#4CAF50", iptal: "#F44336",
+                      yeni: "#2196F3", hazirlaniyor: "#FF9800", onaylandi: "#00BFA5", kargoda: "#9C27B0", tamamlandi: "#4CAF50", iptal: "#F44336",
                     };
                     const statusLabels: Record<string, string> = {
-                      yeni: "Bekliyor", hazirlaniyor: "Hazırlanıyor", onaylandi: "Onaylandı", tamamlandi: "Tamamlandı", iptal: "İptal",
+                      yeni: "Bekliyor", hazirlaniyor: "Hazırlanıyor", onaylandi: "Onaylandı", kargoda: "Kargoda", tamamlandi: "Tamamlandı", iptal: "İptal",
                     };
                     return (
                       <Card key={order.id} data-testid={`card-history-order-${order.id}`}>
@@ -2945,10 +2948,10 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             {orderDetailDialog && (() => {
               const order = orderDetailDialog;
               const statusColors: Record<string, string> = {
-                yeni: "#2196F3", hazirlaniyor: "#FF9800", onaylandi: "#00BFA5", tamamlandi: "#4CAF50", iptal: "#F44336",
+                yeni: "#2196F3", hazirlaniyor: "#FF9800", onaylandi: "#00BFA5", kargoda: "#9C27B0", tamamlandi: "#4CAF50", iptal: "#F44336",
               };
               const statusLabels: Record<string, string> = {
-                yeni: "Bekliyor", hazirlaniyor: "Hazırlanıyor", onaylandi: "Onaylandı", tamamlandi: "Tamamlandı", iptal: "İptal",
+                yeni: "Bekliyor", hazirlaniyor: "Hazırlanıyor", onaylandi: "Onaylandı", kargoda: "Kargoda", tamamlandi: "Tamamlandı", iptal: "İptal",
               };
               return (
                 <div className="space-y-4">
@@ -3155,6 +3158,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                         <SelectItem value="yeni">Bekliyor</SelectItem>
                         <SelectItem value="onaylandi">Onaylandı</SelectItem>
                         <SelectItem value="hazirlaniyor">Hazırlanıyor</SelectItem>
+                        <SelectItem value="kargoda">Kargoda</SelectItem>
                         <SelectItem value="tamamlandi">Tamamlandı</SelectItem>
                         <SelectItem value="iptal">İptal</SelectItem>
                       </SelectContent>
@@ -10921,7 +10925,7 @@ function StokSayimSection() {
           {orderDetail && (() => {
             const order = orderDetail;
             const statusLabels: Record<string, string> = {
-              yeni: "Bekliyor", hazirlaniyor: "Hazırlanıyor", onaylandi: "Onaylandı", tamamlandi: "Tamamlandı", iptal: "İptal",
+              yeni: "Bekliyor", hazirlaniyor: "Hazırlanıyor", onaylandi: "Onaylandı", kargoda: "Kargoda", tamamlandi: "Tamamlandı", iptal: "İptal",
             };
             const num = (v: any) => Number(v || 0).toLocaleString("tr-TR", { minimumFractionDigits: 2 });
             return (

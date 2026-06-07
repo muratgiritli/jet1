@@ -21,6 +21,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
   yeni: { label: "Bekliyor", color: "bg-blue-500 text-white" },
   onaylandi: { label: "Onaylandı", color: "bg-teal-500 text-white" },
   hazirlaniyor: { label: "Hazırlanıyor", color: "bg-orange-500 text-white" },
+  kargoda: { label: "Kargoda", color: "bg-purple-500 text-white" },
   tamamlandi: { label: "Tamamlandı", color: "bg-green-600 text-white" },
   iptal: { label: "İptal", color: "bg-red-500 text-white" },
 };
