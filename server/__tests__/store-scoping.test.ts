@@ -22,6 +22,7 @@ import { readFileSync } from "node:fs";
 import * as cookieSignature from "cookie-signature";
 import { registerRoutes, isTestOtpBypass } from "../routes";
 import { injectAllMeta } from "../seo-meta";
+import { SEO_PAGES } from "../../client/src/lib/seo-data";
 import { getStoreByHost, brandifyFor } from "../../shared/stores";
 import { pool } from "../storage";
 // The shared-edit protection helpers live in the client lib so they can be unit
@@ -1370,6 +1371,89 @@ test("product page canonical/og:url bind to the requesting domain (no cross-bran
   assert.ok(samCanonical.startsWith(`${samsunStore.domain}/urun/${orderProductId}`), "samsun product canonical must bind to the samsun domain");
   assert.ok(!/jetgomarket\.com/i.test(ataCanonical), "atakum canonical must not point at the jetgo domain");
   assert.ok(!/jetgomarket\.com/i.test(samCanonical), "samsun canonical must not point at the jetgo domain");
+});
+
+// ---- Programmatic SEO landing pages (third server-rendered surface) ----
+//
+// injectAllMeta routes known SEO slugs (client/src/lib/seo-data) through
+// injectSeoMeta: the shared title/description/keywords are brandified to the
+// requesting domain and canonical/og:url are bound to that domain. A regression
+// there would let an SEO landing page on a non-default host leak the default
+// JETGO brand into the exact surfaces that drive organic ranking and share
+// previews (title, meta description, og:title/description, canonical). These
+// tests exercise that path for the atakum and samsun hosts using a real slug
+// whose source metaTitle/metaDescription contain BOTH "JETGO" and
+// "jetgomarket.com" — so a working brandify must rewrite the brand word AND the
+// domain, and a broken one would leave a detectable leak.
+
+const SEO_TEST_SLUG = "jetgo-petshop";
+const seoTestPage = SEO_PAGES.find((p) => p.slug === SEO_TEST_SLUG);
+
+// Mirror of seo-meta.ts escapeHtml so the exact-match assertions below stay
+// correct even if the brandified copy ever contains HTML-special characters.
+const escapeHtmlForTest = (s: string) =>
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+
+test("SEO test fixture slug exists with brandifiable source content", () => {
+  // Guards the two tests below against silently passing if seo-data is edited so
+  // the chosen slug disappears or no longer carries the JETGO brand to swap.
+  assert.ok(seoTestPage, `seo-data must still define the "${SEO_TEST_SLUG}" slug`);
+  assert.match(seoTestPage!.metaTitle, /JETGO/, "fixture metaTitle must contain JETGO to brandify");
+  assert.match(seoTestPage!.metaTitle, /jetgomarket\.com/i, "fixture metaTitle must contain the jetgo domain to brandify");
+});
+
+// Assert an SEO landing page served on `host` carries `store`'s brand across
+// title / description / og:title / og:description and self-canonicalizes to the
+// store domain, never leaking the default JETGO brand or domain.
+async function assertSeoLandingBranding(host: string, store: ReturnType<typeof getStoreByHost>) {
+  const html = await injectAllMeta(INDEX_HTML, `/${SEO_TEST_SLUG}`, host);
+
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const description = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1] ?? "";
+  const ogTitle = html.match(/<meta\s+property="og:title"\s+content="([^"]*)"/i)?.[1] ?? "";
+  const ogDescription = html.match(/<meta\s+property="og:description"\s+content="([^"]*)"/i)?.[1] ?? "";
+  const canonical = html.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+  const ogUrl = html.match(/<meta\s+property="og:url"\s+content="([^"]*)"/i)?.[1] ?? "";
+
+  // Title/description must equal the brandified source verbatim (proves the
+  // SEO content was taken from the shared table AND brandified for this host).
+  assert.equal(title, escapeHtmlForTest(brandifyFor(store, seoTestPage!.metaTitle)), `${host} SEO <title> must be the brandified metaTitle`);
+  assert.equal(description, escapeHtmlForTest(brandifyFor(store, seoTestPage!.metaDescription)), `${host} SEO description must be the brandified metaDescription`);
+  // og:title / og:description mirror the brandified title/description.
+  assert.equal(ogTitle, title, `${host} og:title must mirror the brandified <title>`);
+  assert.equal(ogDescription, description, `${host} og:description must mirror the brandified description`);
+
+  // Brand word present; default brand + domain absent from every text surface.
+  assert.ok(title.includes(store.brandWord), `${host} SEO <title> must carry the ${store.brandWord} brand`);
+  for (const [label, val] of [["title", title], ["description", description], ["og:title", ogTitle], ["og:description", ogDescription]] as const) {
+    assert.ok(!/JETGO/i.test(val), `${host} SEO ${label} must not leak the JETGO brand`);
+    assert.ok(!/jetgomarket\.com/i.test(val), `${host} SEO ${label} must not leak the jetgo domain`);
+  }
+
+  // Self-canonicalization: canonical + og:url bind to THIS store's domain/slug.
+  const expectedCanonical = `${store.domain}/${SEO_TEST_SLUG}`;
+  assert.equal(canonical, expectedCanonical, `${host} SEO canonical must bind to the ${store.id} domain`);
+  assert.equal(ogUrl, expectedCanonical, `${host} SEO og:url must bind to the ${store.id} domain`);
+  assert.ok(!/jetgomarket\.com/i.test(canonical), `${host} SEO canonical must not point at the jetgo domain`);
+}
+
+test("SEO landing page brands title/description/og + canonical per host (atakum)", async () => {
+  await assertSeoLandingBranding(ATAKUM_HOST, getStoreByHost(ATAKUM_HOST));
+});
+
+test("SEO landing page brands title/description/og + canonical per host (samsun)", async () => {
+  await assertSeoLandingBranding(SAMSUN_HOST, getStoreByHost(SAMSUN_HOST));
+});
+
+test("SEO landing page on the default (jetgo) host keeps the JETGO brand (contrast)", async () => {
+  // Proves the per-host checks above actually discriminate: on the default store
+  // brandify is a no-op, so the JETGO brand and domain are expected to remain.
+  const store = getStoreByHost(JETGO_HOST);
+  const html = await injectAllMeta(INDEX_HTML, `/${SEO_TEST_SLUG}`, JETGO_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const canonical = html.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+  assert.match(title, /JETGO/, "default-host SEO title keeps the JETGO brand (brandify is a no-op)");
+  assert.equal(canonical, `${store.domain}/${SEO_TEST_SLUG}`, "default-host SEO canonical binds to the jetgo domain");
 });
 
 // ---- Shipped-order tracking SMS auto-send + de-duplication ----
