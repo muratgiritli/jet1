@@ -1588,3 +1588,78 @@ test("no tracking SMS is attempted when cargo/tracking info is missing", async (
     sms.restore();
   }
 });
+
+// ---- Changing the tracking number lets the tracking SMS go out again ----
+//
+// The admin tracking-update route (PATCH /api/admin/orders/:id/tracking) writes
+// the cargo company + tracking number, then calls notifyShipmentIfNeeded. To send
+// the tracking SMS again after a correction, updateOrderTracking (server/storage.ts)
+// resets orders.shipping_sms_sent to false ONLY when the new tracking number
+// differs from the stored one (the `IS DISTINCT FROM` CASE). These tests pin both
+// halves of that contract: a DIFFERENT number re-sends, the SAME number does not.
+
+test("changing an order's tracking number re-sends the tracking SMS (shipping_sms_sent reset)", async () => {
+  // Start clean: no cargo/tracking yet, flag false.
+  const orderId = await seedShippableOrder({ cargoCompany: null, trackingNumber: null });
+  const sms = captureNetgsmSms();
+  try {
+    // 1) Admin enters cargo + first tracking number -> ships once (SMS #1).
+    const first = await patchAdmin(`/api/admin/orders/${orderId}/tracking`, SAMSUN_HOST, {
+      cargoCompany: "Yurtiçi Kargo",
+      trackingNumber: `${MARK}_TRK_A`,
+    });
+    assert.equal(first.status, 200, `first tracking PATCH failed: ${JSON.stringify(first.body)}`);
+    await settle();
+    assert.equal(sms.calls.length, 1, "entering tracking the first time sends one SMS");
+    assert.match(sms.calls[0].body, new RegExp(`${MARK}_TRK_A`), "first SMS must carry the first tracking number");
+
+    const afterFirst = await pool.query("SELECT shipping_sms_sent FROM orders WHERE id = $1", [orderId]);
+    assert.equal(afterFirst.rows[0].shipping_sms_sent, true, "flag must be set after the first send");
+
+    // 2) Admin corrects the tracking number -> flag resets, ships again (SMS #2).
+    const second = await patchAdmin(`/api/admin/orders/${orderId}/tracking`, SAMSUN_HOST, {
+      cargoCompany: "Yurtiçi Kargo",
+      trackingNumber: `${MARK}_TRK_B`,
+    });
+    assert.equal(second.status, 200, `second tracking PATCH failed: ${JSON.stringify(second.body)}`);
+    await settle();
+    assert.equal(sms.calls.length, 2, "a changed tracking number must re-send the tracking SMS");
+    assert.match(sms.calls[1].body, new RegExp(`${MARK}_TRK_B`), "the re-sent SMS must carry the corrected tracking number");
+
+    const afterSecond = await pool.query("SELECT shipping_sms_sent, tracking_number FROM orders WHERE id = $1", [orderId]);
+    assert.equal(afterSecond.rows[0].tracking_number, `${MARK}_TRK_B`, "stored tracking number must be the corrected one");
+    assert.equal(afterSecond.rows[0].shipping_sms_sent, true, "flag must be set again after the re-send");
+  } finally {
+    sms.restore();
+  }
+});
+
+test("re-saving the SAME tracking number does NOT reset the flag (no duplicate SMS)", async () => {
+  const orderId = await seedShippableOrder({ cargoCompany: null, trackingNumber: null });
+  const sms = captureNetgsmSms();
+  try {
+    // 1) Enter cargo + tracking -> ships once (SMS #1), flag set.
+    const first = await patchAdmin(`/api/admin/orders/${orderId}/tracking`, SAMSUN_HOST, {
+      cargoCompany: "Yurtiçi Kargo",
+      trackingNumber: `${MARK}_TRK_SAME`,
+    });
+    assert.equal(first.status, 200, `first tracking PATCH failed: ${JSON.stringify(first.body)}`);
+    await settle();
+    assert.equal(sms.calls.length, 1, "entering tracking the first time sends one SMS");
+
+    // 2) Re-save the EXACT SAME cargo + tracking number -> IS DISTINCT FROM is
+    //    false, so shipping_sms_sent stays true and no new SMS goes out.
+    const second = await patchAdmin(`/api/admin/orders/${orderId}/tracking`, SAMSUN_HOST, {
+      cargoCompany: "Yurtiçi Kargo",
+      trackingNumber: `${MARK}_TRK_SAME`,
+    });
+    assert.equal(second.status, 200, `second tracking PATCH failed: ${JSON.stringify(second.body)}`);
+    await settle();
+    assert.equal(sms.calls.length, 1, "re-saving the same tracking number must NOT re-send (flag not reset)");
+
+    const row = await pool.query("SELECT shipping_sms_sent FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0].shipping_sms_sent, true, "flag must remain set when the tracking number is unchanged");
+  } finally {
+    sms.restore();
+  }
+});
