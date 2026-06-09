@@ -590,6 +590,99 @@ test("test-OTP bypass lets a NEW customer register and place an Atakum order end
   }
 });
 
+// ---- Returning customer: log in (no re-registration) and reuse saved address ----
+//
+// The new-customer test above proves the registration branch (fresh phone ->
+// OTP -> name + Mahalle). This is the OTHER half of the auth flow: an EXISTING
+// customer who already has an account + saved address. For them /api/otp/verify
+// must log them straight in WITHOUT requiresRegistration, return their saved
+// address, and let them place an order immediately. This is the persistent,
+// server-side complement to the returning-customer browser smoke (testing skill).
+test("test-OTP bypass logs a RETURNING customer in without re-registration and reuses the saved address", async () => {
+  const prevEnv = process.env.NODE_ENV;
+  const prevFlag = process.env.TEST_OTP_BYPASS;
+  process.env.NODE_ENV = "development";
+  process.env.TEST_OTP_BYPASS = "1";
+
+  const phone = "555" + String(randomBytes(4).readUInt32BE(0)).padStart(7, "0").slice(-7);
+  const savedAddress = `${MARK} Atakum Mah., Kayıtlı Cad. No 7`;
+  try {
+    // ---- Setup: register the customer once (the "first visit") so they exist
+    //      with a saved address. This mirrors a customer who signed up earlier. ----
+    const setupSend = await post("/api/otp/send", ATAKUM_HOST, { phone });
+    assert.equal(setupSend.status, 200, `setup otp/send failed: ${JSON.stringify(setupSend.body)}`);
+    assert.equal(setupSend.body.isExisting, false, "phone must be new before registration");
+
+    const regRes = await fetch(`${baseUrl}/api/otp/verify`, {
+      method: "POST",
+      headers: { "X-Forwarded-Host": ATAKUM_HOST, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        phone,
+        code: "0000",
+        name: `${MARK}_RETURNING_BUYER`,
+        address: savedAddress,
+      }),
+    });
+    const regBody = await regRes.json() as any;
+    assert.equal(regRes.status, 200, `setup registration failed: ${JSON.stringify(regBody)}`);
+    assert.ok(regBody.id, "setup registration must return the new customer id");
+    assert.equal(regBody.isNewUser, true, "first visit must create the customer");
+    ids.customers.push(regBody.id as number);
+
+    // ---- Returning visit (a fresh context: NO cookie carried over) ----
+    // 1) otp/send must now recognise the phone as an existing customer. This is
+    //    what flips the checkout UI from "register" to "login" mode.
+    const send = await post("/api/otp/send", ATAKUM_HOST, { phone });
+    assert.equal(send.status, 200, `otp/send failed: ${JSON.stringify(send.body)}`);
+    assert.equal(send.body.isExisting, true, "returning phone must be reported as existing");
+
+    // 2) Verify with JUST the code (no name/address). The server must log the
+    //    customer straight in — NO requiresRegistration — because they already
+    //    have an account. This is the step the checkout's doAuthVerify relies on
+    //    to close the modal instead of showing the registration form.
+    const verifyRes = await fetch(`${baseUrl}/api/otp/verify`, {
+      method: "POST",
+      headers: { "X-Forwarded-Host": ATAKUM_HOST, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, code: "0000" }),
+    });
+    const verifyBody = await verifyRes.json() as any;
+    assert.equal(verifyRes.status, 200, `otp/verify failed: ${JSON.stringify(verifyBody)}`);
+    assert.ok(!verifyBody.requiresRegistration, "returning customer must NOT be asked to register again");
+    assert.equal(verifyBody.isNewUser, false, "returning login must not create a new customer");
+    assert.equal(verifyBody.id, regBody.id, "returning login must resolve the SAME customer");
+    // The saved address comes back on login so checkout can pre-fill it.
+    assert.equal(verifyBody.address, savedAddress, "returning login must return the saved address");
+
+    const setCookie = verifyRes.headers.get("set-cookie");
+    assert.ok(setCookie && setCookie.includes("connect.sid"), "returning login must set a session cookie");
+    const realCookie = setCookie!.split(";")[0];
+
+    // 3) The saved address is reused: /api/customer/me (read by the checkout to
+    //    pre-fill the address field) returns it for the logged-in session.
+    const me = await getWithCookie("/api/customer/me", ATAKUM_HOST, realCookie);
+    assert.equal(me.status, 200, `customer/me failed: ${JSON.stringify(me.body)}`);
+    assert.equal(me.body.address, savedAddress, "saved address must be reused for the returning customer");
+
+    // 4) The returning customer can place an order immediately, without ever
+    //    re-registering. Uses the real session cookie from the login above.
+    const order = await postWithCookie(
+      "/api/orders",
+      ATAKUM_HOST,
+      { ...orderPayload(), customerName: `${MARK}_RETURNING_BUYER`, customerPhone: phone },
+      realCookie,
+    );
+    assert.equal(order.status, 201, `returning-customer order POST failed: ${JSON.stringify(order.body)}`);
+    const orderId = order.body.id as number;
+    assert.ok(orderId, "order id missing in response");
+    ids.orders.push(orderId);
+    const row = await pool.query("SELECT source_site FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0]?.source_site, "atakum", "order must attribute to the Atakum storefront");
+  } finally {
+    if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
+    if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
+  }
+});
+
 // ---- samsun (cargo, online-payment-only) storefront behavior + tracking ----
 //
 // samsun (samsunpetshop.com) is the cargo store: fulfillment "cargo",
