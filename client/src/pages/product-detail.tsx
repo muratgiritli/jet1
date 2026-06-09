@@ -935,20 +935,7 @@ export default function ProductDetailPage() {
                     </Button>
                   )}
                 </div>
-              ) : (
-                <div className="flex flex-col gap-3 mt-2">
-                  <div className="flex items-center justify-center md:justify-start gap-3 flex-wrap">
-                    <span className="text-sm text-muted-foreground font-medium">ADET</span>
-                    <QuantityControl productId={pid} quantity={quantity} onUpdate={(id, delta) => {
-                      if (delta > 0 && hasVariants && !selectedVariant) {
-                        toast({ title: "Lütfen önce seçenek belirleyin", variant: "destructive" });
-                        return false;
-                      }
-                      return updateQty(id, delta, isCampaignMode, selectedVariant ?? undefined);
-                    }} />
-                  </div>
-                </div>
-              )}
+              ) : null}
 
             </div>
           </div>
