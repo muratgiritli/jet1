@@ -1205,7 +1205,18 @@ export default function ProductDetailPage() {
               }}
               data-testid="button-go-login"
             >
-              Giriş Yap / Üye Ol
+              Giriş Yap
+            </Button>
+            <Button
+              className="w-full h-12 font-bold"
+              style={{ backgroundColor: "#2e7d32", color: "#fff" }}
+              onClick={() => {
+                setConfirmDialogOpen(false);
+                setLocation("/giris?tab=register");
+              }}
+              data-testid="button-go-register"
+            >
+              Yeni Üye Ol
             </Button>
             <Button
               variant="outline"
