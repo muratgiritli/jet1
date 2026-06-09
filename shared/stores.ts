@@ -172,12 +172,12 @@ const atakum: StoreConfig = {
 
 const samsun: StoreConfig = {
   id: "samsun",
-  hostnames: ["samsunpetshop.com", "www.samsunpetshop.com"],
+  hostnames: ["atakumpet.com", "www.atakumpet.com"],
   name: "Samsun Pet Shop",
   shortName: "Samsun Pet Shop",
   brandWord: "Samsun Pet Shop",
   alternateNames: ["Samsun Petshop", "Samsun Pet Shop Online", "Samsun Pet", "samsunpetshop"],
-  domain: "https://www.samsunpetshop.com",
+  domain: "https://www.atakumpet.com",
   logo: "/logo-samsun.webp",
   favicon: "/favicon-192.png",
   phone: "+908508403959",

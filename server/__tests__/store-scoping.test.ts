@@ -45,7 +45,7 @@ import {
 const MARK = "__SCOPE_TEST__";
 const JETGO_HOST = "www.jetgomarket.com";
 const ATAKUM_HOST = "www.atakumpetshop.com";
-const SAMSUN_HOST = "www.samsunpetshop.com";
+const SAMSUN_HOST = "www.atakumpet.com";
 
 // app_settings keys touched by the tests; snapshotted and restored.
 const SETTING_KEYS = [
@@ -693,7 +693,7 @@ test("test-OTP bypass logs a RETURNING customer in without re-registration and r
 
 // ---- samsun (cargo, online-payment-only) storefront behavior + tracking ----
 //
-// samsun (samsunpetshop.com) is the cargo store: fulfillment "cargo",
+// samsun (atakumpet.com) is the cargo store: fulfillment "cargo",
 // onlinePaymentOnly true, preorderEnabled false (shared/stores.ts). These tests
 // exercise the server-enforced store behavior end-to-end and the admin -> customer
 // cargo-tracking round-trip, complementing the client-side UI smoke (home/PDP/
@@ -816,7 +816,7 @@ test("checkout on atakum (local store) DOES offer in-person payment surfaces", (
   );
 });
 
-test("online order on samsunpetshop.com is tagged source_site=samsun and starts pending", async () => {
+test("online order on atakumpet.com is tagged source_site=samsun and starts pending", async () => {
   const res = await postWithCookie("/api/orders", SAMSUN_HOST, samsunOnlineOrder(), samsunCustomerCookie);
   assert.equal(res.status, 201, `samsun order POST failed: ${JSON.stringify(res.body)}`);
   const orderId = res.body.id as number;
