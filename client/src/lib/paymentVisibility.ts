@@ -65,3 +65,64 @@ export interface DoorPosState {
 export function showDoorPosInstallments(s: DoorPosState): boolean {
   return !s.onlinePaymentOnly && !s.hasCampaignItems && !s.hasPreorderItems && s.posEnabled;
 }
+
+// Combined input for the single checkout payment-visibility memo. Carries every
+// signal that gates any payment surface so the decision is made in ONE place.
+export interface PaymentSurfaceState {
+  onlinePaymentOnly: boolean;
+  onlineCardEnabled: boolean;
+  nakitEnabled: boolean;
+  eftEnabled: boolean;
+  qrEnabled: boolean;
+  posEnabled: boolean;
+  donationDelivery: boolean;
+  hasCampaignItems: boolean;
+  hasPreorderItems: boolean;
+  hiddenPaymentMethods: Iterable<string>;
+}
+
+// Result of the single source of truth. Every payment surface in checkout
+// (the RadioGroup, the door-POS installment block, the EFT/cash/QR info panels)
+// reads from this object instead of re-deriving its own visibility condition.
+export interface PaymentSurfaceVisibility {
+  /** Ordered radio options to render in the method picker. */
+  options: PaymentOption[];
+  /** Visible radio option ids, for cheap membership checks by info panels. */
+  visibleIds: Set<string>;
+  /** Whether the door-POS installment block may render. */
+  showDoorPos: boolean;
+  /** Whether the Banka Havalesi/EFT info panel may render (when selected). */
+  showEftInfo: boolean;
+  /** Whether the Kapıda Nakit info hint may render (when selected). */
+  showNakitInfo: boolean;
+}
+
+// THE single source of truth for which payment surfaces show at checkout.
+// Combines the RadioGroup filter and the door-POS gate, and derives panel
+// visibility from the same computed option set so nothing duplicates conditions.
+export function computePaymentVisibility(s: PaymentSurfaceState): PaymentSurfaceVisibility {
+  const options = visiblePaymentOptions({
+    onlinePaymentOnly: s.onlinePaymentOnly,
+    onlineCardEnabled: s.onlineCardEnabled,
+    nakitEnabled: s.nakitEnabled,
+    eftEnabled: s.eftEnabled,
+    qrEnabled: s.qrEnabled,
+    donationDelivery: s.donationDelivery,
+    hasPreorder: s.hasPreorderItems,
+    hiddenPaymentMethods: s.hiddenPaymentMethods,
+  });
+  const visibleIds = new Set(options.map((o) => o.id));
+  const showDoorPos = showDoorPosInstallments({
+    onlinePaymentOnly: s.onlinePaymentOnly,
+    hasCampaignItems: s.hasCampaignItems,
+    hasPreorderItems: s.hasPreorderItems,
+    posEnabled: s.posEnabled,
+  });
+  return {
+    options,
+    visibleIds,
+    showDoorPos,
+    showEftInfo: visibleIds.has("eft"),
+    showNakitInfo: visibleIds.has("nakit"),
+  };
+}

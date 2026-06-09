@@ -48,7 +48,7 @@ import {
   PAYMENT_OPTIONS,
   TESLIMAT_MAHALLELERI,
 } from "@/lib/data";
-import { visiblePaymentOptions, showDoorPosInstallments } from "@/lib/paymentVisibility";
+import { computePaymentVisibility } from "@/lib/paymentVisibility";
 import { useCart } from "@/contexts/CartContext";
 
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -506,6 +506,30 @@ export default function Checkout() {
       setPaymentId("online");
     }
   }, [hasPreorderItems, paymentId, setPaymentId]);
+
+  // Single source of truth for which payment surfaces show at checkout. Every
+  // payment surface below (the RadioGroup, the door-POS installment block, and
+  // the EFT/cash info panels) reads from this memo instead of duplicating its
+  // own visibility condition — see paymentVisibility.ts.
+  const paymentVisibility = useMemo(() => {
+    const hiddenByProduct: string[] = [];
+    for (const { product } of selectedProducts) {
+      const arr = (product as any).hiddenPaymentMethods;
+      if (Array.isArray(arr)) for (const m of arr) hiddenByProduct.push(String(m));
+    }
+    return computePaymentVisibility({
+      onlinePaymentOnly,
+      onlineCardEnabled,
+      nakitEnabled,
+      eftEnabled,
+      qrEnabled,
+      posEnabled,
+      donationDelivery,
+      hasCampaignItems,
+      hasPreorderItems,
+      hiddenPaymentMethods: hiddenByProduct,
+    });
+  }, [selectedProducts, onlinePaymentOnly, onlineCardEnabled, nakitEnabled, eftEnabled, qrEnabled, posEnabled, donationDelivery, hasCampaignItems, hasPreorderItems]);
 
   useEffect(() => {
     if (onlinePaymentOnly && paymentId !== "online") {
@@ -1310,7 +1334,7 @@ export default function Checkout() {
                       )}
                     </div>
                   )}
-                  {isLoggedIn && paymentId === "nakit" && (
+                  {isLoggedIn && paymentVisibility.showNakitInfo && paymentId === "nakit" && (
                     <div
                       className="mt-3 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900"
                       data-testid="info-nakit-fatura-adres"
@@ -1500,23 +1524,7 @@ export default function Checkout() {
                     </div>
                   ) : (
                   <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
-                    {(() => {
-                      const hiddenByProduct: string[] = [];
-                      for (const { product } of selectedProducts) {
-                        const arr = (product as any).hiddenPaymentMethods;
-                        if (Array.isArray(arr)) for (const m of arr) hiddenByProduct.push(String(m));
-                      }
-                      return visiblePaymentOptions({
-                        onlinePaymentOnly,
-                        onlineCardEnabled,
-                        nakitEnabled,
-                        eftEnabled,
-                        qrEnabled,
-                        donationDelivery,
-                        hasPreorder: selectedProducts.some(({ product }) => isPreorderProduct(String(product.id))),
-                        hiddenPaymentMethods: hiddenByProduct,
-                      });
-                    })().map((opt) => {
+                    {paymentVisibility.options.map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
                       const optDiscRate = opt.disc < 0 ? Math.abs(opt.disc) : 0;
                       const optDiscAmount = subtotal * optDiscRate;
@@ -1551,7 +1559,7 @@ export default function Checkout() {
                   </RadioGroup>
                   )}
 
-                  {paymentId === "eft" && bankIban && (
+                  {paymentVisibility.showEftInfo && paymentId === "eft" && bankIban && (
                     <div className="mt-3 rounded-lg border border-blue-300 bg-blue-50 dark:bg-blue-950/30 p-3 space-y-1.5" data-testid="info-bank-transfer">
                       <div className="text-sm font-bold text-blue-900 dark:text-blue-100 flex items-center gap-1.5">
                         <Banknote className="w-4 h-4" /> Banka Havalesi / EFT Bilgileri
@@ -1567,7 +1575,7 @@ export default function Checkout() {
                     </div>
                   )}
 
-                  {showDoorPosInstallments({ onlinePaymentOnly, hasCampaignItems, hasPreorderItems, posEnabled }) && (
+                  {paymentVisibility.showDoorPos && (
                     <div className="mt-4 border-t pt-4">
                       <h3 className="text-sm font-bold mb-3 flex items-center gap-2 flex-wrap">
                         <CreditCard className="w-4 h-4 text-blue-600" />

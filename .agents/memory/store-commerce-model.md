@@ -25,6 +25,9 @@ several independent blocks (the method picker AND a separate door/installment bl
 info panels), each with its own visibility condition. An online-only restriction must gate ALL of
 them — gating only the main picker once let an online-only store still display a door-payment block.
 **Why:** the surfaces evolved separately, so a new restriction silently misses the ones added later.
-**How to apply:** when adding/auditing any "store X only allows payment method Y" rule, check every
-payment block in checkout and confirm each honors the flag; the server already rejects disallowed
-methods, so a missed surface is a client-display leak (still wrong), not a security hole.
+**How to apply:** checkout now has ONE source of truth — `computePaymentVisibility()` in
+`client/src/lib/paymentVisibility.ts`, consumed via a single `paymentVisibility` useMemo in
+`checkout.tsx`. Every surface (RadioGroup `.options`, door-POS `.showDoorPos`, EFT `.showEftInfo`,
+nakit hint `.showNakitInfo`) reads from it. When adding a payment surface or a "store X only allows
+method Y" rule, extend this one function/memo — do NOT re-derive a local condition. The server still
+rejects disallowed methods, so a missed surface is a client-display leak, not a security hole.
