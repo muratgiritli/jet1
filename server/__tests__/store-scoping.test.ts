@@ -34,6 +34,13 @@ import {
   isSharedRowInStoreView,
   STORE_SCOPED_SETTING_KEYS as CLIENT_STORE_SCOPED_SETTING_KEYS,
 } from "../../client/src/lib/storeScope";
+// Pure checkout payment-visibility helpers (the exact logic the checkout page
+// renders with). Tested here so an online-only store can never leak in-person
+// payment surfaces without booting React.
+import {
+  visiblePaymentOptions,
+  showDoorPosInstallments,
+} from "../../client/src/lib/paymentVisibility";
 
 const MARK = "__SCOPE_TEST__";
 const JETGO_HOST = "www.jetgomarket.com";
@@ -727,6 +734,86 @@ test("samsun rejects door payment — online-payment-only store (400)", async ()
   );
   assert.equal(res.status, 400);
   assert.match(String(res.body.message ?? ""), /online kredi kartı/i);
+});
+
+// ---- Client-render counterpart: checkout never shows in-person payment ----
+//
+// The server gate above rejects a door payment on the cargo store, but a
+// regression once let the checkout UI *render* the door-POS installment block
+// on the online-only storefront anyway. These tests assert the pure render
+// helpers (the exact logic checkout.tsx renders with) so the UI can never leak
+// an in-person payment surface on an online-payment-only store. They are driven
+// by the real shared/stores.ts config (samsun: onlinePaymentOnly true; atakum:
+// false) so they stay honest if those flags change.
+
+// Default-enabled gateway state: every method configured & enabled. The store's
+// onlinePaymentOnly flag (not these) is what must suppress the door options.
+const allMethodsEnabled = {
+  onlineCardEnabled: true,
+  nakitEnabled: true,
+  eftEnabled: true,
+  qrEnabled: true,
+  donationDelivery: false,
+  hasPreorder: false,
+  hiddenPaymentMethods: [] as string[],
+};
+
+test("checkout on samsun (onlinePaymentOnly) renders ONLY the online card — no in-person surfaces", () => {
+  const samsun = getStoreByHost(SAMSUN_HOST);
+  assert.equal(samsun.id, "samsun");
+  assert.equal(samsun.commerce.onlinePaymentOnly, true, "samsun must be the online-payment-only store");
+
+  const opts = visiblePaymentOptions({
+    ...allMethodsEnabled,
+    onlinePaymentOnly: samsun.commerce.onlinePaymentOnly,
+  });
+  const ids = opts.map((o) => o.id);
+
+  // ONLY the online card option is offered.
+  assert.deepEqual(ids, ["online"], `expected only the online card, got: ${JSON.stringify(ids)}`);
+  // No in-person ("Kapıda") radio surfaces and no Banka Havalesi/EFT.
+  for (const forbidden of ["nakit", "eft", "qr", "pos"]) {
+    assert.ok(!ids.includes(forbidden), `in-person option "${forbidden}" must not render on samsun`);
+  }
+  // The door-POS installment block is suppressed even with POS enabled.
+  assert.equal(
+    showDoorPosInstallments({
+      onlinePaymentOnly: samsun.commerce.onlinePaymentOnly,
+      hasCampaignItems: false,
+      hasPreorderItems: false,
+      posEnabled: true,
+    }),
+    false,
+    "door-POS installment block must never render on the online-only store",
+  );
+});
+
+test("checkout on atakum (local store) DOES offer in-person payment surfaces", () => {
+  const atakum = getStoreByHost(ATAKUM_HOST);
+  assert.equal(atakum.id, "atakum");
+  assert.equal(atakum.commerce.onlinePaymentOnly, false, "atakum must allow in-person payment");
+
+  const opts = visiblePaymentOptions({
+    ...allMethodsEnabled,
+    onlinePaymentOnly: atakum.commerce.onlinePaymentOnly,
+  });
+  const ids = opts.map((o) => o.id);
+
+  // In-person door options + online card are all available on the local store.
+  for (const allowed of ["nakit", "eft", "qr", "online"]) {
+    assert.ok(ids.includes(allowed), `local store should offer "${allowed}"`);
+  }
+  // The door-POS installment block is allowed when POS is enabled.
+  assert.equal(
+    showDoorPosInstallments({
+      onlinePaymentOnly: atakum.commerce.onlinePaymentOnly,
+      hasCampaignItems: false,
+      hasPreorderItems: false,
+      posEnabled: true,
+    }),
+    true,
+    "door-POS installment block should render on the local store",
+  );
 });
 
 test("online order on samsunpetshop.com is tagged source_site=samsun and starts pending", async () => {

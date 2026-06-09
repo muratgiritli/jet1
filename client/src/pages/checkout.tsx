@@ -48,6 +48,7 @@ import {
   PAYMENT_OPTIONS,
   TESLIMAT_MAHALLELERI,
 } from "@/lib/data";
+import { visiblePaymentOptions, showDoorPosInstallments } from "@/lib/paymentVisibility";
 import { useCart } from "@/contexts/CartContext";
 
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -1500,27 +1501,20 @@ export default function Checkout() {
                   ) : (
                   <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
                     {(() => {
-                      const hiddenByProduct = new Set<string>();
+                      const hiddenByProduct: string[] = [];
                       for (const { product } of selectedProducts) {
                         const arr = (product as any).hiddenPaymentMethods;
-                        if (Array.isArray(arr)) for (const m of arr) hiddenByProduct.add(String(m));
+                        if (Array.isArray(arr)) for (const m of arr) hiddenByProduct.push(String(m));
                       }
-                      return PAYMENT_OPTIONS.filter((opt) => {
-                        if (hiddenByProduct.has(opt.id)) return false;
-                        if (onlinePaymentOnly) return opt.id === "online" && onlineCardEnabled;
-                        if (opt.id === "pos") return false;
-                        if (donationDelivery && opt.id !== "eft" && opt.id !== "online") return false;
-                        if (opt.id === "nakit") return nakitEnabled;
-                        if (opt.id === "eft") return eftEnabled;
-                        if (opt.id === "qr") return qrEnabled;
-                        const hasPreorder = selectedProducts.some(({ product }) => isPreorderProduct(String(product.id)));
-                        if (hasPreorder) {
-                          if (opt.id === "online") return onlineCardEnabled;
-                          if (opt.id === "eft") return eftEnabled;
-                          return false;
-                        }
-                        if (opt.id === "online") return onlineCardEnabled;
-                        return true;
+                      return visiblePaymentOptions({
+                        onlinePaymentOnly,
+                        onlineCardEnabled,
+                        nakitEnabled,
+                        eftEnabled,
+                        qrEnabled,
+                        donationDelivery,
+                        hasPreorder: selectedProducts.some(({ product }) => isPreorderProduct(String(product.id))),
+                        hiddenPaymentMethods: hiddenByProduct,
                       });
                     })().map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
@@ -1573,7 +1567,7 @@ export default function Checkout() {
                     </div>
                   )}
 
-                  {!onlinePaymentOnly && !hasCampaignItems && !hasPreorderItems && posEnabled && (
+                  {showDoorPosInstallments({ onlinePaymentOnly, hasCampaignItems, hasPreorderItems, posEnabled }) && (
                     <div className="mt-4 border-t pt-4">
                       <h3 className="text-sm font-bold mb-3 flex items-center gap-2 flex-wrap">
                         <CreditCard className="w-4 h-4 text-blue-600" />
