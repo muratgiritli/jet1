@@ -332,6 +332,7 @@ export async function registerRoutes(
     "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
     "top_banner_enabled", "top_banner_text", "top_banner_link", "top_banner_bg", "top_banner_color",
     "breed_banners", "category_banners",
+    "cargo_fee", "cargo_free_limit", "cargo_min_order",
   ]);
   // Tüm app_settings'i verilen store için çöz: temel değerler + store öneki ezmeleri.
   async function resolveAllSettings(store: string): Promise<Record<string, string>> {
@@ -2613,9 +2614,13 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
     if (!isCampaignOrder) {
       if (reqStore(req).commerce.fulfillment === "cargo") {
-        const cargoSettings = await resolveSettings(["cargo_fee", "cargo_free_limit"], orderStore);
-        const cFee = Number(cargoSettings.cargo_fee ?? 0) || 0;
-        const cFree = Number(cargoSettings.cargo_free_limit ?? 0) || 0;
+        const cargoSettings = await resolveSettings(["cargo_fee", "cargo_free_limit", "cargo_min_order"], orderStore);
+        const cFee = Math.max(0, Number(cargoSettings.cargo_fee ?? 0) || 0);
+        const cFree = Math.max(0, Number(cargoSettings.cargo_free_limit ?? 0) || 0);
+        const cMin = Math.max(0, Number(cargoSettings.cargo_min_order ?? 0) || 0);
+        if (cMin > 0 && orderData.subtotal < cMin) {
+          return res.status(400).json({ message: `Minimum sipariş tutarı ${cMin} TL.` });
+        }
         orderData.shipping = (cFree > 0 && orderData.subtotal >= cFree) ? 0 : cFee;
       } else {
         orderData.shipping = orderData.subtotal >= STANDARD_FREE_SHIP_LIMIT ? 0 : STANDARD_SHIP_FEE;
@@ -3852,7 +3857,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         "sokak_banner_enabled", "veteriner_banner_enabled",
         "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
         "cross_sell_enabled",
-        "cargo_fee", "cargo_free_limit",
+        "cargo_fee", "cargo_free_limit", "cargo_min_order",
       ];
       const settings = await resolveSettings(keys, publicStoreId(req));
       res.set("Cache-Control", "no-store");
@@ -3888,7 +3893,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         "sokak_banner_enabled", "veteriner_banner_enabled",
         "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
         "cross_sell_enabled",
-        "cargo_fee", "cargo_free_limit",
+        "cargo_fee", "cargo_free_limit", "cargo_min_order",
       ];
 
       const toslaFlag = updates.payment_tosla_enabled;

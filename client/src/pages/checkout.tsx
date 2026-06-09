@@ -123,6 +123,7 @@ export default function Checkout() {
   const bankName = publicSettings?.bank_name || "";
   const cargoFee = Number(publicSettings?.cargo_fee ?? 0) || 0;
   const cargoFreeLimit = Number(publicSettings?.cargo_free_limit ?? 0) || 0;
+  const cargoMinOrder = Number(publicSettings?.cargo_min_order ?? 0) || 0;
 
   const { data: deliveryNeighborhoods = [] } = useQuery<{ id: number; name: string; district: string; minOrder: number; shippingFee: number; freeShippingLimit: number; isActive: boolean }[]>({
     queryKey: ["/api/delivery-neighborhoods"],
@@ -460,7 +461,7 @@ export default function Checkout() {
 
   const effShipFee = isCargo ? cargoFee : (matchedNeighborhood ? matchedNeighborhood.shippingFee : CONFIG.shipFee);
   const effShipLimit = isCargo ? (cargoFreeLimit > 0 ? cargoFreeLimit : Number.POSITIVE_INFINITY) : (matchedNeighborhood ? matchedNeighborhood.freeShippingLimit : CONFIG.shipLimit);
-  const effMinLimit = isCargo ? 0 : (matchedNeighborhood ? matchedNeighborhood.minOrder : CONFIG.minLimit);
+  const effMinLimit = isCargo ? cargoMinOrder : (matchedNeighborhood ? matchedNeighborhood.minOrder : CONFIG.minLimit);
   const stdShipping = subtotal >= effShipLimit ? 0 : effShipFee;
   const stdMinReached = subtotal >= effMinLimit;
 
@@ -1738,6 +1739,12 @@ export default function Checkout() {
                       </div>
                       <p className="text-[11px] text-blue-700 mt-2 leading-snug">Vade farksız, online kredi kartı ile.</p>
                     </div>
+                  )}
+
+                  {isCargo && cargoMinOrder > 0 && !stdMinReached && (
+                    <p className="text-[12px] text-red-600 text-center mt-3 font-medium" data-testid="text-cargo-min-warning">
+                      Minimum sipariş tutarı {cargoMinOrder} TL. Sipariş verebilmek için sepetinize {Math.ceil(cargoMinOrder - subtotal)} TL daha ekleyin.
+                    </p>
                   )}
 
                   <Button

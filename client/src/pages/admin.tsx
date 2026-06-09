@@ -8730,6 +8730,9 @@ function SettingsSection() {
     bank_name: "",
     daily_cargo_widget_enabled: "false",
     cross_sell_enabled: "true",
+    cargo_fee: "",
+    cargo_free_limit: "",
+    cargo_min_order: "",
   });
 
   const baselineRef = useRef<Record<string, string>>({});
@@ -8768,6 +8771,9 @@ function SettingsSection() {
         bank_name: settings.bank_name || "",
         daily_cargo_widget_enabled: settings.daily_cargo_widget_enabled ?? "false",
         cross_sell_enabled: settings.cross_sell_enabled ?? "true",
+        cargo_fee: settings.cargo_fee || "",
+        cargo_free_limit: settings.cargo_free_limit || "",
+        cargo_min_order: settings.cargo_min_order || "",
       };
       setForm(next);
       baselineRef.current = next;
@@ -8821,6 +8827,34 @@ function SettingsSection() {
   return (
     <div className="space-y-4" data-testid="section-ayarlar">
       <h2 className="text-lg font-bold">Puan & Besleme Ayarları</h2>
+
+      {(adminStore === "all" || STORES.find(s => s.id === adminStore)?.commerce?.fulfillment === "cargo") && (
+        <Card className="border-purple-300">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm flex items-center gap-2">
+              <Package className="w-4 h-4 text-purple-600" /> Kargo Ayarları (Şehirler Arası Satış)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-3 space-y-3">
+            <p className="text-[11px] text-muted-foreground">Bu ayarlar yalnızca kargo (şehirler arası) satış yapan siteler için geçerlidir.</p>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold">Kargo Ücreti (TL)</Label>
+              <Input type="number" min="0" step="1" value={form.cargo_fee} onChange={e => setForm(prev => ({ ...prev, cargo_fee: e.target.value }))} placeholder="0" data-testid="input-cargo-fee" />
+              <p className="text-[10px] text-muted-foreground">Her siparişe eklenecek sabit kargo ücreti. 0 = ücretsiz.</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold">Ücretsiz Kargo Limiti (TL)</Label>
+              <Input type="number" min="0" step="1" value={form.cargo_free_limit} onChange={e => setForm(prev => ({ ...prev, cargo_free_limit: e.target.value }))} placeholder="0" data-testid="input-cargo-free-limit" />
+              <p className="text-[10px] text-muted-foreground">Bu tutar ve üzeri siparişlerde kargo ücretsiz olur. 0 = kapalı (her zaman ücret alınır).</p>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-bold">Minimum Sipariş Tutarı (TL)</Label>
+              <Input type="number" min="0" step="1" value={form.cargo_min_order} onChange={e => setForm(prev => ({ ...prev, cargo_min_order: e.target.value }))} placeholder="0" data-testid="input-cargo-min-order" />
+              <p className="text-[10px] text-muted-foreground">Müşterinin sipariş verebilmesi için gereken en düşük sepet tutarı. 0 = sınır yok.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardContent className="pt-4 space-y-4">
