@@ -9,17 +9,24 @@ import SEO from "@/components/SEO";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { TESLIMAT_MAHALLELERI } from "@/lib/data";
 import { apiRequest } from "@/lib/queryClient";
+import { useStore } from "@/lib/store";
+import { PROVINCE_NAMES, districtsOf } from "@shared/turkeyLocations";
 
 type Step = "phone" | "otp" | "register";
 
 export default function AuthPage() {
   const searchStr = useSearch();
   const isRegisterTab = new URLSearchParams(searchStr).get("tab") === "register";
+  const store = useStore();
+  const isCargo = store.commerce.fulfillment === "cargo";
   const [phone, setPhone] = useState("");
   const [otpCode, setOtpCode] = useState(["", "", "", ""]);
   const [name, setName] = useState("");
   const [adresDetay, setAdresDetay] = useState("");
   const [mahalle, setMahalle] = useState("");
+  const [cargoCity, setCargoCity] = useState("");
+  const [cargoDistrict, setCargoDistrict] = useState("");
+  const cargoDistricts = cargoCity ? districtsOf(cargoCity) : [];
   const [customerLocation, setCustomerLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationLoading, setLocationLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -193,17 +200,24 @@ export default function AuthPage() {
     e.preventDefault();
     const errors: Record<string, string> = {};
     if (!name.trim()) errors.name = "Ad Soyad zorunludur";
-    if (!mahalle) errors.mahalle = "Mahalle seçimi zorunludur";
+    if (isCargo) {
+      if (!cargoCity) errors.cargoCity = "İl seçimi zorunludur";
+      if (!cargoDistrict) errors.cargoDistrict = "İlçe seçimi zorunludur";
+    } else if (!mahalle) {
+      errors.mahalle = "Mahalle seçimi zorunludur";
+    }
     if (!adresDetay.trim() || adresDetay.trim().length < 10) errors.adres = "Adres bilgisi zorunludur (cadde, sokak, bina vb.)";
     if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
     setFormErrors({});
     setLoading(true);
     const normalized = phone.replace(/\D/g, "");
     const code = otpCode.join("");
-    const fullAddress = [mahalle, adresDetay.trim()].filter(Boolean).join(", ");
+    const fullAddress = isCargo
+      ? [`${cargoCity} / ${cargoDistrict}`, adresDetay.trim()].filter(Boolean).join(", ")
+      : [mahalle, adresDetay.trim()].filter(Boolean).join(", ");
     try {
       await loginWithOtp(normalized, code, name.trim(), fullAddress || undefined);
-      if (mahalle) localStorage.setItem("jet55_mahalle", mahalle);
+      if (!isCargo && mahalle) localStorage.setItem("jet55_mahalle", mahalle);
       const params = new URLSearchParams(window.location.search);
       setLocation(params.get("redirect") || "/");
     } catch (err: any) {
@@ -374,6 +388,43 @@ export default function AuthPage() {
                   {formErrors.name && <p className="text-[11px] text-red-500 mt-0.5">{formErrors.name}</p>}
                 </div>
 
+                {isCargo ? (
+                  <div className="grid grid-cols-2 gap-2">
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        İl*
+                      </label>
+                      <select
+                        value={cargoCity}
+                        onChange={(e) => { setCargoCity(e.target.value); setCargoDistrict(""); setFormErrors((p) => ({ ...p, cargoCity: "" })); }}
+                        className={`w-full h-10 px-3 rounded-md border text-sm outline-none bg-background ${formErrors.cargoCity ? "border-red-400" : "border-input"}`}
+                        data-testid="select-auth-il"
+                      >
+                        <option value="">İl seçiniz</option>
+                        {PROVINCE_NAMES.map((p) => (<option key={p} value={p}>{p}</option>))}
+                      </select>
+                      {formErrors.cargoCity && <p className="text-[11px] text-red-500 mt-0.5">{formErrors.cargoCity}</p>}
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-sm font-bold flex items-center gap-1.5">
+                        <MapPin className="w-4 h-4 text-muted-foreground" />
+                        İlçe*
+                      </label>
+                      <select
+                        value={cargoDistrict}
+                        onChange={(e) => { setCargoDistrict(e.target.value); setFormErrors((p) => ({ ...p, cargoDistrict: "" })); }}
+                        disabled={!cargoCity}
+                        className={`w-full h-10 px-3 rounded-md border text-sm outline-none bg-background disabled:opacity-50 ${formErrors.cargoDistrict ? "border-red-400" : "border-input"}`}
+                        data-testid="select-auth-ilce"
+                      >
+                        <option value="">İlçe seçiniz</option>
+                        {cargoDistricts.map((d) => (<option key={d} value={d}>{d}</option>))}
+                      </select>
+                      {formErrors.cargoDistrict && <p className="text-[11px] text-red-500 mt-0.5">{formErrors.cargoDistrict}</p>}
+                    </div>
+                  </div>
+                ) : (
                 <div className="space-y-1.5">
                   <label className="text-sm font-bold flex items-center gap-1.5">
                     <MapPin className="w-4 h-4 text-muted-foreground" />
@@ -391,6 +442,7 @@ export default function AuthPage() {
                   </Select>
                   {formErrors.mahalle && <p className="text-[11px] text-red-500 mt-0.5">{formErrors.mahalle}</p>}
                 </div>
+                )}
 
                 <div className="space-y-1">
                   <label className="text-sm font-bold flex items-center gap-1.5">
