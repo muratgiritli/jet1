@@ -179,6 +179,7 @@ const samsun: StoreConfig = {
   alternateNames: ["Atakum Pet", "Atakum Petshop", "Atakum Pet Shop", "atakumpet"],
   domain: "https://www.atakumpet.com",
   logo: "/logo-atakumpet.webp",
+  logoMobile: "/logo-atakumpet-mobile.webp",
   favicon: "/favicon-192.png",
   phone: "+908508403959",
   phoneDisplay: "0850 840 39 59",
