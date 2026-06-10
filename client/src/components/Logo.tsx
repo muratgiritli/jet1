@@ -21,8 +21,8 @@ export default function Logo({ className = "h-8", linkTo = "/", testId = "img-br
         <img
           src={CURRENT_STORE.logo}
           alt={CURRENT_STORE.name}
-          className={`object-contain select-none cursor-pointer hidden md:block ${className}`}
-          style={{ maxWidth: "140px", maxHeight: "42px" }}
+          className={`object-contain object-left select-none cursor-pointer hidden md:block ${className}`}
+          style={{ maxWidth: "190px", maxHeight: "46px" }}
           data-testid={`${testId}-desktop`}
         />
       </>
