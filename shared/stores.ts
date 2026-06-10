@@ -178,7 +178,7 @@ const samsun: StoreConfig = {
   brandWord: "Samsun Pet Shop",
   alternateNames: ["Samsun Petshop", "Samsun Pet Shop Online", "Samsun Pet", "samsunpetshop"],
   domain: "https://www.atakumpet.com",
-  logo: "/logo-samsun.webp",
+  logo: "/logo-atakumpet.webp",
   favicon: "/favicon-192.png",
   phone: "+908508403959",
   phoneDisplay: "0850 840 39 59",
