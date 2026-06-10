@@ -173,10 +173,10 @@ const atakum: StoreConfig = {
 const samsun: StoreConfig = {
   id: "samsun",
   hostnames: ["atakumpet.com", "www.atakumpet.com"],
-  name: "Samsun Pet Shop",
-  shortName: "Samsun Pet Shop",
-  brandWord: "Samsun Pet Shop",
-  alternateNames: ["Samsun Petshop", "Samsun Pet Shop Online", "Samsun Pet", "samsunpetshop"],
+  name: "Atakum Pet",
+  shortName: "Atakum Pet",
+  brandWord: "Atakum Pet",
+  alternateNames: ["Atakum Pet", "Atakum Petshop", "Atakum Pet Shop", "atakumpet"],
   domain: "https://www.atakumpet.com",
   logo: "/logo-atakumpet.webp",
   favicon: "/favicon-192.png",
@@ -186,7 +186,7 @@ const samsun: StoreConfig = {
   address: "Atatürk 3 kısım bulvarı no 113 ATAKUM SAMSUN",
   companyName: "Sizpa internet tic.ltd.şti.",
   businessDescription:
-    "Türkiye geneli kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri Samsun Pet Shop'tan güvenli ödeme ve hızlı kargo ile kapınıza gelir.",
+    "Türkiye geneli kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri Atakum Pet'ten güvenli ödeme ve hızlı kargo ile kapınıza gelir.",
   slogan: "Türkiye'nin Her Yerine Hızlı Kargo",
   social: [],
   theme: {
@@ -195,11 +195,11 @@ const samsun: StoreConfig = {
     navBar: "#9C27B0",
   },
   seo: {
-    title: "Samsun Pet Shop - Türkiye Geneli Kargo | Kedi & Köpek Maması",
+    title: "Atakum Pet - Türkiye Geneli Kargo | Kedi & Köpek Maması",
     description:
-      "Türkiye'nin her yerine kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu güvenli online ödeme ve hızlı kargo. Samsun Pet Shop.",
+      "Türkiye'nin her yerine kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu güvenli online ödeme ve hızlı kargo. Atakum Pet.",
     keywords:
-      "samsun pet shop, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
+      "atakum pet, atakumpet, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
     ogImage: "/og-image.webp",
   },
   commerce: {

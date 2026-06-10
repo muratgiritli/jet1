@@ -1248,7 +1248,7 @@ test("client STORE_SCOPED_SETTING_KEYS matches the server set (no drift)", () =>
 // client/src/lib/store.ts for the override these checks mirror at the data layer.
 
 const ATAKUM_BRAND = "Atakum Pet Shop";
-const SAMSUN_BRAND = "Samsun Pet Shop";
+const SAMSUN_BRAND = "Atakum Pet";
 // Distinctive copy of the SAMSUN (cargo) store. atakum must NEVER show this — it
 // is the signal that local same-day copy was replaced by cargo copy.
 const CARGO_SIGNATURE = /türkiye(?:'nin| geneli)/i;
@@ -1305,7 +1305,7 @@ test("served homepage HTML for the samsun host DOES show cargo copy (contrast)",
   // passing for every store.
   const html = await injectAllMeta(INDEX_HTML, "/", SAMSUN_HOST);
   const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
-  assert.match(title, /Samsun Pet Shop/i);
+  assert.match(title, /Atakum Pet/i);
   assert.match(title, CARGO_SIGNATURE, "samsun homepage title must carry cargo copy");
 });
 
@@ -1433,7 +1433,7 @@ test("product page (/urun/:id) brands <title>, og:site_name and JSON-LD per host
   const ogSiteName = html.match(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i)?.[1] ?? "";
   const ld = extractProductJsonLd(html);
 
-  assert.match(title, /Samsun Pet Shop/i, "product <title> must brand as Samsun Pet Shop");
+  assert.match(title, /Atakum Pet/i, "product <title> must brand as Atakum Pet");
   assert.ok(!/JETGO/i.test(title), "samsun product title must not leak the JETGO brand");
   assert.equal(ogSiteName, SAMSUN_BRAND, "og:site_name must be the Samsun brand");
   assert.ok(ld, "a Product JSON-LD block must be present on the product page");
