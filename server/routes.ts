@@ -192,6 +192,32 @@ async function sendSmsViaNetgsm(phone: string, message: string, msgheaderOverrid
   }
 }
 
+// Sends the admin "new order" SMS exactly once per order. Reads admin_phone +
+// order_notification_sms from app_settings, then atomically claims the order's
+// admin_sms_sent flag so concurrent payment callbacks/webhooks never double-send.
+async function notifyAdminNewOrder(orderId: number, paymentConfirmed = false): Promise<void> {
+  try {
+    if (!orderId) return;
+    const cfgRows = await sharedPool.query(
+      "SELECT key, value FROM app_settings WHERE key IN ('admin_phone','order_notification_sms')"
+    );
+    const cfg: Record<string, string> = {};
+    for (const r of cfgRows.rows) cfg[r.key] = r.value;
+    if (!cfg.admin_phone || cfg.order_notification_sms === "0") return;
+    const claim = await sharedPool.query(
+      "UPDATE orders SET admin_sms_sent = true WHERE id = $1 AND admin_sms_sent = false RETURNING id, customer_name, grand_total, payment_method, items",
+      [orderId]
+    );
+    if (claim.rowCount === 0) return;
+    const ord = claim.rows[0];
+    const itemsArr = Array.isArray(ord.items) ? ord.items : [];
+    const smsMsg = `YENI SIPARIS #${ord.id}\n${ord.customer_name || "Bilinmeyen"}\nTutar: ${ord.grand_total} TL\nOdeme: ${ord.payment_method}${paymentConfirmed ? " (Onaylandi)" : ""}\n${itemsArr.length} urun`;
+    await sendSmsViaNetgsm(cfg.admin_phone, smsMsg);
+  } catch (e) {
+    console.error("notifyAdminNewOrder error:", e);
+  }
+}
+
 const PgSession = pgSession(session);
 
 async function ensureAdminExists() {
@@ -382,6 +408,7 @@ export async function registerRoutes(
     await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_number text;`);
     await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_url text;`);
     await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_sms_sent boolean NOT NULL DEFAULT false;`);
+    await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS admin_sms_sent boolean NOT NULL DEFAULT false;`);
   } catch (e) {
     console.error("Orders source_site migration error:", e);
   }
@@ -2779,21 +2806,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       }
     }
     if (!isOnlinePayment) {
-      try {
-        const adminPhoneResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'admin_phone'");
-        const smsEnabledResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'order_notification_sms'");
-        const adminPhone = adminPhoneResult.rows[0]?.value;
-        const smsEnabled = smsEnabledResult.rows[0]?.value !== "0";
-        if (adminPhone && smsEnabled) {
-          const customerName = orderData.customerName || "Bilinmeyen";
-          const smsMsg = `YENI SIPARIS #${order.id}\n${customerName}\nTutar: ${orderData.grandTotal} TL\nOdeme: ${orderData.paymentMethod}\n${orderData.items.length} urun`;
-          sendSmsViaNetgsm(adminPhone, smsMsg).catch(err => {
-            console.error("Admin order notification SMS error:", err);
-          });
-        }
-      } catch (e) {
-        console.error("Admin notification error:", e);
-      }
+      notifyAdminNewOrder(order.id).catch(() => {});
     }
 
     try {
@@ -3153,28 +3166,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           "UPDATE orders SET payment_status = 'completed' WHERE id = $1 AND status <> 'iptal'",
           [tok.order_id]
         );
-        try {
-          const oRow = await sharedPool.query(
-            "SELECT id, customer_name, grand_total, payment_method, items FROM orders WHERE id = $1",
-            [tok.order_id]
-          );
-          const ord = oRow.rows[0];
-          if (ord) {
-            const adminPhoneResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'admin_phone'");
-            const smsEnabledResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'order_notification_sms'");
-            const adminPhone = adminPhoneResult.rows[0]?.value;
-            const smsEnabled = smsEnabledResult.rows[0]?.value !== "0";
-            if (adminPhone && smsEnabled) {
-              const itemsArr = Array.isArray(ord.items) ? ord.items : [];
-              const smsMsg = `YENI SIPARIS #${ord.id}\n${ord.customer_name || "Bilinmeyen"}\nTutar: ${ord.grand_total} TL\nOdeme: ${ord.payment_method} (Onaylandi)\n${itemsArr.length} urun`;
-              sendSmsViaNetgsm(adminPhone, smsMsg).catch(err => {
-                console.error("Admin tosla success SMS error:", err);
-              });
-            }
-          }
-        } catch (e) {
-          console.error("Admin tosla success notification error:", e);
-        }
+        notifyAdminNewOrder(tok.order_id, true).catch(() => {});
         return res.redirect(303, buildResultUrl(tok.order_id, "success", merchantOrderId));
       }
 
@@ -3334,6 +3326,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           "UPDATE orders SET payment_status = 'completed' WHERE id = $1 AND status <> 'iptal'",
           [tokenRow.order_id]
         );
+        notifyAdminNewOrder(tokenRow.order_id, true).catch(() => {});
         return sendOk();
       }
 
@@ -3618,27 +3611,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           "UPDATE orders SET payment_status = 'completed' WHERE id = $1 AND status <> 'iptal'",
           [tokenRow.order_id]
         );
-        try {
-          const ordR = await sharedPool.query(
-            "SELECT id, customer_name, grand_total, payment_method, items FROM orders WHERE id = $1",
-            [tokenRow.order_id]
-          );
-          const ord = ordR.rows[0];
-          if (ord) {
-            const adminPhoneRow = await sharedPool.query(
-              "SELECT value FROM app_settings WHERE key IN ('admin_phone','order_notification_sms')"
-            );
-            const adminCfg: Record<string, string> = {};
-            for (const r of adminPhoneRow.rows) adminCfg[r.key] = r.value;
-            if (adminCfg.admin_phone && adminCfg.order_notification_sms !== "0") {
-              const itemsArr = ord.items || [];
-              const smsMsg = `YENI SIPARIS #${ord.id}\n${ord.customer_name || "Bilinmeyen"}\nTutar: ${ord.grand_total} TL\nOdeme: ${ord.payment_method} (Onaylandi)\n${itemsArr.length} urun`;
-              sendSmsViaNetgsm(adminCfg.admin_phone, smsMsg).catch((err) => console.error("Admin iyzico success SMS error:", err));
-            }
-          }
-        } catch (e) {
-          console.error("Admin iyzico success notification error:", e);
-        }
+        notifyAdminNewOrder(tokenRow.order_id, true).catch(() => {});
         return res.redirect(303, buildResultUrl({ status: "success", order: String(tokenRow.order_id), t: token }));
       }
 
