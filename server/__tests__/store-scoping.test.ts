@@ -63,6 +63,9 @@ const JETGOPET_HOST = "www.jetgo.pet";
 // self-canonical store on its own URL. Its domain also contains the substring
 // "jetgo", so it exercises the brandifyFor placeholder pass (NOT "JETGO.shop").
 const JETGOSHOP_HOST = "www.jetgo.shop";
+// FOURTH Türkiye-geneli cargo brand (id "markapet", domain marka.pet). Per the
+// owner's request the customer-facing brand IS the domain string "marka.pet".
+const MARKAPET_HOST = "www.marka.pet";
 
 // app_settings keys touched by the tests; snapshotted and restored.
 const SETTING_KEYS = [
@@ -130,10 +133,15 @@ async function get(path: string, host: string) {
   return { status: res.status, body: await res.json() as any };
 }
 
-async function post(path: string, host: string, payload: any) {
+async function post(path: string, host: string, payload: any, xff?: string) {
+  // Optional X-Forwarded-For lets a test run under its OWN client IP so the
+  // per-IP rate limiters (otp/order/global) don't accumulate across the shared
+  // localhost bucket. The app has `trust proxy` on, so req.ip == this XFF.
+  const headers: Record<string, string> = { "X-Forwarded-Host": host, "Content-Type": "application/json" };
+  if (xff) headers["X-Forwarded-For"] = xff;
   const res = await fetch(`${baseUrl}${path}`, {
     method: "POST",
-    headers: { "X-Forwarded-Host": host, "Content-Type": "application/json" },
+    headers,
     body: JSON.stringify(payload),
   });
   return { status: res.status, body: await res.json() as any };
@@ -717,10 +725,13 @@ test("test-OTP bypass logs a RETURNING customer in without re-registration and r
 // checkout branding) run via the testing skill.
 
 // POST as a specific (cookie-identified) customer.
-async function postWithCookie(path: string, host: string, payload: any, cookie: string) {
+async function postWithCookie(path: string, host: string, payload: any, cookie: string, xff?: string) {
+  // See post(): optional XFF isolates this request under its own per-IP bucket.
+  const headers: Record<string, string> = { "X-Forwarded-Host": host, "Content-Type": "application/json", Cookie: cookie };
+  if (xff) headers["X-Forwarded-For"] = xff;
   const res = await fetch(`${baseUrl}${path}`, {
     method: "POST",
-    headers: { "X-Forwarded-Host": host, "Content-Type": "application/json", Cookie: cookie },
+    headers,
     body: JSON.stringify(payload),
   });
   return { status: res.status, body: await res.json() as any };
@@ -1277,6 +1288,9 @@ const JETGOPET_BRAND = "JETGO Pet Shop Samsun";
 // jetgo.shop also shares the JETGO brand name/word with the default `jetgo` store
 // BY DESIGN (separate id + domain); it is a LOCAL same-day storefront too.
 const JETGOSHOP_BRAND = "JETGO Pet Shop Samsun";
+// marka.pet (markapet) cargo brand: per the owner's request the customer-facing
+// brand IS the domain string itself.
+const MARKAPET_BRAND = "marka.pet";
 // Distinctive copy of the SAMSUN (cargo) store. atakum must NEVER show this — it
 // is the signal that local same-day copy was replaced by cargo copy.
 const CARGO_SIGNATURE = /türkiye(?:'nin| geneli)/i;
@@ -1769,6 +1783,149 @@ test("test-OTP bypass lets a NEW customer place a karadeniz cargo order (source_
   }
 });
 
+// ---- marka.pet (markapet, FOURTH cargo brand) storefront identity + behavior --
+//
+// marka.pet is a FOURTH Türkiye-geneli cargo brand sharing the
+// samsun/samsunpet/karadeniz commerce model (cargo, onlinePaymentOnly, preorder
+// off) on its OWN domain. Per the owner's request the customer-facing brand IS
+// the domain string "marka.pet" (name/shortName/brandWord). These checks pin the
+// distinct identity (no collision with the other cargo stores), the cargo
+// contract, the online-only payment surface, brandify and homepage meta.
+
+test("marka.pet host resolves the marka.pet brand, distinct from the other cargo stores", () => {
+  const markapet = getStoreByHost(MARKAPET_HOST);
+  const samsunpet = getStoreByHost(SAMSUNPET_HOST);
+  const karadeniz = getStoreByHost(KARADENIZ_HOST);
+  assert.equal(markapet.id, "markapet");
+  assert.equal(markapet.name, MARKAPET_BRAND, "homepage wordmark/title brand name");
+  assert.equal(markapet.shortName, MARKAPET_BRAND);
+  assert.equal(markapet.brandWord, MARKAPET_BRAND, "brand word is the domain string per the owner's request");
+  assert.equal(markapet.domain, "https://www.marka.pet");
+  // No collision with the other Türkiye-geneli cargo stores.
+  assert.notEqual(markapet.id, samsunpet.id, "markapet must be a SEPARATE store from samsunpet");
+  assert.notEqual(markapet.id, karadeniz.id, "markapet must be a SEPARATE store from karadeniz");
+  assert.notEqual(markapet.domain, samsunpet.domain);
+  assert.notEqual(markapet.domain, karadeniz.domain);
+  // The apex host also resolves (not just the www form).
+  assert.equal(getStoreByHost("marka.pet").id, "markapet");
+});
+
+test("markapet is a cargo, online-payment-only store (same model as samsun/samsunpet/karadeniz)", () => {
+  const markapet = getStoreByHost(MARKAPET_HOST);
+  assert.equal(markapet.commerce.fulfillment, "cargo", "markapet must use the il/ilçe cargo flow");
+  assert.equal(markapet.commerce.shippingLabel, "Kargo Ücreti", "cargo delivery fee label");
+  assert.equal(markapet.commerce.onlinePaymentOnly, true, "cargo store accepts only online card");
+  assert.equal(markapet.commerce.preorderEnabled, false, "preorder must stay off on the cargo store");
+});
+
+test("brandify swaps shared JETGO body copy to the marka.pet brand + domain (no jetgo substring to mangle)", () => {
+  const markapet = getStoreByHost(MARKAPET_HOST);
+  assert.equal(brandifyFor(markapet, "Neden JETGO?"), "Neden marka.pet?");
+  assert.match(brandifyFor(markapet, "jetgomarket.com"), /marka\.pet/);
+  assert.ok(!/jetgomarket\.com/i.test(brandifyFor(markapet, "www.jetgomarket.com")), "must not leak the jetgo domain");
+});
+
+test("checkout on marka.pet (onlinePaymentOnly) renders ONLY the online card — no in-person surfaces", () => {
+  const markapet = getStoreByHost(MARKAPET_HOST);
+  const opts = visiblePaymentOptions({
+    ...allMethodsEnabled,
+    onlinePaymentOnly: markapet.commerce.onlinePaymentOnly,
+  });
+  const optIds = opts.map((o) => o.id);
+  assert.deepEqual(optIds, ["online"], `expected only the online card, got: ${JSON.stringify(optIds)}`);
+  for (const forbidden of ["nakit", "eft", "qr", "pos"]) {
+    assert.ok(!optIds.includes(forbidden), `in-person option "${forbidden}" must not render on markapet`);
+  }
+  assert.equal(
+    showDoorPosInstallments({
+      onlinePaymentOnly: markapet.commerce.onlinePaymentOnly,
+      hasCampaignItems: false,
+      hasPreorderItems: false,
+      posEnabled: true,
+    }),
+    false,
+    "door-POS installment block must never render on the online-only store",
+  );
+});
+
+test("served homepage HTML carries the marka.pet brand + cargo copy (not same-day)", async () => {
+  const html = await injectAllMeta(INDEX_HTML, "/", MARKAPET_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const ogSiteName = html.match(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i)?.[1] ?? "";
+
+  assert.match(title, /marka\.pet/i, "homepage <title> must brand as marka.pet");
+  assert.equal(ogSiteName, MARKAPET_BRAND, "og:site_name must be the marka.pet brand");
+  assert.ok(!/JETGO/i.test(title), "markapet homepage title must not contain JETGO");
+  assert.match(title, CARGO_SIGNATURE, "markapet homepage title must carry cargo copy");
+  assert.ok(!SAME_DAY_SIGNATURE.test(title), "markapet must not show local same-day copy");
+});
+
+test("test-OTP bypass lets a NEW customer place a marka.pet cargo order (source_site=markapet, online-only)", async () => {
+  const prevEnv = process.env.NODE_ENV;
+  const prevFlag = process.env.TEST_OTP_BYPASS;
+  process.env.NODE_ENV = "development";
+  process.env.TEST_OTP_BYPASS = "1";
+
+  const phone = "555" + String(randomBytes(4).readUInt32BE(0)).padStart(7, "0").slice(-7);
+  // Run this whole flow under its OWN client IP so its otp/order requests get a
+  // fresh per-IP bucket and never accumulate into the shared localhost bucket the
+  // other e2e tests use (keeps the cumulative order:<ip> 20/h limit honest).
+  const mpIp = "203.0.113.77";
+  try {
+    const send = await post("/api/otp/send", MARKAPET_HOST, { phone }, mpIp);
+    assert.equal(send.status, 200, `otp/send failed: ${JSON.stringify(send.body)}`);
+    assert.equal(send.body.isExisting, false, "fresh phone must be reported as new");
+
+    const regRes = await fetch(`${baseUrl}/api/otp/verify`, {
+      method: "POST",
+      headers: { "X-Forwarded-Host": MARKAPET_HOST, "X-Forwarded-For": mpIp, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, code: "0000", name: `${MARK}_MP_BUYER`, address: `${MARK} Test Mah., Deneme Cad. No 7` }),
+    });
+    const regBody = await regRes.json() as any;
+    assert.equal(regRes.status, 200, `registration failed: ${JSON.stringify(regBody)}`);
+    assert.ok(regBody.id, "registration must return the new customer id");
+    ids.customers.push(regBody.id as number);
+    const realCookie = (regRes.headers.get("set-cookie") ?? "").split(";")[0];
+    assert.ok(realCookie.includes("connect.sid"), "registration must set a session cookie");
+
+    // Online-only contract: door payment must be rejected on the cargo store.
+    const door = await postWithCookie(
+      "/api/orders",
+      MARKAPET_HOST,
+      { ...samsunOnlineOrder(), customerName: `${MARK}_MP_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
+      realCookie,
+      mpIp,
+    );
+    assert.equal(door.status, 400, `door payment must be rejected on cargo store: ${JSON.stringify(door.body)}`);
+    assert.match(String(door.body.message ?? ""), /online kredi kartı/i);
+
+    // Place the online cargo order with il/ilçe.
+    const order = await postWithCookie(
+      "/api/orders",
+      MARKAPET_HOST,
+      { ...samsunOnlineOrder(), customerName: `${MARK}_MP_BUYER`, customerPhone: phone },
+      realCookie,
+      mpIp,
+    );
+    assert.equal(order.status, 201, `cargo order POST failed: ${JSON.stringify(order.body)}`);
+    const orderId = order.body.id as number;
+    assert.ok(orderId, "order id missing in response");
+    ids.orders.push(orderId);
+
+    const row = await pool.query(
+      "SELECT source_site, payment_status, city, district FROM orders WHERE id = $1",
+      [orderId],
+    );
+    assert.equal(row.rows[0].source_site, "markapet", "order must attribute to the marka.pet storefront");
+    assert.equal(row.rows[0].payment_status, "pending", "online cargo orders must start pending");
+    assert.equal(row.rows[0].city, "İstanbul", "cargo order must persist the selected city (il)");
+    assert.equal(row.rows[0].district, "Kadıköy", "cargo order must persist the selected district (ilçe)");
+  } finally {
+    if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
+    if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
+  }
+});
+
 // ---- atakum.biz (atakumbiz): a SECOND local same-day storefront ------------
 //
 // Same LOCAL commerce model as the `atakum` store (Mahalle checkout + door
@@ -2225,6 +2382,10 @@ test("SEO landing page brands title/description/og + canonical per host (karaden
 
 test("SEO landing page brands title/description/og + canonical per host (atakumbiz)", async () => {
   await assertSeoLandingBranding(ATAKUMBIZ_HOST, getStoreByHost(ATAKUMBIZ_HOST));
+});
+
+test("SEO landing page brands title/description/og + canonical per host (markapet)", async () => {
+  await assertSeoLandingBranding(MARKAPET_HOST, getStoreByHost(MARKAPET_HOST));
 });
 
 test("SEO landing page on jetgo.pet keeps the JETGO brand but self-canonicalizes to jetgo.pet (domain not mangled)", async () => {

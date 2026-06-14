@@ -448,7 +448,54 @@ const jetgoshop: StoreConfig = {
   },
 };
 
-export const STORES: StoreConfig[] = [jetgo, atakum, samsun, samsunpet, karadeniz, atakumbiz, jetgopet, jetgoshop];
+// marka.pet (markapet) — a FOURTH Türkiye-geneli kargo brand. Same cargo /
+// online-card-only commerce model as samsun / samsunpet / karadeniz, but its OWN
+// self-canonicalising domain. Per the owner's request the customer-facing brand
+// IS the domain string "marka.pet" (used as name / shortName / brandWord), and the
+// logo is a TEMPORARY placeholder (client/public/logo-marka.webp) to be replaced
+// by an uploaded asset. The domain has no "jetgo" substring, so brandifyFor needs
+// no placeholder protection here (the simple swap can't corrupt it).
+const markapet: StoreConfig = {
+  id: "markapet",
+  hostnames: ["marka.pet", "www.marka.pet"],
+  name: "marka.pet",
+  shortName: "marka.pet",
+  brandWord: "marka.pet",
+  alternateNames: ["marka.pet", "Marka Pet", "Marka Pet Shop", "markapet"],
+  domain: "https://www.marka.pet",
+  logo: "/logo-marka.webp",
+  favicon: "/favicon-192.png",
+  phone: "+908508403959",
+  phoneDisplay: "0850 840 39 59",
+  email: "info@sizpa.com",
+  address: "Atatürk 3 kısım bulvarı no 113 ATAKUM SAMSUN",
+  companyName: "Sizpa internet tic.ltd.şti.",
+  businessDescription:
+    "Türkiye geneli kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri marka.pet'ten güvenli ödeme ve hızlı kargo ile kapınıza gelir.",
+  slogan: "Türkiye'nin Her Yerine Hızlı Kargo",
+  social: [],
+  theme: {
+    primary: "25 95% 53%",
+    topBar: "#9A3412",
+    navBar: "#EA580C",
+  },
+  seo: {
+    title: "marka.pet - Türkiye Geneli Kargo | Kedi & Köpek Maması",
+    description:
+      "Türkiye'nin her yerine kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu güvenli online ödeme ve hızlı kargo. marka.pet.",
+    keywords:
+      "marka.pet, marka pet, marka pet shop, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
+    ogImage: "/og-image.webp",
+  },
+  commerce: {
+    fulfillment: "cargo",
+    shippingLabel: "Kargo Ücreti",
+    onlinePaymentOnly: true,
+    preorderEnabled: false,
+  },
+};
+
+export const STORES: StoreConfig[] = [jetgo, atakum, samsun, samsunpet, karadeniz, atakumbiz, jetgopet, jetgoshop, markapet];
 export const DEFAULT_STORE: StoreConfig = jetgo;
 
 /** Lowercase host, strip port and a leading "www." */
