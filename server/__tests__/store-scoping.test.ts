@@ -1750,3 +1750,71 @@ test("re-saving the SAME tracking number does NOT reset the flag (no duplicate S
     sms.restore();
   }
 });
+
+// ---- Admin "İptal" (cancel) fires a customer SMS, guarded against re-send ----
+//
+// When an admin sets an order to "iptal" via PATCH /api/admin/orders/:id/status,
+// the buyer must get a branded cancellation SMS (server/routes.ts: the status ===
+// "iptal" branch). A transition guard (prevStatus !== "iptal") means re-selecting
+// "iptal" on an already-cancelled order must NOT re-send. source_site=samsun so
+// resolveSmsHeader resolves a real store and the brand word is the Samsun brand.
+
+async function seedCancellableOrder(opts?: { status?: string; customerPhone?: string | null }): Promise<number> {
+  const status = opts?.status ?? "hazirlaniyor";
+  const customerPhone = opts?.customerPhone === undefined ? "5559990000" : opts.customerPhone;
+  const items = JSON.stringify([{ productId: orderProductId, name: `${MARK}_PRODUCT`, price: 100, quantity: 1 }]);
+  const r = await pool.query(
+    `INSERT INTO orders
+       (items, subtotal, shipping, grand_total, payment_method, status,
+        customer_phone, customer_name, source_site, payment_status)
+     VALUES ($1::jsonb, 100, 0, 100, 'Kapıda Nakit', $2,
+        $3, $4, 'samsun', 'completed')
+     RETURNING id`,
+    [items, status, customerPhone, `${MARK}_CANCEL_BUYER`]
+  );
+  const id = r.rows[0].id as number;
+  ids.orders.push(id);
+  return id;
+}
+
+test("setting an order to 'iptal' fires the cancellation SMS exactly once (customer phone present)", async () => {
+  const orderId = await seedCancellableOrder();
+  const sms = captureNetgsmSms();
+  try {
+    const res = await patchAdmin(`/api/admin/orders/${orderId}/status`, SAMSUN_HOST, { status: "iptal" });
+    assert.equal(res.status, 200, `status PATCH failed: ${JSON.stringify(res.body)}`);
+    await settle();
+
+    assert.equal(sms.calls.length, 1, "exactly one cancellation SMS must be sent");
+    assert.match(sms.calls[0].body, /iptal edilmistir/i, "SMS body must be the cancellation message");
+    assert.match(sms.calls[0].body, new RegExp(`${orderId}\\s+numarali`), "SMS body must reference the order number");
+  } finally {
+    sms.restore();
+  }
+});
+
+test("re-selecting 'iptal' on an already-cancelled order does NOT re-send the SMS (transition guard)", async () => {
+  const orderId = await seedCancellableOrder({ status: "iptal" });
+  const sms = captureNetgsmSms();
+  try {
+    const res = await patchAdmin(`/api/admin/orders/${orderId}/status`, SAMSUN_HOST, { status: "iptal" });
+    assert.equal(res.status, 200, `status PATCH failed: ${JSON.stringify(res.body)}`);
+    await settle();
+    assert.equal(sms.calls.length, 0, "no SMS may be sent when the order was already cancelled");
+  } finally {
+    sms.restore();
+  }
+});
+
+test("cancelling an order with no customer phone attempts no SMS", async () => {
+  const orderId = await seedCancellableOrder({ customerPhone: null });
+  const sms = captureNetgsmSms();
+  try {
+    const res = await patchAdmin(`/api/admin/orders/${orderId}/status`, SAMSUN_HOST, { status: "iptal" });
+    assert.equal(res.status, 200, `status PATCH failed: ${JSON.stringify(res.body)}`);
+    await settle();
+    assert.equal(sms.calls.length, 0, "no SMS may be sent without a customer phone");
+  } finally {
+    sms.restore();
+  }
+});

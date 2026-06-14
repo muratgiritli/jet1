@@ -4017,6 +4017,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     const id = parseInt(String(req.params.id));
     const { status } = req.body;
     if (!status) return res.status(400).json({ message: "Status required" });
+    const prevRow = await sharedPool.query("SELECT status FROM orders WHERE id = $1", [id]);
+    const prevStatus = prevRow.rows[0]?.status;
     const order = await storage.updateOrderStatus(id, status);
     if (!order) return res.status(404).json({ message: "Order not found" });
 
@@ -4033,6 +4035,17 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const stHeader = await resolveSmsHeader(stCfg.id);
       sendSmsViaNetgsm(order.customerPhone, smsMessage, stHeader).catch(err => {
         console.error("Post-delivery SMS error:", err);
+      });
+    }
+
+    if (status === "iptal" && prevStatus !== "iptal" && order.customerPhone) {
+      const stCfg = storeById((order as any).sourceSite);
+      const apexHost = canonicalHost(stCfg).replace(/^www\./, "");
+      const brand = stCfg.id === "jetgo" ? "Jetgo" : stCfg.shortName;
+      const smsMessage = `${brand} - ${order.id} numarali siparissiniz iptal edilmistir. Sorulariniz icin bizimle iletisime gecebilirsiniz. ${apexHost}`;
+      const stHeader = await resolveSmsHeader(stCfg.id);
+      sendSmsViaNetgsm(order.customerPhone, smsMessage, stHeader).catch(err => {
+        console.error("Order-cancel SMS error:", err);
       });
     }
 
