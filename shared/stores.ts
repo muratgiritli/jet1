@@ -257,7 +257,50 @@ const samsunpet: StoreConfig = {
   },
 };
 
-export const STORES: StoreConfig[] = [jetgo, atakum, samsun, samsunpet];
+// Karadeniz Pet Shop — third Türkiye-geneli kargo brand. Same cargo / online-
+// card-only commerce model as `samsun` / `samsunpet`, but its OWN domain, name,
+// logo and SEO so it ranks independently for "karadeniz pet shop" searches.
+const karadeniz: StoreConfig = {
+  id: "karadeniz",
+  hostnames: ["karadenizpetshop.com", "www.karadenizpetshop.com"],
+  name: "Karadeniz Pet Shop",
+  shortName: "Karadeniz Pet Shop",
+  brandWord: "Karadeniz Pet Shop",
+  alternateNames: ["Karadeniz Pet Shop", "Karadeniz Petshop", "Karadeniz Pet", "karadenizpetshop"],
+  domain: "https://www.karadenizpetshop.com",
+  logo: "/logo-karadeniz.webp",
+  favicon: "/favicon-192.png",
+  phone: "+908508403959",
+  phoneDisplay: "0850 840 39 59",
+  email: "info@sizpa.com",
+  address: "Atatürk 3 kısım bulvarı no 113 ATAKUM SAMSUN",
+  companyName: "Sizpa internet tic.ltd.şti.",
+  businessDescription:
+    "Türkiye geneli kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri Karadeniz Pet Shop'tan güvenli ödeme ve hızlı kargo ile kapınıza gelir.",
+  slogan: "Türkiye'nin Her Yerine Hızlı Kargo",
+  social: [],
+  theme: {
+    primary: "152 58% 37%",
+    topBar: "#1B5E20",
+    navBar: "#2E7D32",
+  },
+  seo: {
+    title: "Karadeniz Pet Shop - Türkiye Geneli Kargo | Kedi & Köpek Maması",
+    description:
+      "Türkiye'nin her yerine kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu güvenli online ödeme ve hızlı kargo. Karadeniz Pet Shop.",
+    keywords:
+      "karadeniz pet shop, karadeniz petshop, karadeniz pet, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
+    ogImage: "/og-image.webp",
+  },
+  commerce: {
+    fulfillment: "cargo",
+    shippingLabel: "Kargo Ücreti",
+    onlinePaymentOnly: true,
+    preorderEnabled: false,
+  },
+};
+
+export const STORES: StoreConfig[] = [jetgo, atakum, samsun, samsunpet, karadeniz];
 export const DEFAULT_STORE: StoreConfig = jetgo;
 
 /** Lowercase host, strip port and a leading "www." */

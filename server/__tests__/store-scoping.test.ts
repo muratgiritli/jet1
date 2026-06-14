@@ -50,6 +50,8 @@ const SAMSUN_HOST = "www.atakumpet.com";
 // model but is its OWN store (id "samsunpet", domain samsunpet.com) — it must
 // never collide with the existing "samsun" store bound to atakumpet.com.
 const SAMSUNPET_HOST = "www.samsunpet.com";
+// Third Türkiye-geneli cargo brand (id "karadeniz", domain karadenizpetshop.com).
+const KARADENIZ_HOST = "www.karadenizpetshop.com";
 
 // app_settings keys touched by the tests; snapshotted and restored.
 const SETTING_KEYS = [
@@ -1254,6 +1256,7 @@ test("client STORE_SCOPED_SETTING_KEYS matches the server set (no drift)", () =>
 const ATAKUM_BRAND = "Atakum Pet Shop";
 const SAMSUN_BRAND = "Atakum Pet";
 const SAMSUNPET_BRAND = "Samsun Pet Shop";
+const KARADENIZ_BRAND = "Karadeniz Pet Shop";
 // Distinctive copy of the SAMSUN (cargo) store. atakum must NEVER show this — it
 // is the signal that local same-day copy was replaced by cargo copy.
 const CARGO_SIGNATURE = /türkiye(?:'nin| geneli)/i;
@@ -1611,6 +1614,141 @@ test("test-OTP bypass lets a NEW customer place a samsunpet cargo order (source_
   }
 });
 
+// ---- karadeniz (third cargo brand) storefront identity + behavior ----
+//
+// karadeniz (karadenizpetshop.com) is the THIRD Türkiye-geneli cargo brand,
+// sharing the samsun/samsunpet commerce model (cargo, onlinePaymentOnly,
+// preorder off) but with its own domain, name and logo. These checks pin the
+// distinct identity (no collision with samsun/samsunpet), the cargo contract,
+// the online-only payment surface and the brandified homepage meta.
+
+test("karadeniz host resolves the Karadeniz Pet Shop brand, distinct from the other cargo stores", () => {
+  const karadeniz = getStoreByHost(KARADENIZ_HOST);
+  const samsun = getStoreByHost(SAMSUN_HOST);
+  const samsunpet = getStoreByHost(SAMSUNPET_HOST);
+  assert.equal(karadeniz.id, "karadeniz");
+  assert.equal(karadeniz.name, KARADENIZ_BRAND, "homepage wordmark/title brand name");
+  assert.equal(karadeniz.shortName, KARADENIZ_BRAND);
+  assert.equal(karadeniz.domain, "https://www.karadenizpetshop.com");
+  // No collision with the other two Türkiye-geneli cargo stores.
+  assert.notEqual(karadeniz.id, samsun.id, "karadeniz must be a SEPARATE store from samsun");
+  assert.notEqual(karadeniz.id, samsunpet.id, "karadeniz must be a SEPARATE store from samsunpet");
+  assert.notEqual(karadeniz.domain, samsun.domain);
+  assert.notEqual(karadeniz.domain, samsunpet.domain);
+  // The apex host also resolves (not just the www form).
+  assert.equal(getStoreByHost("karadenizpetshop.com").id, "karadeniz");
+});
+
+test("karadeniz is a cargo, online-payment-only store (same model as samsun/samsunpet)", () => {
+  const karadeniz = getStoreByHost(KARADENIZ_HOST);
+  assert.equal(karadeniz.commerce.fulfillment, "cargo", "karadeniz must use the il/ilçe cargo flow");
+  assert.equal(karadeniz.commerce.shippingLabel, "Kargo Ücreti", "cargo delivery fee label");
+  assert.equal(karadeniz.commerce.onlinePaymentOnly, true, "cargo store accepts only online card");
+  assert.equal(karadeniz.commerce.preorderEnabled, false, "preorder must stay off on the cargo store");
+});
+
+test("brandify swaps shared JETGO body copy to the Karadeniz Pet Shop brand + domain", () => {
+  const karadeniz = getStoreByHost(KARADENIZ_HOST);
+  assert.equal(brandifyFor(karadeniz, "Neden JETGO?"), "Neden Karadeniz Pet Shop?");
+  assert.match(brandifyFor(karadeniz, "jetgomarket.com"), /karadenizpetshop\.com/);
+  assert.ok(!/jetgomarket\.com/i.test(brandifyFor(karadeniz, "www.jetgomarket.com")), "must not leak the jetgo domain");
+});
+
+test("checkout on karadeniz (onlinePaymentOnly) renders ONLY the online card — no in-person surfaces", () => {
+  const karadeniz = getStoreByHost(KARADENIZ_HOST);
+  const opts = visiblePaymentOptions({
+    ...allMethodsEnabled,
+    onlinePaymentOnly: karadeniz.commerce.onlinePaymentOnly,
+  });
+  const optIds = opts.map((o) => o.id);
+  assert.deepEqual(optIds, ["online"], `expected only the online card, got: ${JSON.stringify(optIds)}`);
+  for (const forbidden of ["nakit", "eft", "qr", "pos"]) {
+    assert.ok(!optIds.includes(forbidden), `in-person option "${forbidden}" must not render on karadeniz`);
+  }
+  assert.equal(
+    showDoorPosInstallments({
+      onlinePaymentOnly: karadeniz.commerce.onlinePaymentOnly,
+      hasCampaignItems: false,
+      hasPreorderItems: false,
+      posEnabled: true,
+    }),
+    false,
+    "door-POS installment block must never render on the online-only store",
+  );
+});
+
+test("served homepage HTML carries the Karadeniz Pet Shop brand + cargo copy (not same-day)", async () => {
+  const html = await injectAllMeta(INDEX_HTML, "/", KARADENIZ_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const ogSiteName = html.match(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i)?.[1] ?? "";
+
+  assert.match(title, /Karadeniz Pet Shop/i, "homepage <title> must brand as Karadeniz Pet Shop");
+  assert.equal(ogSiteName, KARADENIZ_BRAND, "og:site_name must be the Karadeniz Pet Shop brand");
+  assert.ok(!/JETGO/i.test(title), "karadeniz homepage title must not contain JETGO");
+  assert.match(title, CARGO_SIGNATURE, "karadeniz homepage title must carry cargo copy");
+  assert.ok(!SAME_DAY_SIGNATURE.test(title), "karadeniz must not show local same-day copy");
+});
+
+test("test-OTP bypass lets a NEW customer place a karadeniz cargo order (source_site=karadeniz, online-only)", async () => {
+  const prevEnv = process.env.NODE_ENV;
+  const prevFlag = process.env.TEST_OTP_BYPASS;
+  process.env.NODE_ENV = "development";
+  process.env.TEST_OTP_BYPASS = "1";
+
+  const phone = "555" + String(randomBytes(4).readUInt32BE(0)).padStart(7, "0").slice(-7);
+  try {
+    const send = await post("/api/otp/send", KARADENIZ_HOST, { phone });
+    assert.equal(send.status, 200, `otp/send failed: ${JSON.stringify(send.body)}`);
+    assert.equal(send.body.isExisting, false, "fresh phone must be reported as new");
+
+    const regRes = await fetch(`${baseUrl}/api/otp/verify`, {
+      method: "POST",
+      headers: { "X-Forwarded-Host": KARADENIZ_HOST, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, code: "0000", name: `${MARK}_KD_BUYER`, address: `${MARK} Test Mah., Deneme Cad. No 14` }),
+    });
+    const regBody = await regRes.json() as any;
+    assert.equal(regRes.status, 200, `registration failed: ${JSON.stringify(regBody)}`);
+    assert.ok(regBody.id, "registration must return the new customer id");
+    ids.customers.push(regBody.id as number);
+    const realCookie = (regRes.headers.get("set-cookie") ?? "").split(";")[0];
+    assert.ok(realCookie.includes("connect.sid"), "registration must set a session cookie");
+
+    // Online-only contract: door payment must be rejected on the cargo store.
+    const door = await postWithCookie(
+      "/api/orders",
+      KARADENIZ_HOST,
+      { ...samsunOnlineOrder(), customerName: `${MARK}_KD_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
+      realCookie,
+    );
+    assert.equal(door.status, 400, `door payment must be rejected on cargo store: ${JSON.stringify(door.body)}`);
+    assert.match(String(door.body.message ?? ""), /online kredi kartı/i);
+
+    // Place the online cargo order with il/ilçe.
+    const order = await postWithCookie(
+      "/api/orders",
+      KARADENIZ_HOST,
+      { ...samsunOnlineOrder(), customerName: `${MARK}_KD_BUYER`, customerPhone: phone },
+      realCookie,
+    );
+    assert.equal(order.status, 201, `cargo order POST failed: ${JSON.stringify(order.body)}`);
+    const orderId = order.body.id as number;
+    assert.ok(orderId, "order id missing in response");
+    ids.orders.push(orderId);
+
+    const row = await pool.query(
+      "SELECT source_site, payment_status, city, district FROM orders WHERE id = $1",
+      [orderId],
+    );
+    assert.equal(row.rows[0].source_site, "karadeniz", "order must attribute to the karadeniz storefront");
+    assert.equal(row.rows[0].payment_status, "pending", "online cargo orders must start pending");
+    assert.equal(row.rows[0].city, "İstanbul", "cargo order must persist the selected city (il)");
+    assert.equal(row.rows[0].district, "Kadıköy", "cargo order must persist the selected district (ilçe)");
+  } finally {
+    if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
+    if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
+  }
+});
+
 // ---- Programmatic SEO landing pages (third server-rendered surface) ----
 //
 // injectAllMeta routes known SEO slugs (client/src/lib/seo-data) through
@@ -1685,6 +1823,10 @@ test("SEO landing page brands title/description/og + canonical per host (samsun)
 
 test("SEO landing page brands title/description/og + canonical per host (samsunpet)", async () => {
   await assertSeoLandingBranding(SAMSUNPET_HOST, getStoreByHost(SAMSUNPET_HOST));
+});
+
+test("SEO landing page brands title/description/og + canonical per host (karadeniz)", async () => {
+  await assertSeoLandingBranding(KARADENIZ_HOST, getStoreByHost(KARADENIZ_HOST));
 });
 
 test("SEO landing page on the default (jetgo) host keeps the JETGO brand (contrast)", async () => {
