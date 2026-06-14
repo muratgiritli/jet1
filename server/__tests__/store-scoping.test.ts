@@ -52,6 +52,7 @@ const SAMSUN_HOST = "www.atakumpet.com";
 const SAMSUNPET_HOST = "www.samsunpet.com";
 // Third Türkiye-geneli cargo brand (id "karadeniz", domain karadenizpetshop.com).
 const KARADENIZ_HOST = "www.karadenizpetshop.com";
+const ATAKUMBIZ_HOST = "www.atakum.biz";
 
 // app_settings keys touched by the tests; snapshotted and restored.
 const SETTING_KEYS = [
@@ -1257,6 +1258,9 @@ const ATAKUM_BRAND = "Atakum Pet Shop";
 const SAMSUN_BRAND = "Atakum Pet";
 const SAMSUNPET_BRAND = "Samsun Pet Shop";
 const KARADENIZ_BRAND = "Karadeniz Pet Shop";
+// atakum.biz shares the "Atakum Pet" brand word with the cargo `samsun` store BY
+// DESIGN (separate id + domain); it is a LOCAL same-day storefront.
+const ATAKUMBIZ_BRAND = "Atakum Pet";
 // Distinctive copy of the SAMSUN (cargo) store. atakum must NEVER show this — it
 // is the signal that local same-day copy was replaced by cargo copy.
 const CARGO_SIGNATURE = /türkiye(?:'nin| geneli)/i;
@@ -1749,6 +1753,120 @@ test("test-OTP bypass lets a NEW customer place a karadeniz cargo order (source_
   }
 });
 
+// ---- atakum.biz (atakumbiz): a SECOND local same-day storefront ------------
+//
+// Same LOCAL commerce model as the `atakum` store (Mahalle checkout + door
+// payment + preorder) but its OWN domain / theme / logo. It intentionally
+// shares the "Atakum Pet" brand word with the cargo `samsun` store
+// (atakumpet.com); these tests pin that the two stay SEPARATE (distinct id +
+// domain), the LOCAL commerce contract, brandify, the door-payment-allowed
+// checkout surface, the same-day homepage meta and source_site attribution.
+
+test("atakum.biz resolves the Atakum Pet brand as a SEPARATE store from samsun/atakum", () => {
+  const atakumbiz = getStoreByHost(ATAKUMBIZ_HOST);
+  const samsun = getStoreByHost(SAMSUN_HOST);
+  const atakum = getStoreByHost(ATAKUM_HOST);
+  assert.equal(atakumbiz.id, "atakumbiz");
+  assert.equal(atakumbiz.name, ATAKUMBIZ_BRAND, "homepage wordmark/title brand name");
+  assert.equal(atakumbiz.shortName, ATAKUMBIZ_BRAND);
+  assert.equal(atakumbiz.domain, "https://www.atakum.biz");
+  // Shares the "Atakum Pet" brand word with samsun BY DESIGN, but must stay a
+  // separate store: distinct id + domain (host resolution is by hostname).
+  assert.equal(atakumbiz.brandWord, samsun.brandWord, "intentionally shares the Atakum Pet brand word with samsun");
+  assert.notEqual(atakumbiz.id, samsun.id, "atakumbiz must be a SEPARATE store from samsun");
+  assert.notEqual(atakumbiz.id, atakum.id, "atakumbiz must be a SEPARATE store from atakum");
+  assert.notEqual(atakumbiz.domain, samsun.domain, "the two Atakum Pet stores must keep distinct domains");
+  // Its OWN logo + a theme distinct from the cargo samsun store (visual identity).
+  assert.equal(atakumbiz.logo, "/logo-atakumbiz.webp", "atakumbiz must use its own white wordmark on the colored topBar");
+  assert.notEqual(atakumbiz.theme.topBar, samsun.theme.topBar, "atakumbiz must look visually distinct from samsun");
+  assert.notEqual(atakumbiz.theme.primary, samsun.theme.primary, "atakumbiz must have its own primary color");
+  // The apex host also resolves (not just the www form).
+  assert.equal(getStoreByHost("atakum.biz").id, "atakumbiz");
+});
+
+test("atakumbiz is a LOCAL same-day store (Mahalle checkout + door payment), not cargo", () => {
+  const atakumbiz = getStoreByHost(ATAKUMBIZ_HOST);
+  assert.equal(atakumbiz.commerce.fulfillment, "local", "atakumbiz must use the local (Mahalle) flow");
+  assert.equal(atakumbiz.commerce.shippingLabel, "Getirmesi", "local delivery fee label");
+  assert.equal(atakumbiz.commerce.onlinePaymentOnly, false, "local store accepts door payment");
+  assert.equal(atakumbiz.commerce.preorderEnabled, true, "preorder stays on for the local store");
+});
+
+test("brandify swaps shared JETGO body copy to the Atakum Pet brand + atakum.biz domain", () => {
+  const atakumbiz = getStoreByHost(ATAKUMBIZ_HOST);
+  assert.equal(brandifyFor(atakumbiz, "Neden JETGO?"), "Neden Atakum Pet?");
+  assert.match(brandifyFor(atakumbiz, "jetgomarket.com"), /atakum\.biz/);
+  assert.ok(!/jetgomarket\.com/i.test(brandifyFor(atakumbiz, "www.jetgomarket.com")), "must not leak the jetgo domain");
+});
+
+test("checkout on atakumbiz (local) offers door payment AND the online card (not online-only)", () => {
+  const atakumbiz = getStoreByHost(ATAKUMBIZ_HOST);
+  const opts = visiblePaymentOptions({
+    ...allMethodsEnabled,
+    onlinePaymentOnly: atakumbiz.commerce.onlinePaymentOnly,
+  });
+  const optIds = opts.map((o) => o.id);
+  assert.ok(optIds.includes("online"), "online card must be available on the local store");
+  assert.ok(optIds.includes("nakit"), "local store must keep the door cash option");
+  assert.ok(optIds.length > 1, `local checkout must offer more than just the online card, got: ${JSON.stringify(optIds)}`);
+});
+
+test("served homepage HTML carries the Atakum Pet brand + local same-day copy (not cargo)", async () => {
+  const html = await injectAllMeta(INDEX_HTML, "/", ATAKUMBIZ_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const ogSiteName = html.match(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i)?.[1] ?? "";
+
+  assert.match(title, /Atakum Pet/i, "homepage <title> must brand as Atakum Pet");
+  assert.equal(ogSiteName, ATAKUMBIZ_BRAND, "og:site_name must be the Atakum Pet brand");
+  assert.ok(!/JETGO/i.test(title), "atakumbiz homepage title must not contain JETGO");
+  assert.match(title, SAME_DAY_SIGNATURE, "local same-day delivery copy expected");
+  assert.ok(!CARGO_SIGNATURE.test(title), "atakumbiz must not show cargo copy");
+});
+
+test("test-OTP bypass lets a NEW customer place a local atakum.biz order (source_site=atakumbiz, door payment OK)", async () => {
+  const prevEnv = process.env.NODE_ENV;
+  const prevFlag = process.env.TEST_OTP_BYPASS;
+  process.env.NODE_ENV = "development";
+  process.env.TEST_OTP_BYPASS = "1";
+
+  const phone = "555" + String(randomBytes(4).readUInt32BE(0)).padStart(7, "0").slice(-7);
+  try {
+    const send = await post("/api/otp/send", ATAKUMBIZ_HOST, { phone });
+    assert.equal(send.status, 200, `otp/send failed: ${JSON.stringify(send.body)}`);
+    assert.equal(send.body.isExisting, false, "fresh phone must be reported as new");
+
+    const regRes = await fetch(`${baseUrl}/api/otp/verify`, {
+      method: "POST",
+      headers: { "X-Forwarded-Host": ATAKUMBIZ_HOST, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, code: "0000", name: `${MARK}_AB_BUYER`, address: `${MARK} Atakum Mah., Test Cad. No 7` }),
+    });
+    const regBody = await regRes.json() as any;
+    assert.equal(regRes.status, 200, `registration failed: ${JSON.stringify(regBody)}`);
+    assert.ok(regBody.id, "registration must return the new customer id");
+    ids.customers.push(regBody.id as number);
+    const realCookie = (regRes.headers.get("set-cookie") ?? "").split(";")[0];
+    assert.ok(realCookie.includes("connect.sid"), "registration must set a session cookie");
+
+    // Local store: door (cash) payment is ACCEPTED, unlike the cargo online-only stores.
+    const order = await postWithCookie(
+      "/api/orders",
+      ATAKUMBIZ_HOST,
+      { ...orderPayload(), customerName: `${MARK}_AB_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
+      realCookie,
+    );
+    assert.equal(order.status, 201, `local door-payment order POST failed: ${JSON.stringify(order.body)}`);
+    const orderId = order.body.id as number;
+    assert.ok(orderId, "order id missing in response");
+    ids.orders.push(orderId);
+
+    const row = await pool.query("SELECT source_site FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0]?.source_site, "atakumbiz", "order must attribute to the atakum.biz storefront");
+  } finally {
+    if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
+    if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
+  }
+});
+
 // ---- Programmatic SEO landing pages (third server-rendered surface) ----
 //
 // injectAllMeta routes known SEO slugs (client/src/lib/seo-data) through
@@ -1827,6 +1945,10 @@ test("SEO landing page brands title/description/og + canonical per host (samsunp
 
 test("SEO landing page brands title/description/og + canonical per host (karadeniz)", async () => {
   await assertSeoLandingBranding(KARADENIZ_HOST, getStoreByHost(KARADENIZ_HOST));
+});
+
+test("SEO landing page brands title/description/og + canonical per host (atakumbiz)", async () => {
+  await assertSeoLandingBranding(ATAKUMBIZ_HOST, getStoreByHost(ATAKUMBIZ_HOST));
 });
 
 test("SEO landing page on the default (jetgo) host keeps the JETGO brand (contrast)", async () => {

@@ -300,7 +300,53 @@ const karadeniz: StoreConfig = {
   },
 };
 
-export const STORES: StoreConfig[] = [jetgo, atakum, samsun, samsunpet, karadeniz];
+// Atakum Pet (atakum.biz) — a SECOND local same-day storefront for the Atakum /
+// Samsun area, distinct from the "atakum" (atakumpetshop.com) store. Same LOCAL
+// commerce model (Mahalle checkout + door payment + preorder) but its OWN
+// domain, theme and logo. NOTE: per the owner's request it intentionally shares
+// the "Atakum Pet" brand word with the cargo `samsun` store (atakumpet.com); the
+// two stay SEPARATE via distinct id + domain (host resolution is by hostname).
+const atakumbiz: StoreConfig = {
+  id: "atakumbiz",
+  hostnames: ["atakum.biz", "www.atakum.biz"],
+  name: "Atakum Pet",
+  shortName: "Atakum Pet",
+  brandWord: "Atakum Pet",
+  alternateNames: ["Atakum Pet", "Atakum Petshop", "Atakum Pet Shop", "atakum.biz"],
+  domain: "https://www.atakum.biz",
+  logo: "/logo-atakumbiz.webp",
+  favicon: "/favicon-192.png",
+  phone: "+908508403959",
+  phoneDisplay: "0850 840 39 59",
+  email: "info@sizpa.com",
+  address: "Atatürk 3 kısım bulvarı no 113 ATAKUM SAMSUN",
+  companyName: "Sizpa internet tic.ltd.şti.",
+  businessDescription:
+    "Atakum'un hızlı pet shop'u Atakum Pet. Kedi maması, köpek maması, kedi kumu, ödül maması ve evcil hayvan ürünlerinde Atakum, İlkadım, Canik içi aynı gün teslimat ve kapıda ödeme imkanı.",
+  slogan: "Atakum'un Hızlı Pet Shop'u — Aynı Gün Teslimat",
+  social: [],
+  theme: {
+    primary: "14 80% 45%",
+    topBar: "#BF360C",
+    navBar: "#E64A19",
+  },
+  seo: {
+    title: "Atakum Pet - Atakum & Samsun'a Aynı Gün Petshop Teslimat",
+    description:
+      "Atakum ve Samsun'a aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu kapıda ödeme. Atakum Pet 09:00-21:00, 0850 840 39 59.",
+    keywords:
+      "atakum pet, atakum petshop, atakum kedi maması, atakum köpek maması, atakum kedi kumu, atakum aynı gün teslimat, samsun petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop atakum",
+    ogImage: "/og-image.webp",
+  },
+  commerce: {
+    fulfillment: "local",
+    shippingLabel: "Getirmesi",
+    onlinePaymentOnly: false,
+    preorderEnabled: true,
+  },
+};
+
+export const STORES: StoreConfig[] = [jetgo, atakum, samsun, samsunpet, karadeniz, atakumbiz];
 export const DEFAULT_STORE: StoreConfig = jetgo;
 
 /** Lowercase host, strip port and a leading "www." */

@@ -31,6 +31,7 @@ name/title/meta/logo/colors and self-canonicalizes.
 - **Leave functional/non-visible JETGO tokens alone:** URL-matching regexes (link rewriting), function/component
   names (`WhyJetgo`), localStorage keys, asset paths, `className="hidden"` text, demo pages.
 - Since brandify is a no-op for the default store, wrapping a literal is always safe for jetgo.
+- **Two stores may deliberately share the same `name`/`shortName`/`brandWord`** (e.g. atakumpet.com cargo + atakum.biz local both brand "Atakum Pet"). They stay separate ONLY via distinct `id` + `domain`; host resolution is by hostname, brandify produces identical text for both (fine). The store-scoping collision tests must therefore assert distinct id + domain, NOT a distinct brand word.
 
 ## Workflow note
 Restart the `Start application` workflow after ANY `server/` or `shared/` edit (tsx, no hot reload).
