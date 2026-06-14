@@ -211,7 +211,53 @@ const samsun: StoreConfig = {
   },
 };
 
-export const STORES: StoreConfig[] = [jetgo, atakum, samsun];
+// Samsun Pet Shop — second Türkiye-geneli kargo brand. Same cargo / online-card-
+// only commerce model as `samsun` (atakumpet.com) but its OWN domain, name, logo
+// and SEO so it ranks independently for "samsun pet shop" searches. NOTE: the id
+// is "samsunpet" — it must NOT collide with the existing "samsun" store (which is
+// bound to atakumpet.com), even though both are Samsun-region cargo storefronts.
+const samsunpet: StoreConfig = {
+  id: "samsunpet",
+  hostnames: ["samsunpet.com", "www.samsunpet.com"],
+  name: "Samsun Pet Shop",
+  shortName: "Samsun Pet Shop",
+  brandWord: "Samsun Pet Shop",
+  alternateNames: ["Samsun Pet Shop", "Samsun Petshop", "Samsun Pet", "samsunpet"],
+  domain: "https://www.samsunpet.com",
+  logo: "/logo-samsun.webp",
+  logoMobile: "/logo-samsun.webp",
+  favicon: "/favicon-192.png",
+  phone: "+908508403959",
+  phoneDisplay: "0850 840 39 59",
+  email: "info@sizpa.com",
+  address: "Atatürk 3 kısım bulvarı no 113 ATAKUM SAMSUN",
+  companyName: "Sizpa internet tic.ltd.şti.",
+  businessDescription:
+    "Türkiye geneli kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri Samsun Pet Shop'tan güvenli ödeme ve hızlı kargo ile kapınıza gelir.",
+  slogan: "Türkiye'nin Her Yerine Hızlı Kargo",
+  social: [],
+  theme: {
+    primary: "174 72% 36%",
+    topBar: "#00695C",
+    navBar: "#00897B",
+  },
+  seo: {
+    title: "Samsun Pet Shop - Türkiye Geneli Kargo | Kedi & Köpek Maması",
+    description:
+      "Türkiye'nin her yerine kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu güvenli online ödeme ve hızlı kargo. Samsun Pet Shop.",
+    keywords:
+      "samsun pet shop, samsun petshop, samsun pet, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
+    ogImage: "/og-image.webp",
+  },
+  commerce: {
+    fulfillment: "cargo",
+    shippingLabel: "Kargo Ücreti",
+    onlinePaymentOnly: true,
+    preorderEnabled: false,
+  },
+};
+
+export const STORES: StoreConfig[] = [jetgo, atakum, samsun, samsunpet];
 export const DEFAULT_STORE: StoreConfig = jetgo;
 
 /** Lowercase host, strip port and a leading "www." */
