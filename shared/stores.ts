@@ -346,7 +346,58 @@ const atakumbiz: StoreConfig = {
   },
 };
 
-export const STORES: StoreConfig[] = [jetgo, atakum, samsun, samsunpet, karadeniz, atakumbiz];
+// JETGO (jetgo.pet) — a SECOND domain for the flagship JETGO brand that works the
+// same way as jetgomarket.com: same JETGO branding, theme, logo and the LOCAL
+// same-day commerce model. It is a SEPARATE self-canonicalising store on its OWN
+// domain (jetgo.pet) so it stays on its own URL instead of redirecting to
+// jetgomarket.com. NOTE: it intentionally shares the "JETGO" brand word with the
+// default `jetgo` store; the two stay SEPARATE via distinct id + domain. Because
+// the domain itself contains the substring "jetgo", brandifyFor uses a
+// placeholder pass so the domain is rewritten to jetgo.pet (NOT "JETGO.pet").
+const jetgopet: StoreConfig = {
+  id: "jetgopet",
+  hostnames: ["jetgo.pet", "www.jetgo.pet"],
+  name: "JETGO Pet Shop Samsun",
+  shortName: "JETGO",
+  brandWord: "JETGO",
+  alternateNames: ["JETGO Samsun Pet Shop", "JetGo Pet", "JETGO Atakum Pet Shop", "JETGO"],
+  domain: "https://www.jetgo.pet",
+  logo: "/logo-jetgo.webp",
+  favicon: "/favicon-192.png",
+  phone: "+908508403959",
+  phoneDisplay: "0850 840 39 59",
+  email: "info@sizpa.com",
+  address: "Yenimahalle Atatürk 3. Kısım Blv. No:113/A, Atakum, Samsun",
+  companyName: "Sizpa İnternet Tic. Ltd. Şti.",
+  businessDescription:
+    "Samsun'un en hızlı pet shop'u JETGO. Kedi maması, köpek maması, kedi kumu, ödül maması ve evcil hayvan ürünlerinde Atakum, İlkadım, Canik içi aynı gün teslimat ve kapıda ödeme imkanı.",
+  slogan: "Samsun'un Hızlı Pet Shop'u — Aynı Gün Teslimat",
+  social: [
+    "https://www.instagram.com/jetgomarket.com",
+    "https://www.facebook.com/jetgomarket.com",
+  ],
+  theme: {
+    primary: "203 89% 53%",
+    topBar: "#6B3480",
+    navBar: "#7c4dff",
+  },
+  seo: {
+    title: "Atakum Petshop & Samsun Pet Shop - Aynı Gün Teslimat | JETGO",
+    description:
+      "Atakum, Samsun, İlkadım, Canik'e aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu kapıda ödeme. JETGO 09:00-21:00, 0850 840 39 59.",
+    keywords:
+      "atakum petshop, samsun petshop, samsun pet shop, atakum pet shop, samsun kedi maması, samsun köpek maması, samsun kedi kumu, atakum aynı gün teslimat, samsun acil petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop samsun",
+    ogImage: "/og-image.webp",
+  },
+  commerce: {
+    fulfillment: "local",
+    shippingLabel: "Getirmesi",
+    onlinePaymentOnly: false,
+    preorderEnabled: true,
+  },
+};
+
+export const STORES: StoreConfig[] = [jetgo, atakum, samsun, samsunpet, karadeniz, atakumbiz, jetgopet];
 export const DEFAULT_STORE: StoreConfig = jetgo;
 
 /** Lowercase host, strip port and a leading "www." */
@@ -392,12 +443,22 @@ export function brandifyFor(store: StoreConfig, text: string): string {
   if (!text || store.id === DEFAULT_STORE.id) return text;
   const host = canonicalHost(store);
   const apex = host.replace(/^www\./, "");
+  // Swap the jetgomarket domain into placeholders FIRST, run the brand-word pass,
+  // then expand the placeholders. This protects a brand domain that itself
+  // contains the substring "jetgo" (e.g. jetgo.pet): if the domain were inserted
+  // before the brand pass, "/jetgo/g -> brandWord" would corrupt it into
+  // "JETGO.pet". The placeholders carry no "jetgo" token, so they survive the
+  // brand pass untouched. Behavior is unchanged for domains without "jetgo".
+  const HOST_PH = "\uE000H\uE000";
+  const APEX_PH = "\uE000A\uE000";
   return text
-    .replace(/www\.jetgomarket\.com/gi, host)
-    .replace(/jetgomarket\.com/gi, apex)
+    .replace(/www\.jetgomarket\.com/gi, HOST_PH)
+    .replace(/jetgomarket\.com/gi, APEX_PH)
     .replace(/JETGO/g, store.brandWord)
     .replace(/Jetgo/g, store.brandWord)
-    .replace(/jetgo/g, store.brandWord);
+    .replace(/jetgo/g, store.brandWord)
+    .split(HOST_PH).join(host)
+    .split(APEX_PH).join(apex);
 }
 
 /** Canonical hostname (with www if that is the canonical form) for a store. */

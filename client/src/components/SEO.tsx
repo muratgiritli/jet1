@@ -71,7 +71,18 @@ export default function SEO({ title, description, canonical, ogImage, ogType, js
     let ldScript = document.getElementById("json-ld-seo") as HTMLScriptElement | null;
     if (jsonLd) {
       if (!ldScript) { ldScript = document.createElement("script"); ldScript.id = "json-ld-seo"; ldScript.type = "application/ld+json"; document.head.appendChild(ldScript); }
-      ldScript.textContent = brandify(JSON.stringify(jsonLd));
+      // Brandify the JSON-LD so brand name + self-referential URLs follow this
+      // domain, BUT preserve contact identifiers (email + sameAs social handles):
+      // they point to the single real business shared across every brand, so they
+      // must NOT be domain-rewritten (e.g. instagram.com/jetgomarket.com on the
+      // jetgo.pet brand must stay jetgomarket.com). Mirrors server/seo-meta.ts.
+      const ldRaw = JSON.stringify(jsonLd);
+      const origEmail = ldRaw.match(/"email":\s*"[^"]*"/i)?.[0];
+      const origSameAs = ldRaw.match(/"sameAs":\s*\[[\s\S]*?\]/i)?.[0];
+      let ldOut = brandify(ldRaw);
+      if (origEmail) ldOut = ldOut.replace(/"email":\s*"[^"]*"/i, origEmail);
+      if (origSameAs) ldOut = ldOut.replace(/"sameAs":\s*\[[\s\S]*?\]/i, origSameAs);
+      ldScript.textContent = ldOut;
     }
 
     return () => {

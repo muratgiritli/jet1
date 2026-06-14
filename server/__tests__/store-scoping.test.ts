@@ -53,6 +53,11 @@ const SAMSUNPET_HOST = "www.samsunpet.com";
 // Third Türkiye-geneli cargo brand (id "karadeniz", domain karadenizpetshop.com).
 const KARADENIZ_HOST = "www.karadenizpetshop.com";
 const ATAKUMBIZ_HOST = "www.atakum.biz";
+// Second domain for the flagship JETGO brand (id "jetgopet", domain jetgo.pet).
+// Same JETGO brand + LOCAL same-day model as jetgomarket.com, but a SEPARATE
+// self-canonical store on its own URL. Its domain contains the substring "jetgo",
+// which exercises the brandifyFor placeholder pass (must NOT become "JETGO.pet").
+const JETGOPET_HOST = "www.jetgo.pet";
 
 // app_settings keys touched by the tests; snapshotted and restored.
 const SETTING_KEYS = [
@@ -1261,6 +1266,9 @@ const KARADENIZ_BRAND = "Karadeniz Pet Shop";
 // atakum.biz shares the "Atakum Pet" brand word with the cargo `samsun` store BY
 // DESIGN (separate id + domain); it is a LOCAL same-day storefront.
 const ATAKUMBIZ_BRAND = "Atakum Pet";
+// jetgo.pet shares the JETGO brand name/word with the default `jetgo` store BY
+// DESIGN (separate id + domain); it is a LOCAL same-day storefront.
+const JETGOPET_BRAND = "JETGO Pet Shop Samsun";
 // Distinctive copy of the SAMSUN (cargo) store. atakum must NEVER show this — it
 // is the signal that local same-day copy was replaced by cargo copy.
 const CARGO_SIGNATURE = /türkiye(?:'nin| geneli)/i;
@@ -1867,6 +1875,144 @@ test("test-OTP bypass lets a NEW customer place a local atakum.biz order (source
   }
 });
 
+// ---- jetgo.pet (jetgopet): a SECOND domain for the flagship JETGO brand -------
+//
+// Works the same way as jetgomarket.com: same JETGO branding, theme, logo and the
+// LOCAL same-day commerce model, but a SEPARATE self-canonicalising store on its
+// OWN domain (jetgo.pet) so it stays on its own URL instead of redirecting to
+// jetgomarket.com. It INTENTIONALLY shares the "JETGO" brand word with the default
+// `jetgo` store; the two stay SEPARATE via distinct id + domain. CRITICAL: the
+// domain itself contains the substring "jetgo", so brandifyFor must rewrite
+// jetgomarket.com -> jetgo.pet WITHOUT mangling it into "JETGO.pet".
+
+test("jetgo.pet resolves the JETGO brand as a SEPARATE self-canonical store from the default jetgo", () => {
+  const jetgopet = getStoreByHost(JETGOPET_HOST);
+  const jetgo = getStoreByHost(JETGO_HOST);
+  assert.equal(jetgopet.id, "jetgopet");
+  assert.equal(jetgopet.name, JETGOPET_BRAND, "homepage wordmark/title brand name");
+  assert.equal(jetgopet.brandWord, "JETGO");
+  // Shares the JETGO brand word with the default store BY DESIGN, but must stay a
+  // separate store: distinct id + domain (host resolution is by hostname).
+  assert.equal(jetgopet.brandWord, jetgo.brandWord, "intentionally shares the JETGO brand word with the default store");
+  assert.equal(jetgopet.domain, "https://www.jetgo.pet");
+  assert.notEqual(jetgopet.id, jetgo.id, "jetgo.pet must be a SEPARATE store from the default jetgo");
+  assert.notEqual(jetgopet.domain, jetgo.domain, "the two JETGO stores must keep distinct domains");
+  // "jetgomarket.com gibi": same look (theme + logo) as the flagship.
+  assert.deepEqual(jetgopet.theme, jetgo.theme, "jetgo.pet must look like jetgomarket.com");
+  assert.equal(jetgopet.logo, jetgo.logo, "jetgo.pet reuses the JETGO logo");
+  // The apex host also resolves (not just the www form).
+  assert.equal(getStoreByHost("jetgo.pet").id, "jetgopet");
+  // Canonical-redirect contract: the apex host resolves to the SAME store, whose
+  // canonical host (derived from .domain) is the www form. So server/index.ts's
+  // canonical-host middleware 301s jetgo.pet -> https://www.jetgo.pet and MUST NOT
+  // redirect away to jetgomarket.com.
+  const canonicalHost = new URL(jetgopet.domain).host;
+  assert.equal(canonicalHost, "www.jetgo.pet", "301 target host for the apex must be the www form of jetgo.pet");
+  assert.notEqual(canonicalHost, "jetgo.pet", "apex differs from canonical, so the middleware redirects to www");
+  assert.ok(!/jetgomarket/i.test(canonicalHost), "jetgo.pet must self-canonicalise, never redirect to jetgomarket.com");
+});
+
+test("jetgopet is a LOCAL same-day store (like jetgomarket.com), not cargo", () => {
+  const jetgopet = getStoreByHost(JETGOPET_HOST);
+  assert.equal(jetgopet.commerce.fulfillment, "local", "jetgo.pet must use the local (Mahalle) flow");
+  assert.equal(jetgopet.commerce.shippingLabel, "Getirmesi", "local delivery fee label");
+  assert.equal(jetgopet.commerce.onlinePaymentOnly, false, "local store accepts door payment");
+  assert.equal(jetgopet.commerce.preorderEnabled, true, "preorder stays on for the local store");
+});
+
+test("brandify rewrites the jetgomarket domain to jetgo.pet WITHOUT mangling the 'jetgo' substring", () => {
+  const jetgopet = getStoreByHost(JETGOPET_HOST);
+  // brandWord is also "JETGO" so brand-name swaps are no-ops; the domain swap is
+  // what must survive intact: jetgomarket.com -> jetgo.pet, never "JETGO.pet".
+  assert.equal(brandifyFor(jetgopet, "jetgomarket.com"), "jetgo.pet");
+  assert.equal(brandifyFor(jetgopet, "www.jetgomarket.com"), "www.jetgo.pet");
+  assert.equal(
+    brandifyFor(jetgopet, "Sipariş için www.jetgomarket.com adresine gidin"),
+    "Sipariş için www.jetgo.pet adresine gidin",
+  );
+  assert.ok(!/JETGO\.pet/.test(brandifyFor(jetgopet, "jetgomarket.com")), "domain must NOT be corrupted to JETGO.pet");
+  assert.ok(!/jetgomarket\.com/i.test(brandifyFor(jetgopet, "www.jetgomarket.com")), "must not leak the jetgomarket domain");
+});
+
+test("brandify placeholder pass leaves other brands' domains unchanged (regression)", () => {
+  // The placeholder pass must not change behavior for stores whose domain does
+  // NOT contain the substring "jetgo".
+  const atakum = getStoreByHost(ATAKUM_HOST);
+  const samsun = getStoreByHost(SAMSUN_HOST);
+  assert.equal(brandifyFor(atakum, "Neden JETGO? jetgomarket.com"), `Neden ${atakum.brandWord}? atakumpetshop.com`);
+  assert.equal(brandifyFor(samsun, "www.jetgomarket.com"), "www.atakumpet.com");
+});
+
+test("checkout on jetgo.pet (local) offers door payment AND the online card (not online-only)", () => {
+  const jetgopet = getStoreByHost(JETGOPET_HOST);
+  const opts = visiblePaymentOptions({
+    ...allMethodsEnabled,
+    onlinePaymentOnly: jetgopet.commerce.onlinePaymentOnly,
+  });
+  const optIds = opts.map((o) => o.id);
+  assert.ok(optIds.includes("online"), "online card must be available on the local store");
+  assert.ok(optIds.includes("nakit"), "local store must keep the door cash option");
+  assert.ok(optIds.length > 1, `local checkout must offer more than just the online card, got: ${JSON.stringify(optIds)}`);
+});
+
+test("served homepage HTML on jetgo.pet carries the JETGO brand + local same-day copy (not cargo)", async () => {
+  const html = await injectAllMeta(INDEX_HTML, "/", JETGOPET_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const ogSiteName = html.match(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i)?.[1] ?? "";
+
+  assert.match(title, /JETGO/, "homepage <title> must brand as JETGO");
+  assert.equal(ogSiteName, JETGOPET_BRAND, "og:site_name must be the JETGO brand name");
+  assert.match(title, SAME_DAY_SIGNATURE, "local same-day delivery copy expected");
+  assert.ok(!CARGO_SIGNATURE.test(title), "jetgo.pet must not show cargo copy");
+  // The brandify domain-swap must not corrupt the served markup into "JETGO.pet"
+  // (case-sensitive: the correct lowercase "jetgo.pet" is expected to appear).
+  assert.ok(!/JETGO\.pet/.test(html), "served HTML must not contain a corrupted JETGO.pet domain");
+});
+
+test("test-OTP bypass lets a NEW customer place a local jetgo.pet order (source_site=jetgopet, door payment OK)", async () => {
+  const prevEnv = process.env.NODE_ENV;
+  const prevFlag = process.env.TEST_OTP_BYPASS;
+  process.env.NODE_ENV = "development";
+  process.env.TEST_OTP_BYPASS = "1";
+
+  const phone = "555" + String(randomBytes(4).readUInt32BE(0)).padStart(7, "0").slice(-7);
+  try {
+    const send = await post("/api/otp/send", JETGOPET_HOST, { phone });
+    assert.equal(send.status, 200, `otp/send failed: ${JSON.stringify(send.body)}`);
+    assert.equal(send.body.isExisting, false, "fresh phone must be reported as new");
+
+    const regRes = await fetch(`${baseUrl}/api/otp/verify`, {
+      method: "POST",
+      headers: { "X-Forwarded-Host": JETGOPET_HOST, "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, code: "0000", name: `${MARK}_JP_BUYER`, address: `${MARK} Atakum Mah., Test Cad. No 9` }),
+    });
+    const regBody = await regRes.json() as any;
+    assert.equal(regRes.status, 200, `registration failed: ${JSON.stringify(regBody)}`);
+    assert.ok(regBody.id, "registration must return the new customer id");
+    ids.customers.push(regBody.id as number);
+    const realCookie = (regRes.headers.get("set-cookie") ?? "").split(";")[0];
+    assert.ok(realCookie.includes("connect.sid"), "registration must set a session cookie");
+
+    // Local store: door (cash) payment is ACCEPTED, unlike the cargo online-only stores.
+    const order = await postWithCookie(
+      "/api/orders",
+      JETGOPET_HOST,
+      { ...orderPayload(), customerName: `${MARK}_JP_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
+      realCookie,
+    );
+    assert.equal(order.status, 201, `local door-payment order POST failed: ${JSON.stringify(order.body)}`);
+    const orderId = order.body.id as number;
+    assert.ok(orderId, "order id missing in response");
+    ids.orders.push(orderId);
+
+    const row = await pool.query("SELECT source_site FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0]?.source_site, "jetgopet", "order must attribute to the jetgo.pet storefront");
+  } finally {
+    if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
+    if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
+  }
+});
+
 // ---- Programmatic SEO landing pages (third server-rendered surface) ----
 //
 // injectAllMeta routes known SEO slugs (client/src/lib/seo-data) through
@@ -1949,6 +2095,34 @@ test("SEO landing page brands title/description/og + canonical per host (karaden
 
 test("SEO landing page brands title/description/og + canonical per host (atakumbiz)", async () => {
   await assertSeoLandingBranding(ATAKUMBIZ_HOST, getStoreByHost(ATAKUMBIZ_HOST));
+});
+
+test("SEO landing page on jetgo.pet keeps the JETGO brand but self-canonicalizes to jetgo.pet (domain not mangled)", async () => {
+  // jetgopet shares the JETGO brand word, so unlike the other branded hosts the
+  // brand word is EXPECTED to remain; the DOMAIN, however, must be rewritten from
+  // jetgomarket.com to jetgo.pet WITHOUT being corrupted into "JETGO.pet". The
+  // shared assertSeoLandingBranding helper asserts JETGO is absent, so jetgopet
+  // needs its own assertions here.
+  const store = getStoreByHost(JETGOPET_HOST);
+  const html = await injectAllMeta(INDEX_HTML, `/${SEO_TEST_SLUG}`, JETGOPET_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const description = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1] ?? "";
+  const canonical = html.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+  const ogUrl = html.match(/<meta\s+property="og:url"\s+content="([^"]*)"/i)?.[1] ?? "";
+
+  // Title/description equal the brandified source verbatim (brand word kept,
+  // domain rewritten to jetgo.pet).
+  assert.equal(title, escapeHtmlForTest(brandifyFor(store, seoTestPage!.metaTitle)), "jetgo.pet SEO <title> must be the brandified metaTitle");
+  assert.equal(description, escapeHtmlForTest(brandifyFor(store, seoTestPage!.metaDescription)), "jetgo.pet SEO description must be the brandified metaDescription");
+  assert.match(title, /JETGO/, "jetgo.pet keeps the shared JETGO brand word");
+  assert.ok(!/jetgomarket\.com/i.test(title), "jetgo.pet SEO title must not leak the jetgomarket domain");
+  assert.ok(!/JETGO\.pet/.test(title), "jetgo.pet SEO title domain must not be corrupted to JETGO.pet");
+
+  // Self-canonicalization: canonical + og:url bind to the jetgo.pet domain/slug.
+  const expectedCanonical = `${store.domain}/${SEO_TEST_SLUG}`;
+  assert.equal(canonical, expectedCanonical, "jetgo.pet SEO canonical must bind to the jetgo.pet domain");
+  assert.equal(ogUrl, expectedCanonical, "jetgo.pet SEO og:url must bind to the jetgo.pet domain");
+  assert.ok(!/jetgomarket\.com/i.test(canonical), "jetgo.pet SEO canonical must not point at the jetgomarket domain");
 });
 
 test("SEO landing page on the default (jetgo) host keeps the JETGO brand (contrast)", async () => {
