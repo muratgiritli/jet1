@@ -1496,8 +1496,17 @@ export async function registerRoutes(
   });
 
 
-  app.get("/googleb16b707b9ac148c4.html", (_req, res) => {
-    res.type("text/html").send("google-site-verification: googleb16b707b9ac148c4.html");
+  // Google Search Console HTML-dosya doğrulaması, DOMAIN BAZLI. Her mağaza kendi
+  // google.verificationFileId değerini ayarlar; dosya yalnızca ait olduğu domainde
+  // sunulur (diğerlerinde 404), böylece her domain Google'da bağımsız doğrulanır.
+  app.get(/^\/google([0-9a-zA-Z]+)\.html$/, (req, res) => {
+    const store = reqStore(req);
+    const id = req.path.match(/^\/google([0-9a-zA-Z]+)\.html$/)?.[1];
+    if (id && store.google?.verificationFileId && id === store.google.verificationFileId) {
+      res.type("text/html").send(`google-site-verification: google${id}.html`);
+      return;
+    }
+    res.status(404).end();
   });
 
   app.get("/yandex_bac46bfa93c251d0.html", (_req, res) => {

@@ -81,6 +81,53 @@ function replaceTag(html: string, regex: RegExp, replacement: string): string {
   return html.replace(/<\/head>/i, `  ${replacement}\n  </head>`);
 }
 
+/** Keep only safe id characters so a config value can't break out of the inline
+ * script / attribute it gets embedded in. GTM/GA4/Ads ids are alnum + "-"/"_". */
+function sanitizeGId(s: string): string {
+  return String(s).replace(/[^A-Za-z0-9_-]/g, "");
+}
+
+/**
+ * Inject THIS domain's own Google tags (Search Console verification, GTM, GA4,
+ * Ads), keyed off the resolved store. Nothing is emitted unless the store sets
+ * the matching value, so every domain is an independent Google property and an
+ * unconfigured domain ships zero tracking.
+ */
+export function injectGoogleTags(html: string, store: StoreConfig): string {
+  const g = store.google;
+  if (!g) return html;
+  let out = html;
+
+  const head: string[] = [];
+  if (g.siteVerification) {
+    head.push(`<meta name="google-site-verification" content="${escapeHtml(g.siteVerification)}" />`);
+  }
+  const gtmId = g.gtmId ? sanitizeGId(g.gtmId) : "";
+  if (gtmId) {
+    head.push(
+      `<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','${gtmId}');</script>`,
+    );
+  }
+  const gtagIds = [...(g.ga4Ids || []), ...(g.adsIds || [])].map(sanitizeGId).filter(Boolean);
+  if (gtagIds.length) {
+    const configs = gtagIds.map((x) => `gtag('config','${x}');`).join("");
+    head.push(
+      `<script async src="https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(gtagIds[0])}"></script>` +
+        `<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());${configs}</script>`,
+    );
+  }
+  if (head.length) {
+    out = out.replace(/<\/head>/i, `  ${head.join("\n  ")}\n  </head>`);
+  }
+
+  if (gtmId) {
+    const noscript = `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${encodeURIComponent(gtmId)}" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`;
+    out = out.replace(/<body([^>]*)>/i, (m) => `${m}\n    ${noscript}`);
+  }
+
+  return out;
+}
+
 /**
  * Per-domain identity tags applied to EVERY served page so each custom domain
  * presents its own brand: og:site_name, theme-color, app title and share image.
@@ -281,6 +328,7 @@ const PRODUCT_PATH_RE = /^\/urun\/(\d+)(?:\/[^/?#]*)?\/?$/;
 export async function injectAllMeta(html: string, urlPath: string, host?: string): Promise<string> {
   const store = getStoreByHost(host);
   let out = applyGlobalBranding(html, store);
+  out = injectGoogleTags(out, store);
 
   const cleanPath = urlPath.split("?")[0].split("#")[0];
   const m = cleanPath.match(PRODUCT_PATH_RE);

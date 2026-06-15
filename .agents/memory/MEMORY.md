@@ -12,3 +12,4 @@
 - [Branding UI smoke quirks](branding-ui-smoke-quirks.md) — hidden #seo-static + <title> stay JETGO on dev host (false negatives); checkout Mahalle is OTP-gated; assert branding at data layer in store-scoping.test.ts instead.
 - [E2E rate-limit isolation](e2e-rate-limit-isolation.md) — every new e2e OTP/order flow must run under its own X-Forwarded-For IP, else it tips the shared per-IP order bucket over and flakes unrelated later tests to 429.
 - [Per-store logo convention](store-logo-convention.md) — store logos must be WHITE wordmarks in raster webp (SVG <img> renders blank); desktop home renders brand as text, verify logo/theme on an inner page.
+- [Per-domain Google independence](google-per-domain.md) — never hardcode GTM/GA4/Ads/GSC in index.html; inject per-store from StoreConfig.google via injectGoogleTags; empty {} = no tags; sanitize ids before embedding.

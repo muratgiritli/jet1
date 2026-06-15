@@ -21,7 +21,7 @@ import { randomBytes } from "node:crypto";
 import { readFileSync } from "node:fs";
 import * as cookieSignature from "cookie-signature";
 import { registerRoutes, isTestOtpBypass } from "../routes";
-import { injectAllMeta } from "../seo-meta";
+import { injectAllMeta, injectGoogleTags } from "../seo-meta";
 import { SEO_PAGES } from "../../client/src/lib/seo-data";
 import { getStoreByHost, brandifyFor } from "../../shared/stores";
 import { pool } from "../storage";
@@ -2449,6 +2449,89 @@ test("SEO landing page on the default (jetgo) host keeps the JETGO brand (contra
   const canonical = html.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
   assert.match(title, /JETGO/, "default-host SEO title keeps the JETGO brand (brandify is a no-op)");
   assert.equal(canonical, `${store.domain}/${SEO_TEST_SLUG}`, "default-host SEO canonical binds to the jetgo domain");
+});
+
+// ---- Per-domain Google independence (GSC / GTM / GA4 / Ads) ----
+//
+// Each of the 9 domains must be its own Google property. There must be NO shared,
+// hardcoded Google snippet baked into the served HTML template; instead Google
+// tags are injected per-store from StoreConfig.google (currently empty for all
+// stores), and the HTML-file Search Console verification is served only on the
+// domain whose store declares that file id.
+
+test("Google: index.html template carries NO hardcoded shared Google snippet", () => {
+  for (const needle of [
+    "GTM-5LW8HVSQ",
+    "G-PKN1VB7PDP",
+    "G-TVXEX6PM5J",
+    "AW-18172136744",
+    "AW-18225395395",
+    "BnShDgutkrnaLluBAybKrpRub",
+    "google-site-verification",
+    "googletagmanager.com/gtag/js",
+    "googletagmanager.com/gtm.js",
+    "googletagmanager.com/ns.html",
+  ]) {
+    assert.ok(!INDEX_HTML.includes(needle), `index.html must not hardcode ${needle}`);
+  }
+});
+
+test("Google: every domain currently injects ZERO Google tags (empty + independent)", async () => {
+  const ALL_HOSTS = [
+    JETGO_HOST, ATAKUM_HOST, SAMSUN_HOST, SAMSUNPET_HOST, KARADENIZ_HOST,
+    ATAKUMBIZ_HOST, JETGOPET_HOST, JETGOSHOP_HOST, MARKAPET_HOST,
+  ];
+  for (const host of ALL_HOSTS) {
+    const html = await injectAllMeta(INDEX_HTML, "/", host);
+    assert.ok(!html.includes("google-site-verification"), `${host}: no GSC meta until configured`);
+    assert.ok(!html.includes("googletagmanager.com/gtm.js"), `${host}: no GTM until configured`);
+    assert.ok(!html.includes("googletagmanager.com/gtag/js"), `${host}: no gtag until configured`);
+    assert.ok(!html.includes("googletagmanager.com/ns.html"), `${host}: no GTM noscript until configured`);
+  }
+});
+
+test("Google: injectGoogleTags wires a store's OWN GSC + GTM + GA4 + Ads", () => {
+  const fakeStore = {
+    ...getStoreByHost(JETGO_HOST),
+    google: {
+      gtmId: "GTM-TEST123",
+      ga4Ids: ["G-AAA111", "G-BBB222"],
+      adsIds: ["AW-CCC333"],
+      siteVerification: "verif-token-xyz",
+    },
+  } as any;
+  const out = injectGoogleTags(INDEX_HTML, fakeStore);
+  assert.ok(out.includes(`content="verif-token-xyz"`), "GSC meta injected");
+  assert.ok(out.includes("'dataLayer','GTM-TEST123'"), "GTM loader injected");
+  assert.ok(out.includes("ns.html?id=GTM-TEST123"), "GTM noscript injected");
+  assert.ok(out.includes("gtag/js?id=G-AAA111"), "gtag loader uses first id");
+  assert.ok(out.includes("gtag('config','G-AAA111')"), "GA4 id #1 configured");
+  assert.ok(out.includes("gtag('config','G-BBB222')"), "GA4 id #2 configured");
+  assert.ok(out.includes("gtag('config','AW-CCC333')"), "Ads id configured");
+});
+
+test("Google: injectGoogleTags strips unsafe characters from ids (no script breakout)", () => {
+  const fakeStore = {
+    ...getStoreByHost(JETGO_HOST),
+    google: { gtmId: "GTM-X'};alert(1)//", ga4Ids: ["G-OK1<script>"] },
+  } as any;
+  const out = injectGoogleTags(INDEX_HTML, fakeStore);
+  assert.ok(!out.includes("alert(1)"), "unsafe gtm chars stripped");
+  assert.ok(!out.includes("<script>id"), "no breakout");
+  assert.ok(out.includes("'dataLayer','GTM-Xalert1'"), "gtm id sanitized to safe chars");
+  assert.ok(out.includes("gtag('config','G-OK1script')"), "ga4 id sanitized to safe chars");
+});
+
+test("Google: injectGoogleTags is a no-op for a store with empty google config", () => {
+  const base = getStoreByHost(JETGO_HOST);
+  assert.equal(injectGoogleTags(INDEX_HTML, base), INDEX_HTML);
+});
+
+test("Google: HTML-file verification 404s on a domain that hasn't declared that file", async () => {
+  const res = await fetch(`${baseUrl}/googleb16b707b9ac148c4.html`, {
+    headers: { "X-Forwarded-Host": JETGO_HOST },
+  });
+  assert.equal(res.status, 404);
 });
 
 // ---- Shipped-order tracking SMS auto-send + de-duplication ----

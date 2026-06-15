@@ -2,13 +2,10 @@
 <html lang="tr">
   <head>
     <meta charset="UTF-8" />
-    <!-- Google Tag Manager -->
-    <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
-    new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
-    j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
-    'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
-    })(window,document,'script','dataLayer','GTM-5LW8HVSQ');</script>
-    <!-- End Google Tag Manager -->
+    <!-- Google tags (GTM / GA4 / Ads) ve Search Console doğrulaması artık
+         domain bazlı olarak sunucuda enjekte edilir (server/seo-meta.ts ->
+         injectGoogleTags, shared/stores.ts -> StoreConfig.google). Buraya
+         SABİT Google kodu eklemeyin: tüm domainlerde çalışıp hesapları karıştırır. -->
     <!-- Capture PWA install prompt early (before React mounts) -->
     <script>
       window.__deferredInstallPrompt = null;
@@ -45,8 +42,6 @@
     <link rel="apple-touch-icon" sizes="512x512" href="/favicon-512.png" />
     <meta name="theme-color" content="#6B3480" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <!-- Google Search Console verification (jetgomarket.com) -->
-    <meta name="google-site-verification" content="BnShDgutkrnaLluBAybKrpRub-WHRULdJgyyGhPRzjA" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="JETGO" />
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -98,25 +93,8 @@
       ]
     }
     </script>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-PKN1VB7PDP"></script>
-    <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-      gtag('config', 'G-PKN1VB7PDP');
-      gtag('config', 'G-TVXEX6PM5J');
-      gtag('config', 'AW-18172136744');
-      if (location.hostname === 'atakumpet.com' || location.hostname === 'www.atakumpet.com') {
-        gtag('config', 'AW-18225395395');
-      }
-    </script>
   </head>
   <body>
-    <!-- Google Tag Manager (noscript) -->
-    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-5LW8HVSQ"
-    height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
-    <!-- End Google Tag Manager (noscript) -->
     <div id="root"></div>
     <div id="seo-static" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap;border:0;padding:0;margin:-1px;">
       <h1>JETGO Pet Shop Samsun - Atakum Petshop, Aynı Gün Petshop Teslimatı</h1>

@@ -43,6 +43,24 @@ export interface StoreCommerce {
   preorderEnabled: boolean;
 }
 
+/**
+ * Domaine ÖZEL Google hesap kimlikleri. Her alan opsiyoneldir; boş bırakılan
+ * alan için o domainde HİÇBİR Google etiketi yüklenmez. Böylece her domain
+ * Google'a karşı bağımsız bir site gibi davranır (ayrı GA4 / GTM / Search Console).
+ */
+export interface StoreGoogle {
+  /** Google Tag Manager kapsayıcı id'si, örn: "GTM-XXXXXXX". */
+  gtmId?: string;
+  /** GA4 ölçüm id'leri, örn: ["G-XXXXXXXXXX"]. Birden fazla olabilir. */
+  ga4Ids?: string[];
+  /** Google Ads dönüşüm id'leri, örn: ["AW-XXXXXXXXXX"]. */
+  adsIds?: string[];
+  /** Search Console META doğrulama kodu (meta etiketindeki content="..." değeri). */
+  siteVerification?: string;
+  /** Search Console HTML-DOSYA doğrulaması: /google<ID>.html dosyasındaki ID kısmı. */
+  verificationFileId?: string;
+}
+
 export interface StoreConfig {
   /** Stable internal id, also used to tag the order's source site. */
   id: string;
@@ -84,6 +102,12 @@ export interface StoreConfig {
   seo: StoreSeo;
   /** Mağazaya özel ticaret / teslimat davranışı. */
   commerce: StoreCommerce;
+  /**
+   * Domaine ÖZEL Google hesapları (her domain Google'a karşı bağımsız bir site).
+   * Boş `{}` bırakıldığında bu domainde HİÇ Google etiketi/doğrulaması yüklenmez.
+   * Sahibi kendi GA4 / GTM / Search Console hesaplarını açıp kodlarını buraya girer.
+   */
+  google?: StoreGoogle;
 }
 
 const jetgo: StoreConfig = {
@@ -121,6 +145,7 @@ const jetgo: StoreConfig = {
       "atakum petshop, samsun petshop, samsun pet shop, atakum pet shop, samsun kedi maması, samsun köpek maması, samsun kedi kumu, atakum aynı gün teslimat, samsun acil petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop samsun",
     ogImage: "/og-image.webp",
   },
+  google: {},
   commerce: {
     fulfillment: "local",
     shippingLabel: "Getirmesi",
@@ -162,6 +187,7 @@ const atakum: StoreConfig = {
       "atakum pet shop, atakum petshop, atakum kedi maması, atakum köpek maması, atakum kedi kumu, atakum aynı gün teslimat, atakum acil petshop, samsun petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop atakum",
     ogImage: "/og-image.webp",
   },
+  google: {},
   commerce: {
     fulfillment: "local",
     shippingLabel: "Getirmesi",
@@ -203,6 +229,7 @@ const samsun: StoreConfig = {
       "atakum pet, atakumpet, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
     ogImage: "/og-image.webp",
   },
+  google: {},
   commerce: {
     fulfillment: "cargo",
     shippingLabel: "Kargo Ücreti",
@@ -249,6 +276,7 @@ const samsunpet: StoreConfig = {
       "samsun pet shop, samsun petshop, samsun pet, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
     ogImage: "/og-image.webp",
   },
+  google: {},
   commerce: {
     fulfillment: "cargo",
     shippingLabel: "Kargo Ücreti",
@@ -292,6 +320,7 @@ const karadeniz: StoreConfig = {
       "karadeniz pet shop, karadeniz petshop, karadeniz pet, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
     ogImage: "/og-image.webp",
   },
+  google: {},
   commerce: {
     fulfillment: "cargo",
     shippingLabel: "Kargo Ücreti",
@@ -338,6 +367,7 @@ const atakumbiz: StoreConfig = {
       "atakum pet, atakum petshop, atakum kedi maması, atakum köpek maması, atakum kedi kumu, atakum aynı gün teslimat, samsun petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop atakum",
     ogImage: "/og-image.webp",
   },
+  google: {},
   commerce: {
     fulfillment: "local",
     shippingLabel: "Getirmesi",
@@ -389,6 +419,7 @@ const jetgopet: StoreConfig = {
       "atakum petshop, samsun petshop, samsun pet shop, atakum pet shop, samsun kedi maması, samsun köpek maması, samsun kedi kumu, atakum aynı gün teslimat, samsun acil petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop samsun",
     ogImage: "/og-image.webp",
   },
+  google: {},
   commerce: {
     fulfillment: "local",
     shippingLabel: "Getirmesi",
@@ -440,6 +471,7 @@ const jetgoshop: StoreConfig = {
       "atakum petshop, samsun petshop, samsun pet shop, atakum pet shop, samsun kedi maması, samsun köpek maması, samsun kedi kumu, atakum aynı gün teslimat, samsun acil petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop samsun",
     ogImage: "/og-image.webp",
   },
+  google: {},
   commerce: {
     fulfillment: "local",
     shippingLabel: "Getirmesi",
@@ -487,6 +519,7 @@ const markapet: StoreConfig = {
       "marka.pet, marka pet, marka pet shop, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
     ogImage: "/og-image.webp",
   },
+  google: {},
   commerce: {
     fulfillment: "cargo",
     shippingLabel: "Kargo Ücreti",
