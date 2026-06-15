@@ -11,7 +11,6 @@ import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SocialProofToast from "@/components/SocialProofToast";
-import { useStore } from "@/lib/store";
 const Landing = lazy(() => import("@/pages/landing"));
 const AdLanding = lazy(() => import("@/pages/ad-landing"));
 
@@ -195,11 +194,9 @@ const LANDING_LIKE_ROUTES = new Set([
 
 function AppShell() {
   const [location] = useLocation();
-  const store = useStore();
   const isAdmin = location.startsWith("/admin");
   const isDemo = location === "/demo" || location.startsWith("/demo-kampanya") || location === "/demo1" || location === "/demo2" || location === "/demo-anasayfa";
   const isLandingLike = LANDING_LIKE_ROUTES.has(location);
-  const isAtakumHome = store.id === "atakum" && (location === "/" || location === "/petshop");
 
   useEffect(() => {
     if (isLandingLike) {
@@ -218,17 +215,17 @@ function AppShell() {
 
   return (
     <>
-      {!isAdmin && !isDemo && !isAtakumHome && (
+      {!isAdmin && !isDemo && (
         <div className={isLandingLike ? "md:hidden" : ""}>
           <Header />
         </div>
       )}
       <ErrorBoundary><Router /></ErrorBoundary>
-      {!isAdmin && !isDemo && isLandingLike && !isAtakumHome && (
+      {!isAdmin && !isDemo && isLandingLike && (
         <div className="md:hidden"><Footer /></div>
       )}
-      {!isAdmin && !isDemo && !isAtakumHome && <FloatingCartBar />}
-      {!isAdmin && !isDemo && !isAtakumHome && <BottomTabBar />}
+      {!isAdmin && !isDemo && <FloatingCartBar />}
+      {!isAdmin && !isDemo && <BottomTabBar />}
     </>
   );
 }

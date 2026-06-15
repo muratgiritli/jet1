@@ -23,14 +23,6 @@ function DemoAnasayfaEmbed() {
     </Suspense>
   );
 }
-const AtakumHome = lazy(() => import("@/pages/atakum-home"));
-function AtakumHomeEmbed() {
-  return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-gray-400 text-sm">Yükleniyor...</div>}>
-      <AtakumHome />
-    </Suspense>
-  );
-}
 import SEO, { LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import TopBanner from "@/components/TopBanner";
 import ContactDialog from "@/components/ContactDialog";
@@ -1132,11 +1124,6 @@ interface LandingSeoOverride {
 export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverride }) {
   const { isLoggedIn } = useCustomer();
   const isMobile = useIsMobile();
-  const store = useStore();
-
-  if (store.id === "atakum") {
-    return <AtakumHomeEmbed />;
-  }
 
   const seoNode = seoOverride ? (
     <SEO
