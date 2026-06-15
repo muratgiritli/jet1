@@ -3,7 +3,7 @@ import { Link, useLocation } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import {
   Search, ShoppingBag, Menu, Zap, Clock, ShieldCheck, CreditCard,
-  Gift, Heart, ChevronRight, CheckCircle2, Grid3X3, User,
+  Gift, ChevronRight, CheckCircle2, Grid3X3, User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -13,7 +13,6 @@ import { useCustomer } from "@/contexts/CustomerContext";
 import { useToast } from "@/hooks/use-toast";
 import SEO, { LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD, SITE_DOMAIN } from "@/components/SEO";
 import heroImg from "@/assets/images/atakum-hiz-hero.png";
-import askidaImg from "@/assets/images/atakum-hiz-askida.png";
 import catDog from "@/assets/images/category-dog.webp";
 import catCat from "@/assets/images/category-cat.webp";
 import catBird from "@/assets/images/category-bird.webp";
@@ -338,35 +337,6 @@ export default function AtakumHome() {
           </div>
         </section>
 
-        {/* Askida Mama */}
-        <section className="bg-slate-100 rounded-3xl overflow-hidden flex flex-col md:flex-row">
-          <div className="md:w-5/12">
-            <img src={askidaImg} alt="Sokak hayvanları için askıda mama" className="w-full h-full object-cover min-h-[250px]" />
-          </div>
-          <div className="p-6 md:p-10 md:w-7/12 flex flex-col justify-center">
-            <div className="inline-flex items-center gap-2 bg-rose-100 text-rose-600 px-3 py-1 rounded-full text-sm font-bold w-max mb-4">
-              <Heart size={16} className="fill-rose-600" /> Topluluk
-            </div>
-            <h2 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight mb-3">
-              Askıda Mama
-            </h2>
-            <p className="text-slate-600 font-medium mb-6 leading-relaxed">
-              Sokaktaki dostlarımızı unutmuyoruz. Siparişinize ekleyeceğiniz ufak bir bağış maması, Atakum'daki sokak hayvanlarına doğrudan ulaştırılır.
-            </p>
-            <div className="flex items-center gap-3">
-              <Link href="/sokak-canlari">
-                <Button className="bg-rose-500 hover:bg-rose-600 text-white font-bold rounded-xl h-12 px-6" data-testid="button-askida">
-                  Bağış Yap
-                </Button>
-              </Link>
-              <Link href="/sokak-canlari">
-                <Button variant="outline" className="border-slate-300 text-slate-700 font-bold rounded-xl h-12">
-                  Daha Fazla Bilgi
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
 
         {/* Vet Tip */}
         <section className="bg-amber-50 rounded-3xl p-6 md:p-8 border border-amber-100 relative overflow-hidden">
@@ -403,7 +373,6 @@ export default function AtakumHome() {
               <h4 className="text-white font-bold text-lg mb-4">Hızlı Linkler</h4>
               <ul className="space-y-3 font-medium">
                 <li><Link href="/kategori"><span className="hover:text-brand transition-colors cursor-pointer">Kategoriler</span></Link></li>
-                <li><Link href="/sokak-canlari"><span className="hover:text-brand transition-colors cursor-pointer">Askıda Mama</span></Link></li>
                 <li><Link href="/kampanya"><span className="hover:text-brand transition-colors cursor-pointer">Kampanyalar</span></Link></li>
                 <li><Link href="/sss"><span className="hover:text-brand transition-colors cursor-pointer">Sıkça Sorulan Sorular</span></Link></li>
               </ul>
