@@ -36,6 +36,54 @@ uri = "file://attached_assets/generated_images/logo-samsun-balanced.png"
 type = "image"
 title = "samsun balanced logo"
 
+[[generated]]
+id = "myhP28ek-UHetdrabOg1i"
+uri = "file://artifacts/mockup-sandbox/public/images/sicak-hero.png"
+type = "image"
+title = "Warm hero image dog cat"
+
+[[generated]]
+id = "pHvu__uQQfNpLtt_FkeLO"
+uri = "file://artifacts/mockup-sandbox/public/images/sicak-askida.png"
+type = "image"
+title = "Community food bowl heart"
+
+[[generated]]
+id = "JQKBG3ItvIKn-8ssXvPzX"
+uri = "file://artifacts/mockup-sandbox/public/images/sicak-vet.png"
+type = "image"
+title = "Friendly vet with dog"
+
+[[generated]]
+id = "OALFec1AD1DbiDsa_Q43y"
+uri = "file://artifacts/mockup-sandbox/public/images/vitrin-hero.png"
+type = "image"
+title = "Editorial pet portrait purple"
+
+[[generated]]
+id = "dnktF5PaUe-jps1M6yPvz"
+uri = "file://artifacts/mockup-sandbox/public/images/vitrin-products.png"
+type = "image"
+title = "Premium pet food still life"
+
+[[generated]]
+id = "rUim4W0BpkuWHPdTLVvvk"
+uri = "file://artifacts/mockup-sandbox/public/images/vitrin-charity.png"
+type = "image"
+title = "Street cat sleeping peacefully"
+
+[[generated]]
+id = "umkkferB6HgqkjdftSR_V"
+uri = "file://artifacts/mockup-sandbox/public/images/hiz-hero.png"
+type = "image"
+title = "Speedy delivery scooter purple"
+
+[[generated]]
+id = "drMHaM9BQVsQaex3Yd7zL"
+uri = "file://artifacts/mockup-sandbox/public/images/hiz-askida.png"
+type = "image"
+title = "Street cat askida mama"
+
 [[outputs]]
 id = "9y2QoewR6z_sxq3OzRlmR"
 uri = "file://jetgo_urunler.xlsx"
