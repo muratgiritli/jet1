@@ -17,6 +17,7 @@ import multer from "multer";
 import OpenAI from "openai";
 import { BRAND_PAGES } from "../client/src/lib/brand-seo-data";
 import { getAllStoreGoogleConfigs, setStoreGoogleConfig, deleteStoreGoogleConfig } from "./google-tags";
+import { getAllStoreMerchantConfigs, getStoreMerchantConfig, setStoreMerchantConfig, deleteStoreMerchantConfig } from "./merchant";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -1564,12 +1565,40 @@ export async function registerRoutes(
       preorderDate.setDate(preorderDate.getDate() + 3);
       const preorderDateStr = preorderDate.toISOString().split("T")[0];
 
+      // Teslimat modeli: kargo domainleri "aynı gün teslimat" demez.
+      const isCargo = stCfg.commerce.fulfillment === "cargo";
+      const merchantCfg = await getStoreMerchantConfig(stCfg.id);
+      // Kargo ücreti SADECE kargo modelinde anlamlıdır; aynı gün modeli her zaman
+      // ücretsizdir (override yok sayılır). Kargo için pozitif bir fiyat yoksa
+      // (ne admin override ne cargo_fee) shipping bloğu HİÇ yazılmaz; Google
+      // Merchant Center hesap düzeyi kargo ayarına bırakılır. Kargo domaini
+      // ASLA "0.00 TRY / ücretsiz aynı gün" iddiasında bulunmaz.
+      let shipAmount: string | null;
+      if (isCargo) {
+        let amt = merchantCfg?.shippingAmount != null ? Number(merchantCfg.shippingAmount) : NaN;
+        if (!Number.isFinite(amt)) {
+          const cs = await resolveSettings(["cargo_fee"], stCfg.id);
+          amt = Number(cs.cargo_fee ?? 0) || 0;
+        }
+        shipAmount = amt > 0 ? amt.toFixed(2) : null;
+      } else {
+        shipAmount = "0.00";
+      }
+      const shipService = isCargo ? "Kargo" : "Aynı Gün Teslimat";
+      const deliveryLine = isCargo
+        ? "Türkiye geneli hızlı kargo ile teslimat."
+        : "Aynı gün kapıda teslimat ve kapıda ödeme imkanı.";
+      const channelDesc = isCargo
+        ? `${stCfg.name} — Türkiye geneli hızlı kargo. Kedi maması, köpek maması, kedi kumu ve tüm pet ürünleri.`
+        : `${stCfg.name} — aynı gün kapıda teslimat ve kapıda ödeme. Kedi maması, köpek maması, kedi kumu ve tüm pet ürünleri.`;
+      const mpnPrefix = (stCfg.brandWord || "PET").replace(/[^A-Za-z0-9]+/g, "").toUpperCase() || "PET";
+
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
       xml += `<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">\n`;
       xml += `  <channel>\n`;
       xml += `    <title>${esc(stCfg.name)}</title>\n`;
       xml += `    <link>${SITE}</link>\n`;
-      xml += `    <description>Samsun'un en hızlı pet shop'u — kedi maması, köpek maması, kedi kumu ve daha fazlası. Aynı gün teslimat.</description>\n`;
+      xml += `    <description>${esc(channelDesc)}</description>\n`;
 
       let included = 0;
       let skippedNoImage = 0;
@@ -1592,7 +1621,7 @@ export async function registerRoutes(
         const imageUrl = r.img.startsWith("http") ? r.img : `${SITE}${r.img}`;
         const nameStartsWithBrand = brandClean && nameClean.toLowerCase().startsWith(brandClean.toLowerCase());
         const descPrefix = nameStartsWithBrand ? nameClean : `${brandClean} ${nameClean}`;
-        const descRaw = `${descPrefix}. ${animalLabel} için ${subcatClean || "pet ürünü"}. Samsun Atakum, İlkadım ve Canik mahallelerine aynı gün kapıda teslimat ve kapıda ödeme imkanı sunulur.`;
+        const descRaw = `${descPrefix}. ${animalLabel} için ${subcatClean || "pet ürünü"}. ${deliveryLine}`;
         const description = truncate(descRaw, 5000);
 
         // Pricing: if original_price > price, original goes in g:price, discounted in g:sale_price
@@ -1618,16 +1647,19 @@ export async function registerRoutes(
         if (r.barcode && /^\d{8,14}$/.test(String(r.barcode).trim())) {
           xml += `      <g:gtin>${esc(r.barcode)}</g:gtin>\n`;
         } else {
-          // No valid GTIN — provide MPN; with brand+mpn Google accepts the product
-          xml += `      <g:mpn>JETGO-${r.id}</g:mpn>\n`;
+          // No valid GTIN — provide MPN; with brand+mpn Google accepts the product.
+          // Marka sızıntısını önlemek için domaine özel marka kelimesini kullan.
+          xml += `      <g:mpn>${esc(mpnPrefix)}-${r.id}</g:mpn>\n`;
         }
         xml += `      <g:google_product_category>${esc(googleCat)}</g:google_product_category>\n`;
         if (productType) xml += `      <g:product_type>${esc(productType)}</g:product_type>\n`;
-        xml += `      <g:shipping>\n`;
-        xml += `        <g:country>TR</g:country>\n`;
-        xml += `        <g:service>Aynı Gün Teslimat</g:service>\n`;
-        xml += `        <g:price>0.00 TRY</g:price>\n`;
-        xml += `      </g:shipping>\n`;
+        if (shipAmount != null) {
+          xml += `      <g:shipping>\n`;
+          xml += `        <g:country>TR</g:country>\n`;
+          xml += `        <g:service>${esc(shipService)}</g:service>\n`;
+          xml += `        <g:price>${shipAmount} TRY</g:price>\n`;
+          xml += `      </g:shipping>\n`;
+        }
         xml += `    </item>\n`;
         included++;
       }
@@ -3871,6 +3903,38 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.delete("/api/admin/google-tags/:storeId", requireAdmin, async (req, res) => {
     try {
       await deleteStoreGoogleConfig(String(req.params.storeId));
+      res.json({ ok: true });
+    } catch (err: any) {
+      const invalid = err?.message === "invalid store";
+      res.status(invalid ? 400 : 500).json({ message: invalid ? "Geçersiz mağaza" : "Silme başarısız" });
+    }
+  });
+
+  // Google Merchant Center — her domain için feed adresi, ürün sayısı ve
+  // domaine özel Merchant hesap kimliği / kargo override yönetimi.
+  app.get("/api/admin/merchant", requireAdmin, async (_req, res) => {
+    try {
+      const stores = await getAllStoreMerchantConfigs();
+      const { rows } = await sharedPool.query(
+        `SELECT COUNT(*)::int AS c FROM products WHERE is_active = true AND price > 0 AND img IS NOT NULL AND img <> ''`,
+      );
+      res.json({ productCount: rows[0]?.c ?? 0, stores });
+    } catch {
+      res.status(500).json({ message: "Merchant ayarları yüklenemedi" });
+    }
+  });
+  app.put("/api/admin/merchant/:storeId", requireAdmin, async (req, res) => {
+    try {
+      const cfg = await setStoreMerchantConfig(String(req.params.storeId), req.body || {});
+      res.json({ ok: true, config: cfg });
+    } catch (err: any) {
+      const invalid = err?.message === "invalid store";
+      res.status(invalid ? 400 : 500).json({ message: invalid ? "Geçersiz mağaza" : "Kayıt başarısız" });
+    }
+  });
+  app.delete("/api/admin/merchant/:storeId", requireAdmin, async (req, res) => {
+    try {
+      await deleteStoreMerchantConfig(String(req.params.storeId));
       res.json({ ok: true });
     } catch (err: any) {
       const invalid = err?.message === "invalid store";

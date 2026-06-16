@@ -25,6 +25,7 @@ import { injectAllMeta, injectGoogleTags } from "../seo-meta";
 import { SEO_PAGES } from "../../client/src/lib/seo-data";
 import { getStoreByHost, brandifyFor, STORES } from "../../shared/stores";
 import { setStoreGoogleConfig, deleteStoreGoogleConfig, getAllStoreGoogleConfigs } from "../google-tags";
+import { setStoreMerchantConfig, deleteStoreMerchantConfig, getAllStoreMerchantConfigs, normalizeMerchantConfig } from "../merchant";
 import { pool } from "../storage";
 // The shared-edit protection helpers live in the client lib so they can be unit
 // tested here without booting the React app. STORE_SCOPED_SETTING_KEYS must stay
@@ -88,6 +89,8 @@ const SETTING_KEYS = [
   "payment_tosla_enabled", "tosla_client_id", "tosla_api_user", "tosla_api_pass",
   // per-domain DB-backed Google tags (override) touched by the Google tests
   "atakum:google_tags", "samsun:google_tags", "jetgopet:google_tags",
+  // per-domain DB-backed Google Merchant config touched by the Merchant tests
+  "samsun:merchant", "atakum:merchant", "markapet:merchant",
 ];
 
 let server: ReturnType<typeof createServer>;
@@ -2635,6 +2638,110 @@ test("Google: admin google-tags routes reject unauthenticated callers", async ()
   // the rejected write must not have persisted
   const rows = await getAllStoreGoogleConfigs();
   assert.notEqual(rows.find((r) => r.id === "atakum")!.effective.gtmId, "GTM-HACK");
+});
+
+// ---- Per-domain Google Merchant feed + admin config ----
+
+test("Merchant: config module normalizes ids + rejects unknown store", async () => {
+  await assert.rejects(() => setStoreMerchantConfig("not-a-store", { merchantId: "1" }));
+  // merchantId keeps digits only; shippingAmount normalized to X.XX
+  assert.deepEqual(
+    normalizeMerchantConfig({ merchantId: " MC-123 456 ", shippingAmount: "49,9" }),
+    { merchantId: "123456", shippingAmount: "49.90" },
+  );
+  // non-numeric id and negative amount drop out entirely
+  assert.deepEqual(normalizeMerchantConfig({ merchantId: "abc", shippingAmount: "-5" }), {});
+});
+
+test("Merchant: admin overview lists every store with feed url + fulfillment", async () => {
+  await setStoreMerchantConfig("samsun", { merchantId: "9988776655", shippingAmount: "39.90" });
+  try {
+    const rows = await getAllStoreMerchantConfigs();
+    assert.equal(rows.length, STORES.length, "every store listed");
+    const sam = rows.find((r) => r.id === "samsun")!;
+    assert.equal(sam.fulfillment, "cargo");
+    assert.equal(sam.hasConfig, true);
+    assert.equal(sam.config.merchantId, "9988776655");
+    assert.equal(sam.config.shippingAmount, "39.90");
+    assert.ok(sam.feedUrl.endsWith("/google-merchant.xml"), "feed url points at the xml feed");
+    assert.ok(sam.feedUrl.includes("atakumpet.com"), "feed url uses the store's OWN domain");
+    const ata = rows.find((r) => r.id === "atakum")!;
+    assert.equal(ata.fulfillment, "local");
+    assert.equal(ata.hasConfig, false, "untouched store has no config");
+  } finally {
+    await deleteStoreMerchantConfig("samsun");
+  }
+});
+
+test("Merchant feed: local store advertises same-day, cargo store advertises kargo", async () => {
+  // Give the cargo store a positive feed shipping price so its <g:shipping> block
+  // is deterministic regardless of whether dev cargo_fee happens to be configured.
+  await setStoreMerchantConfig("samsun", { shippingAmount: "29.90" });
+  try {
+    const localFeed = await (await fetch(`${baseUrl}/google-merchant.xml`, { headers: { "X-Forwarded-Host": ATAKUM_HOST } })).text();
+    const cargoFeed = await (await fetch(`${baseUrl}/google-merchant.xml`, { headers: { "X-Forwarded-Host": SAMSUN_HOST } })).text();
+    // channel descriptions are commerce-model aware
+    assert.match(localFeed, /aynı gün/i, "local channel mentions same-day delivery");
+    assert.match(cargoFeed, /kargo/i, "cargo channel mentions kargo");
+    // cargo feed must never claim the same-day service or the Samsun-only mahalle text
+    assert.ok(!cargoFeed.includes("Aynı Gün Teslimat"), "cargo feed must NOT advertise same-day shipping");
+    for (const feed of [localFeed, cargoFeed]) {
+      assert.ok(!feed.includes("İlkadım") && !feed.includes("Canik"), "no hardcoded Samsun mahalle text");
+    }
+    // item-level shipping service reflects the model (guarded on item presence)
+    if (localFeed.includes("<item>")) {
+      assert.ok(localFeed.includes("<g:service>Aynı Gün Teslimat</g:service>"), "local items ship same-day");
+      assert.ok(localFeed.includes("<g:price>0.00 TRY</g:price>"), "local same-day shipping is free");
+    }
+    if (cargoFeed.includes("<item>")) {
+      assert.ok(cargoFeed.includes("<g:service>Kargo</g:service>"), "cargo items ship via kargo");
+      assert.ok(cargoFeed.includes("<g:price>29.90 TRY</g:price>"), "cargo carries the configured kargo price");
+      assert.ok(!cargoFeed.includes("<g:service>Aynı Gün Teslimat</g:service>"), "no same-day item shipping on cargo feed");
+    }
+  } finally {
+    await deleteStoreMerchantConfig("samsun");
+  }
+});
+
+test("Merchant feed: cargo store with no configured shipping never advertises free 0.00", async () => {
+  // No merchant override; if cargo_fee is also unset/zero the <g:shipping> block is
+  // OMITTED (deferred to Merchant Center account shipping) — a cargo domain must
+  // never emit a forbidden "free 0.00 TRY" / same-day shipping line.
+  await deleteStoreMerchantConfig("samsun");
+  const feed = await (await fetch(`${baseUrl}/google-merchant.xml`, { headers: { "X-Forwarded-Host": SAMSUN_HOST } })).text();
+  assert.ok(!feed.includes("<g:price>0.00 TRY</g:price>"), "cargo feed must NEVER advertise free 0.00 shipping");
+  assert.ok(!feed.includes("Aynı Gün Teslimat"), "cargo feed must NOT claim same-day delivery");
+});
+
+test("Merchant feed: admin shippingAmount override flows into the cargo feed", async () => {
+  await setStoreMerchantConfig("samsun", { shippingAmount: "55.00" });
+  try {
+    const feed = await (await fetch(`${baseUrl}/google-merchant.xml`, { headers: { "X-Forwarded-Host": SAMSUN_HOST } })).text();
+    if (feed.includes("<item>")) {
+      assert.ok(feed.includes("<g:price>55.00 TRY</g:price>"), "override shipping price appears in feed");
+    }
+  } finally {
+    await deleteStoreMerchantConfig("samsun");
+  }
+});
+
+test("Merchant feed: non-JETGO domain never leaks the JETGO brand word in MPN", async () => {
+  const feed = await (await fetch(`${baseUrl}/google-merchant.xml`, { headers: { "X-Forwarded-Host": MARKAPET_HOST } })).text();
+  // the MPN fallback used to hardcode "JETGO-<id>"; it must now be brandified per store
+  assert.ok(!feed.includes("JETGO-"), "no JETGO- MPN leak on marka.pet feed");
+});
+
+test("Merchant: admin routes reject unauthenticated callers", async () => {
+  const getRes = await fetch(`${baseUrl}/api/admin/merchant`, { headers: { "X-Forwarded-Host": JETGO_HOST } });
+  assert.equal(getRes.status, 401, "GET requires admin");
+  const putRes = await fetch(`${baseUrl}/api/admin/merchant/samsun`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "X-Forwarded-Host": JETGO_HOST },
+    body: JSON.stringify({ merchantId: "666" }),
+  });
+  assert.equal(putRes.status, 401, "PUT requires admin");
+  const rows = await getAllStoreMerchantConfigs();
+  assert.equal(rows.find((r) => r.id === "samsun")!.hasConfig, false, "rejected write did not persist");
 });
 
 // ---- Shipped-order tracking SMS auto-send + de-duplication ----

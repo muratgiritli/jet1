@@ -87,6 +87,7 @@ import {
   Stethoscope,
   Printer,
   Truck,
+  Copy,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -2091,6 +2092,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "iletisim", label: "İletişim", icon: <Mail className="w-3.5 h-3.5" /> },
             { key: "eksik", label: "Eksik Ürünler", icon: <AlertTriangle className="w-3.5 h-3.5" /> },
             { key: "google", label: "Google", icon: <Tag className="w-3.5 h-3.5" /> },
+            { key: "merchant", label: "Merchant", icon: <ShoppingBag className="w-3.5 h-3.5" /> },
             { key: "ayarlar", label: "Ayarlar", icon: <Settings className="w-3.5 h-3.5" /> },
           ].map(tab => (
             <button
@@ -2137,6 +2139,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "iletisim" && <ContactMessagesSection />}
         {activeSection === "eksik" && <MissingProductsSection />}
         {activeSection === "google" && <GoogleTagsSection />}
+        {activeSection === "merchant" && <MerchantSection />}
         {activeSection === "ayarlar" && <SettingsSection />}
         {activeSection === "yonetim" && <>
           {!yonetimSub && (
@@ -8709,6 +8712,18 @@ type GoogleTagRow = {
 };
 type GoogleForm = { gtmId: string; ga4Ids: string; adsIds: string; siteVerification: string };
 
+type MerchantConfig = { merchantId?: string; shippingAmount?: string };
+type MerchantRow = {
+  id: string;
+  name: string;
+  domain: string;
+  fulfillment: "local" | "cargo";
+  feedUrl: string;
+  config: MerchantConfig;
+  hasConfig: boolean;
+};
+type MerchantForm = { merchantId: string; shippingAmount: string };
+
 function GoogleTagsSection() {
   const { toast } = useToast();
   const { data: rows, isLoading } = useQuery<GoogleTagRow[]>({
@@ -8810,6 +8825,136 @@ function GoogleTagsSection() {
                 {r.hasOverride && (
                   <Button size="sm" variant="outline" onClick={() => { setSavingId(r.id); resetMut.mutate(r.id); }} disabled={busy} data-testid={`btn-reset-google-${r.id}`}>
                     Varsayılana Dön
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
+  );
+}
+
+function MerchantSection() {
+  const { toast } = useToast();
+  const { data, isLoading } = useQuery<{ productCount: number; stores: MerchantRow[] }>({
+    queryKey: ["/api/admin/merchant"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/merchant", { credentials: "include" });
+      if (!res.ok) throw new Error("Merchant ayarları yüklenemedi");
+      return res.json();
+    },
+  });
+  const [forms, setForms] = useState<Record<string, MerchantForm>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!data?.stores) return;
+    const next: Record<string, MerchantForm> = {};
+    for (const r of data.stores) {
+      next[r.id] = {
+        merchantId: r.config?.merchantId || "",
+        shippingAmount: r.config?.shippingAmount || "",
+      };
+    }
+    setForms(next);
+  }, [data]);
+
+  const saveMut = useMutation({
+    mutationFn: async (storeId: string) => { await apiRequest("PUT", `/api/admin/merchant/${storeId}`, forms[storeId]); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/merchant"] });
+      toast({ title: "Kaydedildi", description: "Feed en geç 60 saniye içinde güncellenir." });
+    },
+    onError: (e: any) => toast({ title: "Hata", description: e?.message || "Kayıt başarısız", variant: "destructive" }),
+    onSettled: () => setSavingId(null),
+  });
+
+  const resetMut = useMutation({
+    mutationFn: async (storeId: string) => { await apiRequest("DELETE", `/api/admin/merchant/${storeId}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/merchant"] });
+      toast({ title: "Sıfırlandı", description: "Varsayılan teslimat moduna dönüldü." });
+    },
+    onError: (e: any) => toast({ title: "Hata", description: e?.message || "İşlem başarısız", variant: "destructive" }),
+    onSettled: () => setSavingId(null),
+  });
+
+  const setField = (storeId: string, k: keyof MerchantForm, v: string) =>
+    setForms((p) => ({ ...p, [storeId]: { ...(p[storeId] || { merchantId: "", shippingAmount: "" }), [k]: v } }));
+
+  const copyFeed = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Kopyalandı", description: "Feed adresi panoya kopyalandı." });
+    } catch {
+      toast({ title: "Kopyalanamadı", description: url, variant: "destructive" });
+    }
+  };
+
+  if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Yükleniyor...</div>;
+
+  return (
+    <div className="space-y-4" data-testid="section-merchant">
+      <div className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
+        Her domaini Google Merchant Center'a ayrı ayrı ekleyin. Her domainin kendi ürün feed adresini, o domainin
+        Merchant hesabında "Feed" olarak tanımlayın. Feed içeriği o domainin teslimat moduna göre üretilir
+        (aynı gün teslimat veya kargo). Toplam feed ürünü: <strong data-testid="text-merchant-product-count">{data?.productCount ?? 0}</strong>.
+        Kargo ücretini boş bırakırsanız kargo domainlerinde mağazanın kargo ayarı kullanılır.
+      </div>
+      {(data?.stores || []).map((r) => {
+        const f = forms[r.id] || { merchantId: "", shippingAmount: "" };
+        const busy = savingId === r.id && (saveMut.isPending || resetMut.isPending);
+        const isCargo = r.fulfillment === "cargo";
+        return (
+          <Card key={r.id} data-testid={`card-merchant-${r.id}`}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center justify-between gap-2">
+                <span>{r.name}</span>
+                <div className="flex items-center gap-1.5">
+                  <Badge variant={isCargo ? "secondary" : "default"} data-testid={`badge-fulfillment-${r.id}`}>
+                    {isCargo ? "Kargo" : "Aynı Gün"}
+                  </Badge>
+                  {r.hasConfig && <Badge variant="outline" data-testid={`badge-merchant-saved-${r.id}`}>Kayıtlı</Badge>}
+                </div>
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">{r.domain.replace(/^https?:\/\//, "")}</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="space-y-1">
+                <Label className="text-xs">Ürün Feed Adresi (Merchant Center'a ekleyin)</Label>
+                <div className="flex items-center gap-2">
+                  <Input readOnly value={r.feedUrl} className="font-mono text-xs" data-testid={`input-feed-url-${r.id}`} />
+                  <Button size="sm" variant="outline" onClick={() => copyFeed(r.feedUrl)} data-testid={`btn-copy-feed-${r.id}`}>
+                    <Copy className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              </div>
+              <div className={isCargo ? "grid gap-3 sm:grid-cols-2" : "grid gap-3"}>
+                <div className="space-y-1">
+                  <Label className="text-xs">Merchant Center Hesap ID</Label>
+                  <Input value={f.merchantId} onChange={(e) => setField(r.id, "merchantId", e.target.value)} placeholder="örn. 1234567890" inputMode="numeric" data-testid={`input-merchant-id-${r.id}`} />
+                </div>
+                {isCargo ? (
+                  <div className="space-y-1">
+                    <Label className="text-xs">Feed Kargo Ücreti (TL, opsiyonel)</Label>
+                    <Input value={f.shippingAmount} onChange={(e) => setField(r.id, "shippingAmount", e.target.value)} placeholder="boş = mağaza kargo ayarı" inputMode="decimal" data-testid={`input-merchant-ship-${r.id}`} />
+                  </div>
+                ) : null}
+              </div>
+              {!isCargo && (
+                <p className="text-xs text-muted-foreground" data-testid={`text-merchant-shipnote-${r.id}`}>
+                  Aynı gün teslimat: feed'de kargo ücretsiz (0,00) gösterilir.
+                </p>
+              )}
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={() => { setSavingId(r.id); saveMut.mutate(r.id); }} disabled={busy} data-testid={`btn-save-merchant-${r.id}`}>
+                  {busy && saveMut.isPending ? "Kaydediliyor..." : "Kaydet"}
+                </Button>
+                {r.hasConfig && (
+                  <Button size="sm" variant="outline" onClick={() => { setSavingId(r.id); resetMut.mutate(r.id); }} disabled={busy} data-testid={`btn-reset-merchant-${r.id}`}>
+                    Sıfırla
                   </Button>
                 )}
               </div>

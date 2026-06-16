@@ -21,3 +21,11 @@ Config ids are embedded into inline `<script>`/attributes, so they MUST be sanit
 
 ## Search Console HTML-file verification
 Served by a dynamic route in `server/routes.ts` matching `/google<ID>.html`, returning the file ONLY when the resolved store's `verificationFileId` matches (else 404) — so each domain verifies independently. Route is registered before static serving so it wins. It must not collide with `/google-merchant.xml` (`.xml`, has a dash) or `/yandex_*.html`.
+
+## Google Merchant feed (`/google-merchant.xml`) is commerce-model-driven
+The shopping feed is generated per requesting domain and MUST match that store's `StoreConfig.commerce.fulfillment`, never a hardcoded city/brand:
+- **local (same-day) stores:** channel/item text = "Aynı Gün Teslimat", shipping ALWAYS free (`0.00 TRY`). A per-store shipping override is intentionally IGNORED for local — same-day-free is the selling point.
+- **cargo stores:** text = "Kargo"/"Türkiye geneli hızlı kargo". Shipping price = admin merchant override → else store `cargo_fee` (via `resolveSettings`). **If neither yields a positive number, OMIT the `<g:shipping>` block entirely** (defer to Merchant Center account-level shipping). A cargo domain must NEVER emit "Aynı Gün Teslimat" nor a free `0.00 TRY` line — that was the original bug.
+- **Why:** dev/prod often have NO `cargo_fee` row at all (resolveSettings defaults it to 0); printing `0.00` would falsely advertise free cargo. Omitting is safe and is Google's recommended account-level-shipping path.
+- MPN fallback (no GTIN) must be brandified per store (`brandWord`-derived prefix), never a literal `JETGO-` — that leaks the flagship brand onto other domains.
+- Admin config lives in `server/merchant.ts` (mirror of google-tags.ts): `app_settings` key `<storeId>:merchant` = JSON `{merchantId, shippingAmount}`, 60s cache+invalidate, fail-closed null, whitelist storeId. `merchantId` is digits-only (record-keeping only; not injected into the feed). Admin UI = MerchantSection (`/api/admin/merchant`, requireAdmin); the shipping-override input is shown ONLY for cargo stores.
