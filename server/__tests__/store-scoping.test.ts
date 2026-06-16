@@ -2455,9 +2455,10 @@ test("SEO landing page on the default (jetgo) host keeps the JETGO brand (contra
 //
 // Each of the 9 domains must be its own Google property. There must be NO shared,
 // hardcoded Google snippet baked into the served HTML template; instead Google
-// tags are injected per-store from StoreConfig.google (currently empty for all
-// stores), and the HTML-file Search Console verification is served only on the
-// domain whose store declares that file id.
+// tags are injected per-store from StoreConfig.google (only jetgo.pet currently
+// declares a tag — a Google Ads id; all other stores are empty), and the HTML-file
+// Search Console verification is served only on the domain whose store declares
+// that file id.
 
 test("Google: index.html template carries NO hardcoded shared Google snippet", () => {
   for (const needle of [
@@ -2476,18 +2477,26 @@ test("Google: index.html template carries NO hardcoded shared Google snippet", (
   }
 });
 
-test("Google: every domain currently injects ZERO Google tags (empty + independent)", async () => {
-  const ALL_HOSTS = [
+test("Google: only jetgo.pet injects Google tags (Ads); other domains inject ZERO", async () => {
+  // Every domain except jetgo.pet is still an empty, independent Google property.
+  const ZERO_HOSTS = [
     JETGO_HOST, ATAKUM_HOST, SAMSUN_HOST, SAMSUNPET_HOST, KARADENIZ_HOST,
-    ATAKUMBIZ_HOST, JETGOPET_HOST, JETGOSHOP_HOST, MARKAPET_HOST,
+    ATAKUMBIZ_HOST, JETGOSHOP_HOST, MARKAPET_HOST,
   ];
-  for (const host of ALL_HOSTS) {
+  for (const host of ZERO_HOSTS) {
     const html = await injectAllMeta(INDEX_HTML, "/", host);
     assert.ok(!html.includes("google-site-verification"), `${host}: no GSC meta until configured`);
     assert.ok(!html.includes("googletagmanager.com/gtm.js"), `${host}: no GTM until configured`);
     assert.ok(!html.includes("googletagmanager.com/gtag/js"), `${host}: no gtag until configured`);
     assert.ok(!html.includes("googletagmanager.com/ns.html"), `${host}: no GTM noscript until configured`);
   }
+  // jetgo.pet has its OWN Google Ads tag (AW-18243800307) configured — and only Ads,
+  // no GTM/GSC — and that tag must NOT leak onto any other domain (asserted above).
+  const petHtml = await injectAllMeta(INDEX_HTML, "/", JETGOPET_HOST);
+  assert.ok(petHtml.includes("googletagmanager.com/gtag/js?id=AW-18243800307"), "jetgo.pet loads its Ads gtag");
+  assert.ok(petHtml.includes("gtag('config','AW-18243800307')"), "jetgo.pet configures its Ads id");
+  assert.ok(!petHtml.includes("google-site-verification"), "jetgo.pet: no GSC meta (only Ads configured)");
+  assert.ok(!petHtml.includes("googletagmanager.com/gtm.js"), "jetgo.pet: no GTM (only Ads configured)");
 });
 
 test("Google: injectGoogleTags wires a store's OWN GSC + GTM + GA4 + Ads", () => {

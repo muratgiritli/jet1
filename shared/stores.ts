@@ -419,7 +419,7 @@ const jetgopet: StoreConfig = {
       "atakum petshop, samsun petshop, samsun pet shop, atakum pet shop, samsun kedi maması, samsun köpek maması, samsun kedi kumu, atakum aynı gün teslimat, samsun acil petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop samsun",
     ogImage: "/og-image.webp",
   },
-  google: {},
+  google: { adsIds: ["AW-18243800307"] },
   commerce: {
     fulfillment: "local",
     shippingLabel: "Getirmesi",
