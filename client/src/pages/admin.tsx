@@ -3,7 +3,7 @@ import { exportProductsPdf } from "@/lib/exportProductsPdf";
 import { exportStockMovementsPdf } from "@/lib/exportStockMovementsPdf";
 import { exportSktPdf } from "@/lib/exportSktPdf";
 import { printOrderReceipt } from "@/lib/printReceipt";
-import { STORES } from "@shared/stores";
+import { STORES, type StoreGoogle } from "@shared/stores";
 import { isSharedRowInStoreView, confirmSharedEdit, storeCtxParam, STORE_SCOPED_SETTING_KEYS, confirmSharedSettingsSave } from "@/lib/storeScope";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -2090,6 +2090,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "yorumlar", label: "Yorumlar", icon: <MessageSquare className="w-3.5 h-3.5" /> },
             { key: "iletisim", label: "İletişim", icon: <Mail className="w-3.5 h-3.5" /> },
             { key: "eksik", label: "Eksik Ürünler", icon: <AlertTriangle className="w-3.5 h-3.5" /> },
+            { key: "google", label: "Google", icon: <Tag className="w-3.5 h-3.5" /> },
             { key: "ayarlar", label: "Ayarlar", icon: <Settings className="w-3.5 h-3.5" /> },
           ].map(tab => (
             <button
@@ -2135,6 +2136,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "yorumlar" && <ReviewManagementSection />}
         {activeSection === "iletisim" && <ContactMessagesSection />}
         {activeSection === "eksik" && <MissingProductsSection />}
+        {activeSection === "google" && <GoogleTagsSection />}
         {activeSection === "ayarlar" && <SettingsSection />}
         {activeSection === "yonetim" && <>
           {!yonetimSub && (
@@ -8692,6 +8694,130 @@ function InstallmentRatesCard() {
         )}
       </CardContent>
     </Card>
+  );
+}
+
+type GoogleTagRow = {
+  id: string;
+  name: string;
+  domain: string;
+  override: StoreGoogle | null;
+  static: StoreGoogle | null;
+  effective: StoreGoogle;
+  hasOverride: boolean;
+  source: "db" | "static" | "none";
+};
+type GoogleForm = { gtmId: string; ga4Ids: string; adsIds: string; siteVerification: string };
+
+function GoogleTagsSection() {
+  const { toast } = useToast();
+  const { data: rows, isLoading } = useQuery<GoogleTagRow[]>({
+    queryKey: ["/api/admin/google-tags"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/google-tags", { credentials: "include" });
+      if (!res.ok) throw new Error("Google etiketleri yüklenemedi");
+      return res.json();
+    },
+  });
+  const [forms, setForms] = useState<Record<string, GoogleForm>>({});
+  const [savingId, setSavingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!rows) return;
+    const next: Record<string, GoogleForm> = {};
+    for (const r of rows) {
+      const eff = r.effective || {};
+      next[r.id] = {
+        gtmId: eff.gtmId || "",
+        ga4Ids: (eff.ga4Ids || []).join(", "),
+        adsIds: (eff.adsIds || []).join(", "),
+        siteVerification: eff.siteVerification || "",
+      };
+    }
+    setForms(next);
+  }, [rows]);
+
+  const saveMut = useMutation({
+    mutationFn: async (storeId: string) => {
+      await apiRequest("PUT", `/api/admin/google-tags/${storeId}`, forms[storeId]);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/google-tags"] });
+      toast({ title: "Kaydedildi", description: "En geç 60 saniye içinde tüm sayfalarda yayında." });
+    },
+    onError: (e: any) => toast({ title: "Hata", description: e?.message || "Kayıt başarısız", variant: "destructive" }),
+    onSettled: () => setSavingId(null),
+  });
+
+  const resetMut = useMutation({
+    mutationFn: async (storeId: string) => { await apiRequest("DELETE", `/api/admin/google-tags/${storeId}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/google-tags"] });
+      toast({ title: "Sıfırlandı", description: "Koddaki varsayılana dönüldü." });
+    },
+    onError: (e: any) => toast({ title: "Hata", description: e?.message || "İşlem başarısız", variant: "destructive" }),
+    onSettled: () => setSavingId(null),
+  });
+
+  const setField = (storeId: string, k: keyof GoogleForm, v: string) =>
+    setForms((p) => ({ ...p, [storeId]: { ...(p[storeId] || { gtmId: "", ga4Ids: "", adsIds: "", siteVerification: "" }), [k]: v } }));
+
+  if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Yükleniyor...</div>;
+
+  return (
+    <div className="space-y-4" data-testid="section-google-tags">
+      <div className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
+        Her domain için Google etiketlerini buradan girin. Kaydettiğinizde redeploy gerekmeden yayına girer (en geç 60 sn).
+        GA4 ve Ads kimliklerini virgülle ayırarak birden fazla girebilirsiniz. Boş bırakılan alan o domainde hiçbir etiket yüklemez.
+      </div>
+      {(rows || []).map((r) => {
+        const f = forms[r.id] || { gtmId: "", ga4Ids: "", adsIds: "", siteVerification: "" };
+        const busy = savingId === r.id && (saveMut.isPending || resetMut.isPending);
+        return (
+          <Card key={r.id} data-testid={`card-google-${r.id}`}>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base flex items-center justify-between gap-2">
+                <span>{r.name}</span>
+                <Badge variant={r.source === "db" ? "default" : r.source === "static" ? "secondary" : "outline"} data-testid={`badge-source-${r.id}`}>
+                  {r.source === "db" ? "Admin (DB)" : r.source === "static" ? "Kod (varsayılan)" : "Boş"}
+                </Badge>
+              </CardTitle>
+              <p className="text-xs text-muted-foreground">{r.domain.replace(/^https?:\/\//, "")}</p>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label className="text-xs">GTM ID</Label>
+                  <Input value={f.gtmId} onChange={(e) => setField(r.id, "gtmId", e.target.value)} placeholder="GTM-XXXXXXX" data-testid={`input-gtm-${r.id}`} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Search Console (meta kodu)</Label>
+                  <Input value={f.siteVerification} onChange={(e) => setField(r.id, "siteVerification", e.target.value)} placeholder="doğrulama kodu" data-testid={`input-verify-${r.id}`} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">GA4 ID(ler)</Label>
+                  <Input value={f.ga4Ids} onChange={(e) => setField(r.id, "ga4Ids", e.target.value)} placeholder="G-XXXXXXXXXX, G-..." data-testid={`input-ga4-${r.id}`} />
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-xs">Google Ads ID(ler)</Label>
+                  <Input value={f.adsIds} onChange={(e) => setField(r.id, "adsIds", e.target.value)} placeholder="AW-XXXXXXXXXX" data-testid={`input-ads-${r.id}`} />
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button size="sm" onClick={() => { setSavingId(r.id); saveMut.mutate(r.id); }} disabled={busy} data-testid={`btn-save-google-${r.id}`}>
+                  {busy && saveMut.isPending ? "Kaydediliyor..." : "Kaydet / Yayına Al"}
+                </Button>
+                {r.hasOverride && (
+                  <Button size="sm" variant="outline" onClick={() => { setSavingId(r.id); resetMut.mutate(r.id); }} disabled={busy} data-testid={`btn-reset-google-${r.id}`}>
+                    Varsayılana Dön
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
   );
 }
 

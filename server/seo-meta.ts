@@ -1,6 +1,7 @@
 import { SEO_PAGES, type SeoPageData } from "../client/src/lib/seo-data";
 import { pool as sharedPool } from "./storage";
 import { getStoreByHost, brandifyFor, type StoreConfig } from "@shared/stores";
+import { getStoreGoogleConfig } from "./google-tags";
 
 type ProductMeta = {
   id: number;
@@ -328,7 +329,10 @@ const PRODUCT_PATH_RE = /^\/urun\/(\d+)(?:\/[^/?#]*)?\/?$/;
 export async function injectAllMeta(html: string, urlPath: string, host?: string): Promise<string> {
   const store = getStoreByHost(host);
   let out = applyGlobalBranding(html, store);
-  out = injectGoogleTags(out, store);
+  // DB'de admin tarafından girilmiş google config varsa statik koda gömülü
+  // değeri tamamen ezer (boş bile olsa); yoksa statik koda gömülü değere düşülür.
+  const dbGoogle = await getStoreGoogleConfig(store.id);
+  out = injectGoogleTags(out, dbGoogle ? { ...store, google: dbGoogle } : store);
 
   const cleanPath = urlPath.split("?")[0].split("#")[0];
   const m = cleanPath.match(PRODUCT_PATH_RE);

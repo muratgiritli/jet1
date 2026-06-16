@@ -23,7 +23,8 @@ import * as cookieSignature from "cookie-signature";
 import { registerRoutes, isTestOtpBypass } from "../routes";
 import { injectAllMeta, injectGoogleTags } from "../seo-meta";
 import { SEO_PAGES } from "../../client/src/lib/seo-data";
-import { getStoreByHost, brandifyFor } from "../../shared/stores";
+import { getStoreByHost, brandifyFor, STORES } from "../../shared/stores";
+import { setStoreGoogleConfig, deleteStoreGoogleConfig, getAllStoreGoogleConfigs } from "../google-tags";
 import { pool } from "../storage";
 // The shared-edit protection helpers live in the client lib so they can be unit
 // tested here without booting the React app. STORE_SCOPED_SETTING_KEYS must stay
@@ -85,6 +86,8 @@ const SETTING_KEYS = [
   "payment_nakit_enabled",
   // online card gate (Tosla) — needed so online orders pass the payment gate
   "payment_tosla_enabled", "tosla_client_id", "tosla_api_user", "tosla_api_pass",
+  // per-domain DB-backed Google tags (override) touched by the Google tests
+  "atakum:google_tags", "samsun:google_tags", "jetgopet:google_tags",
 ];
 
 let server: ReturnType<typeof createServer>;
@@ -2541,6 +2544,97 @@ test("Google: HTML-file verification 404s on a domain that hasn't declared that 
     headers: { "X-Forwarded-Host": JETGO_HOST },
   });
   assert.equal(res.status, 404);
+});
+
+// ---- DB-backed per-domain Google tags (admin-editable, no redeploy) ----
+//
+// Google config moved from hardcoded StoreConfig.google to app_settings
+// "<storeId>:google_tags" (JSON), read with a short-lived cache that
+// setStoreGoogleConfig/deleteStoreGoogleConfig invalidate. A DB override fully
+// replaces the static config (even when empty); absence falls back to static.
+
+test("Google: a DB override beats the static config and emits that store's tags", async () => {
+  await setStoreGoogleConfig("atakum", {
+    gtmId: "GTM-DBONLY1", ga4Ids: ["G-DBGA4ONE"], adsIds: [], siteVerification: "db-verif-1",
+  });
+  try {
+    const html = await injectAllMeta(INDEX_HTML, "/", ATAKUM_HOST);
+    assert.ok(html.includes("'dataLayer','GTM-DBONLY1'"), "DB GTM injected");
+    assert.ok(html.includes("gtag/js?id=G-DBGA4ONE"), "DB GA4 injected");
+    assert.ok(html.includes(`content="db-verif-1"`), "DB GSC meta injected");
+  } finally {
+    await deleteStoreGoogleConfig("atakum");
+  }
+});
+
+test("Google: an empty DB override blanks a store's STATIC tags (no redeploy)", async () => {
+  // jetgopet ships a static Ads tag; an explicit empty DB override must remove it.
+  await setStoreGoogleConfig("jetgopet", {});
+  try {
+    const html = await injectAllMeta(INDEX_HTML, "/", JETGOPET_HOST);
+    assert.ok(!html.includes("googletagmanager.com/gtag/js"), "empty override removes the static Ads gtag");
+    assert.ok(!html.includes("AW-18243800307"), "static Ads id no longer emitted");
+  } finally {
+    await deleteStoreGoogleConfig("jetgopet");
+  }
+});
+
+test("Google: a DB override on one domain does NOT leak onto another", async () => {
+  await setStoreGoogleConfig("atakum", { gtmId: "GTM-LEAKTEST" });
+  try {
+    const ata = await injectAllMeta(INDEX_HTML, "/", ATAKUM_HOST);
+    const sam = await injectAllMeta(INDEX_HTML, "/", SAMSUN_HOST);
+    assert.ok(ata.includes("GTM-LEAKTEST"), "atakum gets its own DB GTM");
+    assert.ok(!sam.includes("GTM-LEAKTEST"), "samsun must NOT see atakum's DB GTM");
+  } finally {
+    await deleteStoreGoogleConfig("atakum");
+  }
+});
+
+test("Google: deleting a DB override restores the static config", async () => {
+  await setStoreGoogleConfig("jetgopet", { gtmId: "GTM-TEMP9" });
+  let html = await injectAllMeta(INDEX_HTML, "/", JETGOPET_HOST);
+  assert.ok(html.includes("GTM-TEMP9"), "temp DB override active");
+  await deleteStoreGoogleConfig("jetgopet");
+  html = await injectAllMeta(INDEX_HTML, "/", JETGOPET_HOST);
+  assert.ok(!html.includes("GTM-TEMP9"), "DB override removed");
+  assert.ok(html.includes("AW-18243800307"), "static Ads restored after delete");
+});
+
+test("Google: admin overview lists every store with source flags + normalizes ids", async () => {
+  // unknown store id is rejected
+  await assert.rejects(() => setStoreGoogleConfig("not-a-store", { gtmId: "x" }));
+  // comma/newline-split lists are trimmed + deduped on write
+  await setStoreGoogleConfig("atakum", { ga4Ids: " G-AAA , G-AAA \n G-BBB ", adsIds: "AW-1" });
+  try {
+    const rows = await getAllStoreGoogleConfigs();
+    assert.equal(rows.length, STORES.length, "every store listed");
+    const ata = rows.find((r) => r.id === "atakum")!;
+    assert.equal(ata.source, "db");
+    assert.equal(ata.hasOverride, true);
+    assert.deepEqual(ata.effective.ga4Ids, ["G-AAA", "G-BBB"], "ga4 ids split/trimmed/deduped");
+    assert.deepEqual(ata.effective.adsIds, ["AW-1"]);
+    const pet = rows.find((r) => r.id === "jetgopet")!;
+    assert.equal(pet.source, "static", "jetgopet still served from static config");
+  } finally {
+    await deleteStoreGoogleConfig("atakum");
+  }
+});
+
+test("Google: admin google-tags routes reject unauthenticated callers", async () => {
+  const getRes = await fetch(`${baseUrl}/api/admin/google-tags`, {
+    headers: { "X-Forwarded-Host": JETGO_HOST },
+  });
+  assert.equal(getRes.status, 401, "GET requires admin");
+  const putRes = await fetch(`${baseUrl}/api/admin/google-tags/atakum`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", "X-Forwarded-Host": JETGO_HOST },
+    body: JSON.stringify({ gtmId: "GTM-HACK" }),
+  });
+  assert.equal(putRes.status, 401, "PUT requires admin");
+  // the rejected write must not have persisted
+  const rows = await getAllStoreGoogleConfigs();
+  assert.notEqual(rows.find((r) => r.id === "atakum")!.effective.gtmId, "GTM-HACK");
 });
 
 // ---- Shipped-order tracking SMS auto-send + de-duplication ----

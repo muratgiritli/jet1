@@ -16,6 +16,7 @@ import { runSeoFill, getSeoFillStatus, isSeoFillRunning } from "./seo-fill";
 import multer from "multer";
 import OpenAI from "openai";
 import { BRAND_PAGES } from "../client/src/lib/brand-seo-data";
+import { getAllStoreGoogleConfigs, setStoreGoogleConfig, deleteStoreGoogleConfig } from "./google-tags";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -3847,6 +3848,33 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     } catch {
       res.set("Cache-Control", "no-store");
       res.json({});
+    }
+  });
+
+  // ===== Domain'e özel Google etiketleri (DB-backed, redeploy gerektirmez) =====
+  app.get("/api/admin/google-tags", requireAdmin, async (_req, res) => {
+    try {
+      res.json(await getAllStoreGoogleConfigs());
+    } catch {
+      res.status(500).json({ message: "Google etiketleri yüklenemedi" });
+    }
+  });
+  app.put("/api/admin/google-tags/:storeId", requireAdmin, async (req, res) => {
+    try {
+      const cfg = await setStoreGoogleConfig(String(req.params.storeId), req.body || {});
+      res.json({ ok: true, config: cfg });
+    } catch (err: any) {
+      const invalid = err?.message === "invalid store";
+      res.status(invalid ? 400 : 500).json({ message: invalid ? "Geçersiz mağaza" : "Kayıt başarısız" });
+    }
+  });
+  app.delete("/api/admin/google-tags/:storeId", requireAdmin, async (req, res) => {
+    try {
+      await deleteStoreGoogleConfig(String(req.params.storeId));
+      res.json({ ok: true });
+    } catch (err: any) {
+      const invalid = err?.message === "invalid store";
+      res.status(invalid ? 400 : 500).json({ message: invalid ? "Geçersiz mağaza" : "Silme başarısız" });
     }
   });
 

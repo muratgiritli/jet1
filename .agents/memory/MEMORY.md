@@ -14,4 +14,4 @@
 - [Per-store logo convention](store-logo-convention.md) — store logos must be WHITE wordmarks in raster webp (SVG <img> renders blank); desktop home renders brand as text, verify logo/theme on an inner page.
 - [Admin list staleness](admin-list-staleness.md) — global staleTime:Infinity means admin lists never self-refresh; order desk went stale because refresh was gated behind notification toggle. Override freshness-critical lists per-query.
 - [Per-store home override](per-store-home-override.md) — bespoke single-store homepage needs BOTH landing.tsx early-return AND App.tsx chrome suppression; cart updateQty returns `blocked` (true=failed), toast on !blocked.
-- [Per-domain Google independence](google-per-domain.md) — never hardcode GTM/GA4/Ads/GSC in index.html; inject per-store from StoreConfig.google via injectGoogleTags; empty {} = no tags; sanitize ids before embedding.
+- [Per-domain Google independence](google-per-domain.md) — never hardcode GTM/GA4/Ads/GSC in index.html; per-store tags now DB-backed+admin-editable (app_settings `<store>:google_tags`), StoreConfig.google is static fallback; DB-present-wins (empty {} blanks); sanitize ids.
