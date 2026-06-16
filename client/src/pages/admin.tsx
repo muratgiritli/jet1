@@ -1239,8 +1239,17 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     },
   });
 
+  // Sipariş masası listesi global staleTime: Infinity'yi geçersiz kılar: aksi halde
+  // liste yalnızca bildirim polling'i bir mutasyon/yeni sipariş tetiklediğinde
+  // yenilenir; bildirim kapalıysa veya tespit kaçarsa sayfa açıkken liste eskir ve
+  // yeni gelen siparişler görünmez. Bu sorgu kendi başına periyodik + odak/yeniden
+  // bağlanma anında tazelensin diye burada override ediliyor.
   const { data: allOrders = [], isLoading: ordersLoading } = useQuery<Order[]>({
     queryKey: ["/api/admin/orders"],
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+    staleTime: 0,
   });
 
   useEffect(() => {
