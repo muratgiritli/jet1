@@ -325,6 +325,29 @@ export async function registerRoutes(
       return undefined;
     }
   }
+  // Alıcıya "siparişiniz alındı" SMS'ini tam olarak bir kez gönderir. customer_sms_sent
+  // bayrağını atomik olarak işaretler; eşzamanlı ödeme callback/webhook'ları asla iki kez
+  // göndermez. Telefon yoksa hiç işaretlemez/göndermez. paymentConfirmed=true (online kart)
+  // ise ödemenin onaylandığı da mesaja eklenir. SMS başlığı domain'e göre çözülür.
+  async function notifyCustomerNewOrder(orderId: number, paymentConfirmed = false): Promise<void> {
+    try {
+      if (!orderId) return;
+      const claim = await sharedPool.query(
+        "UPDATE orders SET customer_sms_sent = true WHERE id = $1 AND customer_sms_sent = false AND customer_phone IS NOT NULL AND customer_phone <> '' RETURNING id, customer_phone, grand_total, source_site",
+        [orderId]
+      );
+      if (claim.rowCount === 0) return;
+      const ord = claim.rows[0];
+      const stCfg = storeById(ord.source_site);
+      const brand = stCfg.id === "jetgo" ? "Jetgo" : stCfg.shortName;
+      const apexHost = canonicalHost(stCfg).replace(/^www\./, "");
+      const smsMsg = `${brand} - #${ord.id} numarali siparisiniz alindi.${paymentConfirmed ? " Odemeniz onaylandi." : ""} Tutar: ${ord.grand_total} TL. Tesekkurler! ${apexHost}`;
+      const stHeader = await resolveSmsHeader(stCfg.id);
+      await sendSmsViaNetgsm(ord.customer_phone, smsMsg, stHeader);
+    } catch (e) {
+      console.error("notifyCustomerNewOrder error:", e);
+    }
+  }
   // Verilen store için LIKE desenine uyan app_settings anahtarlarını çöz.
   async function resolveSettingsLike(basePattern: string, store: string): Promise<Record<string, string>> {
     const prefix = settingsPrefix(store);
@@ -411,6 +434,7 @@ export async function registerRoutes(
     await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS tracking_url text;`);
     await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_sms_sent boolean NOT NULL DEFAULT false;`);
     await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS admin_sms_sent boolean NOT NULL DEFAULT false;`);
+    await sharedPool.query(`ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_sms_sent boolean NOT NULL DEFAULT false;`);
   } catch (e) {
     console.error("Orders source_site migration error:", e);
   }
@@ -2849,6 +2873,10 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
     if (!isOnlinePayment) {
       notifyAdminNewOrder(order.id).catch(() => {});
+      // Havale/EFT alıcısı zaten IBAN bilgilendirme SMS'i alıyor; çift SMS olmasın.
+      if (!/havale|eft/i.test(orderData.paymentMethod || "")) {
+        notifyCustomerNewOrder(order.id).catch(() => {});
+      }
     }
 
     try {
@@ -3209,6 +3237,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           [tok.order_id]
         );
         notifyAdminNewOrder(tok.order_id, true).catch(() => {});
+        notifyCustomerNewOrder(tok.order_id, true).catch(() => {});
         return res.redirect(303, buildResultUrl(tok.order_id, "success", merchantOrderId));
       }
 
@@ -3369,6 +3398,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           [tokenRow.order_id]
         );
         notifyAdminNewOrder(tokenRow.order_id, true).catch(() => {});
+        notifyCustomerNewOrder(tokenRow.order_id, true).catch(() => {});
         return sendOk();
       }
 
@@ -3654,6 +3684,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           [tokenRow.order_id]
         );
         notifyAdminNewOrder(tokenRow.order_id, true).catch(() => {});
+        notifyCustomerNewOrder(tokenRow.order_id, true).catch(() => {});
         return res.redirect(303, buildResultUrl({ status: "success", order: String(tokenRow.order_id), t: token }));
       }
 

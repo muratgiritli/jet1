@@ -129,6 +129,7 @@ export const orders = pgTable("orders", {
   trackingUrl: text("tracking_url"),
   shippingSmsSent: boolean("shipping_sms_sent").notNull().default(false),
   adminSmsSent: boolean("admin_sms_sent").notNull().default(false),
+  customerSmsSent: boolean("customer_sms_sent").notNull().default(false),
   installmentMonths: integer("installment_months"),
   installmentRate: real("installment_rate"),
   installmentMonthly: real("installment_monthly"),

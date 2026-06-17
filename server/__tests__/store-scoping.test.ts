@@ -3019,3 +3019,101 @@ test("cancelling an order with no customer phone attempts no SMS", async () => {
     sms.restore();
   }
 });
+
+// ---- New-order buyer SMS: "siparişiniz alındı" confirmation -------------------
+//
+// When an order is created on a door-payment (local) store, OR when an online
+// card payment is confirmed, the BUYER must get a branded "siparişiniz alındı"
+// SMS exactly once (server/routes.ts: notifyCustomerNewOrder, deduped by
+// orders.customer_sms_sent, fired from the SAME paths as the admin new-order SMS).
+// Havale/EFT is excluded because that buyer already gets the IBAN instructions
+// SMS. The admin "YENI SIPARIS" SMS may also fire here, so we filter the captured
+// NetGSM calls by the buyer message body instead of asserting a total count.
+
+// Register a brand-new buyer on a local storefront via the test-OTP bypass and
+// return its session cookie + phone. Runs under its OWN client IP so the per-IP
+// rate limiters don't bleed into other tests (see e2e rate-limit isolation).
+async function registerLocalBuyer(host: string, ip: string, name: string): Promise<{ cookie: string; phone: string }> {
+  const phone = "555" + String(randomBytes(4).readUInt32BE(0)).padStart(7, "0").slice(-7);
+  const send = await post("/api/otp/send", host, { phone }, ip);
+  assert.equal(send.status, 200, `otp/send failed: ${JSON.stringify(send.body)}`);
+  const regRes = await fetch(`${baseUrl}/api/otp/verify`, {
+    method: "POST",
+    headers: { "X-Forwarded-Host": host, "X-Forwarded-For": ip, "Content-Type": "application/json" },
+    body: JSON.stringify({ phone, code: "0000", name, address: `${MARK} Atakum Mah., Test Cad. No 9` }),
+  });
+  const regBody = await regRes.json() as any;
+  assert.equal(regRes.status, 200, `registration failed: ${JSON.stringify(regBody)}`);
+  ids.customers.push(regBody.id as number);
+  const cookie = (regRes.headers.get("set-cookie") ?? "").split(";")[0];
+  assert.ok(cookie.includes("connect.sid"), "registration must set a session cookie");
+  return { cookie, phone };
+}
+
+test("placing a local door-payment order sends the buyer a branded 'siparisiniz alindi' SMS once (customer_sms_sent set)", async () => {
+  const prevEnv = process.env.NODE_ENV;
+  const prevFlag = process.env.TEST_OTP_BYPASS;
+  process.env.NODE_ENV = "development";
+  process.env.TEST_OTP_BYPASS = "1";
+  const sms = captureNetgsmSms();
+  try {
+    const { cookie, phone } = await registerLocalBuyer(ATAKUMBIZ_HOST, "203.0.113.78", `${MARK}_NEWORDER_BUYER`);
+    const order = await postWithCookie(
+      "/api/orders",
+      ATAKUMBIZ_HOST,
+      { ...orderPayload(), customerName: `${MARK}_NEWORDER_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
+      cookie,
+      "203.0.113.78",
+    );
+    assert.equal(order.status, 201, `door-payment order POST failed: ${JSON.stringify(order.body)}`);
+    const orderId = order.body.id as number;
+    ids.orders.push(orderId);
+    await settle();
+
+    const buyerSms = sms.calls.filter((c) => /siparisiniz alindi/i.test(c.body));
+    assert.equal(buyerSms.length, 1, `exactly one buyer 'siparisiniz alindi' SMS expected (got ${sms.calls.length} total NetGSM calls)`);
+    assert.match(buyerSms[0].body, new RegExp(`#${orderId}\\s+numarali`), "buyer SMS must reference the order number");
+
+    const row = await pool.query("SELECT customer_sms_sent FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0].customer_sms_sent, true, "customer_sms_sent must be set after sending");
+  } finally {
+    sms.restore();
+    if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
+    if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
+  }
+});
+
+test("a havale/EFT order does NOT send the generic buyer 'siparisiniz alindi' SMS (buyer gets IBAN instructions instead)", async () => {
+  const prevEnv = process.env.NODE_ENV;
+  const prevFlag = process.env.TEST_OTP_BYPASS;
+  process.env.NODE_ENV = "development";
+  process.env.TEST_OTP_BYPASS = "1";
+  const prevEft = (await pool.query("SELECT value FROM app_settings WHERE key = 'payment_eft_enabled'")).rows[0]?.value;
+  await setSetting("payment_eft_enabled", "1");
+  const sms = captureNetgsmSms();
+  try {
+    const { cookie, phone } = await registerLocalBuyer(ATAKUMBIZ_HOST, "203.0.113.79", `${MARK}_HAVALE_BUYER`);
+    const order = await postWithCookie(
+      "/api/orders",
+      ATAKUMBIZ_HOST,
+      { ...orderPayload(), customerName: `${MARK}_HAVALE_BUYER`, customerPhone: phone, paymentMethod: "Banka Havalesi/EFT" },
+      cookie,
+      "203.0.113.79",
+    );
+    assert.equal(order.status, 201, `havale order POST failed: ${JSON.stringify(order.body)}`);
+    const orderId = order.body.id as number;
+    ids.orders.push(orderId);
+    await settle();
+
+    const buyerSms = sms.calls.filter((c) => /siparisiniz alindi/i.test(c.body));
+    assert.equal(buyerSms.length, 0, "havale buyer must NOT get the generic order-received SMS");
+    const row = await pool.query("SELECT customer_sms_sent FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0].customer_sms_sent, false, "customer_sms_sent must stay false for havale orders");
+  } finally {
+    sms.restore();
+    if (prevEft === undefined) await pool.query("DELETE FROM app_settings WHERE key = 'payment_eft_enabled'");
+    else await setSetting("payment_eft_enabled", prevEft);
+    if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
+    if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
+  }
+});
