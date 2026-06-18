@@ -3890,7 +3890,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 <SelectTrigger className="w-[120px] sm:w-[140px] h-8 text-xs sm:text-sm" data-testid="select-filter-animal">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="z-[10001]">
                   <SelectItem value="all">Tümü</SelectItem>
                   {ANIMALS.map((a) => (
                     <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
@@ -3902,7 +3902,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <SelectTrigger className="w-[130px] sm:w-[180px] h-8 text-xs sm:text-sm" data-testid="select-filter-subcategory">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[10001]">
                     <SelectItem value="all">Tüm Alt Kategoriler</SelectItem>
                     {(subcategoriesByAnimal[selectedAnimalFilter] || []).map((sc) => (
                       <SelectItem key={sc.slug} value={sc.slug}>{sc.name}</SelectItem>
@@ -3915,7 +3915,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                   <SelectTrigger className="w-[130px] sm:w-[180px] h-8 text-xs sm:text-sm" data-testid="select-filter-brand">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[10001]">
                     <SelectItem value="all">Tüm Markalar</SelectItem>
                     {filteredBrands.map((b) => (
                       <SelectItem key={b.slug} value={b.slug}>{b.name}</SelectItem>
