@@ -1873,6 +1873,35 @@ test("served homepage HTML carries the marka.pet brand + cargo copy (not same-da
   assert.ok(!SAME_DAY_SIGNATURE.test(title), "markapet must not show local same-day copy");
 });
 
+test("marka.pet serves the expanded cargo keyword pages (cargoOnly, türkiye/kargo voice)", async () => {
+  const markapet = getStoreByHost(MARKAPET_HOST);
+  const localStore = getStoreByHost(ATAKUMBIZ_HOST);
+
+  for (const slug of ["turkiye-geneli-kedi-mamasi", "kargo-ile-mama", "hills-mama-kargo"]) {
+    const page = findSeoPage(slug, markapet);
+    assert.ok(page, `marka.pet must serve cargo keyword "${slug}"`);
+    assert.equal(page!.availability, "cargoOnly", `"${slug}" must be a cargoOnly page`);
+    assert.ok(!findSeoPage(slug, localStore), `a LOCAL store must NOT serve cargo-only "${slug}"`);
+  }
+
+  const html = await injectAllMeta(INDEX_HTML, "/turkiye-geneli-kedi-mamasi", MARKAPET_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const description = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1] ?? "";
+  assert.match(title, /marka\.pet/i, "cargo keyword page must brand as marka.pet");
+  assert.ok(!/JETGO/i.test(`${title} ${description}`), "no JETGO leak on the marka.pet cargo page");
+  assert.match(description, CARGO_SIGNATURE, "cargo keyword page must carry türkiye/kargo copy");
+  assert.ok(!SAME_DAY_SIGNATURE.test(`${title} ${description}`), "cargo page must not show same-day copy");
+
+  // SEO-surface parity: the cargo keyword page must expose an H1 and FAQPage
+  // JSON-LD (for Google/AI rich results), brandified with no JETGO/same-day leak.
+  assert.match(html, /<h1>[\s\S]*?<\/h1>/i, "cargo keyword page must render an H1 for crawlers");
+  const ldBlocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+  const faqLd = ldBlocks.find((b) => b.includes('"FAQPage"'));
+  assert.ok(faqLd, "cargo keyword page must emit FAQPage JSON-LD");
+  assert.ok(!/JETGO/i.test(faqLd!), "FAQPage JSON-LD must brandify (no JETGO leak)");
+  assert.ok(!SAME_DAY_SIGNATURE.test(faqLd!), "FAQPage JSON-LD must not carry same-day copy");
+});
+
 test("test-OTP bypass lets a NEW customer place a marka.pet cargo order (source_site=markapet, online-only)", async () => {
   const prevEnv = process.env.NODE_ENV;
   const prevFlag = process.env.TEST_OTP_BYPASS;

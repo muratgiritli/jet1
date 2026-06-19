@@ -514,9 +514,9 @@ const markapet: StoreConfig = {
   seo: {
     title: "marka.pet - Türkiye Geneli Kargo | Kedi & Köpek Maması",
     description:
-      "Türkiye'nin her yerine kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu güvenli online ödeme ve hızlı kargo. marka.pet.",
+      "Türkiye'nin her yerine hızlı kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu, ödül maması, akvaryum ve kuş ürünlerinde Royal Canin, Pro Plan, Hills, Reflex, N&D; güvenli online ödeme. marka.pet.",
     keywords:
-      "marka.pet, marka pet, marka pet shop, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
+      "marka.pet, marka pet, marka pet shop, online pet shop, online petshop, kargo ile mama, kargo ile kedi maması, kargo ile köpek maması, kedi maması sipariş, köpek maması sipariş, online mama siparişi, kedi maması, köpek maması, kedi kumu, ödül maması, royal canin, pro plan, hills, reflex, n&d, brit care, evcil hayvan ürünleri, akvaryum malzemeleri, kuş yemi, türkiye geneli pet shop, türkiye geneli kargo, hızlı kargo, güvenli online ödeme, online kredi kartı, uygun fiyat petshop",
     ogImage: "/og-image.webp",
   },
   google: {},
