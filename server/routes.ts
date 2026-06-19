@@ -16,6 +16,7 @@ import { runSeoFill, getSeoFillStatus, isSeoFillRunning } from "./seo-fill";
 import multer from "multer";
 import OpenAI from "openai";
 import { BRAND_PAGES } from "../client/src/lib/brand-seo-data";
+import { KEYWORD_AUTO_ADDED } from "../client/src/lib/seo-data";
 import { getAllStoreGoogleConfigs, setStoreGoogleConfig, deleteStoreGoogleConfig } from "./google-tags";
 import { getAllStoreMerchantConfigs, getStoreMerchantConfig, setStoreMerchantConfig, deleteStoreMerchantConfig } from "./merchant";
 
@@ -950,7 +951,12 @@ export async function registerRoutes(
         priority: "0.7",
         changefreq: "weekly",
       }));
-      const seoSlugs = [...coreSlugs, ...mahalleSlugs, ...keywordSlugs, ...blogSlugs, ...brandSlugs];
+      const keywordAutoSlugs = KEYWORD_AUTO_ADDED.map((p) => ({
+        url: `/${p.slug}`,
+        priority: "0.6",
+        changefreq: "weekly",
+      }));
+      const seoSlugs = [...coreSlugs, ...mahalleSlugs, ...keywordSlugs, ...blogSlugs, ...brandSlugs, ...keywordAutoSlugs];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
       for (const page of seoSlugs) {

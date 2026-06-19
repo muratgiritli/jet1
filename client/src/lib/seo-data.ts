@@ -1,4 +1,5 @@
 import { BRAND_PAGES } from "./brand-seo-data";
+import { KEYWORD_AUTO_PAGES } from "./keyword-pages";
 export interface SeoSection {
   h2: string;
   paragraphs: string[];
@@ -4162,3 +4163,11 @@ const PRODUCT_SEO_PAGES: SeoPageData[] = [
 SEO_PAGES.push(...MAHALLE_PAGES, ...KEYWORD_PAGES, ...PRODUCT_SEO_PAGES);
 
 SEO_PAGES.push(...BRAND_PAGES);
+
+// Otomatik üretilen anahtar kelime sayfaları: slug'ı mevcut bir sayfayla
+// çakışanları atla (mevcut sayfa zaten o terimi hedefliyor).
+const existingSlugs = new Set(SEO_PAGES.map((p) => p.slug));
+export const KEYWORD_AUTO_ADDED = KEYWORD_AUTO_PAGES.filter(
+  (p) => !existingSlugs.has(p.slug),
+);
+SEO_PAGES.push(...KEYWORD_AUTO_ADDED);
