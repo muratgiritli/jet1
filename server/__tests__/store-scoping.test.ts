@@ -2412,6 +2412,58 @@ test("SEO landing page brands title/description/og + canonical per host (atakumb
   await assertSeoLandingBranding(ATAKUMBIZ_HOST, getStoreByHost(ATAKUMBIZ_HOST));
 });
 
+// ---- atakum.biz "1 saatte teslimat Atakum" SEO coverage --------------------
+test("atakum.biz homepage title leads with the 1-saatte Atakum angle (keeps same-day, no cargo)", async () => {
+  const html = await injectAllMeta(INDEX_HTML, "/", ATAKUMBIZ_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  assert.match(title, /1 saat/i, "atakumbiz home title must feature the 1-hour Atakum delivery angle");
+  assert.match(title, SAME_DAY_SIGNATURE, "atakumbiz home title must still carry same-day copy");
+  assert.ok(!CARGO_SIGNATURE.test(title), "atakumbiz home title must not show cargo copy");
+});
+
+test("atakum.biz serves the expanded attached keyword corpus (newly added slugs resolve)", () => {
+  const store = getStoreByHost(ATAKUMBIZ_HOST);
+  const newSlugs = [
+    "1-saatte-mama",
+    "1-saatte-kedi-mamasi",
+    "kapiya-mama-getir",
+    "evime-kedi-mamasi-getir",
+    "kedi-mamasi-satin-al",
+    "akvaryum-malzemeleri",
+    "kopek-tasmasi-siparis",
+    "online-petshop-atakum",
+  ];
+  for (const slug of newSlugs) {
+    assert.ok(findSeoPage(slug, store), `atakumbiz must serve the newly added keyword page "${slug}"`);
+  }
+});
+
+test("a local 1-saatte keyword page serves the 1-hour Atakum copy on atakum.biz and stays off cargo", async () => {
+  const localStore = getStoreByHost(ATAKUMBIZ_HOST);
+  const cargoStore = getStoreByHost(KARADENIZ_HOST);
+  const slug = "1-saatte-mama";
+
+  assert.ok(findSeoPage(slug, localStore), `atakumbiz must serve "${slug}"`);
+
+  const html = await injectAllMeta(INDEX_HTML, `/${slug}`, ATAKUMBIZ_HOST);
+  const description = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1] ?? "";
+  assert.match(description, /1 saat/i, "local 1-saatte page must serve the 1-hour delivery copy");
+  assert.ok(!CARGO_SIGNATURE.test(description), "local page must not leak cargo copy");
+
+  const ldBlocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+  const faqLd = ldBlocks.find((b) => b.includes("FAQPage"));
+  assert.ok(faqLd, "local keyword page must emit FAQPage JSON-LD");
+  assert.match(faqLd!, /1 saat/i, "FAQPage JSON-LD must carry the 1-hour delivery answer");
+
+  // Proximity / immediacy keywords are local-only: present locally, absent on cargo.
+  for (const localIntentSlug of ["petshop-mahallemde", "petshop-navigasyon", "petshop-adres"]) {
+    assert.ok(findSeoPage(localIntentSlug, localStore), `atakumbiz must serve local-intent "${localIntentSlug}"`);
+    assert.ok(!findSeoPage(localIntentSlug, cargoStore), `cargo must not serve local-intent "${localIntentSlug}"`);
+  }
+
+  assert.ok(!findSeoPage(slug, cargoStore), `cargo store must not serve the local-intent "${slug}"`);
+});
+
 test("SEO landing page brands title/description/og + canonical per host (markapet)", async () => {
   await assertSeoLandingBranding(MARKAPET_HOST, getStoreByHost(MARKAPET_HOST));
 });

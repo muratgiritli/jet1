@@ -351,8 +351,8 @@ const atakumbiz: StoreConfig = {
   address: "Atatürk 3 kısım bulvarı no 113 ATAKUM SAMSUN",
   companyName: "Sizpa internet tic.ltd.şti.",
   businessDescription:
-    "Atakum'un hızlı pet shop'u Atakum Pet. Kedi maması, köpek maması, kedi kumu, ödül maması ve evcil hayvan ürünlerinde Atakum, İlkadım, Canik içi aynı gün teslimat ve kapıda ödeme imkanı.",
-  slogan: "Atakum'un Hızlı Pet Shop'u — Aynı Gün Teslimat",
+    "Atakum'un en hızlı pet shop'u Atakum Pet. Kedi maması, köpek maması, kedi kumu, ödül maması ve evcil hayvan ürünlerinde Atakum içinde 1 saatte, İlkadım, Canik ve Tekkeköy'e aynı gün teslimat ve kapıda ödeme imkanı.",
+  slogan: "Atakum'a 1 Saatte Teslimat — Atakum'un Hızlı Pet Shop'u",
   social: [],
   theme: {
     primary: "14 80% 45%",
@@ -360,11 +360,11 @@ const atakumbiz: StoreConfig = {
     navBar: "#E64A19",
   },
   seo: {
-    title: "Atakum Pet - Atakum & Samsun'a Aynı Gün Petshop Teslimat",
+    title: "Atakum Pet - Atakum'a 1 Saatte Petshop Teslimat | Aynı Gün",
     description:
-      "Atakum ve Samsun'a aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu kapıda ödeme. Atakum Pet 09:00-21:00, 0850 840 39 59.",
+      "Atakum içinde 1 saatte, Samsun'a aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu kapıda ödeme. Atakum Pet 09:00-21:00, 0850 840 39 59.",
     keywords:
-      "atakum pet, atakum petshop, atakum kedi maması, atakum köpek maması, atakum kedi kumu, atakum aynı gün teslimat, samsun petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop atakum",
+      "atakum pet, atakum petshop, atakum 1 saatte teslimat, 1 saatte petshop atakum, 1 saatte mama atakum, atakum kedi maması, atakum köpek maması, atakum kedi kumu, atakum aynı gün teslimat, samsun petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop atakum",
     ogImage: "/og-image.webp",
   },
   google: {},
