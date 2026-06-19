@@ -927,6 +927,14 @@ export async function registerRoutes(
         { url: "/kapida-odeme-petshop", priority: "0.85", changefreq: "weekly" },
         { url: "/petshop-kapida-odeme", priority: "0.85", changefreq: "weekly" },
         { url: "/getir-petshop", priority: "0.8", changefreq: "weekly" },
+        { url: "/samsun-akvaryum-malzemeleri", priority: "0.7", changefreq: "weekly" },
+        { url: "/samsun-acik-petshop", priority: "0.75", changefreq: "weekly" },
+        { url: "/atakum-pet-market", priority: "0.8", changefreq: "weekly" },
+        { url: "/samsun-pet-market", priority: "0.8", changefreq: "weekly" },
+        { url: "/samsun-eve-teslim-petshop", priority: "0.75", changefreq: "weekly" },
+        { url: "/samsun-petshop-telefon-siparis", priority: "0.7", changefreq: "weekly" },
+        { url: "/samsun-indirimli-petshop", priority: "0.7", changefreq: "weekly" },
+        { url: "/acil-kopek-mamasi-samsun", priority: "0.75", changefreq: "weekly" },
       ];
       const blogSlugs = [
         { url: "/blog", priority: "0.8", changefreq: "weekly" },
