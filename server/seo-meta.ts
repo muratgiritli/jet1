@@ -1,6 +1,6 @@
 import { SEO_PAGES, type SeoPageData } from "../client/src/lib/seo-data";
 import { pool as sharedPool } from "./storage";
-import { getStoreByHost, brandifyFor, type StoreConfig } from "@shared/stores";
+import { getStoreByHost, brandifyFor, commercifyFor, type StoreConfig } from "@shared/stores";
 import { getStoreGoogleConfig } from "./google-tags";
 
 type ProductMeta = {
@@ -171,8 +171,12 @@ function injectSeoMeta(html: string, urlPath: string, store: StoreConfig): strin
   const data = findSeoData(urlPath);
   if (!data) return html;
 
-  const title = escapeHtml(brandifyFor(store, data.metaTitle || data.title));
-  const description = escapeHtml(brandifyFor(store, data.metaDescription || ""));
+  // Compose: rewrite false local delivery/payment claims for cargo stores
+  // (commercifyFor), THEN brand to this domain. No-op for local/default stores.
+  const bc = (t: string) => brandifyFor(store, commercifyFor(store, t));
+
+  const title = escapeHtml(bc(data.metaTitle || data.title));
+  const description = escapeHtml(bc(data.metaDescription || ""));
   const canonical = `${store.domain}/${data.slug}`;
   const keywords = data.keywords ? escapeHtml(brandifyFor(store, data.keywords)) : "";
 
@@ -219,9 +223,9 @@ function injectSeoMeta(html: string, urlPath: string, store: StoreConfig): strin
   }
 
   if (data.h1 && data.intro && data.intro.length > 0) {
-    const h1 = escapeHtml(brandifyFor(store, data.h1));
+    const h1 = escapeHtml(bc(data.h1));
     const introHtml = data.intro
-      .map((p) => `<p>${escapeHtml(brandifyFor(store, p))}</p>`)
+      .map((p) => `<p>${escapeHtml(bc(p))}</p>`)
       .join("\n");
     const noscriptBlock =
       `<noscript>\n` +
@@ -240,6 +244,35 @@ function injectSeoMeta(html: string, urlPath: string, store: StoreConfig): strin
       `  ${extras.join("\n  ")}\n  </head>`,
     );
   }
+
+  // AI/no-JS tarayıcılar (LLM botları, AI Overviews) için yapısal veriyi sunucu
+  // tarafında bas: client JS çalışmadan da BreadcrumbList + FAQPage HTML'de olur.
+  const ldBlocks: string[] = [];
+  const breadcrumb = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Ana Sayfa", item: store.domain },
+      { "@type": "ListItem", position: 2, name: brandifyFor(store, data.title), item: canonical },
+    ],
+  };
+  ldBlocks.push(JSON.stringify(breadcrumb));
+  if (data.faq && data.faq.length > 0) {
+    const faq = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: data.faq.map((q) => ({
+        "@type": "Question",
+        name: bc(q.q),
+        acceptedAnswer: { "@type": "Answer", text: bc(q.a) },
+      })),
+    };
+    ldBlocks.push(JSON.stringify(faq));
+  }
+  const ldScripts = ldBlocks
+    .map((b) => `<script type="application/ld+json">${b.replace(/</g, "\\u003c")}</script>`)
+    .join("\n  ");
+  out = out.replace(/<\/head>/i, `  ${ldScripts}\n  </head>`);
 
   return out;
 }

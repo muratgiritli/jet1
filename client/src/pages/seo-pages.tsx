@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD, FAQ_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import { SEO_PAGES, type SeoPageData } from "@/lib/seo-data";
-import { brandify, CURRENT_STORE } from "@/lib/store";
+import { brandify, commercify, CURRENT_STORE } from "@/lib/store";
 import NotFound from "@/pages/not-found";
 
 function StoreInfoBox({ hideWhatsapp = false }: { hideWhatsapp?: boolean }) {
@@ -82,17 +82,21 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
     { name: page.title, url: `${SITE_DOMAIN}/${page.slug}` },
   ];
 
+  // Rewrite false local delivery/payment claims for cargo stores BEFORE <SEO>
+  // brandifies meta/jsonLd; bc = commercify + brandify for the visible body.
+  const bc = (t: string) => brandify(commercify(t));
+
   const jsonLd = [
     BREADCRUMB_JSONLD(breadcrumbs),
-    FAQ_JSONLD(page.faq.map(f => ({ question: f.q, answer: f.a }))),
+    FAQ_JSONLD(page.faq.map(f => ({ question: commercify(f.q), answer: commercify(f.a) }))),
     LOCAL_BUSINESS_JSONLD,
   ];
 
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title={page.metaTitle}
-        description={page.metaDescription}
+        title={commercify(page.metaTitle)}
+        description={commercify(page.metaDescription)}
         canonical={`${SITE_DOMAIN}/${page.slug}`}
         keywords={page.keywords}
         jsonLd={jsonLd}
@@ -119,8 +123,8 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
             <ChevronRight className="w-3 h-3" />
             <span className="text-white">{page.title}</span>
           </nav>
-          <h1 className="text-2xl md:text-4xl font-extrabold mb-4" data-testid="seo-h1">{brandify(page.h1)}</h1>
-          <p className="text-sm md:text-base text-white/80 max-w-2xl">{brandify(page.intro[0])}</p>
+          <h1 className="text-2xl md:text-4xl font-extrabold mb-4" data-testid="seo-h1">{bc(page.h1)}</h1>
+          <p className="text-sm md:text-base text-white/80 max-w-2xl">{bc(page.intro[0])}</p>
         </div>
       </div>
 
@@ -146,23 +150,23 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
 
         <section>
           {page.intro.slice(1).map((p, i) => (
-            <p key={i} className="text-muted-foreground leading-relaxed mb-4">{brandify(p)}</p>
+            <p key={i} className="text-muted-foreground leading-relaxed mb-4">{bc(p)}</p>
           ))}
         </section>
 
         {page.sections && page.sections.length > 0 && (
           page.sections.map((sec, si) => (
             <section key={si}>
-              <h2 className="text-xl font-bold mb-3">{brandify(sec.h2)}</h2>
+              <h2 className="text-xl font-bold mb-3">{bc(sec.h2)}</h2>
               {sec.paragraphs.map((p, pi) => (
-                <p key={pi} className="text-muted-foreground leading-relaxed mb-3">{brandify(p)}</p>
+                <p key={pi} className="text-muted-foreground leading-relaxed mb-3">{bc(p)}</p>
               ))}
               {sec.list && sec.list.length > 0 && (
                 <ul className="grid gap-1.5 mt-2 mb-3">
                   {sec.list.map((item, li) => (
                     <li key={li} className="flex items-start gap-2 text-sm text-muted-foreground">
                       <ChevronRight className="w-3.5 h-3.5 text-[#6B3480] mt-0.5 shrink-0" />
-                      <span>{brandify(item)}</span>
+                      <span>{bc(item)}</span>
                     </li>
                   ))}
                 </ul>
@@ -182,7 +186,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
                   <div className="w-6 h-6 rounded-full bg-[#6B3480]/10 flex items-center justify-center shrink-0 mt-0.5">
                     <ChevronRight className="w-3.5 h-3.5 text-[#6B3480]" />
                   </div>
-                  <p className="text-sm text-muted-foreground">{brandify(f)}</p>
+                  <p className="text-sm text-muted-foreground">{bc(f)}</p>
                 </div>
               ))}
             </div>
@@ -236,11 +240,11 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
             {page.faq.map((item, i) => (
               <details key={i} className="group border rounded-lg overflow-hidden" data-testid={`faq-${i}`}>
                 <summary className="flex items-center justify-between p-4 cursor-pointer font-medium text-sm hover:bg-muted/50 transition-colors">
-                  {brandify(item.q)}
+                  {bc(item.q)}
                   <ChevronRight className="w-4 h-4 text-muted-foreground transition-transform group-open:rotate-90 shrink-0 ml-2" />
                 </summary>
                 <div className="px-4 pb-4 text-sm text-muted-foreground leading-relaxed">
-                  {brandify(item.a)}
+                  {bc(item.a)}
                 </div>
               </details>
             ))}

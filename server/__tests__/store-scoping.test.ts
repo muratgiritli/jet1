@@ -2457,6 +2457,54 @@ test("SEO landing page on the default (jetgo) host keeps the JETGO brand (contra
   assert.equal(canonical, `${store.domain}/${SEO_TEST_SLUG}`, "default-host SEO canonical binds to the jetgo domain");
 });
 
+// ---- Cargo stores must not advertise the LOCAL same-day/door-payment model ----
+//
+// The shared keyword landing pages are authored for the Samsun/Atakum LOCAL
+// same-day-courier + door-payment model. On a CARGO / online-payment-only store
+// (karadeniz/samsun/samsunpet) those promises are FALSE — and since they now feed
+// the server-rendered FAQPage JSON-LD + <noscript> intro that AI crawlers read,
+// they must be rewritten by commercifyFor. These tests prove the rewrite fires on
+// a cargo host and is a no-op on a local host (gating), asserting only on the
+// SEO-injected surfaces we control (noscript intro + FAQPage ld+json) so the
+// pre-existing app-wide static LocalBusiness block can't cause false results.
+
+const seoKeywordPage = SEO_PAGES.find((p) => p.type === "keyword");
+
+const noscriptOf = (html: string) => html.match(/<noscript>([\s\S]*?)<\/noscript>/i)?.[1] ?? "";
+const faqLdOf = (html: string) =>
+  html.match(/<script type="application\/ld\+json">([^<]*FAQPage[^<]*)<\/script>/i)?.[1] ?? "";
+
+test("SEO keyword fixture exists and carries the local same-day/door-payment claims", () => {
+  // Guards the gating test below: if seo-data stops emitting keyword pages or the
+  // local claims, the cargo assertions would pass vacuously.
+  assert.ok(seoKeywordPage, "seo-data must still define at least one keyword landing page");
+  const intro = seoKeywordPage!.intro.join(" ");
+  assert.match(intro, /Kapıda nakit, kredi kartı \(POS\) ve QR/, "fixture intro must carry the door-payment claim");
+  assert.match(intro, /Atakum, İlkadım, Canik ve Tekkeköy/, "fixture intro must carry the neighborhood delivery list");
+});
+
+test("cargo store rewrites false local delivery/payment claims in SEO landing copy (karadeniz vs atakum)", async () => {
+  const slug = seoKeywordPage!.slug;
+  const cargo = await injectAllMeta(INDEX_HTML, `/${slug}`, KARADENIZ_HOST);
+  const local = await injectAllMeta(INDEX_HTML, `/${slug}`, ATAKUM_HOST);
+
+  const cargoBody = `${noscriptOf(cargo)} ${faqLdOf(cargo)}`;
+  const localBody = `${noscriptOf(local)} ${faqLdOf(local)}`;
+
+  // Local host: commercifyFor is a no-op, so the same-day/door-payment claims
+  // survive (proves the fixture surfaces actually carry them).
+  assert.match(localBody, /Kapıda nakit, kredi kartı \(POS\) ve QR/, "local SEO copy keeps the door-payment claim");
+  assert.match(localBody, /Atakum, İlkadım, Canik ve Tekkeköy/, "local SEO copy keeps the neighborhood delivery list");
+
+  // Cargo host (karadeniz): the false LOCAL claims must be gone from the
+  // AI-visible surfaces and replaced with cargo/online wording + the Karadeniz brand.
+  assert.ok(!/Kapıda nakit, kredi kartı \(POS\) ve QR/.test(cargoBody), "cargo SEO copy must drop the door-payment claim");
+  assert.ok(!/ortalama 1-3 saat/i.test(cargoBody), "cargo SEO copy must drop the same-day courier claim");
+  assert.ok(!/Atakum, İlkadım, Canik ve Tekkeköy/.test(cargoBody), "cargo SEO copy must drop the neighborhood delivery list");
+  assert.match(cargoBody, /kargo/i, "cargo SEO copy must speak the cargo delivery model");
+  assert.ok(cargoBody.includes("Karadeniz Pet Shop"), "cargo SEO copy must carry the Karadeniz brand");
+});
+
 // ---- Per-domain Google independence (GSC / GTM / GA4 / Ads) ----
 //
 // Each of the 9 domains must be its own Google property. There must be NO shared,

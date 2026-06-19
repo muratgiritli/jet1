@@ -1,4 +1,4 @@
-import { getStoreByHost, getStoreByExactHost, STORES, type StoreConfig, brandifyFor } from "@shared/stores";
+import { getStoreByHost, getStoreByExactHost, STORES, type StoreConfig, brandifyFor, commercifyFor } from "@shared/stores";
 
 // Store override for local/e2e smoke testing. Real branded storefronts can only
 // be served from their custom domains, so on the dev/preview host the resolver
@@ -41,4 +41,13 @@ export function useStore(): StoreConfig {
  */
 export function brandify(text: string): string {
   return brandifyFor(CURRENT_STORE, text);
+}
+
+/**
+ * Rewrite local same-day-courier / door-payment SEO claims to cargo/online
+ * wording for the current store. No-op unless this store is cargo-fulfilled.
+ * Apply BEFORE brandify on shared SEO copy: brandify(commercify(text)).
+ */
+export function commercify(text: string): string {
+  return commercifyFor(CURRENT_STORE, text);
 }

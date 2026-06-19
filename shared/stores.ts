@@ -592,6 +592,63 @@ export function brandifyFor(store: StoreConfig, text: string): string {
     .split(APEX_PH).join(apex);
 }
 
+// Shared SEO/landing copy is authored for the LOCAL same-day-courier + door-
+// payment model (Samsun/Atakum). On a CARGO / online-payment-only store those
+// delivery & payment promises are FALSE, and since they now also feed AI-visible
+// JSON-LD they must be corrected. Each entry rewrites one specific local CLAIM
+// (same-day speed, courier, neighborhood delivery, door payment, WhatsApp order)
+// into its cargo/online equivalent. Ordered specific→general so longer phrases
+// win before their substrings. Keyword phrases and generic "kapıya teslim"
+// (true for cargo too) are intentionally NOT matched, so SEO targets survive.
+const CARGO_COPY_REWRITES: ReadonlyArray<readonly [RegExp, string]> = [
+  [/Kapıda nakit, kredi kartı \(POS\) ve QR ile ödeme yapabilirsiniz; nakit ödemede ekstra avantajlı fiyat ve her siparişte %5 Para Puan\./g, "Güvenli online kredi/banka kartı ile ödeme yapabilirsiniz; her siparişte %5 Para Puan kazanırsınız."],
+  [/Evet, kapıda nakit, kredi kartı \(POS\) ve QR ile ödeme yapabilirsiniz\. Nakit ödemede avantajlı fiyat sunuyoruz\./g, "Evet, güvenli online kredi/banka kartı ile ödeme yapabilirsiniz."],
+  [/Evet, kapıda nakit, kredi kartı \(POS\) ve QR ile ödeme yapabilirsiniz\./g, "Evet, güvenli online kredi/banka kartı ile ödeme yapabilirsiniz."],
+  [/Atakum, İlkadım, Canik ve Tekkeköy'ün tüm mahallelerine teslimat yapıyoruz\./g, "Türkiye'nin her yerine kargo ile gönderim yapıyoruz."],
+  [/(?:Samsun ve Atakum|Samsun|Atakum)'ın tüm mahallelerine kurye ile teslimat yapıyoruz\./g, "Türkiye'nin her yerine kargo ile gönderim yapıyoruz."],
+  [/Kurye ekibimiz siparişinizi apartman katınıza kadar getirir, ağır çuval taşımazsınız\./g, "Kargo ile siparişiniz adresinize kadar gelir, ağır çuval taşımazsınız."],
+  [/Aynı gün, ortalama 1-3 saat içinde siparişiniz kapınızda olur\./g, "Siparişiniz güvenli ödeme sonrası hızlıca kargoya verilir."],
+  [/Aynı gün, ortalama 1-3 saat teslimat/g, "Hızlı kargo ile teslimat"],
+  [/Ortalama 1-3 saat içinde siparişiniz kapınızda olur\. Sabah verilen siparişler öğleden sonra elinizde\./g, "Siparişiniz kargoya verildikten sonra çoğu adrese 1-3 iş gününde ulaşır."],
+  [/Ortalama 1-3 saat içinde siparişiniz kapınızda olur\. Acil ihtiyaçlarda önceliklendirme yapıyoruz\./g, "Siparişiniz hızlı kargo ile gönderilir; çoğu adrese 1-3 iş gününde ulaşır."],
+  [/Evet, ortalama 1-3 saat içinde teslimat yapıyoruz\. Sabah verilen siparişler öğleden sonra elinizde olur\./g, "Siparişinizi hızlıca kargoya veriyoruz; çoğu adrese 1-3 iş gününde ulaşır."],
+  [/Evet, akvaryum ekipmanı ve balık yemi ürünlerini aynı gün kapınıza getiriyoruz\./g, "Evet, akvaryum ekipmanı ve balık yemi ürünlerini hızlı kargo ile adresinize gönderiyoruz."],
+  [/her gün, hafta sonu ve pazar günü dahil sipariş alır\. Gündüz verdiğiniz siparişler aynı gün kapınıza ulaşır\./g, "her gün, hafta sonu dahil sipariş alır. Siparişleriniz hızlıca kargoya verilir."],
+  [/her gün sipariş alır ve kapınıza teslim eder; hafta sonu ve pazar günü dahil hizmetinizdeyiz\./g, "her gün sipariş alır ve kargo ile adresinize gönderir; hafta sonu dahil hizmetinizdeyiz."],
+  [/jetgomarket\.com üzerinden ürünleri seçin, sepete ekleyin ve WhatsApp ile tek tıkla siparişinizi onaylayın\./g, "jetgomarket.com üzerinden ürünleri seçin, sepete ekleyin ve güvenli online ödeme ile siparişinizi tamamlayın."],
+  [/Ürünleri sepete ekleyip WhatsApp ile onaylayın; siparişiniz aynı gün kapınıza gelir\./g, "Ürünleri sepete ekleyip güvenli online ödeme ile tamamlayın; siparişiniz kargoyla adresinize gelir."],
+  [/Kapıda nakit, POS ve QR ödeme/g, "Güvenli online kart ile ödeme"],
+  [/Kapıda ödeme seçenekleri mevcuttur\./g, "Güvenli online ödeme seçenekleri mevcuttur."],
+  [/Kapıda ödeme, uygun fiyat\./g, "Güvenli online ödeme, uygun fiyat."],
+  [/Nakit ödemede ekstra indirim, kampanyalı ürünler ve %5 Para Puan ile tasarruf edersiniz\./g, "Kampanyalı ürünler ve %5 Para Puan ile tasarruf edersiniz."],
+  [/Nakit ödemede ekstra avantaj sağlıyoruz\./g, "Online ödeme ve %5 Para Puan avantajı sağlıyoruz."],
+  [/kapıda ödeme kabul ediyor mu\?/g, "güvenli online ödeme kabul ediyor mu?"],
+  [/için kapıda ödeme var mı\?/g, "için güvenli online ödeme var mı?"],
+  [/gerçekten aynı gün mü\?/g, "ne kadar sürede gelir?"],
+  [/(?:Samsun ve Atakum|Samsun|Atakum) tüm mahallelere teslimat/g, "Türkiye geneli kargo ile teslimat"],
+  [/kurye ile teslimat yapıyoruz/g, "kargo ile teslimat yapıyoruz"],
+  [/aynı gün kapınıza getirir\./g, "hızlı kargo ile adresinize gönderir."],
+  [/aynı gün kapınızda teslim alın\./g, "hızlı kargo ile adresinizde teslim alın."],
+  [/siparişinizi en kısa sürede kapınıza ulaştırır\./g, "siparişinizi en kısa sürede kargoya verir."],
+  [/- aynı gün kapıda/g, "- hızlı kargo ile"],
+  [/- hemen kapınızda/g, "- hızlı kargo ile"],
+];
+
+/**
+ * Rewrite shared SEO/landing copy that hard-codes the LOCAL same-day courier +
+ * door-payment model so it reads truthfully on CARGO / online-payment-only
+ * stores (Karadeniz / Samsun / Samsunpet). No-op for local-fulfillment stores
+ * and the default store. Only false delivery/payment CLAIMS are swapped; keyword
+ * phrases and generic "kapıya teslim" stay intact. Compose with brandifyFor at
+ * render time: brandifyFor(store, commercifyFor(store, text)).
+ */
+export function commercifyFor(store: StoreConfig, text: string): string {
+  if (!text || store.commerce.fulfillment !== "cargo") return text;
+  let t = text;
+  for (const [pattern, replacement] of CARGO_COPY_REWRITES) t = t.replace(pattern, replacement);
+  return t;
+}
+
 /** Canonical hostname (with www if that is the canonical form) for a store. */
 export function canonicalHost(store: StoreConfig): string {
   try {

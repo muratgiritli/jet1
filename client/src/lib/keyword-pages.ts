@@ -151,6 +151,142 @@ const KEYWORDS: string[] = [
   "atakum petshop gross market",
   "samsun pet market teslimat",
   "atakum pet market teslimat",
+  "petshop eve gelsin",
+  "petshop hızlı servis",
+  "petshop express",
+  "pet market express",
+  "anında petshop",
+  "anında mama teslimat",
+  "hemen petshop",
+  "hemen pet market",
+  "petshop sipariş ver",
+  "pet market sipariş ver",
+  "online mama siparişi",
+  "telefonla mama siparişi",
+  "whatsapp mama siparişi",
+  "evcil hayvan maması teslimat",
+  "evcil hayvan marketi yakın",
+  "evcil hayvan mağazası yakın",
+  "pet ihtiyaçları teslimat",
+  "pet ürünleri sipariş",
+  "pet ürünleri eve teslim",
+  "pet ürünleri kapıda ödeme",
+  "kapıda ödeme kedi maması",
+  "kapıda ödeme köpek maması",
+  "kapıda ödeme kedi kumu",
+  "kapıda ödeme pet market",
+  "kapıda ödeme evcil hayvan ürünleri",
+  "aynı gün kedi maması",
+  "aynı gün köpek maması",
+  "aynı gün kedi kumu",
+  "aynı gün pet market",
+  "aynı gün evcil hayvan ürünleri",
+  "hızlı kedi maması teslimat",
+  "hızlı köpek maması teslimat",
+  "hızlı petshop teslimat",
+  "hızlı pet market teslimat",
+  "acil kedi kumu",
+  "acil pet ürünü",
+  "acil evcil hayvan maması",
+  "gece petshop",
+  "gece pet market",
+  "24 saat pet market",
+  "7/24 petshop",
+  "7/24 pet market",
+  "hafta sonu petshop",
+  "cumartesi açık petshop",
+  "pazar açık petshop",
+  "resmi tatilde açık petshop",
+  "yakındaki kedi maması satan yer",
+  "yakındaki köpek maması satan yer",
+  "yakındaki pet market",
+  "yakındaki akvaryumcu",
+  "yakındaki hayvan mağazası",
+  "konuma göre petshop",
+  "konuma göre pet market",
+  "bulunduğum yerde petshop",
+  "bulunduğum yerde pet market",
+  "petshop telefon numarası samsun",
+  "petshop adres samsun",
+  "pet market samsun atakum",
+  "pet market yakınlarda",
+  "petshop indirim",
+  "pet market kampanya",
+  "ucuz kedi maması samsun",
+  "ucuz köpek maması samsun",
+  "en ucuz petshop samsun",
+  "en uygun pet market",
+  "kedi kumu siparişi",
+  "kedi kumu eve gelsin",
+  "kedi kumu kapıda ödeme",
+  "topaklanan kedi kumu teslimat",
+  "köpek ödül maması teslimat",
+  "köpek kemiği teslimat",
+  "kedi ödül maması teslimat",
+  "kedi konservesi teslimat",
+  "köpek konservesi teslimat",
+  "yaş mama teslimat",
+  "kuru mama teslimat",
+  "yavru kedi maması teslimat",
+  "yavru köpek maması teslimat",
+  "yetişkin köpek maması teslimat",
+  "sterilised kedi maması teslimat",
+  "hassas sindirim mama teslimat",
+  "veteriner mama teslimat",
+  "royal canin eve teslim",
+  "pro plan eve teslim",
+  "hills eve teslim",
+  "reflex eve teslim",
+  "brit care eve teslim",
+  "lavital eve teslim",
+  "nd mama eve teslim",
+  "prochoice eve teslim",
+  "mama market samsun",
+  "evcil dost market",
+  "pet alışveriş teslimat",
+  "petshop kurye hizmeti",
+  "evcil hayvan mağazası teslimat",
+  "evime mama getir",
+  "kedi maması getir",
+  "köpek maması getir",
+  "yakınımdaki mama satan yer",
+  "en yakın mama market",
+  "mama market yakın",
+  "evcil hayvan ürünleri yakın",
+  "petshop teslimat hizmeti",
+  "pet market kurye hizmeti",
+  "samsun evcil hayvan mağazası",
+  "atakum evcil hayvan mağazası",
+  "samsun kedi kumu siparişi",
+  "atakum kedi kumu siparişi",
+  "samsun mama kapıya teslim",
+  "evcil hayvan ihtiyaçları samsun",
+  "evcil hayvan ihtiyaçları atakum",
+  "petshop online alışveriş",
+  "pet market online alışveriş",
+  "online kedi maması siparişi",
+  "online köpek maması siparişi",
+  "evcil hayvan marketi samsun",
+  "evcil hayvan marketi atakum",
+  "petshop şimdi açık",
+  "pet market şimdi açık",
+  "bana en yakın mama satan yer",
+  "evime en yakın petshop",
+  "evime en yakın pet market",
+  "petshop yakınlarda açık",
+  "yakındaki açık pet market",
+  "samsun petshop eve teslim",
+  "atakum petshop eve teslim",
+  "samsun hızlı mama teslimatı",
+  "atakum hızlı mama teslimatı",
+  "petshop 1 saat teslimat",
+  "pet market 1 saat teslimat",
+  "evcil hayvan ürünleri 1 saat teslimat",
+  "mama siparişi aynı gün",
+  "mama siparişi kapıya teslim",
+  "hızlı mama siparişi",
+  "petshop hızlı sipariş",
+  "pet market hızlı sipariş",
 ];
 
 function slugify(s: string): string {
@@ -370,7 +506,7 @@ const LINK_POOL: { text: string; href: string }[] = [
   { text: "Kedi Kumu", href: "/kedi-kumu" },
 ];
 
-function buildKeywordPage(kw: string): SeoPageData {
+function buildKeywordPage(kw: string, related: { text: string; href: string }[]): SeoPageData {
   const slug = slugify(kw);
   const cat = classify(kw);
   const region = regionLabel(kw);
@@ -385,8 +521,6 @@ function buildKeywordPage(kw: string): SeoPageData {
     `${ORDER_LINE} ${SPEED_LINE}`,
     `${PAY_LINE}`,
   ];
-
-  const links = LINK_POOL.filter((l) => l.href !== `/${slug}`).slice(0, 5);
 
   return {
     slug,
@@ -419,16 +553,59 @@ function buildKeywordPage(kw: string): SeoPageData {
       { q: `${K} teslimatı ne kadar sürer?`, a: "Ortalama 1-3 saat içinde siparişiniz kapınızda olur. Sabah verilen siparişler öğleden sonra elinizde." },
       { q: `${K} için kapıda ödeme var mı?`, a: "Evet, kapıda nakit, kredi kartı (POS) ve QR ile ödeme yapabilirsiniz. Nakit ödemede avantajlı fiyat sunuyoruz." },
     ],
-    internalLinks: links,
+    internalLinks: related,
   };
 }
 
-// Üret + kendi içinde slug tekilleştir.
-const seen = new Set<string>();
-export const KEYWORD_AUTO_PAGES: SeoPageData[] = [];
+// Tüm benzersiz girişleri hesapla (slug bazında tekilleştir).
+interface KwEntry { kw: string; slug: string; cat: Category; title: string; }
+const _seen = new Set<string>();
+const _entries: KwEntry[] = [];
 for (const kw of KEYWORDS) {
-  const page = buildKeywordPage(kw);
-  if (seen.has(page.slug)) continue;
-  seen.add(page.slug);
-  KEYWORD_AUTO_PAGES.push(page);
+  const slug = slugify(kw);
+  if (_seen.has(slug)) continue;
+  _seen.add(slug);
+  _entries.push({ kw, slug, cat: classify(kw), title: trTitle(kw) });
 }
+
+// Kategoriye göre grupla; aynı konudaki sayfalar birbirine bağlanır.
+const _byCat = new Map<Category, KwEntry[]>();
+for (const e of _entries) {
+  const arr = _byCat.get(e.cat) ?? [];
+  arr.push(e);
+  _byCat.set(e.cat, arr);
+}
+
+// Her sayfa için iç bağlantılar ("her birine link ver"): global döngüde bir
+// sonraki sayfa (hiçbir sayfa öksüz kalmasın diye her sayfa en az bir yerden
+// linklenir), aynı kategoriden kardeş sayfalar ve hub sayfaları.
+function relatedFor(globalIdx: number): { text: string; href: string }[] {
+  const e = _entries[globalIdx];
+  const out: { text: string; href: string }[] = [];
+  const push = (l: { text: string; href: string }) => {
+    if (l.href === `/${e.slug}`) return;
+    if (out.some((o) => o.href === l.href)) return;
+    out.push(l);
+  };
+  if (_entries.length > 1) {
+    const next = _entries[(globalIdx + 1) % _entries.length];
+    push({ text: next.title, href: `/${next.slug}` });
+  }
+  const sibs = _byCat.get(e.cat) ?? [];
+  if (sibs.length > 1) {
+    const sIdx = sibs.findIndex((s) => s.slug === e.slug);
+    for (let i = 1; i <= 4 && out.length < 5; i++) {
+      const s = sibs[(sIdx + i) % sibs.length];
+      push({ text: s.title, href: `/${s.slug}` });
+    }
+  }
+  for (const h of LINK_POOL) {
+    if (out.length >= 7) break;
+    push(h);
+  }
+  return out;
+}
+
+export const KEYWORD_AUTO_PAGES: SeoPageData[] = _entries.map((e, i) =>
+  buildKeywordPage(e.kw, relatedFor(i)),
+);
