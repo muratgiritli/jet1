@@ -1,5 +1,6 @@
 import { BRAND_PAGES } from "./brand-seo-data";
 import { KEYWORD_AUTO_PAGES } from "./keyword-pages";
+import type { StoreConfig } from "@shared/stores";
 export interface SeoSection {
   h2: string;
   paragraphs: string[];
@@ -9,6 +10,11 @@ export interface SeoSection {
 export interface SeoPageData {
   slug: string;
   type: "core" | "district" | "mahalle-block" | "mahalle" | "category" | "blog" | "keyword" | "brand";
+  // Commerce-model scope. Default "all" = truthful on both local & cargo stores
+  // (after commercify cleanup). "localOnly" = same-day courier / door-payment /
+  // hyperlocal pages hidden from cargo domains. "cargoOnly" = online+kargo pages
+  // hidden from local domains. See getSeoPagesForStore / findSeoPage.
+  availability?: "all" | "localOnly" | "cargoOnly";
   title: string;
   metaTitle: string;
   metaDescription: string;
@@ -4171,3 +4177,62 @@ export const KEYWORD_AUTO_ADDED = KEYWORD_AUTO_PAGES.filter(
   (p) => !existingSlugs.has(p.slug),
 );
 SEO_PAGES.push(...KEYWORD_AUTO_ADDED);
+
+// ---------------------------------------------------------------------------
+// Commerce-model availability + per-store resolution.
+// ---------------------------------------------------------------------------
+
+// Local-intent tokens: geography, proximity, same-day-courier speed, door
+// payment and local channels. Any hand-authored page mentioning these in its
+// slug/keywords/headings cannot be served truthfully on a cargo domain.
+const CLASSIFY_LOCAL_RE =
+  /(samsun|atakum|i̇lkad|ilkad|canik|tekkek|mahalle|en yakın|en yakin|yakınınız|yakininiz|aynı gün|ayni gun|1 saat|bir saat|2 saat|acil|express|hızlı|hizli|anında|aninda|hemen|kurye|getir|gelsin|eve teslim|eve servis|kapıda ödeme|kapida odeme|kapıda nakit|whatsapp|nöbetçi|nobetci|gece|24 saat|7\/24|açık petshop|acik petshop|hafta sonu)/i;
+
+function classifyAvailability(p: SeoPageData): "all" | "localOnly" | "cargoOnly" {
+  if (p.availability) return p.availability;
+  if (p.type === "district" || p.type === "mahalle" || p.type === "mahalle-block") {
+    return "localOnly";
+  }
+  const hay = `${p.slug} ${p.keywords} ${p.h1} ${p.title} ${p.metaTitle}`;
+  return CLASSIFY_LOCAL_RE.test(hay) ? "localOnly" : "all";
+}
+
+// Normalise every page so `availability` is always set.
+for (const p of SEO_PAGES) {
+  p.availability = classifyAvailability(p);
+}
+
+export function isCargoStore(store: StoreConfig): boolean {
+  return store.commerce.fulfillment === "cargo";
+}
+
+/** Pages eligible for a store's commerce model (unique slugs per model). */
+export function getSeoPagesForStore(store: StoreConfig): SeoPageData[] {
+  const cargo = isCargoStore(store);
+  return SEO_PAGES.filter((p) => {
+    const a = p.availability ?? "all";
+    if (a === "all") return true;
+    return cargo ? a === "cargoOnly" : a === "localOnly";
+  });
+}
+
+const _localSlugMap = new Map<string, SeoPageData>();
+const _cargoSlugMap = new Map<string, SeoPageData>();
+for (const p of SEO_PAGES) {
+  const a = p.availability ?? "all";
+  if (a !== "cargoOnly" && !_localSlugMap.has(p.slug)) _localSlugMap.set(p.slug, p);
+  if (a !== "localOnly" && !_cargoSlugMap.has(p.slug)) _cargoSlugMap.set(p.slug, p);
+}
+
+/** Resolve a slug to the variant served by this store's commerce model. */
+export function findSeoPage(slug: string, store: StoreConfig): SeoPageData | undefined {
+  return (isCargoStore(store) ? _cargoSlugMap : _localSlugMap).get(slug);
+}
+
+/** Set of slugs reachable on this store (for link/orphan filtering). */
+export function availableSlugSet(store: StoreConfig): Set<string> {
+  return new Set((isCargoStore(store) ? _cargoSlugMap : _localSlugMap).keys());
+}
+
+/** Every SEO slug across both models — used to tell SEO links from app routes. */
+export const ALL_SEO_SLUGS: Set<string> = new Set(SEO_PAGES.map((p) => p.slug));

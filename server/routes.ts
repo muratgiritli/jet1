@@ -15,8 +15,7 @@ import { runVetImport, getVetImportStatus, isVetImportRunning } from "./vet-impo
 import { runSeoFill, getSeoFillStatus, isSeoFillRunning } from "./seo-fill";
 import multer from "multer";
 import OpenAI from "openai";
-import { BRAND_PAGES } from "../client/src/lib/brand-seo-data";
-import { KEYWORD_AUTO_ADDED } from "../client/src/lib/seo-data";
+import { getSeoPagesForStore, isCargoStore } from "../client/src/lib/seo-data";
 import { getAllStoreGoogleConfigs, setStoreGoogleConfig, deleteStoreGoogleConfig } from "./google-tags";
 import { getAllStoreMerchantConfigs, getStoreMerchantConfig, setStoreMerchantConfig, deleteStoreMerchantConfig } from "./merchant";
 
@@ -803,140 +802,35 @@ export async function registerRoutes(
 
   app.get("/sitemap-seo.xml", async (req, res) => {
     try {
-      const SITE = reqStore(req).domain;
+      const store = reqStore(req);
+      const SITE = store.domain;
       const today = new Date().toISOString().split("T")[0];
-      const coreSlugs = [
-        { url: "/samsun-petshop", priority: "0.9", changefreq: "weekly" },
-        { url: "/atakum-petshop", priority: "0.8", changefreq: "weekly" },
-        { url: "/ilkadim-petshop", priority: "0.8", changefreq: "weekly" },
-        { url: "/canik-petshop", priority: "0.8", changefreq: "weekly" },
-        { url: "/atakum-mahalleler", priority: "0.7", changefreq: "monthly" },
-        { url: "/kedi-mamasi", priority: "0.8", changefreq: "weekly" },
-        { url: "/kopek-mamasi", priority: "0.8", changefreq: "weekly" },
-        { url: "/kedi-kumu", priority: "0.8", changefreq: "weekly" },
-        { url: "/pet-aksesuar", priority: "0.7", changefreq: "weekly" },
-        { url: "/kedi-mamasi-en-iyi-markalar", priority: "0.7", changefreq: "monthly" },
-        { url: "/kedi-kumu-en-iyi", priority: "0.7", changefreq: "monthly" },
-        { url: "/kopek-mamasi-fiyatlari", priority: "0.7", changefreq: "monthly" },
-      ];
-      const atakumMahalleler = ["denizevleri","guzelyali","kurupelit","atakent","incesu","mimar-sinan","korfez","yeni-mahalle","altinkum","balac","cakirlar","soguksu","taflan","cobanli","buyukoyumca","esenevler","kucukkolpinar"];
-      const ilkadimMahalleler = ["kadikoy","rasathane","kilicdede","baruthane","kalkanci","ulugazi","derecik","adalet","ciftlik","liman","tepecik"];
-      const canikMahalleler = ["karsiyaka","gaziosmanpasa","canik-yenimahalle","kuzeyyildizi","karadeniz"];
-      const mahalleSlugs = [
-        ...atakumMahalleler.map(m => ({ url: `/atakum-${m}-petshop`, priority: "0.6", changefreq: "monthly" })),
-        ...ilkadimMahalleler.map(m => ({ url: `/ilkadim-${m}-petshop`, priority: "0.6", changefreq: "monthly" })),
-        ...canikMahalleler.map(m => ({ url: `/canik-${m}-petshop`, priority: "0.6", changefreq: "monthly" })),
-      ];
-      const keywordSlugs = [
-        { url: "/samsun-atakum-petshop-kedi-kopek-mamasi", priority: "0.8", changefreq: "weekly" },
-        { url: "/jetgo-petshop", priority: "0.8", changefreq: "weekly" },
-        { url: "/samsun-petshop-kedi-mamasi", priority: "0.8", changefreq: "weekly" },
-        { url: "/samsun-petshop-kopek-mamasi", priority: "0.8", changefreq: "weekly" },
-        { url: "/samsun-petshop-kedi-kumu", priority: "0.8", changefreq: "weekly" },
-        { url: "/atakum-petshop-kedi-mamasi", priority: "0.7", changefreq: "weekly" },
-        { url: "/atakum-petshop-kopek-mamasi", priority: "0.7", changefreq: "weekly" },
-        { url: "/en-yakin-petshop-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/kapiya-teslim-petshop-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/online-petshop-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-petshop-fiyat-kampanya", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-evcil-hayvan-magazasi", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-kedi-mamasi-fiyatlari", priority: "0.7", changefreq: "weekly" },
-        { url: "/acil-kedi-mamasi-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/kopek-mamasi-hizli-teslim-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/kedi-kumu-kapiya-teslim-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/mama-siparis-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/petshop-delivery-samsun", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-kedi-acik-mama", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kedi-yas-mama", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kedi-konserve", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kedi-malt-vitamin", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kedi-odul-mama", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kedi-bakim-saglik", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kedi-tuvaleti", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kedi-tasima", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kopek-acik-mama", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kopek-yas-mama", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kopek-odul-kemik", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kopek-bakim-saglik", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kopek-tuvalet-malzemeleri", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kopek-tasima-kulube", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kopek-uygun-cuval-mama", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kus-yemi", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kus-kafesi", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kus-vitamini", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kus-bakim-aksesuar", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kemirgen-yemi", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kemirgen-kafesi", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kemirgen-vitamin", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-kemirgen-bakim-aksesuar", priority: "0.6", changefreq: "monthly" },
-        { url: "/atakum-cumhuriyet-petshop", priority: "0.5", changefreq: "monthly" },
-        { url: "/atakum-alanli-petshop", priority: "0.5", changefreq: "monthly" },
-        { url: "/atakum-kucukoyumca-petshop", priority: "0.5", changefreq: "monthly" },
-        { url: "/atakum-avdan-petshop", priority: "0.5", changefreq: "monthly" },
-        { url: "/atakum-catalcam-petshop", priority: "0.5", changefreq: "monthly" },
-        { url: "/atakum-haciismail-petshop", priority: "0.5", changefreq: "monthly" },
-        { url: "/atakum-kamali-petshop", priority: "0.5", changefreq: "monthly" },
-        { url: "/atakum-mecidiye-petshop", priority: "0.5", changefreq: "monthly" },
-        { url: "/atakum-yenicam-petshop", priority: "0.5", changefreq: "monthly" },
-        { url: "/atakum-organize-sanayi-petshop", priority: "0.5", changefreq: "monthly" },
-        { url: "/atakum-kozaagac-petshop", priority: "0.5", changefreq: "monthly" },
-        { url: "/atakum-kedi-kumu-kapiya-teslim", priority: "0.7", changefreq: "weekly" },
-        { url: "/atakum-kedi-mamasi-kapiya-teslim", priority: "0.7", changefreq: "weekly" },
-        { url: "/atakum-kopek-mamasi-kapiya-teslim", priority: "0.7", changefreq: "weekly" },
-        { url: "/atakum-kus-yemi-kafes", priority: "0.6", changefreq: "monthly" },
-        { url: "/atakum-kemirgen-urunleri", priority: "0.6", changefreq: "monthly" },
-        { url: "/atakum-petshop-ayni-gun-teslimat", priority: "0.7", changefreq: "weekly" },
-        { url: "/atakum-en-yakin-petshop", priority: "0.7", changefreq: "weekly" },
-        { url: "/atakum-petshop-kapida-odeme", priority: "0.7", changefreq: "weekly" },
-        { url: "/atakum-petshop-whatsapp-siparis", priority: "0.7", changefreq: "weekly" },
-        // 2026 hub: kısa-form ürün/ilçe + hız + ödeme + güven landing pages
-        { url: "/atakum-kedi-mamasi", priority: "0.85", changefreq: "weekly" },
-        { url: "/atakum-kopek-mamasi", priority: "0.85", changefreq: "weekly" },
-        { url: "/samsun-kedi-kumu", priority: "0.8", changefreq: "weekly" },
-        { url: "/samsun-kopek-mamasi", priority: "0.85", changefreq: "weekly" },
-        { url: "/samsun-hizli-petshop", priority: "0.8", changefreq: "weekly" },
-        { url: "/atakum-acil-petshop", priority: "0.75", changefreq: "weekly" },
-        { url: "/samsun-acil-petshop", priority: "0.75", changefreq: "weekly" },
-        { url: "/atakum-1-saatte-kedi-mamasi", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-1-saatte-kopek-mamasi", priority: "0.7", changefreq: "weekly" },
-        { url: "/atakum-gece-acik-petshop", priority: "0.6", changefreq: "monthly" },
-        { url: "/atakum-aninda-teslim-mama", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-1-saat-teslim-petshop", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-express-petshop", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-kapida-odeme-petshop", priority: "0.8", changefreq: "weekly" },
-        { url: "/atakum-kapida-odeme-petshop", priority: "0.8", changefreq: "weekly" },
-        { url: "/samsun-eve-teslim-kedi-mamasi", priority: "0.75", changefreq: "weekly" },
-        { url: "/atakum-eve-teslim-kopek-mamasi", priority: "0.75", changefreq: "weekly" },
-        { url: "/samsun-petshop-kurye", priority: "0.7", changefreq: "weekly" },
-        { url: "/atakum-hizli-kedi-kumu", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-ucuz-kedi-mamasi", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-en-iyi-kopek-mamasi", priority: "0.7", changefreq: "weekly" },
-        { url: "/atakum-proplan-mama", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-royal-canin-mama", priority: "0.7", changefreq: "weekly" },
-        { url: "/atakum-yavru-kedi-mamasi", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-buyuk-irk-kopek-mamasi", priority: "0.7", changefreq: "weekly" },
-        { url: "/atakum-tahilsiz-mama", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-premium-mama", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-sahte-mama-nasil-anlasilir", priority: "0.6", changefreq: "monthly" },
-        { url: "/atakum-son-kullanma-tarihi-mama", priority: "0.6", changefreq: "monthly" },
-        { url: "/samsun-orijinal-mama-nereden-alinir", priority: "0.65", changefreq: "monthly" },
-        { url: "/atakum-guvenilir-petshop", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-petshop-yorumlari", priority: "0.6", changefreq: "monthly" },
-        { url: "/atakum-uygun-fiyatli-mama", priority: "0.7", changefreq: "weekly" },
-        { url: "/en-yakin-petshop", priority: "0.85", changefreq: "weekly" },
-        { url: "/en-yakin-petshoplar", priority: "0.8", changefreq: "weekly" },
-        { url: "/kapida-odeme-petshop", priority: "0.85", changefreq: "weekly" },
-        { url: "/petshop-kapida-odeme", priority: "0.85", changefreq: "weekly" },
-        { url: "/getir-petshop", priority: "0.8", changefreq: "weekly" },
-        { url: "/samsun-akvaryum-malzemeleri", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-acik-petshop", priority: "0.75", changefreq: "weekly" },
-        { url: "/atakum-pet-market", priority: "0.8", changefreq: "weekly" },
-        { url: "/samsun-pet-market", priority: "0.8", changefreq: "weekly" },
-        { url: "/samsun-eve-teslim-petshop", priority: "0.75", changefreq: "weekly" },
-        { url: "/samsun-petshop-telefon-siparis", priority: "0.7", changefreq: "weekly" },
-        { url: "/samsun-indirimli-petshop", priority: "0.7", changefreq: "weekly" },
-        { url: "/acil-kopek-mamasi-samsun", priority: "0.75", changefreq: "weekly" },
-      ];
+
+      // Priority/changefreq by page type. SEO landing pages are derived from the
+      // shared corpus, filtered to THIS domain's commerce model, so cargo
+      // domains never list local-only (same-day/neighborhood) pages and local
+      // domains never list cargo-only pages.
+      const TYPE_META: Record<string, { priority: string; changefreq: string }> = {
+        core: { priority: "0.9", changefreq: "weekly" },
+        district: { priority: "0.8", changefreq: "weekly" },
+        category: { priority: "0.8", changefreq: "weekly" },
+        keyword: { priority: "0.7", changefreq: "weekly" },
+        brand: { priority: "0.7", changefreq: "weekly" },
+        blog: { priority: "0.7", changefreq: "monthly" },
+        "mahalle-block": { priority: "0.7", changefreq: "monthly" },
+        mahalle: { priority: "0.6", changefreq: "monthly" },
+      };
+      const DEFAULT_META = { priority: "0.6", changefreq: "monthly" };
+
+      const landingSlugs = getSeoPagesForStore(store).map((p) => {
+        const meta = TYPE_META[p.type] ?? DEFAULT_META;
+        return { url: `/${p.slug}`, priority: meta.priority, changefreq: meta.changefreq };
+      });
+
+      // Standalone blog content (separate /blog routes, not part of the SEO
+      // landing corpus). Geo-specific articles are dropped on cargo domains so
+      // they don't imply a local presence.
+      const cargo = isCargoStore(store);
       const blogSlugs = [
         { url: "/blog", priority: "0.8", changefreq: "weekly" },
         { url: "/blog/kedi-mamasi-nasil-secilir", priority: "0.7", changefreq: "monthly" },
@@ -945,18 +839,9 @@ export async function registerRoutes(
         { url: "/blog/evcil-hayvan-beslenme-hatalari", priority: "0.7", changefreq: "monthly" },
         { url: "/blog/kedi-bakim-ipuclari", priority: "0.7", changefreq: "monthly" },
         { url: "/blog/samsun-evcil-hayvan-gezilecek-yerler", priority: "0.6", changefreq: "monthly" },
-      ];
-      const brandSlugs = BRAND_PAGES.map((p) => ({
-        url: `/${p.slug}`,
-        priority: "0.7",
-        changefreq: "weekly",
-      }));
-      const keywordAutoSlugs = KEYWORD_AUTO_ADDED.map((p) => ({
-        url: `/${p.slug}`,
-        priority: "0.6",
-        changefreq: "weekly",
-      }));
-      const seoSlugs = [...coreSlugs, ...mahalleSlugs, ...keywordSlugs, ...blogSlugs, ...brandSlugs, ...keywordAutoSlugs];
+      ].filter((b) => !(cargo && /samsun|atakum|ilkadim|canik/i.test(b.url)));
+
+      const seoSlugs = [...landingSlugs, ...blogSlugs];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n`;
       for (const page of seoSlugs) {

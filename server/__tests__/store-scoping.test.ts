@@ -22,7 +22,14 @@ import { readFileSync } from "node:fs";
 import * as cookieSignature from "cookie-signature";
 import { registerRoutes, isTestOtpBypass } from "../routes";
 import { injectAllMeta, injectGoogleTags } from "../seo-meta";
-import { SEO_PAGES } from "../../client/src/lib/seo-data";
+import {
+  SEO_PAGES,
+  findSeoPage,
+  getSeoPagesForStore,
+  availableSlugSet,
+  ALL_SEO_SLUGS,
+  isCargoStore,
+} from "../../client/src/lib/seo-data";
 import { getStoreByHost, brandifyFor, STORES } from "../../shared/stores";
 import { setStoreGoogleConfig, deleteStoreGoogleConfig, getAllStoreGoogleConfigs } from "../google-tags";
 import { setStoreMerchantConfig, deleteStoreMerchantConfig, getAllStoreMerchantConfigs, normalizeMerchantConfig } from "../merchant";
@@ -2319,27 +2326,42 @@ test("test-OTP bypass lets a NEW customer place a local jetgo.shop order (source
 // "jetgomarket.com" — so a working brandify must rewrite the brand word AND the
 // domain, and a broken one would leave a detectable leak.
 
-const SEO_TEST_SLUG = "jetgo-petshop";
-const seoTestPage = SEO_PAGES.find((p) => p.slug === SEO_TEST_SLUG);
+// Per-commerce-model SEO fixtures. The same slug can carry BOTH a localOnly and
+// a cargoOnly entry, so each fixture is resolved against a store of the matching
+// model via findSeoPage (which returns the served variant).
+const SEO_TEST_SLUG = "jetgo-petshop";            // localOnly (local hosts)
+const CARGO_SEO_TEST_SLUG = "kedi-mamasi-siparis"; // cargoOnly (cargo hosts)
+const seoTestPage = findSeoPage(SEO_TEST_SLUG, getStoreByHost(JETGO_HOST));
+const cargoSeoTestPage = findSeoPage(CARGO_SEO_TEST_SLUG, getStoreByHost(KARADENIZ_HOST));
 
 // Mirror of seo-meta.ts escapeHtml so the exact-match assertions below stay
 // correct even if the brandified copy ever contains HTML-special characters.
 const escapeHtmlForTest = (s: string) =>
   s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 
-test("SEO test fixture slug exists with brandifiable source content", () => {
-  // Guards the two tests below against silently passing if seo-data is edited so
-  // the chosen slug disappears or no longer carries the JETGO brand to swap.
-  assert.ok(seoTestPage, `seo-data must still define the "${SEO_TEST_SLUG}" slug`);
-  assert.match(seoTestPage!.metaTitle, /JETGO/, "fixture metaTitle must contain JETGO to brandify");
-  assert.match(seoTestPage!.metaTitle, /jetgomarket\.com/i, "fixture metaTitle must contain the jetgo domain to brandify");
+test("SEO test fixtures exist with brandifiable source content (per commerce model)", () => {
+  // Guards the tests below against silently passing if seo-data is edited so a
+  // fixture slug disappears or no longer carries the JETGO brand to swap.
+  assert.ok(seoTestPage, `seo-data must still define a localOnly "${SEO_TEST_SLUG}" page`);
+  assert.equal(seoTestPage!.availability, "localOnly", "local fixture must be localOnly");
+  assert.match(seoTestPage!.metaTitle, /JETGO/, "local fixture metaTitle must contain JETGO to brandify");
+  assert.match(seoTestPage!.metaTitle, /jetgomarket\.com/i, "local fixture metaTitle must contain the jetgo domain to brandify");
+
+  assert.ok(cargoSeoTestPage, `seo-data must still define a cargoOnly "${CARGO_SEO_TEST_SLUG}" page`);
+  assert.equal(cargoSeoTestPage!.availability, "cargoOnly", "cargo fixture must be cargoOnly");
+  assert.match(cargoSeoTestPage!.metaTitle, /JETGO/, "cargo fixture metaTitle must contain JETGO to brandify");
 });
 
 // Assert an SEO landing page served on `host` carries `store`'s brand across
 // title / description / og:title / og:description and self-canonicalizes to the
 // store domain, never leaking the default JETGO brand or domain.
 async function assertSeoLandingBranding(host: string, store: ReturnType<typeof getStoreByHost>) {
-  const html = await injectAllMeta(INDEX_HTML, `/${SEO_TEST_SLUG}`, host);
+  // Pick the fixture for this store's commerce model (the same slug can have a
+  // localOnly and a cargoOnly variant; only one is served per store).
+  const slug = isCargoStore(store) ? CARGO_SEO_TEST_SLUG : SEO_TEST_SLUG;
+  const page = findSeoPage(slug, store);
+  assert.ok(page, `${host}: fixture "${slug}" must be served on the ${store.id} commerce model`);
+  const html = await injectAllMeta(INDEX_HTML, `/${slug}`, host);
 
   const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
   const description = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1] ?? "";
@@ -2350,8 +2372,8 @@ async function assertSeoLandingBranding(host: string, store: ReturnType<typeof g
 
   // Title/description must equal the brandified source verbatim (proves the
   // SEO content was taken from the shared table AND brandified for this host).
-  assert.equal(title, escapeHtmlForTest(brandifyFor(store, seoTestPage!.metaTitle)), `${host} SEO <title> must be the brandified metaTitle`);
-  assert.equal(description, escapeHtmlForTest(brandifyFor(store, seoTestPage!.metaDescription)), `${host} SEO description must be the brandified metaDescription`);
+  assert.equal(title, escapeHtmlForTest(brandifyFor(store, page!.metaTitle)), `${host} SEO <title> must be the brandified metaTitle`);
+  assert.equal(description, escapeHtmlForTest(brandifyFor(store, page!.metaDescription)), `${host} SEO description must be the brandified metaDescription`);
   // og:title / og:description mirror the brandified title/description.
   assert.equal(ogTitle, title, `${host} og:title must mirror the brandified <title>`);
   assert.equal(ogDescription, description, `${host} og:description must mirror the brandified description`);
@@ -2364,7 +2386,7 @@ async function assertSeoLandingBranding(host: string, store: ReturnType<typeof g
   }
 
   // Self-canonicalization: canonical + og:url bind to THIS store's domain/slug.
-  const expectedCanonical = `${store.domain}/${SEO_TEST_SLUG}`;
+  const expectedCanonical = `${store.domain}/${slug}`;
   assert.equal(canonical, expectedCanonical, `${host} SEO canonical must bind to the ${store.id} domain`);
   assert.equal(ogUrl, expectedCanonical, `${host} SEO og:url must bind to the ${store.id} domain`);
   assert.ok(!/jetgomarket\.com/i.test(canonical), `${host} SEO canonical must not point at the jetgo domain`);
@@ -2461,48 +2483,182 @@ test("SEO landing page on the default (jetgo) host keeps the JETGO brand (contra
 //
 // The shared keyword landing pages are authored for the Samsun/Atakum LOCAL
 // same-day-courier + door-payment model. On a CARGO / online-payment-only store
-// (karadeniz/samsun/samsunpet) those promises are FALSE — and since they now feed
-// the server-rendered FAQPage JSON-LD + <noscript> intro that AI crawlers read,
-// they must be rewritten by commercifyFor. These tests prove the rewrite fires on
-// a cargo host and is a no-op on a local host (gating), asserting only on the
-// SEO-injected surfaces we control (noscript intro + FAQPage ld+json) so the
-// pre-existing app-wide static LocalBusiness block can't cause false results.
+// (karadeniz/samsun/samsunpet) those promises are FALSE. Under option B the local
+// pages are HIDDEN on cargo hosts and a separate cargo-framed corpus is served in
+// their place. These tests prove (a) per-model eligibility (localOnly hidden on
+// cargo, cargoOnly hidden on local), (b) no cargo-served SEO surface leaks a local
+// claim, and (c) no internal/buy link is orphaned within a commerce model.
 
-const seoKeywordPage = SEO_PAGES.find((p) => p.type === "keyword");
+// A localOnly keyword page carrying BOTH the door-payment claim and the Samsun
+// neighborhood list — the strongest "local" fixture to prove cargo hides it.
+const seoLocalKeywordPage = SEO_PAGES.find(
+  (p) =>
+    p.type === "keyword" &&
+    p.availability === "localOnly" &&
+    /Kapıda nakit, kredi kartı \(POS\) ve QR/.test(p.intro.join(" ")) &&
+    /Atakum, İlkadım, Canik ve Tekkeköy/.test(p.intro.join(" ")),
+);
 
 const noscriptOf = (html: string) => html.match(/<noscript>([\s\S]*?)<\/noscript>/i)?.[1] ?? "";
-const faqLdOf = (html: string) =>
-  html.match(/<script type="application\/ld\+json">([^<]*FAQPage[^<]*)<\/script>/i)?.[1] ?? "";
+const titleOf = (html: string) => html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
 
-test("SEO keyword fixture exists and carries the local same-day/door-payment claims", () => {
-  // Guards the gating test below: if seo-data stops emitting keyword pages or the
-  // local claims, the cargo assertions would pass vacuously.
-  assert.ok(seoKeywordPage, "seo-data must still define at least one keyword landing page");
-  const intro = seoKeywordPage!.intro.join(" ");
+// Commerce-model claims that are TRUE for the local same-day-courier model but
+// FALSE on a cargo / online-payment store. Brand words (which can themselves
+// contain a city name, e.g. "Samsun Pet") are deliberately excluded so the
+// scanner never false-positives on a store's own brand.
+const FORBIDDEN_LOCAL: { re: RegExp; label: string }[] = [
+  { re: /\bkapıda\b/i, label: "door (kapıda) claim" },
+  { re: /aynı gün|ayni gun/i, label: "same-day" },
+  { re: /ortalama 1-3 saat|1-3 saatte/i, label: "1-3 hour courier" },
+  { re: /60 dakika|1 saat içinde|1 saatte/i, label: "≤1 hour delivery" },
+  { re: /\bkurye\b/i, label: "courier" },
+  { re: /whatsapp/i, label: "whatsapp order" },
+  { re: /\bgetir\b/i, label: "getir" },
+  { re: /nöbetçi|nobetci/i, label: "night-open" },
+  { re: /Atakum, İlkadım, Canik/i, label: "neighborhood delivery list" },
+  // In-person-only payment options: on a cargo / online-payment store these are
+  // false. Brand words never contain them, so they are safe to forbid outright.
+  { re: /\bnakit\b/i, label: "cash payment" },
+  { re: /\bPOS\b/, label: "POS terminal" },
+  { re: /\bQR\b/, label: "QR payment" },
+];
+
+test("local keyword fixture exists and carries the local same-day/door-payment claims", () => {
+  // Guards the eligibility test below: if seo-data stops emitting localOnly
+  // keyword pages with the local claims, the cargo assertions pass vacuously.
+  assert.ok(seoLocalKeywordPage, "seo-data must still define a localOnly keyword page carrying the local claims");
+  const intro = seoLocalKeywordPage!.intro.join(" ");
   assert.match(intro, /Kapıda nakit, kredi kartı \(POS\) ve QR/, "fixture intro must carry the door-payment claim");
   assert.match(intro, /Atakum, İlkadım, Canik ve Tekkeköy/, "fixture intro must carry the neighborhood delivery list");
 });
 
-test("cargo store rewrites false local delivery/payment claims in SEO landing copy (karadeniz vs atakum)", async () => {
-  const slug = seoKeywordPage!.slug;
-  const cargo = await injectAllMeta(INDEX_HTML, `/${slug}`, KARADENIZ_HOST);
-  const local = await injectAllMeta(INDEX_HTML, `/${slug}`, ATAKUM_HOST);
+test("per-model eligibility: localOnly hidden on cargo, cargoOnly hidden on local", async () => {
+  const cargoStore = getStoreByHost(KARADENIZ_HOST);
+  const localStore = getStoreByHost(ATAKUM_HOST);
+  const localSlug = seoLocalKeywordPage!.slug;
 
-  const cargoBody = `${noscriptOf(cargo)} ${faqLdOf(cargo)}`;
-  const localBody = `${noscriptOf(local)} ${faqLdOf(local)}`;
+  // A cargo-native slug = cargoOnly with NO localOnly twin (so resolving it on a
+  // local store can only return undefined, never a same-slug local variant).
+  const localSlugs = new Set(SEO_PAGES.filter((p) => p.availability === "localOnly").map((p) => p.slug));
+  const cargoNativeSlug = SEO_PAGES.find((p) => p.availability === "cargoOnly" && !localSlugs.has(p.slug))?.slug;
+  assert.ok(cargoNativeSlug, "seo-data must define at least one cargo-native keyword (cargoOnly, no local twin)");
 
-  // Local host: commercifyFor is a no-op, so the same-day/door-payment claims
-  // survive (proves the fixture surfaces actually carry them).
-  assert.match(localBody, /Kapıda nakit, kredi kartı \(POS\) ve QR/, "local SEO copy keeps the door-payment claim");
-  assert.match(localBody, /Atakum, İlkadım, Canik ve Tekkeköy/, "local SEO copy keeps the neighborhood delivery list");
+  // Resolver layer: each model only resolves its own variant.
+  assert.ok(!findSeoPage(localSlug, cargoStore), `localOnly "${localSlug}" must not resolve on a cargo store`);
+  assert.ok(!findSeoPage(cargoNativeSlug!, localStore), `cargo-native "${cargoNativeSlug}" must not resolve on a local store`);
 
-  // Cargo host (karadeniz): the false LOCAL claims must be gone from the
-  // AI-visible surfaces and replaced with cargo/online wording + the Karadeniz brand.
-  assert.ok(!/Kapıda nakit, kredi kartı \(POS\) ve QR/.test(cargoBody), "cargo SEO copy must drop the door-payment claim");
-  assert.ok(!/ortalama 1-3 saat/i.test(cargoBody), "cargo SEO copy must drop the same-day courier claim");
-  assert.ok(!/Atakum, İlkadım, Canik ve Tekkeköy/.test(cargoBody), "cargo SEO copy must drop the neighborhood delivery list");
-  assert.match(cargoBody, /kargo/i, "cargo SEO copy must speak the cargo delivery model");
-  assert.ok(cargoBody.includes("Karadeniz Pet Shop"), "cargo SEO copy must carry the Karadeniz brand");
+  // Server layer: a localOnly slug on a cargo host falls back to home meta — the
+  // local page's title / neighborhood copy must NOT be server-rendered.
+  const cargoHtml = await injectAllMeta(INDEX_HTML, `/${localSlug}`, KARADENIZ_HOST);
+  assert.notEqual(
+    titleOf(cargoHtml),
+    escapeHtmlForTest(brandifyFor(cargoStore, seoLocalKeywordPage!.metaTitle)),
+    "cargo host must not serve the local page's brandified title",
+  );
+  assert.ok(!/Atakum, İlkadım, Canik/.test(cargoHtml), "cargo host must not serve the local neighborhood copy");
+});
+
+test("forbidden-claim scanner: no cargo-served SEO page leaks a local claim (source + injected HTML)", async () => {
+  const cargoPages = SEO_PAGES.filter((p) => p.availability === "cargoOnly");
+  assert.ok(cargoPages.length > 0, "there must be a cargo SEO corpus to serve");
+
+  // (1) Source scan over EVERY cargo page (cheap, no I/O) — the corpus must be
+  // truthful by construction across all text fields.
+  for (const p of cargoPages) {
+    const hay = [
+      p.metaTitle,
+      p.metaDescription,
+      p.keywords,
+      p.h1,
+      ...p.intro,
+      ...(p.sections ?? []).flatMap((s) => [s.h2, ...s.paragraphs, ...(s.list ?? [])]),
+      ...(p.features ?? []),
+      ...p.faq.flatMap((f) => [f.q, f.a]),
+      ...p.internalLinks.map((l) => l.text),
+      ...(p.buyLinks ?? []).map((l) => l.text),
+    ].join("  ");
+    for (const { re, label } of FORBIDDEN_LOCAL) {
+      assert.ok(!re.test(hay), `cargo page "${p.slug}" source leaks local claim (${label}): ${hay.match(re)?.[0]}`);
+    }
+  }
+
+  // (2) Injected-HTML scan over a sample, on a cargo host whose brand itself
+  // contains a city name (samsunpet) — proves brandify never re-introduces a
+  // forbidden atom and the scanner doesn't false-positive on the store brand.
+  for (const p of cargoPages.slice(0, 15)) {
+    const html = await injectAllMeta(INDEX_HTML, `/${p.slug}`, SAMSUNPET_HOST);
+    const description = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1] ?? "";
+    const keywords = html.match(/<meta\s+name="keywords"\s+content="([^"]*)"/i)?.[1] ?? "";
+    const surface = `${titleOf(html)}  ${description}  ${keywords}  ${noscriptOf(html)}`;
+    for (const { re, label } of FORBIDDEN_LOCAL) {
+      assert.ok(!re.test(surface), `cargo-served "${p.slug}" injected HTML leaks local claim (${label}): ${surface.match(re)?.[0]}`);
+    }
+  }
+});
+
+test("forbidden-claim scanner: FULL cargo HTML (static #seo-static + every ld+json) carries no local claim", async () => {
+  // The previous scanner only inspected title/description/keywords/noscript and
+  // therefore missed the LOCAL claims baked into client/index.html's static
+  // surfaces (the hidden #seo-static crawler block + the static LocalBusiness
+  // JSON-LD), which applyGlobalBranding only brandified — never commercified —
+  // and so served verbatim on cargo hosts. This scans the ENTIRE injected HTML,
+  // including all <script type="application/ld+json"> blocks, on a cargo host.
+  // Scan EVERY cargo-served SEO route's full HTML (acceptance: no forbidden local
+  // atom in ANY cargo-served SEO HTML/JSON-LD), not just a sample.
+  const cargoPages = SEO_PAGES.filter((p) => p.availability === "cargoOnly");
+  const samples = cargoPages.map((p) => `/${p.slug}`);
+  assert.ok(samples.length > 0, "there must be cargo SEO routes to scan");
+  for (const path of samples) {
+    const html = await injectAllMeta(INDEX_HTML, path, KARADENIZ_HOST);
+    const ldBlocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+    const seoStatic = html.match(/<div id="seo-static"[^>]*>[\s\S]*?<\/div>/i)?.[0] ?? "";
+    // Guard: prove the surfaces we care about are actually present in the scan,
+    // so the assertions below can never pass vacuously.
+    assert.ok(seoStatic.length > 0, `cargo "${path}" must still ship a #seo-static crawler block`);
+    assert.ok(ldBlocks.length > 0, `cargo "${path}" must still ship structured data`);
+    const surface = `${html}\n${ldBlocks.join("\n")}\n${seoStatic}`;
+    for (const { re, label } of FORBIDDEN_LOCAL) {
+      assert.ok(!re.test(surface), `cargo full HTML "${path}" leaks local claim (${label}): ${surface.match(re)?.[0]}`);
+    }
+    // The static LocalBusiness JSON-LD must no longer advertise Samsun-only
+    // delivery: areaServed is collapsed to the whole country on cargo.
+    assert.ok(!/"areaServed":\s*\[/.test(html), `cargo "${path}" must not keep a neighborhood areaServed list`);
+  }
+});
+
+test("contrast: the LOCAL host still serves the local static crawler block (scanner discriminates)", async () => {
+  // Proves the cargo full-HTML scan above is meaningful: on a LOCAL host the same
+  // static surfaces legitimately keep the same-day / neighborhood claims.
+  const html = await injectAllMeta(INDEX_HTML, `/${SEO_TEST_SLUG}`, ATAKUM_HOST);
+  const seoStatic = html.match(/<div id="seo-static"[^>]*>[\s\S]*?<\/div>/i)?.[0] ?? "";
+  assert.match(seoStatic, /aynı gün|Aynı gün/i, "local host keeps the same-day claim in its static crawler block");
+  assert.match(html, /"areaServed":\s*\[/, "local host keeps its neighborhood areaServed list");
+});
+
+test("cargo SEO landing copy speaks the cargo model and carries the store brand", async () => {
+  const html = await injectAllMeta(INDEX_HTML, `/${CARGO_SEO_TEST_SLUG}`, KARADENIZ_HOST);
+  const body = `${noscriptOf(html)} ${titleOf(html)}`;
+  assert.match(body, /kargo/i, "cargo SEO copy must speak the cargo delivery model");
+  assert.ok(body.includes("Karadeniz Pet Shop"), "cargo SEO copy must carry the Karadeniz brand");
+});
+
+test("no SEO internal/buy link is orphaned within its commerce model", () => {
+  for (const [label, host] of [["local", ATAKUM_HOST], ["cargo", KARADENIZ_HOST]] as const) {
+    const store = getStoreByHost(host);
+    const avail = availableSlugSet(store);
+    const orphans: string[] = [];
+    for (const p of getSeoPagesForStore(store)) {
+      const links = [...p.internalLinks, ...(p.buyLinks ?? [])];
+      for (const l of links) {
+        const m = (l.href || "").match(/^\/([^/?#]+)$/);
+        if (!m) continue;
+        const s = m[1];
+        if (!ALL_SEO_SLUGS.has(s)) continue; // app route, not an SEO page
+        if (!avail.has(s)) orphans.push(`${p.slug} -> ${l.href}`);
+      }
+    }
+    assert.equal(orphans.length, 0, `${label} model has orphaned SEO links: ${orphans.slice(0, 10).join(", ")}`);
+  }
 });
 
 // ---- Per-domain Google independence (GSC / GTM / GA4 / Ads) ----

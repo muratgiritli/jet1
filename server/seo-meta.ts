@@ -1,4 +1,4 @@
-import { SEO_PAGES, type SeoPageData } from "../client/src/lib/seo-data";
+import { findSeoPage, type SeoPageData } from "../client/src/lib/seo-data";
 import { pool as sharedPool } from "./storage";
 import { getStoreByHost, brandifyFor, commercifyFor, type StoreConfig } from "@shared/stores";
 import { getStoreGoogleConfig } from "./google-tags";
@@ -57,10 +57,6 @@ async function getProductMeta(id: number): Promise<ProductMeta | null> {
   }
 }
 
-const slugMap: Map<string, SeoPageData> = new Map(
-  SEO_PAGES.map((p) => [p.slug, p]),
-);
-
 function escapeHtml(s: string): string {
   return s
     .replace(/&/g, "&amp;")
@@ -70,11 +66,13 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
-function findSeoData(urlPath: string): SeoPageData | undefined {
+function findSeoData(urlPath: string, store: StoreConfig): SeoPageData | undefined {
   const cleanPath = urlPath.split("?")[0].split("#")[0];
   const slug = cleanPath.replace(/^\/+/, "").replace(/\/+$/, "");
   if (!slug) return undefined;
-  return slugMap.get(slug);
+  // Resolve the variant served by this store's commerce model so cargo domains
+  // never emit local-only pages (and vice versa).
+  return findSeoPage(slug, store);
 }
 
 function replaceTag(html: string, regex: RegExp, replacement: string): string {
@@ -133,17 +131,59 @@ export function injectGoogleTags(html: string, store: StoreConfig): string {
  * Per-domain identity tags applied to EVERY served page so each custom domain
  * presents its own brand: og:site_name, theme-color, app title and share image.
  */
+// The static crawler block in client/index.html promises the LOCAL model
+// (aynı gün kurye, kapıda ödeme, Samsun mahalle teslimatı). On a cargo /
+// online-payment store those claims are FALSE and commercifyFor's phrase table
+// does not cover this bespoke wording, so cargo stores get a purpose-built,
+// nationwide-cargo crawler block instead of a rewrite of the local one.
+function cargoSeoStaticBlock(store: StoreConfig): string {
+  const name = escapeHtml(store.name);
+  return (
+    `<div id="seo-static" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap;border:0;padding:0;margin:-1px;">\n` +
+    `      <h1>${name} - Türkiye Geneli Hızlı Petshop Kargo</h1>\n` +
+    `      <p>Kedi maması, köpek maması, kedi kumu ve evcil hayvan ürünlerini Türkiye'nin her yerine hızlı kargo ile gönderen online petshop. Güvenli online ödeme, 900'den fazla ürün ve her siparişte %5 Para Puan.</p>\n` +
+    `      <h2>Kedi Ürünleri ve Kedi Maması</h2>\n` +
+    `      <p>Royal Canin, Pro Plan, Hill's, N&amp;D ve Reflex gibi premium kedi mama markaları, kedi kumu çeşitleri, kedi oyuncakları ve aksesuarları hızlı kargo ile adresinize gelir.</p>\n` +
+    `      <h2>Köpek Ürünleri ve Köpek Maması</h2>\n` +
+    `      <p>Yavru, yetişkin ve büyük ırk köpekler için tahıllı/tahılsız mamalar, ödül mamaları, tasma ve köpek aksesuarları Türkiye geneline kargo ile.</p>\n` +
+    `      <h2>Kuş, Kemirgen ve Akvaryum Ürünleri</h2>\n` +
+    `      <p>Muhabbet kuşu yemi, hamster mamaları, akvaryum balık yemleri ve aksesuarlar geniş çeşitle Türkiye geneline kargolanır.</p>\n` +
+    `      <h2>Kampanya ve İndirimler</h2>\n` +
+    `      <p>Haftalık petshop kampanyaları, sepet indirimleri, ücretsiz kargo fırsatları ve para puan kazandıran loyalty programı.</p>\n` +
+    `      <img src="/og-image.webp" alt="${name} online petshop Türkiye geneli kargo" width="1" height="1" />\n` +
+    `      <nav aria-label="Site içi linkler">\n` +
+    `        <ul>\n` +
+    `          <li><a href="/kategori/kedi">Kedi maması ve kedi ürünleri</a></li>\n` +
+    `          <li><a href="/kategori/kopek">Köpek maması ve köpek ürünleri</a></li>\n` +
+    `          <li><a href="/kategori/kus">Kuş yemi ve kafes ürünleri</a></li>\n` +
+    `          <li><a href="/kategori/kemirgen">Kemirgen mamaları</a></li>\n` +
+    `          <li><a href="/kategori/akvaryum">Akvaryum balık ve aksesuarları</a></li>\n` +
+    `          <li><a href="/markalar">Petshop markaları</a></li>\n` +
+    `          <li><a href="/kampanya">Kampanyalı petshop ürünleri</a></li>\n` +
+    `          <li><a href="/blog">Pet bakım rehberi blog</a></li>\n` +
+    `          <li><a href="/iletisim">İletişim</a></li>\n` +
+    `          <li><a href="/hakkimizda">Hakkımızda</a></li>\n` +
+    `        </ul>\n` +
+    `      </nav>\n` +
+    `    </div>`
+  );
+}
+
 function applyGlobalBranding(html: string, store: StoreConfig): string {
   let out = html;
+  const isCargo = store.commerce.fulfillment === "cargo";
   const ogImage = `${store.domain}${store.seo.ogImage}`;
   out = replaceTag(out, /<meta\s+property="og:site_name"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:site_name" content="${escapeHtml(store.name)}" />`);
   out = replaceTag(out, /<meta\s+property="og:image"\s+content="[^"]*"\s*\/?>/i, `<meta property="og:image" content="${escapeHtml(ogImage)}" />`);
   out = replaceTag(out, /<meta\s+name="theme-color"\s+content="[^"]*"\s*\/?>/i, `<meta name="theme-color" content="${store.theme.topBar}" />`);
   out = replaceTag(out, /<meta\s+name="apple-mobile-web-app-title"\s+content="[^"]*"\s*\/?>/i, `<meta name="apple-mobile-web-app-title" content="${escapeHtml(store.shortName)}" />`);
 
-  // Brandify the static crawler-visible SEO block (hidden seo-static div) so each
-  // domain shows its own brand name in pre-render/no-JS markup. No-op for default store.
-  out = out.replace(/<div id="seo-static"[^>]*>[\s\S]*?<\/div>/i, (block) => brandifyFor(store, block));
+  // Static crawler-visible SEO block (hidden seo-static div). Cargo stores get a
+  // nationwide-cargo block (the local one's same-day/kapıda/mahalle promises are
+  // false for them); local/default stores keep the block, brandified to their domain.
+  out = out.replace(/<div id="seo-static"[^>]*>[\s\S]*?<\/div>/i, (block) =>
+    isCargo ? cargoSeoStaticBlock(store) : brandifyFor(store, block),
+  );
 
   // Brandify the static JSON-LD fallback block: brand name and self-referential
   // URLs (url/image/logo) follow the request domain, but contact identifiers
@@ -156,6 +196,11 @@ function applyGlobalBranding(html: string, store: StoreConfig): string {
     let b = brandifyFor(store, block);
     if (origEmail) b = b.replace(/"email":\s*"[^"]*"/i, origEmail);
     if (origSameAs) b = b.replace(/"sameAs":\s*\[[\s\S]*?\]/i, origSameAs);
+    // Cargo stores ship nationwide: the static block's Samsun-neighborhood
+    // areaServed is a false local-delivery claim, so collapse it to Türkiye.
+    if (isCargo) {
+      b = b.replace(/"areaServed":\s*\[[\s\S]*?\]/i, `"areaServed": {"@type":"Country","name":"Türkiye"}`);
+    }
     return b;
   });
 
@@ -168,7 +213,7 @@ function applyGlobalBranding(html: string, store: StoreConfig): string {
  * REQUEST domain so each site self-canonicalizes and ranks independently.
  */
 function injectSeoMeta(html: string, urlPath: string, store: StoreConfig): string {
-  const data = findSeoData(urlPath);
+  const data = findSeoData(urlPath, store);
   if (!data) return html;
 
   // Compose: rewrite false local delivery/payment claims for cargo stores
@@ -378,7 +423,7 @@ export async function injectAllMeta(html: string, urlPath: string, host?: string
     return injectHomeMeta(out, urlPath, store);
   }
 
-  if (findSeoData(urlPath)) {
+  if (findSeoData(urlPath, store)) {
     return injectSeoMeta(out, urlPath, store);
   }
 

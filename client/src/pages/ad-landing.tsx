@@ -1,12 +1,12 @@
 import { useRoute } from "wouter";
 import Landing from "@/pages/landing";
 import { SITE_DOMAIN } from "@/components/SEO";
-import { SEO_PAGES } from "@/lib/seo-data";
+import { findStorePage } from "@/lib/store";
 
 export default function AdLanding() {
   const [, params] = useRoute("/:slug");
   const slug = params?.slug || "";
-  const page = SEO_PAGES.find((p) => p.slug === slug);
+  const page = slug ? findStorePage(slug) : undefined;
 
   return (
     <Landing

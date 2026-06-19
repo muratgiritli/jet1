@@ -3,11 +3,12 @@ import { MapPin, Truck, Phone, ChevronRight, Star, ShieldCheck, Clock, Package, 
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD, FAQ_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
-import { SEO_PAGES, type SeoPageData } from "@/lib/seo-data";
-import { brandify, commercify, CURRENT_STORE } from "@/lib/store";
+import { type SeoPageData } from "@/lib/seo-data";
+import { brandify, commercify, CURRENT_STORE, findStorePage, filterStoreLinks } from "@/lib/store";
 import NotFound from "@/pages/not-found";
 
 function StoreInfoBox({ hideWhatsapp = false }: { hideWhatsapp?: boolean }) {
+  const isCargo = CURRENT_STORE.commerce.fulfillment === "cargo";
   return (
     <section className="border-2 border-[#6B3480]/20 rounded-2xl overflow-hidden" data-testid="store-info-box">
       <div className="bg-[#6B3480]/5 px-5 py-3 border-b border-[#6B3480]/10">
@@ -32,7 +33,7 @@ function StoreInfoBox({ hideWhatsapp = false }: { hideWhatsapp?: boolean }) {
               <a href="tel:+908508403959" className="text-sm text-[#6B3480] hover:underline">0850 840 39 59</a>
             </div>
           </div>
-          {!hideWhatsapp && (
+          {!hideWhatsapp && !isCargo && (
             <div className="flex items-start gap-3">
               <MessageCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
               <div>
@@ -54,14 +55,14 @@ function StoreInfoBox({ hideWhatsapp = false }: { hideWhatsapp?: boolean }) {
             <CreditCard className="w-4 h-4 text-[#6B3480] mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-semibold">Ödeme Yöntemleri</p>
-              <p className="text-sm text-muted-foreground">Nakit, Kredi Kartı (POS), QR, EFT/Havale</p>
+              <p className="text-sm text-muted-foreground">{isCargo ? "Kredi Kartı, Havale/EFT" : "Nakit, Kredi Kartı (POS), QR, EFT/Havale"}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <Truck className="w-4 h-4 text-[#6B3480] mt-0.5 shrink-0" />
             <div>
               <p className="text-sm font-semibold">Teslimat</p>
-              <p className="text-sm text-muted-foreground">Atakum, İlkadım, Canik - Aynı gün</p>
+              <p className="text-sm text-muted-foreground">{isCargo ? "Türkiye geneli hızlı kargo" : "Atakum, İlkadım, Canik - Aynı gün"}</p>
             </div>
           </div>
         </div>
@@ -85,11 +86,15 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
   // Rewrite false local delivery/payment claims for cargo stores BEFORE <SEO>
   // brandifies meta/jsonLd; bc = commercify + brandify for the visible body.
   const bc = (t: string) => brandify(commercify(t));
+  const isCargo = CURRENT_STORE.commerce.fulfillment === "cargo";
 
+  // LOCAL_BUSINESS_JSONLD asserts hyperlocal same-day/kapıda/neighborhood
+  // delivery — false for cargo stores, so omit it (breadcrumb + commercified
+  // FAQ carry no local claims).
   const jsonLd = [
     BREADCRUMB_JSONLD(breadcrumbs),
     FAQ_JSONLD(page.faq.map(f => ({ question: commercify(f.q), answer: commercify(f.a) }))),
-    LOCAL_BUSINESS_JSONLD,
+    ...(isCargo ? [] : [LOCAL_BUSINESS_JSONLD]),
   ];
 
   return (
@@ -254,7 +259,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
         <section>
           <h2 className="text-xl font-bold mb-4">İlgili Sayfalar</h2>
           <div className="flex flex-wrap gap-2">
-            {page.internalLinks.map((link) => (
+            {filterStoreLinks(page.internalLinks).map((link) => (
               <Link key={link.href} href={link.href}>
                 <span className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full bg-[#6B3480]/10 text-[#6B3480] text-sm font-medium hover:bg-[#6B3480]/20 transition-colors cursor-pointer">
                   <ChevronRight className="w-3 h-3" />
@@ -268,11 +273,13 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
         <section className="bg-gradient-to-r from-[#6B3480] to-[#7c4dff] rounded-2xl p-6 md:p-8 text-white text-center">
           <h2 className="text-xl md:text-2xl font-bold mb-2">Hemen Sipariş Verin!</h2>
           <p className="text-sm text-white/80 mb-5 max-w-md mx-auto">
-            900'den fazla ürün, aynı gün teslimat, nakit ödemede avantajlı fiyat.
+            {isCargo
+              ? "900'den fazla ürün, Türkiye geneli hızlı kargo, güvenli online ödeme."
+              : "900'den fazla ürün, aynı gün teslimat, nakit ödemede avantajlı fiyat."}
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            {page.buyLinks && page.buyLinks.length > 0 ? (
-              page.buyLinks.map((b, i) => (
+            {page.buyLinks && filterStoreLinks(page.buyLinks).length > 0 ? (
+              filterStoreLinks(page.buyLinks).map((b, i) => (
                 <Link key={b.href} href={b.href}>
                   <Button variant="secondary" size="lg" className="w-full sm:w-auto" data-testid={`cta-buy-${i}`}>
                     <ShoppingCart className="w-4 h-4 mr-2" />
@@ -294,7 +301,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
                 </Link>
               </>
             )}
-            {page.type !== "brand" && (
+            {page.type !== "brand" && !isCargo && (
               <a href="https://wa.me/908508403959" target="_blank" rel="noopener noreferrer">
                 <Button size="lg" className="w-full sm:w-auto bg-green-600 hover:bg-green-700" data-testid="cta-whatsapp">
                   <Phone className="w-4 h-4 mr-2" />
@@ -312,7 +319,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
 export default function SeoPage() {
   const [, params] = useRoute("/:slug");
   const slug = params?.slug;
-  const page = SEO_PAGES.find((p) => p.slug === slug);
+  const page = slug ? findStorePage(slug) : undefined;
 
   if (!page) {
     return <NotFound />;
