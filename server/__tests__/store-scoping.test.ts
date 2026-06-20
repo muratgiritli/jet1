@@ -32,6 +32,7 @@ import {
   availableSlugSet,
   ALL_SEO_SLUGS,
   isCargoStore,
+  ATAKUM_EXCLUSIVE_PAGES,
 } from "../../client/src/lib/seo-data";
 import { getStoreByHost, brandifyFor, STORES } from "../../shared/stores";
 import { setStoreGoogleConfig, deleteStoreGoogleConfig, getAllStoreGoogleConfigs } from "../google-tags";
@@ -3604,5 +3605,145 @@ test("a havale/EFT order does NOT send the generic buyer 'siparisiniz alindi' SM
     else await setSetting("payment_eft_enabled", prevEft);
     if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
     if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
+  }
+});
+
+// ---- atakum-EXCLUSIVE keyword landing pages (per-domain independent corpus) -
+//
+// atakumpetshop.com publishes its OWN bespoke version of every keyword landing
+// page (storeId "atakum"), OVERRIDING the SHARED keyword page at the same slug
+// ONLY on atakum. Sibling local domains keep the shared page; cargo domains see
+// neither (local-only). These tests pin that exclusivity + non-leakage so a
+// future edit can't quietly re-share atakum's pages or leak them to siblings.
+
+const ATAKUM_STORE = getStoreByHost(ATAKUM_HOST);
+const SIBLING_LOCAL_STORE = getStoreByHost(JETGO_HOST);
+const CARGO_STORE_FOR_ATAKUM = getStoreByHost(SAMSUN_HOST);
+const ATAKUM_SAMPLE_SLUGS = ATAKUM_EXCLUSIVE_PAGES.slice(0, 6).map((p) => p.slug);
+
+test("atakum-exclusive: a sizable bespoke keyword corpus is registered", () => {
+  assert.ok(
+    ATAKUM_EXCLUSIVE_PAGES.length > 700,
+    `expected >700 atakum-exclusive pages, got ${ATAKUM_EXCLUSIVE_PAGES.length}`,
+  );
+  for (const p of ATAKUM_EXCLUSIVE_PAGES) {
+    assert.equal(p.storeId, "atakum", `${p.slug}: must be tagged storeId atakum`);
+    assert.equal(p.availability, "localOnly", `${p.slug}: must be localOnly`);
+    assert.equal(p.type, "keyword", `${p.slug}: must be a keyword page`);
+    assert.ok(
+      p.intro?.length && p.sections?.length && p.faq?.length,
+      `${p.slug}: must carry intro/sections/faq for a substantive page`,
+    );
+    assert.ok(p.internalLinks && p.internalLinks.length > 0, `${p.slug}: must carry internal links`);
+    // Genuine Atakum first-party content (real NAP phone) — not a brand swap.
+    assert.match(JSON.stringify(p), /0850 840 39 59/, `${p.slug}: must carry the Atakum NAP phone`);
+  }
+});
+
+test("atakum-exclusive: atakum serves its own variant; siblings serve the shared one", () => {
+  for (const slug of ATAKUM_SAMPLE_SLUGS) {
+    const ata = findSeoPage(slug, ATAKUM_STORE);
+    const sib = findSeoPage(slug, SIBLING_LOCAL_STORE);
+    assert.ok(ata && sib, `${slug}: must resolve on both atakum and a sibling`);
+    assert.equal(ata!.storeId, "atakum", `${slug}: atakum must get its storeId=atakum override`);
+    assert.equal(sib!.storeId, undefined, `${slug}: sibling must get the shared page (no storeId)`);
+    assert.notEqual(
+      ata!.metaTitle,
+      sib!.metaTitle,
+      `${slug}: atakum & sibling metaTitle must differ (independent content)`,
+    );
+    assert.match(ata!.metaTitle, /Atakum Pet Shop/, `${slug}: atakum metaTitle must carry the Atakum brand`);
+  }
+});
+
+test("atakum-exclusive: overrides never leak onto sibling local or cargo stores", () => {
+  for (const store of [
+    SIBLING_LOCAL_STORE,
+    getStoreByHost(JETGOPET_HOST),
+    getStoreByHost(JETGOSHOP_HOST),
+    CARGO_STORE_FOR_ATAKUM,
+  ]) {
+    const leaked = getSeoPagesForStore(store).filter((p) => p.storeId);
+    assert.equal(leaked.length, 0, `${store.id}: must not see any store-exclusive page`);
+  }
+  const ataStorePages = getSeoPagesForStore(ATAKUM_STORE).filter((p) => p.storeId);
+  assert.ok(ataStorePages.length > 700, "atakum corpus must include its exclusive pages");
+  for (const p of ataStorePages) assert.equal(p.storeId, "atakum");
+  // local-only atakum overrides must be hidden on a cargo store.
+  for (const slug of ATAKUM_SAMPLE_SLUGS) {
+    assert.equal(
+      findSeoPage(slug, CARGO_STORE_FOR_ATAKUM),
+      undefined,
+      `${slug}: local-only override must be hidden on a cargo store`,
+    );
+  }
+});
+
+test("atakum-exclusive: override REPLACES (not duplicates) the slug — unique corpus, parity with sibling", () => {
+  const ata = getSeoPagesForStore(ATAKUM_STORE);
+  const slugs = ata.map((p) => p.slug);
+  assert.equal(new Set(slugs).size, slugs.length, "atakum corpus must have unique slugs (override replaces, not adds)");
+  assert.equal(
+    ata.length,
+    getSeoPagesForStore(SIBLING_LOCAL_STORE).length,
+    "atakum corpus size must match a sibling local store (1:1 override)",
+  );
+  assert.deepEqual(
+    [...availableSlugSet(ATAKUM_STORE)].sort(),
+    [...availableSlugSet(SIBLING_LOCAL_STORE)].sort(),
+    "atakum & sibling must expose the SAME slug set (same URLs, different content)",
+  );
+});
+
+test("atakum-exclusive: curated core/district pages are NOT overridden", () => {
+  const core = findSeoPage("atakum-petshop", ATAKUM_STORE);
+  assert.ok(core, "atakum-petshop must resolve on atakum");
+  assert.equal(core!.storeId, undefined, "curated atakum-petshop must stay shared (no storeId override)");
+  assert.notEqual(core!.type, "keyword", "atakum-petshop must remain a curated (non-keyword) page");
+});
+
+test("atakum-exclusive: SSR meta serves atakum's bespoke content + self-canonical (differs from sibling)", async () => {
+  const slug = ATAKUM_SAMPLE_SLUGS[0];
+  const page = findSeoPage(slug, ATAKUM_STORE)!;
+  const html = await injectAllMeta(INDEX_HTML, `/${slug}`, ATAKUM_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const canonical = html.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+  assert.equal(
+    title,
+    escapeHtmlForTest(brandifyFor(ATAKUM_STORE, page.metaTitle)),
+    "atakum SSR <title> must be the brandified override metaTitle",
+  );
+  assert.match(title, /Atakum Pet Shop/, "atakum SSR <title> must carry the Atakum brand");
+  assert.ok(!/JETGO/i.test(title), "atakum SSR <title> must not leak the JETGO brand");
+  assert.equal(canonical, `${ATAKUM_STORE.domain}/${slug}`, "atakum SSR canonical must bind to the atakum domain");
+
+  // Same slug on a sibling host renders DIFFERENT (shared) title => independence.
+  const sibHtml = await injectAllMeta(INDEX_HTML, `/${slug}`, JETGOPET_HOST);
+  const sibTitle = sibHtml.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  assert.notEqual(title, sibTitle, "atakum & sibling SSR titles for the same slug must differ");
+});
+
+test("atakum-exclusive: sitemap lists the override pages with unique slugs, no foreign exclusives", () => {
+  const sm = getSitemapPagesForStore(ATAKUM_STORE);
+  const slugs = sm.map((p) => p.slug);
+  assert.equal(new Set(slugs).size, slugs.length, "atakum sitemap must have unique slugs");
+  const ownExclusive = sm.filter((p) => p.storeId === "atakum").length;
+  assert.ok(ownExclusive > 700, `atakum sitemap must list its exclusive pages, got ${ownExclusive}`);
+  assert.equal(
+    sm.filter((p) => p.storeId && p.storeId !== "atakum").length,
+    0,
+    "atakum sitemap must not list any foreign store-exclusive page",
+  );
+});
+
+test("atakum-exclusive: 24h/night/always-open keyword pages state truthful 09:00-21:00 hours", () => {
+  const alwaysOpen = ATAKUM_EXCLUSIVE_PAGES.filter((p) =>
+    /24\s*saat|7\s*\/?\s*24|gece|nöbet|kesintisiz/i.test(p.slug + " " + p.title),
+  );
+  assert.ok(alwaysOpen.length > 0, "expected some 24h/night-intent atakum keyword pages");
+  for (const p of alwaysOpen) {
+    const blob = JSON.stringify(p);
+    assert.match(blob, /09:00–21:00/, `${p.slug}: must state the truthful 09:00-21:00 hours`);
+    assert.match(blob, /24 saat açık değildir/, `${p.slug}: must explicitly clarify it is not 24h`);
   }
 });

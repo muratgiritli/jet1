@@ -1,5 +1,6 @@
 import { BRAND_PAGES } from "./brand-seo-data";
 import { KEYWORD_AUTO_PAGES } from "./keyword-pages";
+import { ATAKUM_KEYWORD_PAGES } from "./keyword-pages-atakum";
 import type { StoreConfig } from "@shared/stores";
 export interface SeoSection {
   h2: string;
@@ -15,6 +16,12 @@ export interface SeoPageData {
   // hyperlocal pages hidden from cargo domains. "cargoOnly" = online+kargo pages
   // hidden from local domains. See getSeoPagesForStore / findSeoPage.
   availability?: "all" | "localOnly" | "cargoOnly";
+  // Store-EXCLUSIVE override. When set, this page is served ONLY on the store
+  // whose id matches and, at a slug it shares with a normal page, it REPLACES
+  // that page for this store (other stores keep the shared one). Lets one domain
+  // (e.g. atakum) publish its own independent variant of a keyword landing page.
+  // See _overrideByStore / findSeoPage / getSeoPagesForStore.
+  storeId?: string;
   title: string;
   metaTitle: string;
   metaDescription: string;
@@ -4178,6 +4185,19 @@ export const KEYWORD_AUTO_ADDED = KEYWORD_AUTO_PAGES.filter(
 );
 SEO_PAGES.push(...KEYWORD_AUTO_ADDED);
 
+// Atakum-EXCLUSIVE keyword pages (storeId "atakum"). They override the SHARED
+// keyword page at the same slug ONLY on atakumpetshop.com. We keep an override
+// only when the slug's shared page is itself a keyword page — never replace a
+// curated core/category/district/brand page with a templated keyword one.
+const _sharedTypeBySlug = new Map<string, SeoPageData["type"]>();
+for (const p of SEO_PAGES) {
+  if (!_sharedTypeBySlug.has(p.slug)) _sharedTypeBySlug.set(p.slug, p.type);
+}
+export const ATAKUM_EXCLUSIVE_PAGES: SeoPageData[] = ATAKUM_KEYWORD_PAGES.filter(
+  (p) => _sharedTypeBySlug.get(p.slug) === "keyword",
+);
+SEO_PAGES.push(...ATAKUM_EXCLUSIVE_PAGES);
+
 // ---------------------------------------------------------------------------
 // Commerce-model availability + per-store resolution.
 // ---------------------------------------------------------------------------
@@ -4209,10 +4229,16 @@ export function isCargoStore(store: StoreConfig): boolean {
 /** Pages eligible for a store's commerce model (unique slugs per model). */
 export function getSeoPagesForStore(store: StoreConfig): SeoPageData[] {
   const cargo = isCargoStore(store);
+  const overrides = _overrideByStore.get(store.id);
   return SEO_PAGES.filter((p) => {
     const a = p.availability ?? "all";
-    if (a === "all") return true;
-    return cargo ? a === "cargoOnly" : a === "localOnly";
+    const fitsModel = a === "all" || (cargo ? a === "cargoOnly" : a === "localOnly");
+    // Store-EXCLUSIVE pages: served only on their own store (and only if the
+    // page still fits this store's commerce model).
+    if (p.storeId) return p.storeId === store.id && fitsModel;
+    // Shared page replaced by this store's own override at the same slug.
+    if (overrides?.has(p.slug)) return false;
+    return fitsModel;
   });
 }
 
@@ -4276,20 +4302,38 @@ export function getSitemapPagesForStore(store: StoreConfig): SeoPageData[] {
 
 const _localSlugMap = new Map<string, SeoPageData>();
 const _cargoSlugMap = new Map<string, SeoPageData>();
+// Per-store exclusive overrides: storeId -> (slug -> page). Built ONLY from
+// pages carrying a storeId; these never enter the shared commerce-model maps.
+const _overrideByStore = new Map<string, Map<string, SeoPageData>>();
 for (const p of SEO_PAGES) {
+  if (p.storeId) {
+    let m = _overrideByStore.get(p.storeId);
+    if (!m) {
+      m = new Map<string, SeoPageData>();
+      _overrideByStore.set(p.storeId, m);
+    }
+    if (!m.has(p.slug)) m.set(p.slug, p);
+    continue;
+  }
   const a = p.availability ?? "all";
   if (a !== "cargoOnly" && !_localSlugMap.has(p.slug)) _localSlugMap.set(p.slug, p);
   if (a !== "localOnly" && !_cargoSlugMap.has(p.slug)) _cargoSlugMap.set(p.slug, p);
 }
 
-/** Resolve a slug to the variant served by this store's commerce model. */
+/** Resolve a slug to the variant served by this store: its own exclusive
+ * override first, otherwise the shared variant for its commerce model. */
 export function findSeoPage(slug: string, store: StoreConfig): SeoPageData | undefined {
+  const override = _overrideByStore.get(store.id)?.get(slug);
+  if (override) return override;
   return (isCargoStore(store) ? _cargoSlugMap : _localSlugMap).get(slug);
 }
 
 /** Set of slugs reachable on this store (for link/orphan filtering). */
 export function availableSlugSet(store: StoreConfig): Set<string> {
-  return new Set((isCargoStore(store) ? _cargoSlugMap : _localSlugMap).keys());
+  const set = new Set((isCargoStore(store) ? _cargoSlugMap : _localSlugMap).keys());
+  const overrides = _overrideByStore.get(store.id);
+  if (overrides) for (const slug of overrides.keys()) set.add(slug);
+  return set;
 }
 
 /** Every SEO slug across both models — used to tell SEO links from app routes. */

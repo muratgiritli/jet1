@@ -726,7 +726,7 @@ const KEYWORDS: string[] = [
   "atakum petshop kapında teslimat",
 ];
 
-function slugify(s: string): string {
+export function slugify(s: string): string {
   return s
     .replace(/İ/g, "i").replace(/I/g, "i").replace(/ı/g, "i")
     .replace(/Ç/g, "c").replace(/ç/g, "c")
@@ -742,7 +742,7 @@ function slugify(s: string): string {
     .replace(/-+/g, "-");
 }
 
-function trTitle(s: string): string {
+export function trTitle(s: string): string {
   return s
     .split(" ")
     .map((w) => (w.length ? w.charAt(0).toLocaleUpperCase("tr-TR") + w.slice(1) : w))
@@ -750,15 +750,15 @@ function trTitle(s: string): string {
 }
 
 // Cümle başında büyük harf (Türkçe).
-function trCap(s: string): string {
+export function trCap(s: string): string {
   return s.length ? s.charAt(0).toLocaleUpperCase("tr-TR") + s.slice(1) : s;
 }
 
-type Category =
+export type Category =
   | "brand" | "akvaryum" | "acil" | "acik" | "hiz" | "yakin"
   | "teslimat" | "fiyat" | "siparis" | "market" | "genel";
 
-function classify(kw: string): Category {
+export function classify(kw: string): Category {
   const k = kw.toLocaleLowerCase("tr-TR");
   if (/(royal canin|pro plan|hills|reflex|brit care|lavital|nd mama|prochoice)/.test(k)) return "brand";
   if (/(akvaryum)/.test(k)) return "akvaryum";
