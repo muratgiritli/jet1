@@ -37,6 +37,7 @@ import {
 } from "../../client/src/lib/seo-data";
 import { ROYALCANIN_KEYWORD_PAGES } from "../../client/src/lib/keyword-pages-jetgo-royalcanin";
 import { MARKALAR_KEYWORD_PAGES, MARKALAR_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgo-markalar";
+import { DIGER_KEYWORD_PAGES, DIGER_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgo-diger";
 import { getStoreByHost, brandifyFor, STORES } from "../../shared/stores";
 import { setStoreGoogleConfig, deleteStoreGoogleConfig, getAllStoreGoogleConfigs } from "../google-tags";
 import { setStoreMerchantConfig, deleteStoreMerchantConfig, getAllStoreMerchantConfigs, normalizeMerchantConfig } from "../merchant";
@@ -4176,4 +4177,318 @@ test("markalar: a representative page is served only on jetgomarket.com and list
   );
   const jetgoSitemap = new Set(getSitemapPagesForStore(JETGO_STORE).map((q) => q.slug));
   assert.ok(jetgoSitemap.has(slug), `${slug}: jetgo sitemap must list the markalar page`);
+});
+
+// ---------------------------------------------------------------------------
+// "Diğer anahtar kelimeler" (broad multi-category) jetgo-exclusive corpus.
+//
+// The 4th and broadest jetgo corpus: a landing page per long-tail keyword
+// spanning retailers (Trendyol/Migros/Akakçe...), live-animal & adoption intent,
+// service intent (eğitim, kuaför, pansiyon, veteriner), litter, birds/small pets,
+// accessories (collar/bed/carrier/bowl/grooming/toy/clothing), health/supplement
+// and food/treat. It shares storeId "jetgo", so the combined-corpus invariants
+// above (served only on jetgo, unique slugs, sitemap framing) already cover it.
+// The tests below lock the diger-SPECIFIC, truthfulness-sensitive behaviour:
+//   - the corpus exists & is folded in (all jetgo/localOnly/keyword/unique, faq),
+//   - category copy is correct (accessories are NOT framed as feeding, litter as
+//     litter, birds as bird food),
+//   - live-animal keywords never claim to SELL animals (pet shops legally can't),
+//   - service keywords never claim JETGO PROVIDES the service (it is a pet shop),
+//   - retailer keywords never claim to BE / be affiliated with the marketplace,
+//   - no page fabricates a concrete price.
+// Truthfulness is scoped to page COPY (markalarCopy) — internalLinks legitimately
+// cross-sell real stocked products and are not a claim about the keyword itself.
+// ---------------------------------------------------------------------------
+
+const digerBySlug = new Map(DIGER_KEYWORD_PAGES.map((p) => [p.slug, p] as const));
+
+// Body text EXCLUDING faq questions: a live-intent FAQ legitimately ASKS "can I
+// buy a live animal here?" (answer: "Hayır"), so the question must not be mistaken
+// for an affirmative sale claim. Lower-cased for tr-aware matching.
+function digerBody(p: SeoPageData): string {
+  return [
+    p.metaDescription,
+    p.h1,
+    ...(p.intro ?? []),
+    ...(p.sections ?? []).flatMap((s) => [s.h2, ...(s.paragraphs ?? []), ...(s.list ?? [])]),
+    ...(p.features ?? []),
+    ...((p.faq ?? []).map((f) => f.a)),
+  ].join(" ").toLocaleLowerCase("tr-TR");
+}
+
+test("diger: a large multi-category keyword corpus is registered and folded into jetgo", () => {
+  assert.ok(
+    DIGER_KEYWORD_PAGES.length > 3000,
+    `expected >3000 diger pages, got ${DIGER_KEYWORD_PAGES.length}`,
+  );
+  assert.ok(
+    Number.isFinite(DIGER_SKIPPED_NOISE) && DIGER_SKIPPED_NOISE >= 0,
+    `DIGER_SKIPPED_NOISE must be a count, got ${DIGER_SKIPPED_NOISE}`,
+  );
+  const slugs = DIGER_KEYWORD_PAGES.map((p) => p.slug);
+  assert.equal(new Set(slugs).size, slugs.length, "diger corpus must have unique slugs");
+  for (const p of DIGER_KEYWORD_PAGES) {
+    assert.equal(p.storeId, "jetgo", `${p.slug}: diger page must be storeId jetgo`);
+    assert.equal(p.availability, "localOnly", `${p.slug}: diger page must be localOnly`);
+    assert.equal(p.type, "keyword", `${p.slug}: diger page must be a keyword page`);
+    assert.ok(p.metaTitle && p.metaDescription && p.h1, `${p.slug}: must carry title/meta/h1`);
+    assert.ok((p.faq ?? []).length > 0, `${p.slug}: must carry an faq for mobile/AI search`);
+  }
+  // No diger slug may shadow a real client app route (e.g. /acik-mama).
+  for (const r of ["acik-mama", "kampanya", "veteriner", "magaza", "blog"]) {
+    assert.ok(!digerBySlug.has(r), `diger must not generate a reserved app-route slug (${r})`);
+  }
+  // The integrated jetgo corpus must absorb the diger pages on top of the first
+  // three corpora (diger loses any cross-corpus slug collision — earlier wins).
+  const jetgoSlugs = new Set(JETGO_EXCLUSIVE_PAGES.map((p) => p.slug));
+  const absorbed = DIGER_KEYWORD_PAGES.filter((p) => jetgoSlugs.has(p.slug)).length;
+  assert.ok(
+    absorbed > 3000,
+    `most diger pages must be folded into JETGO_EXCLUSIVE_PAGES (got ${absorbed})`,
+  );
+});
+
+test("diger: accessory keywords are framed as accessories, never as food/feeding (tasma ≠ mama)", () => {
+  const FEEDING = /(günlük|öğün) porsiyon|porsiyon (tablo|miktar)|mama (porsiyon|geçiş)|kaç (gram|öğün) mama|beslenme tablosu/i;
+  const COLLAR_VOCAB = /tasma|koşum|gezdirme|breakaway|boyun/i;
+  const samples = ["kopek-tasmasi", "kedi-tasmasi", "kopek-yatagi"];
+  let checked = 0;
+  for (const slug of samples) {
+    const p = digerBySlug.get(slug);
+    if (!p) continue; // slug may have deduped across corpora; skip if absent
+    checked++;
+    assert.ok(
+      !FEEDING.test(markalarCopy(p)),
+      `${slug}: accessory page must not carry feeding-portion instructions`,
+    );
+  }
+  assert.ok(checked >= 2, `expected to verify accessory pages, got ${checked}`);
+  const collar = digerBySlug.get("kopek-tasmasi");
+  if (collar) {
+    assert.match(markalarCopy(collar), COLLAR_VOCAB, "köpek tasması must be framed as a collar/leash accessory");
+  }
+});
+
+test("diger: litter and bird keywords get their correct category copy", () => {
+  const litter = digerBySlug.get("kedi-kumu");
+  assert.ok(litter, "kedi-kumu must exist in the diger corpus");
+  assert.match(
+    markalarCopy(litter!),
+    /kedi kumu|topaklan|bentonit|silika|tuvalet/i,
+    "kedi kumu must be framed as cat litter",
+  );
+  const bird = digerBySlug.get("muhabbet-kusu-yemi");
+  assert.ok(bird, "muhabbet-kusu-yemi must exist in the diger corpus");
+  assert.match(
+    markalarCopy(bird!),
+    /kuş|yem|tohum|gaga taşı|mineral/i,
+    "bird food must be framed for birds",
+  );
+});
+
+test("diger: live-animal / adoption keywords never claim to sell animals", () => {
+  const live = DIGER_KEYWORD_PAGES.filter((p) => /Sorumlu Sahiplenme/i.test(p.metaTitle));
+  assert.ok(live.length > 50, `expected a body of live-animal pages, got ${live.length}`);
+  // "canlı hayvan satışı yapmaz" / "canlı hayvan satmaz" — explicit no-sale line.
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const AFFIRM = /sat[ıi]yoruz|satar[ıi]z|satışı yap[ıi]yoruz|satışı yapar[ıi]z|satın alabilirsiniz|canlı hayvan (satıyoruz|satarız|mevcut|stok)/;
+  for (const p of live) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: live page must state JETGO does not sell live animals`);
+    assert.ok(!AFFIRM.test(digerBody(p)), `${p.slug}: live page must not affirmatively offer animals for sale`);
+  }
+});
+
+test("diger: every live-animal acquisition KEYWORD is truth-safe (broad slug-derived recall)", () => {
+  // Recall guard: derive the live-candidate set from the SLUG tokens, NOT from the
+  // emitted metaTitle. The metaTitle test above only inspects pages the generator
+  // already decided were live; a MISCLASSIFIED live keyword (e.g. a bird/rabbit
+  // treated as a product, or "eğitimli ... satılık" swallowed as a service) would
+  // silently escape it. Here we independently flag any keyword whose slug pairs an
+  // acquisition cue with a live animal — and no tangible product / service subject —
+  // then assert each carries the no-sale disclaimer and never affirms a sale.
+  // Token-based (slugs are ASCII, hyphen-delimited) so suffixes/plurals are exact.
+  const ANIMAL_STEM = ["kedi","kopek","yavru","kitten","puppy","muhabbet","kanarya","papagan","sultan","paraket","finch","ispinoz","saka","kus","tavsan","hamster","ginepig","gine","kemirgen","sinsilla","gerbil","fare","sican","balik","lepistes","moli","melek","japon","kaplumbaga","iguana","gekko","yilan","surungen"];
+  // Unambiguous acquisition cues (price-only "fiyat"/"ucuz" is ambiguous over
+  // products and is pinned by name in the next test, not swept here).
+  const CUE = new Set(["canli","satilik","satlik","satis","satisi","satan","satanlar","satilan","satma","sat","satin","sahiplen","sahiplendirme","almak","alma","alinir","alan","alanlar","alici","alicisi","bedava","ucretsiz","sahibinden"]);
+  // Tangible product / service tokens (exact match) → the subject is the product or
+  // service, not a live animal. Includes look-alikes of the buyer cue "alan" that are
+  // actually areas/taming/shopping ("alanı" area, "alıştırma" taming, "alışveriş").
+  const PROD_SVC = new Set(["ev","evi","kum","kumu","yag","yagi","otu","kab","kabi","yem","yemi","kafes","kafesi","mama","mamasi","tasma","tuvalet","kemik","gaga","tuy","catnip","nane","zehir","kapan","damla","minder","yatak","suluk","oyuncak","oyun","alani","alanlari","vitamin","vitaminler","sampuan","tarak","firca","kiyafet","canta","tasima","kulube","kulubesi","kumes","mineral","file","aksesuar","malzeme","urun","isimlik","egitim","egitimi","kuafor","pansiyon","otel","veteriner","merkez","merkezi","gezdirme","kosum","macun","malt","altligi","alisveris","alisverisi","alistirma","aliskin"]);
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const AFFIRM = /sat[ıi]yoruz|satar[ıi]z|satışı yap[ıi]yoruz|satışı yapar[ıi]z|satın alabilirsiniz|canlı hayvan (satıyoruz|satarız|mevcut|stok)/;
+  const candidates = DIGER_KEYWORD_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasAnimal = t.some((x) => ANIMAL_STEM.some((a) => x.startsWith(a)));
+    const hasCue = t.some((x) => CUE.has(x));
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasAnimal && hasCue && !hasProdSvc;
+  });
+  assert.ok(candidates.length > 150, `expected a large live-sale candidate body, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: live-sale keyword must state JETGO does not sell live animals`);
+    assert.ok(!AFFIRM.test(digerBody(p)), `${p.slug}: live-sale keyword must not affirmatively offer animals for sale`);
+  }
+});
+
+test("diger: ambiguous price/where-to-buy cues are classified by SUBJECT, not surface cue", () => {
+  // The hardest cases: a price/where-to-buy/free cue whose SUBJECT decides the
+  // category. A living animal must carry the no-sale disclaimer; a product or
+  // service with the SAME cue must NOT (the disclaimer would be off-topic/misleading).
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  // MUST be live — bird/rabbit/parrot subjects behind a price cue ("fiyatları"),
+  // a "where to buy/sell" phrasing ("satan/alan petshoplar/yerler", "satanlar"),
+  // a bare sell verb ("sat"/"satma"/"satma sitesi"), a free cue ("bedava"/"ücretsiz"),
+  // an acquisition verb ("almak"), or a trained-animal attribute ("eğitimli ...").
+  // These are the cues earlier passes missed.
+  const LIVE = [
+    "muhabbet-kusu-fiyatlari","1-aylik-muhabbet-kusu-fiyatlari","kanarya-fiyatlari-sahibinden",
+    "tavsan-satisi","jako-papagan-satis","papagan-satis","muhabbet-kusu-satan-petshoplar",
+    "muhabbet-kusu-satan-yerler","sahibinden-papagan-satanlar","muhabbet-kusu-almak",
+    "erkek-muhabbet-kusuna-disi-almak","bedava-muhabbet-kusu","jumbo-muhabbet-kusu-sahibinden",
+    "muhabbet-kusu-ucretsiz","egitimli-muhabbet-kusu-fiyatlari",
+    "muhabbet-kusu-sat","muhabbet-kusu-satma","muhabbet-kusu-satma-sitesi",
+    "muhabbet-kusu-alan-petshoplar","muhabbet-kusu-alan-yerler","tavsan-alan-yerler",
+  ];
+  // MUST NOT be live — the SAME cues over a product (ev/kulübe/yağ/kafes/yem/mama)
+  // or a service (eğitim/merkez). Guards the classifier against over-triggering.
+  const NOT_LIVE = [
+    "kedi-evi-fiyatlari","kopek-kulubesi-fiyatlari","kopek-egitim-fiyatlari",
+    "kopek-egitim-merkezi-fiyatlari","muhabbet-kusu-yemi","kedi-balik-yagi","kopek-kafesi",
+    "ucretsiz-kedi-mamasi","bedava-kopek-kulubesi","hamster-kafesi-fiyatlari",
+    // buyer-cue look-alikes that are actually taming guides / shopping-generic, not
+    // a live transaction ("alıştırma" tame, "alışveriş" shopping) — must stay off.
+    "muhabbet-kusu-alistirma","papagan-alistirma","muhabbet-kusu-alisveris",
+  ];
+  for (const slug of LIVE) {
+    const p = digerBySlug.get(slug);
+    assert.ok(p, `expected live keyword "${slug}" in the diger corpus`);
+    assert.match(markalarCopy(p!), NO_SALE, `${slug}: live-animal subject must carry the no-sale disclaimer`);
+  }
+  for (const slug of NOT_LIVE) {
+    const p = digerBySlug.get(slug);
+    assert.ok(p, `expected keyword "${slug}" in the diger corpus`);
+    assert.ok(!NO_SALE.test(markalarCopy(p!)), `${slug}: product/service subject must NOT be framed as a live-animal sale`);
+  }
+});
+
+test("diger: every bird/rabbit PRICE keyword is truth-safe (broad slug-derived recall)", () => {
+  // Companion to the strong-cue recall sweep above, but for the noisier PRICE cue.
+  // "fiyat"/"ucuz" over a cat/dog is ambiguous (food brands: "royal canin kitten
+  // en ucuz"), so we sweep only BIRDS + RABBITS — species JETGO never stocks live,
+  // where a bare price query resolves to the live animal. Any such keyword with no
+  // product/service subject and that is not a retailer page must carry the no-sale
+  // disclaimer; this catches modifier-heavy live PRICE pages an ASCII-boundary bug
+  // (e.g. "anaç"/"çift"/"renkli"/"maltese"/"sov") previously let slip through.
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const RETAILER = /Yerel Alternatif/;
+  const BIRD_RABBIT = ["muhabbet","papagan","sultan","kanarya","paraket","finch","ispinoz","saka","kus","kakadu","kakariki","jako","forpus","sevda","cennet","tavsan"];
+  const PRICE = new Set(["fiyat","fiyati","fiyatlari","ucuz"]);
+  // Product / service / accessory nouns (incl. bird/rabbit equipment: yemlik/folluk/
+  // suluk/kümes/kuluçka) → the subject is the object, not the animal.
+  const PROD_SVC = new Set(["yem","yemi","yemlik","kafes","kafesi","kafesli","folluk","yumurtalik","suluk","sulugu","kumes","kumesi","kulube","kulubesi","tasma","tasmasi","oyuncak","oyun","vitamin","takviye","takim","mama","mamasi","mamalari","gaga","tuy","isimlik","aksesuar","malzeme","urun","mineral","file","kum","kumu","tuvalet","tuvaleti","kulucka","korse","agizlik","ev","evi","koruyucu","yara","sok","akilli","alani","alanlari","alistirma","alisveris","alisverisi","egitim","egitimi","kuafor","pansiyon","veteriner","merkez","merkezi","gezdirme","tras","yikama","altligi"]);
+  const candidates = DIGER_KEYWORD_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasAnimal = t.some((x) => BIRD_RABBIT.some((a) => x.startsWith(a)));
+    const hasPrice = t.some((x) => PRICE.has(x)) || p.slug.includes("ne-kadar");
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasAnimal && hasPrice && !hasProdSvc && !RETAILER.test(markalarCopy(p));
+  });
+  assert.ok(candidates.length > 100, `expected a large bird/rabbit price candidate body, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: bird/rabbit price keyword must state JETGO does not sell live animals`);
+  }
+});
+
+test("diger: every breed PRICE keyword is truth-safe (cat/dog breed recall)", () => {
+  // A breed name is itself a live animal, so a breed + price cue ("kangal fiyatı",
+  // "pug fiyatı", "british kedi fiyat") is a live-animal price query and must carry
+  // the no-sale disclaimer. Regression guard for two prior bugs: (1) the Turkish
+  // k→ğ consonant mutation made "köpeği" (X's dog) never match the literal "köpek",
+  // so "kangal köpeği fiyatları" escaped; (2) a bare breed with no generic head
+  // ("kangal fiyatı") was not treated as a live subject at all.
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const RETAILER = /Yerel Alternatif/;
+  // ASCII slug forms of the cat/dog breeds. Ambiguous city-ish stems (ankara/van)
+  // are omitted so the sweep never picks up a non-breed location page.
+  const BREED = ["persian","persan","british","scottish","sphynx","maine","coon","ragdoll","tekir","sarman","bengal","labrador","golden","rottweiler","chihuahua","yorkshire","shih","cocker","bulldog","cane","teckel","dachshund","poodle","pomeranian","boxer","german","beagle","husky","retriever","terrier","kangal","akbas","pug"];
+  const PRICE = new Set(["fiyat","fiyati","fiyatlari","ucuz"]);
+  const PROD_SVC = new Set(["mama","mamasi","mamalari","kumu","kafes","kafesi","kafesli","tasma","tasmasi","yatak","yatagi","minder","oyuncak","sampuan","vitamin","takviye","tarak","firca","kiyafet","canta","kulube","kulubesi","ev","evi","tuvalet","suluk","kab","kabi","macun","malt","catnip","kemik","damla","mineral","aksesuar","malzeme","urun","egitim","egitimi","kuafor","pansiyon","otel","veteriner","merkez","merkezi","gezdirme","tras","yikama","altligi","alisveris","alistirma"]);
+  const candidates = DIGER_KEYWORD_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasBreed = t.some((x) => BREED.includes(x));
+    const hasPrice = t.some((x) => PRICE.has(x)) || p.slug.includes("ne-kadar");
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasBreed && hasPrice && !hasProdSvc && !RETAILER.test(markalarCopy(p));
+  });
+  assert.ok(candidates.length >= 5, `expected a body of breed price candidates, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: breed price keyword must state JETGO does not sell live animals`);
+  }
+  // Curated guards for the exact slugs a prior review flagged as leaking.
+  for (const slug of ["kangal-fiyati", "kangal-kopegi-fiyatlari", "pug-fiyati"]) {
+    const p = digerBySlug.get(slug);
+    assert.ok(p, `expected breed keyword "${slug}" in the diger corpus`);
+    assert.match(markalarCopy(p!), NO_SALE, `${slug}: breed price query must carry the no-sale disclaimer`);
+  }
+});
+
+test("diger: service keywords never claim JETGO provides the service", () => {
+  // Service pages share the "Pet Shop" metaTitle with info-guides, so key off the
+  // explicit assurance the generator emits only for true service keywords.
+  const NOT_PROVIDED = /hizmet(i)? (vermez|vermeyiz)|hizmet değil/i;
+  const servicePages = DIGER_KEYWORD_PAGES.filter(
+    (p) => /JETGO Samsun Pet Shop/.test(p.metaTitle) && NOT_PROVIDED.test(markalarCopy(p)),
+  );
+  assert.ok(servicePages.length > 20, `expected a body of service pages, got ${servicePages.length}`);
+  const PROVIDES = /hizmet(i)? (veriyoruz|sağlıyoruz|sunuyoruz)|eğitim veriyoruz|pansiyonumuz/i;
+  for (const p of servicePages) {
+    assert.ok(!PROVIDES.test(markalarCopy(p)), `${p.slug}: service page must not claim JETGO provides the service`);
+  }
+  // A clear service keyword is classified as a service, not a sellable product.
+  const egitim = digerBySlug.get("kopek-egitimi");
+  if (egitim) assert.match(markalarCopy(egitim), NOT_PROVIDED, "köpek eğitimi must be framed as a service JETGO does not provide");
+});
+
+test("diger: retailer keywords position JETGO as a local alternative, never as the marketplace", () => {
+  const retail = DIGER_KEYWORD_PAGES.filter((p) => /Yerel Alternatif/i.test(p.metaTitle));
+  assert.ok(retail.length > 50, `expected a body of retailer pages, got ${retail.length}`);
+  const INDEPENDENT = /bağımsız bir işletme|resmi bir bağlantımız yok/i;
+  const AFFILIATED = /resmi (bayi|satıcı|distribütör)|yetkili (bayi|satıcı)/i;
+  for (const p of retail.slice(0, 60)) {
+    const copy = markalarCopy(p);
+    assert.match(copy, INDEPENDENT, `${p.slug}: retailer page must disclaim affiliation with the marketplace`);
+    assert.ok(!AFFILIATED.test(copy), `${p.slug}: retailer page must not imply official marketplace affiliation`);
+  }
+});
+
+test("diger: no page fabricates a concrete price", () => {
+  // A fabricated price is a number adjacent to a currency token. Year/size tokens
+  // echoed from the keyword (e.g. "fiyat 2020", "15 kg") are NOT prices.
+  const PRICE = /\d[\d.,]*\s*(₺|tl\b|lira\b)|₺\s*\d/i;
+  const bad = DIGER_KEYWORD_PAGES.filter((p) => PRICE.test(markalarCopy(p)));
+  assert.equal(
+    bad.length,
+    0,
+    `pages must not state a concrete price (offenders: ${bad.slice(0, 5).map((p) => p.slug).join(", ")})`,
+  );
+});
+
+test("diger: a representative page is served only on jetgomarket.com and listed in its sitemap", () => {
+  const slug = "kopek-tasmasi";
+  const p = digerBySlug.get(slug);
+  assert.ok(p, `${slug} must exist in the diger corpus`);
+  assert.ok(findSeoPage(slug, JETGO_STORE), `${slug}: must resolve on jetgo`);
+  assert.equal(
+    findSeoPage(slug, getStoreByHost(JETGOPET_HOST)),
+    undefined,
+    `${slug}: diger page must NOT resolve on a sibling local store`,
+  );
+  assert.equal(
+    findSeoPage(slug, getStoreByHost(SAMSUN_HOST)),
+    undefined,
+    `${slug}: local-only diger page must be hidden on a cargo store`,
+  );
+  const jetgoSitemap = new Set(getSitemapPagesForStore(JETGO_STORE).map((q) => q.slug));
+  assert.ok(jetgoSitemap.has(slug), `${slug}: jetgo sitemap must list the diger page`);
 });

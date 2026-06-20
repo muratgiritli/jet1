@@ -69,9 +69,24 @@ non-circular regression guard (count>10 breaks if vet framing regresses; the
 no-cure assertion guards copy). Vet diets are nutritional SUPPORT under vet
 guidance, never a cure.
 
-**3-way cross-corpus dedup:** multiple jetgo corpora share storeId "jetgo"; append
-them to `_jetgoCorpus` in EARLIER-WINS precedence (specialised first: Pro Plan →
-Royal Canin → broad markalar catch-all). The single existing dedup loop (seen-slug
-set + skip-curated-non-keyword-collision) handles all three with no new code — just
-append in the right order. Verified 0 cross-corpus collisions because brand slugs
-are disjoint, but the ordering still matters for any future overlap.
+**N-way cross-corpus dedup:** multiple jetgo corpora share storeId "jetgo"; append
+them to `_jetgoCorpus` in EARLIER-WINS precedence (most specific first: Pro Plan →
+Royal Canin → broad "markalar" → broadest "diğer anahtar kelimeler" catch-all). The
+single existing dedup loop (seen-slug set + skip-curated-non-keyword-collision)
+handles any number of corpora with no new code — just append in the right order.
+Collisions are rare because brand/keyword slugs are largely disjoint, but ordering
+still decides the winner for any overlap, so put the catch-all LAST.
+
+**Turkish consonant mutation breaks literal stem regexes (cost a NO-SHIP cycle):**
+Turkish softens a final k/p/t/ç before a vowel suffix — "köpek" + possessive →
+"köpeği" (k→ğ, U+011F), "balık" → "balığı". A literal `köpek`/`balık` regex NEVER
+matches the suffixed form, so possessive live-animal queries ("kangal köpeği
+fiyatları") silently escape a truthfulness gate. Fix: use a char class on the final
+consonant — `köpe[kğ]`, `balı[kğ]` — in EVERY place that matches the stem.
+
+**A bare breed name IS a live animal (no generic head needed):** "kangal fiyatı" /
+"pug fiyatı" have no "kedi/köpek" head yet are still live-animal price queries. The
+live classifier must (a) OPEN its gate on a breed regex too (not only generic animal
+nouns) and (b) SUBTRACT the breed (breed + `\S*` for suffixes) in the residue check
+so a bare breed leaves empty residue → classified live and gets the no-sale
+disclaimer. Tangible products still bail first ("kangal maması fiyatı" stays food).

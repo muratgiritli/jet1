@@ -4,6 +4,7 @@ import { ATAKUM_KEYWORD_PAGES } from "./keyword-pages-atakum";
 import { JETGO_KEYWORD_PAGES } from "./keyword-pages-jetgo";
 import { ROYALCANIN_KEYWORD_PAGES } from "./keyword-pages-jetgo-royalcanin";
 import { MARKALAR_KEYWORD_PAGES } from "./keyword-pages-jetgo-markalar";
+import { DIGER_KEYWORD_PAGES } from "./keyword-pages-jetgo-diger";
 import type { StoreConfig } from "@shared/stores";
 export interface SeoSection {
   h2: string;
@@ -4208,16 +4209,17 @@ SEO_PAGES.push(...ATAKUM_EXCLUSIVE_PAGES);
 // (core/category/district/brand). A collision with a shared keyword page is
 // allowed and becomes a jetgo override.
 //
-// All three brand corpora carry storeId "jetgo", so a slug that appears in more
+// All four jetgo corpora carry storeId "jetgo", so a slug that appears in more
 // than one would be served twice for jetgo and break the unique-slug invariant.
 // We therefore de-duplicate across the corpora here — order is Pro Plan, then
-// Royal Canin, then the broad "diğer markalar" catch-all; the EARLIER (more
-// specialised) corpus wins — in addition to each generator's own internal slug
-// de-dup.
+// Royal Canin, then the "diğer markalar" brand catch-all, then the broad "diğer
+// anahtar kelimeler" multi-category corpus; the EARLIER (more specialised) corpus
+// wins — in addition to each generator's own internal slug de-dup.
 const _jetgoCorpus: SeoPageData[] = [
   ...JETGO_KEYWORD_PAGES,
   ...ROYALCANIN_KEYWORD_PAGES,
   ...MARKALAR_KEYWORD_PAGES,
+  ...DIGER_KEYWORD_PAGES,
 ];
 const _jetgoSeenSlugs = new Set<string>();
 export const JETGO_EXCLUSIVE_PAGES: SeoPageData[] = [];
@@ -4332,7 +4334,18 @@ export function getSitemapPagesForStore(store: StoreConfig): SeoPageData[] {
   // Store-EXCLUSIVE pages (storeId === this store) exist ONLY on this domain, so
   // there is nothing to partition across siblings — this store must list them ALL
   // in its own sitemap. Only the SHARED corpus is split by the hash partition.
-  return pages.filter((p) => p.storeId === store.id || ownsSitemapSlug(store, p.slug));
+  //
+  // A shared (storeless) page whose slug is OVERRIDDEN by a store-exclusive page
+  // inside this partition group is a special case: the exclusive owner already
+  // lists that slug (above), so the shared twin must be excluded from the hash
+  // partition entirely — otherwise a sibling that hash-owns the slug would list
+  // it too, breaking the disjoint-slice invariant.
+  const claimed = _groupExclusiveSlugs.get(store.id);
+  return pages.filter(
+    (p) =>
+      p.storeId === store.id ||
+      (ownsSitemapSlug(store, p.slug) && !(claimed && claimed.has(p.slug))),
+  );
 }
 
 const _localSlugMap = new Map<string, SeoPageData>();
@@ -4353,6 +4366,20 @@ for (const p of SEO_PAGES) {
   const a = p.availability ?? "all";
   if (a !== "cargoOnly" && !_localSlugMap.has(p.slug)) _localSlugMap.set(p.slug, p);
   if (a !== "localOnly" && !_cargoSlugMap.has(p.slug)) _cargoSlugMap.set(p.slug, p);
+}
+
+// storeId -> the slugs claimed by a store-exclusive page ANYWHERE in that store's
+// sitemap-partition group. Used by getSitemapPagesForStore to keep the per-domain
+// sitemap slices disjoint: the shared twin of a claimed slug is listed only by its
+// exclusive owner, never re-listed by a sibling that merely hash-owns it.
+const _groupExclusiveSlugs = new Map<string, Set<string>>();
+for (const group of SITEMAP_PARTITION_GROUPS) {
+  const claimed = new Set<string>();
+  for (const sid of group) {
+    const m = _overrideByStore.get(sid);
+    if (m) for (const slug of m.keys()) claimed.add(slug);
+  }
+  for (const sid of group) _groupExclusiveSlugs.set(sid, claimed);
 }
 
 /** Resolve a slug to the variant served by this store: its own exclusive
