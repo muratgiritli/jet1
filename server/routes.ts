@@ -15,7 +15,7 @@ import { runVetImport, getVetImportStatus, isVetImportRunning } from "./vet-impo
 import { runSeoFill, getSeoFillStatus, isSeoFillRunning } from "./seo-fill";
 import multer from "multer";
 import OpenAI from "openai";
-import { getSeoPagesForStore, isCargoStore } from "../client/src/lib/seo-data";
+import { getSeoPagesForStore, getSitemapPagesForStore, isCargoStore } from "../client/src/lib/seo-data";
 import { getAllStoreGoogleConfigs, setStoreGoogleConfig, deleteStoreGoogleConfig } from "./google-tags";
 import { getAllStoreMerchantConfigs, getStoreMerchantConfig, setStoreMerchantConfig, deleteStoreMerchantConfig } from "./merchant";
 
@@ -822,7 +822,10 @@ export async function registerRoutes(
       };
       const DEFAULT_META = { priority: "0.6", changefreq: "monthly" };
 
-      const landingSlugs = getSeoPagesForStore(store).map((p) => {
+      // The three independent JETGO domains each list a DISTINCT, disjoint slice
+      // of the shared local corpus so their sitemaps differ (pages still resolve
+      // on every domain). Other stores list their full eligible set.
+      const landingSlugs = getSitemapPagesForStore(store).map((p) => {
         const meta = TYPE_META[p.type] ?? DEFAULT_META;
         return { url: `/${p.slug}`, priority: meta.priority, changefreq: meta.changefreq };
       });

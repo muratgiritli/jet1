@@ -4216,6 +4216,52 @@ export function getSeoPagesForStore(store: StoreConfig): SeoPageData[] {
   });
 }
 
+/**
+ * The three independent JETGO-branded LOCAL domains (jetgomarket.com → "jetgo",
+ * jetgo.pet → "jetgopet", jetgo.shop → "jetgoshop") all serve the SAME shared
+ * local landing-page corpus. To give each domain a DISTINCT sitemap — without
+ * splitting the pages themselves (every page still resolves on every domain) —
+ * each landing slug is assigned to exactly one of these domains by a stable
+ * hash. The three sitemap-seo.xml files therefore advertise disjoint,
+ * evenly-sized slices of the corpus instead of three identical lists.
+ *
+ * ORDER IS LOAD-BEARING: a slug's owner is `hash(slug) % len` indexed into this
+ * array, so reordering or resizing it remaps every page to a different domain
+ * (churns all three sitemaps). Only append/reorder deliberately.
+ */
+export const SITEMAP_PARTITION_STORE_IDS = ["jetgo", "jetgopet", "jetgoshop"] as const;
+
+function stableSlugHash(slug: string): number {
+  let h = 5381;
+  for (let i = 0; i < slug.length; i++) {
+    h = (((h << 5) + h) ^ slug.charCodeAt(i)) >>> 0;
+  }
+  return h;
+}
+
+/**
+ * Is `store` the assigned sitemap owner of `slug`? Stores outside the
+ * partition set own every slug (unchanged behaviour).
+ */
+export function ownsSitemapSlug(store: StoreConfig, slug: string): boolean {
+  const idx = (SITEMAP_PARTITION_STORE_IDS as readonly string[]).indexOf(store.id);
+  if (idx === -1) return true;
+  return stableSlugHash(slug) % SITEMAP_PARTITION_STORE_IDS.length === idx;
+}
+
+/**
+ * Landing pages this store should list in ITS sitemap. For the three
+ * independent JETGO domains this is a disjoint ~1/3 slice of the shared corpus;
+ * for every other store it is the full eligible set (unchanged behaviour).
+ */
+export function getSitemapPagesForStore(store: StoreConfig): SeoPageData[] {
+  const pages = getSeoPagesForStore(store);
+  if ((SITEMAP_PARTITION_STORE_IDS as readonly string[]).indexOf(store.id) === -1) {
+    return pages;
+  }
+  return pages.filter((p) => ownsSitemapSlug(store, p.slug));
+}
+
 const _localSlugMap = new Map<string, SeoPageData>();
 const _cargoSlugMap = new Map<string, SeoPageData>();
 for (const p of SEO_PAGES) {

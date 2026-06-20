@@ -26,6 +26,7 @@ import {
   SEO_PAGES,
   findSeoPage,
   getSeoPagesForStore,
+  getSitemapPagesForStore,
   availableSlugSet,
   ALL_SEO_SLUGS,
   isCargoStore,
@@ -2814,6 +2815,63 @@ test("no SEO internal/buy link is orphaned within its commerce model", () => {
     }
     assert.equal(orphans.length, 0, `${label} model has orphaned SEO links: ${orphans.slice(0, 10).join(", ")}`);
   }
+});
+
+// ---- Per-domain sitemap partition (the 3 independent JETGO domains) ----
+//
+// jetgomarket.com / jetgo.pet / jetgo.shop serve the SAME shared local corpus.
+// Each must publish a DISTINCT sitemap: a disjoint, even slice of that corpus.
+// The pages themselves stay reachable on every domain — only the sitemap listing
+// is partitioned.
+
+test("sitemap partition: the 3 JETGO domains list disjoint, complete, deterministic slices", () => {
+  const jetgo = getStoreByHost("www.jetgomarket.com");
+  const jetgopet = getStoreByHost("www.jetgo.pet");
+  const jetgoshop = getStoreByHost("www.jetgo.shop");
+  assert.deepEqual(
+    [jetgo.id, jetgopet.id, jetgoshop.id],
+    ["jetgo", "jetgopet", "jetgoshop"],
+    "partition test must target the three JETGO local stores",
+  );
+
+  const full = new Set(getSeoPagesForStore(jetgo).map((p) => p.slug));
+  const sets = [jetgo, jetgopet, jetgoshop].map(
+    (s) => new Set(getSitemapPagesForStore(s).map((p) => p.slug)),
+  );
+
+  // Each slice is non-empty and strictly smaller than the full corpus.
+  for (const [i, set] of sets.entries()) {
+    assert.ok(set.size > 0, `store ${i} sitemap slice is empty`);
+    assert.ok(set.size < full.size, `store ${i} sitemap slice is not a strict subset`);
+  }
+
+  // Pairwise disjoint — the three sitemaps share no slug.
+  for (let i = 0; i < sets.length; i++) {
+    for (let j = i + 1; j < sets.length; j++) {
+      const overlap = [...sets[i]].filter((s) => sets[j].has(s));
+      assert.equal(overlap.length, 0, `slices ${i} and ${j} overlap: ${overlap.slice(0, 5).join(", ")}`);
+    }
+  }
+
+  // Union covers the whole corpus — no slug is dropped from every sitemap.
+  const union = new Set<string>();
+  for (const set of sets) for (const s of set) union.add(s);
+  assert.equal(union.size, full.size, "partition slices must cover the full corpus");
+  for (const s of full) assert.ok(union.has(s), `slug missing from every sitemap: ${s}`);
+
+  // Deterministic across calls (stable hash, no churn between deploys).
+  const again = new Set(getSitemapPagesForStore(jetgopet).map((p) => p.slug));
+  assert.deepEqual([...again].sort(), [...sets[1]].sort(), "partition must be deterministic");
+});
+
+test("sitemap partition: stores outside the JETGO trio still list their full corpus", () => {
+  const atakum = getStoreByHost(ATAKUM_HOST);
+  assert.equal(atakum.id, "atakum", "ATAKUM_HOST must resolve to the atakum local store");
+  assert.deepEqual(
+    getSitemapPagesForStore(atakum).map((p) => p.slug).sort(),
+    getSeoPagesForStore(atakum).map((p) => p.slug).sort(),
+    "atakum (outside the partition set) must list the full eligible corpus",
+  );
 });
 
 // ---- Per-domain Google independence (GSC / GTM / GA4 / Ads) ----

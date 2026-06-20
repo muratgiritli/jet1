@@ -46,3 +46,16 @@ in Google's index. Do NOT "fix" the static file to a relative/blank canonical �
 break the dev/static fallback and the per-host rewrite already handles it.
 **Intentionally shared (not rewritten):** JSON-LD `email` + `sameAs` social handles point
 to the one real business across all brands; that shared NAP footprint is accepted, not a bug.
+
+## The 3 JETGO domains publish DISJOINT sitemaps (sitemap-only partition)
+jetgomarket.com/jetgo.pet/jetgo.shop all serve the SAME local landing corpus, but each
+advertises only its own ~1/3 slice in `/sitemap-seo.xml` (the user wanted "her birinin
+sitemap farklı olsun" while keeping every page reachable on every domain). Each landing
+slug is assigned to ONE domain by a stable hash → `getSitemapPagesForStore` /
+`ownsSitemapSlug` / `SITEMAP_PARTITION_STORE_IDS` in `seo-data.ts`.
+**Why it matters / traps:** (1) it's sitemap-ONLY — `findSeoPage`/`availableSlugSet`
+(serving + orphan-link checks) are untouched, so pages still resolve everywhere; do NOT
+route serving through the partition. (2) `SITEMAP_PARTITION_STORE_IDS` order is
+load-bearing (owner = `hash % len` indexed into it) — reordering remaps every page and
+churns all three sitemaps. (3) Blog (7 URLs) is intentionally left shared on all three.
+(4) Stores OUTSIDE the trio (atakum, cargo) keep the full corpus — never assume partition.
