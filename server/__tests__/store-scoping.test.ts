@@ -35,6 +35,7 @@ import {
   ATAKUM_EXCLUSIVE_PAGES,
   JETGO_EXCLUSIVE_PAGES,
 } from "../../client/src/lib/seo-data";
+import { ROYALCANIN_KEYWORD_PAGES } from "../../client/src/lib/keyword-pages-jetgo-royalcanin";
 import { getStoreByHost, brandifyFor, STORES } from "../../shared/stores";
 import { setStoreGoogleConfig, deleteStoreGoogleConfig, getAllStoreGoogleConfigs } from "../google-tags";
 import { setStoreMerchantConfig, deleteStoreMerchantConfig, getAllStoreMerchantConfigs, normalizeMerchantConfig } from "../merchant";
@@ -3881,4 +3882,134 @@ test("jetgo-exclusive: SSR meta serves jetgo's bespoke content on jetgomarket.co
   const sibHtml = await injectAllMeta(INDEX_HTML, `/${slug}`, JETGOPET_HOST);
   const sibTitle = sibHtml.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
   assert.notEqual(title, sibTitle, "jetgo product SSR title must not appear on a sibling host");
+});
+
+// ---------------------------------------------------------------------------
+// Royal Canin jetgo-exclusive corpus.
+//
+// jetgomarket.com also publishes a dedicated landing page for every Royal Canin
+// keyword. This corpus shares storeId "jetgo" with the Pro Plan corpus, so the
+// combined-corpus invariants above (served only on jetgo, unique slugs, sitemap,
+// retailer framing) already cover it. The tests below lock the Royal Canin-SPECIFIC
+// behaviour: a sizable RC corpus exists, breed/size-line pages carry the bespoke
+// "Irk ve Boyuta" section, and veterinary-diet pages stay truthful (nutritional
+// support under veterinary guidance, never a cure claim).
+// ---------------------------------------------------------------------------
+
+test("royal-canin: a large bespoke Royal Canin keyword corpus is registered and folded into jetgo", () => {
+  assert.ok(
+    ROYALCANIN_KEYWORD_PAGES.length > 2000,
+    `expected >2000 Royal Canin pages, got ${ROYALCANIN_KEYWORD_PAGES.length}`,
+  );
+  const slugs = ROYALCANIN_KEYWORD_PAGES.map((p) => p.slug);
+  assert.equal(new Set(slugs).size, slugs.length, "Royal Canin corpus must have unique slugs");
+  for (const p of ROYALCANIN_KEYWORD_PAGES) {
+    assert.equal(p.storeId, "jetgo", `${p.slug}: RC page must be storeId jetgo`);
+    assert.equal(p.availability, "localOnly", `${p.slug}: RC page must be localOnly`);
+    assert.equal(p.type, "keyword", `${p.slug}: RC page must be a keyword page`);
+  }
+  // The integrated jetgo corpus must absorb the RC pages (minus cross-corpus slug
+  // collisions with Pro Plan, which Pro Plan wins) on top of the Pro Plan pages.
+  const jetgoSlugs = new Set(JETGO_EXCLUSIVE_PAGES.map((p) => p.slug));
+  const absorbed = ROYALCANIN_KEYWORD_PAGES.filter((p) => jetgoSlugs.has(p.slug)).length;
+  assert.ok(
+    absorbed > 2000,
+    `most RC pages must be folded into JETGO_EXCLUSIVE_PAGES (got ${absorbed})`,
+  );
+});
+
+test("royal-canin: breed/size-line keywords carry the bespoke 'Irk ve Boyuta' section", () => {
+  const withBreedSection = ROYALCANIN_KEYWORD_PAGES.filter((p) =>
+    (p.sections ?? []).some((s) => /Irk ve Boyuta Özel Beslenme/.test(s.h2)),
+  );
+  assert.ok(
+    withBreedSection.length > 50,
+    `expected many RC breed/size-line pages with the Irk/Boyut section, got ${withBreedSection.length}`,
+  );
+  // A clear breed page (Labrador) must resolve on jetgo and carry breed-aware prose.
+  const labrador = findSeoPage("royal-canin-labrador", JETGO_STORE);
+  assert.ok(labrador, "royal-canin-labrador must resolve on jetgo");
+  const blob = JSON.stringify(labrador);
+  assert.match(blob, /Labrador/, "breed page must name the breed");
+  assert.match(blob, /köpek/i, "Labrador page must be framed as a dog product");
+  // ...and it must NOT leak onto a sibling local store.
+  assert.equal(
+    findSeoPage("royal-canin-labrador", getStoreByHost(JETGOPET_HOST)),
+    undefined,
+    "RC breed page must not resolve on a sibling local store",
+  );
+});
+
+test("royal-canin: veterinary-diet pages give nutritional support under vet guidance, never a cure claim", () => {
+  const vetPages = ROYALCANIN_KEYWORD_PAGES.filter((p) =>
+    /\b(renal|hepatic|urinary|gastro|gastrointestinal|cardiac|anallergenic|annalergenic|diabetic|recovery|mobility|satiety)\b/.test(p.slug),
+  );
+  assert.ok(vetPages.length > 20, `expected a body of RC veterinary-diet pages, got ${vetPages.length}`);
+  const FORBIDDEN_CURE = /iyileştirir|tedavi eder|kesin (çözüm|tedavi)|hastalığı (yok eder|geçirir)|garanti(li)? (tedavi|iyileşme)/i;
+  for (const p of vetPages.slice(0, 60)) {
+    const blob = JSON.stringify(p);
+    assert.match(blob, /veteriner/i, `${p.slug}: vet-diet page must direct the buyer to veterinary guidance`);
+    assert.ok(!FORBIDDEN_CURE.test(blob), `${p.slug}: vet-diet page must not claim to cure/treat`);
+  }
+});
+
+test("royal-canin: retailer-intent keywords (Amazon/Petlebi/...) are framed as a local ALTERNATIVE", () => {
+  const rcRetailer = ROYALCANIN_KEYWORD_PAGES.filter((p) => /Yerel Alternatif/.test(p.metaTitle));
+  assert.ok(rcRetailer.length > 0, "expected some RC retailer-intent pages");
+  for (const p of rcRetailer.slice(0, 25)) {
+    const blob = JSON.stringify(p);
+    assert.match(blob, /bağımsız|alternatif/i, `${p.slug}: RC retailer page must position JETGO as an independent local alternative`);
+    assert.match(blob, /bağlantımız yoktur/i, `${p.slug}: RC retailer page must carry the no-affiliation disclaimer`);
+    assert.ok(
+      !/resmi (bayi|satıcı|distribütör)|yetkili (bayi|satıcı)/i.test(blob),
+      `${p.slug}: RC retailer page must not imply official marketplace affiliation`,
+    );
+  }
+});
+
+test("royal-canin: competitor-only keywords are NEVER presented as Royal Canin products (truthfulness)", () => {
+  // The source keyword list carries a little noise: keywords naming a DIFFERENT
+  // brand (no Royal Canin mention) must not be dressed up as Royal Canin products.
+  const COMPETITOR_SAMPLES = [
+    "felicia köpek maması 6 kg",
+    "felicia kısırlaştırılmış kedi maması 2 kg",
+    "dentabites whiskas",
+    "monge starter mini",
+    "brit care superfruits",
+    "brit care tavşanlı köpek maması",
+    "n&d kinoa kedi maması",
+    "n&d tahılsız yavru kedi maması",
+    "hills maxi puppy",
+    "proplan fit 32",
+  ];
+  const byTitle = new Map(
+    ROYALCANIN_KEYWORD_PAGES.map((p) => [p.title.toLocaleLowerCase("tr-TR"), p] as const),
+  );
+  let checked = 0;
+  for (const s of COMPETITOR_SAMPLES) {
+    const p = byTitle.get(s.toLocaleLowerCase("tr-TR"));
+    if (!p) continue; // slug may have collided/deduped; skip if absent
+    checked++;
+    // Only the PAGE COPY is asserted truthful. internalLinks legitimately point to
+    // real Royal Canin product pages the shop sells (reasonable cross-sell) and are
+    // not a claim that this keyword itself is a Royal Canin product.
+    const copy = [
+      p.title,
+      p.metaTitle,
+      p.metaDescription,
+      p.h1,
+      ...(p.intro ?? []),
+      ...(p.sections ?? []).flatMap((sec) => [sec.h2, ...(sec.paragraphs ?? []), ...(sec.list ?? [])]),
+      ...(p.features ?? []),
+      ...((p.faq ?? []).flatMap((f) => [f.q, f.a])),
+    ].join(" ");
+    assert.ok(
+      !/Royal Canin/i.test(copy),
+      `${p.slug}: competitor keyword must NOT be framed as a Royal Canin product`,
+    );
+    // It should still be a useful, store-scoped JETGO page.
+    assert.equal(p.storeId, "jetgo", `${p.slug}: competitor page must stay jetgo-scoped`);
+    assert.match(copy, /JETGO/i, `${p.slug}: competitor page must still surface JETGO framing`);
+  }
+  assert.ok(checked >= 6, `expected to verify several competitor-only pages, got ${checked}`);
 });

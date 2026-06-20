@@ -2,6 +2,7 @@ import { BRAND_PAGES } from "./brand-seo-data";
 import { KEYWORD_AUTO_PAGES } from "./keyword-pages";
 import { ATAKUM_KEYWORD_PAGES } from "./keyword-pages-atakum";
 import { JETGO_KEYWORD_PAGES } from "./keyword-pages-jetgo";
+import { ROYALCANIN_KEYWORD_PAGES } from "./keyword-pages-jetgo-royalcanin";
 import type { StoreConfig } from "@shared/stores";
 export interface SeoSection {
   h2: string;
@@ -4199,18 +4200,27 @@ export const ATAKUM_EXCLUSIVE_PAGES: SeoPageData[] = ATAKUM_KEYWORD_PAGES.filter
 );
 SEO_PAGES.push(...ATAKUM_EXCLUSIVE_PAGES);
 
-// JETGO-EXCLUSIVE Pro Plan / pet-food keyword pages (storeId "jetgo"), served
-// ONLY on jetgomarket.com. Unlike atakum's override-only set, these are NEW
-// product/brand slugs (not in the shared corpus), so we ADD every page UNLESS its
-// slug would clobber a hand-authored NON-keyword curated page (core/category/
-// district/brand). A collision with a shared keyword page is allowed and becomes
-// a jetgo override. (keyword-pages-jetgo.ts already deduped internally by slug.)
-export const JETGO_EXCLUSIVE_PAGES: SeoPageData[] = JETGO_KEYWORD_PAGES.filter(
-  (p) => {
-    const shared = _sharedTypeBySlug.get(p.slug);
-    return shared === undefined || shared === "keyword";
-  },
-);
+// JETGO-EXCLUSIVE Pro Plan + Royal Canin / pet-food keyword pages (storeId
+// "jetgo"), served ONLY on jetgomarket.com. Unlike atakum's override-only set,
+// these are NEW product/brand slugs (not in the shared corpus), so we ADD every
+// page UNLESS its slug would clobber a hand-authored NON-keyword curated page
+// (core/category/district/brand). A collision with a shared keyword page is
+// allowed and becomes a jetgo override.
+//
+// Both brand corpora carry storeId "jetgo", so a slug that appears in BOTH would
+// be served twice for jetgo and break the unique-slug invariant. We therefore
+// de-duplicate across the two corpora here (Pro Plan first wins) in addition to
+// each generator's own internal slug de-dup.
+const _jetgoCorpus: SeoPageData[] = [...JETGO_KEYWORD_PAGES, ...ROYALCANIN_KEYWORD_PAGES];
+const _jetgoSeenSlugs = new Set<string>();
+export const JETGO_EXCLUSIVE_PAGES: SeoPageData[] = [];
+for (const p of _jetgoCorpus) {
+  if (_jetgoSeenSlugs.has(p.slug)) continue;
+  const shared = _sharedTypeBySlug.get(p.slug);
+  if (shared !== undefined && shared !== "keyword") continue;
+  _jetgoSeenSlugs.add(p.slug);
+  JETGO_EXCLUSIVE_PAGES.push(p);
+}
 SEO_PAGES.push(...JETGO_EXCLUSIVE_PAGES);
 
 // ---------------------------------------------------------------------------

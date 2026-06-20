@@ -31,3 +31,16 @@ two older invariants become wrong and must be relaxed (not deleted):
 exact two test breakages and require the sitemap bypass. `getSeoPagesForStore`
 already gates exclusives by `storeId===store.id`, so leakage to siblings/cargo is
 prevented at the source.
+
+**Brand-truthfulness rule (imported keyword lists carry noise):** a "brand X"
+keyword export will contain a small fraction of competitor/noise keywords (e.g. a
+Royal Canin list had ~11/2556 naming Felicia/Whiskas/Monge/Brit Care/N&D/Hill's/
+Pro Plan). The generator must NOT dress these up as brand-X products. Detect the
+real brand: competitor-token AND no brand-X-token → frame neutrally ("check stock /
+premium alternative", never claim it IS brand X); both tokens → brand-X-centric
+comparison; else default brand X. Gate EVERY brand-X-specific surface (intro, meta,
+explainer, info blurb, barcode prose, FAQ, and any brand-specific section like a
+breed/size-line philosophy block) on the isRC flag, and parameterise hardcoded
+brand mentions. `internalLinks` may still cross-sell to real brand-X product pages
+— that is navigation, not a product-identity claim, so scope truthfulness tests to
+page COPY (title/meta/h1/intro/sections/features/faq), not the whole serialized page.
