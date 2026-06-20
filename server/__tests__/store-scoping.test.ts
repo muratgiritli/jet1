@@ -33,6 +33,7 @@ import {
   ALL_SEO_SLUGS,
   isCargoStore,
   ATAKUM_EXCLUSIVE_PAGES,
+  JETGO_EXCLUSIVE_PAGES,
 } from "../../client/src/lib/seo-data";
 import { getStoreByHost, brandifyFor, STORES } from "../../shared/stores";
 import { setStoreGoogleConfig, deleteStoreGoogleConfig, getAllStoreGoogleConfigs } from "../google-tags";
@@ -3618,6 +3619,10 @@ test("a havale/EFT order does NOT send the generic buyer 'siparisiniz alindi' SM
 
 const ATAKUM_STORE = getStoreByHost(ATAKUM_HOST);
 const SIBLING_LOCAL_STORE = getStoreByHost(JETGO_HOST);
+// A local sibling that carries NO store-exclusive corpus of its own, so its slug
+// set equals the SHARED local corpus. jetgo can no longer play this role (it now
+// owns the Pro Plan keyword corpus), so 1:1-override parity is measured here.
+const CLEAN_SIBLING_LOCAL_STORE = getStoreByHost(JETGOPET_HOST);
 const CARGO_STORE_FOR_ATAKUM = getStoreByHost(SAMSUN_HOST);
 const ATAKUM_SAMPLE_SLUGS = ATAKUM_EXCLUSIVE_PAGES.slice(0, 6).map((p) => p.slug);
 
@@ -3663,8 +3668,10 @@ test("atakum-exclusive: overrides never leak onto sibling local or cargo stores"
     getStoreByHost(JETGOSHOP_HOST),
     CARGO_STORE_FOR_ATAKUM,
   ]) {
-    const leaked = getSeoPagesForStore(store).filter((p) => p.storeId);
-    assert.equal(leaked.length, 0, `${store.id}: must not see any store-exclusive page`);
+    // A store may carry its OWN exclusives (jetgo does); what must never happen is
+    // a FOREIGN store's exclusive (e.g. atakum's) leaking onto another domain.
+    const leaked = getSeoPagesForStore(store).filter((p) => p.storeId && p.storeId !== store.id);
+    assert.equal(leaked.length, 0, `${store.id}: must not see any FOREIGN store-exclusive page`);
   }
   const ataStorePages = getSeoPagesForStore(ATAKUM_STORE).filter((p) => p.storeId);
   assert.ok(ataStorePages.length > 700, "atakum corpus must include its exclusive pages");
@@ -3685,13 +3692,13 @@ test("atakum-exclusive: override REPLACES (not duplicates) the slug — unique c
   assert.equal(new Set(slugs).size, slugs.length, "atakum corpus must have unique slugs (override replaces, not adds)");
   assert.equal(
     ata.length,
-    getSeoPagesForStore(SIBLING_LOCAL_STORE).length,
-    "atakum corpus size must match a sibling local store (1:1 override)",
+    getSeoPagesForStore(CLEAN_SIBLING_LOCAL_STORE).length,
+    "atakum corpus size must match a clean sibling local store (1:1 override)",
   );
   assert.deepEqual(
     [...availableSlugSet(ATAKUM_STORE)].sort(),
-    [...availableSlugSet(SIBLING_LOCAL_STORE)].sort(),
-    "atakum & sibling must expose the SAME slug set (same URLs, different content)",
+    [...availableSlugSet(CLEAN_SIBLING_LOCAL_STORE)].sort(),
+    "atakum & clean sibling must expose the SAME slug set (same URLs, different content)",
   );
 });
 
@@ -3746,4 +3753,132 @@ test("atakum-exclusive: 24h/night/always-open keyword pages state truthful 09:00
     assert.match(blob, /09:00–21:00/, `${p.slug}: must state the truthful 09:00-21:00 hours`);
     assert.match(blob, /24 saat açık değildir/, `${p.slug}: must explicitly clarify it is not 24h`);
   }
+});
+
+// ---- JETGO-EXCLUSIVE Pro Plan / pet-food keyword landing pages --------------
+//
+// jetgomarket.com (store "jetgo") publishes its OWN dedicated landing page for
+// every Pro Plan / pet-food keyword. Unlike atakum's OVERRIDES of shared keyword
+// slugs, these are BRAND-NEW product/brand slugs (not in the shared corpus). They
+// must be served ONLY on jetgomarket.com and — because jetgo is in a sitemap
+// partition group — must STILL be listed in FULL in jetgo's own sitemap (that is
+// exactly what the storeId bypass in getSitemapPagesForStore guarantees).
+
+const JETGO_STORE = getStoreByHost(JETGO_HOST);
+const JETGO_SAMPLE_SLUGS = JETGO_EXCLUSIVE_PAGES.slice(0, 8).map((p) => p.slug);
+
+test("jetgo-exclusive: a large bespoke Pro Plan keyword corpus is registered", () => {
+  assert.ok(
+    JETGO_EXCLUSIVE_PAGES.length > 800,
+    `expected >800 jetgo-exclusive pages, got ${JETGO_EXCLUSIVE_PAGES.length}`,
+  );
+  const slugs = JETGO_EXCLUSIVE_PAGES.map((p) => p.slug);
+  assert.equal(new Set(slugs).size, slugs.length, "jetgo corpus must have unique slugs");
+  const metaTitles = JETGO_EXCLUSIVE_PAGES.map((p) => p.metaTitle);
+  assert.ok(
+    new Set(metaTitles).size > metaTitles.length * 0.9,
+    "jetgo metaTitles must be overwhelmingly unique (not a thin duplicate corpus)",
+  );
+  for (const p of JETGO_EXCLUSIVE_PAGES) {
+    assert.equal(p.storeId, "jetgo", `${p.slug}: must be tagged storeId jetgo`);
+    assert.equal(p.availability, "localOnly", `${p.slug}: must be localOnly`);
+    assert.equal(p.type, "keyword", `${p.slug}: must be a keyword page`);
+    assert.ok(p.metaTitle && p.metaDescription && p.h1, `${p.slug}: must carry title/meta/h1`);
+    assert.ok(
+      p.intro?.length && p.sections?.length && p.faq?.length,
+      `${p.slug}: must carry intro/sections/faq for a substantive long-form page`,
+    );
+    assert.ok(p.internalLinks && p.internalLinks.length > 0, `${p.slug}: must carry internal links`);
+    // Genuine JETGO first-party content (real NAP phone) — not a brand swap.
+    assert.match(JSON.stringify(p), /0850 840 39 59/, `${p.slug}: must carry the JETGO NAP phone`);
+  }
+});
+
+test("jetgo-exclusive: pages are served ONLY on jetgomarket.com (no leak to siblings/cargo)", () => {
+  const own = getSeoPagesForStore(JETGO_STORE).filter((p) => p.storeId === "jetgo");
+  assert.equal(own.length, JETGO_EXCLUSIVE_PAGES.length, "jetgo must serve ALL of its exclusive pages");
+  for (const host of [JETGOPET_HOST, JETGOSHOP_HOST, ATAKUM_HOST, SAMSUN_HOST]) {
+    const store = getStoreByHost(host);
+    const leaked = getSeoPagesForStore(store).filter((p) => p.storeId === "jetgo");
+    assert.equal(leaked.length, 0, `${store.id}: must NOT see any jetgo-exclusive page`);
+  }
+  for (const slug of JETGO_SAMPLE_SLUGS) {
+    assert.ok(findSeoPage(slug, JETGO_STORE), `${slug}: must resolve on jetgo`);
+    assert.equal(
+      findSeoPage(slug, getStoreByHost(JETGOPET_HOST)),
+      undefined,
+      `${slug}: jetgo-exclusive must NOT resolve on a sibling local store`,
+    );
+    assert.equal(
+      findSeoPage(slug, getStoreByHost(SAMSUN_HOST)),
+      undefined,
+      `${slug}: local-only jetgo page must be hidden on a cargo store`,
+    );
+  }
+});
+
+test("jetgo-exclusive: jetgo sitemap lists EVERY exclusive (storeId bypasses the hash partition); siblings list none", () => {
+  const jetgoSitemap = new Set(getSitemapPagesForStore(JETGO_STORE).map((p) => p.slug));
+  for (const p of JETGO_EXCLUSIVE_PAGES) {
+    assert.ok(jetgoSitemap.has(p.slug), `${p.slug}: jetgo sitemap must list its own exclusive page`);
+  }
+  // jetgo is in a partition group; siblings must NOT list jetgo's exclusives.
+  for (const host of [JETGOPET_HOST, JETGOSHOP_HOST]) {
+    const sib = new Set(getSitemapPagesForStore(getStoreByHost(host)).map((p) => p.slug));
+    const leak = JETGO_EXCLUSIVE_PAGES.filter((p) => sib.has(p.slug));
+    assert.equal(leak.length, 0, `${host}: sibling sitemap must not list any jetgo-exclusive page`);
+  }
+  // no FOREIGN store-exclusive in jetgo's own sitemap.
+  assert.equal(
+    getSitemapPagesForStore(JETGO_STORE).filter((p) => p.storeId && p.storeId !== "jetgo").length,
+    0,
+    "jetgo sitemap must not list any foreign store-exclusive page",
+  );
+});
+
+test("jetgo-exclusive: NEW slugs never clobber a curated NON-keyword shared page", () => {
+  // Every jetgo page is either a brand-new slug or a benign override of a SHARED
+  // keyword page; it must never replace a hand-authored core/category/district page.
+  for (const p of JETGO_EXCLUSIVE_PAGES) {
+    const shared = SEO_PAGES.find((q) => q.slug === p.slug && !q.storeId);
+    if (shared) {
+      assert.equal(
+        shared.type,
+        "keyword",
+        `${p.slug}: a jetgo exclusive may only collide with a shared KEYWORD page, not a curated page`,
+      );
+    }
+  }
+});
+
+test("jetgo-exclusive: retailer-intent keywords are framed as a local ALTERNATIVE (no marketplace affiliation)", () => {
+  const retailerPages = JETGO_EXCLUSIVE_PAGES.filter((p) => /Yerel Alternatif/.test(p.metaTitle));
+  assert.ok(retailerPages.length > 0, "expected some retailer-intent jetgo pages");
+  for (const p of retailerPages.slice(0, 25)) {
+    const blob = JSON.stringify(p);
+    assert.match(blob, /bağımsız|alternatif/i, `${p.slug}: retailer page must position JETGO as an independent local alternative`);
+    assert.match(blob, /bağlantımız yoktur/i, `${p.slug}: retailer page must carry the no-affiliation disclaimer`);
+    assert.ok(
+      !/resmi (bayi|satıcı|distribütör)|yetkili (bayi|satıcı)/i.test(blob),
+      `${p.slug}: retailer page must not imply official marketplace affiliation`,
+    );
+  }
+});
+
+test("jetgo-exclusive: SSR meta serves jetgo's bespoke content on jetgomarket.com, not on a sibling", async () => {
+  const slug = JETGO_SAMPLE_SLUGS[0];
+  const page = findSeoPage(slug, JETGO_STORE)!;
+  const html = await injectAllMeta(INDEX_HTML, `/${slug}`, JETGO_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const canonical = html.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+  assert.equal(
+    title,
+    escapeHtmlForTest(brandifyFor(JETGO_STORE, page.metaTitle)),
+    "jetgo SSR <title> must be the brandified jetgo metaTitle",
+  );
+  assert.equal(canonical, `${JETGO_STORE.domain}/${slug}`, "jetgo SSR canonical must bind to the jetgomarket.com domain");
+  // The same slug does NOT exist on a sibling host => a different (non-product) title.
+  const sibHtml = await injectAllMeta(INDEX_HTML, `/${slug}`, JETGOPET_HOST);
+  const sibTitle = sibHtml.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  assert.notEqual(title, sibTitle, "jetgo product SSR title must not appear on a sibling host");
 });

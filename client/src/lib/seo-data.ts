@@ -1,6 +1,7 @@
 import { BRAND_PAGES } from "./brand-seo-data";
 import { KEYWORD_AUTO_PAGES } from "./keyword-pages";
 import { ATAKUM_KEYWORD_PAGES } from "./keyword-pages-atakum";
+import { JETGO_KEYWORD_PAGES } from "./keyword-pages-jetgo";
 import type { StoreConfig } from "@shared/stores";
 export interface SeoSection {
   h2: string;
@@ -4198,6 +4199,20 @@ export const ATAKUM_EXCLUSIVE_PAGES: SeoPageData[] = ATAKUM_KEYWORD_PAGES.filter
 );
 SEO_PAGES.push(...ATAKUM_EXCLUSIVE_PAGES);
 
+// JETGO-EXCLUSIVE Pro Plan / pet-food keyword pages (storeId "jetgo"), served
+// ONLY on jetgomarket.com. Unlike atakum's override-only set, these are NEW
+// product/brand slugs (not in the shared corpus), so we ADD every page UNLESS its
+// slug would clobber a hand-authored NON-keyword curated page (core/category/
+// district/brand). A collision with a shared keyword page is allowed and becomes
+// a jetgo override. (keyword-pages-jetgo.ts already deduped internally by slug.)
+export const JETGO_EXCLUSIVE_PAGES: SeoPageData[] = JETGO_KEYWORD_PAGES.filter(
+  (p) => {
+    const shared = _sharedTypeBySlug.get(p.slug);
+    return shared === undefined || shared === "keyword";
+  },
+);
+SEO_PAGES.push(...JETGO_EXCLUSIVE_PAGES);
+
 // ---------------------------------------------------------------------------
 // Commerce-model availability + per-store resolution.
 // ---------------------------------------------------------------------------
@@ -4297,7 +4312,10 @@ export function ownsSitemapSlug(store: StoreConfig, slug: string): boolean {
 export function getSitemapPagesForStore(store: StoreConfig): SeoPageData[] {
   const pages = getSeoPagesForStore(store);
   if (!partitionGroupOf(store.id)) return pages;
-  return pages.filter((p) => ownsSitemapSlug(store, p.slug));
+  // Store-EXCLUSIVE pages (storeId === this store) exist ONLY on this domain, so
+  // there is nothing to partition across siblings — this store must list them ALL
+  // in its own sitemap. Only the SHARED corpus is split by the hash partition.
+  return pages.filter((p) => p.storeId === store.id || ownsSitemapSlug(store, p.slug));
 }
 
 const _localSlugMap = new Map<string, SeoPageData>();
