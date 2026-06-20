@@ -37,6 +37,16 @@ local-intent terms to LOCAL_INTENT_RE, (2) keep "türkiye" out of any local copy
 title (a test asserts it), and (4) rely on the store-scoping test suite's cargo
 forbidden-scanner to catch leaks.
 
+## Sibling local domains lead homepage SEO with DISTINCT geo
+The shared keyword pages are identical across all LOCAL JETGO domains (jetgomarket.com,
+jetgo.pet, jetgo.shop...), so the only lever to avoid duplicate homepage SEO between
+them is the per-store `seo.title/description/keywords` in `stores.ts`. Convention:
+each local JETGO domain leads with a different geographic focus — jetgomarket.com =
+Atakum-led (physical shop + "1 saatte" is only truthful there), jetgo.shop = Samsun-led.
+When the user says "<domain> (location) yap", differentiate that ONE store's seo block
+(target by the jetgo block range, since the old strings are byte-shared with jetgopet)
+and do NOT re-add keywords — the corpus is already complete and shared.
+
 ## Bare neighborhood proper-nouns are a trap
 A keyword that is just a mahalle name + product (e.g. "atakent kedi maması",
 "denizevleri petshop") carries NO intent word, so `isUniversalKeyword` returns true

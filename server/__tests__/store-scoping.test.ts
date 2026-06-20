@@ -2586,6 +2586,34 @@ test("Samsun/Atakum neighborhood keyword pages are LOCAL-only, serve on jetgo.sh
   assert.ok(!/jetgomarket\.com/i.test(`${title} ${description}`), "neighborhood page must not leak the jetgomarket domain");
 });
 
+test("jetgomarket.com homepage SEO is Atakum-led with neighborhood reach, local same-day, not cargo", async () => {
+  // jetgomarket.com (default jetgo, LOCAL same-day) physically sits in Atakum, so its
+  // homepage SEO leads with Atakum + mahalle reach while keeping Samsun-wide same-day.
+  // It must NOT read like a Türkiye-geneli cargo store, and as a LOCAL store it must
+  // also serve the shared neighborhood keyword pages.
+  const jetgo = getStoreByHost(JETGO_HOST);
+  assert.ok(!isCargoStore(jetgo), "guard: jetgomarket.com must be a local store");
+
+  const html = await injectAllMeta(INDEX_HTML, "/", JETGO_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const description = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1] ?? "";
+  const blob = `${title} ${description}`;
+  assert.match(title, /Atakum/i, "jetgomarket homepage title must lead with Atakum");
+  assert.match(title, /JETGO/, "jetgomarket homepage title must keep the JETGO brand");
+  assert.match(blob, SAME_DAY_SIGNATURE, "jetgomarket homepage must keep local same-day copy");
+  assert.ok(!CARGO_SIGNATURE.test(blob), "jetgomarket homepage must not carry cargo (türkiye geneli) copy");
+  assert.match(
+    description,
+    /Denizevleri|Atakent|Mimar Sinan|Yenimahalle|Kurupelit/,
+    "jetgomarket homepage description must name Atakum neighborhoods",
+  );
+
+  // As a LOCAL store it serves the shared neighborhood keyword pages.
+  const page = findSeoPage("denizevleri-petshop", jetgo);
+  assert.ok(page, "neighborhood keyword page must serve on jetgomarket.com");
+  assert.equal(page!.availability, "localOnly", "neighborhood page must be localOnly");
+});
+
 test("SEO landing page on the default (jetgo) host keeps the JETGO brand (contrast)", async () => {
   // Proves the per-host checks above actually discriminate: on the default store
   // brandify is a no-op, so the JETGO brand and domain are expected to remain.
