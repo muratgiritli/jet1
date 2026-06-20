@@ -155,3 +155,9 @@ id = "Wq-EqftYdY_EVlyj7MbX6"
 uri = "file://attached_assets/generated_videos/jetgo_post5_square.mp4"
 type = "video"
 title = "JETGO Instagram Paylaşım - 5 Sahne (1:1, müzikli, 13sn)"
+
+[[outputs]]
+id = "9hSFtvJi63YYZXY8ndHJ2"
+uri = "file://jetgo-sitemaps-all-domains.zip"
+type = "unspecified"
+title = "Tüm domainlerin sitemap'leri (9 domain × 4 dosya)"
