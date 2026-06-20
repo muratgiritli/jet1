@@ -3,6 +3,7 @@ import { KEYWORD_AUTO_PAGES } from "./keyword-pages";
 import { ATAKUM_KEYWORD_PAGES } from "./keyword-pages-atakum";
 import { JETGO_KEYWORD_PAGES } from "./keyword-pages-jetgo";
 import { ROYALCANIN_KEYWORD_PAGES } from "./keyword-pages-jetgo-royalcanin";
+import { MARKALAR_KEYWORD_PAGES } from "./keyword-pages-jetgo-markalar";
 import type { StoreConfig } from "@shared/stores";
 export interface SeoSection {
   h2: string;
@@ -4207,11 +4208,17 @@ SEO_PAGES.push(...ATAKUM_EXCLUSIVE_PAGES);
 // (core/category/district/brand). A collision with a shared keyword page is
 // allowed and becomes a jetgo override.
 //
-// Both brand corpora carry storeId "jetgo", so a slug that appears in BOTH would
-// be served twice for jetgo and break the unique-slug invariant. We therefore
-// de-duplicate across the two corpora here (Pro Plan first wins) in addition to
-// each generator's own internal slug de-dup.
-const _jetgoCorpus: SeoPageData[] = [...JETGO_KEYWORD_PAGES, ...ROYALCANIN_KEYWORD_PAGES];
+// All three brand corpora carry storeId "jetgo", so a slug that appears in more
+// than one would be served twice for jetgo and break the unique-slug invariant.
+// We therefore de-duplicate across the corpora here — order is Pro Plan, then
+// Royal Canin, then the broad "diğer markalar" catch-all; the EARLIER (more
+// specialised) corpus wins — in addition to each generator's own internal slug
+// de-dup.
+const _jetgoCorpus: SeoPageData[] = [
+  ...JETGO_KEYWORD_PAGES,
+  ...ROYALCANIN_KEYWORD_PAGES,
+  ...MARKALAR_KEYWORD_PAGES,
+];
 const _jetgoSeenSlugs = new Set<string>();
 export const JETGO_EXCLUSIVE_PAGES: SeoPageData[] = [];
 for (const p of _jetgoCorpus) {

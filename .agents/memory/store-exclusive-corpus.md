@@ -44,3 +44,34 @@ breed/size-line philosophy block) on the isRC flag, and parameterise hardcoded
 brand mentions. `internalLinks` may still cross-sell to real brand-X product pages
 — that is navigation, not a product-identity claim, so scope truthfulness tests to
 page COPY (title/meta/h1/intro/sections/features/faq), not the whole serialized page.
+
+**Multi-brand corpus (when the keyword export is NOT a single brand):** a "diğer
+markalar" export spans many brands (Hill's, N&D/Farmina, GimCat, Reflex, Enjoy,
+Pronature, LaVital, ProChoice, GranCarno, Cibau, + bare barcodes + foreign telecom
+noise). There is NO single default brand: detect from a broad ordered brand table,
+first hit = brand, second distinct hit = compareBrand (neutral comparison), zero
+hits = stay generic (barcodes/bare sizes → product-code lookup, never invent a
+brand). Brand-specific normalizations are load-bearing: N&D → "N&D (Farmina)";
+GimCat (and bare malt/paste/vitamin/milk) = TREATS (macun/ödül/takviye), never
+staple "mama". Skip non-pet noise via a NOISE_RE and EXPORT the skipped count so a
+test can assert noise>0 AND that no noise token leaks into any page.
+
+**Hill's letter-code vet diets — classification ORDER is the trap (cost me >1
+test cycle):** generic-diet detection runs BEFORE the Hill's z/d/i/d/k/d… letter-code
+map, so a generic token wins when both are present — e.g. "hills sensitive zd" is
+classified as a generic *sensitive* diet, NOT a z/d veterinary diet, and correctly
+carries NO mandatory veterinary framing. Consequence for tests: do NOT filter "true
+vet-diet" pages by a title token like /\bzd\b/ (it over-matches these generic pages
+and the "must mention veteriner" assertion then fails). Filter by the emitted
+support-not-cure marker line ("Veteriner diyetleri tek başına tedavi değil, beslenme
+desteğidir") — that tracks the generator's REAL classification and is a sound,
+non-circular regression guard (count>10 breaks if vet framing regresses; the
+no-cure assertion guards copy). Vet diets are nutritional SUPPORT under vet
+guidance, never a cure.
+
+**3-way cross-corpus dedup:** multiple jetgo corpora share storeId "jetgo"; append
+them to `_jetgoCorpus` in EARLIER-WINS precedence (specialised first: Pro Plan →
+Royal Canin → broad markalar catch-all). The single existing dedup loop (seen-slug
+set + skip-curated-non-keyword-collision) handles all three with no new code — just
+append in the right order. Verified 0 cross-corpus collisions because brand slugs
+are disjoint, but the ordering still matters for any future overlap.

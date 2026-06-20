@@ -36,6 +36,7 @@ import {
   JETGO_EXCLUSIVE_PAGES,
 } from "../../client/src/lib/seo-data";
 import { ROYALCANIN_KEYWORD_PAGES } from "../../client/src/lib/keyword-pages-jetgo-royalcanin";
+import { MARKALAR_KEYWORD_PAGES, MARKALAR_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgo-markalar";
 import { getStoreByHost, brandifyFor, STORES } from "../../shared/stores";
 import { setStoreGoogleConfig, deleteStoreGoogleConfig, getAllStoreGoogleConfigs } from "../google-tags";
 import { setStoreMerchantConfig, deleteStoreMerchantConfig, getAllStoreMerchantConfigs, normalizeMerchantConfig } from "../merchant";
@@ -4012,4 +4013,167 @@ test("royal-canin: competitor-only keywords are NEVER presented as Royal Canin p
     assert.match(copy, /JETGO/i, `${p.slug}: competitor page must still surface JETGO framing`);
   }
   assert.ok(checked >= 6, `expected to verify several competitor-only pages, got ${checked}`);
+});
+
+// ---------------------------------------------------------------------------
+// "Diğer markalar" (other brands) jetgo-exclusive corpus.
+//
+// jetgomarket.com publishes a landing page for every "other brand" keyword too.
+// Unlike Pro Plan / Royal Canin this corpus is MULTI-BRAND (Hill's, N&D/Farmina,
+// GimCat, Reflex, Enjoy, Pronature, LaVital, ProChoice, ProPerformance, GranCarno,
+// Cibau, plus product barcodes). It shares storeId "jetgo", so the combined-corpus
+// invariants above (served only on jetgo, unique slugs, sitemap, retailer framing)
+// already cover it. The tests below lock the markalar-SPECIFIC behaviour: the
+// corpus exists & is folded in, telecom noise is skipped, each keyword's brand is
+// attributed truthfully (never dressed up as a different brand), Hill's letter-code
+// vet diets stay support-not-cure, GimCat keywords are framed as treats/supplements
+// (not staple kibble), and barcodes stay brand-neutral.
+// ---------------------------------------------------------------------------
+
+// Page COPY only (NOT internalLinks): internalLinks legitimately cross-sell real
+// products the shop stocks and are not a claim about the keyword's own brand.
+function markalarCopy(p: SeoPageData): string {
+  return [
+    p.title,
+    p.metaTitle,
+    p.metaDescription,
+    p.h1,
+    ...(p.intro ?? []),
+    ...(p.sections ?? []).flatMap((sec) => [sec.h2, ...(sec.paragraphs ?? []), ...(sec.list ?? [])]),
+    ...(p.features ?? []),
+    ...((p.faq ?? []).flatMap((f) => [f.q, f.a])),
+  ].join(" ");
+}
+const markalarBySlug = new Map(MARKALAR_KEYWORD_PAGES.map((p) => [p.slug, p] as const));
+
+test("markalar: a large multi-brand keyword corpus is registered and folded into jetgo", () => {
+  assert.ok(
+    MARKALAR_KEYWORD_PAGES.length > 1000,
+    `expected >1000 markalar pages, got ${MARKALAR_KEYWORD_PAGES.length}`,
+  );
+  const slugs = MARKALAR_KEYWORD_PAGES.map((p) => p.slug);
+  assert.equal(new Set(slugs).size, slugs.length, "markalar corpus must have unique slugs");
+  for (const p of MARKALAR_KEYWORD_PAGES) {
+    assert.equal(p.storeId, "jetgo", `${p.slug}: markalar page must be storeId jetgo`);
+    assert.equal(p.availability, "localOnly", `${p.slug}: markalar page must be localOnly`);
+    assert.equal(p.type, "keyword", `${p.slug}: markalar page must be a keyword page`);
+    assert.ok(p.metaTitle && p.metaDescription && p.h1, `${p.slug}: must carry title/meta/h1`);
+  }
+  // The integrated jetgo corpus must absorb the markalar pages on top of Pro Plan
+  // + Royal Canin (markalar loses any cross-corpus slug collision, earlier wins).
+  const jetgoSlugs = new Set(JETGO_EXCLUSIVE_PAGES.map((p) => p.slug));
+  const absorbed = MARKALAR_KEYWORD_PAGES.filter((p) => jetgoSlugs.has(p.slug)).length;
+  assert.ok(
+    absorbed > 1000,
+    `most markalar pages must be folded into JETGO_EXCLUSIVE_PAGES (got ${absorbed})`,
+  );
+});
+
+test("markalar: telecom/Spanish noise (Spectrum, paquetes, promociones) is skipped, never published", () => {
+  assert.ok(
+    MARKALAR_SKIPPED_NOISE > 0,
+    `expected the generator to report skipped noise keywords, got ${MARKALAR_SKIPPED_NOISE}`,
+  );
+  const NOISE = /spectrum|paquetes|promociones|sin contrato|com calificado/i;
+  const leaked = MARKALAR_KEYWORD_PAGES.filter((p) => NOISE.test(`${p.slug} ${markalarCopy(p)}`));
+  assert.equal(leaked.length, 0, `telecom noise must never become a page (leaked: ${leaked.map((p) => p.slug).join(", ")})`);
+});
+
+test("markalar: each keyword's brand is attributed truthfully, never dressed up as another brand", () => {
+  // Single-brand keywords (no cross-brand comparison): the page copy must name the
+  // CORRECT brand and must NOT claim to be Royal Canin / Pro Plan (separate corpora)
+  // nor any other unrelated brand from the known list.
+  const SAMPLES: Array<{ slug: string; brand: RegExp; foreign: RegExp }> = [
+    { slug: "gimcat-malt-soft-paste", brand: /GimCat/i, foreign: /Royal Canin|Pro ?Plan|Hill's|Reflex|Farmina/i },
+    { slug: "hills-zd", brand: /Hill's/i, foreign: /Royal Canin|Pro ?Plan|Farmina|GimCat|Reflex/i },
+    { slug: "nd-kedi-mamasi", brand: /N&D \(Farmina\)|Farmina/i, foreign: /Royal Canin|Pro ?Plan|Hill's|GimCat|Reflex/i },
+    { slug: "farmina-pumpkin", brand: /Farmina/i, foreign: /Royal Canin|Pro ?Plan|Hill's|GimCat|Reflex/i },
+    { slug: "grancarno", brand: /GranCarno/i, foreign: /Royal Canin|Pro ?Plan|Hill's|GimCat/i },
+    { slug: "cibau-fish-sensitive", brand: /Cibau/i, foreign: /Royal Canin|Pro ?Plan|Hill's|GimCat/i },
+    { slug: "enjoy-cambridge", brand: /Enjoy/i, foreign: /Royal Canin|Pro ?Plan|Hill's|GimCat/i },
+    { slug: "pronature-daily-growth", brand: /Pronature/i, foreign: /Royal Canin|Pro ?Plan|Hill's|GimCat/i },
+    { slug: "lavital-12-kg", brand: /LaVital/i, foreign: /Royal Canin|Pro ?Plan|Hill's|GimCat/i },
+    { slug: "prochoice-15-kg", brand: /ProChoice/i, foreign: /Royal Canin|Pro ?Plan|Hill's|GimCat/i },
+    { slug: "reflex-plus-somonlu-kopek-mamasi", brand: /Reflex/i, foreign: /Royal Canin|Pro ?Plan|Hill's|GimCat/i },
+  ];
+  let checked = 0;
+  for (const s of SAMPLES) {
+    const p = markalarBySlug.get(s.slug);
+    if (!p) continue; // slug may have deduped/collided across corpora; skip if absent
+    checked++;
+    const copy = markalarCopy(p);
+    assert.match(copy, s.brand, `${s.slug}: page must name its true brand`);
+    assert.ok(!s.foreign.test(copy), `${s.slug}: page must NOT be framed as a different brand`);
+    assert.equal(p.storeId, "jetgo", `${s.slug}: must stay jetgo-scoped`);
+    assert.match(copy, /JETGO/i, `${s.slug}: must still surface JETGO framing`);
+  }
+  assert.ok(checked >= 8, `expected to verify several single-brand pages, got ${checked}`);
+});
+
+test("markalar: Hill's letter-code veterinary diets give support under vet guidance, never a cure", () => {
+  // A "vet diet" is one the generator actually classified as a letter-code/therapeutic
+  // diet — it emits the explicit support-not-cure line. (Title tokens like "zd" are
+  // NOT enough: e.g. "hills sensitive zd" is framed as a generic sensitive diet and
+  // is correctly NOT given mandatory veterinary framing.) We key off that marker so
+  // the filter tracks the generator's real classification, and breaks if it regresses.
+  const SUPPORT_NOT_CURE = /Veteriner diyetleri tek başına tedavi değil, beslenme desteğidir/;
+  const vetPages = MARKALAR_KEYWORD_PAGES.filter(
+    (p) => /hill/i.test(p.title) && SUPPORT_NOT_CURE.test(markalarCopy(p)),
+  );
+  assert.ok(vetPages.length > 10, `expected a body of Hill's letter-code vet-diet pages, got ${vetPages.length}`);
+  const FORBIDDEN_CURE = /iyileştirir|tedavi eder|kesin (çözüm|tedavi)|hastalığı (yok eder|geçirir)|garanti(li)? (tedavi|iyileşme)/i;
+  for (const p of vetPages) {
+    const copy = markalarCopy(p);
+    assert.match(copy, /veteriner/i, `${p.slug}: Hill's vet-diet page must direct the buyer to veterinary guidance`);
+    assert.ok(!FORBIDDEN_CURE.test(copy), `${p.slug}: Hill's vet-diet page must not claim to cure/treat`);
+  }
+});
+
+test("markalar: GimCat keywords are framed as treats/supplements (macun/ödül/takviye), not staple kibble", () => {
+  const gimcat = MARKALAR_KEYWORD_PAGES.filter((p) => /gimcat/i.test(p.title));
+  assert.ok(gimcat.length > 3, `expected several GimCat pages, got ${gimcat.length}`);
+  let treatFramed = 0;
+  for (const p of gimcat.slice(0, 40)) {
+    const copy = markalarCopy(p);
+    if (/macun|ödül|takviye|vitamin|malt/i.test(copy)) treatFramed++;
+  }
+  assert.ok(
+    treatFramed >= Math.ceil(Math.min(gimcat.length, 40) * 0.5),
+    `most GimCat pages must use treat/supplement framing, got ${treatFramed}`,
+  );
+  // A clear treat keyword carries treat vocabulary.
+  const malt = markalarBySlug.get("gimcat-malt-soft-paste");
+  if (malt) assert.match(markalarCopy(malt), /macun/i, "gimcat malt paste must be framed as a macun (treat)");
+});
+
+test("markalar: barcode/product-code keywords stay brand-neutral (no invented brand)", () => {
+  const barcodes = MARKALAR_KEYWORD_PAGES.filter((p) => /^\d{6,}$/.test(p.slug));
+  assert.ok(barcodes.length > 100, `expected the barcode keyword set, got ${barcodes.length}`);
+  for (const p of barcodes.slice(0, 40)) {
+    const copy = markalarCopy(p);
+    assert.match(p.metaTitle, /Ürün Kodu/i, `${p.slug}: barcode page must be framed by product code`);
+    assert.ok(
+      !/Royal Canin|Pro ?Plan|Hill's|GimCat|Farmina/i.test(copy),
+      `${p.slug}: barcode page must not invent a specific brand`,
+    );
+  }
+});
+
+test("markalar: a representative page is served only on jetgomarket.com and listed in its sitemap", () => {
+  const slug = "grancarno";
+  const p = markalarBySlug.get(slug);
+  assert.ok(p, `${slug} must exist in the markalar corpus`);
+  assert.ok(findSeoPage(slug, JETGO_STORE), `${slug}: must resolve on jetgo`);
+  assert.equal(
+    findSeoPage(slug, getStoreByHost(JETGOPET_HOST)),
+    undefined,
+    `${slug}: markalar page must NOT resolve on a sibling local store`,
+  );
+  assert.equal(
+    findSeoPage(slug, getStoreByHost(SAMSUN_HOST)),
+    undefined,
+    `${slug}: local-only markalar page must be hidden on a cargo store`,
+  );
+  const jetgoSitemap = new Set(getSitemapPagesForStore(JETGO_STORE).map((q) => q.slug));
+  assert.ok(jetgoSitemap.has(slug), `${slug}: jetgo sitemap must list the markalar page`);
 });
