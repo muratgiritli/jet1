@@ -47,15 +47,18 @@ break the dev/static fallback and the per-host rewrite already handles it.
 **Intentionally shared (not rewritten):** JSON-LD `email` + `sameAs` social handles point
 to the one real business across all brands; that shared NAP footprint is accepted, not a bug.
 
-## The 3 JETGO domains publish DISJOINT sitemaps (sitemap-only partition)
-jetgomarket.com/jetgo.pet/jetgo.shop all serve the SAME local landing corpus, but each
-advertises only its own ~1/3 slice in `/sitemap-seo.xml` (the user wanted "her birinin
-sitemap farklı olsun" while keeping every page reachable on every domain). Each landing
-slug is assigned to ONE domain by a stable hash → `getSitemapPagesForStore` /
-`ownsSitemapSlug` / `SITEMAP_PARTITION_STORE_IDS` in `seo-data.ts`.
-**Why it matters / traps:** (1) it's sitemap-ONLY — `findSeoPage`/`availableSlugSet`
-(serving + orphan-link checks) are untouched, so pages still resolve everywhere; do NOT
-route serving through the partition. (2) `SITEMAP_PARTITION_STORE_IDS` order is
-load-bearing (owner = `hash % len` indexed into it) — reordering remaps every page and
-churns all three sitemaps. (3) Blog (7 URLs) is intentionally left shared on all three.
-(4) Stores OUTSIDE the trio (atakum, cargo) keep the full corpus — never assume partition.
+## Per-domain DISJOINT sitemaps (sitemap-only partition, MULTI-GROUP)
+Sibling domains that share ONE corpus each advertise only their own slice in
+`/sitemap-seo.xml` (user: "her birinin sitemap farklı olsun") while every page still
+resolves on every domain. Driven by `SITEMAP_PARTITION_GROUPS` (array of independent
+groups) + `partitionGroupOf` / `ownsSitemapSlug` / `getSitemapPagesForStore` in
+`seo-data.ts`. Two groups today: the 3 JETGO LOCAL domains and the 4 CARGO domains
+(atakumpet.com / samsunpet.com / karadenizpetshop.com / marka.pet).
+**Why it matters / traps:** (1) sitemap-ONLY — `findSeoPage`/`availableSlugSet` (serving
++ orphan-link checks) are untouched, so pages resolve everywhere; never route serving
+through the partition. (2) within a group owner = `hash(slug) % group.length` indexed
+into the group array → a group's ORDER & LENGTH are load-bearing (reorder/resize churns
+THAT group's sitemaps). Groups are INDEPENDENT — adding the cargo group left JETGO's %3
+assignments byte-for-byte unchanged; do NOT merge ids into one flat list. (3) Blog (~6-7
+URLs) is intentionally shared within a group. (4) Stores in NO group (atakum, atakumbiz)
+keep the full corpus — never assume a store is partitioned.

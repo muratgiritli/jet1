@@ -4217,21 +4217,34 @@ export function getSeoPagesForStore(store: StoreConfig): SeoPageData[] {
 }
 
 /**
- * The three independent JETGO-branded LOCAL domains (jetgomarket.com → "jetgo",
- * jetgo.pet → "jetgopet", jetgo.shop → "jetgoshop") all serve the SAME shared
- * local landing-page corpus. To give each domain a DISTINCT sitemap — without
- * splitting the pages themselves (every page still resolves on every domain) —
- * each landing slug is assigned to exactly one of these domains by a stable
- * hash. The three sitemap-seo.xml files therefore advertise disjoint,
- * evenly-sized slices of the corpus instead of three identical lists.
+ * Sibling domains that share ONE corpus but must each publish a DISTINCT sitemap.
+ * Within a group, every landing slug is assigned to exactly one member by a stable
+ * hash (`hash(slug) % group.length`, indexed into the group array), so the members'
+ * sitemap-seo.xml files advertise disjoint, evenly-sized slices instead of
+ * identical lists. The pages themselves stay reachable on every domain — only the
+ * sitemap LISTING is sliced (serving / orphan-link checks are untouched).
  *
- * ORDER IS LOAD-BEARING: a slug's owner is `hash(slug) % len` indexed into this
- * array, so reordering or resizing it remaps every page to a different domain
- * (churns all three sitemaps). Only append/reorder deliberately.
+ *   Group 1 — the 3 independent JETGO LOCAL domains (shared local corpus):
+ *     jetgomarket.com / jetgo.pet / jetgo.shop
+ *   Group 2 — the 4 CARGO sibling domains (shared cargo corpus):
+ *     atakumpet.com / samsunpet.com / karadenizpetshop.com / marka.pet
+ *
+ * ORDER & LENGTH ARE LOAD-BEARING *per group*: reordering or resizing a group
+ * remaps every slug among that group's members (churns those sitemaps), so only
+ * append/reorder a group deliberately. Groups are INDEPENDENT — editing one never
+ * affects another. A store in NO group owns every slug (full corpus, unchanged).
  */
-export const SITEMAP_PARTITION_STORE_IDS = ["jetgo", "jetgopet", "jetgoshop"] as const;
+export const SITEMAP_PARTITION_GROUPS: readonly (readonly string[])[] = [
+  ["jetgo", "jetgopet", "jetgoshop"],
+  ["samsun", "samsunpet", "karadeniz", "markapet"],
+] as const;
 
-function stableSlugHash(slug: string): number {
+/** The partition group that contains `storeId`, or undefined if it is in none. */
+function partitionGroupOf(storeId: string): readonly string[] | undefined {
+  return SITEMAP_PARTITION_GROUPS.find((g) => g.includes(storeId));
+}
+
+export function stableSlugHash(slug: string): number {
   let h = 5381;
   for (let i = 0; i < slug.length; i++) {
     h = (((h << 5) + h) ^ slug.charCodeAt(i)) >>> 0;
@@ -4240,25 +4253,24 @@ function stableSlugHash(slug: string): number {
 }
 
 /**
- * Is `store` the assigned sitemap owner of `slug`? Stores outside the
- * partition set own every slug (unchanged behaviour).
+ * Is `store` the assigned sitemap owner of `slug`? A store outside every
+ * partition group owns every slug (unchanged behaviour); inside a group it owns
+ * only the slugs whose hash maps to its index within that group.
  */
 export function ownsSitemapSlug(store: StoreConfig, slug: string): boolean {
-  const idx = (SITEMAP_PARTITION_STORE_IDS as readonly string[]).indexOf(store.id);
-  if (idx === -1) return true;
-  return stableSlugHash(slug) % SITEMAP_PARTITION_STORE_IDS.length === idx;
+  const group = partitionGroupOf(store.id);
+  if (!group) return true;
+  return stableSlugHash(slug) % group.length === group.indexOf(store.id);
 }
 
 /**
- * Landing pages this store should list in ITS sitemap. For the three
- * independent JETGO domains this is a disjoint ~1/3 slice of the shared corpus;
- * for every other store it is the full eligible set (unchanged behaviour).
+ * Landing pages this store should list in ITS sitemap. For a member of a
+ * partition group this is a disjoint slice of the shared corpus; for every other
+ * store it is the full eligible set (unchanged behaviour).
  */
 export function getSitemapPagesForStore(store: StoreConfig): SeoPageData[] {
   const pages = getSeoPagesForStore(store);
-  if ((SITEMAP_PARTITION_STORE_IDS as readonly string[]).indexOf(store.id) === -1) {
-    return pages;
-  }
+  if (!partitionGroupOf(store.id)) return pages;
   return pages.filter((p) => ownsSitemapSlug(store, p.slug));
 }
 

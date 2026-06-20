@@ -27,6 +27,8 @@ import {
   findSeoPage,
   getSeoPagesForStore,
   getSitemapPagesForStore,
+  SITEMAP_PARTITION_GROUPS,
+  stableSlugHash,
   availableSlugSet,
   ALL_SEO_SLUGS,
   isCargoStore,
@@ -2864,13 +2866,83 @@ test("sitemap partition: the 3 JETGO domains list disjoint, complete, determinis
   assert.deepEqual([...again].sort(), [...sets[1]].sort(), "partition must be deterministic");
 });
 
-test("sitemap partition: stores outside the JETGO trio still list their full corpus", () => {
+// The 4 CARGO sibling domains (atakumpet.com → "samsun", samsunpet.com →
+// "samsunpet", karadenizpetshop.com → "karadeniz", marka.pet → "markapet") share
+// the SAME cargo corpus and must likewise each publish a DISTINCT sitemap. This is
+// an INDEPENDENT partition group from the JETGO trio.
+test("sitemap partition: the 4 cargo domains list disjoint, complete, deterministic slices", () => {
+  const samsun = getStoreByHost("www.atakumpet.com");
+  const samsunpet = getStoreByHost("www.samsunpet.com");
+  const karadeniz = getStoreByHost("www.karadenizpetshop.com");
+  const markapet = getStoreByHost("www.marka.pet");
+  assert.deepEqual(
+    [samsun.id, samsunpet.id, karadeniz.id, markapet.id],
+    ["samsun", "samsunpet", "karadeniz", "markapet"],
+    "partition test must target the four cargo stores",
+  );
+
+  const full = new Set(getSeoPagesForStore(samsun).map((p) => p.slug));
+  const sets = [samsun, samsunpet, karadeniz, markapet].map(
+    (s) => new Set(getSitemapPagesForStore(s).map((p) => p.slug)),
+  );
+
+  // Each slice is non-empty and strictly smaller than the full corpus.
+  for (const [i, set] of sets.entries()) {
+    assert.ok(set.size > 0, `cargo store ${i} sitemap slice is empty`);
+    assert.ok(set.size < full.size, `cargo store ${i} sitemap slice is not a strict subset`);
+  }
+
+  // Pairwise disjoint — the four sitemaps share no slug.
+  for (let i = 0; i < sets.length; i++) {
+    for (let j = i + 1; j < sets.length; j++) {
+      const overlap = [...sets[i]].filter((s) => sets[j].has(s));
+      assert.equal(overlap.length, 0, `cargo slices ${i} and ${j} overlap: ${overlap.slice(0, 5).join(", ")}`);
+    }
+  }
+
+  // Union covers the whole cargo corpus — no slug is dropped from every sitemap.
+  const union = new Set<string>();
+  for (const set of sets) for (const s of set) union.add(s);
+  assert.equal(union.size, full.size, "cargo partition slices must cover the full corpus");
+  for (const s of full) assert.ok(union.has(s), `slug missing from every cargo sitemap: ${s}`);
+
+  // Deterministic across calls (stable hash, no churn between deploys).
+  const again = new Set(getSitemapPagesForStore(karadeniz).map((p) => p.slug));
+  assert.deepEqual([...again].sort(), [...sets[2]].sort(), "cargo partition must be deterministic");
+});
+
+// The JETGO trio and the cargo group are independent: a JETGO store is still
+// partitioned by its own 3-member group (mod 3), NOT by the 4-member cargo group,
+// so adding the cargo group never reassigns a JETGO slug.
+test("sitemap partition: JETGO and cargo groups are independent (jetgopet stays mod-3)", () => {
+  const jetgopet = getStoreByHost("www.jetgo.pet"); // index 1 of ["jetgo","jetgopet","jetgoshop"]
+  const slice = getSitemapPagesForStore(jetgopet).map((p) => p.slug);
+  assert.ok(slice.length > 0, "jetgopet must still own a non-empty slice");
+  for (const slug of slice) {
+    assert.equal(stableSlugHash(slug) % 3, 1, `jetgopet slug not owned under mod-3: ${slug}`);
+  }
+});
+
+// Guard the multi-group invariants: a store in two groups would silently take the
+// first group's partition; an empty group would divide by zero in ownsSitemapSlug.
+test("sitemap partition: groups are well-formed (no empty groups, no shared store id)", () => {
+  const seen = new Set<string>();
+  for (const g of SITEMAP_PARTITION_GROUPS) {
+    assert.ok(g.length > 0, "a partition group must not be empty");
+    for (const id of g) {
+      assert.ok(!seen.has(id), `store id "${id}" appears in more than one partition group`);
+      seen.add(id);
+    }
+  }
+});
+
+test("sitemap partition: stores outside every group still list their full corpus", () => {
   const atakum = getStoreByHost(ATAKUM_HOST);
   assert.equal(atakum.id, "atakum", "ATAKUM_HOST must resolve to the atakum local store");
   assert.deepEqual(
     getSitemapPagesForStore(atakum).map((p) => p.slug).sort(),
     getSeoPagesForStore(atakum).map((p) => p.slug).sort(),
-    "atakum (outside the partition set) must list the full eligible corpus",
+    "atakum (outside every partition group) must list the full eligible corpus",
   );
 });
 
