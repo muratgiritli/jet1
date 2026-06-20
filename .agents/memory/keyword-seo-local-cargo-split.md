@@ -44,8 +44,19 @@ them is the per-store `seo.title/description/keywords` in `stores.ts`. Conventio
 each local JETGO domain leads with a different geographic focus — jetgomarket.com =
 Atakum-led (physical shop + "1 saatte" is only truthful there), jetgo.shop = Samsun-led.
 When the user says "<domain> (location) yap", differentiate that ONE store's seo block
-(target by the jetgo block range, since the old strings are byte-shared with jetgopet)
 and do NOT re-add keywords — the corpus is already complete and shared.
+
+**Same-city siblings (jetgomarket.com + jetgo.pet both Atakum):** when the user insists
+two sibling locals target the SAME city, you cannot differentiate by city — instead give
+each a DISTINCT neighborhood set + distinct title wording. jetgomarket.com uses
+Denizevleri/Atakent/Mimar Sinan; jetgo.pet uses Esenevler/Balaç/Büyükoyumca/Çamlıyazı/
+Kurupelit/OMÜ. Both keep "Aynı Gün" + Atakum + JETGO, no "türkiye".
+
+**Edit-targeting gotcha:** a store's `seo.title` may be byte-shared with another store
+(e.g. jetgo's & jetgopet's old title were identical, count=2), so an `edit` on the title
+is ambiguous — target the specific store by its `const <id>: StoreConfig = {` block range
+(node script that scopes the replace to that block). desc/keywords are usually unique per
+store so the plain `edit` tool works for them.
 
 ## Bare neighborhood proper-nouns are a trap
 A keyword that is just a mahalle name + product (e.g. "atakent kedi maması",

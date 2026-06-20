@@ -2171,6 +2171,15 @@ test("served homepage HTML on jetgo.pet carries the JETGO brand + local same-day
   assert.equal(ogSiteName, JETGOPET_BRAND, "og:site_name must be the JETGO brand name");
   assert.match(title, SAME_DAY_SIGNATURE, "local same-day delivery copy expected");
   assert.ok(!CARGO_SIGNATURE.test(title), "jetgo.pet must not show cargo copy");
+  // jetgo.pet is Atakum-led like jetgomarket.com, but differentiated by DISTINCT
+  // neighborhood copy so the two JETGO domains are not duplicate-content of each other.
+  assert.match(title, /Atakum/i, "jetgo.pet homepage title must lead with Atakum");
+  const description = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1] ?? "";
+  assert.match(
+    description,
+    /Esenevler|Balaç|Büyükoyumca|Çamlıyazı|OMÜ/i,
+    "jetgo.pet homepage description must name its OWN Atakum neighborhoods (distinct from jetgomarket.com)",
+  );
   // The brandify domain-swap must not corrupt the served markup into "JETGO.pet"
   // (case-sensitive: the correct lowercase "jetgo.pet" is expected to appear).
   assert.ok(!/JETGO\.pet/.test(html), "served HTML must not contain a corrupted JETGO.pet domain");
