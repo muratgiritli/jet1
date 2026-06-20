@@ -32,3 +32,17 @@ that param or they default to `"all"`.
 
 - sitemap.xml/-main/-products/-seo, robots.txt, google-merchant.xml, llms.txt derive `SITE`/brand from `reqStore(req)`.
 - Admin exports (`/api/export/xlsx`, `/api/export/yml`) derive from `storeById(adminStoreId(req))`; yml filename is `<storeId>_urunler.yml`.
+
+## Static index.html canonical/og:url is a "do not fix" trap
+`client/index.html` hardcodes `https://www.jetgomarket.com/` in `<link rel="canonical">`,
+`og:url`, `og:image` and JSON-LD url/image/logo. This is NOT a leak: `seo-meta.ts`
+`injectHomeMeta`/`injectSeoMeta`/`injectProductMeta` rewrite canonical+og:url to
+`${reqStore.domain}${path}` at serve time, and `applyGlobalBranding` brandifies the
+JSON-LD block per host. Verified live: jetgo.pet/jetgo.shop/jetgomarket.com each
+self-canonicalize to their OWN domain. **Why it matters:** every LOCAL JETGO domain
+(jetgomarket.com, jetgo.pet, jetgo.shop) serves the SAME shared landing-page corpus, so
+self-canonical-per-domain is the ONLY thing keeping them from collapsing into jetgomarket
+in Google's index. Do NOT "fix" the static file to a relative/blank canonical — you'd
+break the dev/static fallback and the per-host rewrite already handles it.
+**Intentionally shared (not rewritten):** JSON-LD `email` + `sameAs` social handles point
+to the one real business across all brands; that shared NAP footprint is accepted, not a bug.
