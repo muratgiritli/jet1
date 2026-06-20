@@ -36,3 +36,14 @@ local-intent terms to LOCAL_INTENT_RE, (2) keep "türkiye" out of any local copy
 (CARGO_SIGNATURE = /türkiye/i), (3) keep "aynı gün" in any local store's homepage
 title (a test asserts it), and (4) rely on the store-scoping test suite's cargo
 forbidden-scanner to catch leaks.
+
+## Bare neighborhood proper-nouns are a trap
+A keyword that is just a mahalle name + product (e.g. "atakent kedi maması",
+"denizevleri petshop") carries NO intent word, so `isUniversalKeyword` returns true
+and it silently also generates a Türkiye-geneli cargoOnly page — a national cargo
+store falsely claiming neighborhood service. The fix is to put the neighborhood
+**proper nouns themselves** in LOCAL_INTENT_RE (Samsun/Atakum set: atakent,
+yenimahalle, denizevleri, esenevler, mimar sinan, alanlı, büyükoyumca, küçükoyumca,
+çamlıyazı, balaç, yeşildere, kurupelit, omü...). Before adding new geo tokens, verify
+they are not substrings of existing universal keywords, or you'll pull legitimate
+cargo keywords out of the cargo set.

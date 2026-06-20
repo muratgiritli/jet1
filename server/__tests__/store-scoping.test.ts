@@ -2549,6 +2549,43 @@ test("SEO landing page on jetgo.shop keeps the JETGO brand but self-canonicalize
   assert.ok(!/jetgomarket\.com/i.test(canonical), "jetgo.shop SEO canonical must not point at the jetgomarket domain");
 });
 
+test("Samsun/Atakum neighborhood keyword pages are LOCAL-only, serve on jetgo.shop, and never leak into cargo", async () => {
+  // jetgo.shop is the Samsun-focused LOCAL same-day JETGO storefront. The attached
+  // keyword file adds hyper-local mahalle long-tail (Denizevleri, Atakent, Mimar
+  // Sinan, Kurupelit...). A bare "atakent kedi maması" has no intent token, so the
+  // LOCAL_INTENT_RE neighborhood group is what keeps it OUT of the Türkiye-geneli
+  // cargo pages (a national cargo store must never claim neighborhood service).
+  const NEIGHBORHOOD_SLUGS = [
+    "denizevleri-petshop",
+    "atakent-kedi-mamasi",
+    "mimar-sinan-petshop",
+    "kurupelit-petshop",
+  ];
+  const jetgoshop = getStoreByHost(JETGOSHOP_HOST);
+  const cargoStore = getStoreByHost(KARADENIZ_HOST);
+  assert.ok(isCargoStore(cargoStore), "guard: karadeniz must be a cargo store");
+  assert.ok(!isCargoStore(jetgoshop), "guard: jetgo.shop must be a local store");
+
+  for (const slug of NEIGHBORHOOD_SLUGS) {
+    const localPage = findSeoPage(slug, jetgoshop);
+    assert.ok(localPage, `neighborhood page "${slug}" must be served on jetgo.shop (local)`);
+    assert.equal(localPage!.availability, "localOnly", `"${slug}" must be localOnly`);
+    assert.equal(
+      findSeoPage(slug, cargoStore),
+      undefined,
+      `"${slug}" must NOT be reachable on a Türkiye-geneli cargo store`,
+    );
+  }
+
+  // The served HTML must brandify to JETGO and stay on the local (non-cargo) model.
+  const html = await injectAllMeta(INDEX_HTML, "/denizevleri-petshop", JETGOSHOP_HOST);
+  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const description = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1] ?? "";
+  assert.match(title, /JETGO/, "neighborhood SEO title must carry the JETGO brand");
+  assert.ok(!CARGO_SIGNATURE.test(`${title} ${description}`), "local neighborhood page must not show cargo (türkiye geneli) copy");
+  assert.ok(!/jetgomarket\.com/i.test(`${title} ${description}`), "neighborhood page must not leak the jetgomarket domain");
+});
+
 test("SEO landing page on the default (jetgo) host keeps the JETGO brand (contrast)", async () => {
   // Proves the per-host checks above actually discriminate: on the default store
   // brandify is a no-op, so the JETGO brand and domain are expected to remain.

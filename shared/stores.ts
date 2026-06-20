@@ -464,11 +464,11 @@ const jetgoshop: StoreConfig = {
     navBar: "#7c4dff",
   },
   seo: {
-    title: "Atakum Petshop & Samsun Pet Shop - Aynı Gün Teslimat | JETGO",
+    title: "Samsun Pet Shop & Atakum Petshop - Aynı Gün Teslimat | JETGO",
     description:
-      "Atakum, Samsun, İlkadım, Canik'e aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu kapıda ödeme. JETGO 09:00-21:00, 0850 840 39 59.",
+      "Samsun'da kedi maması, köpek maması ve kedi kumu aynı gün kapınızda. JETGO; Atakum, İlkadım, Canik ve tüm mahallelere (Denizevleri, Atakent, Mimar Sinan, Yenimahalle) kapıda ödeme ile teslimat. 0850 840 39 59.",
     keywords:
-      "atakum petshop, samsun petshop, samsun pet shop, atakum pet shop, samsun kedi maması, samsun köpek maması, samsun kedi kumu, atakum aynı gün teslimat, samsun acil petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop samsun",
+      "samsun petshop, samsun pet shop, atakum petshop, samsun kedi maması, samsun köpek maması, samsun kedi kumu, atakum aynı gün teslimat, denizevleri petshop, atakent petshop, yenimahalle petshop, mimar sinan petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop samsun",
     ogImage: "/og-image.webp",
   },
   google: {},
