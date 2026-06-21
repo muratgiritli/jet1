@@ -3,6 +3,7 @@ import { KEYWORD_AUTO_PAGES } from "./keyword-pages";
 import { ATAKUM_KEYWORD_PAGES } from "./keyword-pages-atakum";
 import { ATAKUM_ALL_KEYWORD_PAGES } from "./keyword-pages-atakum-all";
 import { JETGOSHOP_ALL_KEYWORD_PAGES } from "./keyword-pages-jetgoshop-all";
+import { ATAKUMBIZ_ALL_KEYWORD_PAGES } from "./keyword-pages-atakumbiz-all";
 import { JETGO_KEYWORD_PAGES } from "./keyword-pages-jetgo";
 import { ROYALCANIN_KEYWORD_PAGES } from "./keyword-pages-jetgo-royalcanin";
 import { MARKALAR_KEYWORD_PAGES } from "./keyword-pages-jetgo-markalar";
@@ -4275,6 +4276,27 @@ for (const p of JETGOSHOP_ALL_KEYWORD_PAGES) {
   JETGOSHOP_ALL_EXCLUSIVE_PAGES.push(p);
 }
 SEO_PAGES.push(...JETGOSHOP_ALL_EXCLUSIVE_PAGES);
+
+// ATAKUM PET broad multi-category corpus (storeId "atakumbiz"), served ONLY on
+// atakum.biz. atakum.biz shares the "Atakum Pet" brand WORD with the cargo
+// `samsun` store and the same Atakum 1-saat angle as the atakum-all corpus, so it
+// cannot differ by facts — the corpus is unique vs jetgomarket.com AND vs the
+// atakum-all / jetgoshop-all corpora by CONTENT (wholly separate prose / FAQ /
+// section rhythm in keyword-pages-atakumbiz-all). De-dup mirrors the rules above:
+//   • a collision with a hand-authored NON-keyword curated page
+//     (core/category/district/brand) is SKIPPED — never clobber curated content;
+//   • a collision with a shared KEYWORD slug is allowed and becomes an atakumbiz
+//     override; a brand-new slug is added outright as an atakumbiz-scoped page.
+const _atakumbizAllSeen = new Set<string>();
+export const ATAKUMBIZ_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
+for (const p of ATAKUMBIZ_ALL_KEYWORD_PAGES) {
+  if (_atakumbizAllSeen.has(p.slug)) continue;
+  const shared = _sharedTypeBySlug.get(p.slug);
+  if (shared !== undefined && shared !== "keyword") continue;
+  _atakumbizAllSeen.add(p.slug);
+  ATAKUMBIZ_ALL_EXCLUSIVE_PAGES.push(p);
+}
+SEO_PAGES.push(...ATAKUMBIZ_ALL_EXCLUSIVE_PAGES);
 
 // ---------------------------------------------------------------------------
 // Commerce-model availability + per-store resolution.

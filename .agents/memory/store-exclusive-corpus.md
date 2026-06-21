@@ -104,3 +104,25 @@ serving its OWN store-scoped content at those URLs. Three test consequences:
   each owner lists ALL of its own, matched by storeId not slug, no FOREIGN leak).
 - Uniqueness-by-CONTENT must assert on PROSE (metaTitle/h1/body differ vs the other
   store at the shared slug), NOT on the brand token — the brand is shared by design.
+
+**Same-FACTS sibling (harder than same-brand): atakumbiz vs atakum-all.** Two
+exclusive corpora can share not just a brand WORD but the SAME town, same NAP-ish
+address, and the SAME angle/slogan (both are "Atakum Pet(Shop)", both LOCAL same-day
+"Atakum'a 1 Saatte"). Facts can't differentiate them, so uniqueness lives entirely
+in the PROSE. The reliable recipe (mirrors the jetgoshop build, now proven a 3rd
+time): (1) a DISTINCT FNV hash/salt scheme (extra avalanche + additive pick/rotate,
+disjoint salt range) so copy-bank selection diverges per slug; (2) fully separate
+phrase/heading/FAQ/neighborhood/meta banks; (3) distinct intent metaTitle MARKERS
+per corpus (atakum-all "Sahiplenme Rehberi"/"Yerel Alternatif"/"Bilgilendirme";
+jetgoshop "Sorumlu Sahiplenme"/"Yerel Seçenek"; atakumbiz "Sahiplenme Çağrısı"/
+"Yerel Esnaf"/"Bilgi Notu") — the markers also double as the test's category filter.
+Add an explicit "UNIQUE-by-CONTENT vs <closest sibling>" test (metaTitle+h1+body
+notEqual at every overlapping slug). The per-store generator/keyword file is a thin
+mirror: a re-export of the SAME keyword universe + a generator copy with its own
+banks/salts/markers/brand/NAP; never fork the shared classifier engine.
+
+**Truth-safety test trap — gate the filter on the MARKER, not the disclaimer.** A
+service/live/retailer truth test that filters pages by "has the disclaimer AND has
+the marker" can never catch a page MISSING the disclaimer (the filter excludes the
+exact failures it should flag). Filter by the intent MARKER alone, then assert every
+matched page CONTAINS the disclaimer (`assert.match`) and lacks the affirmative claim.
