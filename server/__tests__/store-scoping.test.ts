@@ -3437,10 +3437,15 @@ function captureNetgsmSms() {
     NETGSM_USERCODE: process.env.NETGSM_USERCODE,
     NETGSM_PASSWORD: process.env.NETGSM_PASSWORD,
     NETGSM_MSGHEADER: process.env.NETGSM_MSGHEADER,
+    TEST_SMS_CAPTURE: process.env.TEST_SMS_CAPTURE,
   };
   process.env.NETGSM_USERCODE = `${MARK}_UC`;
   process.env.NETGSM_PASSWORD = `${MARK}_PW`;
   process.env.NETGSM_MSGHEADER = `${MARK}_HDR`;
+  // Opt this captured context out of the production-side TEST_OTP_BYPASS SMS guard:
+  // global fetch is mocked below, so running the real sendSmsViaNetgsm logic here
+  // never touches the network — we WANT it to run so we can count/inspect payloads.
+  process.env.TEST_SMS_CAPTURE = "1";
   globalThis.fetch = ((input: any, init?: any) => {
     const url = typeof input === "string" ? input : (input?.url ?? String(input));
     if (url.includes("netgsm.com.tr")) {
@@ -3453,7 +3458,7 @@ function captureNetgsmSms() {
     calls,
     restore() {
       globalThis.fetch = origFetch;
-      for (const k of ["NETGSM_USERCODE", "NETGSM_PASSWORD", "NETGSM_MSGHEADER"] as const) {
+      for (const k of ["NETGSM_USERCODE", "NETGSM_PASSWORD", "NETGSM_MSGHEADER", "TEST_SMS_CAPTURE"] as const) {
         if (prev[k] === undefined) delete process.env[k];
         else process.env[k] = prev[k]!;
       }

@@ -526,6 +526,17 @@ export const insertSubscriptionSchema = createInsertSchema(subscriptions).omit({
 export type InsertSubscription = z.infer<typeof insertSubscriptionSchema>;
 export type Subscription = typeof subscriptions.$inferSelect;
 
+// Yasaklı numaralar: admin panelinden eklenen bu numaralara OTP SMS gönderilmez (tüm siteler için geçerli).
+export const bannedNumbers = pgTable("banned_numbers", {
+  id: serial("id").primaryKey(),
+  phone: text("phone").notNull().unique(),
+  reason: text("reason"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+export const insertBannedNumberSchema = createInsertSchema(bannedNumbers).omit({ id: true, createdAt: true });
+export type InsertBannedNumber = z.infer<typeof insertBannedNumberSchema>;
+export type BannedNumber = typeof bannedNumbers.$inferSelect;
+
 export const siteVisits = pgTable("site_visits", {
   id: serial("id").primaryKey(),
   ip: text("ip"),

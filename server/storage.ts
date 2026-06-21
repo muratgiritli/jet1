@@ -22,8 +22,9 @@ import {
   type Banner, type InsertBanner,
   type Subscription, type InsertSubscription,
   type Coupon, type InsertCoupon,
-  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders, deliveryNeighborhoods, banners, coupons, contactMessages, subscriptions,
+  users, subcategories, brandCategories, products, crossSellSections, crossSellItems, orders, breedStats, stockAlerts, installmentRates, customers, customerFavorites, customerAddresses, petProfiles, loyaltyPoints, reorderReminders, deliveryNeighborhoods, banners, coupons, contactMessages, subscriptions, bannedNumbers,
   type ContactMessage, type InsertContactMessage,
+  type BannedNumber, type InsertBannedNumber,
 } from "@shared/schema";
 
 export const pool = new pg.Pool({
@@ -154,6 +155,11 @@ export interface IStorage {
   getAllSubscriptions(): Promise<Subscription[]>;
   updateSubscriptionStatus(id: number, status: string): Promise<void>;
   deleteSubscription(id: number): Promise<void>;
+
+  getBannedNumbers(): Promise<BannedNumber[]>;
+  addBannedNumber(data: InsertBannedNumber): Promise<BannedNumber>;
+  deleteBannedNumber(id: number): Promise<void>;
+  isNumberBanned(phone: string): Promise<boolean>;
 
   getCouponByCode(code: string, store?: string): Promise<Coupon | undefined>;
   getAllCoupons(): Promise<Coupon[]>;
@@ -637,6 +643,39 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSubscription(id: number): Promise<void> {
     await db.delete(subscriptions).where(eq(subscriptions.id, id));
+  }
+
+  async getBannedNumbers(): Promise<BannedNumber[]> {
+    return db.select().from(bannedNumbers).orderBy(desc(bannedNumbers.createdAt));
+  }
+
+  async addBannedNumber(data: InsertBannedNumber): Promise<BannedNumber> {
+    const [row] = await db
+      .insert(bannedNumbers)
+      .values(data)
+      .onConflictDoUpdate({ target: bannedNumbers.phone, set: { reason: data.reason ?? null } })
+      .returning();
+    return row;
+  }
+
+  async deleteBannedNumber(id: number): Promise<void> {
+    await db.delete(bannedNumbers).where(eq(bannedNumbers.id, id));
+  }
+
+  async isNumberBanned(phone: string): Promise<boolean> {
+    if (!phone) return false;
+    try {
+      const [row] = await db
+        .select({ id: bannedNumbers.id })
+        .from(bannedNumbers)
+        .where(eq(bannedNumbers.phone, phone))
+        .limit(1);
+      return !!row;
+    } catch (e) {
+      // DB hatası OTP akışını kilitlemesin: hata durumunda yasaklı sayma.
+      console.error("[isNumberBanned] sorgu hatası:", (e as Error)?.message);
+      return false;
+    }
   }
 
   async getCouponByCode(code: string, store?: string): Promise<Coupon | undefined> {

@@ -88,6 +88,7 @@ import {
   Printer,
   Truck,
   Copy,
+  Ban,
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -2085,6 +2086,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "banner", label: "Banner", icon: <ImageLucide className="w-3.5 h-3.5" /> },
             { key: "sokakcanlari", label: "Sokak Canları", icon: <Heart className="w-3.5 h-3.5" /> },
             { key: "abone", label: "Abone", icon: <Gift className="w-3.5 h-3.5" /> },
+            { key: "yasakli", label: "Yasaklı No", icon: <Ban className="w-3.5 h-3.5" /> },
             { key: "raporlama", label: "Raporlama", icon: <BarChart3 className="w-3.5 h-3.5" /> },
             { key: "stoksayim", label: "Stok Sayım", icon: <ScanLine className="w-3.5 h-3.5" /> },
             { key: "skttakip", label: "SKT Takip", icon: <Calendar className="w-3.5 h-3.5" /> },
@@ -2132,6 +2134,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "banner" && <BannersSection />}
         {activeSection === "sokakcanlari" && <StreetAnimalsSection />}
         {activeSection === "abone" && <SubscriptionsSection />}
+        {activeSection === "yasakli" && <BannedNumbersSection />}
         {activeSection === "raporlama" && <ReportsSection />}
         {activeSection === "stoksayim" && <StokSayimSection />}
         {activeSection === "skttakip" && <SktTakipSection />}
@@ -7996,6 +7999,117 @@ function SubscriptionsSection() {
                   <Trash2 className="w-3.5 h-3.5" />
                 </Button>
               </div>
+            </div>
+          ))}
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+function BannedNumbersSection() {
+  const { data: list = [], isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/banned-numbers"] });
+  const { toast } = useToast();
+  const [phone, setPhone] = useState("");
+  const [reason, setReason] = useState("");
+
+  const parseErr = (e: any, fallback: string) => {
+    const m = String(e?.message || "");
+    const idx = m.indexOf("{");
+    if (idx >= 0) { try { return JSON.parse(m.slice(idx))?.message || fallback; } catch { return fallback; } }
+    return fallback;
+  };
+
+  const addMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/admin/banned-numbers", { phone: phone.trim(), reason: reason.trim() || undefined });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/banned-numbers"] });
+      setPhone(""); setReason("");
+      toast({ title: "Numara yasaklandı" });
+    },
+    onError: (e: any) => toast({ title: parseErr(e, "Eklenemedi"), variant: "destructive" }),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: number) => { await apiRequest("DELETE", `/api/admin/banned-numbers/${id}`); },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/banned-numbers"] });
+      toast({ title: "Yasak kaldırıldı" });
+    },
+  });
+
+  const fmtPhone = (p: string) => {
+    if (!p || p.length !== 10) return p;
+    return `0${p.slice(0, 3)} ${p.slice(3, 6)} ${p.slice(6, 8)} ${p.slice(8, 10)}`;
+  };
+  const fmtDate = (d: string) => new Date(d).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" });
+
+  return (
+    <div className="space-y-4" data-testid="section-banned-numbers">
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm flex items-center gap-2">
+            <Ban className="w-4 h-4 text-red-600" /> Yasaklı Numara Ekle
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 space-y-3">
+          <p className="text-xs text-muted-foreground">
+            Buraya eklenen numaralara <strong>OTP (doğrulama) SMS'i gönderilmez</strong>. Kullanıcı kod istediğinde "Bu numara engellenmiştir" uyarısı görür. Tüm siteler için geçerlidir.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-2">
+            <input
+              type="tel"
+              inputMode="numeric"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="05XX XXX XX XX"
+              className="flex-1 h-9 text-sm border rounded px-3 bg-background"
+              data-testid="input-banned-phone"
+            />
+            <input
+              type="text"
+              value={reason}
+              onChange={(e) => setReason(e.target.value)}
+              placeholder="Sebep (opsiyonel)"
+              className="flex-1 h-9 text-sm border rounded px-3 bg-background"
+              data-testid="input-banned-reason"
+            />
+            <Button
+              onClick={() => addMutation.mutate()}
+              disabled={addMutation.isPending || !phone.trim()}
+              style={{ backgroundColor: "#6B3480" }}
+              className="h-9"
+              data-testid="button-add-banned"
+            >
+              <Ban className="w-3.5 h-3.5 mr-1" /> Yasakla
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Yasaklı Numaralar ({list.length})</CardTitle>
+        </CardHeader>
+        <CardContent className="p-3 space-y-2">
+          {isLoading && <p className="text-sm text-muted-foreground text-center py-4">Yükleniyor...</p>}
+          {!isLoading && list.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-6">Henüz yasaklı numara yok.</p>
+          )}
+          {list.map((b: any) => (
+            <div key={b.id} className="border rounded-xl p-3 flex items-center gap-3 flex-wrap" data-testid={`row-banned-${b.id}`}>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono text-sm font-semibold text-red-700" data-testid={`text-banned-phone-${b.id}`}>{fmtPhone(b.phone)}</span>
+                  {b.reason && <Badge variant="outline" className="text-xs">{b.reason}</Badge>}
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-1">{fmtDate(b.createdAt)}</p>
+              </div>
+              <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-600" onClick={() => { if (confirm("Yasak kaldırılsın mı?")) deleteMutation.mutate(b.id); }} data-testid={`button-delete-banned-${b.id}`}>
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
             </div>
           ))}
         </CardContent>

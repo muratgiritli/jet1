@@ -111,7 +111,29 @@ function normalizeTrSms(s: string): string {
   return s.replace(/[ıİşŞğĞüÜöÖçÇ]/g, (c) => map[c] || c);
 }
 
+// Türk cep numarasını kanonik forma indirger: baştaki +90 / 90 / 0 atılır, 5XXXXXXXXX (10 hane)
+// döner. Yasaklı numara eşleştirmesi farklı yazımlardan (05.., +90 5.., 5..) etkilenmesin diye.
+function canonicalTrPhone(raw: string): string {
+  let d = (raw || "").replace(/\D/g, "");
+  if (d.startsWith("90")) d = d.slice(2);
+  if (d.length === 11 && d.startsWith("0")) d = d.slice(1);
+  return d;
+}
+
 async function sendSmsViaNetgsm(phone: string, message: string, msgheaderOverride?: string): Promise<boolean> {
+  // Test/e2e guard: when running under the OTP bypass (NODE_ENV !== production AND
+  // TEST_OTP_BYPASS=1), NEVER hit the real NetGSM API. The e2e suite places real
+  // orders across every store on each run, and the buyer/admin "siparişiniz alındı"
+  // SMS paths are not otherwise gated — without this, every test run burns real SMS
+  // credits (the suite uses fake 5XX numbers, so they queue but never deliver).
+  // Return true so claim-before-send dedup flags still behave as "sent".
+  // Exception: tests that explicitly want to exercise this function's logic install
+  // an SMS capture (mocking global fetch, so no real network is touched) and set
+  // TEST_SMS_CAPTURE=1 — let those proceed so they can count/inspect the payload.
+  if (isTestOtpBypass() && process.env.TEST_SMS_CAPTURE !== "1") {
+    console.log("NetGSM send skipped (TEST_OTP_BYPASS active, no SMS capture)");
+    return true;
+  }
   const usercode = process.env.NETGSM_USERCODE;
   const password = process.env.NETGSM_PASSWORD;
   const msgheader = (msgheaderOverride && msgheaderOverride.trim()) || process.env.NETGSM_MSGHEADER;
@@ -4127,6 +4149,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     const normalized = phone.replace(/\D/g, "");
     if (normalized.length < 10) return res.status(400).json({ message: "Geçerli bir telefon numarası girin" });
 
+    // Yasaklı numara kontrolü: admin panelinden engellenen numaralara OTP SMS gönderilmez.
+    if (await storage.isNumberBanned(canonicalTrPhone(normalized))) {
+      return res.status(403).json({ message: "Bu numara engellenmiştir. Lütfen müşteri hizmetleri ile iletişime geçin.", banned: true });
+    }
+
     if (isTestOtpBypass()) {
       otpStore.set(normalized, { code: TEST_OTP_CODE, expiresAt: Date.now() + 180000, attempts: 0 });
       const customerExists = !!(await storage.getCustomerByPhone(normalized));
@@ -5571,6 +5598,41 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       res.json({ sent, failed, total: validPhones.length });
     } catch (err) {
       res.status(500).json({ message: "SMS gönderim hatası" });
+    }
+  });
+
+  // ===== Yasaklı Numaralar (tüm siteler için global) =====
+  app.get("/api/admin/banned-numbers", requireAdmin, async (_req, res) => {
+    try {
+      const list = await storage.getBannedNumbers();
+      res.json(list);
+    } catch {
+      res.status(500).json({ message: "Listeleme hatası" });
+    }
+  });
+
+  app.post("/api/admin/banned-numbers", requireAdmin, async (req, res) => {
+    try {
+      const phone = canonicalTrPhone(String(req.body?.phone || ""));
+      if (!/^5\d{9}$/.test(phone)) {
+        return res.status(400).json({ message: "Geçerli bir cep numarası giriniz (5XX XXX XX XX)." });
+      }
+      const reason = req.body?.reason ? String(req.body.reason).slice(0, 200) : null;
+      const row = await storage.addBannedNumber({ phone, reason });
+      res.json(row);
+    } catch {
+      res.status(500).json({ message: "Yasaklı numara eklenemedi" });
+    }
+  });
+
+  app.delete("/api/admin/banned-numbers/:id", requireAdmin, async (req, res) => {
+    try {
+      const id = parseInt(String(req.params.id));
+      if (isNaN(id)) return res.status(400).json({ message: "Geçersiz ID" });
+      await storage.deleteBannedNumber(id);
+      res.json({ success: true });
+    } catch {
+      res.status(500).json({ message: "Silme hatası" });
     }
   });
 
