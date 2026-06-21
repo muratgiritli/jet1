@@ -1,6 +1,7 @@
 import { BRAND_PAGES } from "./brand-seo-data";
 import { KEYWORD_AUTO_PAGES } from "./keyword-pages";
 import { ATAKUM_KEYWORD_PAGES } from "./keyword-pages-atakum";
+import { ATAKUM_ALL_KEYWORD_PAGES } from "./keyword-pages-atakum-all";
 import { JETGO_KEYWORD_PAGES } from "./keyword-pages-jetgo";
 import { ROYALCANIN_KEYWORD_PAGES } from "./keyword-pages-jetgo-royalcanin";
 import { MARKALAR_KEYWORD_PAGES } from "./keyword-pages-jetgo-markalar";
@@ -4201,6 +4202,26 @@ export const ATAKUM_EXCLUSIVE_PAGES: SeoPageData[] = ATAKUM_KEYWORD_PAGES.filter
   (p) => _sharedTypeBySlug.get(p.slug) === "keyword",
 );
 SEO_PAGES.push(...ATAKUM_EXCLUSIVE_PAGES);
+
+// ATAKUM broad NEW-SLUG corpus (storeId "atakum"), served ONLY on
+// atakumpetshop.com. Unlike the legacy ATAKUM_EXCLUSIVE_PAGES above — which only
+// OVERRIDE shared keyword slugs 1:1 — this corpus ADDS brand-new long-tail slugs,
+// exactly like the jetgo corpora below. De-dup rules:
+//   • a slug already owned by ANY legacy atakum page LOSES (legacy wins);
+//   • a slug that would clobber a hand-authored NON-keyword curated page
+//     (core/category/district/brand) is SKIPPED;
+//   • a collision with a shared KEYWORD slug is allowed and becomes an atakum
+//     override; a brand-new slug is added outright.
+const _atakumAllSeen = new Set<string>(ATAKUM_KEYWORD_PAGES.map((p) => p.slug));
+export const ATAKUM_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
+for (const p of ATAKUM_ALL_KEYWORD_PAGES) {
+  if (_atakumAllSeen.has(p.slug)) continue;
+  const shared = _sharedTypeBySlug.get(p.slug);
+  if (shared !== undefined && shared !== "keyword") continue;
+  _atakumAllSeen.add(p.slug);
+  ATAKUM_ALL_EXCLUSIVE_PAGES.push(p);
+}
+SEO_PAGES.push(...ATAKUM_ALL_EXCLUSIVE_PAGES);
 
 // JETGO-EXCLUSIVE Pro Plan + Royal Canin / pet-food keyword pages (storeId
 // "jetgo"), served ONLY on jetgomarket.com. Unlike atakum's override-only set,

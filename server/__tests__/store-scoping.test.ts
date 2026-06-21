@@ -33,6 +33,7 @@ import {
   ALL_SEO_SLUGS,
   isCargoStore,
   ATAKUM_EXCLUSIVE_PAGES,
+  ATAKUM_ALL_EXCLUSIVE_PAGES,
   JETGO_EXCLUSIVE_PAGES,
 } from "../../client/src/lib/seo-data";
 import { ROYALCANIN_KEYWORD_PAGES } from "../../client/src/lib/keyword-pages-jetgo-royalcanin";
@@ -3689,20 +3690,38 @@ test("atakum-exclusive: overrides never leak onto sibling local or cargo stores"
   }
 });
 
-test("atakum-exclusive: override REPLACES (not duplicates) the slug — unique corpus, parity with sibling", () => {
+test("atakum-exclusive: legacy overrides REPLACE shared slugs; the new corpus ADDS brand-new slugs on top", () => {
+  // Two distinct atakum corpora now coexist:
+  //  • ATAKUM_EXCLUSIVE_PAGES  — legacy OVERRIDES of shared keyword slugs (the page
+  //    count is unchanged vs a clean sibling, content differs);
+  //  • ATAKUM_ALL_EXCLUSIVE_PAGES — a BRAND-NEW slug corpus that ADDS pages a clean
+  //    sibling never had.
+  // So atakum is no longer 1:1 with a clean sibling; it is the sibling's slug set
+  // PLUS the new corpus. Pin exactly that, plus global slug uniqueness.
   const ata = getSeoPagesForStore(ATAKUM_STORE);
   const slugs = ata.map((p) => p.slug);
-  assert.equal(new Set(slugs).size, slugs.length, "atakum corpus must have unique slugs (override replaces, not adds)");
+  assert.equal(new Set(slugs).size, slugs.length, "atakum corpus must have unique slugs (no double-registration)");
+
+  const clean = getSeoPagesForStore(CLEAN_SIBLING_LOCAL_STORE);
   assert.equal(
     ata.length,
-    getSeoPagesForStore(CLEAN_SIBLING_LOCAL_STORE).length,
-    "atakum corpus size must match a clean sibling local store (1:1 override)",
+    clean.length + ATAKUM_ALL_EXCLUSIVE_PAGES.length,
+    "atakum size must equal a clean sibling + the brand-new ATAKUM_ALL corpus (legacy overrides replace, new corpus adds)",
   );
-  assert.deepEqual(
-    [...availableSlugSet(ATAKUM_STORE)].sort(),
-    [...availableSlugSet(CLEAN_SIBLING_LOCAL_STORE)].sort(),
-    "atakum & clean sibling must expose the SAME slug set (same URLs, different content)",
-  );
+
+  const ataSet = availableSlugSet(ATAKUM_STORE);
+  const cleanSet = availableSlugSet(CLEAN_SIBLING_LOCAL_STORE);
+  // The clean sibling's entire slug set is a SUBSET of atakum's (atakum overrides
+  // those same slugs but never drops one).
+  for (const s of cleanSet) {
+    assert.ok(ataSet.has(s), `clean-sibling slug ${s} must also exist on atakum`);
+  }
+  // Every brand-new slug is genuinely NEW: present on atakum, absent from the clean
+  // sibling — i.e. these are additions, not overrides of an existing shared slug.
+  for (const p of ATAKUM_ALL_EXCLUSIVE_PAGES) {
+    assert.ok(ataSet.has(p.slug), `new atakum slug ${p.slug} must resolve on atakum`);
+    assert.ok(!cleanSet.has(p.slug), `new atakum slug ${p.slug} must be absent from a clean sibling (it is an addition)`);
+  }
 });
 
 test("atakum-exclusive: curated core/district pages are NOT overridden", () => {
@@ -4491,4 +4510,242 @@ test("diger: a representative page is served only on jetgomarket.com and listed 
   );
   const jetgoSitemap = new Set(getSitemapPagesForStore(JETGO_STORE).map((q) => q.slug));
   assert.ok(jetgoSitemap.has(slug), `${slug}: jetgo sitemap must list the diger page`);
+});
+
+// ---- ATAKUM-ALL brand-new keyword corpus (atakumpetshop.com) ---------------
+//
+// atakumpetshop.com (store "atakum") additionally publishes a BRAND-NEW slug page
+// for every keyword in its own corpus — distinct from the legacy ATAKUM overrides
+// (which replace shared slugs) and written to be UNIQUE vs jetgomarket. These are
+// LOCAL same-day Atakum/Samsun pages. They must be exclusive to atakum, complete
+// for SEO/AI-search, internally consistent, and — critically — truth-safe: live
+// animals carry a no-sale disclaimer, services are never claimed as provided,
+// retailer queries disclaim affiliation, and no page fabricates a concrete price.
+//
+// A breed name normally implies a live animal, but a breed-NAMED FOOD SKU
+// ("royal canin british shorthair 10 kg") is a product, not a live query, so the
+// recall sweeps below subtract a tight food-SKU signal (weight unit or explicit
+// food brand) the same way they subtract product/service subjects.
+
+const atakumAllBySlug = new Map(ATAKUM_ALL_EXCLUSIVE_PAGES.map((p) => [p.slug, p] as const));
+void atakumAllBySlug;
+// slug-form food-SKU signal — pages we deliberately classify as food, not live.
+const ATAKUM_ALL_FOOD_SKU = /(^|-)\d+-?(kg|gr|gram|kilo)(-|$)|royal-?can[iı]n|pro-?plan|proplan|hills|farmina|acana|or[iı]jen/;
+// Representative real client app routes a generated SEO slug must never shadow.
+const RESERVED_APP_SLUGS = new Set([
+  "acik-mama","kampanya","veteriner","magaza","blog","petshop","kategori","urun",
+  "siparis","odeme","admin","giris","hesabim","favoriler","kayip-ilan","yarisma",
+  "sss","kvkk","gizlilik","iletisim","hakkimizda","ozel-patiler","sokak-canlari",
+]);
+
+test("atakum-all: a large brand-new keyword corpus is registered, exclusive, and complete", () => {
+  assert.ok(
+    ATAKUM_ALL_EXCLUSIVE_PAGES.length > 5000,
+    `expected a large atakum-all corpus, got ${ATAKUM_ALL_EXCLUSIVE_PAGES.length}`,
+  );
+  const slugs = ATAKUM_ALL_EXCLUSIVE_PAGES.map((p) => p.slug);
+  assert.equal(new Set(slugs).size, slugs.length, "atakum-all corpus must have unique slugs");
+  for (const p of ATAKUM_ALL_EXCLUSIVE_PAGES) {
+    assert.equal(p.storeId, "atakum", `${p.slug}: atakum-all page must be storeId atakum`);
+    assert.equal(p.availability, "localOnly", `${p.slug}: atakum-all page must be localOnly`);
+    assert.equal(p.type, "keyword", `${p.slug}: atakum-all page must be a keyword page`);
+    assert.ok(
+      p.metaTitle && p.metaDescription && p.h1 &&
+      (p.intro ?? []).length && (p.sections ?? []).length &&
+      (p.faq ?? []).length && (p.internalLinks ?? []).length,
+      `${p.slug}: must carry title/meta/h1 + intro/sections/faq/internalLinks for a substantive AI-search page`,
+    );
+    // Genuine Atakum first-party content (real NAP phone) — not a brand swap.
+    assert.match(markalarCopy(p), /0850 840 39 59/, `${p.slug}: must carry the Atakum NAP phone`);
+    // No slug may shadow a real client app route.
+    assert.ok(!RESERVED_APP_SLUGS.has(p.slug), `${p.slug}: must not shadow a reserved app route`);
+  }
+});
+
+test("atakum-all: every internal link resolves within atakum's own slug space", () => {
+  const ataSet = availableSlugSet(ATAKUM_STORE);
+  let checked = 0;
+  for (const p of ATAKUM_ALL_EXCLUSIVE_PAGES) {
+    for (const l of p.internalLinks ?? []) {
+      const target = (l.href ?? "").replace(/^\//, "");
+      if (!target || target.includes("/")) continue; // skip non-flat (parametric) routes
+      checked++;
+      assert.ok(ataSet.has(target), `${p.slug}: internal link "/${target}" must resolve on atakum`);
+    }
+  }
+  assert.ok(checked > 1000, `expected many internal links to verify, got ${checked}`);
+});
+
+test("atakum-all: atakum-tagged pages never leak to any other store; overrides stay store-scoped", () => {
+  // The atakum corpus is "unique vs jetgomarket" by CONTENT, not by slug: almost
+  // every new page reuses a keyword slug jetgo already publishes, but rewrites it
+  // with atakum-specific (storeId="atakum") content. The hard invariant is that an
+  // atakum-TAGGED page is never served on any other store — the shared slug still
+  // resolves elsewhere, but to that store's own (non-atakum) page.
+  for (const store of [
+    SIBLING_LOCAL_STORE,
+    getStoreByHost(JETGOPET_HOST),
+    getStoreByHost(JETGOSHOP_HOST),
+    JETGO_STORE,
+    CARGO_STORE_FOR_ATAKUM,
+  ]) {
+    const foreign = getSeoPagesForStore(store).filter((p) => p.storeId === "atakum");
+    assert.equal(foreign.length, 0, `${store.id}: must not serve any atakum-tagged page`);
+  }
+  // Override scoping: the SAME slug yields atakum's page on atakum and a DIFFERENT,
+  // non-atakum page on jetgo — same URL, store-scoped content, no leak.
+  const jetgoSet = availableSlugSet(JETGO_STORE);
+  const overridePage = ATAKUM_ALL_EXCLUSIVE_PAGES.find((p) => jetgoSet.has(p.slug));
+  assert.ok(overridePage, "expected the atakum corpus to override at least one shared jetgo slug");
+  const overrideSlug = overridePage!.slug;
+  assert.equal(
+    findSeoPage(overrideSlug, ATAKUM_STORE)?.storeId,
+    "atakum",
+    `${overrideSlug}: atakum must serve its own (atakum-tagged) override`,
+  );
+  const onJetgo = findSeoPage(overrideSlug, JETGO_STORE);
+  assert.ok(onJetgo, `${overrideSlug}: jetgo must still serve its own page at this slug`);
+  assert.notEqual(onJetgo!.storeId, "atakum", `${overrideSlug}: jetgo must NOT serve the atakum-tagged page`);
+  // Every new atakum slug is an ADDITION vs a clean sibling (jetgopet): absent there.
+  const cleanSet = availableSlugSet(CLEAN_SIBLING_LOCAL_STORE);
+  for (const p of ATAKUM_ALL_EXCLUSIVE_PAGES) {
+    assert.ok(!cleanSet.has(p.slug), `${p.slug}: must be absent from a clean sibling (atakum addition)`);
+  }
+});
+
+test("atakum-all: the corpus is listed in atakum's sitemap with no foreign exclusives", () => {
+  const sm = getSitemapPagesForStore(ATAKUM_STORE);
+  const own = sm.filter((p) => p.storeId === "atakum").length;
+  assert.ok(own > 5000, `atakum sitemap must list its brand-new exclusives, got ${own}`);
+  assert.equal(
+    sm.filter((p) => p.storeId && p.storeId !== "atakum").length,
+    0,
+    "atakum sitemap must not list any foreign store-exclusive page",
+  );
+});
+
+test("atakum-all: content is independent — metaTitles carry the Atakum brand, never JETGO", () => {
+  for (const p of ATAKUM_ALL_EXCLUSIVE_PAGES.slice(0, 200)) {
+    assert.match(p.metaTitle, /Atakum Pet Shop/, `${p.slug}: metaTitle must carry the Atakum brand`);
+    assert.ok(!/JETGO/i.test(markalarCopy(p)), `${p.slug}: must not leak the JETGO brand`);
+  }
+  // Distinct metaTitles (human-sounding, not one templated string).
+  const titles = new Set(ATAKUM_ALL_EXCLUSIVE_PAGES.map((p) => p.metaTitle));
+  assert.ok(titles.size > 5000, `metaTitles must be largely unique, got ${titles.size}`);
+});
+
+test("atakum-all: live-animal / breed pages never claim to sell animals", () => {
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const AFFIRM = /sat[ıi]yoruz|satar[ıi]z|satışı yap[ıi]yoruz|satışı yapar[ıi]z|satın alabilirsiniz|canlı hayvan (satıyoruz|satarız|mevcut|stok)/;
+  const live = ATAKUM_ALL_EXCLUSIVE_PAGES.filter((p) => /Sahiplenme Rehberi/.test(p.metaTitle));
+  assert.ok(live.length > 50, `expected a body of live-animal pages, got ${live.length}`);
+  for (const p of live) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: live page must state atakum does not sell live animals`);
+    assert.ok(!AFFIRM.test(digerBody(p)), `${p.slug}: live page must not affirmatively offer animals for sale`);
+  }
+});
+
+test("atakum-all: every live-animal acquisition KEYWORD is truth-safe (broad slug-derived recall)", () => {
+  // Independent recall guard derived from slug tokens (not the emitted metaTitle):
+  // any keyword pairing a live animal with an acquisition cue — and no tangible
+  // product/service subject and no food-SKU signal — must carry the no-sale line.
+  const ANIMAL_STEM = ["kedi","kopek","yavru","kitten","puppy","muhabbet","kanarya","papagan","sultan","paraket","finch","ispinoz","saka","kus","tavsan","hamster","ginepig","gine","kemirgen","sinsilla","gerbil","fare","sican","balik","lepistes","moli","melek","japon","kaplumbaga","iguana","gekko","yilan","surungen"];
+  const CUE = new Set(["canli","satilik","satlik","satis","satisi","satan","satanlar","satilan","satma","sat","satin","sahiplen","sahiplendirme","almak","alma","alinir","alan","alanlar","alici","alicisi","bedava","ucretsiz","sahibinden"]);
+  const PROD_SVC = new Set(["ev","evi","kum","kumu","yag","yagi","otu","kab","kabi","yem","yemi","kafes","kafesi","mama","mamasi","tasma","tuvalet","kemik","gaga","tuy","catnip","nane","zehir","kapan","damla","minder","yatak","suluk","oyuncak","oyun","alani","alanlari","vitamin","vitaminler","sampuan","tarak","firca","kiyafet","canta","tasima","kulube","kulubesi","kumes","mineral","file","aksesuar","malzeme","urun","isimlik","egitim","egitimi","kuafor","pansiyon","otel","veteriner","merkez","merkezi","gezdirme","kosum","macun","malt","altligi","alisveris","alisverisi","alistirma","aliskin"]);
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const AFFIRM = /sat[ıi]yoruz|satar[ıi]z|satışı yap[ıi]yoruz|satışı yapar[ıi]z|satın alabilirsiniz|canlı hayvan (satıyoruz|satarız|mevcut|stok)/;
+  const candidates = ATAKUM_ALL_EXCLUSIVE_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasAnimal = t.some((x) => ANIMAL_STEM.some((a) => x.startsWith(a)));
+    const hasCue = t.some((x) => CUE.has(x));
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasAnimal && hasCue && !hasProdSvc && !ATAKUM_ALL_FOOD_SKU.test(p.slug);
+  });
+  assert.ok(candidates.length > 100, `expected a large live-sale candidate body, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: live-sale keyword must state atakum does not sell live animals`);
+    assert.ok(!AFFIRM.test(digerBody(p)), `${p.slug}: live-sale keyword must not affirmatively offer animals for sale`);
+  }
+});
+
+test("atakum-all: every bird/rabbit PRICE keyword is truth-safe (broad slug-derived recall)", () => {
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const RETAILER = /Yerel Alternatif/;
+  const BIRD_RABBIT = ["muhabbet","papagan","sultan","kanarya","paraket","finch","ispinoz","saka","kus","kakadu","kakariki","jako","forpus","sevda","cennet","tavsan"];
+  const PRICE = new Set(["fiyat","fiyati","fiyatlari","ucuz"]);
+  const PROD_SVC = new Set(["yem","yemi","yemlik","kafes","kafesi","kafesli","folluk","yumurtalik","suluk","sulugu","kumes","kumesi","kulube","kulubesi","tasma","tasmasi","oyuncak","oyun","vitamin","takviye","takim","mama","mamasi","mamalari","gaga","tuy","isimlik","aksesuar","malzeme","urun","mineral","file","kum","kumu","tuvalet","tuvaleti","kulucka","korse","agizlik","ev","evi","koruyucu","yara","sok","akilli","alani","alanlari","alistirma","alisveris","alisverisi","egitim","egitimi","kuafor","pansiyon","veteriner","merkez","merkezi","gezdirme","tras","yikama","altligi"]);
+  const candidates = ATAKUM_ALL_EXCLUSIVE_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasAnimal = t.some((x) => BIRD_RABBIT.some((a) => x.startsWith(a)));
+    const hasPrice = t.some((x) => PRICE.has(x)) || p.slug.includes("ne-kadar");
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasAnimal && hasPrice && !hasProdSvc && !ATAKUM_ALL_FOOD_SKU.test(p.slug) && !RETAILER.test(markalarCopy(p));
+  });
+  assert.ok(candidates.length > 100, `expected a large bird/rabbit price candidate body, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: bird/rabbit price keyword must state atakum does not sell live animals`);
+  }
+});
+
+test("atakum-all: every breed PRICE keyword is truth-safe; breed-named FOOD SKUs stay product", () => {
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const RETAILER = /Yerel Alternatif/;
+  const BREED = ["persian","persan","british","scottish","sphynx","maine","coon","ragdoll","tekir","sarman","bengal","labrador","golden","rottweiler","chihuahua","yorkshire","shih","cocker","bulldog","cane","teckel","dachshund","poodle","pomeranian","boxer","german","beagle","husky","retriever","terrier","kangal","akbas","pug"];
+  const PRICE = new Set(["fiyat","fiyati","fiyatlari","ucuz"]);
+  const PROD_SVC = new Set(["mama","mamasi","mamalari","kumu","kafes","kafesi","kafesli","tasma","tasmasi","yatak","yatagi","minder","oyuncak","sampuan","vitamin","takviye","tarak","firca","kiyafet","canta","kulube","kulubesi","ev","evi","tuvalet","suluk","kab","kabi","macun","malt","catnip","kemik","damla","mineral","aksesuar","malzeme","urun","egitim","egitimi","kuafor","pansiyon","otel","veteriner","merkez","merkezi","gezdirme","tras","yikama","altligi","alisveris","alistirma"]);
+  // Live breed-price candidates (food SKUs subtracted) must carry the no-sale line.
+  const candidates = ATAKUM_ALL_EXCLUSIVE_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasBreed = t.some((x) => BREED.includes(x));
+    const hasPrice = t.some((x) => PRICE.has(x)) || p.slug.includes("ne-kadar");
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasBreed && hasPrice && !hasProdSvc && !ATAKUM_ALL_FOOD_SKU.test(p.slug) && !RETAILER.test(markalarCopy(p));
+  });
+  assert.ok(candidates.length >= 5, `expected a body of breed price candidates, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: breed price keyword must state atakum does not sell live animals`);
+  }
+  // The inverse: a breed-NAMED food SKU ("royal canin british shorthair …") is a
+  // product, so it must NOT carry the (off-topic) live no-sale disclaimer.
+  const foodBreed = ATAKUM_ALL_EXCLUSIVE_PAGES.filter(
+    (p) => ATAKUM_ALL_FOOD_SKU.test(p.slug) && /(british|scottish|persian|persan|golden|labrador|terrier|retriever|bulldog|shorthair|pug|yorkshire)/.test(p.slug),
+  );
+  assert.ok(foodBreed.length > 0, "expected some breed-named food SKUs in the corpus");
+  for (const p of foodBreed) {
+    assert.ok(!NO_SALE.test(markalarCopy(p)), `${p.slug}: breed-named food SKU must NOT be framed as a live-animal no-sale page`);
+  }
+});
+
+test("atakum-all: service keywords never claim atakum provides the service", () => {
+  const NOT_PROVIDED = /hizmet(i)? (vermez|vermeyiz)|hizmet değil/i;
+  const PROVIDES = /hizmet(i)? (veriyoruz|sağlıyoruz|sunuyoruz)|eğitim veriyoruz|pansiyonumuz/i;
+  const servicePages = ATAKUM_ALL_EXCLUSIVE_PAGES.filter(
+    (p) => /Bilgilendirme/.test(p.metaTitle) && NOT_PROVIDED.test(markalarCopy(p)),
+  );
+  assert.ok(servicePages.length > 20, `expected a body of service pages, got ${servicePages.length}`);
+  for (const p of servicePages) {
+    assert.ok(!PROVIDES.test(markalarCopy(p)), `${p.slug}: service page must not claim atakum provides the service`);
+  }
+});
+
+test("atakum-all: retailer keywords position atakum as a local alternative, never as the marketplace", () => {
+  const INDEPENDENT = /bağımsız bir işletme|resmi bir bağlantımız yok/i;
+  const AFFILIATED = /resmi (bayi|satıcı|distribütör)|yetkili (bayi|satıcı)/i;
+  const retail = ATAKUM_ALL_EXCLUSIVE_PAGES.filter((p) => /Yerel Alternatif/i.test(p.metaTitle));
+  assert.ok(retail.length > 50, `expected a body of retailer pages, got ${retail.length}`);
+  for (const p of retail) {
+    const copy = markalarCopy(p);
+    assert.match(copy, INDEPENDENT, `${p.slug}: retailer page must disclaim affiliation with the marketplace`);
+    assert.ok(!AFFILIATED.test(copy), `${p.slug}: retailer page must not imply official marketplace affiliation`);
+  }
+});
+
+test("atakum-all: no page fabricates a concrete price", () => {
+  const PRICE = /\d[\d.,]*\s*(₺|tl\b|lira\b)|₺\s*\d/i;
+  const bad = ATAKUM_ALL_EXCLUSIVE_PAGES.filter((p) => PRICE.test(markalarCopy(p)));
+  assert.equal(
+    bad.length,
+    0,
+    `pages must not state a concrete price (offenders: ${bad.slice(0, 5).map((p) => p.slug).join(", ")})`,
+  );
 });
