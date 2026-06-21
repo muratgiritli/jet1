@@ -4,6 +4,7 @@ import { ATAKUM_KEYWORD_PAGES } from "./keyword-pages-atakum";
 import { ATAKUM_ALL_KEYWORD_PAGES } from "./keyword-pages-atakum-all";
 import { JETGOSHOP_ALL_KEYWORD_PAGES } from "./keyword-pages-jetgoshop-all";
 import { ATAKUMBIZ_ALL_KEYWORD_PAGES } from "./keyword-pages-atakumbiz-all";
+import { MARKAPET_ALL_KEYWORD_PAGES } from "./keyword-pages-markapet-all";
 import { JETGO_KEYWORD_PAGES } from "./keyword-pages-jetgo";
 import { ROYALCANIN_KEYWORD_PAGES } from "./keyword-pages-jetgo-royalcanin";
 import { MARKALAR_KEYWORD_PAGES } from "./keyword-pages-jetgo-markalar";
@@ -4298,6 +4299,28 @@ for (const p of ATAKUMBIZ_ALL_KEYWORD_PAGES) {
 }
 SEO_PAGES.push(...ATAKUMBIZ_ALL_EXCLUSIVE_PAGES);
 
+// MARKA.PET broad multi-category corpus (storeId "markapet"), served ONLY on
+// marka.pet. This is the FIRST store-exclusive corpus built for a CARGO store:
+// every page is tagged availability "cargoOnly" by the generator, so it is
+// served exclusively on the Türkiye-geneli marka.pet domain and never on a local
+// store. Its prose is wholly separate (cargo voice: Türkiye geneli kargo, güvenli
+// online ödeme) so it is unique BY CONTENT vs jetgomarket.com AND the atakum-all /
+// jetgoshop-all / atakumbiz-all corpora. De-dup mirrors the rules above:
+//   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
+//     never clobber curated content;
+//   • a collision with a shared KEYWORD slug becomes a markapet override; a
+//     brand-new slug is added outright as a markapet-scoped page.
+const _markapetAllSeen = new Set<string>();
+export const MARKAPET_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
+for (const p of MARKAPET_ALL_KEYWORD_PAGES) {
+  if (_markapetAllSeen.has(p.slug)) continue;
+  const shared = _sharedTypeBySlug.get(p.slug);
+  if (shared !== undefined && shared !== "keyword") continue;
+  _markapetAllSeen.add(p.slug);
+  MARKAPET_ALL_EXCLUSIVE_PAGES.push(p);
+}
+SEO_PAGES.push(...MARKAPET_ALL_EXCLUSIVE_PAGES);
+
 // ---------------------------------------------------------------------------
 // Commerce-model availability + per-store resolution.
 // ---------------------------------------------------------------------------
@@ -4446,6 +4469,27 @@ for (const group of SITEMAP_PARTITION_GROUPS) {
     if (m) for (const slug of m.keys()) claimed.add(slug);
   }
   for (const sid of group) _groupExclusiveSlugs.set(sid, claimed);
+}
+
+// marka.pet (cargo) internal links must resolve WITHIN the cargo slug space.
+// The shared generator borrows core/sibling links that, on a LOCAL store, point
+// at localOnly curated slugs (e.g. /kedi-mamasi, /en-yakin-petshop) which a cargo
+// store never serves. Drop any single-segment SEO link on a markapet-exclusive
+// page that does not resolve to a slug reachable on marka.pet; parametric/app
+// routes (href containing a nested "/") are left untouched.
+{
+  const _markapetServed = new Set<string>(_cargoSlugMap.keys());
+  for (const p of MARKAPET_ALL_EXCLUSIVE_PAGES) _markapetServed.add(p.slug);
+  for (const p of MARKAPET_ALL_EXCLUSIVE_PAGES) {
+    if (!p.internalLinks) continue;
+    p.internalLinks = p.internalLinks.filter((l) => {
+      const href = l.href || "";
+      if (!href.startsWith("/")) return true;
+      const slug = href.slice(1);
+      if (!slug || slug.includes("/")) return true; // app / parametric route
+      return _markapetServed.has(slug);
+    });
+  }
 }
 
 /** Resolve a slug to the variant served by this store: its own exclusive

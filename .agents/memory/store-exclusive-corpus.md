@@ -126,3 +126,28 @@ service/live/retailer truth test that filters pages by "has the disclaimer AND h
 the marker" can never catch a page MISSING the disclaimer (the filter excludes the
 exact failures it should flag). Filter by the intent MARKER alone, then assert every
 matched page CONTAINS the disclaimer (`assert.match`) and lacks the affirmative claim.
+
+**First CARGO store to own an exclusive corpus (marka.pet/markapet) — two cargo-only
+traps a LOCAL exclusive corpus never hits:**
+- `availability` MUST be set EXPLICITLY to `"cargoOnly"` on every page. Otherwise
+  `classifyAvailability` auto-tags `localOnly` via CLASSIFY_LOCAL_RE and the cargo
+  store silently DROPS the pages (cargo stores serve cargoOnly, not localOnly).
+- The global forbidden-claim scanner (the cargo invariant test) scans ALL SERVED
+  surfaces — metaTitle, title, keywords meta, AND internalLinks.text — not just the
+  body. **Why:** a local exclusive corpus only had to strip local-intent from BODY
+  copy; a cargo corpus must keep the raw local-intent keyword ONLY in the URL slug
+  (targeting, not an affirmative claim) and feed the local-intent-STRIPPED label to
+  EVERY served string. Internal-link text is the easy miss — it echoes sibling
+  keyword titles, so strip there too (`trTitle(stripLocalIntent(sib.kw) || noun)`).
+  Forbidden cargo atoms: same-day, kapıda ödeme/nakit, kurye, getir, nöbetçi, nakit,
+  POS, QR, 1 saat(te)/1-3 saat/60 dakika, mahalle teslimat, en yakın, gece açık, 7/24,
+  WhatsApp. Note `STRIP_RE` may not remove standalone nakit/POS/QR — verify the actual
+  keyword set has none (the imported list happened to be clean) or extend STRIP_RE.
+- Sitemap-partition test that assumed cargo stores have NO exclusives must be relaxed
+  to the SAME "hash-partition the storeless shared slices + each owner lists ALL its
+  own exclusives (by storeId, no foreign leak)" shape used for the multi-brand group;
+  `_groupExclusiveSlugs` / partition logic is already generic across cargo + local groups.
+- Accepted tradeoff: stripping local intent off titles/keywords means a few hundred
+  near-duplicate metaTitles (keywords that differ only by a forbidden modifier collapse
+  to the same clean label). Acceptable — the unique-title floor still holds and a
+  truthful duplicate title beats an untruthful unique one.
