@@ -90,3 +90,17 @@ live classifier must (a) OPEN its gate on a breed regex too (not only generic an
 nouns) and (b) SUBTRACT the breed (breed + `\S*` for suffixes) in the residue check
 so a bare breed leaves empty residue → classified live and gets the no-sale
 disclaimer. Tangible products still bail first ("kangal maması fiyatı" stays food).
+
+**Same-brand sibling that REUSES another store's slugs (cost the 2 failing tests
+when adding jetgoshop):** a new store can share the SAME base brand as an existing
+one (jetgoshop shares "JETGO" with jetgomarket) AND legitimately reuse that store's
+slugs — both shared-keyword OVERRIDES and the other store's own exclusive slugs —
+serving its OWN store-scoped content at those URLs. Three test consequences:
+- Sibling-leak tests must assert by `p.storeId === "<owner>"`, NOT by slug. A shared
+  slug showing up on a sibling is the sibling's own page, not a leak.
+- The N-domain sitemap PARTITION test must SPLIT storeless-shared pages (hash-
+  partitioned: disjoint + complete + deterministic, computed from a CLEAN member
+  minus all group exclusiveSlugs) from per-`storeId` exclusives (bypass partition,
+  each owner lists ALL of its own, matched by storeId not slug, no FOREIGN leak).
+- Uniqueness-by-CONTENT must assert on PROSE (metaTitle/h1/body differ vs the other
+  store at the shared slug), NOT on the brand token — the brand is shared by design.

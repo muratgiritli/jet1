@@ -2,6 +2,7 @@ import { BRAND_PAGES } from "./brand-seo-data";
 import { KEYWORD_AUTO_PAGES } from "./keyword-pages";
 import { ATAKUM_KEYWORD_PAGES } from "./keyword-pages-atakum";
 import { ATAKUM_ALL_KEYWORD_PAGES } from "./keyword-pages-atakum-all";
+import { JETGOSHOP_ALL_KEYWORD_PAGES } from "./keyword-pages-jetgoshop-all";
 import { JETGO_KEYWORD_PAGES } from "./keyword-pages-jetgo";
 import { ROYALCANIN_KEYWORD_PAGES } from "./keyword-pages-jetgo-royalcanin";
 import { MARKALAR_KEYWORD_PAGES } from "./keyword-pages-jetgo-markalar";
@@ -4252,6 +4253,28 @@ for (const p of _jetgoCorpus) {
   JETGO_EXCLUSIVE_PAGES.push(p);
 }
 SEO_PAGES.push(...JETGO_EXCLUSIVE_PAGES);
+
+// JETGO SHOP broad multi-category corpus (storeId "jetgoshop"), served ONLY on
+// jetgo.shop. jetgo.shop shares the JETGO brand/theme with jetgomarket.com, so
+// it cannot differ by brand or NAP — the corpus is unique vs jetgomarket.com by
+// CONTENT (wholly separate prose/structure/FAQ in keyword-pages-jetgoshop-all).
+// De-dup mirrors the atakum-all rules:
+//   • a collision with a hand-authored NON-keyword curated page
+//     (core/category/district/brand) is SKIPPED — never clobber curated content;
+//   • a collision with a shared KEYWORD slug is allowed and becomes a jetgoshop
+//     override; a brand-new slug (incl. one only a jetgo-EXCLUSIVE page owns,
+//     which is store-scoped to jetgo and so absent from _sharedTypeBySlug) is
+//     added outright as a jetgoshop-scoped page.
+const _jetgoshopAllSeen = new Set<string>();
+export const JETGOSHOP_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
+for (const p of JETGOSHOP_ALL_KEYWORD_PAGES) {
+  if (_jetgoshopAllSeen.has(p.slug)) continue;
+  const shared = _sharedTypeBySlug.get(p.slug);
+  if (shared !== undefined && shared !== "keyword") continue;
+  _jetgoshopAllSeen.add(p.slug);
+  JETGOSHOP_ALL_EXCLUSIVE_PAGES.push(p);
+}
+SEO_PAGES.push(...JETGOSHOP_ALL_EXCLUSIVE_PAGES);
 
 // ---------------------------------------------------------------------------
 // Commerce-model availability + per-store resolution.
