@@ -164,9 +164,21 @@ TWO cargo stores own exclusives:**
   owners) from the hash-partitioned storeless slice, and the set of CLEAN partition
   members shrinks accordingly (a clean cargo member owns no exclusives). Add own-
   exclusive + no-foreign-leak assertions for the new owner too.
-- Shared cargo test fixtures (a slug both cargo owners now OVERRIDE, e.g.
+- Shared cargo test fixtures (a slug the cargo owners now OVERRIDE, e.g.
   `kedi-mamasi-siparis`) must be resolved via `findSeoPage(slug, CLEAN_cargo_store)`
-  — a cargo store that owns NO exclusive corpus (samsun) — so the fixture returns the
-  shared storeless page that still carries the raw "JETGO" placeholder. Resolving it
-  against an owner returns its already-brandified override and defeats any brandify
-  guard built on that fixture.
+  — a cargo store that owns NO exclusive corpus — so the fixture returns the shared
+  storeless page that still carries the raw "JETGO" placeholder. Resolving it against
+  an owner returns its already-brandified override and defeats any brandify guard.
+
+**The CLEAN-cargo-store pool SHRINKS with every new cargo owner (3rd cargo corpus =
+samsun/atakumpet.com).** Each cargo store that gains exclusives stops being a valid
+clean fixture/partition base. Order of cargo owners so far: markapet → karadeniz →
+samsun; the ONLY remaining clean cargo member is **samsunpet** (samsunpet.com, id
+"samsunpet"). So: (a) the partition `sharedFull` base and all "hidden-on-cargo" /
+brandify-fixture lookups must now point at samsunpet, NOT samsun; (b) the partition
+"clean member" loop indices shrink (only samsunpet is clean); (c) when samsunpet
+eventually gains its own corpus, there is NO clean cargo store left — either keep one
+domain deliberately clean or rewrite the fixtures to compute the storeless page
+directly. samsun's universe == karadeniz's (markalar∪diger), so the partition
+`claimed` set is UNCHANGED when samsun joins (its slugs were already claimed via
+karadeniz) — only the base store and clean-member set change, not the slices.

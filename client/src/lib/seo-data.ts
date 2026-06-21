@@ -6,6 +6,7 @@ import { JETGOSHOP_ALL_KEYWORD_PAGES } from "./keyword-pages-jetgoshop-all";
 import { ATAKUMBIZ_ALL_KEYWORD_PAGES } from "./keyword-pages-atakumbiz-all";
 import { MARKAPET_ALL_KEYWORD_PAGES } from "./keyword-pages-markapet-all";
 import { KARADENIZ_ALL_KEYWORD_PAGES } from "./keyword-pages-karadeniz-all";
+import { SAMSUN_ALL_KEYWORD_PAGES } from "./keyword-pages-samsun-all";
 import { JETGO_KEYWORD_PAGES } from "./keyword-pages-jetgo";
 import { ROYALCANIN_KEYWORD_PAGES } from "./keyword-pages-jetgo-royalcanin";
 import { MARKALAR_KEYWORD_PAGES } from "./keyword-pages-jetgo-markalar";
@@ -4344,6 +4345,30 @@ for (const p of KARADENIZ_ALL_KEYWORD_PAGES) {
 }
 SEO_PAGES.push(...KARADENIZ_ALL_EXCLUSIVE_PAGES);
 
+// ATAKUM PET broad multi-category corpus (storeId "samsun"), served ONLY on
+// atakumpet.com. This is the THIRD store-exclusive CARGO corpus (after marka.pet
+// and karadenizpetshop.com): every page is tagged availability "cargoOnly" by the
+// generator, so it is served exclusively on the Türkiye-geneli samsun domain and
+// never on a local store. It consumes the SAME markalar+diger universe as the
+// karadeniz corpus, so the same slugs resolve on both domains — its prose is a
+// wholly separate cargo "Atakum Pet" voice, unique BY CONTENT vs jetgomarket.com
+// AND the karadeniz-all / markapet-all sibling cargo corpora. De-dup mirrors the
+// rules above:
+//   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
+//     never clobber curated content;
+//   • a collision with a shared KEYWORD slug becomes a samsun override; a
+//     brand-new slug is added outright as a samsun-scoped page.
+const _samsunAllSeen = new Set<string>();
+export const SAMSUN_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
+for (const p of SAMSUN_ALL_KEYWORD_PAGES) {
+  if (_samsunAllSeen.has(p.slug)) continue;
+  const shared = _sharedTypeBySlug.get(p.slug);
+  if (shared !== undefined && shared !== "keyword") continue;
+  _samsunAllSeen.add(p.slug);
+  SAMSUN_ALL_EXCLUSIVE_PAGES.push(p);
+}
+SEO_PAGES.push(...SAMSUN_ALL_EXCLUSIVE_PAGES);
+
 // ---------------------------------------------------------------------------
 // Commerce-model availability + per-store resolution.
 // ---------------------------------------------------------------------------
@@ -4530,6 +4555,26 @@ for (const group of SITEMAP_PARTITION_GROUPS) {
       const slug = href.slice(1);
       if (!slug || slug.includes("/")) return true; // app / parametric route
       return _karadenizServed.has(slug);
+    });
+  }
+}
+
+// atakumpet.com (cargo) internal links must resolve WITHIN the cargo slug space
+// too — same rationale as the marka.pet / karadeniz filters above. Drop any
+// single-segment SEO link on a samsun-exclusive page that does not resolve to a
+// slug reachable on atakumpet.com; parametric/app routes (nested "/") are left
+// untouched.
+{
+  const _samsunServed = new Set<string>(_cargoSlugMap.keys());
+  for (const p of SAMSUN_ALL_EXCLUSIVE_PAGES) _samsunServed.add(p.slug);
+  for (const p of SAMSUN_ALL_EXCLUSIVE_PAGES) {
+    if (!p.internalLinks) continue;
+    p.internalLinks = p.internalLinks.filter((l) => {
+      const href = l.href || "";
+      if (!href.startsWith("/")) return true;
+      const slug = href.slice(1);
+      if (!slug || slug.includes("/")) return true; // app / parametric route
+      return _samsunServed.has(slug);
     });
   }
 }
