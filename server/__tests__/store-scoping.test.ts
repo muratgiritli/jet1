@@ -38,10 +38,12 @@ import {
   JETGOSHOP_ALL_EXCLUSIVE_PAGES,
   ATAKUMBIZ_ALL_EXCLUSIVE_PAGES,
   MARKAPET_ALL_EXCLUSIVE_PAGES,
+  KARADENIZ_ALL_EXCLUSIVE_PAGES,
 } from "../../client/src/lib/seo-data";
 import { JETGOSHOP_ALL_KEYWORD_PAGES, JETGOSHOP_ALL_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgoshop-all";
 import { ATAKUMBIZ_ALL_KEYWORD_PAGES, ATAKUMBIZ_ALL_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-atakumbiz-all";
 import { MARKAPET_ALL_KEYWORD_PAGES, MARKAPET_ALL_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-markapet-all";
+import { KARADENIZ_ALL_KEYWORD_PAGES, KARADENIZ_ALL_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-karadeniz-all";
 import { ROYALCANIN_KEYWORD_PAGES } from "../../client/src/lib/keyword-pages-jetgo-royalcanin";
 import { MARKALAR_KEYWORD_PAGES, MARKALAR_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgo-markalar";
 import { DIGER_KEYWORD_PAGES, DIGER_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgo-diger";
@@ -254,6 +256,14 @@ before(async () => {
   app.use(express.json({ limit: "10mb" }));
   app.use(express.urlencoded({ extended: false, limit: "10mb" }));
   const httpServer = createServer(app);
+  // Disable the server's idle keep-alive timeout. undici (node's global fetch)
+  // pools a keep-alive socket to baseUrl; during a long run of pure non-fetch
+  // unit tests the default ~5s idle timeout closes that socket server-side, and
+  // the next test that reuses it fails with a connection-reset "fetch failed".
+  // Keeping idle sockets open removes that test-only race (real HTTP clients
+  // simply reconnect on reset, so this only affects the in-test client).
+  httpServer.keepAliveTimeout = 0;
+  httpServer.headersTimeout = 0;
   await registerRoutes(httpServer, app);
   await new Promise<void>((resolve) => {
     server = httpServer.listen(0, "127.0.0.1", () => resolve());
@@ -2385,7 +2395,12 @@ test("test-OTP bypass lets a NEW customer place a local jetgo.shop order (source
 const SEO_TEST_SLUG = "jetgo-petshop";            // localOnly (local hosts)
 const CARGO_SEO_TEST_SLUG = "kedi-mamasi-siparis"; // cargoOnly (cargo hosts)
 const seoTestPage = findSeoPage(SEO_TEST_SLUG, getStoreByHost(JETGO_HOST));
-const cargoSeoTestPage = findSeoPage(CARGO_SEO_TEST_SLUG, getStoreByHost(KARADENIZ_HOST));
+// Resolve the cargo fixture against a CLEAN cargo store (samsun owns no
+// store-exclusive corpus) so it returns the SHARED storeless cargo page that
+// still carries the raw "JETGO" placeholder. The cargo stores that own an
+// exclusive corpus (karadeniz, markapet) override this slug with an
+// already-brandified page, which would defeat the brandify guard below.
+const cargoSeoTestPage = findSeoPage(CARGO_SEO_TEST_SLUG, getStoreByHost(SAMSUN_HOST));
 
 // Mirror of seo-meta.ts escapeHtml so the exact-match assertions below stay
 // correct even if the brandified copy ever contains HTML-special characters.
@@ -2934,8 +2949,8 @@ test("sitemap partition: the 3 JETGO domains list disjoint, complete shared slic
 // The 4 CARGO sibling domains (atakumpet.com → "samsun", samsunpet.com →
 // "samsunpet", karadenizpetshop.com → "karadeniz", marka.pet → "markapet") share
 // the SAME cargo corpus and must likewise each publish a DISTINCT sitemap. This is
-// an INDEPENDENT partition group from the JETGO trio. marka.pet is the FIRST cargo
-// store to additionally own a store-EXCLUSIVE corpus, so — exactly like the JETGO
+// an INDEPENDENT partition group from the JETGO trio. karadenizpetshop.com and
+// marka.pet each ALSO own a store-EXCLUSIVE corpus, so — exactly like the JETGO
 // trio — the shared corpus is hash-partitioned across the group while each domain
 // also lists ALL of its own exclusives (which bypass the partition).
 test("sitemap partition: the 4 cargo domains list disjoint, complete shared slices + own exclusives", () => {
@@ -2964,12 +2979,13 @@ test("sitemap partition: the 4 cargo domains list disjoint, complete shared slic
   );
 
   // The full shared universe the group partitions: storeless cargo pages eligible
-  // on a CLEAN member (samsun owns no exclusives), MINUS any slug claimed by a
-  // group-exclusive override (markapet) — those are listed only by their exclusive
-  // owner and are dropped from the hash partition on every member.
-  const exclusiveSlugs = new Set<string>(
-    sitemaps[3].filter((p) => p.storeId).map((p) => p.slug), // markapet exclusives
-  );
+  // on a CLEAN member (samsun/samsunpet own no exclusives), MINUS any slug claimed
+  // by a group-exclusive override (karadeniz OR markapet) — those are listed only
+  // by their exclusive owner and are dropped from the hash partition on every member.
+  const exclusiveSlugs = new Set<string>([
+    ...sitemaps[2].filter((p) => p.storeId).map((p) => p.slug), // karadeniz exclusives
+    ...sitemaps[3].filter((p) => p.storeId).map((p) => p.slug), // markapet exclusives
+  ]);
   const sharedFull = new Set(
     getSeoPagesForStore(samsun)
       .filter((p) => !p.storeId && !exclusiveSlugs.has(p.slug))
@@ -2996,20 +3012,30 @@ test("sitemap partition: the 4 cargo domains list disjoint, complete shared slic
   assert.equal(sharedUnion.size, sharedFull.size, "cargo shared partition slices must cover the full shared corpus");
   for (const s of sharedFull) assert.ok(sharedUnion.has(s), `cargo shared slug missing from every sitemap: ${s}`);
 
-  // ---- OWN store-exclusive pages bypass the partition: marka.pet lists ALL of its
-  // own; the three clean members list NONE. ----
+  // ---- OWN store-exclusive pages bypass the partition: karadenizpetshop.com and
+  // marka.pet each list ALL of their own; the two clean members (samsun/samsunpet)
+  // list NONE. ----
+  const karadenizEx = new Set(sitemaps[2].filter((p) => p.storeId === "karadeniz").map((p) => p.slug));
+  for (const p of KARADENIZ_ALL_EXCLUSIVE_PAGES) {
+    assert.ok(karadenizEx.has(p.slug), `${p.slug}: karadenizpetshop.com sitemap must list its own exclusive`);
+  }
   const markapetEx = new Set(sitemaps[3].filter((p) => p.storeId === "markapet").map((p) => p.slug));
   for (const p of MARKAPET_ALL_EXCLUSIVE_PAGES) {
     assert.ok(markapetEx.has(p.slug), `${p.slug}: marka.pet sitemap must list its own exclusive`);
   }
-  for (const i of [0, 1, 2]) {
+  for (const i of [0, 1]) {
     assert.equal(
       sitemaps[i].filter((p) => p.storeId).length,
       0,
       `cargo clean member ${i} must list NO store-exclusive page`,
     );
   }
-  // No FOREIGN store-exclusive leaks into marka.pet's sitemap.
+  // No FOREIGN store-exclusive leaks into either exclusive-owning sitemap.
+  assert.equal(
+    sitemaps[2].filter((p) => p.storeId && p.storeId !== "karadeniz").length,
+    0,
+    "karadenizpetshop.com sitemap must not list a foreign exclusive",
+  );
   assert.equal(
     sitemaps[3].filter((p) => p.storeId && p.storeId !== "markapet").length,
     0,
@@ -5820,4 +5846,350 @@ test("markapet-all: SSR serves marka.pet's bespoke cargo content, self-canonical
   assert.notEqual(mpTitle, jetgoTitle, "marka.pet title must differ from jetgomarket at the same slug");
   assert.equal(jetgoCanon, `${JETGO_STORE.domain}/${overrideSlug}`, "jetgomarket canonical must bind to jetgomarket");
   assert.ok(!mpCanon.includes(JETGO_STORE.domain), "marka.pet canonical must not leak the jetgomarket domain");
+});
+
+// ===========================================================================
+// KARADENIZ PET SHOP broad keyword corpus (karadenizpetshop.com, store id
+// "karadeniz") — the 9th corpus and the SECOND built for a CARGO store (after
+// marka.pet). A cargo store ships Türkiye geneli; it has NO physical shopfront,
+// NO same-day courier, NO door payment and NO mahalle delivery. The corpus must
+// therefore be cargo-framed AND truth-safe: it must read distinct from
+//   • the SHARED jetgomarket.com keyword pages,
+//   • the markapet-all corpus (marka.pet, the sibling CARGO store), AND
+//   • the jetgoshop-all corpus (jetgo.shop, "JETGO Pet Shop"),
+// while NEVER affirming a local-presence / same-day / door-payment trait that a
+// cargo store cannot truthfully claim. Pages carry availability "cargoOnly".
+// Thresholds are MEASURED against the markalar+diger universe (~4992 pages),
+// which is smaller than markapet's atakum-all universe — so they are tuned down
+// from the markapet numbers, never blindly copied.
+// ===========================================================================
+const KARADENIZ_STORE = getStoreByHost(KARADENIZ_HOST);
+// Intent pages are identified by their (exclusive) metaTitle markers — chosen to
+// differ from every sibling corpus (markapet "Sahiplenme Önerisi"/"Kargolu
+// Alternatif"/"Hizmet Notu", atakumbiz/jetgoshop variants) AND to read in a
+// CARGO voice.
+const KARADENIZ_LIVE_MARK = /Sahiplendirme Rehberi/;
+const KARADENIZ_RETAILER_MARK = /Bağımsız Kargo Adresi/;
+const KARADENIZ_SERVICE_MARK = /Yönlendirme Notu/;
+// Cargo body surfaces only — the keyword K survives raw in slug/title/metaTitle/
+// keywords (SEO targeting), but the local-intent label is STRIPPED in all body
+// copy, so the forbidden scan runs over the rendered prose, never the SEO meta.
+function karadenizBody(p: SeoPageData): string {
+  return [
+    p.metaDescription,
+    p.h1,
+    ...(p.intro ?? []),
+    ...(p.sections ?? []).flatMap((s) => [s.h2, ...(s.paragraphs ?? []), ...(s.list ?? [])]),
+    ...(p.features ?? []),
+    ...((p.faq ?? []).flatMap((f) => [f.q, f.a])),
+  ].join(" ");
+}
+
+test("karadeniz-all: a large keyword corpus is registered, exclusive, and complete (cargoOnly)", () => {
+  assert.ok(
+    KARADENIZ_ALL_EXCLUSIVE_PAGES.length > 4000,
+    `expected a large karadeniz-all corpus, got ${KARADENIZ_ALL_EXCLUSIVE_PAGES.length}`,
+  );
+  const slugs = KARADENIZ_ALL_EXCLUSIVE_PAGES.map((p) => p.slug);
+  assert.equal(new Set(slugs).size, slugs.length, "karadeniz-all corpus must have unique slugs");
+  for (const p of KARADENIZ_ALL_EXCLUSIVE_PAGES) {
+    assert.equal(p.storeId, "karadeniz", `${p.slug}: karadeniz-all page must be storeId karadeniz`);
+    assert.equal(p.availability, "cargoOnly", `${p.slug}: karadeniz-all page must be cargoOnly (cargo trap)`);
+    assert.equal(p.type, "keyword", `${p.slug}: karadeniz-all page must be a keyword page`);
+    assert.ok(
+      p.metaTitle && p.metaDescription && p.h1 &&
+      (p.intro ?? []).length && (p.sections ?? []).length &&
+      (p.faq ?? []).length && (p.internalLinks ?? []).length,
+      `${p.slug}: must carry title/meta/h1 + intro/sections/faq/internalLinks for a substantive AI-search page`,
+    );
+    // Genuine Karadeniz Pet Shop first-party content (real NAP phone) — not a brand swap.
+    assert.match(markalarCopy(p), /0850 840 39 59/, `${p.slug}: must carry the Karadeniz Pet Shop NAP phone`);
+    // No slug may shadow a real client app route.
+    assert.ok(!RESERVED_APP_SLUGS.has(p.slug), `${p.slug}: must not shadow a reserved app route`);
+  }
+});
+
+test("karadeniz-all: noise keywords are skipped and the rest are registered", () => {
+  assert.ok(KARADENIZ_ALL_SKIPPED_NOISE > 0, "expected some noise keywords (e.g. Spanish 'buscar') to be skipped");
+  assert.ok(
+    KARADENIZ_ALL_KEYWORD_PAGES.length >= KARADENIZ_ALL_EXCLUSIVE_PAGES.length,
+    "generated pages must be a superset of the registered exclusive corpus (curated collisions dropped)",
+  );
+});
+
+test("karadeniz-all: NO page affirms a same-day / door-payment / local-presence trait", () => {
+  // The cargo invariant. Scan the rendered BODY of EVERY page — a single
+  // affirmation would be untruthful. (The global forbidden-claim scanner already
+  // covers the SEO meta surfaces; only the URL slug retains the raw keyword.)
+  const offenders = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => FORBIDDEN_CARGO_RE.test(karadenizBody(p)));
+  assert.equal(
+    offenders.length,
+    0,
+    `cargo pages must not affirm a local/same-day/door trait (offenders: ${offenders
+      .slice(0, 5)
+      .map((p) => `${p.slug} :: ${karadenizBody(p).match(FORBIDDEN_CARGO_RE)?.[0]}`)
+      .join(" | ")})`,
+  );
+});
+
+test("karadeniz-all: every metaDescription carries the Türkiye-geneli cargo signature", () => {
+  const missing = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => !CARGO_SIGNATURE.test(p.metaDescription ?? ""));
+  assert.equal(missing.length, 0, `metaDescriptions must carry the cargo signature (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`);
+});
+
+test("karadeniz-all: every internal link resolves within karadenizpetshop.com's own slug space", () => {
+  const kzSet = availableSlugSet(KARADENIZ_STORE);
+  let checked = 0;
+  for (const p of KARADENIZ_ALL_EXCLUSIVE_PAGES) {
+    for (const l of p.internalLinks ?? []) {
+      const target = (l.href ?? "").replace(/^\//, "");
+      if (!target || target.includes("/")) continue; // skip non-flat (parametric) routes
+      checked++;
+      assert.ok(kzSet.has(target), `${p.slug}: internal link "/${target}" must resolve on karadenizpetshop.com`);
+    }
+  }
+  assert.ok(checked > 1000, `expected many internal links to verify, got ${checked}`);
+});
+
+test("karadeniz-all: karadeniz-tagged pages never leak to any other store; overrides stay store-scoped", () => {
+  for (const store of [
+    JETGO_STORE,
+    SIBLING_LOCAL_STORE,
+    CLEAN_SIBLING_LOCAL_STORE,
+    ATAKUM_STORE,
+    CARGO_STORE_FOR_ATAKUM,
+    JETGOSHOP_STORE,
+    ATAKUMBIZ_STORE,
+    MARKAPET_STORE,
+  ]) {
+    const foreign = getSeoPagesForStore(store).filter((p) => p.storeId === "karadeniz");
+    assert.equal(foreign.length, 0, `${store.id}: must not serve any karadeniz-tagged page`);
+  }
+  // Override scoping: the SAME slug yields karadeniz's page on karadenizpetshop.com
+  // and a DIFFERENT, non-karadeniz page on jetgomarket — same URL, store-scoped.
+  const jetgoSet = availableSlugSet(JETGO_STORE);
+  const overridePage = KARADENIZ_ALL_EXCLUSIVE_PAGES.find((p) => jetgoSet.has(p.slug));
+  assert.ok(overridePage, "expected the karadeniz corpus to override at least one shared jetgo slug");
+  const overrideSlug = overridePage!.slug;
+  assert.equal(
+    findSeoPage(overrideSlug, KARADENIZ_STORE)?.storeId,
+    "karadeniz",
+    `${overrideSlug}: karadenizpetshop.com must serve its own (karadeniz-tagged) override`,
+  );
+  const onJetgo = findSeoPage(overrideSlug, JETGO_STORE);
+  assert.ok(onJetgo, `${overrideSlug}: jetgomarket must still serve its own page at this slug`);
+  assert.notEqual(onJetgo!.storeId, "karadeniz", `${overrideSlug}: jetgomarket must NOT serve the karadeniz-tagged page`);
+});
+
+test("karadeniz-all: the corpus is served on karadenizpetshop.com's sitemap with no foreign exclusives", () => {
+  const sm = getSitemapPagesForStore(KARADENIZ_STORE);
+  const own = sm.filter((p) => p.storeId === "karadeniz").length;
+  assert.ok(own > 4000, `karadenizpetshop.com sitemap must list its own exclusives, got ${own}`);
+  assert.equal(
+    sm.filter((p) => p.storeId && p.storeId !== "karadeniz").length,
+    0,
+    "karadenizpetshop.com sitemap must not list any foreign store-exclusive page",
+  );
+});
+
+test("karadeniz-all: content is UNIQUE-by-CONTENT vs jetgomarket.com (own brand, distinct prose)", () => {
+  for (const p of KARADENIZ_ALL_EXCLUSIVE_PAGES.slice(0, 200)) {
+    assert.match(p.metaTitle, /Karadeniz Pet Shop/, `${p.slug}: metaTitle must carry the Karadeniz Pet Shop brand`);
+  }
+  // Distinct metaTitles (human-sounding, not one templated string).
+  const titles = new Set(KARADENIZ_ALL_EXCLUSIVE_PAGES.map((p) => p.metaTitle));
+  assert.ok(titles.size > 4000, `metaTitles must be largely unique, got ${titles.size}`);
+
+  // At a SHARED slug, karadenizpetshop.com and jetgomarket serve DIFFERENT pages.
+  const jetgoSet = availableSlugSet(JETGO_STORE);
+  const overrides = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => jetgoSet.has(p.slug));
+  assert.ok(overrides.length > 100, `expected karadeniz to override many shared jetgo slugs, got ${overrides.length}`);
+  let compared = 0;
+  for (const p of overrides.slice(0, 300)) {
+    const onJetgo = findSeoPage(p.slug, JETGO_STORE)!;
+    assert.notEqual(onJetgo.storeId, "karadeniz", `${p.slug}: jetgomarket must serve its OWN page, not the karadeniz one`);
+    assert.notEqual(p.metaTitle, onJetgo.metaTitle, `${p.slug}: metaTitle must differ from jetgomarket`);
+    assert.notEqual(p.h1, onJetgo.h1, `${p.slug}: h1 must differ from jetgomarket`);
+    assert.notEqual(markalarCopy(p), markalarCopy(onJetgo), `${p.slug}: body must differ from jetgomarket`);
+    compared++;
+  }
+  assert.ok(compared > 100, `expected many jetgomarket comparisons, got ${compared}`);
+});
+
+test("karadeniz-all: content is UNIQUE-by-CONTENT vs the markapet-all corpus (sibling cargo, distinct copy)", () => {
+  const mpBySlug = new Map(MARKAPET_ALL_EXCLUSIVE_PAGES.map((p) => [p.slug, p] as const));
+  let compared = 0;
+  for (const p of KARADENIZ_ALL_EXCLUSIVE_PAGES) {
+    const mp = mpBySlug.get(p.slug);
+    if (!mp) continue;
+    assert.notEqual(p.metaTitle, mp.metaTitle, `${p.slug}: metaTitle must differ from markapet-all`);
+    assert.notEqual(p.h1, mp.h1, `${p.slug}: h1 must differ from markapet-all`);
+    assert.notEqual(markalarCopy(p), markalarCopy(mp), `${p.slug}: body must differ from markapet-all`);
+    compared++;
+    if (compared >= 400) break;
+  }
+  assert.ok(compared > 100, `expected many markapet-all comparisons, got ${compared}`);
+});
+
+test("karadeniz-all: content is UNIQUE-by-CONTENT vs the jetgoshop-all corpus (distinct copy banks)", () => {
+  const shopBySlug = new Map(JETGOSHOP_ALL_EXCLUSIVE_PAGES.map((p) => [p.slug, p] as const));
+  let compared = 0;
+  for (const p of KARADENIZ_ALL_EXCLUSIVE_PAGES) {
+    const shop = shopBySlug.get(p.slug);
+    if (!shop) continue;
+    assert.notEqual(p.metaTitle, shop.metaTitle, `${p.slug}: metaTitle must differ from jetgoshop-all`);
+    assert.notEqual(markalarCopy(p), markalarCopy(shop), `${p.slug}: body must differ from jetgoshop-all`);
+    compared++;
+    if (compared >= 300) break;
+  }
+  assert.ok(compared > 100, `expected many jetgoshop-all comparisons, got ${compared}`);
+});
+
+test("karadeniz-all: live-animal pages never claim to sell animals", () => {
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const AFFIRM = /sat[ıi]yoruz|satar[ıi]z|satışı yap[ıi]yoruz|satışı yapar[ıi]z|satın alabilirsiniz|canlı hayvan (satıyoruz|satarız|mevcut|stok)/;
+  const live = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => KARADENIZ_LIVE_MARK.test(p.metaTitle));
+  assert.ok(live.length > 50, `expected a body of live-animal pages, got ${live.length}`);
+  for (const p of live) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: live page must state Karadeniz Pet Shop does not sell live animals`);
+    assert.ok(!AFFIRM.test(digerBody(p)), `${p.slug}: live page must not affirmatively offer animals for sale`);
+  }
+});
+
+test("karadeniz-all: every live-animal acquisition KEYWORD is truth-safe (broad slug-derived recall)", () => {
+  const ANIMAL_STEM = ["kedi","kopek","yavru","kitten","puppy","muhabbet","kanarya","papagan","sultan","paraket","finch","ispinoz","saka","kus","tavsan","hamster","ginepig","gine","kemirgen","sinsilla","gerbil","fare","sican","balik","lepistes","moli","melek","japon","kaplumbaga","iguana","gekko","yilan","surungen"];
+  const CUE = new Set(["canli","satilik","satlik","satis","satisi","satan","satanlar","satilan","satma","sat","satin","sahiplen","sahiplendirme","almak","alma","alinir","alan","alanlar","alici","alicisi","bedava","ucretsiz","sahibinden"]);
+  const PROD_SVC = new Set(["ev","evi","kum","kumu","yag","yagi","otu","kab","kabi","yem","yemi","kafes","kafesi","mama","mamasi","tasma","tuvalet","kemik","gaga","tuy","catnip","nane","zehir","kapan","damla","minder","yatak","suluk","oyuncak","oyun","alani","alanlari","vitamin","vitaminler","sampuan","tarak","firca","kiyafet","canta","tasima","kulube","kulubesi","kumes","mineral","file","aksesuar","malzeme","urun","isimlik","egitim","egitimi","kuafor","pansiyon","otel","veteriner","merkez","merkezi","gezdirme","kosum","macun","malt","altligi","alisveris","alisverisi","alistirma","aliskin"]);
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const AFFIRM = /sat[ıi]yoruz|satar[ıi]z|satışı yap[ıi]yoruz|satışı yapar[ıi]z|satın alabilirsiniz|canlı hayvan (satıyoruz|satarız|mevcut|stok)/;
+  const candidates = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasAnimal = t.some((x) => ANIMAL_STEM.some((a) => x.startsWith(a)));
+    const hasCue = t.some((x) => CUE.has(x));
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasAnimal && hasCue && !hasProdSvc && !ATAKUM_ALL_FOOD_SKU.test(p.slug);
+  });
+  assert.ok(candidates.length > 100, `expected a large live-sale candidate body, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: live-sale keyword must state Karadeniz Pet Shop does not sell live animals`);
+    assert.ok(!AFFIRM.test(digerBody(p)), `${p.slug}: live-sale keyword must not affirmatively offer animals for sale`);
+  }
+});
+
+test("karadeniz-all: every bird/rabbit PRICE keyword is truth-safe (broad slug-derived recall)", () => {
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const BIRD_RABBIT = ["muhabbet","papagan","sultan","kanarya","paraket","finch","ispinoz","saka","kus","kakadu","kakariki","jako","forpus","sevda","cennet","tavsan"];
+  const PRICE = new Set(["fiyat","fiyati","fiyatlari","ucuz"]);
+  const PROD_SVC = new Set(["yem","yemi","yemlik","kafes","kafesi","kafesli","folluk","yumurtalik","suluk","sulugu","kumes","kumesi","kulube","kulubesi","tasma","tasmasi","oyuncak","oyun","vitamin","takviye","takim","mama","mamasi","mamalari","gaga","tuy","isimlik","aksesuar","malzeme","urun","mineral","file","kum","kumu","tuvalet","tuvaleti","kulucka","korse","agizlik","ev","evi","koruyucu","yara","sok","akilli","alani","alanlari","alistirma","alisveris","alisverisi","egitim","egitimi","kuafor","pansiyon","veteriner","merkez","merkezi","gezdirme","tras","yikama","altligi"]);
+  const candidates = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasAnimal = t.some((x) => BIRD_RABBIT.some((a) => x.startsWith(a)));
+    const hasPrice = t.some((x) => PRICE.has(x)) || p.slug.includes("ne-kadar");
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasAnimal && hasPrice && !hasProdSvc && !ATAKUM_ALL_FOOD_SKU.test(p.slug) && !KARADENIZ_RETAILER_MARK.test(p.metaTitle);
+  });
+  assert.ok(candidates.length > 100, `expected a large bird/rabbit price candidate body, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: bird/rabbit price keyword must state Karadeniz Pet Shop does not sell live animals`);
+  }
+});
+
+test("karadeniz-all: every breed PRICE keyword is truth-safe; breed-named FOOD SKUs stay product", () => {
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const BREED = ["persian","persan","british","scottish","sphynx","maine","coon","ragdoll","tekir","sarman","bengal","labrador","golden","rottweiler","chihuahua","yorkshire","shih","cocker","bulldog","cane","teckel","dachshund","poodle","pomeranian","boxer","german","beagle","husky","retriever","terrier","kangal","akbas","pug"];
+  const PRICE = new Set(["fiyat","fiyati","fiyatlari","ucuz"]);
+  const PROD_SVC = new Set(["mama","mamasi","mamalari","kumu","kafes","kafesi","kafesli","tasma","tasmasi","yatak","yatagi","minder","oyuncak","sampuan","vitamin","takviye","tarak","firca","kiyafet","canta","kulube","kulubesi","ev","evi","tuvalet","suluk","kab","kabi","macun","malt","catnip","kemik","damla","mineral","aksesuar","malzeme","urun","egitim","egitimi","kuafor","pansiyon","otel","veteriner","merkez","merkezi","gezdirme","tras","yikama","altligi","alisveris","alistirma"]);
+  const candidates = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasBreed = t.some((x) => BREED.includes(x));
+    const hasPrice = t.some((x) => PRICE.has(x)) || p.slug.includes("ne-kadar");
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasBreed && hasPrice && !hasProdSvc && !ATAKUM_ALL_FOOD_SKU.test(p.slug) && !KARADENIZ_RETAILER_MARK.test(p.metaTitle);
+  });
+  assert.ok(candidates.length >= 5, `expected a body of breed price candidates, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: breed price keyword must state Karadeniz Pet Shop does not sell live animals`);
+  }
+  // The inverse: a breed-NAMED food SKU is a product, never a live no-sale page.
+  const foodBreed = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter(
+    (p) => ATAKUM_ALL_FOOD_SKU.test(p.slug) && /(british|scottish|persian|persan|golden|labrador|terrier|retriever|bulldog|shorthair|pug|yorkshire)/.test(p.slug),
+  );
+  assert.ok(foodBreed.length > 0, "expected some breed-named food SKUs in the corpus");
+  for (const p of foodBreed) {
+    assert.ok(!NO_SALE.test(markalarCopy(p)), `${p.slug}: breed-named food SKU must NOT be framed as a live-animal no-sale page`);
+  }
+});
+
+test("karadeniz-all: service keywords never claim Karadeniz Pet Shop provides the service", () => {
+  const NOT_PROVIDED = /hizmet(i)? (vermiyoruz|vermez|vermeyiz)|hizmet değil/i;
+  const PROVIDES = /hizmet(i)? (veriyoruz|sağlıyoruz|sunuyoruz)|eğitim veriyoruz|pansiyonumuz/i;
+  const servicePages = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => KARADENIZ_SERVICE_MARK.test(p.metaTitle));
+  assert.ok(servicePages.length > 20, `expected a body of service pages, got ${servicePages.length}`);
+  for (const p of servicePages) {
+    const copy = markalarCopy(p);
+    assert.match(copy, NOT_PROVIDED, `${p.slug}: service page must disclaim that Karadeniz Pet Shop provides the service`);
+    assert.ok(!PROVIDES.test(copy), `${p.slug}: service page must not claim Karadeniz Pet Shop provides the service`);
+  }
+});
+
+test("karadeniz-all: retailer keywords position Karadeniz Pet Shop as an independent alternative, never the marketplace", () => {
+  const INDEPENDENT = /bağımsız bir işletme|resmi bir bağlantımız yok/i;
+  const AFFILIATED = /resmi (bayi|satıcı|distribütör)|yetkili (bayi|satıcı)/i;
+  const retail = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => KARADENIZ_RETAILER_MARK.test(p.metaTitle));
+  assert.ok(retail.length > 50, `expected a body of retailer pages, got ${retail.length}`);
+  for (const p of retail) {
+    const copy = markalarCopy(p);
+    assert.match(copy, INDEPENDENT, `${p.slug}: retailer page must disclaim affiliation with the marketplace`);
+    assert.ok(!AFFILIATED.test(copy), `${p.slug}: retailer page must not imply official marketplace affiliation`);
+  }
+});
+
+test("karadeniz-all: 24-hour / late-night keywords carry a truthful no-physical-store disclaimer", () => {
+  // A cargo store has NO shopfront, so the always-open answer must clarify the
+  // online store takes orders any hour but there is no physical store / 24h desk.
+  const candidates = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter(
+    (p) => (p.faq ?? []).some((f) => /fiziksel bir mağaza işletmiyoruz/.test(f.a)),
+  );
+  assert.ok(candidates.length >= 1, `expected at least one always-open keyword page, got ${candidates.length}`);
+  for (const p of candidates) {
+    const ans = (p.faq ?? []).find((f) => /fiziksel bir mağaza işletmiyoruz/.test(f.a))!.a;
+    assert.ok(!FORBIDDEN_CARGO_RE.test(ans), `${p.slug}: always-open answer must not affirm a 24h/local trait`);
+  }
+});
+
+test("karadeniz-all: no page fabricates a concrete price", () => {
+  const PRICE = /\d[\d.,]*\s*(₺|tl\b|lira\b)|₺\s*\d/i;
+  const bad = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => PRICE.test(markalarCopy(p)));
+  assert.equal(
+    bad.length,
+    0,
+    `pages must not state a concrete price (offenders: ${bad.slice(0, 5).map((p) => p.slug).join(", ")})`,
+  );
+});
+
+test("karadeniz-all: SSR serves karadeniz's bespoke cargo content, self-canonical, differs from jetgomarket", async () => {
+  const jetgoSet = availableSlugSet(JETGO_STORE);
+  const overrideSlug = KARADENIZ_ALL_EXCLUSIVE_PAGES.find((p) => jetgoSet.has(p.slug))!.slug;
+  const kzPage = findSeoPage(overrideSlug, KARADENIZ_STORE)!;
+  assert.equal(kzPage.storeId, "karadeniz", "karadenizpetshop.com must serve its own store-scoped override");
+
+  const kzHtml = await injectAllMeta(INDEX_HTML, `/${overrideSlug}`, KARADENIZ_HOST);
+  const kzTitle = kzHtml.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const kzCanon = kzHtml.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+  assert.equal(
+    kzTitle,
+    escapeHtmlForTest(brandifyFor(KARADENIZ_STORE, kzPage.metaTitle)),
+    "karadenizpetshop.com SSR <title> must be its own brandified metaTitle",
+  );
+  assert.equal(kzCanon, `${KARADENIZ_STORE.domain}/${overrideSlug}`, "karadenizpetshop.com SSR canonical must bind to karadenizpetshop.com");
+  assert.ok(!/JETGO/i.test(kzTitle), "karadenizpetshop.com SSR title must not leak the JETGO brand");
+
+  // The SAME slug on jetgomarket.com → a DIFFERENT title (jetgo's own page),
+  // self-canonical to jetgomarket. No cross-domain leak in either direction.
+  const jetgoHtml = await injectAllMeta(INDEX_HTML, `/${overrideSlug}`, JETGO_HOST);
+  const jetgoTitle = jetgoHtml.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const jetgoCanon = jetgoHtml.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+  assert.notEqual(kzTitle, jetgoTitle, "karadenizpetshop.com title must differ from jetgomarket at the same slug");
+  assert.equal(jetgoCanon, `${JETGO_STORE.domain}/${overrideSlug}`, "jetgomarket canonical must bind to jetgomarket");
+  assert.ok(!kzCanon.includes(JETGO_STORE.domain), "karadenizpetshop.com canonical must not leak the jetgomarket domain");
 });

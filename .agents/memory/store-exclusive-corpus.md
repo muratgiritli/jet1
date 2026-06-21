@@ -151,3 +151,22 @@ traps a LOCAL exclusive corpus never hits:**
   near-duplicate metaTitles (keywords that differ only by a forbidden modifier collapse
   to the same clean label). Acceptable — the unique-title floor still holds and a
   truthful duplicate title beats an untruthful unique one.
+
+**SECOND cargo-exclusive corpus (karadeniz, mirroring markapet) — what changes once
+TWO cargo stores own exclusives:**
+- The per-store generator/keyword file stays a thin mirror: re-export the SAME
+  keyword universe + a generator copy with its OWN distinct hash/salt scheme (new
+  salt range), separate copy banks, and NEW intent metaTitle markers so prose is
+  unique-by-content vs the sibling cargo corpus (assert metaTitle+h1+body notEqual at
+  overlapping slugs vs the other cargo store, not just vs jetgo). Never fork the
+  shared classifier engine.
+- The N-domain sitemap PARTITION test must now subtract ALL cargo exclusives (both
+  owners) from the hash-partitioned storeless slice, and the set of CLEAN partition
+  members shrinks accordingly (a clean cargo member owns no exclusives). Add own-
+  exclusive + no-foreign-leak assertions for the new owner too.
+- Shared cargo test fixtures (a slug both cargo owners now OVERRIDE, e.g.
+  `kedi-mamasi-siparis`) must be resolved via `findSeoPage(slug, CLEAN_cargo_store)`
+  — a cargo store that owns NO exclusive corpus (samsun) — so the fixture returns the
+  shared storeless page that still carries the raw "JETGO" placeholder. Resolving it
+  against an owner returns its already-brandified override and defeats any brandify
+  guard built on that fixture.
