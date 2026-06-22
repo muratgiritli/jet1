@@ -252,6 +252,29 @@ const orderPayload = () => ({
 });
 
 before(async () => {
+  // ---- Idempotent pre-clean of any sentinel rows leaked by an interrupted or
+  // concurrent prior run. after() only deletes by tracked id, so a crash (or two
+  // runs racing against the shared dev DB) leaves orphans behind. The unique
+  // (store, upper(code)) coupon and the unique customers.phone then make every
+  // re-run's INSERT collide. Coupons are seeded before customers, so the suite
+  // currently dies on the coupon dup-key; clean both here so re-runs self-heal.
+  {
+    const orphCust = await pool.query(
+      "SELECT id FROM customers WHERE phone = $1 OR name IN ($2, $3)",
+      [`${MARK}_5550000`, `${MARK}_BUYER`, `${MARK}_SAMSUN_BUYER`]
+    );
+    const orphCustIds = orphCust.rows.map((r: any) => r.id);
+    if (orphCustIds.length) {
+      // customers is referenced by loyalty_points and the per-customer welcome
+      // coupon (coupons.customer_id); orders link only by phone (no FK).
+      await pool.query("DELETE FROM loyalty_points WHERE customer_id = ANY($1)", [orphCustIds]);
+      await pool.query("DELETE FROM coupons WHERE customer_id = ANY($1)", [orphCustIds]);
+      await pool.query("DELETE FROM customers WHERE id = ANY($1)", [orphCustIds]);
+    }
+    // the admin scope coupons (no customer_id, nothing references them)
+    await pool.query("DELETE FROM coupons WHERE code = $1", [`${MARK}COUPON`]);
+  }
+
   // ---- Boot a fresh app instance against the real (dev) DB ----
   const app = express();
   app.set("trust proxy", true);
