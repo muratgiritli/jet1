@@ -1,4 +1,5 @@
 import express, { type Request, Response, NextFunction } from "express";
+import compression from "compression";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
@@ -14,6 +15,11 @@ process.on("unhandledRejection", (reason: any) => {
 
 const app = express();
 const httpServer = createServer(app);
+
+// gzip/brotli-style compression for all responses (HTML, JS, CSS, JSON). Text
+// assets shrink ~3-4x over the wire, so first paint on a fresh visit is much
+// faster. Already-compressed payloads (images) are skipped automatically.
+app.use(compression());
 
 const productImagesPath = path.resolve(process.cwd(), "client", "public", "product-images");
 app.use("/product-images", express.static(productImagesPath, {
