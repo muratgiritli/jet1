@@ -1300,6 +1300,28 @@ test("client STORE_SCOPED_SETTING_KEYS matches the server set (no drift)", () =>
   assert.deepEqual(clientKeys, serverKeys);
 });
 
+// ---- eager-bundle guard: store.ts must NOT import the SEO corpus ----
+//
+// client/src/lib/store.ts is loaded EAGERLY: main.tsx resolves CURRENT_STORE
+// before React mounts, and the always-rendered chrome (Header/Footer/SEO) all
+// import from it. The huge ./seo-data corpus (tens of thousands of SEO pages
+// built at module-load with several dedup loops) must therefore stay OUT of
+// store.ts, or every page open synchronously loads+executes the whole corpus
+// before first paint — the exact regression that made all storefronts slow to
+// open. The seo-data-dependent helpers live in ./store-seo (imported only by
+// lazy SEO routes). This guard fails if seo-data leaks back into the eager file.
+test("store.ts does not statically import the seo-data corpus (eager-bundle guard)", () => {
+  const src = readFileSync(
+    new URL("../../client/src/lib/store.ts", import.meta.url),
+    "utf8",
+  );
+  assert.ok(
+    !/from\s+["']\.\/seo-data["']/.test(src),
+    "client/src/lib/store.ts must not import ./seo-data — it is eagerly loaded; " +
+      "put seo-data-dependent helpers in ./store-seo (lazy SEO routes only).",
+  );
+});
+
 // ---- atakum (local same-day) storefront branding smoke ----
 //
 // atakum (atakumpetshop.com) is the third branded store: like jetgo it is a

@@ -1,11 +1,4 @@
 import { getStoreByHost, getStoreByExactHost, STORES, type StoreConfig, brandifyFor, commercifyFor } from "@shared/stores";
-import {
-  findSeoPage,
-  getSeoPagesForStore,
-  availableSlugSet,
-  ALL_SEO_SLUGS,
-  type SeoPageData,
-} from "./seo-data";
 
 // Store override for local/e2e smoke testing. Real branded storefronts can only
 // be served from their custom domains, so on the dev/preview host the resolver
@@ -59,28 +52,6 @@ export function commercify(text: string): string {
   return commercifyFor(CURRENT_STORE, text);
 }
 
-/** SEO pages eligible for the active store's commerce model. */
-export function storePages(): SeoPageData[] {
-  return getSeoPagesForStore(CURRENT_STORE);
-}
-
-/** Resolve a slug to the variant served by the active store (or undefined). */
-export function findStorePage(slug: string): SeoPageData | undefined {
-  return findSeoPage(slug, CURRENT_STORE);
-}
-
-/**
- * Drop internal/buy links that point to SEO pages not served by the active
- * store (e.g. local-only slugs on a cargo domain). Non-SEO app routes
- * (/magaza, /kategori/..., /urun/...) are always kept.
- */
-export function filterStoreLinks<T extends { href: string }>(links: T[]): T[] {
-  const avail = availableSlugSet(CURRENT_STORE);
-  return links.filter((l) => {
-    const m = l.href.match(/^\/([^/]+)$/);
-    if (!m) return true;
-    const s = m[1];
-    if (!ALL_SEO_SLUGS.has(s)) return true;
-    return avail.has(s);
-  });
-}
+// SEO-corpus-dependent helpers (storePages, findStorePage, filterStoreLinks) live
+// in ./store-seo so the heavy seo-data module stays OUT of this eagerly loaded file.
+// Import them from "@/lib/store-seo" (only lazy SEO pages need them).

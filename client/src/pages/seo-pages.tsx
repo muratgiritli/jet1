@@ -4,7 +4,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD, FAQ_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import { type SeoPageData } from "@/lib/seo-data";
-import { brandify, commercify, CURRENT_STORE, findStorePage, filterStoreLinks } from "@/lib/store";
+import { brandify, commercify, CURRENT_STORE } from "@/lib/store";
+import { findStorePage, filterStoreLinks } from "@/lib/store-seo";
 import NotFound from "@/pages/not-found";
 
 function StoreInfoBox({ hideWhatsapp = false }: { hideWhatsapp?: boolean }) {
