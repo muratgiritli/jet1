@@ -22,8 +22,22 @@ export function serveStatic(app: Express) {
     index: false,
     setHeaders: (res, filePath) => {
       if (filePath.endsWith(".html")) {
+        // HTML is the entry point — never cache it so new deploys (which point at
+        // freshly hashed asset filenames) are picked up immediately.
         res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+        return;
       }
+      if (/[\\/]assets[\\/]/.test(filePath)) {
+        // Vite build assets carry a content hash in their filename, so they are
+        // immutable: a changed file always gets a new name. Cache them for a year
+        // so repeat visits serve ~1MB of JS/CSS from disk with ZERO network
+        // requests (previously they revalidated on every page open).
+        res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+        return;
+      }
+      // Other static files (manifest, icons, favicon, etc.) are not hashed —
+      // allow caching but require revalidation so updates are picked up.
+      res.setHeader("Cache-Control", "public, max-age=3600");
     }
   }));
 

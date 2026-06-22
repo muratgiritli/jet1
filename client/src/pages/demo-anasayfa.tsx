@@ -462,7 +462,7 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
           <div className="grid grid-cols-6 gap-4">
             {brands.map(b => (
               <Link key={b.name} href="/kategori" className="bg-gray-50 hover:bg-purple-50 border border-gray-100 hover:border-purple-200 rounded-2xl p-4 aspect-[3/2] flex items-center justify-center transition-all hover:scale-105" data-testid={`link-demo-brand-${b.name}`}>
-                <img src={b.img} alt={b.name} className="max-h-full max-w-full object-contain" onError={(e) => { const el = e.target as HTMLImageElement; el.outerHTML = `<div class='text-sm font-bold text-gray-600'>${b.name}</div>`; }} />
+                <img src={b.img} alt={b.name} className="max-h-full max-w-full object-contain" onError={(e) => { const img = e.currentTarget as HTMLImageElement; const fallback = document.createElement("div"); fallback.className = "text-sm font-bold text-gray-600"; fallback.textContent = b.name; img.replaceWith(fallback); }} />
               </Link>
             ))}
           </div>
