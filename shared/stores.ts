@@ -187,7 +187,7 @@ const atakum: StoreConfig = {
       "atakum pet shop, atakum petshop, atakum kedi maması, atakum köpek maması, atakum kedi kumu, atakum aynı gün teslimat, atakum acil petshop, samsun petshop, ilkadım petshop, canik petshop, kapıda ödeme petshop atakum",
     ogImage: "/og-image.webp",
   },
-  google: { siteVerification: "65qy-A3MD5qmfaylK4tTt9eRGegujQLA6kRipeTTObo" },
+  google: {},
   commerce: {
     fulfillment: "local",
     shippingLabel: "Getirmesi",
