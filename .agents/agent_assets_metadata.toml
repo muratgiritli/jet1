@@ -161,3 +161,9 @@ id = "9hSFtvJi63YYZXY8ndHJ2"
 uri = "file://jetgo-sitemaps-all-domains.zip"
 type = "unspecified"
 title = "Tüm domainlerin sitemap'leri (9 domain × 4 dosya)"
+
+[[outputs]]
+id = "ZTwMmEgKd340JamvhLFCj"
+uri = "file://jetgo-sitemaps.zip"
+type = "unspecified"
+title = "Tüm domainlerin sitemap'leri (9 site)"

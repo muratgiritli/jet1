@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <sitemap>
+    <loc>https://www.jetgomarket.com/sitemap-main.xml</loc>
+    <lastmod>2026-06-23</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://www.jetgomarket.com/sitemap-products.xml</loc>
+    <lastmod>2026-06-23</lastmod>
+  </sitemap>
+  <sitemap>
+    <loc>https://www.jetgomarket.com/sitemap-seo.xml</loc>
+    <lastmod>2026-06-23</lastmod>
+  </sitemap>
+</sitemapindex>
