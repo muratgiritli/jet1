@@ -113,25 +113,28 @@ export default function Header() {
       </nav>
 
       <div className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-3 md:px-4 py-2 flex items-center justify-center gap-2 md:gap-3 flex-wrap">
-          <Link href="/magaza">
-            <button
-              className="flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 rounded-full bg-green-600 hover:bg-green-700 text-white text-[11px] md:text-sm font-bold shadow-sm transition-colors whitespace-nowrap"
-              data-testid="btn-header-physical-store"
-            >
-              <Store className="w-3.5 h-3.5 md:w-4 md:h-4" />
-              <span>FİZİKİ MAĞAZAMIZA GİT</span>
-            </button>
-          </Link>
+        <div className="max-w-6xl mx-auto px-2 md:px-4 py-2 flex items-center justify-center gap-2 md:gap-3 flex-nowrap">
+          <a
+            href="https://www.enuygun.pet"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-5 py-1.5 md:py-2 rounded-full bg-green-600 hover:bg-green-700 text-white text-[11px] md:text-sm font-bold shadow-sm transition-colors whitespace-nowrap"
+            data-testid="btn-header-physical-store"
+          >
+            <Store className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
+            <span className="md:hidden">Fiziki Mağaza</span>
+            <span className="hidden md:inline">FİZİKİ MAĞAZAMIZA GİT</span>
+          </a>
           <a
             href={`https://wa.me/${whatsappDigits}`}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 rounded-full bg-white border border-gray-300 hover:border-green-500 hover:bg-green-50 text-gray-800 text-[11px] md:text-sm font-bold shadow-sm transition-colors whitespace-nowrap"
+            className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-5 py-1.5 md:py-2 rounded-full bg-white border border-gray-300 hover:border-green-500 hover:bg-green-50 text-gray-800 text-[11px] md:text-sm font-bold shadow-sm transition-colors whitespace-nowrap"
             data-testid="btn-header-whatsapp"
           >
-            <SiWhatsapp className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-600" />
-            <span>WHATSAPP: {CURRENT_STORE.phoneDisplay}</span>
+            <SiWhatsapp className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-600 shrink-0" />
+            <span className="md:hidden">{CURRENT_STORE.phoneDisplay}</span>
+            <span className="hidden md:inline">WHATSAPP: {CURRENT_STORE.phoneDisplay}</span>
           </a>
         </div>
       </div>
