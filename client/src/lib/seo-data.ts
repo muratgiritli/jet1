@@ -7,6 +7,8 @@ import { ATAKUMBIZ_ALL_KEYWORD_PAGES } from "./keyword-pages-atakumbiz-all";
 import { MARKAPET_ALL_KEYWORD_PAGES } from "./keyword-pages-markapet-all";
 import { KARADENIZ_ALL_KEYWORD_PAGES } from "./keyword-pages-karadeniz-all";
 import { SAMSUN_ALL_KEYWORD_PAGES } from "./keyword-pages-samsun-all";
+import { JETGOPET_ALL_KEYWORD_PAGES } from "./keyword-pages-jetgopet-all";
+import { SAMSUNPET_ALL_KEYWORD_PAGES } from "./keyword-pages-samsunpet-all";
 import { JETGO_KEYWORD_PAGES } from "./keyword-pages-jetgo";
 import { ROYALCANIN_KEYWORD_PAGES } from "./keyword-pages-jetgo-royalcanin";
 import { MARKALAR_KEYWORD_PAGES } from "./keyword-pages-jetgo-markalar";
@@ -4369,6 +4371,55 @@ for (const p of SAMSUN_ALL_KEYWORD_PAGES) {
 }
 SEO_PAGES.push(...SAMSUN_ALL_EXCLUSIVE_PAGES);
 
+// JETGO broad multi-category corpus (storeId "jetgopet"), served ONLY on
+// jetgo.pet. This is the FOURTH store-exclusive corpus built for a LOCAL store
+// (alongside atakum-all / jetgoshop-all / atakumbiz-all): every page is tagged
+// availability "localOnly" by the generator, so it is served exclusively on the
+// same-day jetgo.pet domain. jetgo.pet shares the JETGO brand/theme with
+// jetgomarket.com, so it cannot differ by brand or NAP — the corpus is unique vs
+// jetgomarket.com AND vs the atakum-all / jetgoshop-all / atakumbiz-all corpora by
+// CONTENT (wholly separate prose / FAQ / section rhythm). De-dup mirrors the rules
+// above:
+//   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
+//     never clobber curated content;
+//   • a collision with a shared KEYWORD slug becomes a jetgopet override; a
+//     brand-new slug is added outright as a jetgopet-scoped page.
+const _jetgopetAllSeen = new Set<string>();
+export const JETGOPET_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
+for (const p of JETGOPET_ALL_KEYWORD_PAGES) {
+  if (_jetgopetAllSeen.has(p.slug)) continue;
+  const shared = _sharedTypeBySlug.get(p.slug);
+  if (shared !== undefined && shared !== "keyword") continue;
+  _jetgopetAllSeen.add(p.slug);
+  JETGOPET_ALL_EXCLUSIVE_PAGES.push(p);
+}
+SEO_PAGES.push(...JETGOPET_ALL_EXCLUSIVE_PAGES);
+
+// SAMSUN PET SHOP broad multi-category corpus (storeId "samsunpet"), served ONLY
+// on samsunpet.com. This is the FOURTH store-exclusive CARGO corpus (after
+// marka.pet / karadenizpetshop.com / atakumpet.com): every page is tagged
+// availability "cargoOnly" by the generator, so it is served exclusively on the
+// Türkiye-geneli samsunpet domain and never on a local store. It consumes the SAME
+// markalar+diger universe as the samsun / karadeniz / markapet corpora, so the same
+// slugs resolve on all of them — its prose is a wholly separate cargo "Samsun Pet
+// Shop" voice, unique BY CONTENT vs jetgomarket.com AND the samsun-all /
+// karadeniz-all / markapet-all sibling cargo corpora. De-dup mirrors the rules
+// above:
+//   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
+//     never clobber curated content;
+//   • a collision with a shared KEYWORD slug becomes a samsunpet override; a
+//     brand-new slug is added outright as a samsunpet-scoped page.
+const _samsunpetAllSeen = new Set<string>();
+export const SAMSUNPET_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
+for (const p of SAMSUNPET_ALL_KEYWORD_PAGES) {
+  if (_samsunpetAllSeen.has(p.slug)) continue;
+  const shared = _sharedTypeBySlug.get(p.slug);
+  if (shared !== undefined && shared !== "keyword") continue;
+  _samsunpetAllSeen.add(p.slug);
+  SAMSUNPET_ALL_EXCLUSIVE_PAGES.push(p);
+}
+SEO_PAGES.push(...SAMSUNPET_ALL_EXCLUSIVE_PAGES);
+
 // ---------------------------------------------------------------------------
 // Commerce-model availability + per-store resolution.
 // ---------------------------------------------------------------------------
@@ -4575,6 +4626,26 @@ for (const group of SITEMAP_PARTITION_GROUPS) {
       const slug = href.slice(1);
       if (!slug || slug.includes("/")) return true; // app / parametric route
       return _samsunServed.has(slug);
+    });
+  }
+}
+
+// samsunpet.com (cargo) internal links must resolve WITHIN the cargo slug space
+// too — same rationale as the marka.pet / karadeniz / samsun filters above. Drop
+// any single-segment SEO link on a samsunpet-exclusive page that does not resolve
+// to a slug reachable on samsunpet.com; parametric/app routes (nested "/") are
+// left untouched.
+{
+  const _samsunpetServed = new Set<string>(_cargoSlugMap.keys());
+  for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) _samsunpetServed.add(p.slug);
+  for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) {
+    if (!p.internalLinks) continue;
+    p.internalLinks = p.internalLinks.filter((l) => {
+      const href = l.href || "";
+      if (!href.startsWith("/")) return true;
+      const slug = href.slice(1);
+      if (!slug || slug.includes("/")) return true; // app / parametric route
+      return _samsunpetServed.has(slug);
     });
   }
 }

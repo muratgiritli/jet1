@@ -40,12 +40,16 @@ import {
   MARKAPET_ALL_EXCLUSIVE_PAGES,
   KARADENIZ_ALL_EXCLUSIVE_PAGES,
   SAMSUN_ALL_EXCLUSIVE_PAGES,
+  JETGOPET_ALL_EXCLUSIVE_PAGES,
+  SAMSUNPET_ALL_EXCLUSIVE_PAGES,
 } from "../../client/src/lib/seo-data";
 import { JETGOSHOP_ALL_KEYWORD_PAGES, JETGOSHOP_ALL_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgoshop-all";
 import { ATAKUMBIZ_ALL_KEYWORD_PAGES, ATAKUMBIZ_ALL_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-atakumbiz-all";
 import { MARKAPET_ALL_KEYWORD_PAGES, MARKAPET_ALL_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-markapet-all";
 import { KARADENIZ_ALL_KEYWORD_PAGES, KARADENIZ_ALL_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-karadeniz-all";
 import { SAMSUN_ALL_KEYWORD_PAGES, SAMSUN_ALL_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-samsun-all";
+import { JETGOPET_ALL_KEYWORD_PAGES, JETGOPET_ALL_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgopet-all";
+import { SAMSUNPET_ALL_KEYWORD_PAGES, SAMSUNPET_ALL_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-samsunpet-all";
 import { ROYALCANIN_KEYWORD_PAGES } from "../../client/src/lib/keyword-pages-jetgo-royalcanin";
 import { MARKALAR_KEYWORD_PAGES, MARKALAR_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgo-markalar";
 import { DIGER_KEYWORD_PAGES, DIGER_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgo-diger";
@@ -2442,12 +2446,14 @@ test("test-OTP bypass lets a NEW customer place a local jetgo.shop order (source
 const SEO_TEST_SLUG = "jetgo-petshop";            // localOnly (local hosts)
 const CARGO_SEO_TEST_SLUG = "kedi-mamasi-siparis"; // cargoOnly (cargo hosts)
 const seoTestPage = findSeoPage(SEO_TEST_SLUG, getStoreByHost(JETGO_HOST));
-// Resolve the cargo fixture against a CLEAN cargo store (samsunpet owns no
-// store-exclusive corpus) so it returns the SHARED storeless cargo page that
-// still carries the raw "JETGO" placeholder. The cargo stores that own an
-// exclusive corpus (samsun, karadeniz, markapet) override this slug with an
-// already-brandified page, which would defeat the brandify guard below.
-const cargoSeoTestPage = findSeoPage(CARGO_SEO_TEST_SLUG, getStoreByHost(SAMSUNPET_HOST));
+// Resolve the cargo fixture from the SHARED, storeless cargoOnly page directly:
+// no cargo store is "clean" anymore (samsunpet, samsun, karadeniz and markapet ALL
+// own an exclusive corpus that overrides this slug with an already-brandified
+// page, which would defeat the brandify guard below). The storeless cargo twin
+// still carries the raw "JETGO" placeholder that the per-host brandify must swap.
+const cargoSeoTestPage = SEO_PAGES.find(
+  (p) => p.slug === CARGO_SEO_TEST_SLUG && !p.storeId && (p.availability ?? "all") === "cargoOnly",
+);
 
 // Mirror of seo-meta.ts escapeHtml so the exact-match assertions below stay
 // correct even if the brandified copy ever contains HTML-special characters.
@@ -2924,18 +2930,21 @@ test("sitemap partition: the 3 JETGO domains list disjoint, complete shared slic
     (sm) => new Set(sm.filter((p) => !p.storeId).map((p) => p.slug)),
   );
 
-  // The full shared universe the group partitions: storeless LOCAL pages eligible
-  // on a CLEAN member (jetgopet owns no exclusives), MINUS any slug claimed by a
-  // group-exclusive override — those are listed only by their exclusive owner and
-  // are dropped from the hash partition on every member.
+  // The full shared universe the group partitions: the RAW storeless LOCAL corpus,
+  // MINUS any slug claimed by a group-exclusive override — those are listed only by
+  // their exclusive owner and are dropped from the hash partition on every member.
+  // No member is clean anymore (jetgo, jetgopet AND jetgoshop each own a corpus).
   const exclusiveSlugs = new Set<string>([
     ...sitemaps[0].filter((p) => p.storeId).map((p) => p.slug), // jetgo exclusives
+    ...sitemaps[1].filter((p) => p.storeId).map((p) => p.slug), // jetgopet exclusives
     ...sitemaps[2].filter((p) => p.storeId).map((p) => p.slug), // jetgoshop exclusives
   ]);
+  // Base the shared universe on the RAW storeless local-eligible corpus, MINUS any
+  // slug claimed by a group exclusive. Every member of this group now owns an
+  // exclusive corpus, so getSeoPagesForStore(<member>) can no longer expose the
+  // full storeless set (it hides the twins that member overrides).
   const sharedFull = new Set(
-    getSeoPagesForStore(jetgopet)
-      .filter((p) => !p.storeId && !exclusiveSlugs.has(p.slug))
-      .map((p) => p.slug),
+    [...CLEAN_LOCAL_SLUGS].filter((s) => !exclusiveSlugs.has(s)),
   );
 
   // Each shared slice is non-empty and a strict subset of the shared universe.
@@ -2969,16 +2978,20 @@ test("sitemap partition: the 3 JETGO domains list disjoint, complete shared slic
   for (const p of JETGOSHOP_ALL_EXCLUSIVE_PAGES) {
     assert.ok(shopEx.has(p.slug), `${p.slug}: jetgoshop sitemap must list its own exclusive`);
   }
-  assert.equal(
-    sitemaps[1].filter((p) => p.storeId).length,
-    0,
-    "jetgopet (a clean member) must list NO store-exclusive page",
-  );
+  const petEx = new Set(sitemaps[1].filter((p) => p.storeId === "jetgopet").map((p) => p.slug));
+  for (const p of JETGOPET_ALL_EXCLUSIVE_PAGES) {
+    assert.ok(petEx.has(p.slug), `${p.slug}: jetgopet sitemap must list its own exclusive`);
+  }
   // No FOREIGN store-exclusive leaks into any member's sitemap.
   assert.equal(
     sitemaps[0].filter((p) => p.storeId && p.storeId !== "jetgo").length,
     0,
     "jetgo sitemap must not list a foreign exclusive",
+  );
+  assert.equal(
+    sitemaps[1].filter((p) => p.storeId && p.storeId !== "jetgopet").length,
+    0,
+    "jetgopet sitemap must not list a foreign exclusive",
   );
   assert.equal(
     sitemaps[2].filter((p) => p.storeId && p.storeId !== "jetgoshop").length,
@@ -2996,11 +3009,11 @@ test("sitemap partition: the 3 JETGO domains list disjoint, complete shared slic
 // The 4 CARGO sibling domains (atakumpet.com → "samsun", samsunpet.com →
 // "samsunpet", karadenizpetshop.com → "karadeniz", marka.pet → "markapet") share
 // the SAME cargo corpus and must likewise each publish a DISTINCT sitemap. This is
-// an INDEPENDENT partition group from the JETGO trio. atakumpet.com,
-// karadenizpetshop.com and marka.pet each ALSO own a store-EXCLUSIVE corpus, so —
-// exactly like the JETGO trio — the shared corpus is hash-partitioned across the
-// group while each of those domains also lists ALL of its own exclusives (which
-// bypass the partition). Only samsunpet.com remains a CLEAN member (no exclusives).
+// an INDEPENDENT partition group from the JETGO trio. ALL four cargo domains
+// (atakumpet.com, samsunpet.com, karadenizpetshop.com, marka.pet) own a
+// store-EXCLUSIVE corpus, so — exactly like the JETGO trio — the shared corpus is
+// hash-partitioned across the group while each domain also lists ALL of its own
+// exclusives (which bypass the partition). No cargo member is clean anymore.
 test("sitemap partition: the 4 cargo domains list disjoint, complete shared slices + own exclusives", () => {
   const samsun = getStoreByHost("www.atakumpet.com");
   const samsunpet = getStoreByHost("www.samsunpet.com");
@@ -3026,22 +3039,20 @@ test("sitemap partition: the 4 cargo domains list disjoint, complete shared slic
     (sm) => new Set(sm.filter((p) => !p.storeId).map((p) => p.slug)),
   );
 
-  // The full shared universe the group partitions: storeless cargo pages eligible
-  // on the only CLEAN member (samsunpet owns no exclusives), MINUS any slug claimed
-  // by a group-exclusive override (samsun OR karadeniz OR markapet) — those are
-  // listed only by their exclusive owner and are dropped from the hash partition on
-  // every member. The base MUST be the clean member: samsun now overrides its own
-  // universe, so getSeoPagesForStore(samsun) would no longer expose those storeless
-  // twins.
+  // The full shared universe the group partitions: storeless cargo pages, MINUS any
+  // slug claimed by a group-exclusive override (samsun OR samsunpet OR karadeniz OR
+  // markapet) — those are listed only by their exclusive owner and are dropped from
+  // the hash partition on every member. No cargo member is clean anymore (all four
+  // own an exclusive corpus), so the base MUST be the RAW storeless cargo corpus;
+  // getSeoPagesForStore(<member>) would hide the twins that member overrides.
   const exclusiveSlugs = new Set<string>([
     ...sitemaps[0].filter((p) => p.storeId).map((p) => p.slug), // samsun exclusives
+    ...sitemaps[1].filter((p) => p.storeId).map((p) => p.slug), // samsunpet exclusives
     ...sitemaps[2].filter((p) => p.storeId).map((p) => p.slug), // karadeniz exclusives
     ...sitemaps[3].filter((p) => p.storeId).map((p) => p.slug), // markapet exclusives
   ]);
   const sharedFull = new Set(
-    getSeoPagesForStore(samsunpet)
-      .filter((p) => !p.storeId && !exclusiveSlugs.has(p.slug))
-      .map((p) => p.slug),
+    [...CLEAN_CARGO_SLUGS].filter((s) => !exclusiveSlugs.has(s)),
   );
 
   // Each shared slice is non-empty and a strict subset of the shared universe.
@@ -3065,11 +3076,14 @@ test("sitemap partition: the 4 cargo domains list disjoint, complete shared slic
   for (const s of sharedFull) assert.ok(sharedUnion.has(s), `cargo shared slug missing from every sitemap: ${s}`);
 
   // ---- OWN store-exclusive pages bypass the partition: atakumpet.com,
-  // karadenizpetshop.com and marka.pet each list ALL of their own; the one clean
-  // member (samsunpet) lists NONE. ----
+  // samsunpet.com, karadenizpetshop.com and marka.pet each list ALL of their own. ----
   const samsunEx = new Set(sitemaps[0].filter((p) => p.storeId === "samsun").map((p) => p.slug));
   for (const p of SAMSUN_ALL_EXCLUSIVE_PAGES) {
     assert.ok(samsunEx.has(p.slug), `${p.slug}: atakumpet.com sitemap must list its own exclusive`);
+  }
+  const samsunpetEx = new Set(sitemaps[1].filter((p) => p.storeId === "samsunpet").map((p) => p.slug));
+  for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) {
+    assert.ok(samsunpetEx.has(p.slug), `${p.slug}: samsunpet.com sitemap must list its own exclusive`);
   }
   const karadenizEx = new Set(sitemaps[2].filter((p) => p.storeId === "karadeniz").map((p) => p.slug));
   for (const p of KARADENIZ_ALL_EXCLUSIVE_PAGES) {
@@ -3079,18 +3093,16 @@ test("sitemap partition: the 4 cargo domains list disjoint, complete shared slic
   for (const p of MARKAPET_ALL_EXCLUSIVE_PAGES) {
     assert.ok(markapetEx.has(p.slug), `${p.slug}: marka.pet sitemap must list its own exclusive`);
   }
-  for (const i of [1]) {
-    assert.equal(
-      sitemaps[i].filter((p) => p.storeId).length,
-      0,
-      `cargo clean member ${i} must list NO store-exclusive page`,
-    );
-  }
-  // No FOREIGN store-exclusive leaks into any exclusive-owning sitemap.
+  // No FOREIGN store-exclusive leaks into any sitemap.
   assert.equal(
     sitemaps[0].filter((p) => p.storeId && p.storeId !== "samsun").length,
     0,
     "atakumpet.com sitemap must not list a foreign exclusive",
+  );
+  assert.equal(
+    sitemaps[1].filter((p) => p.storeId && p.storeId !== "samsunpet").length,
+    0,
+    "samsunpet.com sitemap must not list a foreign exclusive",
   );
   assert.equal(
     sitemaps[2].filter((p) => p.storeId && p.storeId !== "karadeniz").length,
@@ -3115,8 +3127,10 @@ test("sitemap partition: the 4 cargo domains list disjoint, complete shared slic
 // so adding the cargo group never reassigns a JETGO slug.
 test("sitemap partition: JETGO and cargo groups are independent (jetgopet stays mod-3)", () => {
   const jetgopet = getStoreByHost("www.jetgo.pet"); // index 1 of ["jetgo","jetgopet","jetgoshop"]
-  const slice = getSitemapPagesForStore(jetgopet).map((p) => p.slug);
-  assert.ok(slice.length > 0, "jetgopet must still own a non-empty slice");
+  // Only the SHARED (storeless) slugs are governed by the hash partition; jetgopet's
+  // own store-exclusive pages bypass it and need not hash to its index.
+  const slice = getSitemapPagesForStore(jetgopet).filter((p) => !p.storeId).map((p) => p.slug);
+  assert.ok(slice.length > 0, "jetgopet must still own a non-empty shared slice");
   for (const slug of slice) {
     assert.equal(stableSlugHash(slug) % 3, 1, `jetgopet slug not owned under mod-3: ${slug}`);
   }
@@ -3821,10 +3835,24 @@ test("a havale/EFT order does NOT send the generic buyer 'siparisiniz alindi' SM
 
 const ATAKUM_STORE = getStoreByHost(ATAKUM_HOST);
 const SIBLING_LOCAL_STORE = getStoreByHost(JETGO_HOST);
-// A local sibling that carries NO store-exclusive corpus of its own, so its slug
-// set equals the SHARED local corpus. jetgo can no longer play this role (it now
-// owns the Pro Plan keyword corpus), so 1:1-override parity is measured here.
-const CLEAN_SIBLING_LOCAL_STORE = getStoreByHost(JETGOPET_HOST);
+// No local store is "clean" anymore: all four JETGO-local domains (jetgo,
+// jetgoshop, atakumbiz, jetgopet) now own an exclusive corpus, so none can stand
+// in for "the shared local corpus a store with no exclusives would serve". The
+// clean local/cargo SLUG SET is therefore computed DIRECTLY from the shared,
+// storeless corpus, independent of any store's overrides/additions; the clean
+// local PAGE COUNT is the number of storeless local-eligible entries.
+const CLEAN_LOCAL_SLUGS = new Set(
+  SEO_PAGES.filter((p) => !p.storeId && (p.availability ?? "all") !== "cargoOnly").map((p) => p.slug),
+);
+const CLEAN_CARGO_SLUGS = new Set(
+  SEO_PAGES.filter((p) => !p.storeId && (p.availability ?? "all") !== "localOnly").map((p) => p.slug),
+);
+const CLEAN_LOCAL_PAGE_COUNT = SEO_PAGES.filter(
+  (p) => !p.storeId && (p.availability ?? "all") !== "cargoOnly",
+).length;
+// A representative OTHER local store for foreign-exclusive leak checks. Its own
+// exclusives are irrelevant here — these checks only look for a FOREIGN storeId.
+const OTHER_LOCAL_STORE = getStoreByHost(JETGOPET_HOST);
 const CARGO_STORE_FOR_ATAKUM = getStoreByHost(SAMSUN_HOST);
 const ATAKUM_SAMPLE_SLUGS = ATAKUM_EXCLUSIVE_PAGES.slice(0, 6).map((p) => p.slug);
 
@@ -3900,15 +3928,14 @@ test("atakum-exclusive: legacy overrides REPLACE shared slugs; the new corpus AD
   const slugs = ata.map((p) => p.slug);
   assert.equal(new Set(slugs).size, slugs.length, "atakum corpus must have unique slugs (no double-registration)");
 
-  const clean = getSeoPagesForStore(CLEAN_SIBLING_LOCAL_STORE);
   assert.equal(
     ata.length,
-    clean.length + ATAKUM_ALL_EXCLUSIVE_PAGES.length,
-    "atakum size must equal a clean sibling + the brand-new ATAKUM_ALL corpus (legacy overrides replace, new corpus adds)",
+    CLEAN_LOCAL_PAGE_COUNT + ATAKUM_ALL_EXCLUSIVE_PAGES.length,
+    "atakum size must equal the shared local corpus + the brand-new ATAKUM_ALL corpus (legacy overrides replace, new corpus adds)",
   );
 
   const ataSet = availableSlugSet(ATAKUM_STORE);
-  const cleanSet = availableSlugSet(CLEAN_SIBLING_LOCAL_STORE);
+  const cleanSet = CLEAN_LOCAL_SLUGS;
   // The clean sibling's entire slug set is a SUBSET of atakum's (atakum overrides
   // those same slugs but never drops one).
   for (const s of cleanSet) {
@@ -4024,15 +4051,19 @@ test("jetgo-exclusive: pages are served ONLY on jetgomarket.com (no leak to sibl
   }
   for (const slug of JETGO_SAMPLE_SLUGS) {
     assert.ok(findSeoPage(slug, JETGO_STORE), `${slug}: must resolve on jetgo`);
-    assert.equal(
-      findSeoPage(slug, getStoreByHost(JETGOPET_HOST)),
-      undefined,
-      `${slug}: jetgo-exclusive must NOT resolve on a sibling local store`,
+    // Every sibling now owns an exclusive corpus, so a shared slug may resolve to
+    // the SIBLING's own store-scoped override — but NEVER to jetgo's exclusive page.
+    const onSiblingLocal = findSeoPage(slug, getStoreByHost(JETGOPET_HOST));
+    assert.ok(
+      !onSiblingLocal || onSiblingLocal.storeId !== "jetgo",
+      `${slug}: jetgo-exclusive must NOT leak to a sibling local store (only the sibling's own override may resolve)`,
     );
-    assert.equal(
-      findSeoPage(slug, getStoreByHost(SAMSUNPET_HOST)),
-      undefined,
-      `${slug}: local-only jetgo page must be hidden on a cargo store`,
+    // A cargo store may serve its OWN cargoOnly override but never jetgo's page,
+    // and never a localOnly page (which would be an untruthful same-day surface).
+    const onCargo = findSeoPage(slug, getStoreByHost(SAMSUNPET_HOST));
+    assert.ok(
+      !onCargo || (onCargo.storeId !== "jetgo" && onCargo.availability !== "localOnly"),
+      `${slug}: jetgo local page must NOT leak to a cargo store (cargo serves only its own cargoOnly override)`,
     );
   }
 });
@@ -4157,11 +4188,12 @@ test("royal-canin: breed/size-line keywords carry the bespoke 'Irk ve Boyuta' se
   const blob = JSON.stringify(labrador);
   assert.match(blob, /Labrador/, "breed page must name the breed");
   assert.match(blob, /köpek/i, "Labrador page must be framed as a dog product");
-  // ...and it must NOT leak onto a sibling local store.
-  assert.equal(
-    findSeoPage("royal-canin-labrador", getStoreByHost(JETGOPET_HOST)),
-    undefined,
-    "RC breed page must not resolve on a sibling local store",
+  // ...and jetgo's RC breed page must NOT leak onto a sibling local store — the
+  // sibling now owns the same-universe slug and serves its OWN store-scoped page.
+  const labradorOnSibling = findSeoPage("royal-canin-labrador", getStoreByHost(JETGOPET_HOST));
+  assert.ok(
+    !labradorOnSibling || labradorOnSibling.storeId !== "jetgo",
+    "RC breed page must not leak to a sibling local store (sibling serves only its own override)",
   );
 });
 
@@ -4388,16 +4420,17 @@ test("markalar: a representative page is served only on jetgomarket.com and list
   const p = markalarBySlug.get(slug);
   assert.ok(p, `${slug} must exist in the markalar corpus`);
   assert.ok(findSeoPage(slug, JETGO_STORE), `${slug}: must resolve on jetgo`);
-  assert.equal(
-    findSeoPage(slug, getStoreByHost(JETGOPET_HOST)),
-    undefined,
-    `${slug}: markalar page must NOT resolve on a sibling local store`,
-  );
-  assert.equal(
-    findSeoPage(slug, getStoreByHost(SAMSUNPET_HOST)),
-    undefined,
-    `${slug}: local-only markalar page must be hidden on a cargo store`,
-  );
+  // Siblings now own exclusive corpora over the same markalar universe. This slug is a
+  // member of both the LOCAL (ATAKUM) and CARGO (markalar) universes, so each sibling
+  // must resolve to its OWN store-scoped override — and NEVER to jetgo's page.
+  const onSiblingLocal = findSeoPage(slug, getStoreByHost(JETGOPET_HOST));
+  assert.ok(onSiblingLocal, `${slug}: a sibling local store sharing the ATAKUM universe must serve its own override`);
+  assert.equal(onSiblingLocal!.storeId, "jetgopet", `${slug}: a sibling local store must serve ONLY its own page, never jetgo's`);
+  assert.equal(onSiblingLocal!.availability, "localOnly", `${slug}: the sibling local override stays localOnly`);
+  const onCargo = findSeoPage(slug, getStoreByHost(SAMSUNPET_HOST));
+  assert.ok(onCargo, `${slug}: a cargo store sharing the markalar universe must serve its own override`);
+  assert.equal(onCargo!.storeId, "samsunpet", `${slug}: a cargo store must serve ONLY its own page, never jetgo's`);
+  assert.equal(onCargo!.availability, "cargoOnly", `${slug}: a cargo store never serves a localOnly markalar page`);
   const jetgoSitemap = new Set(getSitemapPagesForStore(JETGO_STORE).map((q) => q.slug));
   assert.ok(jetgoSitemap.has(slug), `${slug}: jetgo sitemap must list the markalar page`);
 });
@@ -4702,16 +4735,17 @@ test("diger: a representative page is served only on jetgomarket.com and listed 
   const p = digerBySlug.get(slug);
   assert.ok(p, `${slug} must exist in the diger corpus`);
   assert.ok(findSeoPage(slug, JETGO_STORE), `${slug}: must resolve on jetgo`);
-  assert.equal(
-    findSeoPage(slug, getStoreByHost(JETGOPET_HOST)),
-    undefined,
-    `${slug}: diger page must NOT resolve on a sibling local store`,
-  );
-  assert.equal(
-    findSeoPage(slug, getStoreByHost(SAMSUNPET_HOST)),
-    undefined,
-    `${slug}: local-only diger page must be hidden on a cargo store`,
-  );
+  // Siblings now own exclusive corpora over the same diger universe. This slug is a
+  // member of both the LOCAL (ATAKUM) and CARGO (diger) universes, so each sibling
+  // must resolve to its OWN store-scoped override — and NEVER to jetgo's page.
+  const onSiblingLocal = findSeoPage(slug, getStoreByHost(JETGOPET_HOST));
+  assert.ok(onSiblingLocal, `${slug}: a sibling local store sharing the ATAKUM universe must serve its own override`);
+  assert.equal(onSiblingLocal!.storeId, "jetgopet", `${slug}: a sibling local store must serve ONLY its own page, never jetgo's`);
+  assert.equal(onSiblingLocal!.availability, "localOnly", `${slug}: the sibling local override stays localOnly`);
+  const onCargo = findSeoPage(slug, getStoreByHost(SAMSUNPET_HOST));
+  assert.ok(onCargo, `${slug}: a cargo store sharing the diger universe must serve its own override`);
+  assert.equal(onCargo!.storeId, "samsunpet", `${slug}: a cargo store must serve ONLY its own page, never jetgo's`);
+  assert.equal(onCargo!.availability, "cargoOnly", `${slug}: a cargo store never serves a localOnly diger page`);
   const jetgoSitemap = new Set(getSitemapPagesForStore(JETGO_STORE).map((q) => q.slug));
   assert.ok(jetgoSitemap.has(slug), `${slug}: jetgo sitemap must list the diger page`);
 });
@@ -4811,7 +4845,7 @@ test("atakum-all: atakum-tagged pages never leak to any other store; overrides s
   assert.ok(onJetgo, `${overrideSlug}: jetgo must still serve its own page at this slug`);
   assert.notEqual(onJetgo!.storeId, "atakum", `${overrideSlug}: jetgo must NOT serve the atakum-tagged page`);
   // Every new atakum slug is an ADDITION vs a clean sibling (jetgopet): absent there.
-  const cleanSet = availableSlugSet(CLEAN_SIBLING_LOCAL_STORE);
+  const cleanSet = CLEAN_LOCAL_SLUGS;
   for (const p of ATAKUM_ALL_EXCLUSIVE_PAGES) {
     assert.ok(!cleanSet.has(p.slug), `${p.slug}: must be absent from a clean sibling (atakum addition)`);
   }
@@ -5040,7 +5074,7 @@ test("jetgoshop-all: jetgoshop-tagged pages never leak to any other store; overr
   assert.ok(onJetgo, `${overrideSlug}: jetgomarket must still serve its own page at this slug`);
   assert.notEqual(onJetgo!.storeId, "jetgoshop", `${overrideSlug}: jetgomarket must NOT serve the jetgoshop-tagged page`);
   // Every BRAND-NEW jetgoshop slug is an addition vs a clean sibling (jetgopet).
-  const cleanSet = availableSlugSet(CLEAN_SIBLING_LOCAL_STORE);
+  const cleanSet = CLEAN_LOCAL_SLUGS;
   let brandNew = 0;
   for (const p of JETGOSHOP_ALL_EXCLUSIVE_PAGES) {
     if (!jetgoSet.has(p.slug)) {
@@ -5252,6 +5286,332 @@ test("jetgoshop-all: SSR serves jetgo.shop's bespoke content, self-canonical, di
 });
 
 // ===========================================================================
+// JETGO PET broad keyword corpus (jetgo.pet, store id "jetgopet") — the 8th
+// corpus and the SECOND of the JETGO trio to own one. jetgo.pet is a LOCAL
+// same-day store that shares the "JETGO Pet Shop" brand WORD with jetgomarket.com
+// AND consumes the IDENTICAL ATAKUM keyword universe as the jetgoshop-all and
+// atakum-all corpora, so it CANNOT differ by facts or slugs. The uniqueness
+// invariant is therefore wholly on the PROSE: the corpus must read distinct from
+//   • the SHARED jetgomarket.com keyword pages,
+//   • the atakum-all corpus (atakumpetshop.com, "Atakum Pet Shop"), AND
+//   • the jetgoshop-all corpus (jetgo.shop) — its same-universe local sibling.
+// ===========================================================================
+const JETGOPET_STORE = getStoreByHost(JETGOPET_HOST);
+// Intent pages are identified by their (exclusive) metaTitle markers — chosen to
+// differ from the sibling local corpora (jetgoshop "Sorumlu Sahiplenme"/"Yerel
+// Seçenek"/"Bilgilendirme", atakum "Sahiplenme Rehberi"/"Yerel Alternatif"/
+// "Bilgilendirme").
+const JETGOPET_LIVE_MARK = /Bilinçli Sahiplenme/;
+const JETGOPET_RETAILER_MARK = /Yerel Adres/;
+const JETGOPET_SERVICE_MARK = /Kısa Bilgi Notu/;
+
+test("jetgopet-all: a large keyword corpus is registered, exclusive, and complete", () => {
+  assert.ok(
+    JETGOPET_ALL_EXCLUSIVE_PAGES.length > 5000,
+    `expected a large jetgopet-all corpus, got ${JETGOPET_ALL_EXCLUSIVE_PAGES.length}`,
+  );
+  const slugs = JETGOPET_ALL_EXCLUSIVE_PAGES.map((p) => p.slug);
+  assert.equal(new Set(slugs).size, slugs.length, "jetgopet-all corpus must have unique slugs");
+  for (const p of JETGOPET_ALL_EXCLUSIVE_PAGES) {
+    assert.equal(p.storeId, "jetgopet", `${p.slug}: jetgopet-all page must be storeId jetgopet`);
+    assert.equal(p.availability, "localOnly", `${p.slug}: jetgopet-all page must be localOnly`);
+    assert.equal(p.type, "keyword", `${p.slug}: jetgopet-all page must be a keyword page`);
+    assert.ok(
+      p.metaTitle && p.metaDescription && p.h1 &&
+      (p.intro ?? []).length && (p.sections ?? []).length &&
+      (p.faq ?? []).length && (p.internalLinks ?? []).length,
+      `${p.slug}: must carry title/meta/h1 + intro/sections/faq/internalLinks for a substantive AI-search page`,
+    );
+    // Genuine jetgo.pet first-party content (real NAP phone) — not a brand swap.
+    assert.match(markalarCopy(p), /0850 840 39 59/, `${p.slug}: must carry the jetgo.pet NAP phone`);
+    // No slug may shadow a real client app route.
+    assert.ok(!RESERVED_APP_SLUGS.has(p.slug), `${p.slug}: must not shadow a reserved app route`);
+  }
+});
+
+test("jetgopet-all: noise keywords are skipped and the rest are registered", () => {
+  assert.ok(JETGOPET_ALL_SKIPPED_NOISE > 0, "expected some noise keywords (e.g. Spanish 'buscar') to be skipped");
+  assert.ok(
+    JETGOPET_ALL_KEYWORD_PAGES.length >= JETGOPET_ALL_EXCLUSIVE_PAGES.length,
+    "generated pages must be a superset of the registered exclusive corpus (curated collisions dropped)",
+  );
+});
+
+test("jetgopet-all: every internal link resolves within jetgo.pet's own slug space", () => {
+  const petSet = availableSlugSet(JETGOPET_STORE);
+  let checked = 0;
+  for (const p of JETGOPET_ALL_EXCLUSIVE_PAGES) {
+    for (const l of p.internalLinks ?? []) {
+      const target = (l.href ?? "").replace(/^\//, "");
+      if (!target || target.includes("/")) continue; // skip non-flat (parametric) routes
+      checked++;
+      assert.ok(petSet.has(target), `${p.slug}: internal link "/${target}" must resolve on jetgo.pet`);
+    }
+  }
+  assert.ok(checked > 1000, `expected many internal links to verify, got ${checked}`);
+});
+
+test("jetgopet-all: jetgopet-tagged pages never leak to any other store; overrides stay store-scoped", () => {
+  for (const store of [
+    getStoreByHost(JETGO_HOST),
+    getStoreByHost(JETGOSHOP_HOST),
+    getStoreByHost(ATAKUMBIZ_HOST),
+    getStoreByHost(ATAKUM_HOST),
+    getStoreByHost(SAMSUN_HOST),
+    getStoreByHost(SAMSUNPET_HOST),
+    getStoreByHost(KARADENIZ_HOST),
+    getStoreByHost(MARKAPET_HOST),
+  ]) {
+    const foreign = getSeoPagesForStore(store).filter((p) => p.storeId === "jetgopet");
+    assert.equal(foreign.length, 0, `${store.id}: must not serve any jetgopet-tagged page`);
+  }
+  // Override scoping: the SAME slug yields jetgopet's page on jetgo.pet and a
+  // DIFFERENT, non-jetgopet page on jetgomarket — same URL, store-scoped content.
+  const jetgoSet = availableSlugSet(SIBLING_LOCAL_STORE);
+  const overridePage = JETGOPET_ALL_EXCLUSIVE_PAGES.find((p) => jetgoSet.has(p.slug));
+  assert.ok(overridePage, "expected the jetgopet corpus to override at least one shared jetgo slug");
+  const overrideSlug = overridePage!.slug;
+  assert.equal(
+    findSeoPage(overrideSlug, JETGOPET_STORE)?.storeId,
+    "jetgopet",
+    `${overrideSlug}: jetgo.pet must serve its own (jetgopet-tagged) override`,
+  );
+  const onJetgo = findSeoPage(overrideSlug, SIBLING_LOCAL_STORE);
+  assert.ok(onJetgo, `${overrideSlug}: jetgomarket must still serve its own page at this slug`);
+  assert.notEqual(onJetgo!.storeId, "jetgopet", `${overrideSlug}: jetgomarket must NOT serve the jetgopet-tagged page`);
+  // Every BRAND-NEW jetgopet slug is an addition vs the shared local corpus.
+  const cleanSet = CLEAN_LOCAL_SLUGS;
+  let brandNew = 0;
+  for (const p of JETGOPET_ALL_EXCLUSIVE_PAGES) {
+    if (!jetgoSet.has(p.slug)) {
+      assert.ok(!cleanSet.has(p.slug), `${p.slug}: a brand-new jetgopet slug must be absent from the shared local corpus`);
+      brandNew++;
+    }
+  }
+  assert.ok(brandNew > 0, "expected at least some brand-new jetgopet slugs");
+});
+
+test("jetgopet-all: the corpus is listed in jetgo.pet's sitemap with no foreign exclusives", () => {
+  const sm = getSitemapPagesForStore(JETGOPET_STORE);
+  const own = sm.filter((p) => p.storeId === "jetgopet").length;
+  assert.ok(own > 5000, `jetgo.pet sitemap must list its own exclusives, got ${own}`);
+  assert.equal(
+    sm.filter((p) => p.storeId && p.storeId !== "jetgopet").length,
+    0,
+    "jetgo.pet sitemap must not list any foreign store-exclusive page",
+  );
+});
+
+test("jetgopet-all: content is UNIQUE-by-CONTENT vs jetgomarket.com (shared brand, distinct prose)", () => {
+  // The JETGO brand is shared by design, so the metaTitle carries it.
+  for (const p of JETGOPET_ALL_EXCLUSIVE_PAGES.slice(0, 200)) {
+    assert.match(p.metaTitle, /JETGO Pet Shop/, `${p.slug}: metaTitle must carry the shared JETGO Pet Shop brand`);
+  }
+  // Distinct metaTitles (human-sounding, not one templated string).
+  const titles = new Set(JETGOPET_ALL_EXCLUSIVE_PAGES.map((p) => p.metaTitle));
+  assert.ok(titles.size > 5000, `metaTitles must be largely unique, got ${titles.size}`);
+
+  // At a SHARED slug, jetgo.pet and jetgomarket serve DIFFERENT pages: distinct
+  // metaTitle + h1 + body. Same URL, store-scoped content — never a brand/NAP swap.
+  const jetgoSet = availableSlugSet(SIBLING_LOCAL_STORE);
+  const overrides = JETGOPET_ALL_EXCLUSIVE_PAGES.filter((p) => jetgoSet.has(p.slug));
+  assert.ok(overrides.length > 100, `expected jetgopet to override many shared jetgo slugs, got ${overrides.length}`);
+  let compared = 0;
+  for (const p of overrides.slice(0, 300)) {
+    const onJetgo = findSeoPage(p.slug, SIBLING_LOCAL_STORE)!;
+    assert.notEqual(onJetgo.storeId, "jetgopet", `${p.slug}: jetgomarket must serve its OWN page, not the jetgopet one`);
+    assert.notEqual(p.metaTitle, onJetgo.metaTitle, `${p.slug}: metaTitle must differ from jetgomarket`);
+    assert.notEqual(p.h1, onJetgo.h1, `${p.slug}: h1 must differ from jetgomarket`);
+    assert.notEqual(markalarCopy(p), markalarCopy(onJetgo), `${p.slug}: body must differ from jetgomarket`);
+    compared++;
+  }
+  assert.ok(compared > 100, `expected many jetgomarket comparisons, got ${compared}`);
+});
+
+test("jetgopet-all: content is UNIQUE-by-CONTENT vs the jetgoshop-all corpus (same-universe local sibling, distinct copy)", () => {
+  // jetgopet and jetgoshop share the EXACT same slug universe (ATAKUM_ALL) AND the
+  // shared JETGO brand, so every slug overlaps — the strongest distinctness check.
+  // Distinct hash finalizer + salt + reworded phrase banks must make every shared
+  // page read differently in title, h1 AND body.
+  const shopBySlug = new Map(JETGOSHOP_ALL_EXCLUSIVE_PAGES.map((p) => [p.slug, p] as const));
+  let compared = 0;
+  for (const p of JETGOPET_ALL_EXCLUSIVE_PAGES) {
+    const shop = shopBySlug.get(p.slug);
+    if (!shop) continue;
+    assert.notEqual(p.metaTitle, shop.metaTitle, `${p.slug}: metaTitle must differ from jetgoshop-all`);
+    assert.notEqual(p.h1, shop.h1, `${p.slug}: h1 must differ from jetgoshop-all`);
+    assert.notEqual(markalarCopy(p), markalarCopy(shop), `${p.slug}: body must differ from jetgoshop-all`);
+    compared++;
+    if (compared >= 400) break;
+  }
+  assert.ok(compared > 100, `expected many jetgoshop-all comparisons, got ${compared}`);
+});
+
+test("jetgopet-all: content is UNIQUE-by-CONTENT vs the atakum-all corpus (distinct copy banks)", () => {
+  const ataBySlug = new Map(ATAKUM_ALL_EXCLUSIVE_PAGES.map((p) => [p.slug, p] as const));
+  let compared = 0;
+  for (const p of JETGOPET_ALL_EXCLUSIVE_PAGES) {
+    const ata = ataBySlug.get(p.slug);
+    if (!ata) continue;
+    assert.notEqual(p.metaTitle, ata.metaTitle, `${p.slug}: metaTitle must differ from atakum`);
+    assert.notEqual(markalarCopy(p), markalarCopy(ata), `${p.slug}: body must differ from atakum`);
+    compared++;
+    if (compared >= 300) break;
+  }
+  assert.ok(compared > 100, `expected many atakum comparisons, got ${compared}`);
+});
+
+test("jetgopet-all: live-animal / breed pages never claim to sell animals", () => {
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const AFFIRM = /sat[ıi]yoruz|satar[ıi]z|satışı yap[ıi]yoruz|satışı yapar[ıi]z|satın alabilirsiniz|canlı hayvan (satıyoruz|satarız|mevcut|stok)/;
+  const live = JETGOPET_ALL_EXCLUSIVE_PAGES.filter((p) => JETGOPET_LIVE_MARK.test(p.metaTitle));
+  assert.ok(live.length > 50, `expected a body of live-animal pages, got ${live.length}`);
+  for (const p of live) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: live page must state jetgo.pet does not sell live animals`);
+    assert.ok(!AFFIRM.test(digerBody(p)), `${p.slug}: live page must not affirmatively offer animals for sale`);
+  }
+});
+
+test("jetgopet-all: every live-animal acquisition KEYWORD is truth-safe (broad slug-derived recall)", () => {
+  const ANIMAL_STEM = ["kedi","kopek","yavru","kitten","puppy","muhabbet","kanarya","papagan","sultan","paraket","finch","ispinoz","saka","kus","tavsan","hamster","ginepig","gine","kemirgen","sinsilla","gerbil","fare","sican","balik","lepistes","moli","melek","japon","kaplumbaga","iguana","gekko","yilan","surungen"];
+  const CUE = new Set(["canli","satilik","satlik","satis","satisi","satan","satanlar","satilan","satma","sat","satin","sahiplen","sahiplendirme","almak","alma","alinir","alan","alanlar","alici","alicisi","bedava","ucretsiz","sahibinden"]);
+  const PROD_SVC = new Set(["ev","evi","kum","kumu","yag","yagi","otu","kab","kabi","yem","yemi","kafes","kafesi","mama","mamasi","tasma","tuvalet","kemik","gaga","tuy","catnip","nane","zehir","kapan","damla","minder","yatak","suluk","oyuncak","oyun","alani","alanlari","vitamin","vitaminler","sampuan","tarak","firca","kiyafet","canta","tasima","kulube","kulubesi","kumes","mineral","file","aksesuar","malzeme","urun","isimlik","egitim","egitimi","kuafor","pansiyon","otel","veteriner","merkez","merkezi","gezdirme","kosum","macun","malt","altligi","alisveris","alisverisi","alistirma","aliskin"]);
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const AFFIRM = /sat[ıi]yoruz|satar[ıi]z|satışı yap[ıi]yoruz|satışı yapar[ıi]z|satın alabilirsiniz|canlı hayvan (satıyoruz|satarız|mevcut|stok)/;
+  const candidates = JETGOPET_ALL_EXCLUSIVE_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasAnimal = t.some((x) => ANIMAL_STEM.some((a) => x.startsWith(a)));
+    const hasCue = t.some((x) => CUE.has(x));
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasAnimal && hasCue && !hasProdSvc && !ATAKUM_ALL_FOOD_SKU.test(p.slug);
+  });
+  assert.ok(candidates.length > 100, `expected a large live-sale candidate body, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: live-sale keyword must state jetgo.pet does not sell live animals`);
+    assert.ok(!AFFIRM.test(digerBody(p)), `${p.slug}: live-sale keyword must not affirmatively offer animals for sale`);
+  }
+});
+
+test("jetgopet-all: every bird/rabbit PRICE keyword is truth-safe (broad slug-derived recall)", () => {
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const BIRD_RABBIT = ["muhabbet","papagan","sultan","kanarya","paraket","finch","ispinoz","saka","kus","kakadu","kakariki","jako","forpus","sevda","cennet","tavsan"];
+  const PRICE = new Set(["fiyat","fiyati","fiyatlari","ucuz"]);
+  const PROD_SVC = new Set(["yem","yemi","yemlik","kafes","kafesi","kafesli","folluk","yumurtalik","suluk","sulugu","kumes","kumesi","kulube","kulubesi","tasma","tasmasi","oyuncak","oyun","vitamin","takviye","takim","mama","mamasi","mamalari","gaga","tuy","isimlik","aksesuar","malzeme","urun","mineral","file","kum","kumu","tuvalet","tuvaleti","kulucka","korse","agizlik","ev","evi","koruyucu","yara","sok","akilli","alani","alanlari","alistirma","alisveris","alisverisi","egitim","egitimi","kuafor","pansiyon","veteriner","merkez","merkezi","gezdirme","tras","yikama","altligi"]);
+  const candidates = JETGOPET_ALL_EXCLUSIVE_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasAnimal = t.some((x) => BIRD_RABBIT.some((a) => x.startsWith(a)));
+    const hasPrice = t.some((x) => PRICE.has(x)) || p.slug.includes("ne-kadar");
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasAnimal && hasPrice && !hasProdSvc && !ATAKUM_ALL_FOOD_SKU.test(p.slug) && !JETGOPET_RETAILER_MARK.test(p.metaTitle);
+  });
+  assert.ok(candidates.length > 100, `expected a large bird/rabbit price candidate body, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: bird/rabbit price keyword must state jetgo.pet does not sell live animals`);
+  }
+});
+
+test("jetgopet-all: every breed PRICE keyword is truth-safe; breed-named FOOD SKUs stay product", () => {
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const BREED = ["persian","persan","british","scottish","sphynx","maine","coon","ragdoll","tekir","sarman","bengal","labrador","golden","rottweiler","chihuahua","yorkshire","shih","cocker","bulldog","cane","teckel","dachshund","poodle","pomeranian","boxer","german","beagle","husky","retriever","terrier","kangal","akbas","pug"];
+  const PRICE = new Set(["fiyat","fiyati","fiyatlari","ucuz"]);
+  const PROD_SVC = new Set(["mama","mamasi","mamalari","kumu","kafes","kafesi","kafesli","tasma","tasmasi","yatak","yatagi","minder","oyuncak","sampuan","vitamin","takviye","tarak","firca","kiyafet","canta","kulube","kulubesi","ev","evi","tuvalet","suluk","kab","kabi","macun","malt","catnip","kemik","damla","mineral","aksesuar","malzeme","urun","egitim","egitimi","kuafor","pansiyon","otel","veteriner","merkez","merkezi","gezdirme","tras","yikama","altligi","alisveris","alistirma"]);
+  const candidates = JETGOPET_ALL_EXCLUSIVE_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasBreed = t.some((x) => BREED.includes(x));
+    const hasPrice = t.some((x) => PRICE.has(x)) || p.slug.includes("ne-kadar");
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasBreed && hasPrice && !hasProdSvc && !ATAKUM_ALL_FOOD_SKU.test(p.slug) && !JETGOPET_RETAILER_MARK.test(p.metaTitle);
+  });
+  assert.ok(candidates.length >= 5, `expected a body of breed price candidates, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: breed price keyword must state jetgo.pet does not sell live animals`);
+  }
+  // The inverse: a breed-NAMED food SKU is a product, never a live no-sale page.
+  const foodBreed = JETGOPET_ALL_EXCLUSIVE_PAGES.filter(
+    (p) => ATAKUM_ALL_FOOD_SKU.test(p.slug) && /(british|scottish|persian|persan|golden|labrador|terrier|retriever|bulldog|shorthair|pug|yorkshire)/.test(p.slug),
+  );
+  assert.ok(foodBreed.length > 0, "expected some breed-named food SKUs in the corpus");
+  for (const p of foodBreed) {
+    assert.ok(!NO_SALE.test(markalarCopy(p)), `${p.slug}: breed-named food SKU must NOT be framed as a live-animal no-sale page`);
+  }
+});
+
+test("jetgopet-all: service keywords never claim jetgo.pet provides the service", () => {
+  const NOT_PROVIDED = /hizmet(i)? (vermiyoruz|vermez|vermeyiz)|hizmet değil/i;
+  const PROVIDES = /hizmet(i)? (veriyoruz|sağlıyoruz|sunuyoruz)|eğitim veriyoruz|pansiyonumuz/i;
+  const servicePages = JETGOPET_ALL_EXCLUSIVE_PAGES.filter(
+    (p) => JETGOPET_SERVICE_MARK.test(p.metaTitle) && NOT_PROVIDED.test(markalarCopy(p)),
+  );
+  assert.ok(servicePages.length > 20, `expected a body of service pages, got ${servicePages.length}`);
+  for (const p of servicePages) {
+    assert.ok(!PROVIDES.test(markalarCopy(p)), `${p.slug}: service page must not claim jetgo.pet provides the service`);
+  }
+});
+
+test("jetgopet-all: retailer keywords position jetgo.pet as a local alternative, never the marketplace", () => {
+  const INDEPENDENT = /bağımsız bir işletme|resmi bir bağlantımız yok/i;
+  const AFFILIATED = /resmi (bayi|satıcı|distribütör)|yetkili (bayi|satıcı)/i;
+  const retail = JETGOPET_ALL_EXCLUSIVE_PAGES.filter((p) => JETGOPET_RETAILER_MARK.test(p.metaTitle));
+  assert.ok(retail.length > 50, `expected a body of retailer pages, got ${retail.length}`);
+  for (const p of retail) {
+    const copy = markalarCopy(p);
+    assert.match(copy, INDEPENDENT, `${p.slug}: retailer page must disclaim affiliation with the marketplace`);
+    assert.ok(!AFFILIATED.test(copy), `${p.slug}: retailer page must not imply official marketplace affiliation`);
+  }
+});
+
+test("jetgopet-all: 24-hour / late-night keywords carry a truthful hours disclaimer", () => {
+  // Whenever a page surfaces the "gece / 7/24 hizmet" FAQ it must answer truthfully
+  // (no 24/7 claim — a LOCAL store with real opening hours).
+  const Q = /gece veya 7\/24 hizmet veriyor mu/;
+  const candidates = JETGOPET_ALL_EXCLUSIVE_PAGES.filter(
+    (p) => (p.faq ?? []).some((f) => Q.test(f.q)),
+  );
+  assert.ok(candidates.length >= 1, `expected at least one 24h/late-night keyword page, got ${candidates.length}`);
+  for (const p of candidates) {
+    const ans = (p.faq ?? []).find((f) => Q.test(f.q))!.a;
+    assert.match(ans, /7\/24 ya da gece açık değildir/, `${p.slug}: must not claim to be open 24/7`);
+    assert.ok(ans.includes("09:00–21:00"), `${p.slug}: must state the real opening hours`);
+  }
+});
+
+test("jetgopet-all: no page fabricates a concrete price", () => {
+  const PRICE = /\d[\d.,]*\s*(₺|tl\b|lira\b)|₺\s*\d/i;
+  const bad = JETGOPET_ALL_EXCLUSIVE_PAGES.filter((p) => PRICE.test(markalarCopy(p)));
+  assert.equal(
+    bad.length,
+    0,
+    `pages must not state a concrete price (offenders: ${bad.slice(0, 5).map((p) => p.slug).join(", ")})`,
+  );
+});
+
+test("jetgopet-all: SSR serves jetgo.pet's bespoke content, self-canonical, differs from jetgomarket", async () => {
+  const jetgoSet = availableSlugSet(SIBLING_LOCAL_STORE);
+  const overrideSlug = JETGOPET_ALL_EXCLUSIVE_PAGES.find((p) => jetgoSet.has(p.slug))!.slug;
+  const petPage = findSeoPage(overrideSlug, JETGOPET_STORE)!;
+  assert.equal(petPage.storeId, "jetgopet", "jetgo.pet must serve its own store-scoped override");
+
+  const petHtml = await injectAllMeta(INDEX_HTML, `/${overrideSlug}`, JETGOPET_HOST);
+  const petTitle = petHtml.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const petCanon = petHtml.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+  assert.equal(
+    petTitle,
+    escapeHtmlForTest(brandifyFor(JETGOPET_STORE, petPage.metaTitle)),
+    "jetgo.pet SSR <title> must be its own brandified metaTitle",
+  );
+  assert.equal(petCanon, `${JETGOPET_STORE.domain}/${overrideSlug}`, "jetgo.pet SSR canonical must bind to jetgo.pet");
+
+  // The SAME slug on jetgomarket.com → a DIFFERENT title (jetgo's own page),
+  // self-canonical to jetgomarket. No JETGO-domain cross-leak in either direction.
+  const jetgoHtml = await injectAllMeta(INDEX_HTML, `/${overrideSlug}`, JETGO_HOST);
+  const jetgoTitle = jetgoHtml.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const jetgoCanon = jetgoHtml.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+  assert.notEqual(petTitle, jetgoTitle, "jetgo.pet title must differ from jetgomarket at the same slug");
+  assert.equal(jetgoCanon, `${SIBLING_LOCAL_STORE.domain}/${overrideSlug}`, "jetgomarket canonical must bind to jetgomarket");
+  assert.ok(!petCanon.includes(SIBLING_LOCAL_STORE.domain), "jetgo.pet canonical must not leak the jetgomarket domain");
+});
+
+// ===========================================================================
 // ATAKUM PET broad keyword corpus (atakum.biz, store id "atakumbiz") — the 7th
 // corpus. atakum.biz is a LOCAL same-day store that shares the "Atakum Pet"
 // brand WORD with the cargo `samsun` store AND the very same Atakum 1-saat angle
@@ -5320,7 +5680,7 @@ test("atakumbiz-all: atakumbiz-tagged pages never leak to any other store; overr
   for (const store of [
     JETGO_STORE,
     SIBLING_LOCAL_STORE,
-    CLEAN_SIBLING_LOCAL_STORE,
+    OTHER_LOCAL_STORE,
     ATAKUM_STORE,
     CARGO_STORE_FOR_ATAKUM,
     JETGOSHOP_STORE,
@@ -5343,7 +5703,7 @@ test("atakumbiz-all: atakumbiz-tagged pages never leak to any other store; overr
   assert.ok(onJetgo, `${overrideSlug}: jetgomarket must still serve its own page at this slug`);
   assert.notEqual(onJetgo!.storeId, "atakumbiz", `${overrideSlug}: jetgomarket must NOT serve the atakumbiz-tagged page`);
   // Every BRAND-NEW atakumbiz slug is an addition vs a clean sibling (jetgopet).
-  const cleanSet = availableSlugSet(CLEAN_SIBLING_LOCAL_STORE);
+  const cleanSet = CLEAN_LOCAL_SLUGS;
   let brandNew = 0;
   for (const p of ATAKUMBIZ_ALL_EXCLUSIVE_PAGES) {
     if (!jetgoSet.has(p.slug)) {
@@ -5676,7 +6036,7 @@ test("markapet-all: markapet-tagged pages never leak to any other store; overrid
   for (const store of [
     JETGO_STORE,
     SIBLING_LOCAL_STORE,
-    CLEAN_SIBLING_LOCAL_STORE,
+    OTHER_LOCAL_STORE,
     ATAKUM_STORE,
     CARGO_STORE_FOR_ATAKUM,
     JETGOSHOP_STORE,
@@ -6021,7 +6381,7 @@ test("karadeniz-all: karadeniz-tagged pages never leak to any other store; overr
   for (const store of [
     JETGO_STORE,
     SIBLING_LOCAL_STORE,
-    CLEAN_SIBLING_LOCAL_STORE,
+    OTHER_LOCAL_STORE,
     ATAKUM_STORE,
     CARGO_STORE_FOR_ATAKUM,
     JETGOSHOP_STORE,
@@ -6369,7 +6729,7 @@ test("samsun-all: samsun-tagged pages never leak to any other store; overrides s
   for (const store of [
     JETGO_STORE,
     SIBLING_LOCAL_STORE,
-    CLEAN_SIBLING_LOCAL_STORE,
+    OTHER_LOCAL_STORE,
     ATAKUM_STORE,
     SAMSUNPET_STORE,
     JETGOSHOP_STORE,
@@ -6628,4 +6988,369 @@ test("samsun-all: SSR serves samsun's bespoke cargo content, self-canonical, dif
   assert.notEqual(samTitle, jetgoTitle, "atakumpet.com title must differ from jetgomarket at the same slug");
   assert.equal(jetgoCanon, `${JETGO_STORE.domain}/${overrideSlug}`, "jetgomarket canonical must bind to jetgomarket");
   assert.ok(!samCanon.includes(JETGO_STORE.domain), "atakumpet.com canonical must not leak the jetgomarket domain");
+});
+
+// ===========================================================================
+// SAMSUN PET broad keyword corpus (samsunpet.com, store id "samsunpet") — the 9th
+// and final corpus, and the SECOND Türkiye-geneli "Samsun Pet Shop" cargo brand.
+// samsunpet.com consumes the IDENTICAL markalar+diger universe as the samsun-all,
+// karadeniz-all and (partially) markapet-all corpora, so it CANNOT differ by facts
+// or slugs. The uniqueness invariant is wholly on the PROSE: the corpus must read
+// distinct from
+//   • the SHARED jetgomarket.com keyword pages,
+//   • the samsun-all corpus (atakumpet.com, "Atakum Pet") — same universe,
+//   • the karadeniz-all corpus (karadenizpetshop.com) — same universe, AND
+//   • the markapet-all / jetgoshop-all corpora on their overlapping slugs.
+// As a CARGO store it must NEVER affirm a same-day / door-payment / local-presence
+// trait on any served surface — only the raw URL slug keeps the local keyword.
+// ===========================================================================
+// Intent pages are identified by their (exclusive) metaTitle markers — chosen to
+// differ from every sibling cargo corpus (samsun "Sahiplenme Rehberi"/"Bağımsız
+// Online Adres"/"Bilgi Notu", karadeniz "Sahiplendirme Rehberi"/"Bağımsız Kargo
+// Adresi"/"Yönlendirme Notu", markapet "Sahiplenme Önerisi"/"Kargolu Alternatif"/
+// "Hizmet Notu").
+const SAMSUNPET_LIVE_MARK = /Sorumlu Sahiplenme/;
+const SAMSUNPET_RETAILER_MARK = /Bağımsız Online Mağaza/;
+const SAMSUNPET_SERVICE_MARK = /Bilgilendirme/;
+
+test("samsunpet-all: a large keyword corpus is registered, exclusive, and complete (cargoOnly)", () => {
+  assert.ok(
+    SAMSUNPET_ALL_EXCLUSIVE_PAGES.length > 4000,
+    `expected a large samsunpet-all corpus, got ${SAMSUNPET_ALL_EXCLUSIVE_PAGES.length}`,
+  );
+  const slugs = SAMSUNPET_ALL_EXCLUSIVE_PAGES.map((p) => p.slug);
+  assert.equal(new Set(slugs).size, slugs.length, "samsunpet-all corpus must have unique slugs");
+  for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) {
+    assert.equal(p.storeId, "samsunpet", `${p.slug}: samsunpet-all page must be storeId samsunpet`);
+    assert.equal(p.availability, "cargoOnly", `${p.slug}: samsunpet-all page must be cargoOnly (cargo trap)`);
+    assert.equal(p.type, "keyword", `${p.slug}: samsunpet-all page must be a keyword page`);
+    assert.ok(
+      p.metaTitle && p.metaDescription && p.h1 &&
+      (p.intro ?? []).length && (p.sections ?? []).length &&
+      (p.faq ?? []).length && (p.internalLinks ?? []).length,
+      `${p.slug}: must carry title/meta/h1 + intro/sections/faq/internalLinks for a substantive AI-search page`,
+    );
+    // Genuine Samsun Pet Shop first-party content (real NAP phone) — not a brand swap.
+    assert.match(markalarCopy(p), /0850 840 39 59/, `${p.slug}: must carry the Samsun Pet Shop NAP phone`);
+    // No slug may shadow a real client app route.
+    assert.ok(!RESERVED_APP_SLUGS.has(p.slug), `${p.slug}: must not shadow a reserved app route`);
+  }
+});
+
+test("samsunpet-all: noise keywords are skipped and the rest are registered", () => {
+  assert.ok(SAMSUNPET_ALL_SKIPPED_NOISE > 0, "expected some noise keywords (e.g. Spanish 'buscar') to be skipped");
+  assert.ok(
+    SAMSUNPET_ALL_KEYWORD_PAGES.length >= SAMSUNPET_ALL_EXCLUSIVE_PAGES.length,
+    "generated pages must be a superset of the registered exclusive corpus (curated collisions dropped)",
+  );
+});
+
+test("samsunpet-all: NO page affirms a same-day / door-payment / local-presence trait", () => {
+  // The cargo invariant. Scan the rendered BODY of EVERY page — a single
+  // affirmation would be untruthful. (The global forbidden-claim scanner already
+  // covers the SEO meta surfaces; only the URL slug retains the raw keyword.)
+  const offenders = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => FORBIDDEN_CARGO_RE.test(samsunBody(p)));
+  assert.equal(
+    offenders.length,
+    0,
+    `cargo pages must not affirm a local/same-day/door trait (offenders: ${offenders
+      .slice(0, 5)
+      .map((p) => `${p.slug} :: ${samsunBody(p).match(FORBIDDEN_CARGO_RE)?.[0]}`)
+      .join(" | ")})`,
+  );
+});
+
+test("samsunpet-all: every metaDescription carries the Türkiye-geneli cargo signature", () => {
+  const missing = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => !CARGO_SIGNATURE.test(p.metaDescription ?? ""));
+  assert.equal(missing.length, 0, `metaDescriptions must carry the cargo signature (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`);
+});
+
+test("samsunpet-all: every internal link resolves within samsunpet.com's own slug space", () => {
+  const petSet = availableSlugSet(SAMSUNPET_STORE);
+  let checked = 0;
+  for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) {
+    for (const l of p.internalLinks ?? []) {
+      const target = (l.href ?? "").replace(/^\//, "");
+      if (!target || target.includes("/")) continue; // skip non-flat (parametric) routes
+      checked++;
+      assert.ok(petSet.has(target), `${p.slug}: internal link "/${target}" must resolve on samsunpet.com`);
+    }
+  }
+  assert.ok(checked > 1000, `expected many internal links to verify, got ${checked}`);
+});
+
+test("samsunpet-all: samsunpet-tagged pages never leak to any other store; overrides stay store-scoped", () => {
+  for (const store of [
+    JETGO_STORE,
+    JETGOPET_STORE,
+    JETGOSHOP_STORE,
+    ATAKUMBIZ_STORE,
+    ATAKUM_STORE,
+    SAMSUN_STORE,
+    KARADENIZ_STORE,
+    MARKAPET_STORE,
+  ]) {
+    const foreign = getSeoPagesForStore(store).filter((p) => p.storeId === "samsunpet");
+    assert.equal(foreign.length, 0, `${store.id}: must not serve any samsunpet-tagged page`);
+  }
+  // Override scoping: the SAME slug yields samsunpet's page on samsunpet.com and a
+  // DIFFERENT, non-samsunpet page on jetgomarket — same URL, store-scoped content.
+  const jetgoSet = availableSlugSet(JETGO_STORE);
+  const overridePage = SAMSUNPET_ALL_EXCLUSIVE_PAGES.find((p) => jetgoSet.has(p.slug));
+  assert.ok(overridePage, "expected the samsunpet corpus to override at least one shared jetgo slug");
+  const overrideSlug = overridePage!.slug;
+  assert.equal(
+    findSeoPage(overrideSlug, SAMSUNPET_STORE)?.storeId,
+    "samsunpet",
+    `${overrideSlug}: samsunpet.com must serve its own (samsunpet-tagged) override`,
+  );
+  const onJetgo = findSeoPage(overrideSlug, JETGO_STORE);
+  assert.ok(onJetgo, `${overrideSlug}: jetgomarket must still serve its own page at this slug`);
+  assert.notEqual(onJetgo!.storeId, "samsunpet", `${overrideSlug}: jetgomarket must NOT serve the samsunpet-tagged page`);
+});
+
+test("samsunpet-all: the corpus is served on samsunpet.com's sitemap with no foreign exclusives", () => {
+  const sm = getSitemapPagesForStore(SAMSUNPET_STORE);
+  const own = sm.filter((p) => p.storeId === "samsunpet").length;
+  assert.ok(own > 4000, `samsunpet.com sitemap must list its own exclusives, got ${own}`);
+  assert.equal(
+    sm.filter((p) => p.storeId && p.storeId !== "samsunpet").length,
+    0,
+    "samsunpet.com sitemap must not list any foreign store-exclusive page",
+  );
+});
+
+test("samsunpet-all: content is UNIQUE-by-CONTENT vs jetgomarket.com (own brand, distinct prose)", () => {
+  for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES.slice(0, 200)) {
+    assert.match(p.metaTitle, /Samsun Pet Shop/, `${p.slug}: metaTitle must carry the Samsun Pet Shop brand`);
+  }
+  // Distinct metaTitles (human-sounding, not one templated string).
+  const titles = new Set(SAMSUNPET_ALL_EXCLUSIVE_PAGES.map((p) => p.metaTitle));
+  assert.ok(titles.size > 4000, `metaTitles must be largely unique, got ${titles.size}`);
+
+  // At a SHARED slug, samsunpet.com and jetgomarket serve DIFFERENT pages.
+  const jetgoSet = availableSlugSet(JETGO_STORE);
+  const overrides = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => jetgoSet.has(p.slug));
+  assert.ok(overrides.length > 100, `expected samsunpet to override many shared jetgo slugs, got ${overrides.length}`);
+  let compared = 0;
+  for (const p of overrides.slice(0, 300)) {
+    const onJetgo = findSeoPage(p.slug, JETGO_STORE)!;
+    assert.notEqual(onJetgo.storeId, "samsunpet", `${p.slug}: jetgomarket must serve its OWN page, not the samsunpet one`);
+    assert.notEqual(p.metaTitle, onJetgo.metaTitle, `${p.slug}: metaTitle must differ from jetgomarket`);
+    assert.notEqual(p.h1, onJetgo.h1, `${p.slug}: h1 must differ from jetgomarket`);
+    assert.notEqual(markalarCopy(p), markalarCopy(onJetgo), `${p.slug}: body must differ from jetgomarket`);
+    compared++;
+  }
+  assert.ok(compared > 100, `expected many jetgomarket comparisons, got ${compared}`);
+});
+
+test("samsunpet-all: content is UNIQUE-by-CONTENT vs the samsun-all corpus (same-universe cargo sibling, distinct copy)", () => {
+  // samsunpet and samsun share the EXACT same slug universe (markalar+diger), so
+  // every slug overlaps — the strongest distinctness check. Distinct hash
+  // finalizer + salt + reworded phrase banks must make every shared page read
+  // differently in title, h1 AND body.
+  const samBySlug = new Map(SAMSUN_ALL_EXCLUSIVE_PAGES.map((p) => [p.slug, p] as const));
+  let compared = 0;
+  for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) {
+    const sam = samBySlug.get(p.slug);
+    if (!sam) continue;
+    assert.notEqual(p.metaTitle, sam.metaTitle, `${p.slug}: metaTitle must differ from samsun-all`);
+    assert.notEqual(p.h1, sam.h1, `${p.slug}: h1 must differ from samsun-all`);
+    assert.notEqual(markalarCopy(p), markalarCopy(sam), `${p.slug}: body must differ from samsun-all`);
+    compared++;
+    if (compared >= 400) break;
+  }
+  assert.ok(compared > 100, `expected many samsun-all comparisons, got ${compared}`);
+});
+
+test("samsunpet-all: content is UNIQUE-by-CONTENT vs the karadeniz-all corpus (same-universe cargo sibling, distinct copy)", () => {
+  const kzBySlug = new Map(KARADENIZ_ALL_EXCLUSIVE_PAGES.map((p) => [p.slug, p] as const));
+  let compared = 0;
+  for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) {
+    const kz = kzBySlug.get(p.slug);
+    if (!kz) continue;
+    assert.notEqual(p.metaTitle, kz.metaTitle, `${p.slug}: metaTitle must differ from karadeniz-all`);
+    assert.notEqual(p.h1, kz.h1, `${p.slug}: h1 must differ from karadeniz-all`);
+    assert.notEqual(markalarCopy(p), markalarCopy(kz), `${p.slug}: body must differ from karadeniz-all`);
+    compared++;
+    if (compared >= 400) break;
+  }
+  assert.ok(compared > 100, `expected many karadeniz-all comparisons, got ${compared}`);
+});
+
+test("samsunpet-all: content is UNIQUE-by-CONTENT vs the markapet-all corpus (sibling cargo, distinct copy)", () => {
+  const mpBySlug = new Map(MARKAPET_ALL_EXCLUSIVE_PAGES.map((p) => [p.slug, p] as const));
+  let compared = 0;
+  for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) {
+    const mp = mpBySlug.get(p.slug);
+    if (!mp) continue;
+    assert.notEqual(p.metaTitle, mp.metaTitle, `${p.slug}: metaTitle must differ from markapet-all`);
+    assert.notEqual(markalarCopy(p), markalarCopy(mp), `${p.slug}: body must differ from markapet-all`);
+    compared++;
+    if (compared >= 300) break;
+  }
+  assert.ok(compared > 100, `expected many markapet-all comparisons, got ${compared}`);
+});
+
+test("samsunpet-all: content is UNIQUE-by-CONTENT vs the jetgoshop-all corpus (distinct copy banks)", () => {
+  const shopBySlug = new Map(JETGOSHOP_ALL_EXCLUSIVE_PAGES.map((p) => [p.slug, p] as const));
+  let compared = 0;
+  for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) {
+    const shop = shopBySlug.get(p.slug);
+    if (!shop) continue;
+    assert.notEqual(p.metaTitle, shop.metaTitle, `${p.slug}: metaTitle must differ from jetgoshop-all`);
+    assert.notEqual(markalarCopy(p), markalarCopy(shop), `${p.slug}: body must differ from jetgoshop-all`);
+    compared++;
+    if (compared >= 300) break;
+  }
+  assert.ok(compared > 100, `expected many jetgoshop-all comparisons, got ${compared}`);
+});
+
+test("samsunpet-all: live-animal pages never claim to sell animals", () => {
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const AFFIRM = /sat[ıi]yoruz|satar[ıi]z|satışı yap[ıi]yoruz|satışı yapar[ıi]z|satın alabilirsiniz|canlı hayvan (satıyoruz|satarız|mevcut|stok)/;
+  const live = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => SAMSUNPET_LIVE_MARK.test(p.metaTitle));
+  assert.ok(live.length > 50, `expected a body of live-animal pages, got ${live.length}`);
+  for (const p of live) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: live page must state Samsun Pet Shop does not sell live animals`);
+    assert.ok(!AFFIRM.test(digerBody(p)), `${p.slug}: live page must not affirmatively offer animals for sale`);
+  }
+});
+
+test("samsunpet-all: every live-animal acquisition KEYWORD is truth-safe (broad slug-derived recall)", () => {
+  const ANIMAL_STEM = ["kedi","kopek","yavru","kitten","puppy","muhabbet","kanarya","papagan","sultan","paraket","finch","ispinoz","saka","kus","tavsan","hamster","ginepig","gine","kemirgen","sinsilla","gerbil","fare","sican","balik","lepistes","moli","melek","japon","kaplumbaga","iguana","gekko","yilan","surungen"];
+  const CUE = new Set(["canli","satilik","satlik","satis","satisi","satan","satanlar","satilan","satma","sat","satin","sahiplen","sahiplendirme","almak","alma","alinir","alan","alanlar","alici","alicisi","bedava","ucretsiz","sahibinden"]);
+  const PROD_SVC = new Set(["ev","evi","kum","kumu","yag","yagi","otu","kab","kabi","yem","yemi","kafes","kafesi","mama","mamasi","tasma","tuvalet","kemik","gaga","tuy","catnip","nane","zehir","kapan","damla","minder","yatak","suluk","oyuncak","oyun","alani","alanlari","vitamin","vitaminler","sampuan","tarak","firca","kiyafet","canta","tasima","kulube","kulubesi","kumes","mineral","file","aksesuar","malzeme","urun","isimlik","egitim","egitimi","kuafor","pansiyon","otel","veteriner","merkez","merkezi","gezdirme","kosum","macun","malt","altligi","alisveris","alisverisi","alistirma","aliskin"]);
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const AFFIRM = /sat[ıi]yoruz|satar[ıi]z|satışı yap[ıi]yoruz|satışı yapar[ıi]z|satın alabilirsiniz|canlı hayvan (satıyoruz|satarız|mevcut|stok)/;
+  const candidates = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasAnimal = t.some((x) => ANIMAL_STEM.some((a) => x.startsWith(a)));
+    const hasCue = t.some((x) => CUE.has(x));
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasAnimal && hasCue && !hasProdSvc && !ATAKUM_ALL_FOOD_SKU.test(p.slug);
+  });
+  assert.ok(candidates.length > 100, `expected a large live-sale candidate body, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: live-sale keyword must state Samsun Pet Shop does not sell live animals`);
+    assert.ok(!AFFIRM.test(digerBody(p)), `${p.slug}: live-sale keyword must not affirmatively offer animals for sale`);
+  }
+});
+
+test("samsunpet-all: every bird/rabbit PRICE keyword is truth-safe (broad slug-derived recall)", () => {
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const BIRD_RABBIT = ["muhabbet","papagan","sultan","kanarya","paraket","finch","ispinoz","saka","kus","kakadu","kakariki","jako","forpus","sevda","cennet","tavsan"];
+  const PRICE = new Set(["fiyat","fiyati","fiyatlari","ucuz"]);
+  const PROD_SVC = new Set(["yem","yemi","yemlik","kafes","kafesi","kafesli","folluk","yumurtalik","suluk","sulugu","kumes","kumesi","kulube","kulubesi","tasma","tasmasi","oyuncak","oyun","vitamin","takviye","takim","mama","mamasi","mamalari","gaga","tuy","isimlik","aksesuar","malzeme","urun","mineral","file","kum","kumu","tuvalet","tuvaleti","kulucka","korse","agizlik","ev","evi","koruyucu","yara","sok","akilli","alani","alanlari","alistirma","alisveris","alisverisi","egitim","egitimi","kuafor","pansiyon","veteriner","merkez","merkezi","gezdirme","tras","yikama","altligi"]);
+  const candidates = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasAnimal = t.some((x) => BIRD_RABBIT.some((a) => x.startsWith(a)));
+    const hasPrice = t.some((x) => PRICE.has(x)) || p.slug.includes("ne-kadar");
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasAnimal && hasPrice && !hasProdSvc && !ATAKUM_ALL_FOOD_SKU.test(p.slug) && !SAMSUNPET_RETAILER_MARK.test(p.metaTitle);
+  });
+  assert.ok(candidates.length > 100, `expected a large bird/rabbit price candidate body, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: bird/rabbit price keyword must state Samsun Pet Shop does not sell live animals`);
+  }
+});
+
+test("samsunpet-all: every breed PRICE keyword is truth-safe; breed-named FOOD SKUs stay product", () => {
+  const NO_SALE = /canlı hayvan (satışı yapma|satma)/i;
+  const BREED = ["persian","persan","british","scottish","sphynx","maine","coon","ragdoll","tekir","sarman","bengal","labrador","golden","rottweiler","chihuahua","yorkshire","shih","cocker","bulldog","cane","teckel","dachshund","poodle","pomeranian","boxer","german","beagle","husky","retriever","terrier","kangal","akbas","pug"];
+  const PRICE = new Set(["fiyat","fiyati","fiyatlari","ucuz"]);
+  const PROD_SVC = new Set(["mama","mamasi","mamalari","kumu","kafes","kafesi","kafesli","tasma","tasmasi","yatak","yatagi","minder","oyuncak","sampuan","vitamin","takviye","tarak","firca","kiyafet","canta","kulube","kulubesi","ev","evi","tuvalet","suluk","kab","kabi","macun","malt","catnip","kemik","damla","mineral","aksesuar","malzeme","urun","egitim","egitimi","kuafor","pansiyon","otel","veteriner","merkez","merkezi","gezdirme","tras","yikama","altligi","alisveris","alistirma"]);
+  const candidates = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => {
+    const t = p.slug.split("-");
+    const hasBreed = t.some((x) => BREED.includes(x));
+    const hasPrice = t.some((x) => PRICE.has(x)) || p.slug.includes("ne-kadar");
+    const hasProdSvc = t.some((x) => PROD_SVC.has(x));
+    return hasBreed && hasPrice && !hasProdSvc && !ATAKUM_ALL_FOOD_SKU.test(p.slug) && !SAMSUNPET_RETAILER_MARK.test(p.metaTitle);
+  });
+  assert.ok(candidates.length >= 5, `expected a body of breed price candidates, got ${candidates.length}`);
+  for (const p of candidates) {
+    assert.match(markalarCopy(p), NO_SALE, `${p.slug}: breed price keyword must state Samsun Pet Shop does not sell live animals`);
+  }
+  // The inverse: a breed-NAMED food SKU is a product, never a live no-sale page.
+  const foodBreed = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter(
+    (p) => ATAKUM_ALL_FOOD_SKU.test(p.slug) && /(british|scottish|persian|persan|golden|labrador|terrier|retriever|bulldog|shorthair|pug|yorkshire)/.test(p.slug),
+  );
+  assert.ok(foodBreed.length > 0, "expected some breed-named food SKUs in the corpus");
+  for (const p of foodBreed) {
+    assert.ok(!NO_SALE.test(markalarCopy(p)), `${p.slug}: breed-named food SKU must NOT be framed as a live-animal no-sale page`);
+  }
+});
+
+test("samsunpet-all: service keywords never claim Samsun Pet Shop provides the service", () => {
+  const NOT_PROVIDED = /hizmet(i)? (vermiyoruz|vermez|vermeyiz)|hizmet değil/i;
+  const PROVIDES = /hizmet(i)? (veriyoruz|sağlıyoruz|sunuyoruz)|eğitim veriyoruz|pansiyonumuz/i;
+  const servicePages = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => SAMSUNPET_SERVICE_MARK.test(p.metaTitle));
+  assert.ok(servicePages.length > 20, `expected a body of service pages, got ${servicePages.length}`);
+  for (const p of servicePages) {
+    const copy = markalarCopy(p);
+    assert.match(copy, NOT_PROVIDED, `${p.slug}: service page must disclaim that Samsun Pet Shop provides the service`);
+    assert.ok(!PROVIDES.test(copy), `${p.slug}: service page must not claim Samsun Pet Shop provides the service`);
+  }
+});
+
+test("samsunpet-all: retailer keywords position Samsun Pet Shop as an independent alternative, never the marketplace", () => {
+  const INDEPENDENT = /bağımsız bir işletme|resmi bir bağlantımız yok/i;
+  const AFFILIATED = /resmi (bayi|satıcı|distribütör)|yetkili (bayi|satıcı)/i;
+  const retail = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => SAMSUNPET_RETAILER_MARK.test(p.metaTitle));
+  assert.ok(retail.length > 50, `expected a body of retailer pages, got ${retail.length}`);
+  for (const p of retail) {
+    const copy = markalarCopy(p);
+    assert.match(copy, INDEPENDENT, `${p.slug}: retailer page must disclaim affiliation with the marketplace`);
+    assert.ok(!AFFILIATED.test(copy), `${p.slug}: retailer page must not imply official marketplace affiliation`);
+  }
+});
+
+test("samsunpet-all: 24-hour / late-night keywords carry a truthful no-physical-store disclaimer", () => {
+  // A cargo store has NO shopfront, so the always-open answer must clarify the
+  // online store takes orders any hour but there is no physical store / 24h desk.
+  const candidates = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter(
+    (p) => (p.faq ?? []).some((f) => /fiziksel bir mağaza işletmiyoruz/.test(f.a)),
+  );
+  assert.ok(candidates.length >= 1, `expected at least one always-open keyword page, got ${candidates.length}`);
+  for (const p of candidates) {
+    const ans = (p.faq ?? []).find((f) => /fiziksel bir mağaza işletmiyoruz/.test(f.a))!.a;
+    assert.ok(!FORBIDDEN_CARGO_RE.test(ans), `${p.slug}: always-open answer must not affirm a 24h/local trait`);
+  }
+});
+
+test("samsunpet-all: no page fabricates a concrete price", () => {
+  const PRICE = /\d[\d.,]*\s*(₺|tl\b|lira\b)|₺\s*\d/i;
+  const bad = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => PRICE.test(markalarCopy(p)));
+  assert.equal(
+    bad.length,
+    0,
+    `pages must not state a concrete price (offenders: ${bad.slice(0, 5).map((p) => p.slug).join(", ")})`,
+  );
+});
+
+test("samsunpet-all: SSR serves samsunpet's bespoke cargo content, self-canonical, differs from jetgomarket", async () => {
+  const jetgoSet = availableSlugSet(JETGO_STORE);
+  const overrideSlug = SAMSUNPET_ALL_EXCLUSIVE_PAGES.find((p) => jetgoSet.has(p.slug))!.slug;
+  const petPage = findSeoPage(overrideSlug, SAMSUNPET_STORE)!;
+  assert.equal(petPage.storeId, "samsunpet", "samsunpet.com must serve its own store-scoped override");
+
+  const petHtml = await injectAllMeta(INDEX_HTML, `/${overrideSlug}`, SAMSUNPET_HOST);
+  const petTitle = petHtml.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const petCanon = petHtml.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+  assert.equal(
+    petTitle,
+    escapeHtmlForTest(brandifyFor(SAMSUNPET_STORE, petPage.metaTitle)),
+    "samsunpet.com SSR <title> must be its own brandified metaTitle",
+  );
+  assert.equal(petCanon, `${SAMSUNPET_STORE.domain}/${overrideSlug}`, "samsunpet.com SSR canonical must bind to samsunpet.com");
+  assert.ok(!/JETGO/i.test(petTitle), "samsunpet.com SSR title must not leak the JETGO brand");
+
+  // The SAME slug on jetgomarket.com → a DIFFERENT title (jetgo's own page),
+  // self-canonical to jetgomarket. No cross-domain leak in either direction.
+  const jetgoHtml = await injectAllMeta(INDEX_HTML, `/${overrideSlug}`, JETGO_HOST);
+  const jetgoTitle = jetgoHtml.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
+  const jetgoCanon = jetgoHtml.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
+  assert.notEqual(petTitle, jetgoTitle, "samsunpet.com title must differ from jetgomarket at the same slug");
+  assert.equal(jetgoCanon, `${JETGO_STORE.domain}/${overrideSlug}`, "jetgomarket canonical must bind to jetgomarket");
+  assert.ok(!petCanon.includes(JETGO_STORE.domain), "samsunpet.com canonical must not leak the jetgomarket domain");
 });

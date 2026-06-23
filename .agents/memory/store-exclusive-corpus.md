@@ -170,15 +170,29 @@ TWO cargo stores own exclusives:**
   storeless page that still carries the raw "JETGO" placeholder. Resolving it against
   an owner returns its already-brandified override and defeats any brandify guard.
 
-**The CLEAN-cargo-store pool SHRINKS with every new cargo owner (3rd cargo corpus =
-samsun/atakumpet.com).** Each cargo store that gains exclusives stops being a valid
-clean fixture/partition base. Order of cargo owners so far: markapet → karadeniz →
-samsun; the ONLY remaining clean cargo member is **samsunpet** (samsunpet.com, id
-"samsunpet"). So: (a) the partition `sharedFull` base and all "hidden-on-cargo" /
-brandify-fixture lookups must now point at samsunpet, NOT samsun; (b) the partition
-"clean member" loop indices shrink (only samsunpet is clean); (c) when samsunpet
-eventually gains its own corpus, there is NO clean cargo store left — either keep one
-domain deliberately clean or rewrite the fixtures to compute the storeless page
-directly. samsun's universe == karadeniz's (markalar∪diger), so the partition
-`claimed` set is UNCHANGED when samsun joins (its slugs were already claimed via
-karadeniz) — only the base store and clean-member set change, not the slices.
+**NO clean member remains — ALL 9 stores now own an exclusive corpus.** The last two
+clean stores gained corpora: jetgopet (jetgo.pet, LOCAL same-day, "JETGO Pet Shop")
+and samsunpet (samsunpet.com, CARGO Türkiye-geneli, "Samsun Pet Shop"). Every LOCAL
+store (atakum, jetgoshop, atakumbiz, jetgopet) owns over the ATAKUM universe; every
+CARGO store (samsun, karadeniz, markapet, samsunpet) owns over the markalar∪diger
+universe. **Consequence — never resolve a fixture/partition base through a "clean
+sibling" store again** (there is none): compute the shared storeless page DIRECTLY.
+- Shared-slug brandify fixtures (the raw-"JETGO"-placeholder page): filter SEO_PAGES
+  by `slug && !p.storeId && availability` matching the commerce model
+  (cargoOnly for the cargo fixture, localOnly for local), NOT `findSeoPage(slug,
+  cleanStore)` — every store now returns its own brandified override.
+- Partition `sharedFull` base: build from RAW storeless eligible pages (every page
+  with no `storeId`), NOT `getSeoPagesForStore(cleanStore)` (which now HIDES slugs
+  that the store overrides with its own twin, shrinking the base incorrectly).
+- Each owner's partition assertion lists ALL of its OWN exclusives (by `storeId`, no
+  FOREIGN leak); add jetgopet/samsunpet exclusives to the `exclusiveSlugs` sets.
+- Representative shared-slug tests can now POSITIVELY assert the override: a markalar
+  slug resolves to jetgopet/localOnly on a sibling-local host and samsunpet/cargoOnly
+  on a cargo host (no longer negative-only). Universes were already fully claimed, so
+  adding these two corpora leaves the partition `claimed` set UNCHANGED — only the
+  base computation and clean-member assumptions change.
+- Hash schemes are exhausted across all 9; the two newest: jetgopet = FNV1a +
+  triple32 finalizer (0x21f0aaad/0xd35a2d97), additive pick 0x7feb352d / rotate
+  0x846ca68b, salt range 7xx; samsunpet = FNV1a + 0x45d9f3b finalizer, additive pick
+  0x27d4eb2f / rotate 0x165667b1, salt range 8xx. Any 10th store needs a fresh
+  scheme + salt range disjoint from all of these.
