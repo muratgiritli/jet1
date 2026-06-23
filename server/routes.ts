@@ -279,6 +279,28 @@ export async function registerRoutes(
   const reqStore = (req: any) => getStoreByHost(
     (req.headers?.["x-forwarded-host"] as string) || req.headers?.host || req.hostname,
   );
+
+  // Scheme://host the client actually used, from the same proxy headers as
+  // reqStore. The crawler file chain (sitemap index → sub-sitemaps, robots
+  // Sitemap:) references the SAME host it was fetched on, so Search Console
+  // never hits a redirect or a cross-host fetch on those files. Page <loc> URLs
+  // stay canonical (store.domain) for correct indexing.
+  const reqOrigin = (req: any) => {
+    const proto = (
+      (req.headers?.["x-forwarded-proto"] as string) || req.protocol || "https"
+    )
+      .split(",")[0]
+      .trim();
+    const host = (
+      (req.headers?.["x-forwarded-host"] as string) ||
+      req.headers?.host ||
+      req.hostname ||
+      ""
+    )
+      .split(",")[0]
+      .trim();
+    return `${proto}://${host}`;
+  };
   // Store id'sinden (jetgo/atakum/all) StoreConfig'e; bilinmeyende varsayılan.
   const storeById = (id?: string | null) => STORES.find((s) => s.id === id) || STORES[0];
   // Defense-in-depth: belirli bir mağaza bağlamında (storeContext) yapılan
@@ -726,7 +748,9 @@ export async function registerRoutes(
 
   app.get("/sitemap.xml", async (req, res) => {
     try {
-      const SITE = reqStore(req).domain;
+      // Sub-sitemap refs use the fetched host (reqOrigin), not canonical
+      // store.domain, so the index never points cross-host / through a redirect.
+      const SITE = reqOrigin(req);
       const today = new Date().toISOString().split("T")[0];
 
       let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
@@ -1680,7 +1704,7 @@ export async function registerRoutes(
       "User-agent: DuckDuckBot",
       "Allow: /",
       "",
-      `Sitemap: ${robotsStore.domain}/sitemap.xml`,
+      `Sitemap: ${reqOrigin(req)}/sitemap.xml`,
       "",
     ].join("\n");
     res.send(txt);

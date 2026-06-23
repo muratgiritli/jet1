@@ -534,7 +534,11 @@ export const DEFAULT_STORE: StoreConfig = jetgo;
 /** Lowercase host, strip port and a leading "www." */
 export function normalizeHost(host?: string | null): string {
   if (!host) return "";
-  return host.toLowerCase().trim().split(":")[0].replace(/^www\./, "");
+  // A proxy can emit a comma-joined X-Forwarded-Host ("real.com, proxy"); the
+  // client-facing host is the first token. Strip it before port + www so store
+  // resolution stays consistent with reqOrigin's first-token host (no apex/store
+  // mismatch on the sitemap file chain). No-op for ordinary single-host values.
+  return host.split(",")[0].toLowerCase().trim().split(":")[0].replace(/^www\./, "");
 }
 
 /**

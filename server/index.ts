@@ -47,7 +47,12 @@ app.use((req, res, next) => {
   const store = getStoreByExactHost(reqHost);
   if (store) {
     const target = canonicalHost(store);
-    if (target && reqHost !== target) {
+    // Crawler utility files must be fetchable directly (200) on EVERY host.
+    // Google's sitemap fetcher reports a redirected sitemap as "couldn't fetch",
+    // so /robots.txt and /sitemap*.xml are exempt from the apex→canonical 301.
+    const isCrawlerFile =
+      req.path === "/robots.txt" || /^\/sitemap[\w-]*\.xml$/.test(req.path);
+    if (target && reqHost !== target && !isCrawlerFile) {
       return res.redirect(301, `${store.domain}${req.originalUrl}`);
     }
   }
