@@ -20,6 +20,14 @@ then enforce it on BOTH sides. Cargo orders carry city/district/cargoCompany/tra
 on the orders table; admin sets tracking via `PATCH /api/admin/orders/:id/tracking` (carrier allowlist
 templates auto-derive trackingUrl). Customer order detail surfaces "Kargom nerede?" link.
 
+**Header CTA bar shows "FİZİKİ MAĞAZAMIZA GİT" on ALL 9 stores, including cargo ones.** The
+header (`client/src/components/Header.tsx`) has a global CTA bar (physical-store link → `/magaza`,
+plus WhatsApp via `CURRENT_STORE.phone`). This appears even on cargo stores whose SEO corpus says
+"Türkiye geneli kargo, fiziksel mağaza yok". **Why:** deliberate user choice (asked explicitly, chose
+"Tüm 9 sitede") — the business does run the Atakum physical store behind every brand. **How to apply:**
+do NOT "fix" this as a truthfulness contradiction during cargo-corpus work; it is intentional UI, separate
+from the corpus copy. Only revert if the user reverses the decision.
+
 **A payment restriction has more than one client surface.** Checkout renders payment options across
 several independent blocks (the method picker AND a separate door/installment block AND cash/EFT/QR
 info panels), each with its own visibility condition. An online-only restriction must gate ALL of

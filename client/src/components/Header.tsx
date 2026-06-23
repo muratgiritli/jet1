@@ -1,5 +1,6 @@
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, User, LogIn, UserPlus } from "lucide-react";
+import { ArrowLeft, User, LogIn, UserPlus, Store } from "lucide-react";
+import { SiWhatsapp } from "react-icons/si";
 import { useCustomer } from "@/contexts/CustomerContext";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
@@ -19,6 +20,7 @@ export default function Header() {
   const { isLoggedIn, customer } = useCustomer();
 
   const isHome = location === "/";
+  const whatsappDigits = CURRENT_STORE.phone.replace(/\D/g, "");
 
   return (
     <>
@@ -109,6 +111,30 @@ export default function Header() {
           </ul>
         </div>
       </nav>
+
+      <div className="bg-white border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-3 md:px-4 py-2 flex items-center justify-center gap-2 md:gap-3 flex-wrap">
+          <Link href="/magaza">
+            <button
+              className="flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 rounded-full bg-green-600 hover:bg-green-700 text-white text-[11px] md:text-sm font-bold shadow-sm transition-colors whitespace-nowrap"
+              data-testid="btn-header-physical-store"
+            >
+              <Store className="w-3.5 h-3.5 md:w-4 md:h-4" />
+              <span>FİZİKİ MAĞAZAMIZA GİT</span>
+            </button>
+          </Link>
+          <a
+            href={`https://wa.me/${whatsappDigits}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center gap-1.5 md:gap-2 px-3 md:px-5 py-2 rounded-full bg-white border border-gray-300 hover:border-green-500 hover:bg-green-50 text-gray-800 text-[11px] md:text-sm font-bold shadow-sm transition-colors whitespace-nowrap"
+            data-testid="btn-header-whatsapp"
+          >
+            <SiWhatsapp className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-600" />
+            <span>WHATSAPP: {CURRENT_STORE.phoneDisplay}</span>
+          </a>
+        </div>
+      </div>
     </>
   );
 }
