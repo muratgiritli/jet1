@@ -78,11 +78,11 @@ const MARK = "__SCOPE_TEST__";
 const JETGO_HOST = "www.jetgomarket.com";
 const ATAKUM_HOST = "www.atakumpetshop.com";
 const SAMSUN_HOST = "www.atakumpet.com";
-// Second Türkiye-geneli cargo brand. Shares the samsun cargo / online-card-only
-// model but is its OWN store (id "samsunpet", domain samsunpet.com) — it must
-// never collide with the existing "samsun" store bound to atakumpet.com.
+// Second branded LOCAL same-day store. Shares the samsun local same-day /
+// door-payment model but is its OWN store (id "samsunpet", domain samsunpet.com)
+// — it must never collide with the existing "samsun" store bound to atakumpet.com.
 const SAMSUNPET_HOST = "www.samsunpet.com";
-// Third Türkiye-geneli cargo brand (id "karadeniz", domain karadenizpetshop.com).
+// Third branded LOCAL same-day store (id "karadeniz", domain karadenizpetshop.com).
 const KARADENIZ_HOST = "www.karadenizpetshop.com";
 const ATAKUMBIZ_HOST = "www.atakum.biz";
 // Second domain for the flagship JETGO brand (id "jetgopet", domain jetgo.pet).
@@ -95,7 +95,7 @@ const JETGOPET_HOST = "www.jetgo.pet";
 // self-canonical store on its own URL. Its domain also contains the substring
 // "jetgo", so it exercises the brandifyFor placeholder pass (NOT "JETGO.shop").
 const JETGOSHOP_HOST = "www.jetgo.shop";
-// FOURTH Türkiye-geneli cargo brand (id "markapet", domain marka.pet). Per the
+// FOURTH branded LOCAL same-day store (id "markapet", domain marka.pet). Per the
 // owner's request the customer-facing brand IS the domain string "marka.pet".
 const MARKAPET_HOST = "www.marka.pet";
 
@@ -148,7 +148,7 @@ let orderProductId = 0;
 let sessionCookie = "";
 // Forged admin session cookie (requireAdmin only checks session.userId).
 let adminCookie = "";
-// A SAMSUN (cargo, online-payment-only) customer + its forged session. Used by
+// A SAMSUN (local same-day, door-payment) customer + its forged session. Used by
 // the samsun storefront tests, including the admin->customer tracking round-trip
 // (/api/customer/orders looks orders up by the customer's phone, so the order's
 // customerPhone must equal this seeded customer's phone).
@@ -785,12 +785,12 @@ test("test-OTP bypass logs a RETURNING customer in without re-registration and r
   }
 });
 
-// ---- samsun (cargo, online-payment-only) storefront behavior + tracking ----
+// ---- samsun (local same-day, door-payment) storefront behavior + tracking ----
 //
-// samsun (atakumpet.com) is the cargo store: fulfillment "cargo",
-// onlinePaymentOnly true, preorderEnabled false (shared/stores.ts). These tests
+// samsun (atakumpet.com) is a LOCAL same-day store: fulfillment "local",
+// onlinePaymentOnly false, preorderEnabled true (shared/stores.ts). These tests
 // exercise the server-enforced store behavior end-to-end and the admin -> customer
-// cargo-tracking round-trip, complementing the client-side UI smoke (home/PDP/
+// order-tracking round-trip, complementing the client-side UI smoke (home/PDP/
 // checkout branding) run via the testing skill.
 
 // POST as a specific (cookie-identified) customer.
@@ -812,36 +812,34 @@ async function getWithCookie(path: string, host: string, cookie: string) {
   return { status: res.status, body: await res.json() as any };
 }
 
-// A valid samsun online order for the seeded samsun customer (online card is the
-// only method this store accepts; the customerPhone must match for the read-back).
+// A valid samsun online order for the seeded samsun customer. The local store now
+// accepts BOTH door and online payment; this helper exercises the online-card path
+// (which still starts pending). The customerPhone must match for the read-back.
 const samsunOnlineOrder = () => ({
   ...orderPayload(),
   paymentMethod: "online",
   customerPhone: samsunCustomerPhone,
-  city: "İstanbul",
-  district: "Kadıköy",
 });
 
-test("samsun rejects door payment — online-payment-only store (400)", async () => {
+test("samsun accepts door payment — local same-day store (201)", async () => {
   const res = await postWithCookie(
     "/api/orders",
     SAMSUN_HOST,
     { ...samsunOnlineOrder(), paymentMethod: "Kapıda Nakit" },
     samsunCustomerCookie,
   );
-  assert.equal(res.status, 400);
-  assert.match(String(res.body.message ?? ""), /online kredi kartı/i);
+  assert.equal(res.status, 201, `door payment must be accepted on the local store: ${JSON.stringify(res.body)}`);
+  ids.orders.push(res.body.id as number);
 });
 
-// ---- Client-render counterpart: checkout never shows in-person payment ----
+// ---- Client-render counterpart: local checkout OFFERS in-person payment ----
 //
-// The server gate above rejects a door payment on the cargo store, but a
-// regression once let the checkout UI *render* the door-POS installment block
-// on the online-only storefront anyway. These tests assert the pure render
-// helpers (the exact logic checkout.tsx renders with) so the UI can never leak
-// an in-person payment surface on an online-payment-only store. They are driven
-// by the real shared/stores.ts config (samsun: onlinePaymentOnly true; atakum:
-// false) so they stay honest if those flags change.
+// samsun is a LOCAL same-day store, so its checkout must OFFER the in-person
+// ("Kapıda") payment surfaces (and the door-POS installment block when POS is
+// enabled). These tests assert the pure render helpers (the exact logic
+// checkout.tsx renders with) so the door surfaces can never silently disappear
+// on a local storefront. They are driven by the real shared/stores.ts config
+// (samsun + atakum: onlinePaymentOnly false) so they stay honest if it changes.
 
 // Default-enabled gateway state: every method configured & enabled. The store's
 // onlinePaymentOnly flag (not these) is what must suppress the door options.
@@ -855,10 +853,10 @@ const allMethodsEnabled = {
   hiddenPaymentMethods: [] as string[],
 };
 
-test("checkout on samsun (onlinePaymentOnly) renders ONLY the online card — no in-person surfaces", () => {
+test("checkout on samsun (local store) DOES offer in-person payment surfaces", () => {
   const samsun = getStoreByHost(SAMSUN_HOST);
   assert.equal(samsun.id, "samsun");
-  assert.equal(samsun.commerce.onlinePaymentOnly, true, "samsun must be the online-payment-only store");
+  assert.equal(samsun.commerce.onlinePaymentOnly, false, "samsun must allow in-person payment");
 
   const opts = visiblePaymentOptions({
     ...allMethodsEnabled,
@@ -866,13 +864,11 @@ test("checkout on samsun (onlinePaymentOnly) renders ONLY the online card — no
   });
   const ids = opts.map((o) => o.id);
 
-  // ONLY the online card option is offered.
-  assert.deepEqual(ids, ["online"], `expected only the online card, got: ${JSON.stringify(ids)}`);
-  // No in-person ("Kapıda") radio surfaces and no Banka Havalesi/EFT.
-  for (const forbidden of ["nakit", "eft", "qr", "pos"]) {
-    assert.ok(!ids.includes(forbidden), `in-person option "${forbidden}" must not render on samsun`);
+  // In-person door options + online card are all available on the local store.
+  for (const allowed of ["nakit", "eft", "qr", "online"]) {
+    assert.ok(ids.includes(allowed), `local store should offer "${allowed}"`);
   }
-  // The door-POS installment block is suppressed even with POS enabled.
+  // The door-POS installment block is allowed when POS is enabled.
   assert.equal(
     showDoorPosInstallments({
       onlinePaymentOnly: samsun.commerce.onlinePaymentOnly,
@@ -880,8 +876,8 @@ test("checkout on samsun (onlinePaymentOnly) renders ONLY the online card — no
       hasPreorderItems: false,
       posEnabled: true,
     }),
-    false,
-    "door-POS installment block must never render on the online-only store",
+    true,
+    "door-POS installment block should render on the local store",
   );
 });
 
@@ -925,14 +921,13 @@ test("online order on atakumpet.com is tagged source_site=samsun and starts pend
 });
 
 // Persistent, server-side complement to the browser smoke (testing skill runTest)
-// for the cargo storefront: a brand-new customer registers via the OTP bypass on
-// the samsun host and places an online cargo order end to end. Mirrors the Atakum
-// end-to-end test above, but asserts the CARGO contract: no Mahalle needed at
-// registration, city/district are captured and persisted, and the online-only
-// rule is enforced for this fresh customer (door payment rejected). The browser
-// smoke additionally verifies the visual contract (İl/İlçe inputs, "Kargo Ücreti"
-// label, online-only payment UI) which cannot be asserted at the API layer.
-test("test-OTP bypass lets a NEW customer register and place a SAMSUN cargo order end to end", async () => {
+// for the samsun storefront: a brand-new customer registers via the OTP bypass on
+// the samsun host and places a LOCAL same-day order end to end. Mirrors the Atakum
+// end-to-end test above and asserts the LOCAL contract: door payment is accepted
+// and the order attributes to the samsun storefront. The browser smoke
+// additionally verifies the visual contract (Mahalle picker, "Getirmesi" label,
+// in-person payment UI) which cannot be asserted at the API layer.
+test("test-OTP bypass lets a NEW customer register and place a SAMSUN local order end to end", async () => {
   const prevEnv = process.env.NODE_ENV;
   const prevFlag = process.env.TEST_OTP_BYPASS;
   process.env.NODE_ENV = "development";
@@ -942,7 +937,7 @@ test("test-OTP bypass lets a NEW customer register and place a SAMSUN cargo orde
   const phone = "555" + String(randomBytes(4).readUInt32BE(0)).padStart(7, "0").slice(-7);
   let createdCustomerId: number | undefined;
   try {
-    // 1) Request the OTP on the cargo host. Bypass skips SMS, reports new phone.
+    // 1) Request the OTP on the samsun host. Bypass skips SMS, reports new phone.
     const send = await post("/api/otp/send", SAMSUN_HOST, { phone });
     assert.equal(send.status, 200, `otp/send failed: ${JSON.stringify(send.body)}`);
     assert.equal(send.body.isExisting, false, "fresh phone must be reported as new");
@@ -952,17 +947,16 @@ test("test-OTP bypass lets a NEW customer register and place a SAMSUN cargo orde
     assert.equal(step1.status, 200, `otp/verify step1 failed: ${JSON.stringify(step1.body)}`);
     assert.equal(step1.body.requiresRegistration, true, "new phone must require registration");
 
-    // 3) Complete registration with name + address only (cargo collects city/
-    //    district at checkout, NOT a Mahalle at registration). Returns a real
-    //    signed session cookie.
+    // 3) Complete registration with name + address. Returns a real signed session
+    //    cookie.
     const regRes = await fetch(`${baseUrl}/api/otp/verify`, {
       method: "POST",
       headers: { "X-Forwarded-Host": SAMSUN_HOST, "Content-Type": "application/json" },
       body: JSON.stringify({
         phone,
         code: "0000",
-        name: `${MARK}_CARGO_BUYER`,
-        address: `${MARK} Test Mah., Deneme Cad. No 10`,
+        name: `${MARK}_LOCAL_BUYER`,
+        address: `${MARK} Atakum Mah., Deneme Cad. No 10`,
       }),
     });
     const regBody = await regRes.json() as any;
@@ -976,47 +970,29 @@ test("test-OTP bypass lets a NEW customer register and place a SAMSUN cargo orde
     assert.ok(setCookie && setCookie.includes("connect.sid"), "registration must set a session cookie");
     const realCookie = setCookie!.split(";")[0];
 
-    // 4) Online-only contract: door payment must be rejected for this fresh
-    //    customer on the cargo store.
-    const door = await postWithCookie(
-      "/api/orders",
-      SAMSUN_HOST,
-      { ...samsunOnlineOrder(), customerName: `${MARK}_CARGO_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
-      realCookie,
-    );
-    assert.equal(door.status, 400, `door payment must be rejected on cargo store: ${JSON.stringify(door.body)}`);
-    assert.match(String(door.body.message ?? ""), /online kredi kartı/i);
-
-    // 5) Place the online cargo order with city/district as the freshly-
+    // 4) Place a local same-day order (door payment accepted) as the freshly-
     //    registered customer, using the real session cookie from registration.
     const order = await postWithCookie(
       "/api/orders",
       SAMSUN_HOST,
-      { ...samsunOnlineOrder(), customerName: `${MARK}_CARGO_BUYER`, customerPhone: phone },
+      { ...orderPayload(), customerName: `${MARK}_LOCAL_BUYER`, customerPhone: phone },
       realCookie,
     );
-    assert.equal(order.status, 201, `cargo order POST failed: ${JSON.stringify(order.body)}`);
+    assert.equal(order.status, 201, `samsun order POST failed: ${JSON.stringify(order.body)}`);
     const orderId = order.body.id as number;
     assert.ok(orderId, "order id missing in response");
     ids.orders.push(orderId);
 
-    // 6) Cargo order attributes to samsun, starts pending (online), and persists
-    //    the city/district captured at checkout.
-    const row = await pool.query(
-      "SELECT source_site, payment_status, city, district FROM orders WHERE id = $1",
-      [orderId],
-    );
-    assert.equal(row.rows[0].source_site, "samsun", "order must attribute to the samsun cargo storefront");
-    assert.equal(row.rows[0].payment_status, "pending", "online cargo orders must start pending");
-    assert.equal(row.rows[0].city, "İstanbul", "cargo order must persist the selected city (il)");
-    assert.equal(row.rows[0].district, "Kadıköy", "cargo order must persist the selected district (ilçe)");
+    // 5) Order attributes to the samsun storefront.
+    const row = await pool.query("SELECT source_site FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0].source_site, "samsun", "order must attribute to the samsun storefront");
   } finally {
     if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
     if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
   }
 });
 
-test("admin-entered cargo tracking becomes visible to the customer", async () => {
+test("admin-entered shipment tracking becomes visible to the customer", async () => {
   // 1) Customer places an online order on the samsun storefront.
   const created = await postWithCookie("/api/orders", SAMSUN_HOST, samsunOnlineOrder(), samsunCustomerCookie);
   assert.equal(created.status, 201, `samsun order POST failed: ${JSON.stringify(created.body)}`);
@@ -1539,8 +1515,9 @@ const ATAKUM_BRAND = "Atakum Pet Shop";
 const SAMSUN_BRAND = "Atakum Pet";
 const SAMSUNPET_BRAND = "Samsun Pet Shop";
 const KARADENIZ_BRAND = "Karadeniz Pet Shop";
-// atakum.biz shares the "Atakum Pet" brand word with the cargo `samsun` store BY
-// DESIGN (separate id + domain); it is a LOCAL same-day storefront.
+// atakum.biz shares the "Atakum Pet" brand word with the `samsun` store
+// (atakumpet.com) BY DESIGN (separate id + domain); both are LOCAL same-day
+// storefronts.
 const ATAKUMBIZ_BRAND = "Atakum Pet";
 // jetgo.pet shares the JETGO brand name/word with the default `jetgo` store BY
 // DESIGN (separate id + domain); it is a LOCAL same-day storefront.
@@ -1548,13 +1525,37 @@ const JETGOPET_BRAND = "JETGO Pet Shop Samsun";
 // jetgo.shop also shares the JETGO brand name/word with the default `jetgo` store
 // BY DESIGN (separate id + domain); it is a LOCAL same-day storefront too.
 const JETGOSHOP_BRAND = "JETGO Pet Shop Samsun";
-// marka.pet (markapet) cargo brand: per the owner's request the customer-facing
-// brand IS the domain string itself.
+// marka.pet (markapet) LOCAL same-day brand: per the owner's request the
+// customer-facing brand IS the domain string itself.
 const MARKAPET_BRAND = "marka.pet";
-// Distinctive copy of the SAMSUN (cargo) store. atakum must NEVER show this — it
-// is the signal that local same-day copy was replaced by cargo copy.
+// National-cargo positioning that NO store may advertise anymore: every store is
+// LOCAL same-day now, so a match here is the signal that local copy regressed to
+// the retired cargo copy.
 const CARGO_SIGNATURE = /türkiye(?:'nin| geneli)/i;
+// Broader cargo-claim scanner (türkiye geneli + kargo + anlaşmalı + 81 il + tüm
+// türkiye) — the converted local corpora must carry NONE of these.
+const CARGO_CLAIM_RE = /türkiye(?:'nin| geneli)|\bkargo\b|anlaşmalı|81 il|tüm türkiye/i;
 const SAME_DAY_SIGNATURE = /aynı gün/i;
+// Door-payment ("kapıda ödeme") is a LOCAL-model claim the converted corpora must
+// carry and the dormant cargo corpus must never show.
+const DOOR_PAYMENT_SIGNATURE = /kapıda ödeme/i;
+
+// No real store is cargo anymore (all 9 are LOCAL same-day). The dormant cargo
+// commerce code path (getSeoPagesForStore / findSeoPage / isCargoStore branching
+// on commerce.fulfillment) is still exercised at the DATA layer through this
+// synthetic cargo StoreConfig: a real local store cloned with its commerce model
+// forced back to cargo. It is NEVER bound to a host, so it drives no live SSR.
+const SYNTHETIC_CARGO_STORE: ReturnType<typeof getStoreByHost> = {
+  ...getStoreByHost(KARADENIZ_HOST),
+  id: "synthetic-cargo",
+  commerce: {
+    ...getStoreByHost(KARADENIZ_HOST).commerce,
+    fulfillment: "cargo" as const,
+    onlinePaymentOnly: true,
+    shippingLabel: "Kargo Ücreti",
+    preorderEnabled: false,
+  },
+};
 
 // The static template the server brandifies per request host. Read once from the
 // repo so this stays in lockstep with what production serves.
@@ -1569,16 +1570,16 @@ test("atakum host resolves the Atakum Pet Shop brand", () => {
 
 test("atakum is a LOCAL same-day store (drives Mahalle checkout, not cargo)", () => {
   const atakum = getStoreByHost(ATAKUM_HOST);
-  const samsun = getStoreByHost(SAMSUN_HOST);
   // checkout.tsx gates the address flow on `commerce.fulfillment === "cargo"`:
   // local -> Mahalle picker + door payment; cargo -> il/ilçe + online-only.
   assert.equal(atakum.commerce.fulfillment, "local", "atakum must use the local (Mahalle) flow");
   assert.equal(atakum.commerce.shippingLabel, "Getirmesi", "local delivery fee label");
   assert.equal(atakum.commerce.onlinePaymentOnly, false, "local store accepts door payment");
   assert.equal(atakum.commerce.preorderEnabled, true);
-  // Guard against atakum accidentally inheriting the samsun cargo model.
-  assert.equal(samsun.commerce.fulfillment, "cargo", "samsun stays the cargo contrast case");
-  assert.notEqual(atakum.commerce.fulfillment, samsun.commerce.fulfillment);
+  // No store ships the cargo model anymore; the dormant cargo branch is exercised
+  // only via the synthetic fixture, which must stay the distinct contrast case.
+  assert.equal(SYNTHETIC_CARGO_STORE.commerce.fulfillment, "cargo", "synthetic store is the cargo contrast case");
+  assert.notEqual(atakum.commerce.fulfillment, SYNTHETIC_CARGO_STORE.commerce.fulfillment);
 });
 
 test("brandify swaps shared JETGO body copy to the Atakum brand word", () => {
@@ -1602,13 +1603,15 @@ test("served homepage HTML carries the Atakum brand + local same-day copy (not c
   assert.ok(!CARGO_SIGNATURE.test(title), "atakum must not show samsun cargo copy");
 });
 
-test("served homepage HTML for the samsun host DOES show cargo copy (contrast)", async () => {
-  // Proves the branding check actually discriminates local vs cargo rather than
-  // passing for every store.
+test("served homepage HTML for the samsun host carries the Atakum Pet brand + local same-day copy", async () => {
+  // samsun (atakumpet.com) is now a LOCAL same-day store like atakum: its served
+  // homepage must brand as Atakum Pet and carry same-day copy, never the retired
+  // national-cargo positioning.
   const html = await injectAllMeta(INDEX_HTML, "/", SAMSUN_HOST);
   const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
   assert.match(title, /Atakum Pet/i);
-  assert.match(title, CARGO_SIGNATURE, "samsun homepage title must carry cargo copy");
+  assert.match(title, SAME_DAY_SIGNATURE, "samsun homepage title must carry local same-day copy");
+  assert.ok(!CARGO_SIGNATURE.test(title), "samsun homepage title must not carry the retired cargo copy");
 });
 
 // ---- atakum storefront UI smoke via the ?__store=atakum client override ----
@@ -2888,15 +2891,15 @@ test("SEO landing page on the default (jetgo) host keeps the JETGO brand (contra
   assert.equal(canonical, `${store.domain}/${SEO_TEST_SLUG}`, "default-host SEO canonical binds to the jetgo domain");
 });
 
-// ---- Cargo stores must not advertise the LOCAL same-day/door-payment model ----
+// ---- Dormant cargo commerce path stays truthful + self-consistent (data layer) ----
 //
-// The shared keyword landing pages are authored for the Samsun/Atakum LOCAL
-// same-day-courier + door-payment model. On a CARGO / online-payment-only store
-// (karadeniz/samsun/samsunpet) those promises are FALSE. Under option B the local
-// pages are HIDDEN on cargo hosts and a separate cargo-framed corpus is served in
-// their place. These tests prove (a) per-model eligibility (localOnly hidden on
-// cargo, cargoOnly hidden on local), (b) no cargo-served SEO surface leaks a local
-// claim, and (c) no internal/buy link is orphaned within a commerce model.
+// Every real store is LOCAL same-day now, so no host serves the cargo model. The
+// cargo branch (isCargoStore / getSeoPagesForStore / findSeoPage on a cargo
+// fulfillment) is still reachable in code, so it is exercised at the DATA layer
+// through SYNTHETIC_CARGO_STORE — never via a live host SSR. These tests prove
+// (a) per-model eligibility (localOnly hidden on a cargo store, cargoOnly hidden
+// on a local store), (b) the dormant cargoOnly corpus leaks no local claim, and
+// (c) no internal/buy link is orphaned within either commerce model.
 
 // A localOnly keyword page carrying BOTH the door-payment claim and the Samsun
 // neighborhood list — the strongest "local" fixture to prove cargo hides it.
@@ -2941,8 +2944,10 @@ test("local keyword fixture exists and carries the local same-day/door-payment c
   assert.match(intro, /Atakum, İlkadım, Canik ve Tekkeköy/, "fixture intro must carry the neighborhood delivery list");
 });
 
-test("per-model eligibility: localOnly hidden on cargo, cargoOnly hidden on local", async () => {
-  const cargoStore = getStoreByHost(KARADENIZ_HOST);
+test("per-model eligibility (data layer): localOnly hidden on cargo, cargoOnly hidden on local", () => {
+  // No live cargo host exists anymore; the dormant cargo branch is exercised at
+  // the resolver layer only, through the synthetic cargo fixture.
+  const cargoStore = SYNTHETIC_CARGO_STORE;
   const localStore = getStoreByHost(ATAKUM_HOST);
   const localSlug = seoLocalKeywordPage!.slug;
 
@@ -2950,29 +2955,20 @@ test("per-model eligibility: localOnly hidden on cargo, cargoOnly hidden on loca
   // local store can only return undefined, never a same-slug local variant).
   const localSlugs = new Set(SEO_PAGES.filter((p) => p.availability === "localOnly").map((p) => p.slug));
   const cargoNativeSlug = SEO_PAGES.find((p) => p.availability === "cargoOnly" && !localSlugs.has(p.slug))?.slug;
-  assert.ok(cargoNativeSlug, "seo-data must define at least one cargo-native keyword (cargoOnly, no local twin)");
+  assert.ok(cargoNativeSlug, "seo-data must still define at least one cargo-native keyword (cargoOnly, no local twin)");
 
   // Resolver layer: each model only resolves its own variant.
   assert.ok(!findSeoPage(localSlug, cargoStore), `localOnly "${localSlug}" must not resolve on a cargo store`);
   assert.ok(!findSeoPage(cargoNativeSlug!, localStore), `cargo-native "${cargoNativeSlug}" must not resolve on a local store`);
-
-  // Server layer: a localOnly slug on a cargo host falls back to home meta — the
-  // local page's title / neighborhood copy must NOT be server-rendered.
-  const cargoHtml = await injectAllMeta(INDEX_HTML, `/${localSlug}`, KARADENIZ_HOST);
-  assert.notEqual(
-    titleOf(cargoHtml),
-    escapeHtmlForTest(brandifyFor(cargoStore, seoLocalKeywordPage!.metaTitle)),
-    "cargo host must not serve the local page's brandified title",
-  );
-  assert.ok(!/Atakum, İlkadım, Canik/.test(cargoHtml), "cargo host must not serve the local neighborhood copy");
 });
 
-test("forbidden-claim scanner: no cargo-served SEO page leaks a local claim (source + injected HTML)", async () => {
+test("forbidden-claim scanner: the dormant cargo SEO corpus carries no local claim (source)", () => {
+  // No store serves the cargo model anymore, but the dormant cargoOnly corpus must
+  // stay truthful by construction so the code path is safe if it is ever revived.
+  // Pure data-layer scan over every cargoOnly page's text fields (no host SSR).
   const cargoPages = SEO_PAGES.filter((p) => p.availability === "cargoOnly");
-  assert.ok(cargoPages.length > 0, "there must be a cargo SEO corpus to serve");
+  assert.ok(cargoPages.length > 0, "the dormant cargo SEO corpus must still exist");
 
-  // (1) Source scan over EVERY cargo page (cheap, no I/O) — the corpus must be
-  // truthful by construction across all text fields.
   for (const p of cargoPages) {
     const hay = [
       p.metaTitle,
@@ -2990,70 +2986,44 @@ test("forbidden-claim scanner: no cargo-served SEO page leaks a local claim (sou
       assert.ok(!re.test(hay), `cargo page "${p.slug}" source leaks local claim (${label}): ${hay.match(re)?.[0]}`);
     }
   }
-
-  // (2) Injected-HTML scan over a sample, on a cargo host whose brand itself
-  // contains a city name (samsunpet) — proves brandify never re-introduces a
-  // forbidden atom and the scanner doesn't false-positive on the store brand.
-  for (const p of cargoPages.slice(0, 15)) {
-    const html = await injectAllMeta(INDEX_HTML, `/${p.slug}`, SAMSUNPET_HOST);
-    const description = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1] ?? "";
-    const keywords = html.match(/<meta\s+name="keywords"\s+content="([^"]*)"/i)?.[1] ?? "";
-    const surface = `${titleOf(html)}  ${description}  ${keywords}  ${noscriptOf(html)}`;
-    for (const { re, label } of FORBIDDEN_LOCAL) {
-      assert.ok(!re.test(surface), `cargo-served "${p.slug}" injected HTML leaks local claim (${label}): ${surface.match(re)?.[0]}`);
-    }
-  }
 });
 
-test("forbidden-claim scanner: FULL cargo HTML (static #seo-static + every ld+json) carries no local claim", async () => {
-  // The previous scanner only inspected title/description/keywords/noscript and
-  // therefore missed the LOCAL claims baked into client/index.html's static
-  // surfaces (the hidden #seo-static crawler block + the static LocalBusiness
-  // JSON-LD), which applyGlobalBranding only brandified — never commercified —
-  // and so served verbatim on cargo hosts. This scans the ENTIRE injected HTML,
-  // including all <script type="application/ld+json"> blocks, on a cargo host.
-  // Scan EVERY cargo-served SEO route's full HTML (acceptance: no forbidden local
-  // atom in ANY cargo-served SEO HTML/JSON-LD), not just a sample.
-  const cargoPages = SEO_PAGES.filter((p) => p.availability === "cargoOnly");
-  const samples = cargoPages.map((p) => `/${p.slug}`);
-  assert.ok(samples.length > 0, "there must be cargo SEO routes to scan");
-  for (const path of samples) {
-    const html = await injectAllMeta(INDEX_HTML, path, KARADENIZ_HOST);
-    const ldBlocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
-    const seoStatic = html.match(/<div id="seo-static"[^>]*>[\s\S]*?<\/div>/i)?.[0] ?? "";
-    // Guard: prove the surfaces we care about are actually present in the scan,
-    // so the assertions below can never pass vacuously.
-    assert.ok(seoStatic.length > 0, `cargo "${path}" must still ship a #seo-static crawler block`);
-    assert.ok(ldBlocks.length > 0, `cargo "${path}" must still ship structured data`);
-    const surface = `${html}\n${ldBlocks.join("\n")}\n${seoStatic}`;
-    for (const { re, label } of FORBIDDEN_LOCAL) {
-      assert.ok(!re.test(surface), `cargo full HTML "${path}" leaks local claim (${label}): ${surface.match(re)?.[0]}`);
-    }
-    // The static LocalBusiness JSON-LD must no longer advertise Samsun-only
-    // delivery: areaServed is collapsed to the whole country on cargo.
-    assert.ok(!/"areaServed":\s*\[/.test(html), `cargo "${path}" must not keep a neighborhood areaServed list`);
-  }
-});
-
-test("contrast: the LOCAL host still serves the local static crawler block (scanner discriminates)", async () => {
-  // Proves the cargo full-HTML scan above is meaningful: on a LOCAL host the same
-  // static surfaces legitimately keep the same-day / neighborhood claims.
+test("local host serves the same-day / neighborhood static crawler block + areaServed list", async () => {
+  // SSR check on a LOCAL host: the static #seo-static crawler block and the
+  // LocalBusiness JSON-LD must carry the same-day claim and the neighborhood
+  // areaServed list. (The cargo full-HTML scan was retired with the cargo hosts;
+  // every host is local now.)
   const html = await injectAllMeta(INDEX_HTML, `/${SEO_TEST_SLUG}`, ATAKUM_HOST);
   const seoStatic = html.match(/<div id="seo-static"[^>]*>[\s\S]*?<\/div>/i)?.[0] ?? "";
   assert.match(seoStatic, /aynı gün|Aynı gün/i, "local host keeps the same-day claim in its static crawler block");
   assert.match(html, /"areaServed":\s*\[/, "local host keeps its neighborhood areaServed list");
 });
 
-test("cargo SEO landing copy speaks the cargo model and carries the store brand", async () => {
-  const html = await injectAllMeta(INDEX_HTML, `/${CARGO_SEO_TEST_SLUG}`, KARADENIZ_HOST);
-  const body = `${noscriptOf(html)} ${titleOf(html)}`;
-  assert.match(body, /kargo/i, "cargo SEO copy must speak the cargo delivery model");
-  assert.ok(body.includes("Karadeniz Pet Shop"), "cargo SEO copy must carry the Karadeniz brand");
+test("dormant cargo SEO landing copy speaks the cargo model and brandifies to the store (data layer)", () => {
+  // The dormant cargoOnly corpus resolves only via the synthetic cargo fixture.
+  // Verify the page still speaks the cargo delivery model and that brandifyFor
+  // injects the store's brand word into its copy.
+  const page = findSeoPage(CARGO_SEO_TEST_SLUG, SYNTHETIC_CARGO_STORE);
+  assert.ok(page, `synthetic cargo store must resolve the dormant cargoOnly "${CARGO_SEO_TEST_SLUG}" page`);
+  const source = [
+    page!.metaTitle,
+    page!.metaDescription,
+    page!.h1,
+    ...page!.intro,
+    ...(page!.sections ?? []).flatMap((s) => [s.h2, ...s.paragraphs]),
+    ...page!.faq.flatMap((f) => [f.q, f.a]),
+  ].join("  ");
+  assert.match(source, /kargo/i, "dormant cargo SEO copy must speak the cargo delivery model");
+  const branded = brandifyFor(SYNTHETIC_CARGO_STORE, source);
+  assert.ok(
+    branded.includes(SYNTHETIC_CARGO_STORE.brandWord),
+    "brandifyFor must inject the synthetic store brand word into the cargo copy",
+  );
 });
 
 test("no SEO internal/buy link is orphaned within its commerce model", () => {
-  for (const [label, host] of [["local", ATAKUM_HOST], ["cargo", KARADENIZ_HOST]] as const) {
-    const store = getStoreByHost(host);
+  const localStore = getStoreByHost(ATAKUM_HOST);
+  for (const [label, store] of [["local", localStore], ["cargo", SYNTHETIC_CARGO_STORE]] as const) {
     const avail = availableSlugSet(store);
     const orphans: string[] = [];
     for (const p of getSeoPagesForStore(store)) {
@@ -3177,15 +3147,15 @@ test("sitemap partition: the 3 JETGO domains list disjoint, complete shared slic
   assert.deepEqual([...again].sort(), [...sharedSlices[1]].sort(), "shared partition must be deterministic");
 });
 
-// The 4 CARGO sibling domains (atakumpet.com → "samsun", samsunpet.com →
+// The 4 sibling LOCAL domains (atakumpet.com → "samsun", samsunpet.com →
 // "samsunpet", karadenizpetshop.com → "karadeniz", marka.pet → "markapet") share
-// the SAME cargo corpus and must likewise each publish a DISTINCT sitemap. This is
-// an INDEPENDENT partition group from the JETGO trio. ALL four cargo domains
+// the SAME local corpus and must likewise each publish a DISTINCT sitemap. This is
+// an INDEPENDENT partition group from the JETGO trio. ALL four sibling domains
 // (atakumpet.com, samsunpet.com, karadenizpetshop.com, marka.pet) own a
 // store-EXCLUSIVE corpus, so — exactly like the JETGO trio — the shared corpus is
 // hash-partitioned across the group while each domain also lists ALL of its own
-// exclusives (which bypass the partition). No cargo member is clean anymore.
-test("sitemap partition: the 4 cargo domains list disjoint, complete shared slices + own exclusives", () => {
+// exclusives (which bypass the partition). No sibling member is clean anymore.
+test("sitemap partition: the 4 sibling domains list disjoint, complete shared slices + own exclusives", () => {
   const samsun = getStoreByHost("www.atakumpet.com");
   const samsunpet = getStoreByHost("www.samsunpet.com");
   const karadeniz = getStoreByHost("www.karadenizpetshop.com");
@@ -3193,7 +3163,7 @@ test("sitemap partition: the 4 cargo domains list disjoint, complete shared slic
   assert.deepEqual(
     [samsun.id, samsunpet.id, karadeniz.id, markapet.id],
     ["samsun", "samsunpet", "karadeniz", "markapet"],
-    "partition test must target the four cargo stores",
+    "partition test must target the four sibling stores",
   );
 
   const stores = [samsun, samsunpet, karadeniz, markapet];
@@ -3202,19 +3172,19 @@ test("sitemap partition: the 4 cargo domains list disjoint, complete shared slic
   // Every store's sitemap lists each slug at most once.
   for (const [i, sm] of sitemaps.entries()) {
     const slugs = sm.map((p) => p.slug);
-    assert.equal(new Set(slugs).size, slugs.length, `cargo store ${i} sitemap has duplicate slugs`);
+    assert.equal(new Set(slugs).size, slugs.length, `sibling store ${i} sitemap has duplicate slugs`);
   }
 
-  // ---- SHARED cargo corpus (storeless pages) is split by the mod-4 hash partition. ----
+  // ---- SHARED local corpus (storeless pages) is split by the mod-4 hash partition. ----
   const sharedSlices = sitemaps.map(
     (sm) => new Set(sm.filter((p) => !p.storeId).map((p) => p.slug)),
   );
 
-  // The full shared universe the group partitions: storeless cargo pages, MINUS any
+  // The full shared universe the group partitions: storeless local pages, MINUS any
   // slug claimed by a group-exclusive override (samsun OR samsunpet OR karadeniz OR
   // markapet) — those are listed only by their exclusive owner and are dropped from
-  // the hash partition on every member. No cargo member is clean anymore (all four
-  // own an exclusive corpus), so the base MUST be the RAW storeless cargo corpus;
+  // the hash partition on every member. No member is clean anymore (all four own an
+  // exclusive corpus), so the base MUST be the RAW storeless local corpus;
   // getSeoPagesForStore(<member>) would hide the twins that member overrides.
   const exclusiveSlugs = new Set<string>([
     ...sitemaps[0].filter((p) => p.storeId).map((p) => p.slug), // samsun exclusives
@@ -3223,28 +3193,28 @@ test("sitemap partition: the 4 cargo domains list disjoint, complete shared slic
     ...sitemaps[3].filter((p) => p.storeId).map((p) => p.slug), // markapet exclusives
   ]);
   const sharedFull = new Set(
-    [...CLEAN_CARGO_SLUGS].filter((s) => !exclusiveSlugs.has(s)),
+    [...CLEAN_LOCAL_SLUGS].filter((s) => !exclusiveSlugs.has(s)),
   );
 
   // Each shared slice is non-empty and a strict subset of the shared universe.
   for (const [i, set] of sharedSlices.entries()) {
-    assert.ok(set.size > 0, `cargo shared slice ${i} is empty`);
-    assert.ok(set.size < sharedFull.size, `cargo shared slice ${i} is not a strict subset`);
+    assert.ok(set.size > 0, `shared slice ${i} is empty`);
+    assert.ok(set.size < sharedFull.size, `shared slice ${i} is not a strict subset`);
   }
 
   // Pairwise disjoint — the four shared slices share no slug.
   for (let i = 0; i < sharedSlices.length; i++) {
     for (let j = i + 1; j < sharedSlices.length; j++) {
       const overlap = [...sharedSlices[i]].filter((s) => sharedSlices[j].has(s));
-      assert.equal(overlap.length, 0, `cargo shared slices ${i} and ${j} overlap: ${overlap.slice(0, 5).join(", ")}`);
+      assert.equal(overlap.length, 0, `shared slices ${i} and ${j} overlap: ${overlap.slice(0, 5).join(", ")}`);
     }
   }
 
-  // Union covers the whole shared cargo corpus — no shared slug dropped everywhere.
+  // Union covers the whole shared local corpus — no shared slug dropped everywhere.
   const sharedUnion = new Set<string>();
   for (const set of sharedSlices) for (const s of set) sharedUnion.add(s);
-  assert.equal(sharedUnion.size, sharedFull.size, "cargo shared partition slices must cover the full shared corpus");
-  for (const s of sharedFull) assert.ok(sharedUnion.has(s), `cargo shared slug missing from every sitemap: ${s}`);
+  assert.equal(sharedUnion.size, sharedFull.size, "shared partition slices must cover the full shared corpus");
+  for (const s of sharedFull) assert.ok(sharedUnion.has(s), `shared slug missing from every sitemap: ${s}`);
 
   // ---- OWN store-exclusive pages bypass the partition: atakumpet.com,
   // samsunpet.com, karadenizpetshop.com and marka.pet each list ALL of their own. ----
@@ -4009,14 +3979,11 @@ const SIBLING_LOCAL_STORE = getStoreByHost(JETGO_HOST);
 // No local store is "clean" anymore: all four JETGO-local domains (jetgo,
 // jetgoshop, atakumbiz, jetgopet) now own an exclusive corpus, so none can stand
 // in for "the shared local corpus a store with no exclusives would serve". The
-// clean local/cargo SLUG SET is therefore computed DIRECTLY from the shared,
-// storeless corpus, independent of any store's overrides/additions; the clean
-// local PAGE COUNT is the number of storeless local-eligible entries.
+// clean local SLUG SET is therefore computed DIRECTLY from the shared, storeless
+// corpus, independent of any store's overrides/additions; the clean local PAGE
+// COUNT is the number of storeless local-eligible entries.
 const CLEAN_LOCAL_SLUGS = new Set(
   SEO_PAGES.filter((p) => !p.storeId && (p.availability ?? "all") !== "cargoOnly").map((p) => p.slug),
-);
-const CLEAN_CARGO_SLUGS = new Set(
-  SEO_PAGES.filter((p) => !p.storeId && (p.availability ?? "all") !== "localOnly").map((p) => p.slug),
 );
 const CLEAN_LOCAL_PAGE_COUNT = SEO_PAGES.filter(
   (p) => !p.storeId && (p.availability ?? "all") !== "cargoOnly",
@@ -4024,7 +3991,9 @@ const CLEAN_LOCAL_PAGE_COUNT = SEO_PAGES.filter(
 // A representative OTHER local store for foreign-exclusive leak checks. Its own
 // exclusives are irrelevant here — these checks only look for a FOREIGN storeId.
 const OTHER_LOCAL_STORE = getStoreByHost(JETGOPET_HOST);
-const CARGO_STORE_FOR_ATAKUM = getStoreByHost(SAMSUN_HOST);
+// No real store is cargo anymore; the dormant cargo branch (local overrides hidden
+// on a cargo store) is verified against the synthetic cargo fixture.
+const CARGO_STORE_FOR_ATAKUM = SYNTHETIC_CARGO_STORE;
 const ATAKUM_SAMPLE_SLUGS = ATAKUM_EXCLUSIVE_PAGES.slice(0, 6).map((p) => p.slug);
 
 test("atakum-exclusive: a sizable bespoke keyword corpus is registered", () => {

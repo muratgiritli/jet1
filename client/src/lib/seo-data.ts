@@ -4304,12 +4304,12 @@ for (const p of ATAKUMBIZ_ALL_KEYWORD_PAGES) {
 SEO_PAGES.push(...ATAKUMBIZ_ALL_EXCLUSIVE_PAGES);
 
 // MARKA.PET broad multi-category corpus (storeId "markapet"), served ONLY on
-// marka.pet. This is the FIRST store-exclusive corpus built for a CARGO store:
-// every page is tagged availability "cargoOnly" by the generator, so it is
-// served exclusively on the Türkiye-geneli marka.pet domain and never on a local
-// store. Its prose is wholly separate (cargo voice: Türkiye geneli kargo, güvenli
-// online ödeme) so it is unique BY CONTENT vs jetgomarket.com AND the atakum-all /
-// jetgoshop-all / atakumbiz-all corpora. De-dup mirrors the rules above:
+// marka.pet. A store-exclusive corpus for a LOCAL same-day store: every page is
+// tagged availability "localOnly" by the generator, so it is served exclusively
+// on the same-day marka.pet domain. Its prose is wholly separate (local voice:
+// Samsun içi aynı gün teslimat, kapıda ödeme) so it is unique BY CONTENT vs
+// jetgomarket.com AND the atakum-all / jetgoshop-all / atakumbiz-all corpora.
+// De-dup mirrors the rules above:
 //   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
 //     never clobber curated content;
 //   • a collision with a shared KEYWORD slug becomes a markapet override; a
@@ -4326,12 +4326,12 @@ for (const p of MARKAPET_ALL_KEYWORD_PAGES) {
 SEO_PAGES.push(...MARKAPET_ALL_EXCLUSIVE_PAGES);
 
 // KARADENIZ PET SHOP broad multi-category corpus (storeId "karadeniz"), served
-// ONLY on karadenizpetshop.com. This is the SECOND store-exclusive CARGO corpus
-// (after marka.pet): every page is tagged availability "cargoOnly" by the
-// generator, so it is served exclusively on the Türkiye-geneli karadeniz domain
-// and never on a local store. Its prose is a wholly separate cargo voice, unique
-// BY CONTENT vs jetgomarket.com (the markalar+diger universe it shares) AND the
-// markapet-all sibling cargo corpus. De-dup mirrors the rules above:
+// ONLY on karadenizpetshop.com. A store-exclusive corpus for a LOCAL same-day
+// store: every page is tagged availability "localOnly" by the generator, so it is
+// served exclusively on the same-day karadeniz domain. Its prose is a wholly
+// separate local voice, unique BY CONTENT vs jetgomarket.com (the markalar+diger
+// universe it shares) AND the markapet-all sibling local corpus. De-dup mirrors
+// the rules above:
 //   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
 //     never clobber curated content;
 //   • a collision with a shared KEYWORD slug becomes a karadeniz override; a
@@ -4348,14 +4348,13 @@ for (const p of KARADENIZ_ALL_KEYWORD_PAGES) {
 SEO_PAGES.push(...KARADENIZ_ALL_EXCLUSIVE_PAGES);
 
 // ATAKUM PET broad multi-category corpus (storeId "samsun"), served ONLY on
-// atakumpet.com. This is the THIRD store-exclusive CARGO corpus (after marka.pet
-// and karadenizpetshop.com): every page is tagged availability "cargoOnly" by the
-// generator, so it is served exclusively on the Türkiye-geneli samsun domain and
-// never on a local store. It consumes the SAME markalar+diger universe as the
-// karadeniz corpus, so the same slugs resolve on both domains — its prose is a
-// wholly separate cargo "Atakum Pet" voice, unique BY CONTENT vs jetgomarket.com
-// AND the karadeniz-all / markapet-all sibling cargo corpora. De-dup mirrors the
-// rules above:
+// atakumpet.com. A store-exclusive corpus for a LOCAL same-day store (alongside
+// marka.pet and karadenizpetshop.com): every page is tagged availability
+// "localOnly" by the generator, so it is served exclusively on the same-day samsun
+// domain. It consumes the SAME markalar+diger universe as the karadeniz corpus, so
+// the same slugs resolve on both domains — its prose is a wholly separate local
+// "Atakum Pet" voice, unique BY CONTENT vs jetgomarket.com AND the karadeniz-all /
+// markapet-all sibling local corpora. De-dup mirrors the rules above:
 //   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
 //     never clobber curated content;
 //   • a collision with a shared KEYWORD slug becomes a samsun override; a
@@ -4396,15 +4395,14 @@ for (const p of JETGOPET_ALL_KEYWORD_PAGES) {
 SEO_PAGES.push(...JETGOPET_ALL_EXCLUSIVE_PAGES);
 
 // SAMSUN PET SHOP broad multi-category corpus (storeId "samsunpet"), served ONLY
-// on samsunpet.com. This is the FOURTH store-exclusive CARGO corpus (after
+// on samsunpet.com. A store-exclusive corpus for a LOCAL same-day store (alongside
 // marka.pet / karadenizpetshop.com / atakumpet.com): every page is tagged
-// availability "cargoOnly" by the generator, so it is served exclusively on the
-// Türkiye-geneli samsunpet domain and never on a local store. It consumes the SAME
-// markalar+diger universe as the samsun / karadeniz / markapet corpora, so the same
-// slugs resolve on all of them — its prose is a wholly separate cargo "Samsun Pet
-// Shop" voice, unique BY CONTENT vs jetgomarket.com AND the samsun-all /
-// karadeniz-all / markapet-all sibling cargo corpora. De-dup mirrors the rules
-// above:
+// availability "localOnly" by the generator, so it is served exclusively on the
+// same-day samsunpet domain. It consumes the SAME markalar+diger universe as the
+// samsun / karadeniz / markapet corpora, so the same slugs resolve on all of them —
+// its prose is a wholly separate local "Samsun Pet Shop" voice, unique BY CONTENT
+// vs jetgomarket.com AND the samsun-all / karadeniz-all / markapet-all sibling
+// local corpora. De-dup mirrors the rules above:
 //   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
 //     never clobber curated content;
 //   • a collision with a shared KEYWORD slug becomes a samsunpet override; a
@@ -4474,7 +4472,8 @@ export function getSeoPagesForStore(store: StoreConfig): SeoPageData[] {
  *
  *   Group 1 — the 3 independent JETGO LOCAL domains (shared local corpus):
  *     jetgomarket.com / jetgo.pet / jetgo.shop
- *   Group 2 — the 4 CARGO sibling domains (shared cargo corpus):
+ *   Group 2 — the 4 sibling domains sharing the markalar+diger keyword universe
+ *     (each its own local corpus over the same slug space):
  *     atakumpet.com / samsunpet.com / karadenizpetshop.com / marka.pet
  *
  * ORDER & LENGTH ARE LOAD-BEARING *per group*: reordering or resizing a group

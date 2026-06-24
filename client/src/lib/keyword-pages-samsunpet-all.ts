@@ -1,31 +1,35 @@
 // ---------------------------------------------------------------------------
 // "Tüm anahtar kelimeler" broad SEO landing-page generator for SAMSUN PET SHOP
-// (store id "samsunpet") — the 11th corpus in the family and the FOURTH built
-// for a CARGO store.
+// (store id "samsunpet") — one corpus in the family, built for a TRUE LOCAL
+// SAME-DAY store.
 //
-// Samsun Pet Shop is a Türkiye-geneli (national) online pet shop that ships from
-// a Samsun-based warehouse via contracted cargo, with ONLINE-ONLY card payment.
-// It must read UNIQUE-by-CONTENT versus:
+// Samsun Pet Shop is part of ONE Samsun-based pet shop. It delivers SAME-DAY
+// within the Samsun area (Atakum, İlkadım, Canik, Tekkeköy ve Bafra dâhil
+// çevre mahalleler) with KAPIDA ÖDEME (nakit / kart / QR) via kurye. Delivery
+// is strictly Samsun-only and same-day; there is no nationwide shipping and no
+// online-only payment requirement.
+// It must read UNIQUE-by-CONTENT versus the 8 sibling corpora:
 //   • the SHARED jetgomarket.com keyword pages,
-//   • the jetgo-markalar / jetgo-diger pages (storeId "jetgo", LOCAL voice) that
-//     consume the SAME markalar+diger keyword universe,
-//   • the samsun-all / karadeniz-all / markapet-all corpora — the SIBLING cargo
+//   • the jetgo-markalar / jetgo-diger pages (storeId "jetgo") that consume the
+//     SAME markalar+diger keyword universe,
+//   • the samsun-all / karadeniz-all / markapet-all corpora — the SIBLING local
 //     brands that consume the IDENTICAL markalar+diger universe, so the same
 //     slugs resolve on all of them and the prose must diverge page-by-page.
 //
-// CARGO TRUTHFULNESS is the load-bearing invariant. A cargo store CANNOT
-// truthfully claim any LOCAL trait, so this generator NEVER affirms:
-//   • aynı gün / 1 saat / acil / hemen teslimat
-//   • kapıda ödeme / kapıda nakit
-//   • kurye / mahalleye teslimat
-//   • "en yakın mağaza" / nöbetçi / gece açık / fiziksel mağaza ziyareti
-// Local-intent search terms ARE targeted for SEO, but ONLY the URL slug keeps the
-// raw keyword. Every served surface — title, metaTitle, keywords meta, AND every
-// line of RENDERED BODY COPY (h1, intro, sections, FAQ answers, description) —
-// uses a local-intent-STRIPPED label so the page describes only what Samsun Pet
-// Shop actually offers: online order + güvenli kart ödemesi + Türkiye geneli
-// anlaşmalı kargo. Pages carrying a 24h/gece cue get a truthful "online sipariş
-// 7/24, fiziksel mağaza yok" disclaimer.
+// THIS corpus's DISTINCT ANGLE: SAMSUN-WIDE NEIGHBORHOOD COVERAGE, RELIABILITY-
+// LED — "şehrin her mahallesine aynı gün kurye", geniş Samsun ilçe + mahalle
+// kapsaması (İlkadım merkez, Canik, Atakum, Tekkeköy, Bafra), güvenilir teslimat.
+//
+// LOCAL TRUTHFULNESS is the load-bearing invariant. This is a real local store,
+// so the generator AFFIRMS the local traits it genuinely offers:
+//   • aynı gün teslimat (Samsun içi, çalışma saatleri içinde)
+//   • kapıda ödeme — nakit / kart / QR
+//   • kurye ile kapınıza / mahallenize teslim
+// The raw keyword renders on every served surface — title, metaTitle, keywords
+// meta, h1, intro, sections, FAQ answers, description — because the page truly
+// describes what Samsun Pet Shop offers. Pages carrying a 24h/gece cue get an
+// honest hours note: "online sipariş günün her saati alınır; Samsun içi aynı
+// gün teslimat çalışma saatleri içinde".
 //
 // Classification + truthfulness reuse the shared keyword-truthfulness engine, so
 // live-animal / service / retailer / price intents are framed safely:
@@ -35,9 +39,7 @@
 //   price   → never a fabricated number next to ₺/TL/lira.
 //
 // Consumed by seo-data.ts as a SEPARATE integration loop. Every page is tagged
-// availability "cargoOnly" EXPLICITLY (the auto-classifier would otherwise mark
-// the local-intent slugs localOnly and drop them from the cargo store). Do not
-// hand-edit.
+// availability "localOnly" EXPLICITLY. Do not hand-edit.
 // ---------------------------------------------------------------------------
 
 import type { SeoPageData } from "./seo-data";
@@ -59,30 +61,27 @@ const PHONE = "0850 840 39 59";
 const ORIGIN = "Samsun";
 const SUPPORT_HOURS = "09:00–18:00";
 
-// Türkiye-geneli coverage footprint. A DELIBERATELY cargo-flavoured list of
-// provinces (a Marmara / Ege / Karadeniz weighting, NOT Atakum neighbourhoods)
-// in an order distinct from every sibling corpus so it never lines up.
+// Samsun-içi coverage footprint. A DELIBERATELY local list of Samsun ilçe +
+// mahalle (geniş ilçe + bol mahalle vurgusu) in an order distinct from every
+// sibling corpus so it never lines up.
 const REGIONS = [
-  "İstanbul", "İzmir", "Ankara", "Kocaeli", "Bursa", "Antalya", "Muğla",
-  "Aydın", "Manisa", "Balıkesir", "Tekirdağ", "Sakarya", "Samsun", "Ordu",
-  "Giresun", "Rize", "Tokat", "Çorum", "Amasya", "Sinop",
+  "İlkadım", "Atakum", "Canik", "Tekkeköy", "Bafra", "Mimarsinan", "Denizevleri",
+  "Körfez", "Atakent", "Kurupelit", "Çatalçam", "Yeşilkent", "Cumhuriyet",
+  "Kadıköy", "Güzelyalı", "Aydınlıkevler", "Yenimahalle", "Kılıçdede",
+  "Bahçelievler", "Çiftlik",
 ];
 
 const ALWAYS_OPEN_RE = /24\s*saat|7\s*\/?\s*24|gece|nöbet|kesintisiz|geç\s*saat/i;
 
-// Local-intent search cues. A keyword matching this is STILL targeted for SEO,
-// but its rendered body copy must be reframed truthfully (cargo only).
+// Local-intent search cues. A keyword matching this gets the dedicated isLocal
+// section that AFFIRMS same-day Samsun delivery (it is genuinely true now).
 const LOCAL_INTENT_RE =
   /aynı gün|ayni gun|1 saat|bir saat|2 saat|\bacil\b|hemen|anında|aninda|kurye|kapıda|kapida|mahalle|en yakın|en yakin|nöbet|nobet|gece|7\s*\/?\s*24|24 saat|eve teslim|eve servis|getir|gelsin|hafta sonu/i;
 
-// Tokens stripped from the rendered label so NO served surface affirms a local
-// trait. The stripped label feeds title, metaTitle, keywords meta, body and
-// internal-link text alike; only the URL slug retains the raw keyword.
-const STRIP_RE =
-  /(aynı gün(?:ü|lük)?|ayni gun|1 saat(?:te|lik)?|bir saat(?:te|lik)?|2 saat(?:te)?|acil|hemen|anında|aninda|kurye ?(?:ile|li)?|kapıda ödeme|kapida odeme|kapıda nakit|kapida nakit|kapıda|kapida|mahalleye|mahalle|en yakın|en yakin|nöbetçi|nobetci|gece|geç saat|7\s*\/?\s*24|24 saat|eve teslimat|eve teslim|eve servis|hızlı teslimat|hizli teslimat|getir|gelsin|hafta sonu)/gi;
-
+// This is a real local store, so the raw keyword renders on every served
+// surface unchanged — passthrough.
 function stripLocalIntent(kw: string): string {
-  return kw.replace(STRIP_RE, " ").replace(/\s{2,}/g, " ").trim();
+  return kw;
 }
 
 // ---------------------------------------------------------------------------
@@ -142,34 +141,35 @@ function joinNice(items: string[]): string {
 }
 
 // ---------------------------------------------------------------------------
-// Phrase banks — fresh cargo "Samsun Pet Shop" voice: Türkiye geneli anlaşmalı
-// kargo, güvenli online ödeme. No line is shared with any sibling bank (samsun /
-// karadeniz / markapet in particular, which consume the identical universe), and
-// NONE affirms a local trait (same-day / door-payment / courier / local presence).
+// Phrase banks — local same-day "Samsun Pet Shop" voice: Samsun içi aynı gün
+// kurye teslimatı, kapıda ödeme (nakit/kart/QR), şehrin her mahallesine geniş
+// kapsama. No line is shared with any sibling bank (samsun / karadeniz /
+// markapet in particular, which consume the identical universe), and every line
+// affirms the genuine local trait: same-day Samsun delivery + door payment.
 // ---------------------------------------------------------------------------
 
 const SHIP_LINES = [
-  `${BRAND}, verdiğiniz siparişi ${ORIGIN}'daki depomuzda özenle toplar ve anlaşmalı kargoya teslim eder; gönderiniz yola çıktıktan sonra illerin çoğuna ortalama 1–3 iş gününde varır.`,
-  `Paketiniz sağlam malzemeyle hazırlanıp güvenilir kargo firmamıza bırakılır; ülke genelinde ortalama teslim süresi çoğunlukla 1–3 iş günü arasında değişir.`,
-  `Gönderiniz depodan ayrılır ayrılmaz kargo takip numaranız tarafınıza iletilir; böylece paketinizi yola çıktığı andan adresinize varana dek izleyebilirsiniz.`,
-  `Stokta hazır bekleyen ürünleri vakit kaybetmeden hazırlar, 81 ilin tamamına anlaşmalı kargo ağımızla ulaştırırız.`,
+  `${BRAND}, verdiğiniz siparişi ${ORIGIN}'daki dükkânımızda özenle hazırlar ve kuryemizle aynı gün kapınıza ulaştırır; Samsun içinde mahallenize çoğunlukla saatler içinde teslim ederiz.`,
+  `Siparişiniz hazırlanır hazırlanmaz kuryemiz yola çıkar; Samsun içi aynı gün teslimatla ürününüz çalışma saatleri içinde kapınızda olur.`,
+  `Kuryemiz yola çıktığında size haber veririz; böylece Samsun içindeki teslimatınızı adım adım takip eder, aynı gün kapınızda teslim alırsınız.`,
+  `Stokta hazır bekleyen ürünleri vakit kaybetmeden toplar, şehrin her mahallesine kendi kuryemizle aynı gün ulaştırırız.`,
 ];
 const ORDER_LINES = [
-  `Sipariş vermek son derece basit: beğendiğiniz ürünü internet sitemizde sepete ekleyin ve güvenli online ödeme adımıyla alışverişinizi tamamlayın.`,
-  `İster online mağazamızdan sepetinizi oluşturun, ister ${PHONE} numaralı sipariş hattımızı arayın; hangisi size kolaysa onu seçin.`,
-  `${PHONE} sipariş hattımızdan bize ulaşabilir ya da sitemizden sepete ekleyebilirsiniz; talebiniz hızla hazırlığa alınır.`,
-  `Almak istediğiniz ürünü iletmeniz kâfi; online mağazamız veya ${PHONE} hattımız siparişinizi vakit kaybetmeden oluşturur.`,
+  `Sipariş vermek son derece basit: beğendiğiniz ürünü internet sitemizde sepete ekleyin ve adresinizi girip aynı gün teslimatla siparişinizi tamamlayın.`,
+  `İster online mağazamızdan sepetinizi oluşturun, ister ${PHONE} numaralı sipariş hattımızı arayın; hangisi size kolaysa onu seçin, kuryemiz aynı gün kapınızda.`,
+  `${PHONE} sipariş hattımızdan bize ulaşabilir ya da sitemizden sepete ekleyebilirsiniz; talebiniz hızla hazırlanıp Samsun içinde aynı gün yola çıkar.`,
+  `Almak istediğiniz ürünü iletmeniz kâfi; online mağazamız veya ${PHONE} hattımız siparişinizi alır, kuryemiz mahallenize getirir.`,
 ];
 const PAY_LINES = [
-  "Ödemeyi tamamen internet üzerinden alırız: kredi ya da banka kartınızla 3D Secure korumalı altyapıda güvenle işlem görürsünüz.",
-  "Kartınızla güvenli online ödeme yaparsınız; her alışverişte ödediğiniz tutarın %5'i Para Puan olarak hesabınıza yansır.",
-  "Güvenli online ödemeyle kartınızdan ödersiniz; biriktirdiğiniz %5 Para Puan'ı bir sonraki alışverişinizde indirim olarak kullanırsınız.",
-  "Alışverişinizi güvenli online ödeme ile bitirirsiniz; belirli tutarı aşan siparişlerde kargo ücretini biz üstleniriz.",
+  "Ödemeyi kapıda yaparsınız: kurye geldiğinde nakit, kart veya QR ile dilediğiniz gibi ödersiniz; isterseniz online ödeme de mümkün.",
+  "Kapıda ödeme (nakit / kart / QR) ile rahatça ödersiniz; her alışverişte ödediğiniz tutarın %5'i Para Puan olarak hesabınıza yansır.",
+  "Kapıda nakit, kart ya da QR ile ödersiniz; biriktirdiğiniz %5 Para Puan'ı bir sonraki alışverişinizde indirim olarak kullanırsınız.",
+  "Alışverişinizi kapıda ödeme (nakit/kart/QR) ile bitirirsiniz; Samsun içi teslimatta kurye ücretini belirli tutarın üzerinde biz üstleniriz.",
 ];
 const TRUST_LINES = [
-  "Gönderdiğimiz her ürün orijinaldir ve faturalıdır; özellikle mama gruplarında son kullanma tarihini koliye koymadan önce tek tek gözden geçiririz.",
-  "Yalnızca güvendiğimiz tedarikçilerle çalışır, kırılgan ürünleri darbeye karşı çift kat korur, içiniz rahat olsun diye titizlikle yola çıkarırız.",
-  "Tarihi yaklaşmış veya ambalajı zedelenmiş hiçbir ürünü kargoya vermeyiz; ne aldığınızı net görerek gönül rahatlığıyla alışveriş edersiniz.",
+  "Getirdiğimiz her ürün orijinaldir ve faturalıdır; özellikle mama gruplarında son kullanma tarihini kuryeye vermeden önce tek tek gözden geçiririz.",
+  "Yalnızca güvendiğimiz tedarikçilerle çalışır, kırılgan ürünleri özenle paketler, içiniz rahat olsun diye titizlikle kapınıza ulaştırırız.",
+  "Tarihi yaklaşmış veya ambalajı zedelenmiş hiçbir ürünü kuryeye vermeyiz; ne aldığınızı net görerek gönül rahatlığıyla alışveriş edersiniz.",
 ];
 const STOCK_LINES = [
   `Stok adetleri gün içinde değişebildiği için, dilediğiniz ürünü ayırtmak adına ${PHONE} numaralı hattımızdan kısa bir teyit almanızı tavsiye ederiz.`,
@@ -177,25 +177,25 @@ const STOCK_LINES = [
   `Bir ürünün stokta olup olmadığını en pratik biçimde ${PHONE} numarasından sorabilir, yoksa size en uygun alternatifi birlikte seçebiliriz.`,
 ];
 const REGION_LINES = [
-  "Ülkenin dört bir yanına — İstanbul, İzmir, Ankara, Bursa, Antalya ve geri kalan tüm illere — anlaşmalı kargoyla gönderim yapıyoruz.",
-  "Hangi şehirde olursanız olun paketiniz adresinize ulaşır; Türkiye geneli kargo ağımız 81 ilin tamamını kapsıyor.",
-  "Metropollerden en uzak ilçelere kadar Türkiye'nin her noktasına güvenli kargoyla erişiyoruz.",
+  "Samsun'un dört bir yanına — Atakum, İlkadım, Canik, Tekkeköy ve Bafra dâhil tüm mahallelere — kuryemizle aynı gün teslimat yapıyoruz.",
+  "Samsun içinde hangi mahallede olursanız olun siparişiniz aynı gün kapınızda; geniş ilçe ve mahalle kapsamamızla şehrin her köşesine ulaşıyoruz.",
+  "Merkez mahallelerden çevredeki semtlere kadar Samsun'un her noktasına kendi kuryemizle aynı gün erişiyoruz.",
 ];
 const STORY_LINES = [
-  `${BRAND}, ${ORIGIN} merkezli bir işletme olsa da Türkiye'nin tamamına gönderim yapan bir online pet shoptur; size en doğru ürünü içtenlikle öneririz.`,
-  "Amacımız hızlı, güvenilir ve şeffaf bir online pet shop deneyimi sunmak: kaliteli ürün, güvenli ödeme ve Türkiye geneli kargo bir arada.",
-  "Geniş ürün yelpazesini online alışverişin rahatlığıyla birleştiriyoruz; merak ettiğinizi sorun, bildiğimizi açık yüreklilikle anlatalım.",
+  `${BRAND}, ${ORIGIN} merkezli yerel bir pet shoptur; şehrin her mahallesine aynı gün kuryeyle teslimat yapar, size en doğru ürünü içtenlikle öneririz.`,
+  "Amacımız hızlı, güvenilir ve şeffaf bir yerel pet shop deneyimi sunmak: kaliteli ürün, kapıda ödeme ve Samsun içi aynı gün teslimat bir arada.",
+  "Geniş ürün yelpazesini yerel alışverişin rahatlığıyla birleştiriyoruz; merak ettiğinizi sorun, bildiğimizi açık yüreklilikle anlatalım.",
 ];
 
 const WHY_POINTS = [
-  "Türkiye'nin bütün illerine anlaşmalı kargoyla gönderim",
-  "3D Secure korumalı güvenli online kart ödemesi",
+  "Samsun'un bütün mahallelerine aynı gün kuryeyle teslimat",
+  "Kapıda ödeme — nakit, kart veya QR ile",
   "Kedi, köpek, kuş, kemirgen ve akvaryum için zengin ürün yelpazesi",
   "Premium ve ekonomik markalar tek çatı altında",
   "Orijinal ve faturalı ürün güvencesi",
   "Her siparişte %5 Para Puan kazanımı",
-  "Kargo takip numarasıyla gönderini adım adım izleme",
-  "Belirli tutarın üzerinde ücretsiz kargo",
+  "Kurye yola çıkınca bilgilendirme ve takip",
+  "Belirli tutarın üzerinde ücretsiz Samsun içi teslimat",
 ];
 
 // ---------------------------------------------------------------------------
@@ -208,25 +208,25 @@ function shipSection(Kp: string, regions: string[], h: number): Section {
   return {
     h2: pick(
       [
-        `${Kp} Kaç İş Gününde Teslim Edilir?`,
-        `${Kp} Adresime Ne Zaman Ulaşır?`,
-        `${Kp} İçin Türkiye Geneli Kargo`,
+        `${Kp} Aynı Gün Teslim Edilir mi?`,
+        `${Kp} Kapıma Ne Zaman Ulaşır?`,
+        `${Kp} İçin Samsun İçi Aynı Gün Teslimat`,
       ],
       h,
       801,
     ),
     paragraphs: [
       pick(SHIP_LINES, h, 802),
-      `${Kp} siparişiniz onay verir vermez özenle paketlenip anlaşmalı kargoya teslim edilir; ${joinNice(regions)} başta olmak üzere Türkiye'nin tüm illerine gönderim sağlıyoruz.`,
+      `${Kp} siparişiniz onay verir vermez özenle hazırlanıp kuryemize verilir; ${joinNice(regions)} başta olmak üzere Samsun'un tüm mahallelerine aynı gün teslimat yapıyoruz.`,
     ],
-    list: regions.map((r) => `${r}: anlaşmalı kargoyla 1–3 iş günü`),
+    list: regions.map((r) => `${r}: kuryemizle aynı gün teslimat`),
   };
 }
 
 function siparisSection(h: number): Section {
   return {
     h2: pick(
-      ["Online Sipariş Nasıl Verilir?", "Birkaç Adımda Online Sipariş", "Sipariş ve Güvenli Ödeme Nasıl İşler?"],
+      ["Sipariş Nasıl Verilir?", "Birkaç Adımda Sipariş", "Sipariş ve Kapıda Ödeme Nasıl İşler?"],
       h,
       811,
     ),
@@ -238,20 +238,20 @@ function siparisSection(h: number): Section {
 }
 
 function bolgeSection(regions: string[], h: number): Section {
-  const a = regions[0] ?? "İstanbul";
-  const b = regions[1] ?? "Ankara";
+  const a = regions[0] ?? "Atakum";
+  const b = regions[1] ?? "İlkadım";
   return {
     h2: pick(
-      ["Türkiye'nin Tamamına Gönderim", "Kargo Hangi İllere Gidiyor?", "81 İl Kargo Ağımız"],
+      ["Samsun'un Her Mahallesine Teslimat", "Hangi Mahallelere Gidiyoruz?", "Samsun İçi Aynı Gün Kapsama Alanımız"],
       h,
       821,
     ),
     paragraphs: [
       pick(
         [
-          `${a} ve ${b} başta olmak üzere 81 ilin tamamına anlaşmalı kargoyla düzenli gönderim gerçekleştiriyoruz.`,
-          `${a} ile ${b} dâhil her ile kargo gönderdiğimizden teslim sürelerimiz hem öngörülebilir hem de güvenilirdir.`,
-          `${a}, ${b} ve komşu iller dâhil Türkiye'nin her köşesine erişiyoruz; nerede olursanız olun siparişiniz adresinize dek gelir.`,
+          `${a} ve ${b} başta olmak üzere Samsun'un tüm mahallelerine kuryemizle aynı gün düzenli teslimat gerçekleştiriyoruz.`,
+          `${a} ile ${b} dâhil her mahalleye teslimat yaptığımızdan teslim sürelerimiz hem öngörülebilir hem de güvenilirdir.`,
+          `${a}, ${b} ve komşu semtler dâhil Samsun'un her köşesine erişiyoruz; nerede olursanız olun siparişiniz aynı gün kapınıza gelir.`,
         ],
         h,
         822,
@@ -297,12 +297,12 @@ function mainSection(a: Attr, kwP: string, Kp: string, h: number, isLocal: boole
           [
             "Hayatınıza yeni bir dost katmak istiyorsanız önce barınaklara ve güvenilir sahiplenme gönüllülerine göz atın; sahiplenmek, satın almaktan çok daha doğru bir tercihtir.",
             "Yeni bir dostun en sağlıklı kaynağı barınaklar ve sorumlu sahiplenme ağlarıdır; siz dostunuzu sahiplendikten sonra mama ve bakım tarafında biz yanınızdayız.",
-            "Canlı hayvan ticareti yerine sahiplenmeyi savunuyoruz; eve katılan dostunuzun beslenme ve bakım ihtiyaçlarını Türkiye'nin her yerine kargoyla karşılarız.",
+            "Canlı hayvan ticareti yerine sahiplenmeyi savunuyoruz; eve katılan dostunuzun beslenme ve bakım ihtiyaçlarını Samsun içinde aynı gün kuryeyle karşılarız.",
           ],
           h,
           842,
         ),
-        `Sahiplendiğiniz ${animalW} için mama, kum, kafes, oyuncak ve tüm bakım ürünlerini ${BRAND}'tan Türkiye geneli kargoyla sipariş edebilirsiniz.`,
+        `Sahiplendiğiniz ${animalW} için mama, kum, kafes, oyuncak ve tüm bakım ürünlerini ${BRAND}'tan Samsun içi aynı gün teslimatla sipariş edebilirsiniz.`,
       ],
     };
   }
@@ -311,17 +311,17 @@ function mainSection(a: Attr, kwP: string, Kp: string, h: number, isLocal: boole
     return {
       h2: pick([`${Kp} İçin Kısa Açıklama`, `${Kp} Hakkında Notumuz`, `${Kp}: Durum`], h, 841),
       paragraphs: [
-        `${BRAND} bir online evcil hayvan ürünleri mağazasıdır; ${kwP} hizmeti vermiyoruz. Bu, mağazamızın sunduğu bir hizmet değildir.`,
+        `${BRAND} bir evcil hayvan ürünleri mağazasıdır; ${kwP} hizmeti vermiyoruz. Bu, mağazamızın sunduğu bir hizmet değildir.`,
         pick(
           [
             "Bu iş için bölgenizdeki uzman bir kişiye ya da kuruluşa başvurmanız en doğrusudur; biz yalnızca süreçte gerekecek ürünleri sağlarız.",
             "İşin kendisini alanında yetkin bir adresten almanızı öneririz; mama, bakım ve aksesuar tarafındaki her ihtiyaçta ise yanınızdayız.",
-            "İlgili işi profesyonel birinden almanız gerekir; gereken ürünleri Türkiye'nin her yerine kargoyla ulaştırmaksa bizim işimiz.",
+            "İlgili işi profesyonel birinden almanız gerekir; gereken ürünleri Samsun içinde aynı gün kuryeyle ulaştırmaksa bizim işimiz.",
           ],
           h,
           842,
         ),
-        `Gerekli ürünleri (mama, bakım malzemesi, aksesuar) ${BRAND}'tan güvenli online ödeme ve Türkiye geneli kargoyla temin edebilirsiniz.`,
+        `Gerekli ürünleri (mama, bakım malzemesi, aksesuar) ${BRAND}'tan kapıda ödeme (nakit/kart/QR) ve Samsun içi aynı gün teslimatla temin edebilirsiniz.`,
       ],
     };
   }
@@ -331,12 +331,12 @@ function mainSection(a: Attr, kwP: string, Kp: string, h: number, isLocal: boole
     return {
       h2: pick([`${Kp} Yerine ${BRAND}`, `${Kp}: Bağımsız Bir Seçenek`, `${Kp} mı, ${BRAND} mu?`], h, 841),
       paragraphs: [
-        `${BRAND} bağımsız bir işletmedir; ${r} ile resmi bir bağlantımız yok. Aynı ürünleri Türkiye geneli kargo ve güvenli online ödemeyle bağımsız bir alternatif olarak sunarız.`,
+        `${BRAND} bağımsız bir işletmedir; ${r} ile resmi bir bağlantımız yok. Aynı ürünleri Samsun içi aynı gün teslimat ve kapıda ödeme (nakit/kart/QR) ile bağımsız bir alternatif olarak sunarız.`,
         pick(
           [
             "Bizden sipariş verdiğinizde ürün orijinal ve faturalı gelir; bir aksilik çıktığında muhatapsız kalmaz, doğrudan bize ulaşırsınız.",
-            "Fiyat araştırırken şunu unutmayın: bizden alındığında ürün güvenle paketlenir, kargo takibi iletilir ve destek için gerçek bir ekip yanınızdadır.",
-            "Bağımsız bir online pet shop olarak orijinal ürün, güvenli ödeme ve Türkiye geneli kargo sözümüzün arkasındayız.",
+            "Fiyat araştırırken şunu unutmayın: bizden alındığında ürün güvenle paketlenir, kurye yola çıkınca haber verilir ve destek için gerçek bir ekip yanınızdadır.",
+            "Bağımsız bir yerel pet shop olarak orijinal ürün, kapıda ödeme ve Samsun içi aynı gün teslimat sözümüzün arkasındayız.",
           ],
           h,
           842,
@@ -346,17 +346,17 @@ function mainSection(a: Attr, kwP: string, Kp: string, h: number, isLocal: boole
     };
   }
 
-  // --- Local-intent reframe: never affirm same-day/door-payment/local pickup. -
+  // --- Local-intent affirm: same-day Samsun delivery + door payment are TRUE. -
   if (isLocal) {
     return {
       h2: pick(
-        [`${Kp}: Türkiye Geneline Gönderim`, `${Kp} Nasıl Kargolanır?`, `${Kp} İçin Online Sipariş ve Teslimat`],
+        [`${Kp}: Samsun İçi Aynı Gün Teslimat`, `${Kp} Nasıl Teslim Edilir?`, `${Kp} İçin Sipariş ve Aynı Gün Teslimat`],
         h,
         841,
       ),
       paragraphs: [
-        `${BRAND}, Türkiye'nin her yerine anlaşmalı kargoyla gönderim yapan bir online pet shoptur. Siparişiniz onaylandıktan sonra hızla hazırlanıp kargoya verilir; çoğu adrese 1–3 iş günü içinde ulaşır.`,
-        "Ödemeyi güvenli online altyapımız üzerinden kredi veya banka kartınızla yaparsınız; harcadığınız tutarın %5'i her seferinde Para Puan olarak hesabınıza eklenir.",
+        `${BRAND}, Samsun'un her mahallesine kendi kuryesiyle aynı gün teslimat yapan yerel bir pet shoptur. Siparişiniz onaylandıktan sonra hızla hazırlanıp yola çıkar; çalışma saatleri içinde aynı gün kapınızda olur.`,
+        "Ödemeyi kapıda yaparsınız: kurye geldiğinde nakit, kart veya QR ile rahatça ödersiniz; harcadığınız tutarın %5'i her seferinde Para Puan olarak hesabınıza eklenir.",
         pick(STOCK_LINES, h, 842),
       ],
     };
@@ -387,7 +387,7 @@ function mainSection(a: Attr, kwP: string, Kp: string, h: number, isLocal: boole
         h2: pick([`${Kp} Seçiminde Nelere Dikkat Etmeli?`, `Doğru ${Kp} İçin Pratik Öneriler`, `${Kp} Seçim Rehberi`], h, 843),
         paragraphs: [
           intro,
-          `${crit} ${a.brand ? `${a.brand} dâhil ` : ""}premium ve ekonomik pek çok markayı bir arada bulundurduğumuzdan, kararsızsanız küçük paketle deneyip beğendiğinizde büyük boya geçebilirsiniz; hepsini Türkiye geneli kargoyla yollarız.`,
+          `${crit} ${a.brand ? `${a.brand} dâhil ` : ""}premium ve ekonomik pek çok markayı bir arada bulundurduğumuzdan, kararsızsanız küçük paketle deneyip beğendiğinizde büyük boya geçebilirsiniz; hepsini Samsun içinde aynı gün kuryeyle yollarız.`,
         ],
         list: [
           "Yeni mamaya geçişi 5–7 güne yayıp eski mamayla kademeli harmanlayın",
@@ -402,7 +402,7 @@ function mainSection(a: Attr, kwP: string, Kp: string, h: number, isLocal: boole
         h2: pick([`${Kp} Nasıl Seçilir ve Kullanılır?`, `${Kp} Hakkında Bilmeniz Gerekenler`, `${Kp} Kullanım Tavsiyeleri`], h, 843),
         paragraphs: [
           intro,
-          `${kind ? `${trCap(kind)}kumda ` : "Kedi kumunda "}en belirleyici üç ölçüt topaklanma gücü, toz oranı ve koku kontrolüdür. ${BRAND}'ta topaklanan (bentonit), kristal (silika) ve doğal kum türlerini bir arada bulur, Türkiye'nin her yerine kargoyla sipariş edersiniz.`,
+          `${kind ? `${trCap(kind)}kumda ` : "Kedi kumunda "}en belirleyici üç ölçüt topaklanma gücü, toz oranı ve koku kontrolüdür. ${BRAND}'ta topaklanan (bentonit), kristal (silika) ve doğal kum türlerini bir arada bulur, Samsun içinde aynı gün teslimatla sipariş edersiniz.`,
         ],
         list: [
           "Kap derinliğini 5–7 cm aralığında tutun, topakları her gün ayıklayın",
@@ -416,7 +416,7 @@ function mainSection(a: Attr, kwP: string, Kp: string, h: number, isLocal: boole
         h2: pick([`${Kp} İçin Öneriler`, `${Kp} Nasıl Seçilmeli?`, `${Kp} Üzerine Kısa Notlar`], h, 843),
         paragraphs: [
           intro,
-          "Tohum karışımının tazeliği, kafes hijyeni ve mineral blok / gaga taşı gibi tamamlayıcılar kuşların formunu korumada belirleyicidir. Yem, kafes ve aksesuarları bir arada sunar, Türkiye geneli kargoyla göndeririz.",
+          "Tohum karışımının tazeliği, kafes hijyeni ve mineral blok / gaga taşı gibi tamamlayıcılar kuşların formunu korumada belirleyicidir. Yem, kafes ve aksesuarları bir arada sunar, Samsun içinde aynı gün kuryeyle göndeririz.",
         ],
         list: [
           "Yemliği düzenli temizleyip küflenmeye fırsat vermeyin",
@@ -535,7 +535,7 @@ function mainSection(a: Attr, kwP: string, Kp: string, h: number, isLocal: boole
           pick(
             [
               `${lc} konusunda en çok merak edilenleri ${BRAND} olarak derledik; doğru ürün ve pratik bilgiyle dostunuzun gününü kolaylaştırmayı hedefliyoruz.`,
-              `${lc} hakkında işe yarar bilgileri bir araya getirdik; ihtiyaç duyduğunuz ürünleri de Türkiye'nin her yerine kargoyla gönderiyoruz.`,
+              `${lc} hakkında işe yarar bilgileri bir araya getirdik; ihtiyaç duyduğunuz ürünleri de Samsun içinde aynı gün kuryeyle gönderiyoruz.`,
             ],
             h,
             843,
@@ -545,12 +545,12 @@ function mainSection(a: Attr, kwP: string, Kp: string, h: number, isLocal: boole
       };
     case "shop":
       return {
-        h2: pick([`${Kp} İçin Online Adresiniz`, `${Kp} Arayanlar İçin`, `${Kp}: Türkiye'ye Online Pet Shop`], h, 843),
+        h2: pick([`${Kp} İçin Online Adresiniz`, `${Kp} Arayanlar İçin`, `${Kp}: Samsun'un Yerel Pet Shopu`], h, 843),
         paragraphs: [
           pick(
             [
-              `${lc} için ${BRAND} online mağazasından sipariş verin; ürünlerinizi Türkiye'nin her yerine anlaşmalı kargoyla yolluyoruz.`,
-              `${lc} deyince ${BRAND}: geniş ürün yelpazesi, güvenli online ödeme ve Türkiye geneli kargo bir arada.`,
+              `${lc} için ${BRAND} online mağazasından sipariş verin; ürünlerinizi Samsun'un her mahallesine aynı gün kuryeyle yolluyoruz.`,
+              `${lc} deyince ${BRAND}: geniş ürün yelpazesi, kapıda ödeme (nakit/kart/QR) ve Samsun içi aynı gün teslimat bir arada.`,
             ],
             h,
             843,
@@ -563,7 +563,7 @@ function mainSection(a: Attr, kwP: string, Kp: string, h: number, isLocal: boole
         h2: `${Kp} Üzerine`,
         paragraphs: [
           intro,
-          `İhtiyacınıza en uygun ${noun} için ${BRAND}'taki seçenekleri inceleyebilir, emin olamadığınızda bize danışabilirsiniz; tüm siparişleri Türkiye geneli kargoyla göndeririz.`,
+          `İhtiyacınıza en uygun ${noun} için ${BRAND}'taki seçenekleri inceleyebilir, emin olamadığınızda bize danışabilirsiniz; tüm siparişleri Samsun içinde aynı gün kuryeyle göndeririz.`,
         ],
       };
   }
@@ -585,7 +585,7 @@ function faqFor(
   if (flags.isAlwaysOpen) {
     out.push({
       q: `${BRAND}'tan günün her saati sipariş verebilir miyim?`,
-      a: `Online mağazamız gün boyu siparişe açıktır. Verdiğiniz siparişler iş günlerinde toplanıp anlaşmalı kargoya teslim edilir; fiziksel bir mağaza işletmiyoruz.`,
+      a: `Online sipariş günün her saati alınır; Samsun içi aynı gün teslimat ise çalışma saatleri içinde yapılır. Çalışma saatleri dışında verilen siparişler ilk teslimat saatinde yola çıkar.`,
     });
   }
 
@@ -597,31 +597,31 @@ function faqFor(
   } else if (a.cat === "service") {
     out.push({
       q: `${BRAND} ${kwP} hizmeti veriyor mu?`,
-      a: `Hayır, ${kwP} bizim verdiğimiz bir hizmet değil; bu hizmeti vermiyoruz. Yalnızca süreçte ihtiyaç duyacağınız ürünleri Türkiye geneli kargoyla yollarız.`,
+      a: `Hayır, ${kwP} bizim verdiğimiz bir hizmet değil; bu hizmeti vermiyoruz. Yalnızca süreçte ihtiyaç duyacağınız ürünleri Samsun içinde aynı gün kuryeyle yollarız.`,
     });
   } else if (a.cat === "retailer") {
     out.push({
       q: `${BRAND} ${a.retailer || "pazaryeri"} ile bağlantılı mı?`,
-      a: `Hayır. Bağımsız bir işletmeyiz, resmi bir bağlantımız yok. Aynı ürünleri Türkiye geneli kargo ve güvenli online ödemeyle sunarız.`,
+      a: `Hayır. Bağımsız bir işletmeyiz, resmi bir bağlantımız yok. Aynı ürünleri Samsun içi aynı gün teslimat ve kapıda ödeme (nakit/kart/QR) ile sunarız.`,
     });
   }
 
   const generic: { q: string; a: string }[] = [
     {
-      q: `${Kp} siparişi kaç günde elime ulaşır?`,
-      a: `Siparişiniz onaylandığı an hızla hazırlanıp anlaşmalı kargoya teslim edilir; Türkiye genelinde çoğu adrese 1–3 iş günü içinde varır.`,
+      q: `${Kp} siparişim ne zaman elime ulaşır?`,
+      a: `Siparişiniz onaylandığı an hızla hazırlanıp kuryemize verilir; Samsun içinde çoğu mahalleye çalışma saatleri içinde aynı gün ulaşır.`,
     },
     {
       q: `${Kp} için nasıl ödeme yaparım?`,
-      a: `Ödemeyi güvenli online altyapımız üzerinden kredi ya da banka kartınızla yaparsınız; her siparişte harcadığınız tutarın %5'i Para Puan olarak hesabınıza eklenir. ${PHONE}.`,
+      a: `Ödemeyi kapıda yaparsınız: kurye geldiğinde nakit, kart veya QR ile ödersiniz; her siparişte harcadığınız tutarın %5'i Para Puan olarak hesabınıza eklenir. ${PHONE}.`,
     },
     {
       q: `${Kp} fiyatını nasıl öğrenirim?`,
       a: `Güncel fiyat ve kampanyalar için ürünü sepete ekleyin ya da ${PHONE} numaralı sipariş hattımızdan bilgi alın; fiyatlar stok ve kampanyaya göre değişebilir.`,
     },
     {
-      q: `${BRAND} Türkiye'nin her yerine kargo gönderiyor mu?`,
-      a: `Evet. ${BRAND}, ${ORIGIN} merkezli deposundan Türkiye'nin her iline anlaşmalı kargoyla gönderim yapar. ${PHONE}.`,
+      q: `${BRAND} Samsun'un her mahallesine teslimat yapıyor mu?`,
+      a: `Evet. ${BRAND}, ${ORIGIN} içindeki Atakum, İlkadım, Canik ve Tekkeköy başta olmak üzere tüm mahallelere kendi kuryesiyle aynı gün teslimat yapar. ${PHONE}.`,
     },
   ];
 
@@ -693,18 +693,15 @@ for (const e of _entries) {
   else _byCat.set(e.a.cat, [e]);
 }
 
-// Cargo-safe core links: every href is a SHARED cargoOnly slug already served on
-// samsunpet (verified present in the cargo corpus), so none ever dangles. The
-// seo-data integration additionally filters any link that does not resolve in the
-// samsunpet slug space, so generic localOnly slugs can never leak.
+// Local-safe core links: every href is a SHARED generic slug already served on
+// samsunpet, so none ever dangles. The seo-data integration additionally filters
+// any link that does not resolve in the samsunpet slug space.
 const CORE_LINKS: { text: string; href: string }[] = [
   { text: "Kedi Maması Siparişi", href: "/kedi-mamasi-siparis" },
   { text: "Köpek Maması Siparişi", href: "/kopek-mamasi-siparis" },
   { text: "Online Pet Shop", href: "/online-petshop" },
   { text: "Kedi Kumu Siparişi", href: "/kedi-kumu-siparis" },
   { text: "Uygun Fiyat Pet Shop", href: "/uygun-fiyat-petshop" },
-  { text: "Türkiye Geneli Kedi Maması", href: "/turkiye-geneli-kedi-mamasi" },
-  { text: "Kargo ile Mama", href: "/kargo-ile-mama" },
 ];
 
 function relatedFor(e: Ent, idx: number): { text: string; href: string }[] {
@@ -719,7 +716,7 @@ function relatedFor(e: Ent, idx: number): { text: string; href: string }[] {
   const sIdx = sibs.findIndex((s) => s.slug === e.slug);
   for (let off = 1; off <= sibs.length && out.length < 4; off++) {
     const sib = sibs[(sIdx + off) % sibs.length];
-    push({ text: trTitle(stripLocalIntent(sib.kw) || categoryNoun(sib.a)), href: `/${sib.slug}` });
+    push({ text: trTitle(sib.kw), href: `/${sib.slug}` });
   }
   push(CORE_LINKS[idx % CORE_LINKS.length]);
   push(CORE_LINKS[(idx + 2) % CORE_LINKS.length]);
@@ -732,15 +729,15 @@ function relatedFor(e: Ent, idx: number): { text: string; href: string }[] {
 // ---------------------------------------------------------------------------
 
 const META_SUFFIX = [
-  "Türkiye'nin Tüm İllerine Anlaşmalı Kargo",
-  "Online Sipariş ve Güvenli Kargo",
-  "Ülke Geneli Güvenli Gönderim",
-  "81 İle Kargo Avantajı",
+  "Samsun'un Tüm Mahallelerine Aynı Gün Teslimat",
+  "Aynı Gün Teslimat ve Kapıda Ödeme",
+  "Samsun İçi Aynı Gün Kurye",
+  "Atakum / İlkadım / Canik / Tekkeköy Teslimat",
 ];
 
 function metaTitleFor(a: Attr, K: string, h: number): string {
   if (a.cat === "live") return `${K} | ${BRAND} — Sorumlu Sahiplenme`;
-  if (a.cat === "retailer") return `${K} | ${BRAND} — Bağımsız Online Mağaza`;
+  if (a.cat === "retailer") return `${K} | ${BRAND} — Bağımsız Yerel Mağaza`;
   if (a.cat === "service") return `${K} | ${BRAND} — Bilgilendirme`;
   return `${K} | ${BRAND} — ${pick(META_SUFFIX, h, 861)}`;
 }
@@ -748,20 +745,20 @@ function metaTitleFor(a: Attr, K: string, h: number): string {
 function metaDescFor(a: Attr, kwP: string, h: number): string {
   const lc = trCap(kwP);
   if (a.cat === "live") {
-    return `${lc}: ${BRAND} canlı hayvan satışı yapmaz; sahiplenme için yerel barınakları öneririz. Mama ve bakım ürünlerini Türkiye'nin her yerine kargoyla yolluyoruz. ${PHONE}.`;
+    return `${lc}: ${BRAND} canlı hayvan satışı yapmaz; sahiplenme için yerel barınakları öneririz. Mama ve bakım ürünlerini Samsun içinde aynı gün kuryeyle yolluyoruz. ${PHONE}.`;
   }
   if (a.cat === "service") {
-    return `${lc}: ${BRAND} bu hizmeti vermiyoruz; ihtiyacınız olan ürünleri Türkiye'nin her yerine kargoyla göndeririz. Güvenli online ödeme, ${PHONE}.`;
+    return `${lc}: ${BRAND} bu hizmeti vermiyoruz; ihtiyacınız olan ürünleri Samsun içinde aynı gün kuryeyle göndeririz. Kapıda ödeme (nakit/kart/QR), ${PHONE}.`;
   }
   if (a.cat === "retailer") {
-    return `${lc}: ${BRAND} bağımsız bir online pet shoptur. Aynı ürünler Türkiye geneli kargo ve güvenli online ödemeyle. ${PHONE}.`;
+    return `${lc}: ${BRAND} bağımsız bir yerel pet shoptur. Aynı ürünler Samsun içi aynı gün teslimat ve kapıda ödemeyle. ${PHONE}.`;
   }
   const noun = categoryNoun(a);
   return pick(
     [
-      `${lc} mı arıyorsunuz? ${trCap(noun)} ve tüm evcil hayvan ürünleri Türkiye'nin her köşesine güvenli kargoyla adresinize gelir. Online ödeme, ${PHONE}.`,
-      `${lc} için ${BRAND}: geniş ürün yelpazesi, Türkiye geneli kargo ve güvenli online ödeme bir arada. ${PHONE}.`,
-      `${lc} — Türkiye'nin her iline anlaşmalı kargo. ${trCap(noun)} dâhil yüzlerce ürün, güvenli kart ödemesi. ${PHONE}.`,
+      `${lc} mı arıyorsunuz? ${trCap(noun)} ve tüm evcil hayvan ürünleri Samsun'un her mahallesine aynı gün kuryeyle kapınıza gelir. Kapıda ödeme, ${PHONE}.`,
+      `${lc} için ${BRAND}: geniş ürün yelpazesi, Samsun içi aynı gün teslimat ve kapıda ödeme (nakit/kart/QR) bir arada. ${PHONE}.`,
+      `${lc} — Samsun'un her mahallesine aynı gün kurye. ${trCap(noun)} dâhil yüzlerce ürün, kapıda ödeme. ${PHONE}.`,
     ],
     h,
     862,
@@ -772,7 +769,7 @@ function buildPage(e: Ent, idx: number, related: { text: string; href: string }[
   const { kw, slug, a } = e;
   const h = H(slug);
   const K = trTitle(kw);
-  const kwP = stripLocalIntent(kw) || categoryNoun(a);
+  const kwP = kw;
   const Kp = trTitle(kwP);
   const isLocal = LOCAL_INTENT_RE.test(kw);
   const isAlwaysOpen = ALWAYS_OPEN_RE.test(kw);
@@ -796,16 +793,16 @@ function buildPage(e: Ent, idx: number, related: { text: string; href: string }[
     slug,
     type: "keyword",
     storeId: STORE_ID,
-    availability: "cargoOnly",
+    availability: "localOnly",
     title: Kp,
     metaTitle: metaTitleFor(a, Kp, h),
     metaDescription: metaDescFor(a, kwP, h),
-    keywords: `${kwP}, ${kwP} kargo, kargo ile ${kwP}, ${kwP} türkiye geneli, ${kwP} online sipariş, ${kwP} hızlı kargo`,
+    keywords: `${kwP}, ${kwP} aynı gün, ${kwP} kapıda ödeme, ${kwP} Samsun, ${kwP} sipariş, ${kwP} Atakum`,
     h1: pick(
       [
         `${Kp} — ${BRAND}`,
         `${BRAND} ile ${Kp}`,
-        `${Kp} | ${BRAND} Türkiye Geneli Kargo`,
+        `${Kp} | ${BRAND} Samsun İçi Aynı Gün Teslimat`,
       ],
       h,
       872,
@@ -813,9 +810,9 @@ function buildPage(e: Ent, idx: number, related: { text: string; href: string }[
     intro: [
       pick(
         [
-          `${trCap(kwP)} mı arıyorsunuz? ${BRAND}, ${ORIGIN} merkezli deposundan Türkiye'nin her yerine anlaşmalı kargoyla gönderim yapan bir online pet shoptur.`,
-          `${trCap(kwP)} için doğru ürün ve Türkiye geneli güvenli kargo bir arada; siparişinizi gönül rahatlığıyla verin, gerisini bize bırakın.`,
-          `${BRAND} ile ${kwP} ihtiyacınızı online sipariş edin, Türkiye'nin her köşesine kargoyla adresinize ulaşsın.`,
+          `${trCap(kwP)} mı arıyorsunuz? ${BRAND}, ${ORIGIN} merkezli, şehrin her mahallesine kuryesiyle aynı gün teslimat yapan yerel bir pet shoptur.`,
+          `${trCap(kwP)} için doğru ürün ve Samsun içi aynı gün teslimat bir arada; siparişinizi gönül rahatlığıyla verin, gerisini bize bırakın.`,
+          `${BRAND} ile ${kwP} ihtiyacınızı sipariş edin, Samsun'un her köşesine aynı gün kuryeyle kapınıza ulaşsın.`,
         ],
         h,
         881,

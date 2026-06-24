@@ -213,8 +213,8 @@ const samsun: StoreConfig = {
   address: "Atatürk 3 kısım bulvarı no 113 ATAKUM SAMSUN",
   companyName: "Sizpa internet tic.ltd.şti.",
   businessDescription:
-    "Türkiye geneli kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri Atakum Pet'ten güvenli ödeme ve hızlı kargo ile kapınıza gelir.",
-  slogan: "Türkiye'nin Her Yerine Hızlı Kargo",
+    "Atakum'un hızlı pet shop'u Atakum Pet. Kedi maması, köpek maması, kedi kumu, ödül maması ve evcil hayvan ürünleri Atakum içinde aynı gün, İlkadım ve Canik'e hızlı teslimatla kapınızda; ödemeyi kapıda nakit, kart veya QR ile yapın.",
+  slogan: "Atakum'a Aynı Gün Teslimat — Atakum Pet",
   social: [],
   theme: {
     primary: "271 65% 56%",
@@ -222,11 +222,11 @@ const samsun: StoreConfig = {
     navBar: "#9C27B0",
   },
   seo: {
-    title: "Atakum Pet - Türkiye Geneli Kargo | Kedi & Köpek Maması",
+    title: "Atakum Pet - Atakum'a Aynı Gün Petshop Teslimat | Kapıda Ödeme",
     description:
-      "Türkiye'nin her yerine kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu güvenli online ödeme ve hızlı kargo. Atakum Pet.",
+      "Atakum, İlkadım ve Canik'e aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu kapıda ödeme ile. Atakum Pet, 0850 840 39 59.",
     keywords:
-      "atakum pet, atakumpet, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
+      "atakum pet, atakumpet, atakum petshop, atakum kedi maması, atakum köpek maması, atakum kedi kumu, atakum aynı gün teslimat, atakum acil mama, kapıda ödeme petshop atakum, ilkadım petshop, canik petshop, samsun petshop",
     ogImage: "/og-image.webp",
   },
   google: {},
@@ -238,11 +238,11 @@ const samsun: StoreConfig = {
   },
 };
 
-// Samsun Pet Shop — second Türkiye-geneli kargo brand. Same cargo / online-card-
-// only commerce model as `samsun` (atakumpet.com) but its OWN domain, name, logo
-// and SEO so it ranks independently for "samsun pet shop" searches. NOTE: the id
-// is "samsunpet" — it must NOT collide with the existing "samsun" store (which is
-// bound to atakumpet.com), even though both are Samsun-region cargo storefronts.
+// Samsun Pet Shop — a LOCAL same-day Samsun storefront. Same local commerce model
+// (Mahalle checkout + kapıda ödeme + preorder) as `samsun` (atakumpet.com) but its
+// OWN domain, name, logo and SEO so it ranks independently for "samsun pet shop"
+// searches. NOTE: the id is "samsunpet" — it must NOT collide with the existing
+// "samsun" store (bound to atakumpet.com); both are Samsun same-day storefronts.
 const samsunpet: StoreConfig = {
   id: "samsunpet",
   hostnames: ["samsunpet.com", "www.samsunpet.com"],
@@ -260,8 +260,8 @@ const samsunpet: StoreConfig = {
   address: "Atatürk 3 kısım bulvarı no 113 ATAKUM SAMSUN",
   companyName: "Sizpa internet tic.ltd.şti.",
   businessDescription:
-    "Türkiye geneli kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri Samsun Pet Shop'tan güvenli ödeme ve hızlı kargo ile kapınıza gelir.",
-  slogan: "Türkiye'nin Her Yerine Hızlı Kargo",
+    "Samsun'un mahalle mahalle pet shop'u Samsun Pet Shop. Kedi maması, köpek maması, kedi kumu, ödül maması ve evcil hayvan ürünleri Atakum, İlkadım, Canik ve Tekkeköy'ün tüm mahallelerine aynı gün kuryeyle; ödeme kapıda nakit, kart veya QR ile.",
+  slogan: "Samsun'un Her Mahallesine Aynı Gün Teslimat",
   social: [],
   theme: {
     primary: "174 72% 36%",
@@ -269,11 +269,11 @@ const samsunpet: StoreConfig = {
     navBar: "#00897B",
   },
   seo: {
-    title: "Samsun Pet Shop - Türkiye Geneli Kargo | Kedi & Köpek Maması",
+    title: "Samsun Pet Shop - Samsun'a Aynı Gün Petshop Teslimat | Kapıda Ödeme",
     description:
-      "Türkiye'nin her yerine kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu güvenli online ödeme ve hızlı kargo. Samsun Pet Shop.",
+      "Samsun genelinde aynı gün petshop teslimatı. Kedi maması, köpek maması, kedi kumu Atakum, İlkadım ve Canik mahallelerine kapıda ödeme ile. Samsun Pet Shop, 0850 840 39 59.",
     keywords:
-      "samsun pet shop, samsun petshop, samsun pet, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
+      "samsun pet shop, samsun petshop, samsun pet, samsun kedi maması, samsun köpek maması, samsun kedi kumu, samsun aynı gün teslimat, kapıda ödeme petshop samsun, atakum petshop, ilkadım petshop, canik petshop, tekkeköy petshop",
     ogImage: "/og-image.webp",
   },
   google: {},
@@ -285,9 +285,10 @@ const samsunpet: StoreConfig = {
   },
 };
 
-// Karadeniz Pet Shop — third Türkiye-geneli kargo brand. Same cargo / online-
-// card-only commerce model as `samsun` / `samsunpet`, but its OWN domain, name,
-// logo and SEO so it ranks independently for "karadeniz pet shop" searches.
+// Karadeniz Pet Shop — a LOCAL same-day Samsun storefront. Same local commerce
+// model (Mahalle checkout + kapıda ödeme + preorder) as `samsun` / `samsunpet`,
+// but its OWN domain, name, logo and SEO so it ranks independently for "karadeniz
+// pet shop" searches.
 const karadeniz: StoreConfig = {
   id: "karadeniz",
   hostnames: ["karadenizpetshop.com", "www.karadenizpetshop.com"],
@@ -304,8 +305,8 @@ const karadeniz: StoreConfig = {
   address: "Atatürk 3 kısım bulvarı no 113 ATAKUM SAMSUN",
   companyName: "Sizpa internet tic.ltd.şti.",
   businessDescription:
-    "Türkiye geneli kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri Karadeniz Pet Shop'tan güvenli ödeme ve hızlı kargo ile kapınıza gelir.",
-  slogan: "Türkiye'nin Her Yerine Hızlı Kargo",
+    "Samsunlu komşunuz Karadeniz Pet Shop. Kedi maması, köpek maması, kedi kumu, ödül maması ve evcil hayvan ürünlerini güvenle sipariş edin; Samsun içinde aynı gün kapınızda, ödemeyi kapıda nakit, kart veya QR ile yapın.",
+  slogan: "Samsun'un Güvenilir Pet Shop'u — Aynı Gün Teslimat",
   social: [],
   theme: {
     primary: "152 58% 37%",
@@ -313,11 +314,11 @@ const karadeniz: StoreConfig = {
     navBar: "#2E7D32",
   },
   seo: {
-    title: "Karadeniz Pet Shop - Türkiye Geneli Kargo | Kedi & Köpek Maması",
+    title: "Karadeniz Pet Shop - Samsun'da Aynı Gün Petshop | Kapıda Ödeme",
     description:
-      "Türkiye'nin her yerine kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu güvenli online ödeme ve hızlı kargo. Karadeniz Pet Shop.",
+      "Samsun'un güvenilir yerel pet shop'u. Kedi maması, köpek maması, kedi kumu aynı gün kapınızda, kapıda ödeme ile. Karadeniz Pet Shop, 0850 840 39 59.",
     keywords:
-      "karadeniz pet shop, karadeniz petshop, karadeniz pet, online pet shop, kargo ile mama, kedi maması, köpek maması, kedi kumu, ödül maması, evcil hayvan ürünleri, türkiye geneli pet shop, online kredi kartı",
+      "karadeniz pet shop, karadeniz petshop, karadeniz pet, samsun pet shop, samsun kedi maması, samsun köpek maması, samsun kedi kumu, samsun aynı gün teslimat, kapıda ödeme petshop samsun, atakum petshop, ilkadım petshop, canik petshop",
     ogImage: "/og-image.webp",
   },
   google: {},
@@ -333,7 +334,7 @@ const karadeniz: StoreConfig = {
 // Samsun area, distinct from the "atakum" (atakumpetshop.com) store. Same LOCAL
 // commerce model (Mahalle checkout + door payment + preorder) but its OWN
 // domain, theme and logo. NOTE: per the owner's request it intentionally shares
-// the "Atakum Pet" brand word with the cargo `samsun` store (atakumpet.com); the
+// the "Atakum Pet" brand word with the `samsun` store (atakumpet.com); the
 // two stay SEPARATE via distinct id + domain (host resolution is by hostname).
 const atakumbiz: StoreConfig = {
   id: "atakumbiz",
@@ -480,13 +481,14 @@ const jetgoshop: StoreConfig = {
   },
 };
 
-// marka.pet (markapet) — a FOURTH Türkiye-geneli kargo brand. Same cargo /
-// online-card-only commerce model as samsun / samsunpet / karadeniz, but its OWN
-// self-canonicalising domain. Per the owner's request the customer-facing brand
-// IS the domain string "marka.pet" (used as name / shortName / brandWord), and the
-// logo is a TEMPORARY placeholder (client/public/logo-marka.webp) to be replaced
-// by an uploaded asset. The domain has no "jetgo" substring, so brandifyFor needs
-// no placeholder protection here (the simple swap can't corrupt it).
+// marka.pet (markapet) — a LOCAL same-day Samsun storefront. Same local commerce
+// model (Mahalle checkout + kapıda ödeme + preorder) as samsun / samsunpet /
+// karadeniz, but its OWN self-canonicalising domain. Per the owner's request the
+// customer-facing brand IS the domain string "marka.pet" (used as name / shortName
+// / brandWord), and the logo is a TEMPORARY placeholder (client/public/
+// logo-marka.webp) to be replaced by an uploaded asset. The domain has no "jetgo"
+// substring, so brandifyFor needs no placeholder protection here (the simple swap
+// can't corrupt it).
 const markapet: StoreConfig = {
   id: "markapet",
   hostnames: ["marka.pet", "www.marka.pet"],
@@ -503,8 +505,8 @@ const markapet: StoreConfig = {
   address: "Atatürk 3 kısım bulvarı no 113 ATAKUM SAMSUN",
   companyName: "Sizpa internet tic.ltd.şti.",
   businessDescription:
-    "Türkiye geneli kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu, ödül maması ve tüm evcil hayvan ürünleri marka.pet'ten güvenli ödeme ve hızlı kargo ile kapınıza gelir.",
-  slogan: "Türkiye'nin Her Yerine Hızlı Kargo",
+    "Pratik pet shop marka.pet. Kedi maması, köpek maması, kedi kumu, ödül maması, akvaryum ve kuş ürünlerini (Royal Canin, Pro Plan, Hills, Reflex, N&D) tek tıkla sipariş edin; Samsun içinde aynı gün kapınızda, kapıda nakit, kart veya QR ile ödeyin.",
+  slogan: "Tek Tıkla Sipariş — Samsun İçi Aynı Gün Teslimat",
   social: [],
   theme: {
     primary: "25 95% 53%",
@@ -512,11 +514,11 @@ const markapet: StoreConfig = {
     navBar: "#EA580C",
   },
   seo: {
-    title: "marka.pet - Türkiye Geneli Kargo | Kedi & Köpek Maması",
+    title: "marka.pet - Samsun'a Aynı Gün Petshop Teslimat | Kapıda Ödeme",
     description:
-      "Türkiye'nin her yerine hızlı kargo ile pet shop alışverişi. Kedi maması, köpek maması, kedi kumu, ödül maması, akvaryum ve kuş ürünlerinde Royal Canin, Pro Plan, Hills, Reflex, N&D; güvenli online ödeme. marka.pet.",
+      "Samsun içinde aynı gün pet shop teslimatı. Kedi maması, köpek maması, kedi kumu, ödül maması, akvaryum ve kuş ürünlerinde Royal Canin, Pro Plan, Hills, Reflex, N&D; kapıda ödeme. marka.pet.",
     keywords:
-      "marka.pet, marka pet, marka pet shop, online pet shop, online petshop, kargo ile mama, kargo ile kedi maması, kargo ile köpek maması, kedi maması sipariş, köpek maması sipariş, online mama siparişi, kedi maması, köpek maması, kedi kumu, ödül maması, royal canin, pro plan, hills, reflex, n&d, brit care, evcil hayvan ürünleri, akvaryum malzemeleri, kuş yemi, türkiye geneli pet shop, türkiye geneli kargo, hızlı kargo, güvenli online ödeme, online kredi kartı, uygun fiyat petshop",
+      "marka.pet, marka pet, marka pet shop, samsun pet shop, samsun aynı gün teslimat, kapıda ödeme petshop samsun, kedi maması sipariş, köpek maması sipariş, online mama siparişi, kedi maması, köpek maması, kedi kumu, ödül maması, royal canin, pro plan, hills, reflex, n&d, brit care, evcil hayvan ürünleri, akvaryum malzemeleri, kuş yemi, atakum petshop, ilkadım petshop, canik petshop, uygun fiyat petshop",
     ogImage: "/og-image.webp",
   },
   google: {},
