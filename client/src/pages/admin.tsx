@@ -8855,6 +8855,7 @@ function SettingsSection() {
     cargo_fee: "",
     cargo_free_limit: "",
     cargo_min_order: "",
+    card_surcharge_percent: "5",
   });
 
   const baselineRef = useRef<Record<string, string>>({});
@@ -8895,6 +8896,7 @@ function SettingsSection() {
         cargo_fee: settings.cargo_fee || "",
         cargo_free_limit: settings.cargo_free_limit || "",
         cargo_min_order: settings.cargo_min_order || "",
+        card_surcharge_percent: settings.card_surcharge_percent || "5",
       };
       setForm(next);
       baselineRef.current = next;
@@ -9152,7 +9154,7 @@ function SettingsSection() {
           <p className="text-[11px] text-muted-foreground">Müşterinin checkout sayfasında göreceği ödeme seçeneklerini buradan açıp kapatabilirsiniz.</p>
 
           {([
-            { key: "payment_nakit_enabled", label: "Kapıda Nakit", desc: "Kapıda nakit ödeme (en uygun fiyat, kart/havale/QR +%5)", icon: "💵" },
+            { key: "payment_nakit_enabled", label: "Kapıda Nakit", desc: "Kapıda nakit ödeme — en uygun fiyat (kart/havale/QR ek oranı aşağıdan ayarlanır)", icon: "💵" },
             { key: "payment_pos_enabled", label: "Kapıda Kredi Kartı (POS)", desc: "Kurye gelince fiziksel POS cihazı ile ödeme (tek çekim)", icon: "💳" },
             { key: "payment_installments_enabled", label: "Kapıda Kredi Kartı - Taksit", desc: "POS ile taksitli ödeme seçeneklerini göster (2/3/6/9/12 ay vb.). Kapalıyken sadece Tek Çekim görünür.", icon: "📆" },
             { key: "payment_qr_enabled", label: "Kapıda QR Ödeme", desc: "Kurye gelince banka uygulamasından QR ile ödeme", icon: "📱" },
@@ -9179,6 +9181,21 @@ function SettingsSection() {
               </button>
             </div>
           ))}
+
+          <div className="pt-3 border-t space-y-1.5">
+            <Label className="text-xs font-bold">Diğer Ödeme Yöntemleri Ek Oranı (%)</Label>
+            <Input
+              type="number"
+              min="0"
+              max="100"
+              step="0.1"
+              value={form.card_surcharge_percent}
+              onChange={e => setForm(prev => ({ ...prev, card_surcharge_percent: e.target.value }))}
+              placeholder="5"
+              data-testid="input-card-surcharge-percent"
+            />
+            <p className="text-[10px] text-muted-foreground">POS / Banka Havalesi / QR / Online kart ödemelerinde ürün toplamına eklenecek yüzde (POS komisyonu için). Kapıda nakit her zaman en uygun fiyattır. Örn: 5 = %5 daha pahalı. 0 = ek ücret yok.</p>
+          </div>
 
           <div className="pt-3 border-t space-y-3">
             <h4 className="text-sm font-bold flex items-center gap-2">🌐 Tosla (İşim) Sanal POS Ayarları</h4>

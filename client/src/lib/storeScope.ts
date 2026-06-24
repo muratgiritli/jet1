@@ -34,6 +34,7 @@ export const STORE_SCOPED_SETTING_KEYS = new Set<string>([
   "sms_msgheader",
   "payment_nakit_enabled", "payment_pos_enabled", "payment_qr_enabled", "payment_eft_enabled",
   "payment_installments_enabled", "payment_tosla_enabled", "payment_iyzico_enabled",
+  "card_surcharge_percent",
   "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date",
   "daily_cargo_widget_enabled",
   "sokak_banner_enabled", "veteriner_banner_enabled",

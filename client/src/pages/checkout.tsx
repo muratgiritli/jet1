@@ -46,8 +46,8 @@ import {
   PAYMENT_OPTIONS,
   TESLIMAT_MAHALLELERI,
   cardPrice,
-  CARD_SURCHARGE,
 } from "@/lib/data";
+import { useSurchargeRate, surchargeLabel } from "@/hooks/useSurchargeRate";
 import { computePaymentVisibility } from "@/lib/paymentVisibility";
 import { useCart } from "@/contexts/CartContext";
 
@@ -108,6 +108,7 @@ export default function Checkout() {
   const qrEnabled = isEnabled(publicSettings?.payment_qr_enabled);
   const posEnabled = isEnabled(publicSettings?.payment_pos_enabled);
   const installmentsEnabled = isEnabled(publicSettings?.payment_installments_enabled);
+  const surchargeRate = useSurchargeRate();
   const toslaEnabled = isEnabled(publicSettings?.payment_tosla_enabled);
   const iyzicoEnabled = isEnabled(publicSettings?.payment_iyzico_enabled);
   const onlineCardEnabled = toslaEnabled || iyzicoEnabled;
@@ -1428,7 +1429,7 @@ export default function Checkout() {
                   <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
                     {paymentVisibility.options.map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
-                      const optSurchargeRate = opt.surcharge > 0 ? opt.surcharge : 0;
+                      const optSurchargeRate = opt.surcharge > 0 ? surchargeRate : 0;
                       const optTotal = Math.round(subtotal * (1 + optSurchargeRate) * 100) / 100;
                       return (
                         <label
@@ -1442,7 +1443,7 @@ export default function Checkout() {
                             <span className="text-sm font-medium block leading-tight" data-testid={`text-payment-name-${opt.id}`}>
                               {opt.name}
                               {opt.surcharge > 0 ? (
-                                <span className="ml-1 text-[10px] font-semibold text-muted-foreground">+%5</span>
+                                <span className="ml-1 text-[10px] font-semibold text-muted-foreground">{surchargeLabel(surchargeRate)}</span>
                               ) : (
                                 <span className="ml-1 text-[10px] font-semibold text-emerald-600">en uygun</span>
                               )}
@@ -1486,7 +1487,7 @@ export default function Checkout() {
                       </h3>
                       <div className="space-y-2">
                         {[{ months: 1, rate: 0, isTekCekim: true, noInterest: false }, ...(installmentsEnabled ? installmentRates.filter(r => r.isActive).sort((a, b) => a.sortOrder - b.sortOrder || a.months - b.months).map(r => ({ months: r.months, rate: (r as any).noInterest ? 0 : r.rate, isTekCekim: false, noInterest: (r as any).noInterest || false })) : [])].map((opt) => {
-                          const total = subtotal * (1 + CARD_SURCHARGE) * (1 + (opt.rate || 0) / 100);
+                          const total = subtotal * (1 + surchargeRate) * (1 + (opt.rate || 0) / 100);
                           const monthly = total / opt.months;
                           const active = paymentId === "pos" && installmentMonths === opt.months;
                           const isPesin = opt.rate === 0;
@@ -1514,7 +1515,7 @@ export default function Checkout() {
                               </div>
                               <div className="text-right shrink-0">
                                 {opt.isTekCekim ? (
-                                  <span className="font-semibold tabular-nums">{cardPrice(subtotal).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                                  <span className="font-semibold tabular-nums">{cardPrice(subtotal, surchargeRate).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                                 ) : (
                                   <span className="text-xs">
                                     <span className="text-muted-foreground">{opt.months} x </span>
@@ -1530,7 +1531,7 @@ export default function Checkout() {
                         const rRaw = installmentRates.find(x => x.months === installmentMonths);
                         if (!rRaw) return null;
                         const r = { ...rRaw, rate: (rRaw as any).noInterest ? 0 : rRaw.rate };
-                        const total = subtotal * (1 + CARD_SURCHARGE) * (1 + (r.rate || 0) / 100);
+                        const total = subtotal * (1 + surchargeRate) * (1 + (r.rate || 0) / 100);
                         return (
                           <p className="text-[11px] text-muted-foreground mt-2 text-center">
                             Karttan toplam çekilecek: <strong className="text-foreground">{total.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</strong>
@@ -1561,7 +1562,7 @@ export default function Checkout() {
                     </div>
                     {paymentSurcharge > 0 && (
                       <div className="flex justify-between gap-3 flex-wrap">
-                        <span className="text-muted-foreground">Kart / Havale / QR farkı (+%5)</span>
+                        <span className="text-muted-foreground">Kart / Havale / QR farkı ({surchargeLabel(surchargeRate)})</span>
                         <span className="font-medium" data-testid="text-card-surcharge">
                           +{paymentSurcharge.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                         </span>

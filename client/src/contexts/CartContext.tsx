@@ -7,6 +7,7 @@ import {
 } from "@/lib/data";
 import type { Product as DbProduct } from "@shared/schema";
 import { toast } from "@/hooks/use-toast";
+import { parseSurchargeRate } from "@/hooks/useSurchargeRate";
 
 interface CartProduct {
   id: string;
@@ -441,6 +442,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     saveVariants({});
   }, []);
 
+  const { data: cartPublicSettings } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
+  const surchargeRateCfg = parseSurchargeRate(cartPublicSettings?.card_surcharge_percent);
+
   const { subtotal, selectedProducts, shipping, surcharge, grandTotal, minReached } = useMemo(() => {
     let sub = 0;
     const selected: { product: CartProduct; qty: number }[] = [];
@@ -454,7 +458,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
 
     const pay = PAYMENT_OPTIONS.find((p) => p.id === paymentId)!;
-    const surchargeRate = pay.surcharge > 0 ? pay.surcharge : 0;
+    const surchargeRate = pay.surcharge > 0 ? surchargeRateCfg : 0;
     const surchargeAmt = roundMoney(sub * surchargeRate);
     const ship = sub >= CONFIG.shipLimit ? 0 : CONFIG.shipFee;
     const total = sub + surchargeAmt + ship;
@@ -468,7 +472,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       grandTotal: total,
       minReached: min,
     };
-  }, [basket, paymentId, allProducts]);
+  }, [basket, paymentId, allProducts, surchargeRateCfg]);
 
   const itemCount = Object.values(basket).reduce((a, b) => a + b, 0);
   const minPerc = Math.min((subtotal / CONFIG.minLimit) * 100, 100);

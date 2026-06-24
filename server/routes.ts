@@ -431,6 +431,7 @@ export async function registerRoutes(
     "top_banner_enabled", "top_banner_text", "top_banner_link", "top_banner_bg", "top_banner_color",
     "breed_banners", "category_banners",
     "cargo_fee", "cargo_free_limit", "cargo_min_order",
+    "card_surcharge_percent",
   ]);
   // Tüm app_settings'i verilen store için çöz: temel değerler + store öneki ezmeleri.
   async function resolveAllSettings(store: string): Promise<Record<string, string>> {
@@ -2709,8 +2710,13 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     // on the product subtotal only (not shipping). Cash (Kapıda Nakit) is the base price.
     // Campaign orders are cash-only, so they never get a surcharge.
     const pmForSurcharge = String(orderData.paymentMethod || "").toLowerCase();
+    const surchargeSettings = await resolveSettings(["card_surcharge_percent"], reqStore(req).id);
+    const surchargePctRaw = Number(surchargeSettings.card_surcharge_percent);
+    const surchargeRate = (Number.isFinite(surchargePctRaw) && surchargePctRaw >= 0)
+      ? Math.min(surchargePctRaw, 100) / 100
+      : 0.05;
     const paymentSurcharge = (!isCampaignOrder && !/nakit/.test(pmForSurcharge))
-      ? Math.round(orderData.subtotal * 0.05 * 100) / 100
+      ? Math.round(orderData.subtotal * surchargeRate * 100) / 100
       : 0;
     if (paymentSurcharge > 0) {
       orderData.grandTotal = Math.round((orderData.grandTotal + paymentSurcharge) * 100) / 100;
@@ -3851,6 +3857,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
         "cross_sell_enabled",
         "cargo_fee", "cargo_free_limit", "cargo_min_order",
+        "card_surcharge_percent",
       ];
       const settings = await resolveSettings(keys, publicStoreId(req));
       res.set("Cache-Control", "no-store");
@@ -3932,7 +3939,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.patch("/api/admin/settings", requireAdmin, async (req, res) => {
     try {
       const updates = req.body;
-      const numericKeys = ["pet_base_points", "pet_streak_divisor", "pet_max_points", "pet_base_exp", "pet_streak_exp_bonus"];
+      const numericKeys = ["pet_base_points", "pet_streak_divisor", "pet_max_points", "pet_base_exp", "pet_streak_exp_bonus", "card_surcharge_percent"];
       const textKeys = [
         "admin_phone", "order_notification_sms", "sms_msgheader",
         "payment_eft_enabled", "payment_nakit_enabled", "payment_qr_enabled",

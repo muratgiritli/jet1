@@ -29,7 +29,7 @@ export interface Category {
 
 export const CARD_SURCHARGE = 0.05;
 export const roundMoney = (n: number) => Math.round(n * 100) / 100;
-export const cardPrice = (cash: number) => roundMoney(cash * (1 + CARD_SURCHARGE));
+export const cardPrice = (cash: number, rate: number = CARD_SURCHARGE) => roundMoney(cash * (1 + rate));
 export const isCashPaymentMethod = (method: string) => /nakit/i.test(method || "");
 
 export interface PaymentOption {
