@@ -21,14 +21,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "Royal Canin",
     metaTitle: "Royal Canin Atakum | Kedi & Köpek Maması Aynı Gün Teslimat - JETGO",
     metaDescription:
-      "Atakum'da Royal Canin kedi ve köpek mamaları kapınıza aynı gün teslim. Indoor, Sterilised, Kitten, Maxi, Mini ve ırka özel formüller. Kapıda ödeme, %5 Para Puan, uygun fiyat.",
+      "Atakum'da Royal Canin kedi ve köpek mamaları kapınıza aynı gün teslim. Indoor, Sterilised, Kitten, Maxi, Mini ve ırka özel formüller. Kapıda ödeme, uygun fiyat.",
     keywords:
       "royal canin atakum, royal canin samsun, atakum royal canin mama, royal canin kedi maması atakum, royal canin köpek maması atakum, royal canin sterilised atakum, royal canin indoor samsun, royal canin kitten atakum, royal canin fiyat atakum",
     h1: "Royal Canin Atakum: Kedi ve Köpek Mamaları Kapınıza Aynı Gün Teslim",
     intro: [
       "Royal Canin, dünya genelinde veteriner hekimlerin önerdiği; kedi ve köpeklerin ırkına, yaşına ve yaşam tarzına göre bilimsel olarak formüle edilmiş premium mama markasıdır. JETGO ile Atakum'un her mahallesine Royal Canin ürünlerini ağır çuval taşıma derdi olmadan aynı gün kapınıza getiriyoruz.",
       "Royal Canin Indoor, Sterilised, Kitten, Hair & Skin, Maxi Adult, Medium, Mini ve ırka özel (British Shorthair, Persian, German Shepherd) çeşitlerinin tamamı stoklarımızda. Atakum Denizevleri, Güzelyalı, Kurupelit, Atakent ve diğer mahallelerde Royal Canin arıyorsanız doğru yerdesiniz.",
-      "Ürünü seçin, sepete ekleyin ve kapıda nakit, kredi kartı (POS) veya QR ile ödeyin. Her Royal Canin siparişinde %5 Para Puan kazanır, biriken puanı sonraki alışverişinizde kullanırsınız.",
+      "Ürünü seçin, sepete ekleyin ve kapıda nakit, kredi kartı (POS) veya QR ile ödeyin.",
     ],
     why: {
       h2: "Royal Canin Neden Veteriner Hekimlerin İlk Tercihi?",
@@ -55,7 +55,6 @@ const CONFIGS: BrandConfig[] = [
       "Indoor, Sterilised, Kitten, Maxi, Mini seçenekleri",
       "Atakum'un tüm mahallelerine aynı gün teslimat",
       "Kapıda nakit, kredi kartı (POS) ve QR ödeme",
-      "Her siparişte %5 Para Puan kazancı",
     ],
     faq: [
       { q: "Royal Canin Indoor ile Sterilised arasındaki fark nedir?", a: "Indoor, az hareket eden ev kedileri için kalori dengelenmiş bir formüldür. Sterilised ise kısırlaştırılmış kedilerin değişen metabolizmasına ve kilo alma eğilimine göre geliştirilmiştir." },
@@ -79,7 +78,7 @@ const CONFIGS: BrandConfig[] = [
     intro: [
       "N&D (Natural & Delicious), İtalyan Farmina firmasının yüksek hayvansal protein içeren premium mama serisidir. Tahılsız (Grain Free) ve Ata Tahılı (Ancestral Grain – kızıl buğday ve yulaf) çizgileriyle doğal beslenmeyi öne çıkarır. JETGO ile N&D ürünlerini Atakum'da aynı gün kapınıza getiriyoruz.",
       "Balkabağı, bıldırcın, ringa balığı, kuzu ve narenciye gibi fonksiyonel içerikler N&D'yi farklı kılar. Atakum Denizevleri, Güzelyalı, Kurupelit ve diğer mahallelerde N&D mama arayanlar için doğru adres JETGO'dur.",
-      "Ürünü seçin, sepete ekleyin, kapıda nakit/kart/QR ile ödeyin. Her N&D siparişinde %5 Para Puan kazanırsınız.",
+      "Ürünü seçin, sepete ekleyin, kapıda nakit/kart/QR ile ödeyin.",
     ],
     why: {
       h2: "N&D'yi Farklı Kılan Nedir?",
@@ -106,7 +105,6 @@ const CONFIGS: BrandConfig[] = [
       "GDO'suz, fonksiyonel içerikler",
       "Kedi ve köpek için geniş çeşit",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "N&D tahılsız mama her köpeğe uygun mu?", a: "Tahılsız seriler özellikle tahıl hassasiyeti olan köpekler için idealdir. Köpeğinizin yaşı ve ırk boyutuna uygun formülü seçmeniz önerilir." },
@@ -123,14 +121,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "Hill's Science Plan",
     metaTitle: "Hill's Science Plan Atakum | Bilim Temelli Kedi & Köpek Maması - JETGO",
     metaDescription:
-      "Atakum'da Hill's Science Plan kedi & köpek mamaları aynı gün kapınızda. Veterinerlerle geliştirilen, yaşam evresine ve özel ihtiyaca göre formüller. Kapıda ödeme, %5 Para Puan.",
+      "Atakum'da Hill's Science Plan kedi & köpek mamaları aynı gün kapınızda. Veterinerlerle geliştirilen, yaşam evresine ve özel ihtiyaca göre formüller. Kapıda ödeme.",
     keywords:
       "hills atakum, hill's science plan atakum, hills mama samsun, hills kedi maması atakum, hills köpek maması atakum, hills sensitive stomach atakum, hills sterilised samsun",
     h1: "Hill's Science Plan Atakum: Bilim Temelli Beslenme Kapınızda",
     intro: [
       "Hill's Science Plan, veteriner hekimler ve beslenme uzmanlarıyla geliştirilen, bilim temelli premium mama markasıdır. Klinik olarak kanıtlanmış beslenme yaklaşımıyla dünya genelinde tercih edilir. JETGO ile Hill's ürünlerini Atakum'da aynı gün kapınıza getiriyoruz.",
       "Yaşam evresine (yavru, yetişkin, yaşlı) ve özel ihtiyaca (Sensitive Stomach & Skin, Sterilised, Light, Oral Care) göre formüller sunan Hill's, Atakum Denizevleri, Güzelyalı ve Kurupelit'te kolayca ulaşabileceğiniz markadır.",
-      "Sepete ekleyin, kapıda nakit/kart/QR ödeyin ve her siparişte %5 Para Puan kazanın.",
+      "Sepete ekleyin, kapıda nakit/kart/QR ödeyin.",
     ],
     why: {
       h2: "Hill's Science Plan Neden Tercih Edilir?",
@@ -157,7 +155,6 @@ const CONFIGS: BrandConfig[] = [
       "Hassas mide ve deri için özel seriler",
       "Kedi ve köpek için geniş çeşit",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "Hill's Sensitive Stomach kimler için uygun?", a: "Hassas sindirim sistemine veya hassas deriye sahip kedi ve köpekler için geliştirilmiş bir seridir. Sindirimi kolay içeriklerle hazırlanır." },
@@ -174,14 +171,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "Pro Plan",
     metaTitle: "Pro Plan Atakum | Purina Kedi & Köpek Maması Aynı Gün Teslim - JETGO",
     metaDescription:
-      "Atakum'da Purina Pro Plan kedi & köpek mamaları aynı gün kapınızda. OptiHealth teknolojileri, probiyotik destekli formüller. Kapıda ödeme, %5 Para Puan, uygun fiyat.",
+      "Atakum'da Purina Pro Plan kedi & köpek mamaları aynı gün kapınızda. OptiHealth teknolojileri, probiyotik destekli formüller. Kapıda ödeme, uygun fiyat.",
     keywords:
       "pro plan atakum, purina pro plan atakum, pro plan mama samsun, pro plan kedi maması atakum, pro plan köpek maması atakum, pro plan sterilised samsun",
     h1: "Pro Plan Atakum: Purina Bilim Temelli Beslenme Kapınızda",
     intro: [
       "Purina Pro Plan, bilim temelli ileri beslenme yaklaşımıyla geliştirilen premium mama markasıdır. OPTI- teknolojileri ve bazı formüllerdeki canlı probiyotik desteğiyle dostlarınızın sağlığını destekler. JETGO ile Pro Plan'ı Atakum'da aynı gün kapınıza getiriyoruz.",
       "Yaşa, boyuta ve özel ihtiyaca göre çeşitlenen Pro Plan, Atakum Denizevleri, Güzelyalı, Kurupelit ve diğer mahallelerde kolayca ulaşabileceğiniz bir seçenektir.",
-      "Ürünü seçin, kapıda nakit/kart/QR ödeyin ve her siparişte %5 Para Puan kazanın.",
+      "Ürünü seçin, kapıda nakit/kart/QR ödeyin.",
     ],
     why: {
       h2: "Pro Plan'ın Öne Çıkan Özellikleri",
@@ -208,7 +205,6 @@ const CONFIGS: BrandConfig[] = [
       "Probiyotik destekli seçenekler",
       "Kedi ve köpek için geniş çeşit",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "Pro Plan Sterilised ne işe yarar?", a: "Kısırlaştırılmış kedilerin metabolizmasına uygun, kilo kontrolünü destekleyen dengeli bir formüldür." },
@@ -225,14 +221,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "Reflex Plus",
     metaTitle: "Reflex Plus Atakum | Köpek Maması Aynı Gün Teslim - JETGO",
     metaDescription:
-      "Atakum'da Reflex Plus köpek mamaları aynı gün kapınızda. Yüksek protein, dengeli ve uygun fiyatlı premium yerli üretim. Kapıda ödeme, %5 Para Puan.",
+      "Atakum'da Reflex Plus köpek mamaları aynı gün kapınızda. Yüksek protein, dengeli ve uygun fiyatlı premium yerli üretim. Kapıda ödeme.",
     keywords:
       "reflex plus atakum, reflex plus mama samsun, reflex plus köpek maması atakum, reflex plus fiyat atakum, yerli köpek maması atakum",
     h1: "Reflex Plus Atakum: Uygun Fiyatlı Premium Köpek Maması",
     intro: [
       "Reflex Plus, yerli üretim premium mama serisidir; yüksek protein ve dengeli içeriğiyle kalite-fiyat dengesi arayanların tercihidir. JETGO ile Reflex Plus'ı Atakum'da aynı gün kapınıza getiriyoruz.",
       "Atakum Denizevleri, Güzelyalı, Kurupelit ve diğer mahallelerde uygun fiyatlı kaliteli köpek maması arayanlar için ideal bir seçenektir.",
-      "Ürünü seçin, kapıda nakit/kart/QR ödeyin ve her siparişte %5 Para Puan kazanın.",
+      "Ürünü seçin, kapıda nakit/kart/QR ödeyin.",
     ],
     why: {
       h2: "Reflex Plus Neden Tercih Edilir?",
@@ -259,7 +255,6 @@ const CONFIGS: BrandConfig[] = [
       "Yerli üretim",
       "Irk boyutuna göre çeşit",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "Reflex Plus ile Reflex arasındaki fark nedir?", a: "Reflex Plus, Reflex serisinin üst (premium) çizgisidir; daha yüksek protein ve zenginleştirilmiş içeriklere sahiptir." },
@@ -275,14 +270,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "Reflex",
     metaTitle: "Reflex Atakum | Kedi & Köpek Maması Aynı Gün Teslim - JETGO",
     metaDescription:
-      "Atakum'da Reflex kedi & köpek mamaları aynı gün kapınızda. Geniş çeşit, uygun fiyatlı yerli üretim mama. Kapıda ödeme, %5 Para Puan.",
+      "Atakum'da Reflex kedi & köpek mamaları aynı gün kapınızda. Geniş çeşit, uygun fiyatlı yerli üretim mama. Kapıda ödeme.",
     keywords:
       "reflex atakum, reflex mama samsun, reflex kedi maması atakum, reflex köpek maması atakum, reflex fiyat atakum, yerli mama atakum",
     h1: "Reflex Atakum: Uygun Fiyatlı Kedi ve Köpek Maması",
     intro: [
       "Reflex, geniş ürün yelpazesi ve uygun fiyatıyla Türkiye'nin en bilinen yerli mama markalarından biridir. JETGO ile Reflex ürünlerini Atakum'da aynı gün kapınıza getiriyoruz.",
       "Kedi ve köpekler için kuru ve açık mama seçenekleriyle Reflex, Atakum Denizevleri, Güzelyalı ve Kurupelit'te bütçe dostu beslenme arayanların tercihidir.",
-      "Ürünü seçin, kapıda nakit/kart/QR ödeyin ve her siparişte %5 Para Puan kazanın.",
+      "Ürünü seçin, kapıda nakit/kart/QR ödeyin.",
     ],
     why: {
       h2: "Reflex'i Tercih Etme Nedenleri",
@@ -309,7 +304,6 @@ const CONFIGS: BrandConfig[] = [
       "Kuru ve açık mama",
       "Yerli üretim",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "Reflex mama kaliteli mi?", a: "Reflex, dengeli içerikleri uygun fiyatla sunan güvenilir bir yerli markadır. Daha yüksek protein için Reflex Plus serisini tercih edebilirsiniz." },
@@ -326,14 +320,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "Felicia",
     metaTitle: "Felicia Atakum | Uygun Fiyatlı Kedi & Köpek Maması - JETGO",
     metaDescription:
-      "Atakum'da Felicia kedi & köpek mamaları aynı gün kapınızda. Uygun fiyatlı, dengeli içerikli yerli üretim mama. Kapıda ödeme, %5 Para Puan.",
+      "Atakum'da Felicia kedi & köpek mamaları aynı gün kapınızda. Uygun fiyatlı, dengeli içerikli yerli üretim mama. Kapıda ödeme.",
     keywords:
       "felicia atakum, felicia mama samsun, felicia kedi maması atakum, felicia köpek maması atakum, felicia fiyat atakum, ekonomik mama atakum",
     h1: "Felicia Atakum: Bütçe Dostu Kedi ve Köpek Maması",
     intro: [
       "Felicia, uygun fiyatlı ve dengeli içerikli yerli mama markasıdır; ekonomik beslenme arayan kedi ve köpek sahiplerinin tercihidir. JETGO ile Felicia'yı Atakum'da aynı gün kapınıza getiriyoruz.",
       "Atakum Denizevleri, Güzelyalı, Kurupelit ve diğer mahallelerde bütçe dostu kaliteli mama arayanlar için ideal bir seçenektir.",
-      "Ürünü seçin, kapıda nakit/kart/QR ödeyin ve her siparişte %5 Para Puan kazanın.",
+      "Ürünü seçin, kapıda nakit/kart/QR ödeyin.",
     ],
     why: {
       h2: "Felicia Neden Tercih Edilir?",
@@ -360,7 +354,6 @@ const CONFIGS: BrandConfig[] = [
       "Dengeli temel içerik",
       "Yerli üretim",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "Felicia mama kimler için uygun?", a: "Ekonomik beslenme arayanlar ve çoklu evcil hayvan bakanlar için uygun, dengeli bir temel mamadır." },
@@ -377,14 +370,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "LaVital",
     metaTitle: "LaVital Atakum | Kedi & Köpek Maması Aynı Gün Teslim - JETGO",
     metaDescription:
-      "Atakum'da LaVital kedi & köpek mamaları aynı gün kapınızda. Uygun fiyatlı, kaliteli yerli üretim mama. Kapıda ödeme, %5 Para Puan.",
+      "Atakum'da LaVital kedi & köpek mamaları aynı gün kapınızda. Uygun fiyatlı, kaliteli yerli üretim mama. Kapıda ödeme.",
     keywords:
       "lavital atakum, lavital mama samsun, lavital kedi maması atakum, lavital köpek maması atakum, lavital fiyat atakum",
     h1: "LaVital Atakum: Kaliteli ve Uygun Fiyatlı Mama",
     intro: [
       "LaVital, uygun fiyatlı premium yaklaşımıyla öne çıkan yerli mama markasıdır. Dengeli içerikleriyle kedi ve köpeklerin günlük beslenmesi için güvenilir bir seçenektir. JETGO ile LaVital'i Atakum'da aynı gün kapınıza getiriyoruz.",
       "Atakum Denizevleri, Güzelyalı, Kurupelit ve diğer mahallelerde kalite-fiyat dengesi arayanlar için ideal bir tercihtir.",
-      "Ürünü seçin, kapıda nakit/kart/QR ödeyin ve her siparişte %5 Para Puan kazanın.",
+      "Ürünü seçin, kapıda nakit/kart/QR ödeyin.",
     ],
     why: {
       h2: "LaVital Neden Tercih Edilir?",
@@ -411,7 +404,6 @@ const CONFIGS: BrandConfig[] = [
       "Dengeli içerik",
       "Yerli üretim",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "LaVital mama kaliteli mi?", a: "LaVital, dengeli içerikleri uygun fiyatla sunan, günlük beslenme için güvenilir bir yerli markadır." },
@@ -428,14 +420,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "Pronature",
     metaTitle: "Pronature Atakum | Doğal İçerikli Kedi & Köpek Maması - JETGO",
     metaDescription:
-      "Atakum'da Pronature kedi & köpek mamaları aynı gün kapınızda. Doğal, holistik içerikli premium mama. Kapıda ödeme, %5 Para Puan.",
+      "Atakum'da Pronature kedi & köpek mamaları aynı gün kapınızda. Doğal, holistik içerikli premium mama. Kapıda ödeme.",
     keywords:
       "pronature atakum, pronature mama samsun, pronature kedi maması atakum, pronature köpek maması atakum, doğal mama atakum, holistik mama samsun",
     h1: "Pronature Atakum: Doğal ve Holistik Beslenme",
     intro: [
       "Pronature, doğal ve holistik içerik yaklaşımıyla öne çıkan, Kanada kökenli premium mama markasıdır. Kaliteli protein kaynakları ve doğal içerikleriyle dostlarınızın sağlığını destekler. JETGO ile Pronature'ı Atakum'da aynı gün kapınıza getiriyoruz.",
       "Atakum Denizevleri, Güzelyalı, Kurupelit ve diğer mahallelerde doğal içerikli mama arayanlar için doğru adres JETGO'dur.",
-      "Ürünü seçin, kapıda nakit/kart/QR ödeyin ve her siparişte %5 Para Puan kazanın.",
+      "Ürünü seçin, kapıda nakit/kart/QR ödeyin.",
     ],
     why: {
       h2: "Pronature'ı Farklı Kılan Nedir?",
@@ -462,7 +454,6 @@ const CONFIGS: BrandConfig[] = [
       "Kedi ve köpek için seçenekler",
       "Deri-tüy sağlığına destek",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "Pronature holistik mama ne demek?", a: "Holistik mama, doğal içeriklerle bütüncül beslenmeyi hedefleyen, yapay katkıları sınırlı tutan yaklaşımı ifade eder." },
@@ -479,14 +470,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "ProChoice",
     metaTitle: "ProChoice Atakum | Kedi & Köpek Maması Aynı Gün Teslim - JETGO",
     metaDescription:
-      "Atakum'da ProChoice kedi & köpek mamaları aynı gün kapınızda. Dengeli içerikli, uygun fiyatlı mama. Kapıda ödeme, %5 Para Puan.",
+      "Atakum'da ProChoice kedi & köpek mamaları aynı gün kapınızda. Dengeli içerikli, uygun fiyatlı mama. Kapıda ödeme.",
     keywords:
       "prochoice atakum, prochoice mama samsun, prochoice kedi maması atakum, prochoice köpek maması atakum, prochoice fiyat atakum",
     h1: "ProChoice Atakum: Dengeli ve Uygun Fiyatlı Mama",
     intro: [
       "ProChoice, dengeli içerikleri uygun fiyatla sunan mama markasıdır; günlük beslenme için pratik bir tercihtir. JETGO ile ProChoice'u Atakum'da aynı gün kapınıza getiriyoruz.",
       "Atakum Denizevleri, Güzelyalı, Kurupelit ve diğer mahallelerde uygun fiyatlı kaliteli mama arayanlar için elverişli bir seçenektir.",
-      "Ürünü seçin, kapıda nakit/kart/QR ödeyin ve her siparişte %5 Para Puan kazanın.",
+      "Ürünü seçin, kapıda nakit/kart/QR ödeyin.",
     ],
     why: {
       h2: "ProChoice Neden Tercih Edilir?",
@@ -513,7 +504,6 @@ const CONFIGS: BrandConfig[] = [
       "Kuru ve açık mama",
       "Günlük beslenme için pratik",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "ProChoice mama kimler için uygun?", a: "Uygun fiyatlı, dengeli günlük beslenme arayan kedi ve köpek sahipleri için elverişlidir." },
@@ -530,14 +520,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "ProPerformance",
     metaTitle: "ProPerformance Atakum | Enerjik Köpek & Kedi Maması - JETGO",
     metaDescription:
-      "Atakum'da ProPerformance kedi & köpek mamaları aynı gün kapınızda. Aktif dostlar için enerji ve protein dengeli formüller. Kapıda ödeme, %5 Para Puan.",
+      "Atakum'da ProPerformance kedi & köpek mamaları aynı gün kapınızda. Aktif dostlar için enerji ve protein dengeli formüller. Kapıda ödeme.",
     keywords:
       "properformance atakum, properformance mama samsun, properformance köpek maması atakum, properformance kedi maması atakum, aktif köpek maması atakum",
     h1: "ProPerformance Atakum: Aktif Dostlar İçin Enerjik Beslenme",
     intro: [
       "ProPerformance, aktif ve enerjik dostlar için protein-enerji dengesi gözetilerek hazırlanan mama markasıdır. JETGO ile ProPerformance'ı Atakum'da aynı gün kapınıza getiriyoruz.",
       "Atakum Denizevleri, Güzelyalı, Kurupelit ve diğer mahallelerde hareketli köpek ve kedileri için doyurucu mama arayanlar için uygun bir tercihtir.",
-      "Ürünü seçin, kapıda nakit/kart/QR ödeyin ve her siparişte %5 Para Puan kazanın.",
+      "Ürünü seçin, kapıda nakit/kart/QR ödeyin.",
     ],
     why: {
       h2: "ProPerformance Neden Tercih Edilir?",
@@ -564,7 +554,6 @@ const CONFIGS: BrandConfig[] = [
       "Kedi ve köpek için seçenekler",
       "Uygun fiyat",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "ProPerformance hangi köpekler için uygun?", a: "Hareketli, enerji ihtiyacı yüksek köpekler için doyurucu ve dengeli bir mamadır. Yaş ve boyuta uygun formül seçilmelidir." },
@@ -581,14 +570,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "Econature",
     metaTitle: "Econature Atakum | Uygun Fiyatlı Köpek Maması - JETGO",
     metaDescription:
-      "Atakum'da Econature köpek mamaları aynı gün kapınızda. Doğal içerik yaklaşımı, uygun fiyat. Kapıda ödeme, %5 Para Puan.",
+      "Atakum'da Econature köpek mamaları aynı gün kapınızda. Doğal içerik yaklaşımı, uygun fiyat. Kapıda ödeme.",
     keywords:
       "econature atakum, econature mama samsun, econature köpek maması atakum, econature fiyat atakum, uygun köpek maması atakum",
     h1: "Econature Atakum: Uygun Fiyatlı Doğal İçerikli Köpek Maması",
     intro: [
       "Econature, doğal içerik yaklaşımını uygun fiyatla buluşturan köpek maması markasıdır. JETGO ile Econature'ı Atakum'da aynı gün kapınıza getiriyoruz.",
       "Atakum Denizevleri, Güzelyalı, Kurupelit ve diğer mahallelerde ekonomik ve dengeli köpek maması arayanlar için uygun bir tercihtir.",
-      "Ürünü seçin, kapıda nakit/kart/QR ödeyin ve her siparişte %5 Para Puan kazanın.",
+      "Ürünü seçin, kapıda nakit/kart/QR ödeyin.",
     ],
     why: {
       h2: "Econature Neden Tercih Edilir?",
@@ -615,7 +604,6 @@ const CONFIGS: BrandConfig[] = [
       "Irk boyutuna göre çeşit",
       "Ekonomik beslenme",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "Econature mama kimler için uygun?", a: "Ekonomik ve dengeli günlük beslenme arayan köpek sahipleri için uygun bir mamadır." },
@@ -631,14 +619,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "Enjoy",
     metaTitle: "Enjoy Atakum | Uygun Fiyatlı Kedi & Köpek Maması - JETGO",
     metaDescription:
-      "Atakum'da Enjoy kedi & köpek mamaları aynı gün kapınızda. Ekonomik, dengeli içerikli mama. Kapıda ödeme, %5 Para Puan.",
+      "Atakum'da Enjoy kedi & köpek mamaları aynı gün kapınızda. Ekonomik, dengeli içerikli mama. Kapıda ödeme.",
     keywords:
       "enjoy atakum, enjoy mama samsun, enjoy kedi maması atakum, enjoy köpek maması atakum, ekonomik mama atakum",
     h1: "Enjoy Atakum: Ekonomik Kedi ve Köpek Maması",
     intro: [
       "Enjoy, uygun fiyatlı ve dengeli içerikli mama markasıdır; ekonomik beslenme arayanların pratik tercihidir. JETGO ile Enjoy'u Atakum'da aynı gün kapınıza getiriyoruz.",
       "Atakum Denizevleri, Güzelyalı, Kurupelit ve diğer mahallelerde bütçe dostu mama arayanlar için elverişli bir seçenektir.",
-      "Ürünü seçin, kapıda nakit/kart/QR ödeyin ve her siparişte %5 Para Puan kazanın.",
+      "Ürünü seçin, kapıda nakit/kart/QR ödeyin.",
     ],
     why: {
       h2: "Enjoy Neden Tercih Edilir?",
@@ -665,7 +653,6 @@ const CONFIGS: BrandConfig[] = [
       "Açık ve kuru mama",
       "Günlük beslenme için pratik",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "Enjoy mama kimler için uygun?", a: "Ekonomik günlük beslenme arayan ve çoklu evcil hayvan bakan sahipler için uygun, dengeli bir mamadır." },
@@ -682,14 +669,14 @@ const CONFIGS: BrandConfig[] = [
     brand: "Wanpy",
     metaTitle: "Wanpy Atakum | Kedi & Köpek Ödül ve Atıştırmalık - JETGO",
     metaDescription:
-      "Atakum'da Wanpy ödül ve atıştırmalık ürünleri aynı gün kapınızda. Lezzetli kedi & köpek snackleri. Kapıda ödeme, %5 Para Puan.",
+      "Atakum'da Wanpy ödül ve atıştırmalık ürünleri aynı gün kapınızda. Lezzetli kedi & köpek snackleri. Kapıda ödeme.",
     keywords:
       "wanpy atakum, wanpy samsun, wanpy ödül atakum, wanpy atıştırmalık samsun, kedi ödülü atakum, köpek ödülü atakum",
     h1: "Wanpy Atakum: Lezzetli Ödül ve Atıştırmalıklar",
     intro: [
       "Wanpy, kedi ve köpekler için lezzetli ödül ve atıştırmalık ürünleriyle bilinen bir markadır. Eğitim ödülü ve keyifli anlar için ideal seçenekler sunar. JETGO ile Wanpy'yi Atakum'da aynı gün kapınıza getiriyoruz.",
       "Atakum Denizevleri, Güzelyalı, Kurupelit ve diğer mahallelerde dostunuzu ödüllendirmek için pratik atıştırmalıklar arıyorsanız doğru yerdesiniz.",
-      "Ürünü seçin, kapıda nakit/kart/QR ödeyin ve her siparişte %5 Para Puan kazanın.",
+      "Ürünü seçin, kapıda nakit/kart/QR ödeyin.",
     ],
     why: {
       h2: "Wanpy Ödüllerini Tercih Etme Nedenleri",
@@ -716,7 +703,6 @@ const CONFIGS: BrandConfig[] = [
       "Kedi ve köpek için seçenekler",
       "Pratik, günlük kullanım",
       "Atakum'a aynı gün teslimat",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: "Wanpy ödülleri her gün verilebilir mi?", a: "Ödüller günlük kalori ihtiyacının küçük bir kısmını oluşturmalıdır. Eğitim ve ikram için ölçülü kullanılması önerilir." },
@@ -734,13 +720,13 @@ function buildBrandPage(c: BrandConfig, others: BrandConfig[]): SeoPageData {
     h2: `Atakum'a ${c.brand} Aynı Gün Teslimat`,
     paragraphs: [
       `JETGO, Atakum genelinde ${c.brand} siparişlerini aynı gün teslim eder. Denizevleri, Güzelyalı, Kurupelit, Atakent, İncesu, Mimar Sinan ve diğer mahallelere kurye ekibimiz ürünü kapınıza kadar getirir. Mama bitmeden sipariş verin, dostunuz aç kalmasın.`,
-      `Ödemeyi kapıda nakit, POS ile kredi kartı veya QR kod ile yapabilirsiniz; online kredi kartı seçeneği de mevcuttur. Her ${c.brand} siparişinde %5 Para Puan kazanır, bir sonraki alışverişinizde indirim olarak kullanırsınız.`,
+      `Ödemeyi kapıda nakit, POS ile kredi kartı veya QR kod ile yapabilirsiniz; online kredi kartı seçeneği de mevcuttur.`,
     ],
   };
 
   const sharedFaq = [
     { q: `${c.brand} Atakum'a aynı gün teslim ediliyor mu?`, a: `Evet. Atakum'un tüm mahallelerine (Denizevleri, Güzelyalı, Kurupelit, Atakent ve diğerleri) ${c.brand} siparişlerini aynı gün kapınıza teslim ediyoruz.` },
-    { q: `${c.brand} siparişinde kapıda ödeme var mı?`, a: `Evet. Kapıda nakit, kredi kartı (POS) ve QR kod ile ödeyebilir; dilerseniz online kredi kartı da kullanabilirsiniz. Her siparişte %5 Para Puan kazanırsınız.` },
+    { q: `${c.brand} siparişinde kapıda ödeme var mı?`, a: `Evet. Kapıda nakit, kredi kartı (POS) ve QR kod ile ödeyebilir; dilerseniz online kredi kartı da kullanabilirsiniz.` },
   ];
 
   const crossLinks = others.slice(0, 3).map((o) => ({ text: `${o.brand} Atakum`, href: `/${o.slug}` }));

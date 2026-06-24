@@ -784,7 +784,7 @@ const ORDER_LINE =
   "jetgomarket.com üzerinden ürünleri seçin, sepete ekleyin ve WhatsApp ile tek tıkla siparişinizi onaylayın.";
 const SPEED_LINE = "Atakum içinde ortalama 1 saatte, Samsun (İlkadım, Canik, Tekkeköy) geneline aynı gün siparişiniz kapınızda olur.";
 const PAY_LINE =
-  "Kapıda nakit, kredi kartı (POS) ve QR ile ödeme yapabilirsiniz; nakit ödemede ekstra avantajlı fiyat ve her siparişte %5 Para Puan.";
+  "Kapıda nakit, kredi kartı (POS) ve QR ile ödeme yapabilirsiniz; nakit ödemede ekstra avantajlı fiyat sunuyoruz.";
 const REGION_DELIVERY = "Atakum, İlkadım, Canik ve Tekkeköy'ün tüm mahallelerine teslimat yapıyoruz.";
 
 const PRODUCT_LIST = [
@@ -888,7 +888,7 @@ function flavorFor(cat: Category, kw: string, region: string): Flavor {
         angle: `${region}'da ${kw} - uygun fiyat ve kampanya`,
         secH2: `${K} Fiyat Avantajları`,
         secP: [
-          `${K} arayanlar için rekabetçi fiyat politikası uyguluyoruz. Nakit ödemede ekstra indirim, kampanyalı ürünler ve %5 Para Puan ile tasarruf edersiniz.`,
+          `${K} arayanlar için rekabetçi fiyat politikası uyguluyoruz. Nakit ödemede ekstra indirim ve kampanyalı ürünler ile tasarruf edersiniz.`,
           `Premium markaları uygun fiyata kapınıza getiriyoruz; kaliteden ödün vermeden alışveriş yapın.`,
         ],
         faqQ: `${K} kaliteli mi?`,
@@ -985,7 +985,6 @@ function buildKeywordPage(kw: string, related: { text: string; href: string }[])
       "Atakum içinde 1 saatte, Samsun geneli aynı gün teslimat",
       "Kapıda nakit, POS ve QR ödeme",
       `${region} tüm mahallelere teslimat`,
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: f.faqQ, a: f.faqA },
@@ -1007,7 +1006,7 @@ const CARGO_ORDER_LINE =
 const CARGO_SPEED_LINE =
   "Siparişiniz özenle paketlenip hızla kargoya verilir; anlaşmalı kargo ile 1-3 iş günü içinde adresinize teslim edilir.";
 const CARGO_PAY_LINE =
-  "Ödemenizi kredi veya banka kartı ile güvenli şekilde online yaparsınız; her siparişte %5 Para Puan kazanırsınız.";
+  "Ödemenizi kredi veya banka kartı ile güvenli şekilde online yaparsınız.";
 const CARGO_REGION_DELIVERY =
   "Türkiye'nin her iline anlaşmalı kargo ile gönderim yapıyoruz.";
 
@@ -1136,7 +1135,7 @@ function cargoFlavor(cat: Category, kw: string): Flavor {
         angle: `${kw} - uygun fiyat ve güvenli online alışveriş`,
         secH2: `${K} Fiyat Avantajları`,
         secP: [
-          `${K} arayanlar için rekabetçi fiyat politikası uyguluyoruz. Kampanyalı ürünler ve %5 Para Puan ile tasarruf edersiniz.`,
+          `${K} arayanlar için rekabetçi fiyat politikası uyguluyoruz. Kampanyalı ürünler ile tasarruf edersiniz.`,
           `Premium markaları uygun fiyata kapınıza kargolarız; kaliteden ödün vermeden online alışveriş yapın.`,
         ],
         faqQ: `${K} kaliteli mi?`,
@@ -1207,7 +1206,6 @@ function buildCargoKeywordPage(kw: string, related: { text: string; href: string
       "Hızlı kargo - 1-3 iş günü içinde teslim",
       "Güvenli online kart ile ödeme",
       "Türkiye'nin her yerine gönderim",
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       { q: f.faqQ, a: f.faqA },

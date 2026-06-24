@@ -233,7 +233,7 @@ export default function AuthPage() {
     <div className="min-h-screen bg-background pb-20 md:pb-8">
       <SEO
         title="Giriş Yap / Üye Ol | JETGO Pet Shop Samsun"
-        description="JETGO Pet Shop üyelik girişi. Siparişlerinizi takip edin, para puan kazanın, favori ürünlerinizi kaydedin."
+        description="JETGO Pet Shop üyelik girişi. Siparişlerinizi takip edin, favori ürünlerinizi kaydedin."
         noindex
       />
       <div className="max-w-sm mx-auto px-4 py-8">

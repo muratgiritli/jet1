@@ -6,7 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
 import {
   Truck, CreditCard, Banknote, Smartphone, Building2,
-  ArrowRight, ChevronRight, ChevronLeft, Star, Clock, Shield,
+  ArrowRight, ChevronRight, ChevronLeft, Clock, Shield,
   Gift, MapPin, Phone, Mail, BookOpen, MessageSquare,
   PackageCheck, Zap, Info,
   Stethoscope, ShoppingBag, Heart, Sparkles
@@ -55,10 +55,10 @@ const HERO_SLIDES = [
     badges: true,
   },
   {
-    title: "Her Siparişte\n%5 Para Puan 🎁",
-    subtitle: "Alışveriş yaptıkça kazan, sonraki siparişinde kullan",
+    title: "Kapıda Ödeme\nNakit • Kart • QR 💳",
+    subtitle: "Siparişini al, güvenle kapında öde",
     gradient: "from-indigo-500 via-violet-500 to-purple-400",
-    href: "/giris",
+    href: "/kategori",
   },
   {
     title: "Büyük\nKampanya 🎉",
@@ -906,11 +906,10 @@ function DesktopContactStrip() {
 
 function DesktopStatsBar() {
   return (
-    <div className="hidden md:grid md:grid-cols-4 gap-5" data-testid="section-stats-bar">
+    <div className="hidden md:grid md:grid-cols-3 gap-5" data-testid="section-stats-bar">
       {[
         { icon: ShoppingBag, value: "900+", label: "Ürün Çeşidi", color: "#6B3480", bg: "bg-purple-50" },
         { icon: Truck, value: "Aynı Gün", label: "Teslimat", color: "#059669", bg: "bg-emerald-50" },
-        { icon: Star, value: "%5", label: "Para Puan", color: "#f59e0b", bg: "bg-amber-50" },
         { icon: Shield, value: "Güvenli", label: "Ödeme", color: "#2563eb", bg: "bg-blue-50" },
       ].map((stat, i) => (
         <div key={i} className={`${stat.bg} rounded-2xl p-5 flex items-center gap-4 border border-transparent hover:border-gray-200 transition-colors`}>

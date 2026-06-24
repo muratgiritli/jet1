@@ -201,7 +201,7 @@ export default function Home() {
     <div className="min-h-screen bg-background pb-16">
       <SEO
         title="JETGO Pet Shop Samsun Atakum - Online Sipariş, Kapıda Ödeme & Aynı Gün Teslimat"
-        description="Samsun Atakum, İlkadım, Canik içi aynı gün teslimat. Kedi maması, köpek maması, kedi kumu, kuş yemi ve pet ürünlerinde online pet shop. Kapıda ödeme, %5 Para Puan kazan."
+        description="Samsun Atakum, İlkadım, Canik içi aynı gün teslimat. Kedi maması, köpek maması, kedi kumu, kuş yemi ve pet ürünlerinde online pet shop. Kapıda ödeme."
         keywords="samsun pet shop, atakum pet shop, samsun kedi maması, samsun köpek maması, atakum online pet shop, samsun kapıda ödeme pet shop, samsun aynı gün teslimat, jetgo pet shop, ilkadım pet shop, canik pet shop, samsun pet ürünleri"
         canonical={`${SITE_DOMAIN}/`}
         jsonLd={[LOCAL_BUSINESS_JSONLD, WEBSITE_JSONLD]}

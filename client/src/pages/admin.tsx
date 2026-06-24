@@ -1788,27 +1788,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
     queryKey: ["/api/admin/stock-alerts"],
   });
 
-  const { data: loyaltyCustomers = [], isLoading: loyaltyLoading } = useQuery<{ id: number; phone: string; name: string; balance: number }[]>({
-    queryKey: ["/api/admin/loyalty-points"],
-  });
-
-  const [lpCustomerId, setLpCustomerId] = useState("");
-  const [lpAmount, setLpAmount] = useState("");
-  const [lpDescription, setLpDescription] = useState("");
-
-  const addPointsMutation = useMutation({
-    mutationFn: async (data: { customerId: number; amount: number; description: string }) => {
-      await apiRequest("POST", "/api/admin/loyalty-points", data);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/loyalty-points"] });
-      setLpCustomerId("");
-      setLpAmount("");
-      setLpDescription("");
-      toast({ title: "Puan güncellendi" });
-    },
-  });
-
   interface CampaignItem {
     id: number;
     product_id: number;
@@ -2152,7 +2131,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                 { key: "kategoriler", label: "Kategoriler", icon: <Package className="w-6 h-6" />, color: "text-orange-600" },
                 { key: "altkategoriler", label: "Alt Kategori Yönetimi", icon: <ChevronRight className="w-6 h-6" />, color: "text-indigo-600" },
                 { key: "stokbildirimleri", label: "Stok Bildirimleri", icon: <Bell className="w-6 h-6" />, color: "text-red-600" },
-                { key: "parapuan", label: "Para Puan Yönetimi", icon: <Star className="w-6 h-6" />, color: "text-amber-600" },
                 { key: "urunler", label: "Ürünler", icon: <Package className="w-6 h-6" />, color: "text-cyan-600" },
                 { key: "crosssell", label: "Sıklıkla Birlikte Alınan", icon: <ShoppingBag className="w-6 h-6" />, color: "text-pink-600" },
                 { key: "kediturustats", label: "Kedi Türü İstatistikleri", icon: <BarChart3 className="w-6 h-6" />, color: "text-violet-600" },
@@ -3774,86 +3752,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               ))}
             </div>
           )}
-        </section>}
-
-        {yonetimSub === "parapuan" && <section className="mb-6" data-testid="section-loyalty-points">
-          <h2 className="text-lg font-bold mb-4" data-testid="text-section-loyalty">
-            <Star className="w-5 h-5 inline-block mr-2" />
-            Para Puan Yönetimi
-            <span className="text-sm font-normal text-muted-foreground ml-2">
-              ({loyaltyCustomers.length} müşteri)
-            </span>
-          </h2>
-          <Card>
-            <CardContent className="p-4 space-y-4">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <Select value={lpCustomerId} onValueChange={setLpCustomerId}>
-                  <SelectTrigger data-testid="select-lp-customer">
-                    <SelectValue placeholder="Müşteri seçin" />
-                  </SelectTrigger>
-                  <SelectContent position="popper" className="max-h-60">
-                    {loyaltyCustomers.map((c) => (
-                      <SelectItem key={c.id} value={String(c.id)}>
-                        {c.name} ({c.phone}) - {Math.round(c.balance)} P
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Input
-                  type="number"
-                  placeholder="Puan (+/-)"
-                  value={lpAmount}
-                  onChange={(e) => setLpAmount(e.target.value)}
-                  data-testid="input-lp-amount"
-                />
-                <Input
-                  placeholder="Açıklama"
-                  value={lpDescription}
-                  onChange={(e) => setLpDescription(e.target.value)}
-                  data-testid="input-lp-description"
-                />
-              </div>
-              <Button
-                size="sm"
-                disabled={!lpCustomerId || !lpAmount || isNaN(parseFloat(lpAmount)) || parseFloat(lpAmount) === 0 || addPointsMutation.isPending}
-                onClick={() => {
-                  addPointsMutation.mutate({
-                    customerId: parseInt(lpCustomerId),
-                    amount: parseFloat(lpAmount),
-                    description: lpDescription || (parseFloat(lpAmount) >= 0 ? "Admin tarafından eklendi" : "Admin tarafından düşüldü"),
-                  });
-                }}
-                data-testid="btn-add-points"
-              >
-                {addPointsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : <Plus className="w-4 h-4 mr-1" />}
-                Puan Ekle/Düş
-              </Button>
-
-              {loyaltyLoading ? (
-                <div className="flex justify-center py-4">
-                  <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-                </div>
-              ) : loyaltyCustomers.length > 0 && (
-                <div className="space-y-1 mt-2 max-h-60 overflow-y-auto">
-                  {loyaltyCustomers.map((c) => (
-                    <div key={c.id} className="flex items-center justify-between text-sm py-1.5 px-2 rounded bg-muted/30" data-testid={`row-loyalty-${c.id}`}>
-                      <div className="flex items-center gap-2 min-w-0">
-                        <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
-                        <span className="truncate">{c.name}</span>
-                        <span className="text-xs text-muted-foreground">{c.phone}</span>
-                      </div>
-                      <Badge
-                        className="text-xs no-default-hover-elevate shrink-0"
-                        style={{ backgroundColor: c.balance > 0 ? "#4CAF50" : c.balance < 0 ? "#f44336" : "#9e9e9e", color: "#fff" }}
-                      >
-                        {Math.round(c.balance * 100) / 100} P
-                      </Badge>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </CardContent>
-          </Card>
         </section>}
 
         {yonetimSub === "urunler" && <section>
@@ -8929,7 +8827,6 @@ function SettingsSection() {
     pet_max_points: "",
     pet_base_exp: "",
     pet_streak_exp_bonus: "",
-    loyalty_percent: "",
     admin_phone: "",
     order_notification_sms: "1",
     sms_msgheader: "",
@@ -8970,7 +8867,6 @@ function SettingsSection() {
         pet_max_points: settings.pet_max_points || "5",
         pet_base_exp: settings.pet_base_exp || "10",
         pet_streak_exp_bonus: settings.pet_streak_exp_bonus || "2",
-        loyalty_percent: settings.loyalty_percent || "5",
         admin_phone: settings.admin_phone || "",
         order_notification_sms: settings.order_notification_sms ?? "1",
         sms_msgheader: settings.sms_msgheader || "",
@@ -9041,7 +8937,6 @@ function SettingsSection() {
   if (isLoading) return <div className="flex justify-center py-8"><Loader2 className="w-6 h-6 animate-spin" /></div>;
 
   const fields = [
-    { key: "loyalty_percent", label: "Sipariş Para Puan Oranı (%)", desc: "Her siparişte toplam tutarın yüzde kaçı Para Puan olarak kazanılır", icon: "💰" },
     { key: "pet_base_points", label: "Besleme Temel Puan", desc: "Her besleme için verilecek minimum puan", icon: "🐾" },
     { key: "pet_streak_divisor", label: "Seri Bölen", desc: "Kaç günde bir bonus puan artar (ör: 3 = her 3 günde +1 puan)", icon: "🔥" },
     { key: "pet_max_points", label: "Maksimum Günlük Puan", desc: "Bir beslemede kazanılabilecek en yüksek puan", icon: "⭐" },
@@ -9109,11 +9004,9 @@ function SettingsSection() {
         <CardContent className="pt-4">
           <h3 className="text-sm font-bold mb-2">Puan Formülü Önizleme</h3>
           <div className="bg-muted/50 rounded-lg p-3 text-xs space-y-1">
-            <p><strong>Sipariş kazanımı:</strong> Toplam tutar × %{form.loyalty_percent || 5}</p>
             <p><strong>Besleme puanı:</strong> {form.pet_base_points || 1} + (seri gün ÷ {form.pet_streak_divisor || 3}), maks {form.pet_max_points || 5}</p>
             <p><strong>Deneyim:</strong> {form.pet_base_exp || 10} + (seri gün × {form.pet_streak_exp_bonus || 2})</p>
             <div className="border-t pt-2 mt-2">
-              <p className="text-muted-foreground">Örnek: 500 TL sipariş = <strong>{Math.round(500 * (Number(form.loyalty_percent || 5) / 100))} puan</strong></p>
               <p className="text-muted-foreground">Örnek: 10. gün besleme = <strong>{Math.min(Number(form.pet_base_points || 1) + Math.floor(10 / Math.max(Number(form.pet_streak_divisor || 3), 1)), Number(form.pet_max_points || 5))} puan</strong>, {Number(form.pet_base_exp || 10) + 10 * Number(form.pet_streak_exp_bonus || 2)} XP</p>
             </div>
           </div>

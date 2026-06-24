@@ -69,10 +69,6 @@ export default function ProductInfoAccordions({
       q: "İade ve değişim koşulları nelerdir?",
       a: "Açılmamış ürünler 14 gün içinde iade edilebilir. Mama ve gıda ürünlerinde ambalajın bozulmamış olması gerekir.",
     },
-    {
-      q: "Para Puan nedir, nasıl kullanılır?",
-      a: "Her alışverişinizde tutarın %5'i Para Puan olarak hesabınıza eklenir. Sonraki siparişlerinizde kullanabilirsiniz.",
-    },
   ], []);
 
   const relatedKeywords = useMemo(() => {

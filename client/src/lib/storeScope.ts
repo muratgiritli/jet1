@@ -60,7 +60,7 @@ export function confirmSharedSettingsSave(
   const storeName = STORES.find((s) => s.id === adminStore)?.name || adminStore;
   return confirm(
     `⚠️ Değiştirdiğiniz ayarlar TÜM SİTELERDE ortaktır.\n\n` +
-    `Şu an "${storeName}" görünümündesiniz, ancak bu ayarlar (ödeme, banka, sadakat/puan, besleme vb.) BÜTÜN sitelerde geçerli olacak.\n\n` +
+    `Şu an "${storeName}" görünümündesiniz, ancak bu ayarlar (ödeme, banka, besleme vb.) BÜTÜN sitelerde geçerli olacak.\n\n` +
     `Yine de devam etmek istiyor musunuz?`
   );
 }

@@ -419,7 +419,7 @@ export async function registerRoutes(
   }
   // Domain'e özel olabilecek app_settings anahtarları. Ödeme yöntemi açma/kapama
   // anahtarları her domain için ayrı tutulur; banka IBAN ve Tosla/iyzico API
-  // bilgileri ile sadakat/pet ayarları tüm domainler için ortaktır.
+  // bilgileri ile pet ayarları tüm domainler için ortaktır.
   const STORE_SCOPED_SETTING_KEYS = new Set<string>([
     "sms_msgheader",
     "payment_nakit_enabled", "payment_pos_enabled", "payment_qr_enabled", "payment_eft_enabled",
@@ -1733,7 +1733,6 @@ export async function registerRoutes(
 ## Ana Hizmetler
 - Aynı gün teslimat (Samsun içi 20 km yarıçap)
 - Kapıda nakit / kart ödeme
-- 5% Para Puan kazanma (sonraki alışverişte)
 - AI destekli pet bakım danışmanı (chatbot)
 - Akıllı mama hesaplama
 - Reçeteli mama tekrar siparişi hatırlatma
@@ -2464,7 +2463,6 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     customerAddress: z.string().min(1, "Adres gerekli").max(500, "Adres çok uzun"),
     city: z.string().max(60).optional(),
     district: z.string().max(60).optional(),
-    usedPoints: z.number().optional(),
     couponCode: z.string().max(50).optional(),
     donationAmount: z.number().min(0).max(1000).optional(),
     installmentMonths: z.number().optional(),
@@ -2491,7 +2489,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const fieldErrors = parsed.error.errors.map(e => e.message).join(", ");
       return res.status(400).json({ message: fieldErrors || "Geçersiz sipariş verisi", errors: parsed.error.errors });
     }
-    const { usedPoints, couponCode, ...orderData } = parsed.data;
+    const { couponCode, ...orderData } = parsed.data;
 
     try {
       // Ödeme yöntemi açma/kapama anahtarları domaine özeldir (resolveSettings,
@@ -2707,15 +2705,6 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       orderData.grandTotal = Math.max(0, orderData.subtotal - orderData.discount + orderData.shipping);
     }
 
-    let pointsToUse = 0;
-
-    if (!isCampaignOrder && customerId && usedPoints && usedPoints > 0) {
-      const balance = await storage.getCustomerPointsBalance(customerId);
-      pointsToUse = Math.min(usedPoints, balance);
-      const serverTotal = Math.max(0, orderData.subtotal - orderData.discount + orderData.shipping - pointsToUse);
-      orderData.grandTotal = Math.round(serverTotal * 100) / 100;
-    }
-
     let hasPreorderItems = false;
     const saleMovements: Array<{ productId: number; name: string; barcode: string | null; qty: number; newStock: number }> = [];
     for (const item of orderData.items) {
@@ -2793,34 +2782,6 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       await storage.incrementCouponUsage(appliedCoupon.id);
     }
 
-    if (customerId) {
-      if (!isCampaignOrder && pointsToUse > 0) {
-        await storage.addLoyaltyPoints({
-          customerId,
-          orderId: order.id,
-          amount: -pointsToUse,
-          type: "spent",
-          description: `Sipariş #${order.id} - Para Puan kullanımı`,
-        });
-      }
-      if (!isCampaignOrder) {
-        let loyaltyPct = 5;
-        try {
-          const lpResult = await sharedPool.query("SELECT value FROM app_settings WHERE key = 'loyalty_percent'");
-          if (lpResult.rows.length > 0) loyaltyPct = Number(lpResult.rows[0].value) || 5;
-        } catch {}
-        const earnedPoints = Math.round(orderData.subtotal * (loyaltyPct / 100) * 100) / 100;
-        if (earnedPoints > 0) {
-          await storage.addLoyaltyPoints({
-            customerId,
-            orderId: order.id,
-            amount: earnedPoints,
-            type: "earned",
-            description: `Sipariş #${order.id} - %${loyaltyPct} Para Puan kazanımı`,
-          });
-        }
-      }
-    }
     if (!isOnlinePayment) {
       notifyAdminNewOrder(order.id).catch(() => {});
       // Havale/EFT alıcısı zaten IBAN bilgilendirme SMS'i alıyor; çift SMS olmasın.
@@ -3960,7 +3921,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   app.patch("/api/admin/settings", requireAdmin, async (req, res) => {
     try {
       const updates = req.body;
-      const numericKeys = ["pet_base_points", "pet_streak_divisor", "pet_max_points", "pet_base_exp", "pet_streak_exp_bonus", "loyalty_percent"];
+      const numericKeys = ["pet_base_points", "pet_streak_divisor", "pet_max_points", "pet_base_exp", "pet_streak_exp_bonus"];
       const textKeys = [
         "admin_phone", "order_notification_sms", "sms_msgheader",
         "payment_eft_enabled", "payment_nakit_enabled", "payment_qr_enabled",
@@ -4551,37 +4512,6 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     const customer = await storage.updateCustomer(customerId, updateData as any);
     if (!customer) return res.status(404).json({ message: "Müşteri bulunamadı" });
     res.json({ notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
-  });
-
-  app.get("/api/customer/loyalty-points", requireCustomer, async (req, res) => {
-    const customerId = (req as any).customerId;
-    const balance = await storage.getCustomerPointsBalance(customerId);
-    const history = await storage.getLoyaltyPointsByCustomer(customerId);
-    res.json({ balance: Math.round(balance * 100) / 100, history });
-  });
-
-  app.get("/api/admin/loyalty-points", requireAdmin, async (_req, res) => {
-    const customersWithPoints = await storage.getAllCustomersWithPoints();
-    res.json(customersWithPoints);
-  });
-
-  app.get("/api/admin/loyalty-points/:customerId", requireAdmin, async (req, res) => {
-    const customerId = parseInt(String(req.params.customerId));
-    const balance = await storage.getCustomerPointsBalance(customerId);
-    const history = await storage.getLoyaltyPointsByCustomer(customerId);
-    res.json({ balance: Math.round(balance * 100) / 100, history });
-  });
-
-  app.post("/api/admin/loyalty-points", requireAdmin, async (req, res) => {
-    const { customerId, amount, description } = req.body;
-    if (!customerId || amount === undefined) return res.status(400).json({ message: "customerId ve amount gerekli" });
-    const point = await storage.addLoyaltyPoints({
-      customerId,
-      amount: parseFloat(amount),
-      type: parseFloat(amount) >= 0 ? "manual_add" : "manual_deduct",
-      description: description || "Admin tarafından eklendi",
-    });
-    res.status(201).json(point);
   });
 
   const createReminderSchema = z.object({
@@ -6448,17 +6378,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         .where(eq(virtualPets.id, pet.id))
         .returning();
 
-      const customer = await storage.getCustomer(customerId);
-      if (customer) {
-        await storage.addLoyaltyPoints({
-          customerId,
-          amount: feedPoints,
-          type: "earned",
-          description: `Sanal pet besleme (Gün ${newStreak})`,
-        });
-      }
-
-      res.json({ pet: updated, pointsEarned: feedPoints, message: `+${feedPoints} Para Puan kazandın!` });
+      res.json({ pet: updated, pointsEarned: feedPoints, message: `+${feedPoints} puan kazandın!` });
     } catch (e) {
       res.status(500).json({ message: "Besleme sırasında bir hata oluştu" });
     }

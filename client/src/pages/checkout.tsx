@@ -29,7 +29,6 @@ import {
   MapPin,
   X,
   LogIn,
-  Star,
   Eye,
   EyeOff,
   Lock,
@@ -71,7 +70,6 @@ export default function Checkout() {
   const [lookupDone, setLookupDone] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
   const [editingInfo, setEditingInfo] = useState(false);
-  const [usePoints, setUsePoints] = useState(true);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authAutoShown, setAuthAutoShown] = useState(false);
   const [authStep, setAuthStep] = useState<"phone" | "otp" | "register">("phone");
@@ -93,13 +91,6 @@ export default function Checkout() {
   const shippingLabel = store.commerce.shippingLabel;
   const [cargoCity, setCargoCity] = useState("");
   const [cargoDistrict, setCargoDistrict] = useState("");
-
-  const { data: loyaltyData } = useQuery<{ balance: number }>({
-    queryKey: ["/api/customer/loyalty-points"],
-    enabled: isLoggedIn,
-  });
-
-  const pointsBalance = loyaltyData?.balance || 0;
 
   const { data: publicSettings } = useQuery<Record<string, string>>({
     queryKey: ["/api/public-settings"],
@@ -433,7 +424,6 @@ export default function Checkout() {
   const [deliverySlot, setDeliverySlot] = useState<string>(initialSlot);
   const [selectedDay, setSelectedDay] = useState<string>(deliverySlot.split("|")[0]);
   const [donationAmount, setDonationAmount] = useState(0);
-  const [showPointsDialog, setShowPointsDialog] = useState(false);
   const [couponCode, setCouponCode] = useState("");
   const [couponLoading, setCouponLoading] = useState(false);
   const [couponResult, setCouponResult] = useState<{ valid: boolean; message: string; discountAmount?: number; discountType?: string; discountValue?: number } | null>(null);
@@ -549,8 +539,7 @@ export default function Checkout() {
   const effectiveGrandTotal = Math.max(0, (hasCampaignItems ? campaignGrandTotal : normalGrandTotal) - couponDiscountAmount);
   const effectiveMinReached = hasCampaignItems ? minReached : stdMinReached;
 
-  const pointsDiscount = !hasCampaignItems && isLoggedIn && usePoints && pointsBalance > 0 ? Math.min(pointsBalance, effectiveGrandTotal) : 0;
-  const rawDisplayTotal = Math.max(0, effectiveGrandTotal - pointsDiscount) + donationAmount;
+  const rawDisplayTotal = effectiveGrandTotal + donationAmount;
   const displayTotal = rawDisplayTotal;
 
   const handleApplyCoupon = async () => {
@@ -633,7 +622,6 @@ export default function Checkout() {
         : hasPreorderItems
           ? "Ön Sipariş - Online Kredi Kartı"
           : pay.name;
-      const pointsUsed = pointsDiscount;
       const finalTotal = displayTotal;
 
       const orderPayload: Record<string, unknown> = {
@@ -648,7 +636,6 @@ export default function Checkout() {
         customerAddress: donationDelivery ? donationRecipientAddress.trim() : customerAddress.trim(),
         city: isCargo ? cargoCity : undefined,
         district: isCargo ? cargoDistrict : undefined,
-        usedPoints: pointsUsed > 0 ? pointsUsed : undefined,
         couponCode: appliedCoupon ? appliedCoupon.code : undefined,
         donationAmount: donationAmount > 0 ? donationAmount : undefined,
         customerNote: ((): string | undefined => {
@@ -993,7 +980,7 @@ export default function Checkout() {
                         className="w-full bg-yellow-400 text-gray-900 font-bold text-sm py-2.5 rounded-xl flex items-center justify-center gap-2 disabled:opacity-60 active:scale-[0.98] transition-transform"
                         data-testid="btn-auth-submit"
                       >
-                        {authLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><Gift className="w-4 h-4" /> Kaydol ve 100 TL Kazan</>}
+                        {authLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Hemen Üye Ol</>}
                       </button>
                     </div>
                     <button type="button" className="text-xs text-white/70 hover:text-white mx-auto block mt-2" onClick={() => { setAuthStep("phone"); setAuthErrors({}); }}>
@@ -1096,69 +1083,6 @@ export default function Checkout() {
                 </CardContent>
               </Card>
             </section>
-
-
-            {!hasCampaignItems && (
-              <section className="mt-6">
-                <Card>
-                  <CardContent className="p-4">
-                    <div
-                      className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm"
-                      style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}
-                    >
-                      <Gift className="w-4 h-4 shrink-0" style={{ color: "#e65100" }} />
-                      <span style={{ color: "#bf360c" }} data-testid="text-checkout-points-earn">
-                        Bu siparişi verdiğinizde{" "}
-                        <strong>{((subtotal - paymentDiscount) * 0.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL</strong>{" "}
-                        değerinde Para Puan kazanacaksınız{paymentId === "nakit" ? " (Kapıda Nakit - %10 indirimli tutar üzerinden)" : ""}.
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setShowPointsDialog(true)}
-                      className="text-xs font-medium underline mt-2 ml-1"
-                      style={{ color: "#e65100" }}
-                      data-testid="btn-checkout-points-info"
-                    >
-                      Para Puan nedir?
-                    </button>
-                  </CardContent>
-                </Card>
-              </section>
-            )}
-
-            <Dialog open={showPointsDialog} onOpenChange={setShowPointsDialog}>
-              <DialogContent className="max-w-[340px] sm:max-w-md p-4 sm:p-6">
-                <DialogHeader>
-                  <DialogTitle className="flex items-center gap-2 text-base">
-                    <Gift className="w-4 h-4" style={{ color: "#e65100" }} />
-                    Para Puan Nedir?
-                  </DialogTitle>
-                </DialogHeader>
-                <div className="space-y-2.5 text-xs sm:text-sm text-gray-700">
-                  <p>
-                    <strong>Para Puan</strong>, {brandify("JETGO Pet Shop")}'ta yaptığınız her alışverişte kazandığınız sadakat puanıdır.
-                  </p>
-                  <div className="rounded-lg p-2.5" style={{ backgroundColor: "#fef3e2", border: "1px solid #ffe0b2" }}>
-                    <p className="font-semibold text-xs sm:text-sm" style={{ color: "#e65100" }}>Nasıl Kazanılır?</p>
-                    <p className="mt-0.5">Her siparişinizde toplam tutarın <strong>%5'i</strong> kadar Para Puan kazanırsınız. Örneğin 1.000 TL'lik alışverişte <strong>50 TL</strong> Para Puan!</p>
-                  </div>
-                  <div className="rounded-lg p-2.5" style={{ backgroundColor: "#e8f5e9", border: "1px solid #c8e6c9" }}>
-                    <p className="font-semibold text-xs sm:text-sm" style={{ color: "#2e7d32" }}>Nasıl Kullanılır?</p>
-                    <p className="mt-0.5">Biriken puanlarınız bir sonraki siparişinizde otomatik olarak indirim olarak uygulanır.</p>
-                  </div>
-                  <div className="rounded-lg p-2.5 bg-gray-50 border border-gray-200">
-                    <p className="font-semibold text-xs sm:text-sm text-gray-800">Önemli Bilgiler</p>
-                    <ul className="mt-0.5 space-y-0.5 list-disc list-inside text-gray-600">
-                      <li>Para Puan kazanmak için üye girişi yapmanız gerekir.</li>
-                      <li>Puanlarınız hesabınızda birikir ve istediğiniz zaman kullanabilirsiniz.</li>
-                      <li>Kampanyalı ürünlerde Para Puan geçerli değildir.</li>
-                    </ul>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
-
 
             {hasStreetAnimalItems && (
               <section className="mt-6" data-testid="section-donation-delivery">
@@ -1637,27 +1561,6 @@ export default function Checkout() {
                         {(hasPreorderItems ? subtotal : (subtotal - paymentDiscount)).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                       </span>
                     </div>
-                    {!hasCampaignItems && !hasPreorderItems && isLoggedIn && pointsBalance > 0 && (
-                      <div className="flex justify-between items-center gap-3 flex-wrap">
-                        <button
-                          type="button"
-                          className="flex items-center gap-1.5 text-sm"
-                          onClick={() => setUsePoints(!usePoints)}
-                          data-testid="btn-toggle-points"
-                        >
-                          <div className={`w-4 h-4 rounded border flex items-center justify-center ${usePoints ? "border-orange-500 bg-orange-500" : "border-gray-300"}`}>
-                            {usePoints && <Check className="w-3 h-3 text-white" />}
-                          </div>
-                          <Star className="w-3.5 h-3.5" style={{ color: "#e65100" }} />
-                          <span style={{ color: "#e65100" }}>Para Puan ({pointsBalance.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL)</span>
-                        </button>
-                        {usePoints && pointsDiscount > 0 && (
-                          <span className="font-medium" style={{ color: "#2e7d32" }} data-testid="text-points-discount">
-                            -{pointsDiscount.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-                          </span>
-                        )}
-                      </div>
-                    )}
                     {!hasPreorderItems && appliedCoupon && (
                       <div className="flex justify-between gap-3 flex-wrap">
                         <span className="text-muted-foreground flex items-center gap-1">

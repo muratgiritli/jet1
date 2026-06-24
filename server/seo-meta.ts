@@ -141,7 +141,7 @@ function cargoSeoStaticBlock(store: StoreConfig): string {
   return (
     `<div id="seo-static" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);clip-path:inset(50%);white-space:nowrap;border:0;padding:0;margin:-1px;">\n` +
     `      <h1>${name} - Türkiye Geneli Hızlı Petshop Kargo</h1>\n` +
-    `      <p>Kedi maması, köpek maması, kedi kumu ve evcil hayvan ürünlerini Türkiye'nin her yerine hızlı kargo ile gönderen online petshop. Güvenli online ödeme, 900'den fazla ürün ve her siparişte %5 Para Puan.</p>\n` +
+    `      <p>Kedi maması, köpek maması, kedi kumu ve evcil hayvan ürünlerini Türkiye'nin her yerine hızlı kargo ile gönderen online petshop. Güvenli online ödeme, 900'den fazla ürün.</p>\n` +
     `      <h2>Kedi Ürünleri ve Kedi Maması</h2>\n` +
     `      <p>Royal Canin, Pro Plan, Hill's, N&amp;D ve Reflex gibi premium kedi mama markaları, kedi kumu çeşitleri, kedi oyuncakları ve aksesuarları hızlı kargo ile adresinize gelir.</p>\n` +
     `      <h2>Köpek Ürünleri ve Köpek Maması</h2>\n` +
@@ -149,7 +149,7 @@ function cargoSeoStaticBlock(store: StoreConfig): string {
     `      <h2>Kuş, Kemirgen ve Akvaryum Ürünleri</h2>\n` +
     `      <p>Muhabbet kuşu yemi, hamster mamaları, akvaryum balık yemleri ve aksesuarlar geniş çeşitle Türkiye geneline kargolanır.</p>\n` +
     `      <h2>Kampanya ve İndirimler</h2>\n` +
-    `      <p>Haftalık petshop kampanyaları, sepet indirimleri, ücretsiz kargo fırsatları ve para puan kazandıran loyalty programı.</p>\n` +
+    `      <p>Haftalık petshop kampanyaları, sepet indirimleri, ücretsiz kargo fırsatları.</p>\n` +
     `      <img src="/og-image.webp" alt="${name} online petshop Türkiye geneli kargo" width="1" height="1" />\n` +
     `      <nav aria-label="Site içi linkler">\n` +
     `        <ul>\n` +

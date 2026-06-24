@@ -88,12 +88,8 @@ export function SSSPage() {
       a: "Teslimat sırasında ürünleri mutlaka kontrol ediniz. Hasarlı veya hatalı ürün tespit ettiğinizde 24 saat içinde WhatsApp hattımızdan durumu bildiriniz. Hasarlı/hatalı ürünler ücretsiz olarak değiştirilir."
     },
     {
-      q: "Para Puan sistemi nedir, nasıl çalışır?",
-      a: "Her alışverişinizde sipariş tutarınızın %5'i kadar para puan kazanırsınız. Kazandığınız puanları sonraki siparişlerinizde indirim olarak kullanabilirsiniz. Para puanlarınızı görmek ve kullanmak için üye girişi yapmanız gerekmektedir."
-    },
-    {
       q: "Üyelik nasıl oluşturulur?",
-      a: "Telefon numaranız ve doğum yılınız (4 haneli şifre olarak) ile kolayca üye olabilirsiniz. Üyelik ile sipariş geçmişinizi takip edebilir, favorilerinizi kaydedebilir, para puan kazanabilir ve stok bildirimlerinden yararlanabilirsiniz."
+      a: "Telefon numaranız ve doğum yılınız (4 haneli şifre olarak) ile kolayca üye olabilirsiniz. Üyelik ile sipariş geçmişinizi takip edebilir, favorilerinizi kaydedebilir ve stok bildirimlerinden yararlanabilirsiniz."
     },
     {
       q: "Stokta olmayan ürünü nasıl takip edebilirim?",
@@ -127,7 +123,7 @@ export function SSSPage() {
     <PageWrapper title="Sıkça Sorulan Sorular">
       <SEO
         title="Sıkça Sorulan Sorular | JETGO Samsun Pet Shop"
-        description="JETGO Pet Shop hakkında merak edilen sorular ve cevapları. Sipariş, teslimat, ödeme, iade, para puan ve üyelik konularında detaylı bilgi."
+        description="JETGO Pet Shop hakkında merak edilen sorular ve cevapları. Sipariş, teslimat, ödeme, iade ve üyelik konularında detaylı bilgi."
         canonical={`${SITE_DOMAIN}/sss`}
         jsonLd={FAQ_JSONLD(faqs.map(f => ({ question: f.q, answer: f.a })))}
       />
@@ -161,7 +157,7 @@ export function IslemRehberiPage() {
   const steps = [
     { icon: Search, title: "Ürün Arayın", desc: "Ana sayfadaki arama çubuğunu kullanarak veya kategorilere (Köpek, Kedi, Kuş, Kemirgen) göz atarak istediğiniz ürünü bulun. Alt kategoriler ve markalar arasında kolayca gezinebilirsiniz." },
     { icon: ShoppingCart, title: "Sepete Ekleyin", desc: "Ürün sayfasında adet seçerek 'Sepete Ekle' butonuna tıklayın. İstediğiniz kadar ürün ekleyebilirsiniz. Sepet içeriğiniz sayfalar arasında geçiş yaptığınızda da korunur." },
-    { icon: UserPlus, title: "Üye Olun veya Giriş Yapın", desc: "Sipariş verebilmek için telefon numaranız ve 4 haneli şifrenizle (doğum yılınız) giriş yapın veya yeni üyelik oluşturun. Üyelik sayesinde sipariş geçmişinizi takip edebilir ve para puan kazanabilirsiniz." },
+    { icon: UserPlus, title: "Üye Olun veya Giriş Yapın", desc: "Sipariş verebilmek için telefon numaranız ve 4 haneli şifrenizle (doğum yılınız) giriş yapın veya yeni üyelik oluşturun. Üyelik sayesinde sipariş geçmişinizi takip edebilirsiniz." },
     { icon: CreditCard, title: "Ödeme Yöntemi Seçin", desc: "Kapıda nakit (%5 indirim), banka havalesi/EFT, kapıda POS ile kredi kartı veya QR ödeme seçeneklerinden birini tercih edin." },
     { icon: ClipboardList, title: "Siparişi Onaylayın", desc: "Teslimat mahallenizi seçin, adres bilgilerinizi kontrol edin ve 'WhatsApp ile Sipariş Ver' butonuna tıklayarak siparişinizi gönderin. Sipariş detaylarınız otomatik olarak WhatsApp mesajına dönüştürülür." },
     { icon: Truck, title: "Teslimatı Bekleyin", desc: "Siparişiniz hazırlanır ve Samsun Atakum bölgesinde genellikle aynı gün veya ertesi gün kapınıza teslim edilir. Sipariş durumunuzu 'Takip' sekmesinden anlık olarak izleyebilirsiniz." },
@@ -188,16 +184,6 @@ export function IslemRehberiPage() {
             </div>
           );
         })}
-      </div>
-
-      <div className="mt-6 p-4 rounded-lg border-2 border-dashed" style={{ borderColor: "#6B3480" }}>
-        <div className="flex items-start gap-3">
-          <Heart className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: "#6B3480" }} />
-          <div>
-            <h3 className="text-sm font-semibold mb-1">Para Puan Kazanın!</h3>
-            <p className="text-sm text-muted-foreground">Her alışverişinizde sipariş tutarınızın %5'i kadar para puan kazanırsınız. Puanlarınızı sonraki siparişlerinizde indirim olarak kullanabilirsiniz. Üye olun, alışveriş yapın, puan biriktirin!</p>
-          </div>
-        </div>
       </div>
 
       <Section title="Önemli Bilgiler">
@@ -390,7 +376,7 @@ export function MesafeliSatisSozlesmesiPage() {
           <li><strong>Kapıda POS cihazı ile kredi kartı / banka kartı:</strong> Teslimat sırasında ödeme.</li>
           <li><strong>Kapıda QR ödeme:</strong> Mobil bankacılık uygulaması ile teslimat anında ödeme.</li>
         </ul>
-        <p className="mt-2">Kapıda nakit ödeme indirimi, diğer indirim ve kampanyalarla birleştirilebilir. Para Puan kullanımı tüm ödeme yöntemlerinde geçerlidir.</p>
+        <p className="mt-2">Kapıda nakit ödeme indirimi, diğer indirim ve kampanyalarla birleştirilebilir.</p>
       </Section>
 
       <Section title="Madde 7 – Cayma Hakkı">
@@ -479,7 +465,6 @@ export function KVKKPage() {
           <li><strong>Lokasyon bilgileri:</strong> Teslimat adresi konumu (izniniz dahilinde)</li>
           <li><strong>Evcil hayvan bilgileri:</strong> Pet profil bilgileri, ırk, yaş, kilo (isteğe bağlı, mama hesaplama ve kişiselleştirilmiş hizmet için)</li>
           <li><strong>Dijital iz bilgileri:</strong> Ziyaret edilen sayfalar, arama sorguları, son görüntülenen ürünler, tarayıcı türü, cihaz bilgileri</li>
-          <li><strong>Sadakat programı bilgileri:</strong> Para puan bakiyesi, puan kazanım ve harcama geçmişi</li>
         </ul>
       </Section>
 
@@ -488,7 +473,6 @@ export function KVKKPage() {
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Sipariş oluşturma, onaylama, hazırlama ve teslimat süreçlerinin yürütülmesi</li>
           <li>Üyelik hesabının oluşturulması, yönetilmesi ve kimlik doğrulama</li>
-          <li>Para Puan sadakat programının işletilmesi (puan kazanım, harcama, bakiye yönetimi)</li>
           <li>Müşteri ilişkileri yönetimi ve müşteri destek hizmetlerinin sunulması</li>
           <li>Stok bildirimi ve sipariş hatırlatma (mama bitimi hatırlatma) hizmetlerinin sunulması</li>
           <li>Ürün ve hizmet kalitesinin iyileştirilmesi, kullanıcı deneyiminin kişiselleştirilmesi</li>
@@ -601,7 +585,6 @@ export function GizlilikPage() {
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Siparişlerinizi işlemek, onaylamak ve teslim etmek</li>
           <li>Üyelik hesabınızı oluşturmak ve yönetmek</li>
-          <li>Para Puan sadakat programı kapsamında puan kazanımı ve kullanımı sağlamak</li>
           <li>Akıllı mama hesaplama ve mama bitimi hatırlatma hizmeti sunmak</li>
           <li>Yapay zeka destekli evcil hayvan bakım danışmanlığı hizmeti sunmak</li>
           <li>Stok bildirimi göndermek (ürün tekrar stoğa girdiğinde)</li>
@@ -710,7 +693,6 @@ export function GizlilikSozlesmesiPage() {
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Sipariş geçmişi ve detayları</li>
           <li>Ödeme yöntemi tercihleri</li>
-          <li>Para Puan bakiyesi, kazanım ve harcama geçmişi</li>
           <li>Sepet içeriği ve favori ürünler</li>
           <li>Stok bildirim talepleri</li>
           <li>Mama bitimi hatırlatma tercihleri</li>
@@ -735,7 +717,6 @@ export function GizlilikSozlesmesiPage() {
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Sipariş oluşturma, onaylama, hazırlama ve teslimat süreçlerinin yürütülmesi (sözleşmenin ifası)</li>
           <li>Üyelik hesabının oluşturulması ve yönetilmesi (sözleşmenin ifası)</li>
-          <li>Para Puan sadakat programının işletilmesi (sözleşmenin ifası)</li>
           <li>Akıllı mama hesaplama ve mama bitimi hatırlatma hizmetlerinin sunulması (meşru menfaat)</li>
           <li>Yapay zeka destekli evcil hayvan bakım danışmanlığı (meşru menfaat)</li>
           <li>Müşteri destek ve iletişim hizmetlerinin sağlanması (meşru menfaat)</li>
@@ -797,7 +778,6 @@ export function GizlilikSozlesmesiPage() {
           <li><strong>Üyelik bilgileri:</strong> Hesap aktif olduğu sürece; hesap silme talebinden itibaren 30 gün içinde imha edilir</li>
           <li><strong>Sipariş ve fatura bilgileri:</strong> Vergi mevzuatı gereği 5 yıl</li>
           <li><strong>İletişim kayıtları:</strong> 1 yıl</li>
-          <li><strong>Para Puan bilgileri:</strong> Hesap aktif olduğu sürece</li>
           <li><strong>Çerez verileri:</strong> Çerez Politikası'nda belirtilen süreler boyunca</li>
         </ul>
         <p className="mt-2">Saklama süresi dolmuş veya işlenme amacı ortadan kalkmış veriler, re'sen veya Kullanıcı'nın talebi üzerine silinir, yok edilir veya anonim hale getirilir.</p>
@@ -876,17 +856,7 @@ export function KullanimKosullariPage() {
         </ul>
       </Section>
 
-      <Section title="5. Para Puan (Sadakat Programı)">
-        <ul className="list-disc list-inside space-y-1 ml-2">
-          <li>Üye Kullanıcılar, her siparişte sipariş tutarının <strong>%5'i</strong> kadar para puan kazanır.</li>
-          <li>Kazanılan puanlar sonraki siparişlerde indirim olarak kullanılabilir.</li>
-          <li>Para puanlar yalnızca {brandify("JETGO")} Site'sinde geçerlidir, nakit olarak ödenmez veya transfer edilemez.</li>
-          <li>Şirket, Para Puan programının koşullarını değiştirme veya sonlandırma hakkını saklı tutar.</li>
-          <li>Üyelik iptali halinde birikmiş puanlar sıfırlanır.</li>
-        </ul>
-      </Section>
-
-      <Section title="6. Teslimat Koşulları">
+      <Section title="5. Teslimat Koşulları">
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Teslimat, sipariş formunda belirtilen adrese yapılır.</li>
           <li>Siparişler genellikle aynı gün veya ertesi iş günü teslim edilir.</li>
@@ -897,7 +867,7 @@ export function KullanimKosullariPage() {
         </ul>
       </Section>
 
-      <Section title="7. İade ve Cayma Hakkı">
+      <Section title="6. İade ve Cayma Hakkı">
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Açılmamış ve kullanılmamış ürünler, teslim tarihinden itibaren <strong>14 gün</strong> içinde iade edilebilir.</li>
           <li>Açılmış gıda ürünleri, açık mama, açılmış hijyen ürünleri ve tek kullanımlık ürünlerde iade kabul edilmez.</li>
@@ -906,7 +876,7 @@ export function KullanimKosullariPage() {
         </ul>
       </Section>
 
-      <Section title="8. Fikri Mülkiyet Hakları">
+      <Section title="7. Fikri Mülkiyet Hakları">
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Site'de yer alan {brandify("JETGO")} logosu, tasarım, grafik, metin, yazılım ve diğer tüm içerik {COMPANY.name}'ne aittir ve Fikri ve Sınai Mülkiyet Hakları mevzuatı ile korunmaktadır.</li>
           <li>Site içeriği izinsiz kopyalanamaz, çoğaltılamaz, dağıtılamaz, yayınlanamaz veya ticari amaçla kullanılamaz.</li>
@@ -914,7 +884,7 @@ export function KullanimKosullariPage() {
         </ul>
       </Section>
 
-      <Section title="9. Kullanıcı Yükümlülükleri">
+      <Section title="8. Kullanıcı Yükümlülükleri">
         <p>Kullanıcı, Site'yi kullanırken:</p>
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Türkiye Cumhuriyeti kanunlarına ve genel ahlak kurallarına uygun davranmayı,</li>
@@ -925,7 +895,7 @@ export function KullanimKosullariPage() {
         </ul>
       </Section>
 
-      <Section title="10. Sorumluluk Sınırları">
+      <Section title="9. Sorumluluk Sınırları">
         <ul className="list-disc list-inside space-y-1 ml-2">
           <li>Ürün görselleri temsilidir; renk, boyut ve ambalaj farklılıkları olabilir.</li>
           <li>Son kullanma tarihi yaklaşan ürünler indirimli olarak satışa sunulabilir ve bu durum ürün sayfasında belirtilir.</li>
@@ -936,11 +906,11 @@ export function KullanimKosullariPage() {
         </ul>
       </Section>
 
-      <Section title="11. Uygulanacak Hukuk ve Uyuşmazlık">
+      <Section title="10. Uygulanacak Hukuk ve Uyuşmazlık">
         <p>İşbu Koşullar, Türkiye Cumhuriyeti kanunlarına tabidir. Koşullardan doğan uyuşmazlıklarda <strong>Samsun Mahkemeleri ve İcra Daireleri</strong> yetkilidir.</p>
       </Section>
 
-      <Section title="12. Değişiklikler">
+      <Section title="11. Değişiklikler">
         <p>Şirket, işbu Kullanım Koşulları'nı önceden bildirmeksizin güncelleme hakkını saklı tutar. Güncel koşullar her zaman bu sayfada yayınlanır ve yayınlandığı tarihte yürürlüğe girer.</p>
         <p className="mt-2"><strong>Son güncelleme:</strong> {new Date().toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
       </Section>
@@ -1074,7 +1044,6 @@ export function HakkimizdaPage() {
           <li><strong>Uygun fiyat garantisi:</strong> Piyasanın en uygun fiyatlarıyla, kaliteden ödün vermeden hizmet veriyoruz.</li>
           <li><strong>Aynı gün teslimat:</strong> Samsun Atakum bölgesinde aynı gün veya ertesi gün kapınıza teslim.</li>
           <li><strong>Çoklu ödeme seçeneği:</strong> Kapıda nakit (%5 indirim), kart, QR ödeme imkanı.</li>
-          <li><strong>Para Puan sistemi:</strong> Her alışverişte %5 para puan kazanın, sonraki alışverişlerinizde kullanın.</li>
           <li><strong>900+ ürün çeşidi:</strong> Evcil hayvanınızın tüm ihtiyaçları tek adreste.</li>
           <li><strong>Açık mama satışı:</strong> İstediğiniz kadar, istediğiniz markadan açık mama.</li>
           <li><strong>Akıllı mama hesaplama:</strong> Evcil hayvanınıza özel günlük mama miktarı hesaplama ve mama bitimi hatırlatması.</li>

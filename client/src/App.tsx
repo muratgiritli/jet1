@@ -53,6 +53,7 @@ const FavoritesPage = lazy(() => import("@/pages/favorites"));
 const AuthPage = lazy(() => import("@/pages/auth"));
 const SokakCanlariPage = lazy(() => import("@/pages/sokak-canlari"));
 const ProfilePage = lazy(() => import("@/pages/profile"));
+const AbonePage = lazy(() => import("@/pages/abone"));
 const NotFound = lazy(() => import("@/pages/not-found"));
 const CampaignPage = lazy(() => import("@/pages/campaign"));
 const CampaignDemoPage = lazy(() => import("@/pages/campaign-demo"));
@@ -146,6 +147,7 @@ function Router() {
         <Route path="/giris" component={AuthPage} />
         <Route path="/sokak-canlari" component={SokakCanlariPage} />
         <Route path="/hesabim" component={ProfilePage} />
+        <Route path="/abone" component={AbonePage} />
         <Route path="/demo" component={DemoLanding} />
         <Route path="/demo1" component={Demo1Page} />
         <Route path="/demo2" component={Demo2Page} />

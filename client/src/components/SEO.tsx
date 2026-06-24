@@ -181,7 +181,6 @@ export const LOCAL_BUSINESS_JSONLD = {
   "makesOffer": [
     { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Aynı Gün Teslimat" }, "areaServed": "Samsun" },
     { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Kapıda Ödeme" }, "areaServed": "Samsun" },
-    { "@type": "Offer", "itemOffered": { "@type": "Service", "name": "Para Puan Kazanma (5%)" } },
   ],
   "sameAs": CURRENT_STORE.social,
 };

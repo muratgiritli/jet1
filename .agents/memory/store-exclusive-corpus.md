@@ -3,6 +3,11 @@ name: Store-exclusive landing-page corpora
 description: Two shapes a single store can own an exclusive SEO corpus, plus the sitemap + test invariants that break when adding one.
 ---
 
+> UPDATE: the 4 cargo stores (samsun/samsunpet/karadeniz/markapet) are now LOCAL
+> same-day (see cargo-to-local-conversion.md). Their exclusives are `localOnly`; the
+> `cargoOnly` / cargo-corpus discussion below is now DORMANT history retained for the
+> engine design — no live store exercises the cargo path anymore.
+
 A store can OWN an exclusive landing-page corpus in TWO distinct shapes (all pages
 tagged `storeId`, `availability:"localOnly"`, `type:"keyword"`):
 

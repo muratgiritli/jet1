@@ -115,9 +115,9 @@ const ORDER_LINES = [
 ];
 const PAY_LINES = [
   "Kapıda nakit, kredi kartı (POS) ve QR ile ödeyebilir, nakit ödemede avantajlı fiyattan yararlanırsınız.",
-  "Ödemeyi kapıda nakit, POS cihazıyla kart veya QR ile yapabilirsiniz; her siparişte %5 Para Puan birikir.",
+  "Ödemeyi kapıda nakit, POS cihazıyla kart veya QR ile yapabilirsiniz.",
   "Kapıda nakit ve kartla ödeme açıktır; nakit tercih edenlere küçük bir fiyat avantajı sunuyoruz.",
-  "Teslimatta nakit, kart ve QR seçenekleri mevcut; her alışverişinizde %5 Para Puan kazanırsınız.",
+  "Teslimatta nakit, kart ve QR seçenekleri mevcut.",
 ];
 const TRUST_LINES = [
   "Tüm ürünlerimiz orijinal ve faturalıdır; gıdada son kullanma tarihi uzun, doğru saklanmış ürünleri tercih ederiz.",
@@ -136,7 +136,6 @@ const WHY_POINTS = [
   "Kedi, köpek, kuş ve kemirgen için geniş ürün yelpazesi",
   "Premium ve ekonomik segmentten yan yana seçenekler",
   "Orijinal ve faturalı ürün garantisi",
-  "Her siparişte %5 Para Puan",
   `Her gün ${HOURS} kesintisiz sipariş hattı`,
   "Atakum'u ve Samsun merkez ilçelerini tanıyan yerel ekip",
 ];
@@ -540,7 +539,7 @@ function faqFor(a: Attr, kw: string, K: string, h: number): { q: string; a: stri
     },
     {
       q: `${K} için kapıda ödeme yapabilir miyim?`,
-      a: `Evet. Kapıda nakit, kredi kartı (POS) ve QR ile ödeyebilirsiniz; nakit ödemede avantajlı fiyat ve her siparişte %5 Para Puan sunuyoruz. ${PHONE}.`,
+      a: `Evet. Kapıda nakit, kredi kartı (POS) ve QR ile ödeyebilirsiniz; nakit ödemede avantajlı fiyat sunuyoruz. ${PHONE}.`,
     },
     {
       q: `${K} fiyatını nasıl öğrenirim?`,

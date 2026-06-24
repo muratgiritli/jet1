@@ -50,7 +50,7 @@ const SPEED_LINE =
   "Atakum içinde ortalama 1 saatte, Samsun (İlkadım, Canik, Tekkeköy) geneline aynı gün siparişiniz kapınızda olur.";
 const ORDER_LINE = `${DOMAIN} üzerinden ürünleri seçip sepete ekleyin; WhatsApp ile tek tıkla ya da ${PHONE} numaralı hattımızı arayarak siparişinizi onaylayın.`;
 const PAY_LINE =
-  "Kapıda nakit, kredi kartı (POS) ve QR ile ödeyebilir; nakit ödemede avantajlı fiyat ve her siparişte %5 Para Puan kazanırsınız.";
+  "Kapıda nakit, kredi kartı (POS) ve QR ile ödeyebilirsiniz; nakit ödemede avantajlı fiyat sunarız.";
 const STORE_LINE = `JETGO Pet Shop ${ADDR} adresinden Atakum ve Samsun geneline kapınıza teslimat yapar.`;
 const ORIGINAL_LINE =
   "Tüm ürünlerimiz orijinal ve faturalıdır; son kullanma tarihi uzun, doğru saklanmış ürünleri tercih ederiz.";
@@ -489,7 +489,7 @@ function explainerSection(K: string, a: Attr): Section {
     const r = a.retailer || "pazaryerleri";
     paras.push(
       `${r} üzerinde "${K}" araştıranlar için JETGO, Samsun'un yerel ve hızlı pet shop alternatifidir. ${r} gibi pazaryerlerinden bağımsız bir işletmeyiz; ${r} ile resmi bir bağlantımız yoktur. Avantajımız aracı kargo beklemeden Atakum ve Samsun içinde aynı gün, kapınıza teslimattır.`,
-      `Fiyatları farklı platformlarda karşılaştırabilirsiniz; JETGO'da orijinal ve faturalı ürünü kapıda ödeme ve %5 Para Puan avantajıyla, ürün elinize ulaştıktan sonra ödeyerek alırsınız. ${benefitParagraph(a)}`,
+      `Fiyatları farklı platformlarda karşılaştırabilirsiniz; JETGO'da orijinal ve faturalı ürünü kapıda ödeme avantajıyla, ürün elinize ulaştıktan sonra ödeyerek alırsınız. ${benefitParagraph(a)}`,
     );
     return { h2: `${r} Yerine JETGO ile Aynı Gün Yerel Teslimat`, paragraphs: paras };
   }
@@ -510,7 +510,7 @@ function explainerSection(K: string, a: Attr): Section {
   if (a.intent === "fiyat") {
     paras.push(
       `${K} arayanlar için JETGO uygun fiyat ve şeffaf alışveriş sunar. Güncel fiyat ve kampanyalar dönemsel değişebildiğinden en doğru tutarı ürün sayfasında görebilir ya da WhatsApp / ${PHONE} üzerinden teyit edebilirsiniz.`,
-      `Nakit ödemede avantajlı fiyat, her siparişte %5 Para Puan ve kapıda ödeme imkânıyla bütçenizi korursunuz. ${benefitParagraph(a)}`,
+      `Nakit ödemede avantajlı fiyat ve kapıda ödeme imkânıyla bütçenizi korursunuz. ${benefitParagraph(a)}`,
     );
     return { h2: `${K} için JETGO'da Fiyat Avantajı`, paragraphs: paras };
   }
@@ -557,7 +557,6 @@ function whyJetgoSection(K: string): Section {
       "Orijinal ve faturalı ürün, uzun son kullanma tarihi",
       "Atakum içinde ortalama 1 saatte, Samsun geneline aynı gün teslimat",
       "Kapıda nakit, kredi kartı (POS) ve QR ile ödeme",
-      "Her siparişte %5 Para Puan",
       `Ücretsiz ürün danışmanlığı — WhatsApp ve ${PHONE}`,
     ],
   };
@@ -633,7 +632,7 @@ function faqFor(K: string, a: Attr): Array<{ q: string; a: string }> {
   if (a.intent === "fiyat") {
     out.push({
       q: `${K} fiyatı ne kadar?`,
-      a: `Güncel fiyat ve kampanyalar dönemsel değişebilir; en doğru tutarı ürün sayfasında veya ${PHONE} / WhatsApp üzerinden öğrenebilirsiniz. Nakit ödemede avantajlı fiyat ve her siparişte %5 Para Puan kazanırsınız.`,
+      a: `Güncel fiyat ve kampanyalar dönemsel değişebilir; en doğru tutarı ürün sayfasında veya ${PHONE} / WhatsApp üzerinden öğrenebilirsiniz. Nakit ödemede avantajlı fiyat sunarız.`,
     });
   }
   if (a.compareBrand) {
@@ -737,10 +736,10 @@ function metaTitleFor(K: string, a: Attr): string {
 
 function metaDescFor(kwCap: string, a: Attr): string {
   if (a.intent === "retailer" && a.retailer) {
-    return `${kwCap} mi arıyorsunuz? ${a.retailer} yerine JETGO Samsun: orijinal ve faturalı ürün, Atakum'da 1 saatte, Samsun'a aynı gün kapıda teslim. Kapıda ödeme, %5 Para Puan. ${PHONE}.`;
+    return `${kwCap} mi arıyorsunuz? ${a.retailer} yerine JETGO Samsun: orijinal ve faturalı ürün, Atakum'da 1 saatte, Samsun'a aynı gün kapıda teslim. Kapıda ödeme. ${PHONE}.`;
   }
   if (a.intent === "fiyat") {
-    return `${kwCap} için JETGO: uygun fiyat, nakit indirimi ve %5 Para Puan. Atakum'da 1 saatte, Samsun'a aynı gün kapıda teslimat, kapıda ödeme. ${PHONE}.`;
+    return `${kwCap} için JETGO: uygun fiyat, nakit indirimi. Atakum'da 1 saatte, Samsun'a aynı gün kapıda teslimat, kapıda ödeme. ${PHONE}.`;
   }
   if (a.intent === "barcode") {
     return `${kwCap} ürün kodunu mu arıyorsunuz? JETGO Samsun ekibi barkodla doğru ürünü/muadili tespit eder; Atakum'da 1 saatte, Samsun'a aynı gün kapıda teslimat. ${PHONE}.`;
@@ -803,7 +802,6 @@ function buildJetgoPage(e: Ent, idx: number, related: Array<{ text: string; href
       "Atakum içinde ortalama 1 saatte kapıda teslim",
       "Samsun (İlkadım, Canik, Tekkeköy) geneline aynı gün teslimat",
       "Kapıda nakit, POS ve QR ödeme",
-      "Her siparişte %5 Para Puan",
       `Ücretsiz ürün danışmanlığı — ${PHONE}`,
     ],
     faq: faqFor(K, a),

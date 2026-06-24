@@ -125,9 +125,9 @@ const ORDER_LINES = [
 ];
 const PAY_LINES = [
   "Ödemenizi kapıda nakitle, kredi kartıyla (POS) ya da QR ile tamamlayabilirsiniz; nakit verenlere ufak bir indirim tanıyoruz.",
-  "Kapıda nakit de kart da QR da geçerli; üstelik her siparişte harcamanızın %5'i Para Puan olarak hesabınıza yazılıyor.",
+  "Kapıda nakit de kart da QR da geçerli.",
   "Kapıda ister kartla ister nakitle, tercih sizin; nakdi seçenlere fiyatta minik bir avantaj sağlıyoruz.",
-  "Teslimatta nakit, kart ya da QR fark etmez; toplanan %5 Para Puan'ı bir sonraki alışverişinizde indirim olarak kullanırsınız.",
+  "Teslimatta nakit, kart ya da QR fark etmez.",
 ];
 const TRUST_LINES = [
   "Rafımızdaki her ürün orijinal ve faturalı; bilhassa mamalarda son kullanma tarihini ve saklama şartlarını titizlikle takip ederiz.",
@@ -156,7 +156,6 @@ const WHY_POINTS = [
   "Kedi, köpek, kuş ve kemirgen için geniş ürün çeşidi",
   "Premium ile ekonomik seçenekler bir arada",
   "Orijinal ve faturalı ürün garantisi",
-  "Her alışverişe %5 Para Puan iadesi",
   `Her gün ${HOURS} arasında açık sipariş hattı`,
   "Samsun'u bilen, kolay ulaşılan yerel ekip",
 ];
@@ -554,7 +553,7 @@ function faqFor(a: Attr, kw: string, K: string, h: number): { q: string; a: stri
     },
     {
       q: `${K} alırken kapıda ödeme seçeneği var mı?`,
-      a: `Evet. Kapıda nakit, kredi kartı (POS) ve QR ile ödeme alabiliyoruz; nakit ödeyene ufak indirim, her siparişe %5 Para Puan tanıyoruz. ${PHONE}.`,
+      a: `Evet. Kapıda nakit, kredi kartı (POS) ve QR ile ödeme alabiliyoruz; nakit ödeyene ufak indirim tanıyoruz. ${PHONE}.`,
     },
     {
       q: `${K} fiyatını nereden öğrenebilirim?`,
@@ -693,7 +692,7 @@ function metaDescFor(a: Attr, kw: string, K: string, h: number): string {
   const noun = categoryNoun(a);
   return pick(
     [
-      `${trCap(kw)} mı bakıyorsunuz? ${trCap(noun)} ve aklınızdaki tüm pet ürünleri Samsun içinde aynı gün kapınızda. Kapıda ödeme, %5 Para Puan. ${PHONE}.`,
+      `${trCap(kw)} mı bakıyorsunuz? ${trCap(noun)} ve aklınızdaki tüm pet ürünleri Samsun içinde aynı gün kapınızda. Kapıda ödeme. ${PHONE}.`,
       `${trCap(kw)} denince JETGO Pet Shop: zengin ürün çeşidi, Samsun içinde aynı gün teslimat ve kapıda ödeme. ${PHONE}.`,
       `${trCap(kw)} — Atakum, İlkadım ve Canik'e süratli teslimat. ${trCap(noun)} dahil yüzlerce ürün, kapıda nakit/kart/QR. ${PHONE}.`,
     ],

@@ -24,7 +24,7 @@ const ORDER_LINE = `atakumpetshop.com üzerinden ürünleri seçip sepete ekleyi
 const SPEED_LINE =
   "Atakum içinde ortalama 1 saatte, İlkadım, Canik ve Tekkeköy geneline aynı gün siparişiniz kapınızda olur.";
 const PAY_LINE =
-  "Kapıda nakit, kredi kartı (POS) ve QR ile ödeyebilir; nakit ödemede avantajlı fiyat ve her siparişte %5 Para Puan kazanırsınız.";
+  "Kapıda nakit, kredi kartı (POS) ve QR ile ödeyebilirsiniz; nakit ödemede avantajlı fiyat sunarız.";
 const STORE_LINE = `Atakum Pet Shop ${ADDR} adresinde, her gün ${HOURS} saatleri arasında hizmetinizdedir.`;
 
 // Real Atakum neighbourhoods — rotated per page so delivery-area copy is unique.
@@ -143,7 +143,7 @@ function atakumFlavor(cat: Category, kw: string, K: string): Flavor {
         angle: `${kw} için Atakum'da uygun fiyat ve kampanya sunar`,
         secH2: `Atakum'da ${K} Fiyat Avantajları`,
         secP: [
-          `${K} arayanlar için rekabetçi fiyat politikası uyguluyoruz. Nakit ödemede ekstra indirim, kampanyalı ürünler ve %5 Para Puan ile tasarruf edersiniz.`,
+          `${K} arayanlar için rekabetçi fiyat politikası uyguluyoruz. Nakit ödemede ekstra indirim ve kampanyalı ürünler ile tasarruf edersiniz.`,
           `Premium markaları uygun fiyata Atakum'da kapınıza getiriyoruz; kaliteden ödün vermeden alışveriş yapın.`,
         ],
         faqQ: `${K} kaliteli mi?`,
@@ -279,7 +279,6 @@ function buildAtakumPage(
       "Kapıda nakit, POS ve QR ödeme",
       `Atakum tüm mahallelere teslimat — ${ADDR}`,
       `Her gün ${HOURS} açık — ${PHONE}`,
-      "Her siparişte %5 Para Puan",
     ],
     faq: [
       ...(impliesAlwaysOpen(kw)

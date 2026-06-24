@@ -279,6 +279,20 @@ before(async () => {
     }
     // the admin scope coupons (no customer_id, nothing references them)
     await pool.query("DELETE FROM coupons WHERE code = $1", [`${MARK}COUPON`]);
+
+    // Same crash/timeout orphan problem for the per-scope content rows: a run
+    // killed mid-suite (e.g. by the 2-min test runner cap) never reaches after(),
+    // leaving MARK-tagged banners / delivery_neighborhoods / campaign_items behind.
+    // MARK is a fixed constant, so the next run's onlyTest() then counts both the
+    // fresh and the orphaned rows and the deepEqual scope assertions fail. Match on
+    // a literal substring (strpos), mirroring onlyTest()'s `.includes(MARK)`.
+    // campaign_items reference the MARK product; delete them before the product.
+    await pool.query(
+      "DELETE FROM campaign_items WHERE product_id IN (SELECT id FROM products WHERE strpos(name, $1) > 0)",
+      [MARK]
+    );
+    await pool.query("DELETE FROM banners WHERE strpos(title, $1) > 0", [MARK]);
+    await pool.query("DELETE FROM delivery_neighborhoods WHERE strpos(name, $1) > 0", [MARK]);
   }
 
   // ---- Boot a fresh app instance against the real (dev) DB ----
@@ -1765,14 +1779,14 @@ test("product page canonical/og:url bind to the requesting domain (no cross-bran
   assert.ok(!/jetgomarket\.com/i.test(samCanonical), "samsun canonical must not point at the jetgo domain");
 });
 
-// ---- samsunpet (second cargo brand) storefront identity + behavior ----
+// ---- samsunpet (a Samsun-wide LOCAL same-day brand) storefront identity + behavior ----
 //
-// samsunpet (samsunpet.com) is a SECOND Türkiye-geneli cargo brand. It shares
-// the exact commerce model of `samsun` (atakumpet.com) — fulfillment "cargo",
-// onlinePaymentOnly true, preorder off — but is its own store with its own
+// samsunpet (samsunpet.com) is a Samsun-wide LOCAL same-day brand. It shares
+// the exact commerce model of `samsun` (atakumpet.com) — fulfillment "local",
+// door payment on, preorder on — but is its own store with its own
 // domain, name and logo. The critical invariant: it must NOT collide with the
 // existing "samsun" store even though both serve the Samsun region. These checks
-// pin the distinct identity, the cargo commerce contract, the online-only
+// pin the distinct identity, the local same-day commerce contract, the door
 // payment surface and the brandified homepage meta so the new domain can never
 // silently resolve to the wrong store or leak the default JETGO brand.
 
@@ -1787,17 +1801,17 @@ test("samsunpet host resolves the Samsun Pet Shop brand, distinct from the exist
   // No collision with the pre-existing samsun (atakumpet.com) store.
   assert.equal(samsun.id, "samsun", "atakumpet.com must still resolve the original samsun store");
   assert.notEqual(samsunpet.id, samsun.id, "samsunpet must be a SEPARATE store from samsun");
-  assert.notEqual(samsunpet.domain, samsun.domain, "the two cargo stores must keep distinct domains");
+  assert.notEqual(samsunpet.domain, samsun.domain, "the two stores must keep distinct domains");
   // The apex host also resolves (not just the www form).
   assert.equal(getStoreByHost("samsunpet.com").id, "samsunpet");
 });
 
-test("samsunpet is a cargo, online-payment-only store (same model as samsun)", () => {
+test("samsunpet is a LOCAL same-day store (same model as samsun)", () => {
   const samsunpet = getStoreByHost(SAMSUNPET_HOST);
-  assert.equal(samsunpet.commerce.fulfillment, "cargo", "samsunpet must use the il/ilçe cargo flow");
-  assert.equal(samsunpet.commerce.shippingLabel, "Kargo Ücreti", "cargo delivery fee label");
-  assert.equal(samsunpet.commerce.onlinePaymentOnly, true, "cargo store accepts only online card");
-  assert.equal(samsunpet.commerce.preorderEnabled, false, "preorder must stay off on the cargo store");
+  assert.equal(samsunpet.commerce.fulfillment, "local", "samsunpet must use the local (Mahalle) flow");
+  assert.equal(samsunpet.commerce.shippingLabel, "Getirmesi", "local delivery fee label");
+  assert.equal(samsunpet.commerce.onlinePaymentOnly, false, "local store also accepts door payment");
+  assert.equal(samsunpet.commerce.preorderEnabled, true, "preorder is enabled on the local store");
 });
 
 test("brandify swaps shared JETGO body copy to the Samsun Pet Shop brand + domain", () => {
@@ -1807,16 +1821,16 @@ test("brandify swaps shared JETGO body copy to the Samsun Pet Shop brand + domai
   assert.ok(!/jetgomarket\.com/i.test(brandifyFor(samsunpet, "www.jetgomarket.com")), "must not leak the jetgo domain");
 });
 
-test("checkout on samsunpet (onlinePaymentOnly) renders ONLY the online card — no in-person surfaces", () => {
+test("checkout on samsunpet (local store) DOES offer in-person payment surfaces", () => {
   const samsunpet = getStoreByHost(SAMSUNPET_HOST);
   const opts = visiblePaymentOptions({
     ...allMethodsEnabled,
     onlinePaymentOnly: samsunpet.commerce.onlinePaymentOnly,
   });
   const optIds = opts.map((o) => o.id);
-  assert.deepEqual(optIds, ["online"], `expected only the online card, got: ${JSON.stringify(optIds)}`);
-  for (const forbidden of ["nakit", "eft", "qr", "pos"]) {
-    assert.ok(!optIds.includes(forbidden), `in-person option "${forbidden}" must not render on samsunpet`);
+  // In-person door options + online card are all available on the local store.
+  for (const allowed of ["nakit", "eft", "qr", "online"]) {
+    assert.ok(optIds.includes(allowed), `local store should offer "${allowed}", got: ${JSON.stringify(optIds)}`);
   }
   assert.equal(
     showDoorPosInstallments({
@@ -1825,12 +1839,12 @@ test("checkout on samsunpet (onlinePaymentOnly) renders ONLY the online card —
       hasPreorderItems: false,
       posEnabled: true,
     }),
-    false,
-    "door-POS installment block must never render on the online-only store",
+    true,
+    "door-POS installment block should render on the local store",
   );
 });
 
-test("served homepage HTML carries the Samsun Pet Shop brand + cargo copy (not same-day)", async () => {
+test("served homepage HTML carries the Samsun Pet Shop brand + local same-day copy (not cargo)", async () => {
   const html = await injectAllMeta(INDEX_HTML, "/", SAMSUNPET_HOST);
   const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
   const ogSiteName = html.match(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i)?.[1] ?? "";
@@ -1838,17 +1852,17 @@ test("served homepage HTML carries the Samsun Pet Shop brand + cargo copy (not s
   assert.match(title, /Samsun Pet Shop/i, "homepage <title> must brand as Samsun Pet Shop");
   assert.equal(ogSiteName, SAMSUNPET_BRAND, "og:site_name must be the Samsun Pet Shop brand");
   assert.ok(!/JETGO/i.test(title), "samsunpet homepage title must not contain JETGO");
-  // Cargo copy present, local same-day copy absent (it is NOT a same-day store).
-  assert.match(title, CARGO_SIGNATURE, "samsunpet homepage title must carry cargo copy");
-  assert.ok(!SAME_DAY_SIGNATURE.test(title), "samsunpet must not show local same-day copy");
+  // Local same-day copy present, cargo copy absent.
+  assert.match(title, SAME_DAY_SIGNATURE, "samsunpet homepage title must carry local same-day copy");
+  assert.ok(!CARGO_SIGNATURE.test(title), "samsunpet must not show cargo copy");
 });
 
 // API-level end-to-end on the NEW domain: a fresh customer registers via the OTP
-// bypass on samsunpet.com and the cargo/online-only contract is enforced server
-// -side — door payment rejected, online order attributed to source_site
-// 'samsunpet' (NOT 'samsun'), starts pending, and persists the il/ilçe. This is
-// the strongest regression that the new host is wired through reqStore end to end.
-test("test-OTP bypass lets a NEW customer place a samsunpet cargo order (source_site=samsunpet, online-only)", async () => {
+// bypass on samsunpet.com and the LOCAL contract is enforced server-side — door
+// (cash) payment is ACCEPTED and the order is attributed to source_site
+// 'samsunpet' (NOT 'samsun'). This is the strongest regression that the new host
+// is wired through reqStore end to end.
+test("test-OTP bypass lets a NEW customer place a samsunpet local order (source_site=samsunpet, door payment)", async () => {
   const prevEnv = process.env.NODE_ENV;
   const prevFlag = process.env.TEST_OTP_BYPASS;
   process.env.NODE_ENV = "development";
@@ -1856,8 +1870,8 @@ test("test-OTP bypass lets a NEW customer place a samsunpet cargo order (source_
 
   const phone = "555" + String(randomBytes(4).readUInt32BE(0)).padStart(7, "0").slice(-7);
   try {
-    // 1) Register a fresh customer on the samsunpet host (cargo: name + address,
-    //    no Mahalle). Returns a real signed session cookie.
+    // 1) Register a fresh customer on the samsunpet host. Returns a real signed
+    //    session cookie.
     const send = await post("/api/otp/send", SAMSUNPET_HOST, { phone });
     assert.equal(send.status, 200, `otp/send failed: ${JSON.stringify(send.body)}`);
     assert.equal(send.body.isExisting, false, "fresh phone must be reported as new");
@@ -1874,52 +1888,36 @@ test("test-OTP bypass lets a NEW customer place a samsunpet cargo order (source_
     const realCookie = (regRes.headers.get("set-cookie") ?? "").split(";")[0];
     assert.ok(realCookie.includes("connect.sid"), "registration must set a session cookie");
 
-    // 2) Online-only contract: door payment must be rejected on the cargo store.
-    const door = await postWithCookie(
-      "/api/orders",
-      SAMSUNPET_HOST,
-      { ...samsunOnlineOrder(), customerName: `${MARK}_SP_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
-      realCookie,
-    );
-    assert.equal(door.status, 400, `door payment must be rejected on cargo store: ${JSON.stringify(door.body)}`);
-    assert.match(String(door.body.message ?? ""), /online kredi kartı/i);
-
-    // 3) Place the online cargo order with il/ilçe.
+    // 2) Local store: door (cash) payment is ACCEPTED, unlike the old cargo model.
     const order = await postWithCookie(
       "/api/orders",
       SAMSUNPET_HOST,
-      { ...samsunOnlineOrder(), customerName: `${MARK}_SP_BUYER`, customerPhone: phone },
+      { ...orderPayload(), customerName: `${MARK}_SP_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
       realCookie,
     );
-    assert.equal(order.status, 201, `cargo order POST failed: ${JSON.stringify(order.body)}`);
+    assert.equal(order.status, 201, `local door-payment order POST failed: ${JSON.stringify(order.body)}`);
     const orderId = order.body.id as number;
     assert.ok(orderId, "order id missing in response");
     ids.orders.push(orderId);
 
-    // 4) Attribution + cargo persistence: must tag the NEW store, never 'samsun'.
-    const row = await pool.query(
-      "SELECT source_site, payment_status, city, district FROM orders WHERE id = $1",
-      [orderId],
-    );
-    assert.equal(row.rows[0].source_site, "samsunpet", "order must attribute to the samsunpet storefront, not samsun");
-    assert.equal(row.rows[0].payment_status, "pending", "online cargo orders must start pending");
-    assert.equal(row.rows[0].city, "İstanbul", "cargo order must persist the selected city (il)");
-    assert.equal(row.rows[0].district, "Kadıköy", "cargo order must persist the selected district (ilçe)");
+    // 3) Attribution: must tag the NEW store, never 'samsun'.
+    const row = await pool.query("SELECT source_site FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0]?.source_site, "samsunpet", "order must attribute to the samsunpet storefront, not samsun");
   } finally {
     if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
     if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
   }
 });
 
-// ---- karadeniz (third cargo brand) storefront identity + behavior ----
+// ---- karadeniz (a neighborly LOCAL same-day brand) storefront identity + behavior ----
 //
-// karadeniz (karadenizpetshop.com) is the THIRD Türkiye-geneli cargo brand,
-// sharing the samsun/samsunpet commerce model (cargo, onlinePaymentOnly,
-// preorder off) but with its own domain, name and logo. These checks pin the
-// distinct identity (no collision with samsun/samsunpet), the cargo contract,
-// the online-only payment surface and the brandified homepage meta.
+// karadeniz (karadenizpetshop.com) is a neighborly LOCAL same-day brand,
+// sharing the samsun/samsunpet commerce model (local, door payment,
+// preorder on) but with its own domain, name and logo. These checks pin the
+// distinct identity (no collision with samsun/samsunpet), the local contract,
+// the door payment surface and the brandified homepage meta.
 
-test("karadeniz host resolves the Karadeniz Pet Shop brand, distinct from the other cargo stores", () => {
+test("karadeniz host resolves the Karadeniz Pet Shop brand, distinct from the other sibling stores", () => {
   const karadeniz = getStoreByHost(KARADENIZ_HOST);
   const samsun = getStoreByHost(SAMSUN_HOST);
   const samsunpet = getStoreByHost(SAMSUNPET_HOST);
@@ -1927,7 +1925,7 @@ test("karadeniz host resolves the Karadeniz Pet Shop brand, distinct from the ot
   assert.equal(karadeniz.name, KARADENIZ_BRAND, "homepage wordmark/title brand name");
   assert.equal(karadeniz.shortName, KARADENIZ_BRAND);
   assert.equal(karadeniz.domain, "https://www.karadenizpetshop.com");
-  // No collision with the other two Türkiye-geneli cargo stores.
+  // No collision with the other two sibling stores.
   assert.notEqual(karadeniz.id, samsun.id, "karadeniz must be a SEPARATE store from samsun");
   assert.notEqual(karadeniz.id, samsunpet.id, "karadeniz must be a SEPARATE store from samsunpet");
   assert.notEqual(karadeniz.domain, samsun.domain);
@@ -1936,12 +1934,12 @@ test("karadeniz host resolves the Karadeniz Pet Shop brand, distinct from the ot
   assert.equal(getStoreByHost("karadenizpetshop.com").id, "karadeniz");
 });
 
-test("karadeniz is a cargo, online-payment-only store (same model as samsun/samsunpet)", () => {
+test("karadeniz is a LOCAL same-day store (same model as samsun/samsunpet)", () => {
   const karadeniz = getStoreByHost(KARADENIZ_HOST);
-  assert.equal(karadeniz.commerce.fulfillment, "cargo", "karadeniz must use the il/ilçe cargo flow");
-  assert.equal(karadeniz.commerce.shippingLabel, "Kargo Ücreti", "cargo delivery fee label");
-  assert.equal(karadeniz.commerce.onlinePaymentOnly, true, "cargo store accepts only online card");
-  assert.equal(karadeniz.commerce.preorderEnabled, false, "preorder must stay off on the cargo store");
+  assert.equal(karadeniz.commerce.fulfillment, "local", "karadeniz must use the local (Mahalle) flow");
+  assert.equal(karadeniz.commerce.shippingLabel, "Getirmesi", "local delivery fee label");
+  assert.equal(karadeniz.commerce.onlinePaymentOnly, false, "local store also accepts door payment");
+  assert.equal(karadeniz.commerce.preorderEnabled, true, "preorder is enabled on the local store");
 });
 
 test("brandify swaps shared JETGO body copy to the Karadeniz Pet Shop brand + domain", () => {
@@ -1951,16 +1949,16 @@ test("brandify swaps shared JETGO body copy to the Karadeniz Pet Shop brand + do
   assert.ok(!/jetgomarket\.com/i.test(brandifyFor(karadeniz, "www.jetgomarket.com")), "must not leak the jetgo domain");
 });
 
-test("checkout on karadeniz (onlinePaymentOnly) renders ONLY the online card — no in-person surfaces", () => {
+test("checkout on karadeniz (local store) DOES offer in-person payment surfaces", () => {
   const karadeniz = getStoreByHost(KARADENIZ_HOST);
   const opts = visiblePaymentOptions({
     ...allMethodsEnabled,
     onlinePaymentOnly: karadeniz.commerce.onlinePaymentOnly,
   });
   const optIds = opts.map((o) => o.id);
-  assert.deepEqual(optIds, ["online"], `expected only the online card, got: ${JSON.stringify(optIds)}`);
-  for (const forbidden of ["nakit", "eft", "qr", "pos"]) {
-    assert.ok(!optIds.includes(forbidden), `in-person option "${forbidden}" must not render on karadeniz`);
+  // In-person door options + online card are all available on the local store.
+  for (const allowed of ["nakit", "eft", "qr", "online"]) {
+    assert.ok(optIds.includes(allowed), `local store should offer "${allowed}", got: ${JSON.stringify(optIds)}`);
   }
   assert.equal(
     showDoorPosInstallments({
@@ -1969,12 +1967,12 @@ test("checkout on karadeniz (onlinePaymentOnly) renders ONLY the online card —
       hasPreorderItems: false,
       posEnabled: true,
     }),
-    false,
-    "door-POS installment block must never render on the online-only store",
+    true,
+    "door-POS installment block should render on the local store",
   );
 });
 
-test("served homepage HTML carries the Karadeniz Pet Shop brand + cargo copy (not same-day)", async () => {
+test("served homepage HTML carries the Karadeniz Pet Shop brand + local same-day copy (not cargo)", async () => {
   const html = await injectAllMeta(INDEX_HTML, "/", KARADENIZ_HOST);
   const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
   const ogSiteName = html.match(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i)?.[1] ?? "";
@@ -1982,11 +1980,11 @@ test("served homepage HTML carries the Karadeniz Pet Shop brand + cargo copy (no
   assert.match(title, /Karadeniz Pet Shop/i, "homepage <title> must brand as Karadeniz Pet Shop");
   assert.equal(ogSiteName, KARADENIZ_BRAND, "og:site_name must be the Karadeniz Pet Shop brand");
   assert.ok(!/JETGO/i.test(title), "karadeniz homepage title must not contain JETGO");
-  assert.match(title, CARGO_SIGNATURE, "karadeniz homepage title must carry cargo copy");
-  assert.ok(!SAME_DAY_SIGNATURE.test(title), "karadeniz must not show local same-day copy");
+  assert.match(title, SAME_DAY_SIGNATURE, "karadeniz homepage title must carry local same-day copy");
+  assert.ok(!CARGO_SIGNATURE.test(title), "karadeniz must not show cargo copy");
 });
 
-test("test-OTP bypass lets a NEW customer place a karadeniz cargo order (source_site=karadeniz, online-only)", async () => {
+test("test-OTP bypass lets a NEW customer place a karadeniz local order (source_site=karadeniz, door payment)", async () => {
   const prevEnv = process.env.NODE_ENV;
   const prevFlag = process.env.TEST_OTP_BYPASS;
   process.env.NODE_ENV = "development";
@@ -2010,52 +2008,36 @@ test("test-OTP bypass lets a NEW customer place a karadeniz cargo order (source_
     const realCookie = (regRes.headers.get("set-cookie") ?? "").split(";")[0];
     assert.ok(realCookie.includes("connect.sid"), "registration must set a session cookie");
 
-    // Online-only contract: door payment must be rejected on the cargo store.
-    const door = await postWithCookie(
-      "/api/orders",
-      KARADENIZ_HOST,
-      { ...samsunOnlineOrder(), customerName: `${MARK}_KD_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
-      realCookie,
-    );
-    assert.equal(door.status, 400, `door payment must be rejected on cargo store: ${JSON.stringify(door.body)}`);
-    assert.match(String(door.body.message ?? ""), /online kredi kartı/i);
-
-    // Place the online cargo order with il/ilçe.
+    // Local store: door (cash) payment is ACCEPTED, unlike the old cargo model.
     const order = await postWithCookie(
       "/api/orders",
       KARADENIZ_HOST,
-      { ...samsunOnlineOrder(), customerName: `${MARK}_KD_BUYER`, customerPhone: phone },
+      { ...orderPayload(), customerName: `${MARK}_KD_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
       realCookie,
     );
-    assert.equal(order.status, 201, `cargo order POST failed: ${JSON.stringify(order.body)}`);
+    assert.equal(order.status, 201, `local door-payment order POST failed: ${JSON.stringify(order.body)}`);
     const orderId = order.body.id as number;
     assert.ok(orderId, "order id missing in response");
     ids.orders.push(orderId);
 
-    const row = await pool.query(
-      "SELECT source_site, payment_status, city, district FROM orders WHERE id = $1",
-      [orderId],
-    );
-    assert.equal(row.rows[0].source_site, "karadeniz", "order must attribute to the karadeniz storefront");
-    assert.equal(row.rows[0].payment_status, "pending", "online cargo orders must start pending");
-    assert.equal(row.rows[0].city, "İstanbul", "cargo order must persist the selected city (il)");
-    assert.equal(row.rows[0].district, "Kadıköy", "cargo order must persist the selected district (ilçe)");
+    const row = await pool.query("SELECT source_site FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0]?.source_site, "karadeniz", "order must attribute to the karadeniz storefront");
   } finally {
     if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
     if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
   }
 });
 
-// ---- marka.pet (markapet, FOURTH cargo brand) storefront identity + behavior --
+// ---- marka.pet (markapet, a PRATIK LOCAL same-day brand) storefront identity + behavior --
 //
-// marka.pet is a FOURTH Türkiye-geneli cargo brand sharing the
-// samsun/samsunpet/karadeniz commerce model (cargo, onlinePaymentOnly, preorder
-// off) on its OWN domain. Per the owner's request the customer-facing brand IS
+// marka.pet is a PRATIK LOCAL same-day brand sharing the
+// samsun/samsunpet/karadeniz commerce model (local, door payment, preorder
+// on) on its OWN domain. Per the owner's request the customer-facing brand IS
 // the domain string "marka.pet" (name/shortName/brandWord). These checks pin the
-// distinct identity (no collision with the other cargo stores), the cargo
-// contract, the online-only payment surface, brandify and homepage meta.
+// distinct identity (no collision with the other sibling stores), the local
+// contract, the door payment surface, brandify and homepage meta.
 
-test("marka.pet host resolves the marka.pet brand, distinct from the other cargo stores", () => {
+test("marka.pet host resolves the marka.pet brand, distinct from the other sibling stores", () => {
   const markapet = getStoreByHost(MARKAPET_HOST);
   const samsunpet = getStoreByHost(SAMSUNPET_HOST);
   const karadeniz = getStoreByHost(KARADENIZ_HOST);
@@ -2064,7 +2046,7 @@ test("marka.pet host resolves the marka.pet brand, distinct from the other cargo
   assert.equal(markapet.shortName, MARKAPET_BRAND);
   assert.equal(markapet.brandWord, MARKAPET_BRAND, "brand word is the domain string per the owner's request");
   assert.equal(markapet.domain, "https://www.marka.pet");
-  // No collision with the other Türkiye-geneli cargo stores.
+  // No collision with the other sibling stores.
   assert.notEqual(markapet.id, samsunpet.id, "markapet must be a SEPARATE store from samsunpet");
   assert.notEqual(markapet.id, karadeniz.id, "markapet must be a SEPARATE store from karadeniz");
   assert.notEqual(markapet.domain, samsunpet.domain);
@@ -2073,12 +2055,12 @@ test("marka.pet host resolves the marka.pet brand, distinct from the other cargo
   assert.equal(getStoreByHost("marka.pet").id, "markapet");
 });
 
-test("markapet is a cargo, online-payment-only store (same model as samsun/samsunpet/karadeniz)", () => {
+test("markapet is a LOCAL same-day store (same model as samsun/samsunpet/karadeniz)", () => {
   const markapet = getStoreByHost(MARKAPET_HOST);
-  assert.equal(markapet.commerce.fulfillment, "cargo", "markapet must use the il/ilçe cargo flow");
-  assert.equal(markapet.commerce.shippingLabel, "Kargo Ücreti", "cargo delivery fee label");
-  assert.equal(markapet.commerce.onlinePaymentOnly, true, "cargo store accepts only online card");
-  assert.equal(markapet.commerce.preorderEnabled, false, "preorder must stay off on the cargo store");
+  assert.equal(markapet.commerce.fulfillment, "local", "markapet must use the local (Mahalle) flow");
+  assert.equal(markapet.commerce.shippingLabel, "Getirmesi", "local delivery fee label");
+  assert.equal(markapet.commerce.onlinePaymentOnly, false, "local store also accepts door payment");
+  assert.equal(markapet.commerce.preorderEnabled, true, "preorder is enabled on the local store");
 });
 
 test("brandify swaps shared JETGO body copy to the marka.pet brand + domain (no jetgo substring to mangle)", () => {
@@ -2088,16 +2070,16 @@ test("brandify swaps shared JETGO body copy to the marka.pet brand + domain (no 
   assert.ok(!/jetgomarket\.com/i.test(brandifyFor(markapet, "www.jetgomarket.com")), "must not leak the jetgo domain");
 });
 
-test("checkout on marka.pet (onlinePaymentOnly) renders ONLY the online card — no in-person surfaces", () => {
+test("checkout on marka.pet (local store) DOES offer in-person payment surfaces", () => {
   const markapet = getStoreByHost(MARKAPET_HOST);
   const opts = visiblePaymentOptions({
     ...allMethodsEnabled,
     onlinePaymentOnly: markapet.commerce.onlinePaymentOnly,
   });
   const optIds = opts.map((o) => o.id);
-  assert.deepEqual(optIds, ["online"], `expected only the online card, got: ${JSON.stringify(optIds)}`);
-  for (const forbidden of ["nakit", "eft", "qr", "pos"]) {
-    assert.ok(!optIds.includes(forbidden), `in-person option "${forbidden}" must not render on markapet`);
+  // In-person door options + online card are all available on the local store.
+  for (const allowed of ["nakit", "eft", "qr", "online"]) {
+    assert.ok(optIds.includes(allowed), `local store should offer "${allowed}", got: ${JSON.stringify(optIds)}`);
   }
   assert.equal(
     showDoorPosInstallments({
@@ -2106,12 +2088,12 @@ test("checkout on marka.pet (onlinePaymentOnly) renders ONLY the online card —
       hasPreorderItems: false,
       posEnabled: true,
     }),
-    false,
-    "door-POS installment block must never render on the online-only store",
+    true,
+    "door-POS installment block should render on the local store",
   );
 });
 
-test("served homepage HTML carries the marka.pet brand + cargo copy (not same-day)", async () => {
+test("served homepage HTML carries the marka.pet brand + local same-day copy (not cargo)", async () => {
   const html = await injectAllMeta(INDEX_HTML, "/", MARKAPET_HOST);
   const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
   const ogSiteName = html.match(/<meta\s+property="og:site_name"\s+content="([^"]*)"/i)?.[1] ?? "";
@@ -2119,40 +2101,41 @@ test("served homepage HTML carries the marka.pet brand + cargo copy (not same-da
   assert.match(title, /marka\.pet/i, "homepage <title> must brand as marka.pet");
   assert.equal(ogSiteName, MARKAPET_BRAND, "og:site_name must be the marka.pet brand");
   assert.ok(!/JETGO/i.test(title), "markapet homepage title must not contain JETGO");
-  assert.match(title, CARGO_SIGNATURE, "markapet homepage title must carry cargo copy");
-  assert.ok(!SAME_DAY_SIGNATURE.test(title), "markapet must not show local same-day copy");
+  assert.match(title, SAME_DAY_SIGNATURE, "markapet homepage title must carry local same-day copy");
+  assert.ok(!CARGO_SIGNATURE.test(title), "markapet must not show cargo copy");
 });
 
-test("marka.pet serves the expanded cargo keyword pages (cargoOnly, türkiye/kargo voice)", async () => {
+test("marka.pet serves its expanded local keyword pages (localOnly, same-day/door voice)", async () => {
   const markapet = getStoreByHost(MARKAPET_HOST);
-  const localStore = getStoreByHost(ATAKUMBIZ_HOST);
 
-  for (const slug of ["turkiye-geneli-kedi-mamasi", "kargo-ile-mama", "hills-mama-kargo"]) {
-    const page = findSeoPage(slug, markapet);
-    assert.ok(page, `marka.pet must serve cargo keyword "${slug}"`);
-    assert.equal(page!.availability, "cargoOnly", `"${slug}" must be a cargoOnly page`);
-    assert.ok(!findSeoPage(slug, localStore), `a LOCAL store must NOT serve cargo-only "${slug}"`);
+  // Every sampled markapet slug is a localOnly, markapet-tagged page.
+  for (const sp of MARKAPET_ALL_EXCLUSIVE_PAGES.slice(0, 5)) {
+    const page = findSeoPage(sp.slug, markapet);
+    assert.ok(page, `marka.pet must serve local keyword "${sp.slug}"`);
+    assert.equal(page!.availability, "localOnly", `"${sp.slug}" must be a localOnly page`);
+    assert.equal(page!.storeId, "markapet", `"${sp.slug}" must be markapet-tagged`);
   }
 
-  const html = await injectAllMeta(INDEX_HTML, "/turkiye-geneli-kedi-mamasi", MARKAPET_HOST);
+  const ssrSlug = MARKAPET_ALL_EXCLUSIVE_PAGES[0].slug;
+  const html = await injectAllMeta(INDEX_HTML, `/${ssrSlug}`, MARKAPET_HOST);
   const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
   const description = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1] ?? "";
-  assert.match(title, /marka\.pet/i, "cargo keyword page must brand as marka.pet");
-  assert.ok(!/JETGO/i.test(`${title} ${description}`), "no JETGO leak on the marka.pet cargo page");
-  assert.match(description, CARGO_SIGNATURE, "cargo keyword page must carry türkiye/kargo copy");
-  assert.ok(!SAME_DAY_SIGNATURE.test(`${title} ${description}`), "cargo page must not show same-day copy");
+  assert.match(title, /marka\.pet/i, "local keyword page must brand as marka.pet");
+  assert.ok(!/JETGO/i.test(`${title} ${description}`), "no JETGO leak on the marka.pet local page");
+  assert.match(description, SAME_DAY_SIGNATURE, "local keyword page must carry same-day copy");
+  assert.ok(!CARGO_SIGNATURE.test(`${title} ${description}`), "local page must not show cargo copy");
 
-  // SEO-surface parity: the cargo keyword page must expose an H1 and FAQPage
-  // JSON-LD (for Google/AI rich results), brandified with no JETGO/same-day leak.
-  assert.match(html, /<h1>[\s\S]*?<\/h1>/i, "cargo keyword page must render an H1 for crawlers");
+  // SEO-surface parity: the local keyword page must expose an H1 and FAQPage
+  // JSON-LD (for Google/AI rich results), brandified with no JETGO/cargo leak.
+  assert.match(html, /<h1>[\s\S]*?<\/h1>/i, "local keyword page must render an H1 for crawlers");
   const ldBlocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
   const faqLd = ldBlocks.find((b) => b.includes('"FAQPage"'));
-  assert.ok(faqLd, "cargo keyword page must emit FAQPage JSON-LD");
+  assert.ok(faqLd, "local keyword page must emit FAQPage JSON-LD");
   assert.ok(!/JETGO/i.test(faqLd!), "FAQPage JSON-LD must brandify (no JETGO leak)");
-  assert.ok(!SAME_DAY_SIGNATURE.test(faqLd!), "FAQPage JSON-LD must not carry same-day copy");
+  assert.ok(!CARGO_SIGNATURE.test(faqLd!), "FAQPage JSON-LD must not carry cargo copy");
 });
 
-test("test-OTP bypass lets a NEW customer place a marka.pet cargo order (source_site=markapet, online-only)", async () => {
+test("test-OTP bypass lets a NEW customer place a marka.pet local order (source_site=markapet, door payment)", async () => {
   const prevEnv = process.env.NODE_ENV;
   const prevFlag = process.env.TEST_OTP_BYPASS;
   process.env.NODE_ENV = "development";
@@ -2180,38 +2163,21 @@ test("test-OTP bypass lets a NEW customer place a marka.pet cargo order (source_
     const realCookie = (regRes.headers.get("set-cookie") ?? "").split(";")[0];
     assert.ok(realCookie.includes("connect.sid"), "registration must set a session cookie");
 
-    // Online-only contract: door payment must be rejected on the cargo store.
-    const door = await postWithCookie(
-      "/api/orders",
-      MARKAPET_HOST,
-      { ...samsunOnlineOrder(), customerName: `${MARK}_MP_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
-      realCookie,
-      mpIp,
-    );
-    assert.equal(door.status, 400, `door payment must be rejected on cargo store: ${JSON.stringify(door.body)}`);
-    assert.match(String(door.body.message ?? ""), /online kredi kartı/i);
-
-    // Place the online cargo order with il/ilçe.
+    // Local store: door (cash) payment is ACCEPTED, unlike the old cargo model.
     const order = await postWithCookie(
       "/api/orders",
       MARKAPET_HOST,
-      { ...samsunOnlineOrder(), customerName: `${MARK}_MP_BUYER`, customerPhone: phone },
+      { ...orderPayload(), customerName: `${MARK}_MP_BUYER`, customerPhone: phone, paymentMethod: "Kapıda Nakit" },
       realCookie,
       mpIp,
     );
-    assert.equal(order.status, 201, `cargo order POST failed: ${JSON.stringify(order.body)}`);
+    assert.equal(order.status, 201, `local door-payment order POST failed: ${JSON.stringify(order.body)}`);
     const orderId = order.body.id as number;
     assert.ok(orderId, "order id missing in response");
     ids.orders.push(orderId);
 
-    const row = await pool.query(
-      "SELECT source_site, payment_status, city, district FROM orders WHERE id = $1",
-      [orderId],
-    );
-    assert.equal(row.rows[0].source_site, "markapet", "order must attribute to the marka.pet storefront");
-    assert.equal(row.rows[0].payment_status, "pending", "online cargo orders must start pending");
-    assert.equal(row.rows[0].city, "İstanbul", "cargo order must persist the selected city (il)");
-    assert.equal(row.rows[0].district, "Kadıköy", "cargo order must persist the selected district (ilçe)");
+    const row = await pool.query("SELECT source_site FROM orders WHERE id = $1", [orderId]);
+    assert.equal(row.rows[0]?.source_site, "markapet", "order must attribute to the marka.pet storefront");
   } finally {
     if (prevEnv === undefined) delete process.env.NODE_ENV; else process.env.NODE_ENV = prevEnv;
     if (prevFlag === undefined) delete process.env.TEST_OTP_BYPASS; else process.env.TEST_OTP_BYPASS = prevFlag;
@@ -2222,7 +2188,7 @@ test("test-OTP bypass lets a NEW customer place a marka.pet cargo order (source_
 //
 // Same LOCAL commerce model as the `atakum` store (Mahalle checkout + door
 // payment + preorder) but its OWN domain / theme / logo. It intentionally
-// shares the "Atakum Pet" brand word with the cargo `samsun` store
+// shares the "Atakum Pet" brand word with the `samsun` store
 // (atakumpet.com); these tests pin that the two stay SEPARATE (distinct id +
 // domain), the LOCAL commerce contract, brandify, the door-payment-allowed
 // checkout surface, the same-day homepage meta and source_site attribution.
@@ -2241,7 +2207,7 @@ test("atakum.biz resolves the Atakum Pet brand as a SEPARATE store from samsun/a
   assert.notEqual(atakumbiz.id, samsun.id, "atakumbiz must be a SEPARATE store from samsun");
   assert.notEqual(atakumbiz.id, atakum.id, "atakumbiz must be a SEPARATE store from atakum");
   assert.notEqual(atakumbiz.domain, samsun.domain, "the two Atakum Pet stores must keep distinct domains");
-  // Its OWN logo + a theme distinct from the cargo samsun store (visual identity).
+  // Its OWN logo + a theme distinct from the samsun store (visual identity).
   assert.equal(atakumbiz.logo, "/logo-atakumbiz.webp", "atakumbiz must use its own white wordmark on the colored topBar");
   assert.notEqual(atakumbiz.theme.topBar, samsun.theme.topBar, "atakumbiz must look visually distinct from samsun");
   assert.notEqual(atakumbiz.theme.primary, samsun.theme.primary, "atakumbiz must have its own primary color");
@@ -2735,7 +2701,7 @@ test("atakum.biz serves the expanded attached keyword corpus (newly added slugs 
 
 test("a local 1-saatte keyword page serves the 1-hour Atakum copy on atakum.biz and stays off cargo", async () => {
   const localStore = getStoreByHost(ATAKUMBIZ_HOST);
-  const cargoStore = getStoreByHost(KARADENIZ_HOST);
+  const cargoStore = SYNTHETIC_CARGO_STORE;
   const slug = "1-saatte-mama";
 
   assert.ok(findSeoPage(slug, localStore), `atakumbiz must serve "${slug}"`);
@@ -2819,8 +2785,8 @@ test("Samsun/Atakum neighborhood keyword pages are LOCAL-only, serve on jetgo.sh
   // jetgo.shop is the Samsun-focused LOCAL same-day JETGO storefront. The attached
   // keyword file adds hyper-local mahalle long-tail (Denizevleri, Atakent, Mimar
   // Sinan, Kurupelit...). A bare "atakent kedi maması" has no intent token, so the
-  // LOCAL_INTENT_RE neighborhood group is what keeps it OUT of the Türkiye-geneli
-  // cargo pages (a national cargo store must never claim neighborhood service).
+  // LOCAL_INTENT_RE neighborhood group is what keeps it OUT of the dormant
+  // cargo-model pages (a cargo-model store must never claim neighborhood service).
   const NEIGHBORHOOD_SLUGS = [
     "denizevleri-petshop",
     "atakent-kedi-mamasi",
@@ -2828,8 +2794,8 @@ test("Samsun/Atakum neighborhood keyword pages are LOCAL-only, serve on jetgo.sh
     "kurupelit-petshop",
   ];
   const jetgoshop = getStoreByHost(JETGOSHOP_HOST);
-  const cargoStore = getStoreByHost(KARADENIZ_HOST);
-  assert.ok(isCargoStore(cargoStore), "guard: karadeniz must be a cargo store");
+  const cargoStore = SYNTHETIC_CARGO_STORE;
+  assert.ok(isCargoStore(cargoStore), "guard: synthetic cargo fixture must be a cargo store");
   assert.ok(!isCargoStore(jetgoshop), "guard: jetgo.shop must be a local store");
 
   for (const slug of NEIGHBORHOOD_SLUGS) {
@@ -2839,7 +2805,7 @@ test("Samsun/Atakum neighborhood keyword pages are LOCAL-only, serve on jetgo.sh
     assert.equal(
       findSeoPage(slug, cargoStore),
       undefined,
-      `"${slug}" must NOT be reachable on a Türkiye-geneli cargo store`,
+      `"${slug}" must NOT be reachable on a cargo-model store`,
     );
   }
 
@@ -3260,13 +3226,13 @@ test("sitemap partition: the 4 sibling domains list disjoint, complete shared sl
   const again = new Set(
     getSitemapPagesForStore(karadeniz).filter((p) => !p.storeId).map((p) => p.slug),
   );
-  assert.deepEqual([...again].sort(), [...sharedSlices[2]].sort(), "cargo shared partition must be deterministic");
+  assert.deepEqual([...again].sort(), [...sharedSlices[2]].sort(), "sibling shared partition must be deterministic");
 });
 
-// The JETGO trio and the cargo group are independent: a JETGO store is still
-// partitioned by its own 3-member group (mod 3), NOT by the 4-member cargo group,
-// so adding the cargo group never reassigns a JETGO slug.
-test("sitemap partition: JETGO and cargo groups are independent (jetgopet stays mod-3)", () => {
+// The JETGO trio and the sibling group are independent: a JETGO store is still
+// partitioned by its own 3-member group (mod 3), NOT by the 4-member sibling group,
+// so adding the sibling group never reassigns a JETGO slug.
+test("sitemap partition: JETGO and sibling groups are independent (jetgopet stays mod-3)", () => {
   const jetgopet = getStoreByHost("www.jetgo.pet"); // index 1 of ["jetgo","jetgopet","jetgoshop"]
   // Only the SHARED (storeless) slugs are governed by the hash partition; jetgopet's
   // own store-exclusive pages bypass it and need not hash to its index.
@@ -3502,7 +3468,7 @@ test("Merchant: admin overview lists every store with feed url + fulfillment", a
     const rows = await getAllStoreMerchantConfigs();
     assert.equal(rows.length, STORES.length, "every store listed");
     const sam = rows.find((r) => r.id === "samsun")!;
-    assert.equal(sam.fulfillment, "cargo");
+    assert.equal(sam.fulfillment, "local");
     assert.equal(sam.hasConfig, true);
     assert.equal(sam.config.merchantId, "9988776655");
     assert.equal(sam.config.shippingAmount, "39.90");
@@ -3516,52 +3482,68 @@ test("Merchant: admin overview lists every store with feed url + fulfillment", a
   }
 });
 
-test("Merchant feed: local store advertises same-day, cargo store advertises kargo", async () => {
-  // Give the cargo store a positive feed shipping price so its <g:shipping> block
-  // is deterministic regardless of whether dev cargo_fee happens to be configured.
+// Scope shipping assertions to the <g:shipping> block: the item's own <g:price>
+// (product price) shares the same tag, so a raw feed.includes("<g:price>X TRY")
+// collides with any product that happens to cost X. Only the shipping sub-block
+// reflects the commerce model.
+const shippingBlocks = (feed: string) =>
+  [...feed.matchAll(/<g:shipping>([\s\S]*?)<\/g:shipping>/g)].map((m) => m[1]);
+
+test("Merchant feed: every store advertises same-day local delivery, never kargo", async () => {
+  // All domains are LOCAL same-day now (no cargo host remains). Even a configured
+  // shippingAmount override is IGNORED for a local store (same-day is free): every
+  // <g:shipping> block advertises "Aynı Gün Teslimat" at 0.00 TRY — never a kargo
+  // service nor the override amount.
   await setStoreMerchantConfig("samsun", { shippingAmount: "29.90" });
   try {
-    const localFeed = await (await fetch(`${baseUrl}/google-merchant.xml`, { headers: { "X-Forwarded-Host": ATAKUM_HOST } })).text();
-    const cargoFeed = await (await fetch(`${baseUrl}/google-merchant.xml`, { headers: { "X-Forwarded-Host": SAMSUN_HOST } })).text();
-    // channel descriptions are commerce-model aware
-    assert.match(localFeed, /aynı gün/i, "local channel mentions same-day delivery");
-    assert.match(cargoFeed, /kargo/i, "cargo channel mentions kargo");
-    // cargo feed must never claim the same-day service or the Samsun-only mahalle text
-    assert.ok(!cargoFeed.includes("Aynı Gün Teslimat"), "cargo feed must NOT advertise same-day shipping");
-    for (const feed of [localFeed, cargoFeed]) {
+    const atakumFeed = await (await fetch(`${baseUrl}/google-merchant.xml`, { headers: { "X-Forwarded-Host": ATAKUM_HOST } })).text();
+    const samsunFeed = await (await fetch(`${baseUrl}/google-merchant.xml`, { headers: { "X-Forwarded-Host": SAMSUN_HOST } })).text();
+    for (const feed of [atakumFeed, samsunFeed]) {
+      // channel description is same-day, never the Samsun-only mahalle text
+      assert.match(feed, /aynı gün/i, "local channel mentions same-day delivery");
       assert.ok(!feed.includes("İlkadım") && !feed.includes("Canik"), "no hardcoded Samsun mahalle text");
-    }
-    // item-level shipping service reflects the model (guarded on item presence)
-    if (localFeed.includes("<item>")) {
-      assert.ok(localFeed.includes("<g:service>Aynı Gün Teslimat</g:service>"), "local items ship same-day");
-      assert.ok(localFeed.includes("<g:price>0.00 TRY</g:price>"), "local same-day shipping is free");
-    }
-    if (cargoFeed.includes("<item>")) {
-      assert.ok(cargoFeed.includes("<g:service>Kargo</g:service>"), "cargo items ship via kargo");
-      assert.ok(cargoFeed.includes("<g:price>29.90 TRY</g:price>"), "cargo carries the configured kargo price");
-      assert.ok(!cargoFeed.includes("<g:service>Aynı Gün Teslimat</g:service>"), "no same-day item shipping on cargo feed");
+      const blocks = shippingBlocks(feed);
+      if (feed.includes("<item>")) {
+        assert.ok(blocks.length > 0, "local items must carry a shipping block");
+      }
+      for (const block of blocks) {
+        assert.match(block, /<g:service>Aynı Gün Teslimat<\/g:service>/, "local items ship same-day");
+        assert.match(block, /<g:price>0\.00 TRY<\/g:price>/, "local same-day shipping is free");
+        assert.ok(!block.includes("Kargo"), "local feed must not ship via kargo");
+        assert.ok(!block.includes("29.90"), "local feed must ignore the shippingAmount override");
+      }
     }
   } finally {
     await deleteStoreMerchantConfig("samsun");
   }
 });
 
-test("Merchant feed: cargo store with no configured shipping never advertises free 0.00", async () => {
-  // No merchant override; if cargo_fee is also unset/zero the <g:shipping> block is
-  // OMITTED (deferred to Merchant Center account shipping) — a cargo domain must
-  // never emit a forbidden "free 0.00 TRY" / same-day shipping line.
+test("Merchant feed: local store with no configured shipping still advertises same-day free", async () => {
+  // A local same-day store needs no merchant shipping override: same-day delivery
+  // is free, so each item's shipping block is "Aynı Gün Teslimat" at 0.00 TRY.
   await deleteStoreMerchantConfig("samsun");
   const feed = await (await fetch(`${baseUrl}/google-merchant.xml`, { headers: { "X-Forwarded-Host": SAMSUN_HOST } })).text();
-  assert.ok(!feed.includes("<g:price>0.00 TRY</g:price>"), "cargo feed must NEVER advertise free 0.00 shipping");
-  assert.ok(!feed.includes("Aynı Gün Teslimat"), "cargo feed must NOT claim same-day delivery");
+  const blocks = shippingBlocks(feed);
+  if (feed.includes("<item>")) {
+    assert.ok(blocks.length > 0, "local items must carry a shipping block");
+  }
+  for (const block of blocks) {
+    assert.match(block, /<g:service>Aynı Gün Teslimat<\/g:service>/, "local items ship same-day");
+    assert.match(block, /<g:price>0\.00 TRY<\/g:price>/, "local same-day shipping is free");
+    assert.ok(!block.includes("Kargo"), "local feed must never advertise a kargo channel");
+  }
 });
 
-test("Merchant feed: admin shippingAmount override flows into the cargo feed", async () => {
+test("Merchant feed: admin shippingAmount override is IGNORED for a local same-day store", async () => {
+  // samsun is LOCAL now: same-day delivery is free, so a configured shipping
+  // override never reaches the <g:shipping> block (it stays 0.00 same-day). The
+  // override amount may still coincide with a product price, so scope to shipping.
   await setStoreMerchantConfig("samsun", { shippingAmount: "55.00" });
   try {
     const feed = await (await fetch(`${baseUrl}/google-merchant.xml`, { headers: { "X-Forwarded-Host": SAMSUN_HOST } })).text();
-    if (feed.includes("<item>")) {
-      assert.ok(feed.includes("<g:price>55.00 TRY</g:price>"), "override shipping price appears in feed");
+    for (const block of shippingBlocks(feed)) {
+      assert.ok(!block.includes("55.00"), "local feed must ignore the shippingAmount override");
+      assert.match(block, /<g:price>0\.00 TRY<\/g:price>/, "local same-day shipping stays free");
     }
   } finally {
     await deleteStoreMerchantConfig("samsun");
@@ -3970,9 +3952,9 @@ test("a havale/EFT order does NOT send the generic buyer 'siparisiniz alindi' SM
 //
 // atakumpetshop.com publishes its OWN bespoke version of every keyword landing
 // page (storeId "atakum"), OVERRIDING the SHARED keyword page at the same slug
-// ONLY on atakum. Sibling local domains keep the shared page; cargo domains see
-// neither (local-only). These tests pin that exclusivity + non-leakage so a
-// future edit can't quietly re-share atakum's pages or leak them to siblings.
+// ONLY on atakum. Sibling local domains keep the shared page; a cargo-model store
+// (the synthetic fixture) sees neither (local-only). These tests pin that
+// exclusivity + non-leakage so a future edit can't re-share/leak atakum's pages.
 
 const ATAKUM_STORE = getStoreByHost(ATAKUM_HOST);
 const SIBLING_LOCAL_STORE = getStoreByHost(JETGO_HOST);
@@ -4198,12 +4180,12 @@ test("jetgo-exclusive: pages are served ONLY on jetgomarket.com (no leak to sibl
       !onSiblingLocal || onSiblingLocal.storeId !== "jetgo",
       `${slug}: jetgo-exclusive must NOT leak to a sibling local store (only the sibling's own override may resolve)`,
     );
-    // A cargo store may serve its OWN cargoOnly override but never jetgo's page,
-    // and never a localOnly page (which would be an untruthful same-day surface).
-    const onCargo = findSeoPage(slug, getStoreByHost(SAMSUNPET_HOST));
+    // samsunpet is LOCAL now too: it may serve its OWN localOnly override but never
+    // jetgo's exclusive bespoke page.
+    const onSamsunpet = findSeoPage(slug, getStoreByHost(SAMSUNPET_HOST));
     assert.ok(
-      !onCargo || (onCargo.storeId !== "jetgo" && onCargo.availability !== "localOnly"),
-      `${slug}: jetgo local page must NOT leak to a cargo store (cargo serves only its own cargoOnly override)`,
+      !onSamsunpet || onSamsunpet.storeId !== "jetgo",
+      `${slug}: jetgo-exclusive must NOT leak to samsunpet (only samsunpet's own override may resolve)`,
     );
   }
 });
@@ -4560,17 +4542,17 @@ test("markalar: a representative page is served only on jetgomarket.com and list
   const p = markalarBySlug.get(slug);
   assert.ok(p, `${slug} must exist in the markalar corpus`);
   assert.ok(findSeoPage(slug, JETGO_STORE), `${slug}: must resolve on jetgo`);
-  // Siblings now own exclusive corpora over the same markalar universe. This slug is a
-  // member of both the LOCAL (ATAKUM) and CARGO (markalar) universes, so each sibling
-  // must resolve to its OWN store-scoped override — and NEVER to jetgo's page.
+  // Siblings now own exclusive corpora over the same markalar universe. Every sibling
+  // is LOCAL now, so each resolves to its OWN store-scoped localOnly override — and
+  // NEVER to jetgo's page.
   const onSiblingLocal = findSeoPage(slug, getStoreByHost(JETGOPET_HOST));
   assert.ok(onSiblingLocal, `${slug}: a sibling local store sharing the ATAKUM universe must serve its own override`);
   assert.equal(onSiblingLocal!.storeId, "jetgopet", `${slug}: a sibling local store must serve ONLY its own page, never jetgo's`);
   assert.equal(onSiblingLocal!.availability, "localOnly", `${slug}: the sibling local override stays localOnly`);
-  const onCargo = findSeoPage(slug, getStoreByHost(SAMSUNPET_HOST));
-  assert.ok(onCargo, `${slug}: a cargo store sharing the markalar universe must serve its own override`);
-  assert.equal(onCargo!.storeId, "samsunpet", `${slug}: a cargo store must serve ONLY its own page, never jetgo's`);
-  assert.equal(onCargo!.availability, "cargoOnly", `${slug}: a cargo store never serves a localOnly markalar page`);
+  const onSamsunpet = findSeoPage(slug, getStoreByHost(SAMSUNPET_HOST));
+  assert.ok(onSamsunpet, `${slug}: a sibling local store sharing the markalar universe must serve its own override`);
+  assert.equal(onSamsunpet!.storeId, "samsunpet", `${slug}: a sibling must serve ONLY its own page, never jetgo's`);
+  assert.equal(onSamsunpet!.availability, "localOnly", `${slug}: samsunpet's markalar override stays localOnly`);
   const jetgoSitemap = new Set(getSitemapPagesForStore(JETGO_STORE).map((q) => q.slug));
   assert.ok(jetgoSitemap.has(slug), `${slug}: jetgo sitemap must list the markalar page`);
 });
@@ -4875,17 +4857,17 @@ test("diger: a representative page is served only on jetgomarket.com and listed 
   const p = digerBySlug.get(slug);
   assert.ok(p, `${slug} must exist in the diger corpus`);
   assert.ok(findSeoPage(slug, JETGO_STORE), `${slug}: must resolve on jetgo`);
-  // Siblings now own exclusive corpora over the same diger universe. This slug is a
-  // member of both the LOCAL (ATAKUM) and CARGO (diger) universes, so each sibling
-  // must resolve to its OWN store-scoped override — and NEVER to jetgo's page.
+  // Siblings now own exclusive corpora over the same diger universe. Every sibling
+  // is LOCAL now, so each resolves to its OWN store-scoped localOnly override — and
+  // NEVER to jetgo's page.
   const onSiblingLocal = findSeoPage(slug, getStoreByHost(JETGOPET_HOST));
   assert.ok(onSiblingLocal, `${slug}: a sibling local store sharing the ATAKUM universe must serve its own override`);
   assert.equal(onSiblingLocal!.storeId, "jetgopet", `${slug}: a sibling local store must serve ONLY its own page, never jetgo's`);
   assert.equal(onSiblingLocal!.availability, "localOnly", `${slug}: the sibling local override stays localOnly`);
-  const onCargo = findSeoPage(slug, getStoreByHost(SAMSUNPET_HOST));
-  assert.ok(onCargo, `${slug}: a cargo store sharing the diger universe must serve its own override`);
-  assert.equal(onCargo!.storeId, "samsunpet", `${slug}: a cargo store must serve ONLY its own page, never jetgo's`);
-  assert.equal(onCargo!.availability, "cargoOnly", `${slug}: a cargo store never serves a localOnly diger page`);
+  const onSamsunpet = findSeoPage(slug, getStoreByHost(SAMSUNPET_HOST));
+  assert.ok(onSamsunpet, `${slug}: a sibling local store sharing the diger universe must serve its own override`);
+  assert.equal(onSamsunpet!.storeId, "samsunpet", `${slug}: a sibling must serve ONLY its own page, never jetgo's`);
+  assert.equal(onSamsunpet!.availability, "localOnly", `${slug}: samsunpet's diger override stays localOnly`);
   const jetgoSitemap = new Set(getSitemapPagesForStore(JETGO_STORE).map((q) => q.slug));
   assert.ok(jetgoSitemap.has(slug), `${slug}: jetgo sitemap must list the diger page`);
 });
@@ -6072,26 +6054,28 @@ test("atakumbiz-all: SSR serves atakum.biz's bespoke content, self-canonical, di
 
 // ===========================================================================
 // MARKA.PET broad keyword corpus (marka.pet, store id "markapet") — the 8th
-// corpus and the FIRST built for a CARGO store. A cargo store ships Türkiye
-// geneli; it has NO physical shopfront, NO same-day courier, NO door payment
-// and NO mahalle delivery. The corpus must therefore be cargo-framed AND
-// truth-safe: it must read distinct from
+// corpus, a LOCAL same-day Samsun store with a PRATIK convenience angle: tek
+// tıkla sipariş, Samsun içi aynı gün kapıda. It delivers same-day in the Samsun
+// area (Atakum, İlkadım, Canik, Tekkeköy) with kapıda ödeme + kurye — NO
+// Türkiye-geneli cargo. The corpus must therefore be LOCAL-framed AND truth-safe:
+// it must read distinct from
 //   • the SHARED jetgomarket.com keyword pages,
 //   • the atakumbiz-all corpus (atakum.biz, "Atakum Pet", LOCAL same-day), AND
 //   • the jetgoshop-all corpus (jetgo.shop, "JETGO Pet Shop"),
-// while NEVER affirming a local-presence / same-day / door-payment trait that a
-// cargo store cannot truthfully claim. Pages carry availability "cargoOnly".
+// while AFFIRMING the same-day / door-payment / local-presence trait that is now
+// true for every page. Pages carry availability "localOnly".
 // ===========================================================================
 const MARKAPET_STORE = getStoreByHost(MARKAPET_HOST);
 // Intent pages are identified by their (exclusive) metaTitle markers — chosen to
 // differ from the local sibling corpora (atakumbiz "Sahiplenme Çağrısı"/"Yerel
-// Esnaf"/"Bilgi Notu", jetgoshop/atakum variants) AND to read in a CARGO voice.
+// Esnaf"/"Bilgi Notu", jetgoshop/atakum variants) AND to read in a PRATIK
+// convenience voice.
 const MARKAPET_LIVE_MARK = /Sahiplenme Önerisi/;
-const MARKAPET_RETAILER_MARK = /Kargolu Alternatif/;
+const MARKAPET_RETAILER_MARK = /Yerel Alternatif/;
 const MARKAPET_SERVICE_MARK = /Hizmet Notu/;
-// Cargo body surfaces only — the keyword K survives raw in slug/title/metaTitle/
-// keywords (SEO targeting), but the local-intent label is STRIPPED in all body
-// copy, so the forbidden scan runs over the rendered prose, never the SEO meta.
+// Local body surfaces — the rendered prose now AFFIRMS the same-day/local trait
+// (the keyword K survives raw in slug/title/metaTitle/keywords for SEO too); the
+// local-signature scan runs over the rendered prose, never just the SEO meta.
 function markapetBody(p: SeoPageData): string {
   return [
     p.metaDescription,
@@ -6102,11 +6086,12 @@ function markapetBody(p: SeoPageData): string {
     ...((p.faq ?? []).flatMap((f) => [f.q, f.a])),
   ].join(" ");
 }
-// Traits a Türkiye-geneli cargo store can never truthfully affirm in its prose.
-const FORBIDDEN_CARGO_RE =
-  /aynı gün|ayni gun|1\s*saat|bir saatte|kapıda (ödeme|nakit|kredi)|kapida (odeme|nakit)|kurye|mahalle(?:ye)? teslim|en yakın (mağaza|şube|dükkan|petshop|pet shop|veteriner)|nöbetçi|gece açık|7\/24 açık/i;
+// Positive LOCAL signature every same-day store's prose MUST affirm.
+const LOCAL_SIGNATURE_RE = /aynı gün|kapıda (ödeme|nakit|kredi|kart)|kurye/i;
+// Always-open / 24h claims a same-day (but NOT 24h) store must never make.
+const NIGHT_CLAIM_RE = /nöbetçi|gece açık|gece acık|7\s*\/\s*24|24 saat açık|kesintisiz açık/i;
 
-test("markapet-all: a large keyword corpus is registered, exclusive, and complete (cargoOnly)", () => {
+test("markapet-all: a large keyword corpus is registered, exclusive, and complete (localOnly)", () => {
   assert.ok(
     MARKAPET_ALL_EXCLUSIVE_PAGES.length > 5000,
     `expected a large markapet-all corpus, got ${MARKAPET_ALL_EXCLUSIVE_PAGES.length}`,
@@ -6115,7 +6100,7 @@ test("markapet-all: a large keyword corpus is registered, exclusive, and complet
   assert.equal(new Set(slugs).size, slugs.length, "markapet-all corpus must have unique slugs");
   for (const p of MARKAPET_ALL_EXCLUSIVE_PAGES) {
     assert.equal(p.storeId, "markapet", `${p.slug}: markapet-all page must be storeId markapet`);
-    assert.equal(p.availability, "cargoOnly", `${p.slug}: markapet-all page must be cargoOnly (cargo trap)`);
+    assert.equal(p.availability, "localOnly", `${p.slug}: markapet-all page must be localOnly`);
     assert.equal(p.type, "keyword", `${p.slug}: markapet-all page must be a keyword page`);
     assert.ok(
       p.metaTitle && p.metaDescription && p.h1 &&
@@ -6138,24 +6123,22 @@ test("markapet-all: noise keywords are skipped and the rest are registered", () 
   );
 });
 
-test("markapet-all: NO page affirms a same-day / door-payment / local-presence trait", () => {
-  // The cargo invariant. Scan the rendered BODY of EVERY page — a single
-  // affirmation would be untruthful. (The global forbidden-claim scanner already
-  // covers the SEO meta surfaces; only the URL slug retains the raw keyword.)
-  const offenders = MARKAPET_ALL_EXCLUSIVE_PAGES.filter((p) => FORBIDDEN_CARGO_RE.test(markapetBody(p)));
+test("markapet-all: EVERY page affirms the local same-day / door-payment trait", () => {
+  // The local invariant. Scan the rendered BODY of EVERY page — these are now
+  // truthful same-day Samsun stores, so every page must carry the local signal.
+  const missing = MARKAPET_ALL_EXCLUSIVE_PAGES.filter((p) => !LOCAL_SIGNATURE_RE.test(markapetBody(p)));
   assert.equal(
-    offenders.length,
+    missing.length,
     0,
-    `cargo pages must not affirm a local/same-day/door trait (offenders: ${offenders
-      .slice(0, 5)
-      .map((p) => `${p.slug} :: ${markapetBody(p).match(FORBIDDEN_CARGO_RE)?.[0]}`)
-      .join(" | ")})`,
+    `local pages must affirm a same-day/door/kurye trait (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`,
   );
 });
 
-test("markapet-all: every metaDescription carries the Türkiye-geneli cargo signature", () => {
-  const missing = MARKAPET_ALL_EXCLUSIVE_PAGES.filter((p) => !CARGO_SIGNATURE.test(p.metaDescription ?? ""));
-  assert.equal(missing.length, 0, `metaDescriptions must carry the cargo signature (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`);
+test("markapet-all: every metaDescription carries the same-day local signature, never a cargo one", () => {
+  const missing = MARKAPET_ALL_EXCLUSIVE_PAGES.filter((p) => !SAME_DAY_SIGNATURE.test(p.metaDescription ?? ""));
+  assert.equal(missing.length, 0, `metaDescriptions must carry the same-day signature (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`);
+  const cargo = MARKAPET_ALL_EXCLUSIVE_PAGES.filter((p) => CARGO_SIGNATURE.test(p.metaDescription ?? ""));
+  assert.equal(cargo.length, 0, `metaDescriptions must not carry the cargo signature (offenders: ${cargo.slice(0, 5).map((p) => p.slug).join(", ")})`);
 });
 
 test("markapet-all: every internal link resolves within marka.pet's own slug space", () => {
@@ -6364,17 +6347,15 @@ test("markapet-all: retailer keywords position marka.pet as an independent alter
   }
 });
 
-test("markapet-all: 24-hour / late-night keywords carry a truthful no-physical-store disclaimer", () => {
-  // A cargo store has NO shopfront, so the always-open answer must clarify the
-  // online store takes orders any hour but there is no physical store / 24h desk.
-  const candidates = MARKAPET_ALL_EXCLUSIVE_PAGES.filter(
-    (p) => (p.faq ?? []).some((f) => /fiziksel bir mağaza işletmiyoruz/.test(f.a)),
+test("markapet-all: no page makes a nöbetçi / 24-saat / gece-açık (always-open) claim", () => {
+  // A same-day store delivers within working hours — it is NOT a 24h/nöbetçi
+  // operation, so no served surface may affirm an always-open trait.
+  const offenders = MARKAPET_ALL_EXCLUSIVE_PAGES.filter((p) => NIGHT_CLAIM_RE.test(markapetBody(p)));
+  assert.equal(
+    offenders.length,
+    0,
+    `pages must not claim an always-open/24h trait (offenders: ${offenders.slice(0, 5).map((p) => p.slug).join(", ")})`,
   );
-  assert.ok(candidates.length >= 1, `expected at least one always-open keyword page, got ${candidates.length}`);
-  for (const p of candidates) {
-    const ans = (p.faq ?? []).find((f) => /fiziksel bir mağaza işletmiyoruz/.test(f.a))!.a;
-    assert.ok(!FORBIDDEN_CARGO_RE.test(ans), `${p.slug}: always-open answer must not affirm a 24h/local trait`);
-  }
 });
 
 test("markapet-all: no page fabricates a concrete price", () => {
@@ -6387,7 +6368,7 @@ test("markapet-all: no page fabricates a concrete price", () => {
   );
 });
 
-test("markapet-all: SSR serves marka.pet's bespoke cargo content, self-canonical, differs from jetgomarket", async () => {
+test("markapet-all: SSR serves marka.pet's bespoke local content, self-canonical, differs from jetgomarket", async () => {
   const jetgoSet = availableSlugSet(JETGO_STORE);
   const overrideSlug = MARKAPET_ALL_EXCLUSIVE_PAGES.find((p) => jetgoSet.has(p.slug))!.slug;
   const mpPage = findSeoPage(overrideSlug, MARKAPET_STORE)!;
@@ -6416,30 +6397,31 @@ test("markapet-all: SSR serves marka.pet's bespoke cargo content, self-canonical
 
 // ===========================================================================
 // KARADENIZ PET SHOP broad keyword corpus (karadenizpetshop.com, store id
-// "karadeniz") — the 9th corpus and the SECOND built for a CARGO store (after
-// marka.pet). A cargo store ships Türkiye geneli; it has NO physical shopfront,
-// NO same-day courier, NO door payment and NO mahalle delivery. The corpus must
-// therefore be cargo-framed AND truth-safe: it must read distinct from
+// "karadeniz") — the 9th corpus, a LOCAL same-day Samsun store in a KÖKLÜ /
+// neighborly TRUST voice ("Samsunlu komşunuz"). It delivers same-day in the
+// Samsun area (Atakum, İlkadım, Canik, Tekkeköy) with kapıda ödeme + kurye — NO
+// Türkiye-geneli cargo. The corpus must therefore be LOCAL-framed AND truth-safe:
+// it must read distinct from
 //   • the SHARED jetgomarket.com keyword pages,
-//   • the markapet-all corpus (marka.pet, the sibling CARGO store), AND
+//   • the markapet-all corpus (marka.pet, a LOCAL same-day sibling), AND
 //   • the jetgoshop-all corpus (jetgo.shop, "JETGO Pet Shop"),
-// while NEVER affirming a local-presence / same-day / door-payment trait that a
-// cargo store cannot truthfully claim. Pages carry availability "cargoOnly".
+// while AFFIRMING the same-day / door-payment / local-presence trait that is now
+// true for every page. Pages carry availability "localOnly".
 // Thresholds are MEASURED against the markalar+diger universe (~4992 pages),
 // which is smaller than markapet's atakum-all universe — so they are tuned down
 // from the markapet numbers, never blindly copied.
 // ===========================================================================
 const KARADENIZ_STORE = getStoreByHost(KARADENIZ_HOST);
 // Intent pages are identified by their (exclusive) metaTitle markers — chosen to
-// differ from every sibling corpus (markapet "Sahiplenme Önerisi"/"Kargolu
+// differ from every sibling corpus (markapet "Sahiplenme Önerisi"/"Yerel
 // Alternatif"/"Hizmet Notu", atakumbiz/jetgoshop variants) AND to read in a
-// CARGO voice.
+// KÖKLÜ / neighborly TRUST voice.
 const KARADENIZ_LIVE_MARK = /Sahiplendirme Rehberi/;
-const KARADENIZ_RETAILER_MARK = /Bağımsız Kargo Adresi/;
+const KARADENIZ_RETAILER_MARK = /Bağımsız Yerel Adres/;
 const KARADENIZ_SERVICE_MARK = /Yönlendirme Notu/;
-// Cargo body surfaces only — the keyword K survives raw in slug/title/metaTitle/
-// keywords (SEO targeting), but the local-intent label is STRIPPED in all body
-// copy, so the forbidden scan runs over the rendered prose, never the SEO meta.
+// Local body surfaces — the rendered prose now AFFIRMS the same-day/local trait
+// (the keyword K survives raw in slug/title/metaTitle/keywords for SEO too); the
+// local-signature scan runs over the rendered prose, never just the SEO meta.
 function karadenizBody(p: SeoPageData): string {
   return [
     p.metaDescription,
@@ -6451,7 +6433,7 @@ function karadenizBody(p: SeoPageData): string {
   ].join(" ");
 }
 
-test("karadeniz-all: a large keyword corpus is registered, exclusive, and complete (cargoOnly)", () => {
+test("karadeniz-all: a large keyword corpus is registered, exclusive, and complete (localOnly)", () => {
   assert.ok(
     KARADENIZ_ALL_EXCLUSIVE_PAGES.length > 4000,
     `expected a large karadeniz-all corpus, got ${KARADENIZ_ALL_EXCLUSIVE_PAGES.length}`,
@@ -6460,7 +6442,7 @@ test("karadeniz-all: a large keyword corpus is registered, exclusive, and comple
   assert.equal(new Set(slugs).size, slugs.length, "karadeniz-all corpus must have unique slugs");
   for (const p of KARADENIZ_ALL_EXCLUSIVE_PAGES) {
     assert.equal(p.storeId, "karadeniz", `${p.slug}: karadeniz-all page must be storeId karadeniz`);
-    assert.equal(p.availability, "cargoOnly", `${p.slug}: karadeniz-all page must be cargoOnly (cargo trap)`);
+    assert.equal(p.availability, "localOnly", `${p.slug}: karadeniz-all page must be localOnly`);
     assert.equal(p.type, "keyword", `${p.slug}: karadeniz-all page must be a keyword page`);
     assert.ok(
       p.metaTitle && p.metaDescription && p.h1 &&
@@ -6483,24 +6465,22 @@ test("karadeniz-all: noise keywords are skipped and the rest are registered", ()
   );
 });
 
-test("karadeniz-all: NO page affirms a same-day / door-payment / local-presence trait", () => {
-  // The cargo invariant. Scan the rendered BODY of EVERY page — a single
-  // affirmation would be untruthful. (The global forbidden-claim scanner already
-  // covers the SEO meta surfaces; only the URL slug retains the raw keyword.)
-  const offenders = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => FORBIDDEN_CARGO_RE.test(karadenizBody(p)));
+test("karadeniz-all: EVERY page affirms the local same-day / door-payment trait", () => {
+  // The local invariant. Scan the rendered BODY of EVERY page — these are now
+  // truthful same-day Samsun stores, so every page must carry the local signal.
+  const missing = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => !LOCAL_SIGNATURE_RE.test(karadenizBody(p)));
   assert.equal(
-    offenders.length,
+    missing.length,
     0,
-    `cargo pages must not affirm a local/same-day/door trait (offenders: ${offenders
-      .slice(0, 5)
-      .map((p) => `${p.slug} :: ${karadenizBody(p).match(FORBIDDEN_CARGO_RE)?.[0]}`)
-      .join(" | ")})`,
+    `local pages must affirm a same-day/door/kurye trait (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`,
   );
 });
 
-test("karadeniz-all: every metaDescription carries the Türkiye-geneli cargo signature", () => {
-  const missing = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => !CARGO_SIGNATURE.test(p.metaDescription ?? ""));
-  assert.equal(missing.length, 0, `metaDescriptions must carry the cargo signature (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`);
+test("karadeniz-all: every metaDescription carries the same-day local signature, never a cargo one", () => {
+  const missing = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => !SAME_DAY_SIGNATURE.test(p.metaDescription ?? ""));
+  assert.equal(missing.length, 0, `metaDescriptions must carry the same-day signature (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`);
+  const cargo = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => CARGO_SIGNATURE.test(p.metaDescription ?? ""));
+  assert.equal(cargo.length, 0, `metaDescriptions must not carry the cargo signature (offenders: ${cargo.slice(0, 5).map((p) => p.slug).join(", ")})`);
 });
 
 test("karadeniz-all: every internal link resolves within karadenizpetshop.com's own slug space", () => {
@@ -6710,17 +6690,15 @@ test("karadeniz-all: retailer keywords position Karadeniz Pet Shop as an indepen
   }
 });
 
-test("karadeniz-all: 24-hour / late-night keywords carry a truthful no-physical-store disclaimer", () => {
-  // A cargo store has NO shopfront, so the always-open answer must clarify the
-  // online store takes orders any hour but there is no physical store / 24h desk.
-  const candidates = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter(
-    (p) => (p.faq ?? []).some((f) => /fiziksel bir mağaza işletmiyoruz/.test(f.a)),
+test("karadeniz-all: no page makes a nöbetçi / 24-saat / gece-açık (always-open) claim", () => {
+  // A same-day store delivers within working hours — it is NOT a 24h/nöbetçi
+  // operation, so no served surface may affirm an always-open trait.
+  const offenders = KARADENIZ_ALL_EXCLUSIVE_PAGES.filter((p) => NIGHT_CLAIM_RE.test(karadenizBody(p)));
+  assert.equal(
+    offenders.length,
+    0,
+    `pages must not claim an always-open/24h trait (offenders: ${offenders.slice(0, 5).map((p) => p.slug).join(", ")})`,
   );
-  assert.ok(candidates.length >= 1, `expected at least one always-open keyword page, got ${candidates.length}`);
-  for (const p of candidates) {
-    const ans = (p.faq ?? []).find((f) => /fiziksel bir mağaza işletmiyoruz/.test(f.a))!.a;
-    assert.ok(!FORBIDDEN_CARGO_RE.test(ans), `${p.slug}: always-open answer must not affirm a 24h/local trait`);
-  }
 });
 
 test("karadeniz-all: no page fabricates a concrete price", () => {
@@ -6733,7 +6711,7 @@ test("karadeniz-all: no page fabricates a concrete price", () => {
   );
 });
 
-test("karadeniz-all: SSR serves karadeniz's bespoke cargo content, self-canonical, differs from jetgomarket", async () => {
+test("karadeniz-all: SSR serves karadeniz's bespoke local content, self-canonical, differs from jetgomarket", async () => {
   const jetgoSet = availableSlugSet(JETGO_STORE);
   const overrideSlug = KARADENIZ_ALL_EXCLUSIVE_PAGES.find((p) => jetgoSet.has(p.slug))!.slug;
   const kzPage = findSeoPage(overrideSlug, KARADENIZ_STORE)!;
@@ -6762,32 +6740,32 @@ test("karadeniz-all: SSR serves karadeniz's bespoke cargo content, self-canonica
 
 // ===========================================================================
 // ATAKUM PET broad keyword corpus (atakumpet.com, store id "samsun") — the 10th
-// corpus and the THIRD built for a CARGO store (after marka.pet and
-// karadenizpetshop.com). A cargo store ships Türkiye geneli; it has NO physical
-// shopfront, NO same-day courier, NO door payment and NO mahalle delivery. The
-// corpus must therefore be cargo-framed AND truth-safe: it must read distinct from
+// corpus, a LOCAL same-day Samsun store with an ATAKUM-FIRST, speed-led 1-saatte
+// angle: ~1 saat içinde Atakum, aynı gün İlkadım/Canik/Tekkeköy, kapıda ödeme +
+// kurye — NO Türkiye-geneli cargo. The corpus must therefore be LOCAL-framed AND
+// truth-safe: it must read distinct from
 //   • the SHARED jetgomarket.com keyword pages,
-//   • the karadeniz-all corpus (karadenizpetshop.com, the SAME-UNIVERSE cargo
+//   • the karadeniz-all corpus (karadenizpetshop.com, the SAME-UNIVERSE local
 //     sibling — markalar+diger — so EVERY slug overlaps and must read distinct), AND
 //   • the jetgoshop-all corpus (jetgo.shop, "JETGO Pet Shop"),
-// while NEVER affirming a local-presence / same-day / door-payment trait that a
-// cargo store cannot truthfully claim. Pages carry availability "cargoOnly".
+// while AFFIRMING the same-day / door-payment / local-presence trait that is now
+// true for every page. Pages carry availability "localOnly".
 // The universe is markalar+diger (~4992 pages), identical to karadeniz, so the
-// thresholds mirror the karadeniz numbers. With samsun now owning exclusives,
-// samsunpet.com (id "samsunpet") is the ONLY remaining CLEAN cargo member.
+// thresholds mirror the karadeniz numbers. samsun and samsunpet.com (id
+// "samsunpet") share this universe and must read distinct from each other.
 // ===========================================================================
 const SAMSUN_STORE = getStoreByHost(SAMSUN_HOST);
 const SAMSUNPET_STORE = getStoreByHost(SAMSUNPET_HOST);
 // Intent pages are identified by their (exclusive) metaTitle markers — chosen to
-// differ from every sibling corpus (markapet "Sahiplenme Önerisi"/"Kargolu
-// Alternatif"/"Hizmet Notu", karadeniz "Sahiplendirme Rehberi"/"Bağımsız Kargo
-// Adresi"/"Yönlendirme Notu") AND to read in a CARGO voice.
+// differ from every sibling corpus (markapet "Sahiplenme Önerisi"/"Yerel
+// Alternatif"/"Hizmet Notu", karadeniz "Sahiplendirme Rehberi"/"Bağımsız Yerel
+// Adres"/"Yönlendirme Notu") AND to read in an ATAKUM-FIRST 1-saatte voice.
 const SAMSUN_LIVE_MARK = /Sahiplenme Rehberi/;
-const SAMSUN_RETAILER_MARK = /Bağımsız Online Adres/;
+const SAMSUN_RETAILER_MARK = /Bağımsız Samsun Adresi/;
 const SAMSUN_SERVICE_MARK = /Bilgi Notu/;
-// Cargo body surfaces only — the keyword K survives raw in slug/title/metaTitle/
-// keywords (SEO targeting), but the local-intent label is STRIPPED in all body
-// copy, so the forbidden scan runs over the rendered prose, never the SEO meta.
+// Local body surfaces — the rendered prose now AFFIRMS the same-day/local trait
+// (the keyword K survives raw in slug/title/metaTitle/keywords for SEO too); the
+// local-signature scan runs over the rendered prose, never just the SEO meta.
 function samsunBody(p: SeoPageData): string {
   return [
     p.metaDescription,
@@ -6799,7 +6777,7 @@ function samsunBody(p: SeoPageData): string {
   ].join(" ");
 }
 
-test("samsun-all: a large keyword corpus is registered, exclusive, and complete (cargoOnly)", () => {
+test("samsun-all: a large keyword corpus is registered, exclusive, and complete (localOnly)", () => {
   assert.ok(
     SAMSUN_ALL_EXCLUSIVE_PAGES.length > 4000,
     `expected a large samsun-all corpus, got ${SAMSUN_ALL_EXCLUSIVE_PAGES.length}`,
@@ -6808,7 +6786,7 @@ test("samsun-all: a large keyword corpus is registered, exclusive, and complete 
   assert.equal(new Set(slugs).size, slugs.length, "samsun-all corpus must have unique slugs");
   for (const p of SAMSUN_ALL_EXCLUSIVE_PAGES) {
     assert.equal(p.storeId, "samsun", `${p.slug}: samsun-all page must be storeId samsun`);
-    assert.equal(p.availability, "cargoOnly", `${p.slug}: samsun-all page must be cargoOnly (cargo trap)`);
+    assert.equal(p.availability, "localOnly", `${p.slug}: samsun-all page must be localOnly`);
     assert.equal(p.type, "keyword", `${p.slug}: samsun-all page must be a keyword page`);
     assert.ok(
       p.metaTitle && p.metaDescription && p.h1 &&
@@ -6831,24 +6809,22 @@ test("samsun-all: noise keywords are skipped and the rest are registered", () =>
   );
 });
 
-test("samsun-all: NO page affirms a same-day / door-payment / local-presence trait", () => {
-  // The cargo invariant. Scan the rendered BODY of EVERY page — a single
-  // affirmation would be untruthful. (The global forbidden-claim scanner already
-  // covers the SEO meta surfaces; only the URL slug retains the raw keyword.)
-  const offenders = SAMSUN_ALL_EXCLUSIVE_PAGES.filter((p) => FORBIDDEN_CARGO_RE.test(samsunBody(p)));
+test("samsun-all: EVERY page affirms the local same-day / door-payment trait", () => {
+  // The local invariant. Scan the rendered BODY of EVERY page — these are now
+  // truthful same-day Samsun stores, so every page must carry the local signal.
+  const missing = SAMSUN_ALL_EXCLUSIVE_PAGES.filter((p) => !LOCAL_SIGNATURE_RE.test(samsunBody(p)));
   assert.equal(
-    offenders.length,
+    missing.length,
     0,
-    `cargo pages must not affirm a local/same-day/door trait (offenders: ${offenders
-      .slice(0, 5)
-      .map((p) => `${p.slug} :: ${samsunBody(p).match(FORBIDDEN_CARGO_RE)?.[0]}`)
-      .join(" | ")})`,
+    `local pages must affirm a same-day/door/kurye trait (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`,
   );
 });
 
-test("samsun-all: every metaDescription carries the Türkiye-geneli cargo signature", () => {
-  const missing = SAMSUN_ALL_EXCLUSIVE_PAGES.filter((p) => !CARGO_SIGNATURE.test(p.metaDescription ?? ""));
-  assert.equal(missing.length, 0, `metaDescriptions must carry the cargo signature (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`);
+test("samsun-all: every metaDescription carries the same-day local signature, never a cargo one", () => {
+  const missing = SAMSUN_ALL_EXCLUSIVE_PAGES.filter((p) => !SAME_DAY_SIGNATURE.test(p.metaDescription ?? ""));
+  assert.equal(missing.length, 0, `metaDescriptions must carry the same-day signature (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`);
+  const cargo = SAMSUN_ALL_EXCLUSIVE_PAGES.filter((p) => CARGO_SIGNATURE.test(p.metaDescription ?? ""));
+  assert.equal(cargo.length, 0, `metaDescriptions must not carry the cargo signature (offenders: ${cargo.slice(0, 5).map((p) => p.slug).join(", ")})`);
 });
 
 test("samsun-all: every internal link resolves within atakumpet.com's own slug space", () => {
@@ -7080,17 +7056,15 @@ test("samsun-all: retailer keywords position Atakum Pet as an independent altern
   }
 });
 
-test("samsun-all: 24-hour / late-night keywords carry a truthful no-physical-store disclaimer", () => {
-  // A cargo store has NO shopfront, so the always-open answer must clarify the
-  // online store takes orders any hour but there is no physical store / 24h desk.
-  const candidates = SAMSUN_ALL_EXCLUSIVE_PAGES.filter(
-    (p) => (p.faq ?? []).some((f) => /fiziksel bir mağaza işletmiyoruz/.test(f.a)),
+test("samsun-all: no page makes a nöbetçi / 24-saat / gece-açık (always-open) claim", () => {
+  // A same-day store delivers within working hours — it is NOT a 24h/nöbetçi
+  // operation, so no served surface may affirm an always-open trait.
+  const offenders = SAMSUN_ALL_EXCLUSIVE_PAGES.filter((p) => NIGHT_CLAIM_RE.test(samsunBody(p)));
+  assert.equal(
+    offenders.length,
+    0,
+    `pages must not claim an always-open/24h trait (offenders: ${offenders.slice(0, 5).map((p) => p.slug).join(", ")})`,
   );
-  assert.ok(candidates.length >= 1, `expected at least one always-open keyword page, got ${candidates.length}`);
-  for (const p of candidates) {
-    const ans = (p.faq ?? []).find((f) => /fiziksel bir mağaza işletmiyoruz/.test(f.a))!.a;
-    assert.ok(!FORBIDDEN_CARGO_RE.test(ans), `${p.slug}: always-open answer must not affirm a 24h/local trait`);
-  }
 });
 
 test("samsun-all: no page fabricates a concrete price", () => {
@@ -7103,7 +7077,7 @@ test("samsun-all: no page fabricates a concrete price", () => {
   );
 });
 
-test("samsun-all: SSR serves samsun's bespoke cargo content, self-canonical, differs from jetgomarket", async () => {
+test("samsun-all: SSR serves samsun's bespoke local content, self-canonical, differs from jetgomarket", async () => {
   const jetgoSet = availableSlugSet(JETGO_STORE);
   const overrideSlug = SAMSUN_ALL_EXCLUSIVE_PAGES.find((p) => jetgoSet.has(p.slug))!.slug;
   const samPage = findSeoPage(overrideSlug, SAMSUN_STORE)!;
@@ -7132,7 +7106,8 @@ test("samsun-all: SSR serves samsun's bespoke cargo content, self-canonical, dif
 
 // ===========================================================================
 // SAMSUN PET broad keyword corpus (samsunpet.com, store id "samsunpet") — the 9th
-// and final corpus, and the SECOND Türkiye-geneli "Samsun Pet Shop" cargo brand.
+// and final corpus, a LOCAL same-day "Samsun Pet Shop" brand with a SAMSUN-WIDE
+// neighborhood-coverage angle (şehrin her mahallesine aynı gün kurye).
 // samsunpet.com consumes the IDENTICAL markalar+diger universe as the samsun-all,
 // karadeniz-all and (partially) markapet-all corpora, so it CANNOT differ by facts
 // or slugs. The uniqueness invariant is wholly on the PROSE: the corpus must read
@@ -7141,19 +7116,19 @@ test("samsun-all: SSR serves samsun's bespoke cargo content, self-canonical, dif
 //   • the samsun-all corpus (atakumpet.com, "Atakum Pet") — same universe,
 //   • the karadeniz-all corpus (karadenizpetshop.com) — same universe, AND
 //   • the markapet-all / jetgoshop-all corpora on their overlapping slugs.
-// As a CARGO store it must NEVER affirm a same-day / door-payment / local-presence
-// trait on any served surface — only the raw URL slug keeps the local keyword.
+// As a LOCAL same-day store it AFFIRMS the same-day / door-payment / local-presence
+// trait on every served surface. Pages carry availability "localOnly".
 // ===========================================================================
 // Intent pages are identified by their (exclusive) metaTitle markers — chosen to
-// differ from every sibling cargo corpus (samsun "Sahiplenme Rehberi"/"Bağımsız
-// Online Adres"/"Bilgi Notu", karadeniz "Sahiplendirme Rehberi"/"Bağımsız Kargo
-// Adresi"/"Yönlendirme Notu", markapet "Sahiplenme Önerisi"/"Kargolu Alternatif"/
+// differ from every sibling local corpus (samsun "Sahiplenme Rehberi"/"Bağımsız
+// Samsun Adresi"/"Bilgi Notu", karadeniz "Sahiplendirme Rehberi"/"Bağımsız Yerel
+// Adres"/"Yönlendirme Notu", markapet "Sahiplenme Önerisi"/"Yerel Alternatif"/
 // "Hizmet Notu").
 const SAMSUNPET_LIVE_MARK = /Sorumlu Sahiplenme/;
-const SAMSUNPET_RETAILER_MARK = /Bağımsız Online Mağaza/;
+const SAMSUNPET_RETAILER_MARK = /Bağımsız Yerel Mağaza/;
 const SAMSUNPET_SERVICE_MARK = /Bilgilendirme/;
 
-test("samsunpet-all: a large keyword corpus is registered, exclusive, and complete (cargoOnly)", () => {
+test("samsunpet-all: a large keyword corpus is registered, exclusive, and complete (localOnly)", () => {
   assert.ok(
     SAMSUNPET_ALL_EXCLUSIVE_PAGES.length > 4000,
     `expected a large samsunpet-all corpus, got ${SAMSUNPET_ALL_EXCLUSIVE_PAGES.length}`,
@@ -7162,7 +7137,7 @@ test("samsunpet-all: a large keyword corpus is registered, exclusive, and comple
   assert.equal(new Set(slugs).size, slugs.length, "samsunpet-all corpus must have unique slugs");
   for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) {
     assert.equal(p.storeId, "samsunpet", `${p.slug}: samsunpet-all page must be storeId samsunpet`);
-    assert.equal(p.availability, "cargoOnly", `${p.slug}: samsunpet-all page must be cargoOnly (cargo trap)`);
+    assert.equal(p.availability, "localOnly", `${p.slug}: samsunpet-all page must be localOnly`);
     assert.equal(p.type, "keyword", `${p.slug}: samsunpet-all page must be a keyword page`);
     assert.ok(
       p.metaTitle && p.metaDescription && p.h1 &&
@@ -7185,24 +7160,22 @@ test("samsunpet-all: noise keywords are skipped and the rest are registered", ()
   );
 });
 
-test("samsunpet-all: NO page affirms a same-day / door-payment / local-presence trait", () => {
-  // The cargo invariant. Scan the rendered BODY of EVERY page — a single
-  // affirmation would be untruthful. (The global forbidden-claim scanner already
-  // covers the SEO meta surfaces; only the URL slug retains the raw keyword.)
-  const offenders = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => FORBIDDEN_CARGO_RE.test(samsunBody(p)));
+test("samsunpet-all: EVERY page affirms the local same-day / door-payment trait", () => {
+  // The local invariant. Scan the rendered BODY of EVERY page — these are now
+  // truthful same-day Samsun stores, so every page must carry the local signal.
+  const missing = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => !LOCAL_SIGNATURE_RE.test(samsunBody(p)));
   assert.equal(
-    offenders.length,
+    missing.length,
     0,
-    `cargo pages must not affirm a local/same-day/door trait (offenders: ${offenders
-      .slice(0, 5)
-      .map((p) => `${p.slug} :: ${samsunBody(p).match(FORBIDDEN_CARGO_RE)?.[0]}`)
-      .join(" | ")})`,
+    `local pages must affirm a same-day/door/kurye trait (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`,
   );
 });
 
-test("samsunpet-all: every metaDescription carries the Türkiye-geneli cargo signature", () => {
-  const missing = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => !CARGO_SIGNATURE.test(p.metaDescription ?? ""));
-  assert.equal(missing.length, 0, `metaDescriptions must carry the cargo signature (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`);
+test("samsunpet-all: every metaDescription carries the same-day local signature, never a cargo one", () => {
+  const missing = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => !SAME_DAY_SIGNATURE.test(p.metaDescription ?? ""));
+  assert.equal(missing.length, 0, `metaDescriptions must carry the same-day signature (offenders: ${missing.slice(0, 5).map((p) => p.slug).join(", ")})`);
+  const cargo = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => CARGO_SIGNATURE.test(p.metaDescription ?? ""));
+  assert.equal(cargo.length, 0, `metaDescriptions must not carry the cargo signature (offenders: ${cargo.slice(0, 5).map((p) => p.slug).join(", ")})`);
 });
 
 test("samsunpet-all: every internal link resolves within samsunpet.com's own slug space", () => {
@@ -7284,7 +7257,7 @@ test("samsunpet-all: content is UNIQUE-by-CONTENT vs jetgomarket.com (own brand,
   assert.ok(compared > 100, `expected many jetgomarket comparisons, got ${compared}`);
 });
 
-test("samsunpet-all: content is UNIQUE-by-CONTENT vs the samsun-all corpus (same-universe cargo sibling, distinct copy)", () => {
+test("samsunpet-all: content is UNIQUE-by-CONTENT vs the samsun-all corpus (same-universe local sibling, distinct copy)", () => {
   // samsunpet and samsun share the EXACT same slug universe (markalar+diger), so
   // every slug overlaps — the strongest distinctness check. Distinct hash
   // finalizer + salt + reworded phrase banks must make every shared page read
@@ -7303,7 +7276,7 @@ test("samsunpet-all: content is UNIQUE-by-CONTENT vs the samsun-all corpus (same
   assert.ok(compared > 100, `expected many samsun-all comparisons, got ${compared}`);
 });
 
-test("samsunpet-all: content is UNIQUE-by-CONTENT vs the karadeniz-all corpus (same-universe cargo sibling, distinct copy)", () => {
+test("samsunpet-all: content is UNIQUE-by-CONTENT vs the karadeniz-all corpus (same-universe local sibling, distinct copy)", () => {
   const kzBySlug = new Map(KARADENIZ_ALL_EXCLUSIVE_PAGES.map((p) => [p.slug, p] as const));
   let compared = 0;
   for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) {
@@ -7318,7 +7291,7 @@ test("samsunpet-all: content is UNIQUE-by-CONTENT vs the karadeniz-all corpus (s
   assert.ok(compared > 100, `expected many karadeniz-all comparisons, got ${compared}`);
 });
 
-test("samsunpet-all: content is UNIQUE-by-CONTENT vs the markapet-all corpus (sibling cargo, distinct copy)", () => {
+test("samsunpet-all: content is UNIQUE-by-CONTENT vs the markapet-all corpus (sibling local, distinct copy)", () => {
   const mpBySlug = new Map(MARKAPET_ALL_EXCLUSIVE_PAGES.map((p) => [p.slug, p] as const));
   let compared = 0;
   for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) {
@@ -7445,17 +7418,15 @@ test("samsunpet-all: retailer keywords position Samsun Pet Shop as an independen
   }
 });
 
-test("samsunpet-all: 24-hour / late-night keywords carry a truthful no-physical-store disclaimer", () => {
-  // A cargo store has NO shopfront, so the always-open answer must clarify the
-  // online store takes orders any hour but there is no physical store / 24h desk.
-  const candidates = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter(
-    (p) => (p.faq ?? []).some((f) => /fiziksel bir mağaza işletmiyoruz/.test(f.a)),
+test("samsunpet-all: no page makes a nöbetçi / 24-saat / gece-açık (always-open) claim", () => {
+  // A same-day store delivers within working hours — it is NOT a 24h/nöbetçi
+  // operation, so no served surface may affirm an always-open trait.
+  const offenders = SAMSUNPET_ALL_EXCLUSIVE_PAGES.filter((p) => NIGHT_CLAIM_RE.test(samsunBody(p)));
+  assert.equal(
+    offenders.length,
+    0,
+    `pages must not claim an always-open/24h trait (offenders: ${offenders.slice(0, 5).map((p) => p.slug).join(", ")})`,
   );
-  assert.ok(candidates.length >= 1, `expected at least one always-open keyword page, got ${candidates.length}`);
-  for (const p of candidates) {
-    const ans = (p.faq ?? []).find((f) => /fiziksel bir mağaza işletmiyoruz/.test(f.a))!.a;
-    assert.ok(!FORBIDDEN_CARGO_RE.test(ans), `${p.slug}: always-open answer must not affirm a 24h/local trait`);
-  }
 });
 
 test("samsunpet-all: no page fabricates a concrete price", () => {
@@ -7468,7 +7439,7 @@ test("samsunpet-all: no page fabricates a concrete price", () => {
   );
 });
 
-test("samsunpet-all: SSR serves samsunpet's bespoke cargo content, self-canonical, differs from jetgomarket", async () => {
+test("samsunpet-all: SSR serves samsunpet's bespoke local content, self-canonical, differs from jetgomarket", async () => {
   const jetgoSet = availableSlugSet(JETGO_STORE);
   const overrideSlug = SAMSUNPET_ALL_EXCLUSIVE_PAGES.find((p) => jetgoSet.has(p.slug))!.slug;
   const petPage = findSeoPage(overrideSlug, SAMSUNPET_STORE)!;

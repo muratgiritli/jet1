@@ -4,8 +4,8 @@
 // SAME-DAY store.
 //
 // Samsun Pet Shop is part of ONE Samsun-based pet shop. It delivers SAME-DAY
-// within the Samsun area (Atakum, İlkadım, Canik, Tekkeköy ve Bafra dâhil
-// çevre mahalleler) with KAPIDA ÖDEME (nakit / kart / QR) via kurye. Delivery
+// within the Samsun area (Atakum, İlkadım, Canik, Tekkeköy ve çevre
+// mahalleler) with KAPIDA ÖDEME (nakit / kart / QR) via kurye. Delivery
 // is strictly Samsun-only and same-day; there is no nationwide shipping and no
 // online-only payment requirement.
 // It must read UNIQUE-by-CONTENT versus the 8 sibling corpora:
@@ -18,7 +18,7 @@
 //
 // THIS corpus's DISTINCT ANGLE: SAMSUN-WIDE NEIGHBORHOOD COVERAGE, RELIABILITY-
 // LED — "şehrin her mahallesine aynı gün kurye", geniş Samsun ilçe + mahalle
-// kapsaması (İlkadım merkez, Canik, Atakum, Tekkeköy, Bafra), güvenilir teslimat.
+// kapsaması (İlkadım merkez, Canik, Atakum, Tekkeköy), güvenilir teslimat.
 //
 // LOCAL TRUTHFULNESS is the load-bearing invariant. This is a real local store,
 // so the generator AFFIRMS the local traits it genuinely offers:
@@ -65,7 +65,7 @@ const SUPPORT_HOURS = "09:00–18:00";
 // mahalle (geniş ilçe + bol mahalle vurgusu) in an order distinct from every
 // sibling corpus so it never lines up.
 const REGIONS = [
-  "İlkadım", "Atakum", "Canik", "Tekkeköy", "Bafra", "Mimarsinan", "Denizevleri",
+  "İlkadım", "Atakum", "Canik", "Tekkeköy", "Esenevler", "Mimarsinan", "Denizevleri",
   "Körfez", "Atakent", "Kurupelit", "Çatalçam", "Yeşilkent", "Cumhuriyet",
   "Kadıköy", "Güzelyalı", "Aydınlıkevler", "Yenimahalle", "Kılıçdede",
   "Bahçelievler", "Çiftlik",
@@ -162,8 +162,8 @@ const ORDER_LINES = [
 ];
 const PAY_LINES = [
   "Ödemeyi kapıda yaparsınız: kurye geldiğinde nakit, kart veya QR ile dilediğiniz gibi ödersiniz; isterseniz online ödeme de mümkün.",
-  "Kapıda ödeme (nakit / kart / QR) ile rahatça ödersiniz; her alışverişte ödediğiniz tutarın %5'i Para Puan olarak hesabınıza yansır.",
-  "Kapıda nakit, kart ya da QR ile ödersiniz; biriktirdiğiniz %5 Para Puan'ı bir sonraki alışverişinizde indirim olarak kullanırsınız.",
+  "Kapıda ödeme (nakit / kart / QR) ile rahatça ödersiniz.",
+  "Kapıda nakit, kart ya da QR ile ödersiniz.",
   "Alışverişinizi kapıda ödeme (nakit/kart/QR) ile bitirirsiniz; Samsun içi teslimatta kurye ücretini belirli tutarın üzerinde biz üstleniriz.",
 ];
 const TRUST_LINES = [
@@ -177,7 +177,7 @@ const STOCK_LINES = [
   `Bir ürünün stokta olup olmadığını en pratik biçimde ${PHONE} numarasından sorabilir, yoksa size en uygun alternatifi birlikte seçebiliriz.`,
 ];
 const REGION_LINES = [
-  "Samsun'un dört bir yanına — Atakum, İlkadım, Canik, Tekkeköy ve Bafra dâhil tüm mahallelere — kuryemizle aynı gün teslimat yapıyoruz.",
+  "Samsun'un dört bir yanına — Atakum, İlkadım, Canik, Tekkeköy ve çevre mahallelere — kuryemizle aynı gün teslimat yapıyoruz.",
   "Samsun içinde hangi mahallede olursanız olun siparişiniz aynı gün kapınızda; geniş ilçe ve mahalle kapsamamızla şehrin her köşesine ulaşıyoruz.",
   "Merkez mahallelerden çevredeki semtlere kadar Samsun'un her noktasına kendi kuryemizle aynı gün erişiyoruz.",
 ];
@@ -193,7 +193,6 @@ const WHY_POINTS = [
   "Kedi, köpek, kuş, kemirgen ve akvaryum için zengin ürün yelpazesi",
   "Premium ve ekonomik markalar tek çatı altında",
   "Orijinal ve faturalı ürün güvencesi",
-  "Her siparişte %5 Para Puan kazanımı",
   "Kurye yola çıkınca bilgilendirme ve takip",
   "Belirli tutarın üzerinde ücretsiz Samsun içi teslimat",
 ];
@@ -356,7 +355,7 @@ function mainSection(a: Attr, kwP: string, Kp: string, h: number, isLocal: boole
       ),
       paragraphs: [
         `${BRAND}, Samsun'un her mahallesine kendi kuryesiyle aynı gün teslimat yapan yerel bir pet shoptur. Siparişiniz onaylandıktan sonra hızla hazırlanıp yola çıkar; çalışma saatleri içinde aynı gün kapınızda olur.`,
-        "Ödemeyi kapıda yaparsınız: kurye geldiğinde nakit, kart veya QR ile rahatça ödersiniz; harcadığınız tutarın %5'i her seferinde Para Puan olarak hesabınıza eklenir.",
+        "Ödemeyi kapıda yaparsınız: kurye geldiğinde nakit, kart veya QR ile rahatça ödersiniz.",
         pick(STOCK_LINES, h, 842),
       ],
     };
@@ -613,7 +612,7 @@ function faqFor(
     },
     {
       q: `${Kp} için nasıl ödeme yaparım?`,
-      a: `Ödemeyi kapıda yaparsınız: kurye geldiğinde nakit, kart veya QR ile ödersiniz; her siparişte harcadığınız tutarın %5'i Para Puan olarak hesabınıza eklenir. ${PHONE}.`,
+      a: `Ödemeyi kapıda yaparsınız: kurye geldiğinde nakit, kart veya QR ile ödersiniz. ${PHONE}.`,
     },
     {
       q: `${Kp} fiyatını nasıl öğrenirim?`,

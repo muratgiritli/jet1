@@ -8,6 +8,8 @@
 - [Mobile homepage banner sources](landing-mobile-banners.md) — landing.tsx is the mobile home; HeroCarousel is dead code; which banners are admin-managed vs settings-driven (Sokak/Veteriner image+link in app_settings).
 - [Product detail buy bar](pdp-buy-bar.md) — /urun owns its own fixed bottom CTA (Sepete Ekle→Sepeti Onayla→login/guest dialog); global BottomTabBar/FloatingCartBar self-hide on /urun.
 - [Per-store commerce model](store-commerce-model.md) — StoreConfig.commerce (fulfillment local|cargo, shippingLabel, onlinePaymentOnly, preorderEnabled) drives checkout/preorder/payment; gate both client AND server by store flag, not just product flag.
+- [Cargo→local conversion](cargo-to-local-conversion.md) — 4 ex-cargo stores now LOCAL same-day; ZERO live cargo (machinery dormant); flip link-pruning to _localSlugMap when a store goes local; footprint = Atakum/İlkadım/Canik/Tekkeköy only.
+- [Scope-test orphan self-heal](scope-test-orphans.md) — FIXED-MARK seed rows + after()-only cleanup: a kill by the 2-min cap leaves orphans that double-count; before() must pre-clean each per-scope table.
 - [Publish migration churn](publish-migration-churn.md) — DESC / undeclared imperative indexes make the prod-migration prompt re-propose the same DROP/CREATE forever; use plain ascending + declare in schema.
 - [Per-request store resolution](store-resolution.md) — public/host resolution must use reqStore (x-forwarded-host), not req.hostname; per-domain SMS header + SEO surfaces; never brandify JETGO50.
 - [Sitemap GSC fetchability](sitemap-fetchability.md) — crawler files (/robots.txt, /sitemap*.xml) exempt from canonical 301; index/robots use FETCHED host (no redirect), page <loc> stay canonical; normalizeHost first-token must match reqOrigin.

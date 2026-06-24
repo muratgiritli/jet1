@@ -59,7 +59,7 @@ const SUPPORT_HOURS = "09:00–18:00";
 // Samsun içi teslimat ayak izi: ilçeler ve mahalle örnekleri. Pratik, yerel bir
 // liste; aynı gün kuryeyle teslim ettiğimiz gerçek bölgeler.
 const REGIONS = [
-  "Atakum", "İlkadım", "Canik", "Tekkeköy", "Bafra", "Mimarsinan", "Denizevleri",
+  "Atakum", "İlkadım", "Canik", "Tekkeköy", "Kalkancı", "Mimarsinan", "Denizevleri",
   "Körfez", "Atakent", "Kurupelit", "Çatalçam", "Yeşilkent", "Cumhuriyet",
   "Kılıçdede", "Aydınlıkevler", "Yenimahalle", "Mevlana", "Esenevler", "Belediye Evleri", "Liman",
 ];
@@ -150,8 +150,8 @@ const ORDER_LINES = [
 ];
 const PAY_LINES = [
   "Ödeme tamamen size kalmış: kapıda ödeme ile nakit, kart ya da QR seçeneklerinden istediğinizi seçersiniz.",
-  "Kapıda ödeme (nakit/kart/QR) ile rahatça ödersiniz; her siparişte harcamanızın %5'i Para Puan olarak birikir.",
-  "Kuryeye kapıda nakit, kart veya QR ile ödeyebilir, biriken %5 Para Puan'ı bir sonraki siparişinizde indirim olarak kullanabilirsiniz.",
+  "Kapıda ödeme (nakit/kart/QR) ile rahatça ödersiniz.",
+  "Kuryeye kapıda nakit, kart veya QR ile ödeyebilirsiniz.",
   "Siparişinizi kapıda ödeme ile (nakit/kart/QR) tamamlarsınız; pratik, güvenli ve zahmetsiz.",
 ];
 const TRUST_LINES = [
@@ -181,7 +181,6 @@ const WHY_POINTS = [
   "Kedi, köpek, kuş, kemirgen ve akvaryum için geniş ürün yelpazesi",
   "Premium ve ekonomik markalar bir arada",
   "Orijinal ve faturalı ürün güvencesi",
-  "Her alışverişte %5 Para Puan",
   "Tek tıkla sipariş, mahallenize teslim",
   "Atakum / İlkadım / Canik / Tekkeköy bölgesine hızlı teslimat",
 ];
@@ -344,7 +343,7 @@ function mainSection(a: Attr, kwP: string, Kp: string, h: number, isLocal: boole
       ),
       paragraphs: [
         "marka.pet, Samsun içinde aynı gün kuryeyle teslimat yapan pratik bir pet shoptur. Siparişiniz onaylandıktan sonra hemen hazırlanır ve kurye yola çıkar; Atakum, İlkadım, Canik ve Tekkeköy'de mahallenize kadar aynı gün getiririz.",
-        "Ödemeyi kapıda yaparsınız: nakit, kart ya da QR; size hangisi kolaysa. Üstelik her siparişte harcamanızın %5'i Para Puan olarak birikir.",
+        "Ödemeyi kapıda yaparsınız: nakit, kart ya da QR; size hangisi kolaysa.",
         pick(STOCK_LINES, h, 442),
       ],
     };
@@ -601,7 +600,7 @@ function faqFor(
     },
     {
       q: `${Kp} için nasıl ödeme yapabilirim?`,
-      a: `Kapıda ödeme yaparsınız: kuryeye nakit, kart ya da QR ile ödersiniz; her siparişte harcamanızın %5'i Para Puan olarak hesabınıza eklenir. ${PHONE}.`,
+      a: `Kapıda ödeme yaparsınız: kuryeye nakit, kart ya da QR ile ödersiniz. ${PHONE}.`,
     },
     {
       q: `${Kp} fiyatını nasıl öğrenebilirim?`,
@@ -789,7 +788,7 @@ function buildPage(e: Ent, idx: number, related: { text: string; href: string }[
     h1: pick(
       [
         `${Kp} — marka.pet`,
-        `${Kp} | Samsun İçi Aynı Gün Teslimat`,
+        `${Kp} | Samsun İçi Hızlı Kapıda Teslimat`,
         `${Kp} — Tek Tıkla Sipariş, Aynı Gün Kapıda`,
       ],
       h,

@@ -1,5 +1,5 @@
 import { Link, useRoute } from "wouter";
-import { MapPin, Truck, Phone, ChevronRight, Star, ShieldCheck, Clock, Package, CreditCard, MessageCircle, ShoppingCart } from "lucide-react";
+import { MapPin, Truck, Phone, ChevronRight, ShieldCheck, Clock, Package, CreditCard, MessageCircle, ShoppingCart } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import SEO, { SITE_DOMAIN, BREADCRUMB_JSONLD, FAQ_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
@@ -140,7 +140,7 @@ function SeoPageContent({ page }: { page: SeoPageData }) {
             {[
               { icon: Package, label: "900+ Ürün", desc: "Geniş ürün yelpazesi" },
               { icon: Truck, label: "Aynı Gün", desc: "Hızlı teslimat" },
-              { icon: Star, label: "Para Puan", desc: "%5 geri kazanım" },
+              { icon: MessageCircle, label: "WhatsApp", desc: "Kolay sipariş" },
               { icon: ShieldCheck, label: "Güvenli", desc: "Kapıda ödeme" },
             ].map((item) => (
               <Card key={item.label} className="text-center">

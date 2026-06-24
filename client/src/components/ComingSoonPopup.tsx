@@ -73,7 +73,7 @@ export default function ComingSoonPopup() {
             className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-700 to-pink-600 hover:from-purple-800 hover:to-pink-700 text-white font-bold text-base shadow-lg transition-all flex items-center justify-center"
             data-testid="button-popup-ok"
           >
-            Abone Ol 100 TL Kazan
+            Abone Ol
           </a>
         </div>
       </div>

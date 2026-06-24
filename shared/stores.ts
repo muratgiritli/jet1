@@ -607,7 +607,7 @@ export function brandifyFor(store: StoreConfig, text: string): string {
 // win before their substrings. Keyword phrases and generic "kapıya teslim"
 // (true for cargo too) are intentionally NOT matched, so SEO targets survive.
 const CARGO_COPY_REWRITES: ReadonlyArray<readonly [RegExp, string]> = [
-  [/Kapıda nakit, kredi kartı \(POS\) ve QR ile ödeme yapabilirsiniz; nakit ödemede ekstra avantajlı fiyat ve her siparişte %5 Para Puan\./g, "Güvenli online kredi/banka kartı ile ödeme yapabilirsiniz; her siparişte %5 Para Puan kazanırsınız."],
+  [/Kapıda nakit, kredi kartı \(POS\) ve QR ile ödeme yapabilirsiniz; nakit ödemede ekstra avantajlı fiyat\./g, "Güvenli online kredi/banka kartı ile ödeme yapabilirsiniz."],
   [/Evet, kapıda nakit, kredi kartı \(POS\) ve QR ile ödeme yapabilirsiniz\. Nakit ödemede avantajlı fiyat sunuyoruz\./g, "Evet, güvenli online kredi/banka kartı ile ödeme yapabilirsiniz."],
   [/Evet, kapıda nakit, kredi kartı \(POS\) ve QR ile ödeme yapabilirsiniz\./g, "Evet, güvenli online kredi/banka kartı ile ödeme yapabilirsiniz."],
   [/Atakum, İlkadım, Canik ve Tekkeköy'ün tüm mahallelerine teslimat yapıyoruz\./g, "Türkiye'nin her yerine kargo ile gönderim yapıyoruz."],
@@ -626,8 +626,8 @@ const CARGO_COPY_REWRITES: ReadonlyArray<readonly [RegExp, string]> = [
   [/Kapıda nakit, POS ve QR ödeme/g, "Güvenli online kart ile ödeme"],
   [/Kapıda ödeme seçenekleri mevcuttur\./g, "Güvenli online ödeme seçenekleri mevcuttur."],
   [/Kapıda ödeme, uygun fiyat\./g, "Güvenli online ödeme, uygun fiyat."],
-  [/Nakit ödemede ekstra indirim, kampanyalı ürünler ve %5 Para Puan ile tasarruf edersiniz\./g, "Kampanyalı ürünler ve %5 Para Puan ile tasarruf edersiniz."],
-  [/Nakit ödemede ekstra avantaj sağlıyoruz\./g, "Online ödeme ve %5 Para Puan avantajı sağlıyoruz."],
+  [/Nakit ödemede ekstra indirim ve kampanyalı ürünler ile tasarruf edersiniz\./g, "Kampanyalı ürünler ile tasarruf edersiniz."],
+  [/Nakit ödemede ekstra avantaj sağlıyoruz\./g, "Online ödeme avantajı sağlıyoruz."],
   [/kapıda ödeme kabul ediyor mu\?/g, "güvenli online ödeme kabul ediyor mu?"],
   [/için kapıda ödeme var mı\?/g, "için güvenli online ödeme var mı?"],
   [/gerçekten aynı gün mü\?/g, "ne kadar sürede gelir?"],
