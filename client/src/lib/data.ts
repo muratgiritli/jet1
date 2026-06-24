@@ -27,10 +27,15 @@ export interface Category {
   items: Product[];
 }
 
+export const CARD_SURCHARGE = 0.05;
+export const roundMoney = (n: number) => Math.round(n * 100) / 100;
+export const cardPrice = (cash: number) => roundMoney(cash * (1 + CARD_SURCHARGE));
+export const isCashPaymentMethod = (method: string) => /nakit/i.test(method || "");
+
 export interface PaymentOption {
   id: string;
   name: string;
-  disc: number;
+  surcharge: number;
   tag: string;
 }
 
@@ -90,11 +95,11 @@ export const TESLIMAT_MAHALLELERI = [
 ];
 
 export const PAYMENT_OPTIONS: PaymentOption[] = [
-  { id: "nakit", name: "Kapıda Nakit", disc: -0.10, tag: "%10 İndirim" },
-  { id: "eft", name: "Banka Havalesi", disc: 0, tag: "Peşin" },
-  { id: "qr", name: "Kapıda QR Ödeme", disc: 0, tag: "Peşin" },
-  { id: "pos", name: "Kapıda Kredi Kartı", disc: 0, tag: "Peşin" },
-  { id: "online", name: "Online Kredi Kartı", disc: 0, tag: "Anında" },
+  { id: "nakit", name: "Kapıda Nakit", surcharge: 0, tag: "En uygun" },
+  { id: "eft", name: "Banka Havalesi", surcharge: CARD_SURCHARGE, tag: "+%5" },
+  { id: "qr", name: "Kapıda QR Ödeme", surcharge: CARD_SURCHARGE, tag: "+%5" },
+  { id: "pos", name: "Kapıda Kredi Kartı", surcharge: CARD_SURCHARGE, tag: "+%5" },
+  { id: "online", name: "Online Kredi Kartı", surcharge: CARD_SURCHARGE, tag: "+%5" },
 ];
 
 export const INSTALLMENT_BANKS = [
