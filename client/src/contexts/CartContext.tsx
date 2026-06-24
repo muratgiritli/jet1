@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   CONFIG,
   PAYMENT_OPTIONS,
+  roundMoney,
 } from "@/lib/data";
 import type { Product as DbProduct } from "@shared/schema";
 import { toast } from "@/hooks/use-toast";
@@ -41,7 +42,7 @@ interface CartContextType {
   subtotal: number;
   selectedProducts: { product: CartProduct; qty: number }[];
   shipping: number;
-  discount: number;
+  surcharge: number;
   grandTotal: number;
   minReached: boolean;
   itemCount: number;
@@ -440,7 +441,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     saveVariants({});
   }, []);
 
-  const { subtotal, selectedProducts, shipping, discount, grandTotal, minReached } = useMemo(() => {
+  const { subtotal, selectedProducts, shipping, surcharge, grandTotal, minReached } = useMemo(() => {
     let sub = 0;
     const selected: { product: CartProduct; qty: number }[] = [];
     allProducts.forEach((p) => {
@@ -453,18 +454,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
 
     const pay = PAYMENT_OPTIONS.find((p) => p.id === paymentId)!;
-    const discRate = pay.disc < 0 ? Math.abs(pay.disc) : 0;
-    const disc = sub * discRate;
-    const afterDisc = sub - disc;
-    const ship = afterDisc >= CONFIG.shipLimit ? 0 : CONFIG.shipFee;
-    const total = afterDisc + ship;
+    const surchargeRate = pay.surcharge > 0 ? pay.surcharge : 0;
+    const surchargeAmt = roundMoney(sub * surchargeRate);
+    const ship = sub >= CONFIG.shipLimit ? 0 : CONFIG.shipFee;
+    const total = sub + surchargeAmt + ship;
     const min = sub >= CONFIG.minLimit;
 
     return {
       subtotal: sub,
       selectedProducts: selected,
       shipping: ship,
-      discount: disc,
+      surcharge: surchargeAmt,
       grandTotal: total,
       minReached: min,
     };
@@ -513,7 +513,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       subtotal,
       selectedProducts,
       shipping,
-      discount,
+      surcharge,
       grandTotal,
       minReached,
       itemCount,
@@ -531,7 +531,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       campaignCartIds,
       isPreorderProduct,
     }),
-    [basket, paymentId, updateQty, setVariant, getVariant, clearCart, subtotal, selectedProducts, shipping, discount, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock, updateStock, campaignCartIds, isPreorderProduct]
+    [basket, paymentId, updateQty, setVariant, getVariant, clearCart, subtotal, selectedProducts, shipping, surcharge, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock, updateStock, campaignCartIds, isPreorderProduct]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

@@ -454,8 +454,8 @@ export default function ProductDetailDemoPage() {
                   {displayOriginalPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
                 </span>
               )}
-              <span className="text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                Nakit: {(displayPrice * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+              <span className="text-xs font-medium text-gray-500">
+                Kart / Havale / QR: {(displayPrice * 1.05).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL (+%5)
               </span>
             </div>
 

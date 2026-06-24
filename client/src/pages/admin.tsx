@@ -9152,7 +9152,7 @@ function SettingsSection() {
           <p className="text-[11px] text-muted-foreground">Müşterinin checkout sayfasında göreceği ödeme seçeneklerini buradan açıp kapatabilirsiniz.</p>
 
           {([
-            { key: "payment_nakit_enabled", label: "Kapıda Nakit", desc: "%10 indirimli, kapıda nakit ödeme", icon: "💵" },
+            { key: "payment_nakit_enabled", label: "Kapıda Nakit", desc: "Kapıda nakit ödeme (en uygun fiyat, kart/havale/QR +%5)", icon: "💵" },
             { key: "payment_pos_enabled", label: "Kapıda Kredi Kartı (POS)", desc: "Kurye gelince fiziksel POS cihazı ile ödeme (tek çekim)", icon: "💳" },
             { key: "payment_installments_enabled", label: "Kapıda Kredi Kartı - Taksit", desc: "POS ile taksitli ödeme seçeneklerini göster (2/3/6/9/12 ay vb.). Kapalıyken sadece Tek Çekim görünür.", icon: "📆" },
             { key: "payment_qr_enabled", label: "Kapıda QR Ödeme", desc: "Kurye gelince banka uygulamasından QR ile ödeme", icon: "📱" },

@@ -10,6 +10,7 @@ import { useCustomer } from "@/contexts/CustomerContext";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import ProductImage from "@/components/ProductImage";
 import { productUrl } from "@/lib/data";
+import CardPriceNote from "@/components/CardPriceNote";
 
 interface FavoriteProduct {
   id: string;
@@ -146,9 +147,7 @@ export default function FavoritesPage() {
                           <p className="text-sm font-bold text-primary mt-0.5" data-testid={`text-fav-price-${product.id}`}>
                             {product.price} TL
                           </p>
-                          <span className="inline-block text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full mt-0.5" data-testid={`text-fav-cash-${product.id}`}>
-                            Nakit: {(product.price * 0.9).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} TL
-                          </span>
+                          <CardPriceNote price={Number(product.price)} className="mt-0.5" testId={`text-fav-card-${product.id}`} />
                           <div className="flex items-center gap-2 mt-1.5">
                             {qty > 0 ? (
                               <div className="flex items-center gap-0">

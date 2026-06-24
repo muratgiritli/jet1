@@ -20,6 +20,7 @@ import {
   productUrl,
   type Product,
 } from "@/lib/data";
+import CardPriceNote from "@/components/CardPriceNote";
 import { useCart } from "@/contexts/CartContext";
 import BackNavigation from "@/components/BackNavigation";
 
@@ -131,9 +132,7 @@ function ProductCard({
             )}
           </div>
           {!(product.stock === 0 && product.preorderEnabled) && (
-          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded-full" data-testid={`text-cash-price-${product.id}`}>
-            Nakit: {(product.price * 0.9).toLocaleString("tr-TR", { maximumFractionDigits: 2 })} TL
-          </span>
+          <CardPriceNote price={product.price} testId={`text-card-price-${product.id}`} />
           )}
           {product.skt && (
             <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid={`badge-skt-${product.id}`}>

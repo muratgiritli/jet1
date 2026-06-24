@@ -45,6 +45,8 @@ import {
   CONFIG,
   PAYMENT_OPTIONS,
   TESLIMAT_MAHALLELERI,
+  cardPrice,
+  CARD_SURCHARGE,
 } from "@/lib/data";
 import { computePaymentVisibility } from "@/lib/paymentVisibility";
 import { useCart } from "@/contexts/CartContext";
@@ -351,7 +353,7 @@ export default function Checkout() {
     subtotal,
     selectedProducts,
     shipping,
-    discount,
+    surcharge,
     grandTotal,
     minReached,
     itemCount,
@@ -529,13 +531,13 @@ export default function Checkout() {
   const cargoDistricts = useMemo(() => (cargoCity ? districtsOf(cargoCity) : []), [cargoCity]);
 
   const campaignShipping = hasCampaignItems ? CONFIG.shipFee : stdShipping;
-  const paymentDiscount = hasCampaignItems ? 0 : discount;
-  const normalGrandTotal = subtotal - paymentDiscount + stdShipping;
+  const paymentSurcharge = hasCampaignItems ? 0 : surcharge;
+  const normalGrandTotal = subtotal + paymentSurcharge + stdShipping;
   const campaignGrandTotal = hasCampaignItems ? (subtotal + campaignShipping) : normalGrandTotal;
 
   const effectiveShipping = hasCampaignItems ? campaignShipping : stdShipping;
   const couponDiscountAmount = appliedCoupon ? appliedCoupon.discountAmount : 0;
-  const effectiveDiscount = paymentDiscount + couponDiscountAmount;
+  const effectiveDiscount = couponDiscountAmount;
   const effectiveGrandTotal = Math.max(0, (hasCampaignItems ? campaignGrandTotal : normalGrandTotal) - couponDiscountAmount);
   const effectiveMinReached = hasCampaignItems ? minReached : stdMinReached;
 
@@ -1426,9 +1428,8 @@ export default function Checkout() {
                   <RadioGroup value={paymentId} onValueChange={setPaymentId} data-testid="radio-payment">
                     {paymentVisibility.options.map((opt) => {
                       const Icon = paymentIcons[opt.id] || CreditCard;
-                      const optDiscRate = opt.disc < 0 ? Math.abs(opt.disc) : 0;
-                      const optDiscAmount = subtotal * optDiscRate;
-                      const optTotal = Math.max(0, subtotal - optDiscAmount);
+                      const optSurchargeRate = opt.surcharge > 0 ? opt.surcharge : 0;
+                      const optTotal = Math.round(subtotal * (1 + optSurchargeRate) * 100) / 100;
                       return (
                         <label
                           key={opt.id}
@@ -1440,8 +1441,10 @@ export default function Checkout() {
                           <div className="flex-1 min-w-0">
                             <span className="text-sm font-medium block leading-tight" data-testid={`text-payment-name-${opt.id}`}>
                               {opt.name}
-                              {opt.id === "nakit" && (
-                                <span className="ml-1 font-bold" style={{ color: "#dc2626" }}> (%10 indirimli)</span>
+                              {opt.surcharge > 0 ? (
+                                <span className="ml-1 text-[10px] font-semibold text-muted-foreground">+%5</span>
+                              ) : (
+                                <span className="ml-1 text-[10px] font-semibold text-emerald-600">en uygun</span>
                               )}
                             </span>
                             {opt.id === "online" && (
@@ -1483,7 +1486,7 @@ export default function Checkout() {
                       </h3>
                       <div className="space-y-2">
                         {[{ months: 1, rate: 0, isTekCekim: true, noInterest: false }, ...(installmentsEnabled ? installmentRates.filter(r => r.isActive).sort((a, b) => a.sortOrder - b.sortOrder || a.months - b.months).map(r => ({ months: r.months, rate: (r as any).noInterest ? 0 : r.rate, isTekCekim: false, noInterest: (r as any).noInterest || false })) : [])].map((opt) => {
-                          const total = subtotal * (1 + (opt.rate || 0) / 100);
+                          const total = subtotal * (1 + CARD_SURCHARGE) * (1 + (opt.rate || 0) / 100);
                           const monthly = total / opt.months;
                           const active = paymentId === "pos" && installmentMonths === opt.months;
                           const isPesin = opt.rate === 0;
@@ -1511,7 +1514,7 @@ export default function Checkout() {
                               </div>
                               <div className="text-right shrink-0">
                                 {opt.isTekCekim ? (
-                                  <span className="font-semibold tabular-nums">{subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                                  <span className="font-semibold tabular-nums">{cardPrice(subtotal).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                                 ) : (
                                   <span className="text-xs">
                                     <span className="text-muted-foreground">{opt.months} x </span>
@@ -1527,7 +1530,7 @@ export default function Checkout() {
                         const rRaw = installmentRates.find(x => x.months === installmentMonths);
                         if (!rRaw) return null;
                         const r = { ...rRaw, rate: (rRaw as any).noInterest ? 0 : rRaw.rate };
-                        const total = subtotal * (1 + (r.rate || 0) / 100);
+                        const total = subtotal * (1 + CARD_SURCHARGE) * (1 + (r.rate || 0) / 100);
                         return (
                           <p className="text-[11px] text-muted-foreground mt-2 text-center">
                             Karttan toplam çekilecek: <strong className="text-foreground">{total.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</strong>
@@ -1551,16 +1554,19 @@ export default function Checkout() {
                 <CardContent className="p-5">
                   <div className="space-y-2 text-sm">
                     <div className="flex justify-between gap-3 flex-wrap">
-                      <span className="text-muted-foreground">
-                        Sipariş Tutarı
-                        {!hasPreorderItems && paymentId === "nakit" && paymentDiscount > 0 && (
-                          <span className="ml-1 font-bold" style={{ color: "#dc2626" }}>(%10 indirimli)</span>
-                        )}
-                      </span>
+                      <span className="text-muted-foreground">Sipariş Tutarı</span>
                       <span className="font-medium" data-testid="text-subtotal">
-                        {(hasPreorderItems ? subtotal : (subtotal - paymentDiscount)).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                        {subtotal.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                       </span>
                     </div>
+                    {paymentSurcharge > 0 && (
+                      <div className="flex justify-between gap-3 flex-wrap">
+                        <span className="text-muted-foreground">Kart / Havale / QR farkı (+%5)</span>
+                        <span className="font-medium" data-testid="text-card-surcharge">
+                          +{paymentSurcharge.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                        </span>
+                      </div>
+                    )}
                     {!hasPreorderItems && appliedCoupon && (
                       <div className="flex justify-between gap-3 flex-wrap">
                         <span className="text-muted-foreground flex items-center gap-1">

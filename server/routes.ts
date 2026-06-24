@@ -2705,6 +2705,17 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       orderData.grandTotal = Math.max(0, orderData.subtotal - orderData.discount + orderData.shipping);
     }
 
+    // Non-cash payment methods (POS / Havale-EFT / QR / Online card) add a 5% surcharge
+    // on the product subtotal only (not shipping). Cash (Kapıda Nakit) is the base price.
+    // Campaign orders are cash-only, so they never get a surcharge.
+    const pmForSurcharge = String(orderData.paymentMethod || "").toLowerCase();
+    const paymentSurcharge = (!isCampaignOrder && !/nakit/.test(pmForSurcharge))
+      ? Math.round(orderData.subtotal * 0.05 * 100) / 100
+      : 0;
+    if (paymentSurcharge > 0) {
+      orderData.grandTotal = Math.round((orderData.grandTotal + paymentSurcharge) * 100) / 100;
+    }
+
     let hasPreorderItems = false;
     const saleMovements: Array<{ productId: number; name: string; barcode: string | null; qty: number; newStock: number }> = [];
     for (const item of orderData.items) {

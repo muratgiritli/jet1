@@ -16,7 +16,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { useToast } from "@/hooks/use-toast";
 import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
-import { CATEGORIES, productUrl } from "@/lib/data";
+import { CATEGORIES, productUrl, cardPrice } from "@/lib/data";
 import FavoriteButton from "@/components/FavoriteButton";
 import ImageZoom from "@/components/ImageZoom";
 import ProductImage from "@/components/ProductImage";
@@ -734,12 +734,11 @@ export default function ProductDetailPage() {
 
               {!isPreorder && (
                 <div
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold w-fit bg-emerald-50 text-emerald-700 border border-emerald-200"
-                  data-testid="text-nakit-price"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium w-fit bg-gray-50 text-gray-600 border border-gray-200"
+                  data-testid="text-card-price"
                 >
-                  <Banknote className="w-4 h-4" />
-                  Kapıda Nakit Fiyatı: {(displayPrice * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                  <span className="text-[11px] font-medium text-emerald-600">(%10 indirim)</span>
+                  Kart / Havale / QR: {cardPrice(displayPrice).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                  <span className="text-[11px] font-medium text-gray-400">(+%5)</span>
                 </div>
               )}
 

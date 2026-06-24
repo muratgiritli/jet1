@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ProductImage from "@/components/ProductImage";
 import { productUrl } from "@/lib/data";
+import CardPriceNote from "@/components/CardPriceNote";
 import type { Product } from "@shared/schema";
 
 interface ProductPopupProps {
@@ -110,9 +111,7 @@ export default function ProductPopup({ product, quantity, onUpdate, onClose, isM
               </span>
             )}
           </div>
-          <span className="inline-block text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full" data-testid="product-popup-cash-price">
-            Nakit Fiyatı: {(product.price * 0.9).toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-          </span>
+          <CardPriceNote price={product.price} testId="product-popup-card-price" />
 
           {product.stock === 0 && !product.preorderEnabled && isMama ? (
             <div className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>
