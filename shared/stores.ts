@@ -231,10 +231,10 @@ const samsun: StoreConfig = {
   },
   google: {},
   commerce: {
-    fulfillment: "cargo",
-    shippingLabel: "Kargo Ücreti",
-    onlinePaymentOnly: true,
-    preorderEnabled: false,
+    fulfillment: "local",
+    shippingLabel: "Getirmesi",
+    onlinePaymentOnly: false,
+    preorderEnabled: true,
   },
 };
 
@@ -278,10 +278,10 @@ const samsunpet: StoreConfig = {
   },
   google: {},
   commerce: {
-    fulfillment: "cargo",
-    shippingLabel: "Kargo Ücreti",
-    onlinePaymentOnly: true,
-    preorderEnabled: false,
+    fulfillment: "local",
+    shippingLabel: "Getirmesi",
+    onlinePaymentOnly: false,
+    preorderEnabled: true,
   },
 };
 
@@ -322,10 +322,10 @@ const karadeniz: StoreConfig = {
   },
   google: {},
   commerce: {
-    fulfillment: "cargo",
-    shippingLabel: "Kargo Ücreti",
-    onlinePaymentOnly: true,
-    preorderEnabled: false,
+    fulfillment: "local",
+    shippingLabel: "Getirmesi",
+    onlinePaymentOnly: false,
+    preorderEnabled: true,
   },
 };
 
@@ -521,10 +521,10 @@ const markapet: StoreConfig = {
   },
   google: {},
   commerce: {
-    fulfillment: "cargo",
-    shippingLabel: "Kargo Ücreti",
-    onlinePaymentOnly: true,
-    preorderEnabled: false,
+    fulfillment: "local",
+    shippingLabel: "Getirmesi",
+    onlinePaymentOnly: false,
+    preorderEnabled: true,
   },
 };
 
