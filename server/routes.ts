@@ -417,10 +417,13 @@ export async function registerRoutes(
       );
     }
   }
-  // Domain'e özel olabilecek app_settings anahtarları. Diğer tüm anahtarlar
-  // (ödeme, banka, sadakat, pet vb.) tüm domainler için ortaktır.
+  // Domain'e özel olabilecek app_settings anahtarları. Ödeme yöntemi açma/kapama
+  // anahtarları her domain için ayrı tutulur; banka IBAN ve Tosla/iyzico API
+  // bilgileri ile sadakat/pet ayarları tüm domainler için ortaktır.
   const STORE_SCOPED_SETTING_KEYS = new Set<string>([
     "sms_msgheader",
+    "payment_nakit_enabled", "payment_pos_enabled", "payment_qr_enabled", "payment_eft_enabled",
+    "payment_installments_enabled", "payment_tosla_enabled", "payment_iyzico_enabled",
     "campaign_hero_title", "campaign_hero_subtitle", "campaign_end_date",
     "daily_cargo_widget_enabled",
     "sokak_banner_enabled", "veteriner_banner_enabled",
@@ -2491,16 +2494,15 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     const { usedPoints, couponCode, ...orderData } = parsed.data;
 
     try {
-      const pmRow = await sharedPool.query(
-        `SELECT key, value FROM app_settings WHERE key IN (
-          'payment_nakit_enabled','payment_pos_enabled','payment_qr_enabled','payment_eft_enabled',
-          'payment_tosla_enabled','payment_iyzico_enabled',
-          'tosla_client_id','tosla_api_user','tosla_api_pass',
-          'iyzico_api_key','iyzico_secret_key'
-        )`
-      );
-      const pmMap: Record<string, string> = {};
-      for (const r of pmRow.rows) pmMap[r.key] = r.value;
+      // Ödeme yöntemi açma/kapama anahtarları domaine özeldir (resolveSettings,
+      // önekli değer yoksa ortak "all" değerine düşer). Tosla/iyzico API bilgileri
+      // tüm domainler için ortak kalır.
+      const pmMap = await resolveSettings([
+        'payment_nakit_enabled', 'payment_pos_enabled', 'payment_qr_enabled', 'payment_eft_enabled',
+        'payment_tosla_enabled', 'payment_iyzico_enabled',
+        'tosla_client_id', 'tosla_api_user', 'tosla_api_pass',
+        'iyzico_api_key', 'iyzico_secret_key',
+      ], reqStore(req).id);
       const isOn = (k: string) => pmMap[k] !== "0" && pmMap[k] !== "false" && pmMap[k] !== undefined;
       const pm = String(orderData.paymentMethod || "").toLowerCase();
       const isOnlineCard = /tosla|iyzico|online/.test(pm);
@@ -2860,13 +2862,13 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     res.status(201).json(order);
   });
 
-  async function getToslaConfig() {
-    const r = await sharedPool.query(
-      "SELECT key, value FROM app_settings WHERE key IN ('tosla_client_id','tosla_api_user','tosla_api_pass','tosla_base_url','payment_tosla_enabled')"
+  // Tosla API bilgileri tüm domainler için ortak; payment_tosla_enabled domaine
+  // özeldir (resolveSettings önekli değer yoksa ortak değere düşer).
+  async function getToslaConfig(store: string = "all"): Promise<Record<string, string>> {
+    return await resolveSettings(
+      ['tosla_client_id', 'tosla_api_user', 'tosla_api_pass', 'tosla_base_url', 'payment_tosla_enabled'],
+      store
     );
-    const cfg: Record<string, string> = {};
-    for (const row of r.rows) cfg[row.key] = row.value || "";
-    return cfg;
   }
 
   function toslaOrigin(cfg: Record<string, string>) {
@@ -2980,7 +2982,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       if (!orderId || isNaN(orderId)) return res.status(400).json({ message: "Sipariş bulunamadı" });
 
       const orderRow = await sharedPool.query(
-        "SELECT id, customer_name, customer_phone, customer_address, items, grand_total, payment_method, payment_status FROM orders WHERE id = $1",
+        "SELECT id, customer_name, customer_phone, customer_address, items, grand_total, payment_method, payment_status, source_site FROM orders WHERE id = $1",
         [orderId]
       );
       const o = orderRow.rows[0];
@@ -2997,7 +2999,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         return res.status(400).json({ message: "Bu sipariş zaten ödenmiş" });
       }
 
-      const cfg = await getToslaConfig();
+      const cfg = await getToslaConfig(o.source_site || reqStore(req).id);
       if (cfg.payment_tosla_enabled === "0" || cfg.payment_tosla_enabled === "false") {
         await cancelOrderAndRestoreStock(o.id, "tosla-disabled");
         return res.status(400).json({ message: "Online ödeme şu anda kapalı", cancelled: true });
@@ -3375,13 +3377,13 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   });
 
   // ============ IYZICO PAYMENT ============
-  async function getIyzicoConfig(): Promise<Record<string, string>> {
-    const r = await sharedPool.query(
-      "SELECT key, value FROM app_settings WHERE key IN ('iyzico_api_key','iyzico_secret_key','iyzico_base_url','payment_iyzico_enabled')"
+  // İyzico API bilgileri tüm domainler için ortak; payment_iyzico_enabled domaine
+  // özeldir (resolveSettings önekli değer yoksa ortak değere düşer).
+  async function getIyzicoConfig(store: string = "all"): Promise<Record<string, string>> {
+    return await resolveSettings(
+      ['iyzico_api_key', 'iyzico_secret_key', 'iyzico_base_url', 'payment_iyzico_enabled'],
+      store
     );
-    const out: Record<string, string> = {};
-    for (const row of r.rows) out[row.key] = row.value || "";
-    return out;
   }
 
   function buildIyzicoClient(cfg: Record<string, string>) {
@@ -3421,7 +3423,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         return res.status(400).json({ message: "Geçersiz sipariş" });
       }
       const ordRow = await sharedPool.query(
-        "SELECT id, customer_name, customer_phone, customer_address, items, grand_total, payment_method, payment_status FROM orders WHERE id = $1",
+        "SELECT id, customer_name, customer_phone, customer_address, items, grand_total, payment_method, payment_status, source_site FROM orders WHERE id = $1",
         [orderId]
       );
       const o = ordRow.rows[0];
@@ -3443,7 +3445,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         return res.status(400).json({ message: "Bu sipariş online ödeme için uygun değil" });
       }
 
-      const cfg = await getIyzicoConfig();
+      const cfg = await getIyzicoConfig(o.source_site || reqStore(req).id);
       if (cfg.payment_iyzico_enabled === "0" || cfg.payment_iyzico_enabled === "false") {
         return res.status(503).json({ message: "İyzico ödeme şu anda kapalı." });
       }
@@ -3668,11 +3670,13 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   });
 
-  app.get("/api/bank-info", async (_req, res) => {
+  app.get("/api/bank-info", async (req, res) => {
     try {
-      const r = await sharedPool.query("SELECT key, value FROM app_settings WHERE key IN ('bank_account_name','bank_iban','bank_name','payment_eft_enabled')");
-      const out: Record<string, string> = {};
-      for (const row of r.rows) out[row.key] = row.value || "";
+      // Banka IBAN bilgileri ortak; payment_eft_enabled domaine özeldir.
+      const out = await resolveSettings(
+        ['bank_account_name', 'bank_iban', 'bank_name', 'payment_eft_enabled'],
+        publicStoreId(req)
+      );
       res.json(out);
     } catch {
       res.json({});

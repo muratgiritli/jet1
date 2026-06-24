@@ -117,6 +117,8 @@ const SETTING_KEYS = [
   "payment_nakit_enabled",
   // online card gate (Tosla) — needed so online orders pass the payment gate
   "payment_tosla_enabled", "tosla_client_id", "tosla_api_user", "tosla_api_pass",
+  // per-store online-card toggle override (payment-init store-policy test)
+  "jetgo:payment_tosla_enabled",
   // per-domain DB-backed Google tags (override) touched by the Google tests
   "atakum:google_tags", "samsun:google_tags", "jetgopet:google_tags",
   // per-domain DB-backed Google Merchant config touched by the Merchant tests
@@ -1140,6 +1142,59 @@ test("online order on an unknown host stays source_site=jetgo (default store) th
   assert.equal(r.sourceAfterComplete, "jetgo", "source_site must survive completion");
 });
 
+// ---- Payment-init enforces the ORDER's store policy, not the request host ----
+//
+// Payment toggles (payment_*_enabled) are now per-store. For an EXISTING order
+// the enable check must key off the order's own store (source_site), never the
+// mutable request host — otherwise a buyer could open the hosted-payment page
+// via a different branded domain whose toggle is on and bypass the owning
+// store's "online card off" policy. We disable Tosla for JETGO only (base stays
+// on, so Atakum is still on), create a JETGO order, then call init-payment via
+// the ATAKUM host: it must still be blocked because the order belongs to jetgo.
+test("payment-init enforces the order's store toggle, not the request host", async () => {
+  const xff = "203.0.113." + (10 + Math.floor(Math.random() * 240));
+  const phone = "555" + String(randomBytes(4).readUInt32BE(0)).padStart(7, "0").slice(-7);
+  const c = await pool.query(
+    "INSERT INTO customers (phone, password, name, is_blacklisted) VALUES ($1,$2,$3,false) RETURNING id",
+    [phone, `${MARK}_PWD`, `${MARK}_PAYSCOPE_BUYER`],
+  );
+  ids.customers.push(c.rows[0].id);
+  const cookie = await forgeSessionCookie({ customerId: c.rows[0].id });
+
+  // Create an online order on the JETGO storefront (Tosla still on for jetgo).
+  const placeRes = await fetch(`${baseUrl}/api/orders`, {
+    method: "POST",
+    headers: { "X-Forwarded-Host": JETGO_HOST, "X-Forwarded-For": xff, "Content-Type": "application/json", Cookie: cookie },
+    body: JSON.stringify({ ...onlineOrderPayload(), customerPhone: phone }),
+  });
+  const placeBody = await placeRes.json() as any;
+  assert.equal(placeRes.status, 201, `online order POST failed: ${JSON.stringify(placeBody)}`);
+  const orderId = placeBody.id as number;
+  ids.orders.push(orderId);
+  const created = await pool.query("SELECT source_site, payment_status FROM orders WHERE id = $1", [orderId]);
+  assert.equal(created.rows[0].source_site, "jetgo");
+  assert.equal(created.rows[0].payment_status, "pending");
+
+  // Turn Tosla OFF for jetgo only; base (and therefore atakum) stays ON.
+  await setSetting("jetgo:payment_tosla_enabled", "0");
+  try {
+    // Call init-payment via the ATAKUM host (Tosla on there) for the JETGO order.
+    const initRes = await fetch(`${baseUrl}/api/tosla/init-payment`, {
+      method: "POST",
+      headers: { "X-Forwarded-Host": ATAKUM_HOST, "X-Forwarded-For": xff, "Content-Type": "application/json", Cookie: cookie },
+      body: JSON.stringify({ orderId }),
+    });
+    const initBody = await initRes.json() as any;
+    // Order belongs to jetgo (Tosla off) → must be blocked despite the atakum host.
+    assert.equal(initRes.status, 400, `expected block, got ${initRes.status}: ${JSON.stringify(initBody)}`);
+    assert.equal(initBody.cancelled, true, "the order's own store policy (jetgo: off) must govern, not the request host");
+    const after = await pool.query("SELECT status, payment_status FROM orders WHERE id = $1", [orderId]);
+    assert.equal(after.rows[0].status, "iptal", "blocked online order is cancelled and stock restored");
+  } finally {
+    await pool.query("DELETE FROM app_settings WHERE key = 'jetgo:payment_tosla_enabled'");
+  }
+});
+
 // ---- Shared-edit protection: server-side blockedByStoreContext (403 guard) ----
 //
 // Seeded rows are pushed in store order ["all", "jetgo", "atakum"], so index 0
@@ -1205,8 +1260,8 @@ function withConfirm<T>(impl: () => boolean, fn: () => T): { result: T; calls: n
 test("confirmSharedSettingsSave prompts when a GLOBAL setting changed in a store view", () => {
   const { result, calls } = withConfirm(() => true, () =>
     confirmSharedSettingsSave(
-      { payment_nakit_enabled: "0" }, // global key (not store-scoped)
-      { payment_nakit_enabled: "1" },
+      { bank_iban: "TR01" }, // global key (not store-scoped) — bank info stays shared
+      { bank_iban: "TR00" },
       "jetgo",
     ),
   );
@@ -1217,8 +1272,8 @@ test("confirmSharedSettingsSave prompts when a GLOBAL setting changed in a store
 test("confirmSharedSettingsSave returns false when the user cancels the prompt", () => {
   const { result, calls } = withConfirm(() => false, () =>
     confirmSharedSettingsSave(
-      { payment_nakit_enabled: "0" },
-      { payment_nakit_enabled: "1" },
+      { bank_iban: "TR01" },
+      { bank_iban: "TR00" },
       "jetgo",
     ),
   );
