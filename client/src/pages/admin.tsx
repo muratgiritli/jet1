@@ -2078,7 +2078,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "dashboard", label: "Dashboard", icon: <LayoutDashboard className="w-3.5 h-3.5" /> },
             { key: "yonetim", label: "Yönetim", icon: <Package className="w-3.5 h-3.5" /> },
             { key: "kuponlar", label: "Kuponlar", icon: <Tag className="w-3.5 h-3.5" /> },
-            { key: "bonus", label: "Bonus", icon: <Gift className="w-3.5 h-3.5" /> },
             { key: "ziyaretci", label: "Ziyaretçi", icon: <Eye className="w-3.5 h-3.5" /> },
             { key: "musteriler", label: "Müşteri", icon: <Users className="w-3.5 h-3.5" /> },
             { key: "bildirim", label: "Bildirim", icon: <Bell className="w-3.5 h-3.5" /> },
@@ -2126,7 +2125,6 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         )}
         {activeSection === "dashboard" && <DashboardSection />}
         {activeSection === "kuponlar" && <CouponsSection />}
-        {activeSection === "bonus" && <WelcomeBonusSection />}
         {activeSection === "ziyaretci" && <VisitorsSection />}
         {activeSection === "musteriler" && <CustomersSection />}
         {activeSection === "bildirim" && <NotificationsSection />}
@@ -7135,9 +7133,6 @@ function SimpleBannerVisibilityAdmin() {
           </div>
         </div>
 
-        <div className="text-[11px] text-muted-foreground bg-muted/50 rounded p-2">
-          <strong>Not:</strong> "Yeni Üyeye 100 TL Bonus" banner'ının aç/kapat ayarı yukarıdaki <em>Üst Promo Banner</em> kartından yapılır.
-        </div>
         <Button onClick={() => saveMutation.mutate()} disabled={saveMutation.isPending} className="w-full" data-testid="button-save-banner-visibility">
           {saveMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
           Kaydet
@@ -8332,170 +8327,6 @@ function VisitorsSection() {
   );
 }
 
-function WelcomeBonusSection() {
-  const { data, isLoading } = useQuery<{ summary: any; rows: any[] }>({ queryKey: ["/api/admin/welcome-bonuses"] });
-  const [filter, setFilter] = useState<"all" | "used" | "active" | "expired">("all");
-  const [search, setSearch] = useState("");
-
-  const summary = data?.summary;
-  const allRows = data?.rows || [];
-
-  const rows = allRows.filter(r => {
-    if (filter === "used" && !r.used) return false;
-    if (filter === "active" && r.status !== "active") return false;
-    if (filter === "expired" && r.status !== "expired") return false;
-    if (search.trim()) {
-      const q = search.trim().toLowerCase();
-      const hay = `${r.customerName || ""} ${r.customerPhone || ""} ${r.code || ""}`.toLowerCase();
-      if (!hay.includes(q)) return false;
-    }
-    return true;
-  });
-
-  const fmtTL = (n: number) => `${(n || 0).toLocaleString("tr-TR", { minimumFractionDigits: 0, maximumFractionDigits: 2 })} TL`;
-  const fmtDate = (d: string | null) => d ? new Date(d).toLocaleDateString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric" }) : "-";
-  const fmtDateTime = (d: string | null) => d ? new Date(d).toLocaleString("tr-TR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }) : "-";
-
-  const statusBadge = (r: any) => {
-    if (r.status === "used") return <Badge className="no-default-hover-elevate no-default-active-elevate bg-green-600 text-white">Kullanıldı</Badge>;
-    if (r.status === "expired") return <Badge className="no-default-hover-elevate no-default-active-elevate bg-gray-400 text-white">Süresi Doldu</Badge>;
-    if (r.status === "passive") return <Badge className="no-default-hover-elevate no-default-active-elevate bg-orange-400 text-white">Pasif</Badge>;
-    return <Badge className="no-default-hover-elevate no-default-active-elevate bg-blue-600 text-white">Aktif (Kullanılmadı)</Badge>;
-  };
-
-  return (
-    <div className="space-y-4" data-testid="section-welcome-bonus">
-      <div className="flex items-center gap-2">
-        <Gift className="w-5 h-5 text-purple-600" />
-        <h2 className="text-lg font-bold">Hoş Geldin Bonusu (100 TL)</h2>
-      </div>
-      <p className="text-xs text-gray-500 -mt-2">Yeni üye olup 100 TL hoş geldin bonusu (kupon) alan müşteriler ve bu bonusu siparişte kullananlar.</p>
-
-      {isLoading ? (
-        <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-purple-600" /></div>
-      ) : (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
-            <div className="rounded-xl border bg-white p-3" data-testid="card-bonus-awarded">
-              <p className="text-xs text-gray-500">Bonus Alan Üye</p>
-              <p className="text-xl font-bold text-purple-700">{summary?.totalAwarded ?? 0}</p>
-            </div>
-            <div className="rounded-xl border bg-white p-3" data-testid="card-bonus-used">
-              <p className="text-xs text-gray-500">Bonusu Kullanan</p>
-              <p className="text-xl font-bold text-green-600">{summary?.totalUsed ?? 0}</p>
-            </div>
-            <div className="rounded-xl border bg-white p-3" data-testid="card-bonus-active">
-              <p className="text-xs text-gray-500">Aktif (Kullanılmadı)</p>
-              <p className="text-xl font-bold text-blue-600">{summary?.totalActive ?? 0}</p>
-            </div>
-            <div className="rounded-xl border bg-white p-3" data-testid="card-bonus-expired">
-              <p className="text-xs text-gray-500">Süresi Dolan</p>
-              <p className="text-xl font-bold text-gray-500">{summary?.totalExpired ?? 0}</p>
-            </div>
-            <div className="rounded-xl border bg-white p-3" data-testid="card-bonus-redeemed-value">
-              <p className="text-xs text-gray-500">Kullanılan Bonus Tutarı</p>
-              <p className="text-xl font-bold text-green-600">{fmtTL(summary?.bonusValueRedeemed ?? 0)}</p>
-            </div>
-            <div className="rounded-xl border bg-white p-3" data-testid="card-bonus-revenue">
-              <p className="text-xs text-gray-500">Bu Bonuslardan Gelen Ciro</p>
-              <p className="text-xl font-bold text-emerald-700">{fmtTL(summary?.revenueFromRedeemed ?? 0)}</p>
-            </div>
-          </div>
-
-          <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-            <div className="flex gap-1.5 flex-wrap">
-              {[
-                { key: "all", label: `Tümü (${allRows.length})` },
-                { key: "used", label: `Kullananlar (${summary?.totalUsed ?? 0})` },
-                { key: "active", label: `Aktif (${summary?.totalActive ?? 0})` },
-                { key: "expired", label: `Süresi Dolan (${summary?.totalExpired ?? 0})` },
-              ].map(f => (
-                <button
-                  key={f.key}
-                  onClick={() => setFilter(f.key as any)}
-                  className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${filter === f.key ? "bg-purple-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
-                  data-testid={`btn-bonus-filter-${f.key}`}
-                >
-                  {f.label}
-                </button>
-              ))}
-            </div>
-            <div className="relative sm:ml-auto">
-              <Search className="w-4 h-4 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-              <input
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                placeholder="İsim, telefon veya kod ara"
-                className="pl-8 pr-3 py-1.5 text-sm rounded-full border border-gray-200 w-full sm:w-64 focus:outline-none focus:ring-2 focus:ring-purple-200"
-                data-testid="input-bonus-search"
-              />
-            </div>
-          </div>
-
-          {rows.length === 0 ? (
-            <p className="text-sm text-gray-400 text-center py-10">Kayıt bulunamadı</p>
-          ) : (
-            <div className="space-y-2">
-              {rows.map(r => (
-                <div key={r.id} className="rounded-xl border bg-white p-3 sm:p-4" data-testid={`row-bonus-${r.id}`}>
-                  <div className="flex items-start justify-between gap-3 flex-wrap">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="font-semibold text-sm" data-testid={`text-bonus-name-${r.id}`}>{r.customerName || "İsimsiz"}</span>
-                        {r.customerBlacklisted && <Badge className="no-default-hover-elevate no-default-active-elevate bg-red-600 text-white text-[10px]">Kara Liste</Badge>}
-                      </div>
-                      <div className="flex items-center gap-1.5 mt-1 text-xs text-gray-500">
-                        <Phone className="w-3 h-3" />
-                        <span data-testid={`text-bonus-phone-${r.id}`}>{r.customerPhone || "-"}</span>
-                      </div>
-                    </div>
-                    {statusBadge(r)}
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-3 gap-y-2 mt-3 text-xs">
-                    <div>
-                      <p className="text-gray-400">Bonus Kodu</p>
-                      <p className="font-mono font-semibold" data-testid={`text-bonus-code-${r.id}`}>{r.code}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400">Bonus Tutarı</p>
-                      <p className="font-semibold">{fmtTL(r.discountValue)}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400">Verildiği Tarih</p>
-                      <p className="font-medium">{fmtDate(r.awardedAt)}</p>
-                    </div>
-                    <div>
-                      <p className="text-gray-400">Son Kullanma</p>
-                      <p className="font-medium">{fmtDate(r.expiresAt)}</p>
-                    </div>
-                  </div>
-
-                  {r.used && (
-                    <div className="mt-3 pt-3 border-t border-dashed flex items-center gap-2 flex-wrap text-xs">
-                      <Check className="w-4 h-4 text-green-600" />
-                      <span className="text-gray-600">Kullanıldığı sipariş:</span>
-                      {r.orderId ? (
-                        <>
-                          <Badge className="no-default-hover-elevate no-default-active-elevate bg-purple-100 text-purple-800" data-testid={`badge-bonus-order-${r.id}`}>Sipariş #{r.orderId}</Badge>
-                          <span className="text-gray-500">{fmtDateTime(r.orderDate)}</span>
-                          <span className="text-gray-500">• Tutar: {fmtTL(r.orderTotal)}</span>
-                        </>
-                      ) : (
-                        <span className="text-gray-400 italic">Sipariş eşleştirilemedi (kupon kullanıldı olarak işaretli)</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-            </div>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
 
 function CouponsSection() {
   const { data: allCoupons, isLoading } = useQuery<any[]>({ queryKey: ["/api/admin/coupons"] });

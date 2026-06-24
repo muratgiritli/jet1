@@ -18,7 +18,6 @@ import ImageZoom from "@/components/ImageZoom";
 import ProductImage from "@/components/ProductImage";
 import { ProductDetailSkeleton } from "@/components/ProductSkeleton";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
-import InstallmentBanner from "@/components/InstallmentBanner";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
 type ProductDetailData = {
@@ -489,8 +488,6 @@ export default function ProductDetailDemoPage() {
                 Para Puan nedir?
               </button>
             </div>
-
-            <InstallmentBanner variant="compact" pricePerInstallment={displayPrice / 3} />
 
             {/* Adet ve butonlar */}
             <div className="flex flex-col gap-3 mt-2">

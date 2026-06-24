@@ -4299,7 +4299,6 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
     let customer = await storage.getCustomerByPhone(normalized);
     let isNewUser = false;
-    let welcomeCouponCode: string | undefined;
     if (!customer && !(name && String(name).trim())) {
       return res.json({ verified: true, isNewUser: true, requiresRegistration: true });
     }
@@ -4313,24 +4312,6 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         name: (name || "").trim() || "Müşteri",
         address: (address || "").trim() || null,
       });
-      try {
-        const couponCode = "HG" + customer.id + crypto.randomBytes(3).toString("hex").toUpperCase();
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 30);
-        await storage.createCoupon({
-          code: couponCode,
-          discountType: "fixed",
-          discountValue: 100,
-          minOrderAmount: 500,
-          maxUses: 1,
-          isActive: true,
-          expiresAt,
-          customerId: customer.id,
-        });
-        welcomeCouponCode = couponCode;
-      } catch (e) {
-        console.error("Welcome coupon creation failed:", e);
-      }
     }
 
     (req.session as any).customerId = customer.id;
@@ -4352,7 +4333,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         console.error("Session save error:", err);
         return res.status(500).json({ message: "Oturum kaydedilemedi" });
       }
-      res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, deviceToken: newDeviceToken, isNewUser, welcomeCouponCode });
+      res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, deviceToken: newDeviceToken, isNewUser });
     });
   });
 
@@ -4446,18 +4427,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (!customerId) return res.status(401).json({ message: "Giriş yapılmamış" });
     const customer = await storage.getCustomer(customerId);
     if (!customer) return res.status(401).json({ message: "Giriş yapılmamış" });
-    let welcomeCoupon: { code: string; discountValue: number; minOrderAmount: number; expiresAt: string | null } | undefined;
-    try {
-      const result = await sharedPool.query(
-        "SELECT code, discount_value, min_order_amount, expires_at FROM coupons WHERE customer_id = $1 AND is_active = true AND used_count < COALESCE(max_uses, 999999) AND (expires_at IS NULL OR expires_at > NOW()) LIMIT 1",
-        [customerId]
-      );
-      if (result.rows.length > 0) {
-        const c = result.rows[0];
-        welcomeCoupon = { code: c.code, discountValue: c.discount_value, minOrderAmount: c.min_order_amount, expiresAt: c.expires_at };
-      }
-    } catch {}
-    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, email: customer.email, tcNo: customer.tcNo, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign, welcomeCoupon });
+    res.json({ id: customer.id, phone: customer.phone, name: customer.name, address: customer.address, email: customer.email, tcNo: customer.tcNo, notifyStock: customer.notifyStock, notifyCampaign: customer.notifyCampaign });
   });
 
   app.patch("/api/customer/profile", requireCustomer, async (req, res) => {
@@ -6294,66 +6264,6 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     } catch (e) {
       console.error("admin/visitors error:", e);
       res.status(500).json({ message: "Ziyaretçi verileri alınamadı" });
-    }
-  });
-
-  // Hoş geldin bonusu (100 TL) raporu: yeni üye olup bonus alanlar ve kullananlar
-  app.get("/api/admin/welcome-bonuses", requireAdmin, async (_req, res) => {
-    try {
-      const q = await sharedPool.query(`
-        SELECT
-          c.id,
-          c.code,
-          c.discount_value     AS "discountValue",
-          c.min_order_amount   AS "minOrderAmount",
-          c.used_count         AS "usedCount",
-          c.is_active          AS "isActive",
-          c.expires_at         AS "expiresAt",
-          c.created_at         AS "awardedAt",
-          c.customer_id        AS "customerId",
-          cu.name              AS "customerName",
-          cu.phone             AS "customerPhone",
-          cu.is_blacklisted    AS "customerBlacklisted",
-          ord.id               AS "orderId",
-          ord.created_at       AS "orderDate",
-          ord.subtotal         AS "orderSubtotal",
-          ord.grand_total      AS "orderTotal"
-        FROM coupons c
-        LEFT JOIN customers cu ON cu.id = c.customer_id
-        LEFT JOIN LATERAL (
-          SELECT o.id, o.created_at, o.subtotal, o.grand_total
-          FROM orders o
-          WHERE cu.phone IS NOT NULL
-            AND right(regexp_replace(o.customer_phone, '\\D', '', 'g'), 10) = right(regexp_replace(cu.phone, '\\D', '', 'g'), 10)
-            AND o.discount = c.discount_value
-            AND o.created_at >= c.created_at
-          ORDER BY o.created_at ASC
-          LIMIT 1
-        ) ord ON c.used_count > 0
-        WHERE c.code LIKE 'HG%'
-        ORDER BY c.created_at DESC
-      `);
-      const now = Date.now();
-      const rows = q.rows.map((r: any) => {
-        const used = (r.usedCount ?? 0) > 0;
-        const expired = !used && r.expiresAt && new Date(r.expiresAt).getTime() < now;
-        const status = used ? "used" : expired ? "expired" : (r.isActive ? "active" : "passive");
-        return { ...r, used, status };
-      });
-      const summary = {
-        totalAwarded: rows.length,
-        totalUsed: rows.filter(r => r.used).length,
-        totalActive: rows.filter(r => r.status === "active").length,
-        totalExpired: rows.filter(r => r.status === "expired").length,
-        totalPassive: rows.filter(r => r.status === "passive").length,
-        bonusValueAwarded: rows.reduce((s, r) => s + (r.discountValue || 0), 0),
-        bonusValueRedeemed: rows.filter(r => r.used).reduce((s, r) => s + (r.discountValue || 0), 0),
-        revenueFromRedeemed: rows.filter(r => r.used && r.orderTotal != null).reduce((s, r) => s + (r.orderTotal || 0), 0),
-      };
-      res.json({ summary, rows });
-    } catch (e) {
-      console.error("Welcome bonus report error:", e);
-      res.status(500).json({ message: "Bonus raporu alınamadı" });
     }
   });
 

@@ -114,7 +114,7 @@ export default function InstallBanner() {
             <Sparkles className="w-3.5 h-3.5 text-amber-500 flex-shrink-0" />
           </p>
           <p className="text-[11px] sm:text-xs text-gray-700 leading-tight mt-0.5">
-            Üye ol, <span className="font-bold text-[#6B3480]">100 TL bonus</span> kazan
+            Tek dokunuşla hızlı sipariş
           </p>
         </div>
         <button

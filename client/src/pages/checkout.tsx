@@ -42,7 +42,6 @@ import {
   Clock,
 } from "lucide-react";
 import SEO from "@/components/SEO";
-import InstallmentBanner from "@/components/InstallmentBanner";
 import {
   CONFIG,
   PAYMENT_OPTIONS,
@@ -554,29 +553,6 @@ export default function Checkout() {
   const rawDisplayTotal = Math.max(0, effectiveGrandTotal - pointsDiscount) + donationAmount;
   const displayTotal = rawDisplayTotal;
 
-  const [autoApplyAttemptedSubtotal, setAutoApplyAttemptedSubtotal] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!isLoggedIn || !customer?.welcomeCoupon || appliedCoupon || subtotal <= 0) return;
-    const wc = customer.welcomeCoupon;
-    const minAmount = wc.minOrderAmount || 0;
-    if (subtotal < minAmount) return;
-    if (autoApplyAttemptedSubtotal !== null && subtotal <= autoApplyAttemptedSubtotal) return;
-    setAutoApplyAttemptedSubtotal(subtotal);
-    const code = wc.code.trim().toUpperCase();
-    (async () => {
-      try {
-        const res = await apiRequest("POST", "/api/coupons/validate", { code, subtotal });
-        const data = await res.json();
-        if (data.valid) {
-          setCouponCode(code);
-          setAppliedCoupon({ code, discountAmount: data.discountAmount });
-          setCouponResult(data);
-        }
-      } catch {}
-    })();
-  }, [isLoggedIn, customer, subtotal, appliedCoupon, autoApplyAttemptedSubtotal]);
-
   const handleApplyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
     if (!code) return;
@@ -852,8 +828,8 @@ export default function Checkout() {
                       <Gift className="w-6 h-6" />
                     </div>
                     <div>
-                      <p className="font-bold text-lg leading-tight">Üye Ol & Bonus Kazan</p>
-                      <p className="text-sm text-white/90 leading-tight">100 TL anında bonus sepetinde!</p>
+                      <p className="font-bold text-lg leading-tight">Hemen Üye Ol</p>
+                      <p className="text-sm text-white/90 leading-tight">Telefon numaranızla saniyeler içinde üyelik</p>
                     </div>
                   </div>
                 )}

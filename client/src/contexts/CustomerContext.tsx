@@ -1,13 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 
-interface WelcomeCoupon {
-  code: string;
-  discountValue: number;
-  minOrderAmount: number;
-  expiresAt: string | null;
-}
-
 interface CustomerData {
   id: number;
   phone: string;
@@ -15,7 +8,6 @@ interface CustomerData {
   address: string | null;
   notifyStock: boolean;
   notifyCampaign: boolean;
-  welcomeCoupon?: WelcomeCoupon;
 }
 
 interface CustomerContextType {

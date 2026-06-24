@@ -110,7 +110,7 @@ export default function TopPromoBanner() {
               Uygulamayı İndir ve Hemen Üye Ol
             </div>
             <div className="text-white/85 text-[11px] leading-tight mt-0.5">
-              <span className="font-bold text-yellow-300">100 TL bonus</span> hesabında...
+              Daha hızlı sipariş, anında stok &amp; kampanya bildirimi
             </div>
           </div>
 

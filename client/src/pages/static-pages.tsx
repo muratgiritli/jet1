@@ -1381,13 +1381,11 @@ export function MagazaPage() {
           <p className="text-sm text-muted-foreground leading-relaxed">
             Tüm gıda ürünlerimizin son kullanma tarihini sistemimiz üzerinden takip ediyoruz; SKT'si yaklaşan ürünler
             "Açık Mama / SKT Yakın" bölümünde indirimli fiyatlarla sunulur. Açılmış mama satışı yapıyor, isteyen
-            müşterilerimize gramaj bazlı tartım hizmeti veriyoruz. "Para Puan" sistemimiz sayesinde her alışverişte %5
-            puan kazanır, sonraki siparişlerinizde indirim olarak kullanabilirsiniz.
+            müşterilerimize gramaj bazlı tartım hizmeti veriyoruz.
           </p>
           <p className="text-sm text-muted-foreground leading-relaxed">
             Kapıda nakit (%5 indirimli), kapıda kart (POS), QR ödeme ve havale/EFT seçenekleriyle kolay ödeme imkânı
-            sunuyoruz. "Askıda Mama" projemizle sokak hayvanlarına destek olabilir, yeni üye bonusu olarak 100 TL
-            hoşgeldin kuponu kazanabilirsiniz.
+            sunuyoruz. "Askıda Mama" projemizle sokak hayvanlarına destek olabilirsiniz.
           </p>
         </div>
 

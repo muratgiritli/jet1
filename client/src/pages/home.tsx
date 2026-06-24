@@ -22,7 +22,6 @@ import {
 } from "@/lib/data";
 import { useCart } from "@/contexts/CartContext";
 import BackNavigation from "@/components/BackNavigation";
-import InstallmentBanner from "@/components/InstallmentBanner";
 
 const SLUG_TO_CATEGORY: Record<string, string> = {
   "kedi-bakim-saglik": "BAKIM VE SAĞLIK",
@@ -230,36 +229,9 @@ export default function Home() {
         </div>
       </header>
 
-      <Link href="/odeme">
-        <div
-          className="relative overflow-hidden bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-600 text-white cursor-pointer hover-elevate active-elevate-2"
-          data-testid="banner-hook-installment"
-        >
-          <div className="max-w-2xl mx-auto px-4 py-2.5 flex flex-wrap items-center justify-center gap-x-2 gap-y-1 text-center">
-            <span className="text-base">💳</span>
-            <span className="text-sm sm:text-base font-extrabold tracking-wide">
-              KREDİ KARTI İLE PEŞİN FİYATINA 3 TAKSİT
-            </span>
-            <span className="text-xs sm:text-sm font-bold bg-yellow-300 text-blue-900 px-2 py-0.5 rounded-full">
-              + 12 TAKSİT İMKANI
-            </span>
-            <span className="hidden md:inline text-xs font-medium opacity-90">
-              · World, Axess, Maximum, Bonus & daha fazlası
-            </span>
-            <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-bold">
-              Sipariş Ver →
-            </span>
-          </div>
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-pulse pointer-events-none" />
-        </div>
-      </Link>
-
       <BackNavigation />
 
       <main className="max-w-2xl mx-auto px-4 pb-24 md:pb-8">
-        <div className="mt-4">
-          <InstallmentBanner variant="full" />
-        </div>
         <section className="mt-6">
           {directCategory ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
