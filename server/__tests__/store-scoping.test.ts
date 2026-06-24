@@ -17,7 +17,7 @@ import assert from "node:assert/strict";
 import express from "express";
 import { createServer } from "node:http";
 import type { AddressInfo } from "node:net";
-import { randomBytes } from "node:crypto";
+import { randomBytes, createHash } from "node:crypto";
 import { readFileSync } from "node:fs";
 import * as cookieSignature from "cookie-signature";
 import { registerRoutes, isTestOtpBypass } from "../routes";
@@ -1063,6 +1063,24 @@ test("admin-entered cargo tracking becomes visible to the customer", async () =>
 // 'pending' and routes through the online-card gate, which we enabled above).
 const onlineOrderPayload = () => ({ ...orderPayload(), paymentMethod: "online" });
 
+// Compute the Tosla callback Hash exactly like the server (toslaCallbackHash):
+// sha512(api_pass + client_id + api_user + OrderId + MdStatus + BankResponseCode
+// + BankResponseMessage + RequestStatus) in base64. Reads the (global) merchant
+// creds from app_settings so the simulated callback is signed like a real one.
+async function toslaCallbackHash(p: {
+  orderId: string; mdStatus: string; bankResponseCode: string;
+  bankResponseMessage: string; requestStatus: string;
+}): Promise<string> {
+  const r = await pool.query(
+    "SELECT key, value FROM app_settings WHERE key IN ('tosla_client_id','tosla_api_user','tosla_api_pass')"
+  );
+  const cfg: Record<string, string> = {};
+  for (const row of r.rows) cfg[row.key] = row.value;
+  const data = `${cfg.tosla_api_pass || ""}${cfg.tosla_client_id || ""}${cfg.tosla_api_user || ""}` +
+    `${p.orderId}${p.mdStatus}${p.bankResponseCode}${p.bankResponseMessage}${p.requestStatus}`;
+  return createHash("sha512").update(data, "utf8").digest("base64");
+}
+
 // Drive an online order through the full completion path for a given host and
 // return its source_site read straight from the DB *after* it is marked paid.
 async function completeOnlineOrderAndReadSource(host: string): Promise<{
@@ -1101,8 +1119,12 @@ async function completeOnlineOrderAndReadSource(host: string): Promise<{
   //    The callback flips both the token and the order to 'completed'. We use
   //    GET with query params and disable redirect-following (the callback 303s
   //    to the result page).
+  const cbHash = await toslaCallbackHash({
+    orderId: merchantOrderId, mdStatus: "1", bankResponseCode: "00",
+    bankResponseMessage: "", requestStatus: "1",
+  });
   const cbUrl = `${baseUrl}/api/tosla/callback?OrderId=${encodeURIComponent(merchantOrderId)}` +
-    `&Code=0&BankResponseCode=00&MdStatus=1&RequestStatus=1`;
+    `&Code=0&BankResponseCode=00&MdStatus=1&RequestStatus=1&Hash=${encodeURIComponent(cbHash)}`;
   const cbRes = await fetch(cbUrl, { headers: { "X-Forwarded-Host": host }, redirect: "manual" });
   assert.ok(cbRes.status >= 300 && cbRes.status < 400, `callback expected redirect, got ${cbRes.status}`);
 
@@ -1140,6 +1162,100 @@ test("online order on an unknown host stays source_site=jetgo (default store) th
   assert.equal(r.sourceAtCreation, "jetgo");
   assert.equal(r.statusAfterComplete, "completed");
   assert.equal(r.sourceAfterComplete, "jetgo", "source_site must survive completion");
+});
+
+// ---- SECURITY: Tosla callback must NOT complete without a valid signature ----
+//
+// /api/tosla/callback is public and its success fields (Code/BankResponseCode/
+// MdStatus/RequestStatus) are attacker-controllable; the buyer also knows their
+// own merchantOrderId token. The Tosla Hash (only producible with merchant secret
+// keys) is the sole proof of a genuine payment. A success-looking callback with no
+// hash (or a wrong hash) must leave the order in 'awaiting' — never 'completed'.
+test("tosla callback rejects success payload without a valid hash (no fraud completion)", async () => {
+  const res = await postAsCustomer("/api/orders", JETGO_HOST, onlineOrderPayload());
+  assert.equal(res.status, 201, `online order POST failed: ${JSON.stringify(res.body)}`);
+  const orderId = res.body.id as number;
+  ids.orders.push(orderId);
+
+  const merchantOrderId = `${MARK}NOHASH${orderId}`;
+  await pool.query(
+    `INSERT INTO tosla_payment_tokens (token, order_id, amount, status, updated_at)
+     VALUES ($1, $2, $3, 'pending', NOW())`,
+    [merchantOrderId, orderId, 100],
+  );
+  await pool.query("UPDATE orders SET payment_status = 'awaiting' WHERE id = $1", [orderId]);
+
+  const successQs = `OrderId=${encodeURIComponent(merchantOrderId)}&Code=0&BankResponseCode=00&MdStatus=1&RequestStatus=1`;
+
+  // (a) No Hash at all → must be rejected.
+  const noHash = await fetch(`${baseUrl}/api/tosla/callback?${successQs}`, {
+    headers: { "X-Forwarded-Host": JETGO_HOST }, redirect: "manual",
+  });
+  assert.ok(noHash.status >= 300 && noHash.status < 400, `expected redirect, got ${noHash.status}`);
+  let row = await pool.query("SELECT payment_status FROM orders WHERE id = $1", [orderId]);
+  assert.equal(row.rows[0]?.payment_status, "awaiting", "no-hash callback must NOT complete the order");
+  let tok = await pool.query("SELECT status FROM tosla_payment_tokens WHERE token = $1", [merchantOrderId]);
+  assert.equal(tok.rows[0]?.status, "pending", "no-hash callback must leave the token pending");
+
+  // (b) Wrong Hash → must be rejected.
+  const wrongHash = await fetch(`${baseUrl}/api/tosla/callback?${successQs}&Hash=${encodeURIComponent("not-a-real-hash")}`, {
+    headers: { "X-Forwarded-Host": JETGO_HOST }, redirect: "manual",
+  });
+  assert.ok(wrongHash.status >= 300 && wrongHash.status < 400, `expected redirect, got ${wrongHash.status}`);
+  row = await pool.query("SELECT payment_status FROM orders WHERE id = $1", [orderId]);
+  assert.equal(row.rows[0]?.payment_status, "awaiting", "wrong-hash callback must NOT complete the order");
+  tok = await pool.query("SELECT status FROM tosla_payment_tokens WHERE token = $1", [merchantOrderId]);
+  assert.equal(tok.rows[0]?.status, "pending", "wrong-hash callback must leave the token pending");
+
+  // (c) Valid Hash → now it completes (proves legitimate callbacks still work).
+  const goodHash = await toslaCallbackHash({
+    orderId: merchantOrderId, mdStatus: "1", bankResponseCode: "00",
+    bankResponseMessage: "", requestStatus: "1",
+  });
+  const ok = await fetch(`${baseUrl}/api/tosla/callback?${successQs}&Hash=${encodeURIComponent(goodHash)}`, {
+    headers: { "X-Forwarded-Host": JETGO_HOST }, redirect: "manual",
+  });
+  assert.ok(ok.status >= 300 && ok.status < 400, `expected redirect, got ${ok.status}`);
+  row = await pool.query("SELECT payment_status FROM orders WHERE id = $1", [orderId]);
+  assert.equal(row.rows[0]?.payment_status, "completed", "valid-hash callback must complete the order");
+});
+
+// The Tosla webhook (server-to-server channel) shares the same signature
+// requirement: an unsigned success notification must not complete the order, but
+// a properly signed one must. (Webhook always answers 200, so we assert DB state.)
+test("tosla webhook rejects success payload without a valid hash, accepts a signed one", async () => {
+  const res = await postAsCustomer("/api/orders", JETGO_HOST, onlineOrderPayload());
+  assert.equal(res.status, 201, `online order POST failed: ${JSON.stringify(res.body)}`);
+  const orderId = res.body.id as number;
+  ids.orders.push(orderId);
+
+  const merchantOrderId = `${MARK}WH${orderId}`;
+  await pool.query(
+    `INSERT INTO tosla_payment_tokens (token, order_id, amount, status, updated_at)
+     VALUES ($1, $2, $3, 'pending', NOW())`,
+    [merchantOrderId, orderId, 100],
+  );
+  await pool.query("UPDATE orders SET payment_status = 'awaiting' WHERE id = $1", [orderId]);
+
+  const successQs = `OrderId=${encodeURIComponent(merchantOrderId)}&Code=0&BankResponseCode=00&MdStatus=1&RequestStatus=1`;
+
+  // No Hash → must not complete.
+  await fetch(`${baseUrl}/api/tosla/webhook?${successQs}`, {
+    headers: { "X-Forwarded-Host": JETGO_HOST },
+  });
+  let row = await pool.query("SELECT payment_status FROM orders WHERE id = $1", [orderId]);
+  assert.equal(row.rows[0]?.payment_status, "awaiting", "no-hash webhook must NOT complete the order");
+
+  // Valid Hash → completes.
+  const goodHash = await toslaCallbackHash({
+    orderId: merchantOrderId, mdStatus: "1", bankResponseCode: "00",
+    bankResponseMessage: "", requestStatus: "1",
+  });
+  await fetch(`${baseUrl}/api/tosla/webhook?${successQs}&Hash=${encodeURIComponent(goodHash)}`, {
+    headers: { "X-Forwarded-Host": JETGO_HOST },
+  });
+  row = await pool.query("SELECT payment_status FROM orders WHERE id = $1", [orderId]);
+  assert.equal(row.rows[0]?.payment_status, "completed", "valid-hash webhook must complete the order");
 });
 
 // ---- Payment-init enforces the ORDER's store policy, not the request host ----

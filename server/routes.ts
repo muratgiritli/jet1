@@ -2928,6 +2928,17 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         [orderId]
       );
       if (upd.rowCount === 0) return;
+      // Bu sipariş için bekleyen ödeme token'larını da 'failed' yap; aksi halde geç
+      // gelen geçerli bir Tosla/iyzico callback'i hâlâ 'pending' token'ı işleyip
+      // stoğu ikinci kez iade edebilir veya iptal edilmiş siparişi tamamlayabilir.
+      await sharedPool.query(
+        "UPDATE tosla_payment_tokens SET status = 'failed', updated_at = NOW() WHERE order_id = $1 AND status = 'pending'",
+        [orderId]
+      );
+      await sharedPool.query(
+        "UPDATE iyzico_payment_tokens SET status = 'failed', updated_at = NOW() WHERE order_id = $1 AND status = 'pending'",
+        [orderId]
+      );
       const items = upd.rows[0]?.items || [];
       for (const it of items) {
         const pid = parseInt(String(it.productId));
@@ -3150,21 +3161,30 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         return failRedirect(tok.order_id, merchantOrderId, "config-missing");
       }
 
-      if (callbackHash) {
-        try {
-          const expected = await toslaCallbackHash(cfg, {
-            OrderId: merchantOrderId,
-            MdStatus: mdStatus,
-            BankResponseCode: bankResponseCode,
-            BankResponseMessage: bankResponseMessage,
-            RequestStatus: requestStatus,
-          });
-          if (expected !== callbackHash) {
-            console.warn("[tosla-callback] hash mismatch", { merchantOrderId, expected, callbackHash });
-          }
-        } catch (e) {
-          console.warn("[tosla-callback] hash check error:", e);
-        }
+      // GÜVENLİK: Bu uç nokta herkese açık ve başarı kararı tamamen istemcinin
+      // gönderdiği alanlardan (Code/BankResponseCode/MdStatus/RequestStatus)
+      // çıkıyor. Alıcı kendi merchantOrderId token'ını bildiği için, Hash
+      // doğrulanmazsa ödeme yapmadan siparişini "completed" yapabilir. Tosla
+      // Hash'i yalnızca merchant gizli anahtarlarıyla üretilebildiği için, geçerli
+      // bir Hash olmadan siparişi ASLA tamamlamıyoruz. Hash yok/yanlışsa siparişi
+      // ne tamamlıyoruz ne de iptal ediyoruz (pending kalsın; webhook veya
+      // stale-cleanup çözer).
+      let hashValid = false;
+      try {
+        const expected = await toslaCallbackHash(cfg, {
+          OrderId: merchantOrderId,
+          MdStatus: mdStatus,
+          BankResponseCode: bankResponseCode,
+          BankResponseMessage: bankResponseMessage,
+          RequestStatus: requestStatus,
+        });
+        hashValid = !!callbackHash && expected === callbackHash;
+      } catch (e) {
+        console.warn("[tosla-callback] hash check error:", e);
+      }
+      if (!hashValid) {
+        console.error("[tosla-callback] REJECTED unverified callback", { merchantOrderId, hasHash: !!callbackHash });
+        return failRedirect(tok.order_id, merchantOrderId, "verification-failed");
       }
 
       const codeOk = code === "" || code === "0" || code === "00";
@@ -3311,21 +3331,24 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       const transactionId = String(payload.TransactionId ?? "").trim();
       const callbackHash = String(payload.Hash ?? payload.hash ?? "").trim();
 
-      if (callbackHash) {
-        try {
-          const expected = await toslaCallbackHash(cfg, {
-            OrderId: merchantOrderId,
-            MdStatus: mdStatus,
-            BankResponseCode: bankResponseCode,
-            BankResponseMessage: bankResponseMessage,
-            RequestStatus: requestStatus,
-          });
-          if (expected !== callbackHash) {
-            console.warn("[tosla-webhook] hash mismatch");
-          }
-        } catch (e) {
-          console.warn("[tosla-webhook] hash check error:", e);
-        }
+      // GÜVENLİK: callback ile aynı gerekçe — geçerli bir Tosla Hash'i olmadan
+      // (yalnızca merchant gizli anahtarlarıyla üretilebilir) siparişi tamamlamayız.
+      let hashValid = false;
+      try {
+        const expected = await toslaCallbackHash(cfg, {
+          OrderId: merchantOrderId,
+          MdStatus: mdStatus,
+          BankResponseCode: bankResponseCode,
+          BankResponseMessage: bankResponseMessage,
+          RequestStatus: requestStatus,
+        });
+        hashValid = !!callbackHash && expected === callbackHash;
+      } catch (e) {
+        console.warn("[tosla-webhook] hash check error:", e);
+      }
+      if (!hashValid) {
+        console.error("[tosla-webhook] REJECTED unverified webhook", { merchantOrderId, hasHash: !!callbackHash });
+        return sendOk();
       }
 
       const codeOk = code === "" || code === "0" || code === "00";
