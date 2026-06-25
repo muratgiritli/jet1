@@ -189,6 +189,24 @@
   }
 }
 
+/* Global guard: no page should ever scroll sideways. overflow-x: clip on the
+   app root clips stray horizontal overflow (e.g. a wide table/image inside an
+   admin-entered product description) without creating a scroll container, so
+   position: sticky and normal vertical page scrolling keep working. Scoped to
+   #root (NOT html/body) to avoid the root-element viewport overflow-propagation
+   quirk that can disable vertical scrolling. */
+#root {
+  overflow-x: clip;
+}
+/* Fallback for browsers without overflow:clip support. #root has auto height,
+   so overflow-x:hidden here clips horizontally without becoming a vertical
+   scroll container (vertical page scroll stays on the window). */
+@supports not (overflow: clip) {
+  #root {
+    overflow-x: hidden;
+  }
+}
+
 /**
  * Using the elevate system.
  * Automatic contrast adjustment.
@@ -245,7 +263,7 @@
 .prose-product * {
   max-width: 100%;
   word-break: normal;
-  overflow-wrap: normal;
+  overflow-wrap: break-word;
   hyphens: none;
   -webkit-hyphens: none;
 }
@@ -256,6 +274,14 @@
 }
 .prose-product img,
 .prose-product table { max-width: 100%; height: auto; }
+.prose-product table,
+.prose-product pre {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+}
+.prose-product iframe,
+.prose-product video { max-width: 100%; }
 .prose-product h2 {
   font-size: 1.15rem;
   font-weight: 700;
