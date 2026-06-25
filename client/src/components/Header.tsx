@@ -112,7 +112,7 @@ export default function Header() {
       </header>
 
       <nav className="sticky top-[52px] z-[9998]" style={{ backgroundColor: CURRENT_STORE.theme.navBar }}>
-        <div className="max-w-6xl mx-auto px-3 md:px-4">
+        <div className="max-w-6xl mx-auto px-3 md:px-4 overflow-x-auto scrollbar-hide">
           <ul className="flex items-center justify-start gap-0.5 md:gap-2 py-1 md:py-1.5 flex-nowrap whitespace-nowrap" data-testid="nav-categories">
             {navItems.map((item) => {
               const isHighlight = "highlight" in item && item.highlight;
