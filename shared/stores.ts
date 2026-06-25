@@ -47,6 +47,12 @@ export interface StoreCommerce {
    * detay sayfasına yönlendirir. Yalnızca jetgo (jetgomarket.com) için açıktır.
    */
   quickAddToCart?: boolean;
+  /**
+   * true ise misafir (üyeliksiz) sipariş akışı açıktır: müşteri ad + telefon +
+   * adres girer, sipariş tek seferlik SMS koduyla onaylanır (arka planda sessiz
+   * hesap oluşturulur). Üyelik duvarı gösterilmez. Yalnızca jetgo için açıktır.
+   */
+  guestCheckout?: boolean;
 }
 
 /**
@@ -158,6 +164,7 @@ const jetgo: StoreConfig = {
     onlinePaymentOnly: false,
     preorderEnabled: true,
     quickAddToCart: true,
+    guestCheckout: true,
   },
 };
 

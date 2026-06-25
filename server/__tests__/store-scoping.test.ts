@@ -1596,6 +1596,24 @@ test("atakum is a LOCAL same-day store (drives Mahalle checkout, not cargo)", ()
   assert.notEqual(atakum.commerce.fulfillment, SYNTHETIC_CARGO_STORE.commerce.fulfillment);
 });
 
+test("guestCheckout (frictionless misafir sipariş) is enabled ONLY on jetgomarket.com", () => {
+  // checkout.tsx gates the membership-free guest flow on `commerce.guestCheckout`:
+  // when true the login/register wall is suppressed, an inline name+phone+address
+  // contact section appears, and the order is confirmed with a single SMS code
+  // (silent account under the hood). Only jetgo opts in; the other 8 keep the wall.
+  const jetgo = getStoreByHost(JETGO_HOST);
+  assert.equal(jetgo.commerce.guestCheckout, true, "jetgomarket.com must allow guest (no-membership) checkout");
+
+  for (const store of STORES) {
+    if (store.id === "jetgo") continue;
+    assert.notEqual(
+      store.commerce.guestCheckout,
+      true,
+      `${store.id} must NOT enable guest checkout (membership wall must stay)`,
+    );
+  }
+});
+
 test("brandify swaps shared JETGO body copy to the Atakum brand word", () => {
   const atakum = getStoreByHost(ATAKUM_HOST);
   assert.equal(brandifyFor(atakum, "Neden JETGO?"), "Neden Atakum?");

@@ -91,6 +91,11 @@ export default function Checkout() {
   const isCargo = store.commerce.fulfillment === "cargo";
   const onlinePaymentOnly = store.commerce.onlinePaymentOnly;
   const shippingLabel = store.commerce.shippingLabel;
+  const guestCheckout = store.commerce.guestCheckout === true;
+  const [guestMode, setGuestMode] = useState(false);
+  const pendingOrderRef = useRef<Record<string, unknown> | null>(null);
+  const guestStartingRef = useRef(false);
+  const placingOrderRef = useRef(false);
   const [cargoCity, setCargoCity] = useState("");
   const [cargoDistrict, setCargoDistrict] = useState("");
 
@@ -262,6 +267,15 @@ export default function Checkout() {
     setAuthLoading(true);
     const normalized = authPhone.replace(/\D/g, "");
     try {
+      if (guestMode) {
+        await loginWithOtp(normalized, code, customerName.trim(), customerAddress.trim() || undefined);
+        setShowAuthModal(false);
+        setGuestMode(false);
+        const payload = pendingOrderRef.current;
+        pendingOrderRef.current = null;
+        if (payload) await placeOrder(payload, { loggedIn: true });
+        return;
+      }
       const data = await loginWithOtp(normalized, code);
       if (data?.requiresRegistration) {
         setAuthMode("register");
@@ -372,12 +386,13 @@ export default function Checkout() {
   useEffect(() => {
     if (authAutoShown) return;
     if (isLoggedIn) { setAuthAutoShown(true); return; }
+    if (guestCheckout) { setAuthAutoShown(true); return; }
     if (selectedProducts.length === 0) return;
     setShowAuthModal(true);
     setAuthStep("phone");
     setAuthErrors({});
     setAuthAutoShown(true);
-  }, [isLoggedIn, selectedProducts.length, authAutoShown]);
+  }, [isLoggedIn, selectedProducts.length, authAutoShown, guestCheckout]);
 
   const [orderError, setOrderError] = useState("");
   const [orderNote, setOrderNote] = useState("");
@@ -573,105 +588,167 @@ export default function Checkout() {
     setCouponCode("");
   };
 
-  const handleOrder = async () => {
-    if (!isLoggedIn) {
-      setShowAuthModal(true);
-      return;
-    }
+  const validateOrderForm = (): boolean => {
     if (!customerName.trim()) {
       setOrderError("Lütfen ad soyad bilginizi girin.");
-      return;
+      return false;
     }
     if (!customerPhone.trim()) {
       setOrderError("Lütfen telefon numaranızı girin.");
-      return;
+      return false;
     }
     if (isCargo && (!cargoCity || !cargoDistrict)) {
       setOrderError("Lütfen il ve ilçe seçiniz.");
-      return;
+      return false;
     }
     if (!customerAddress.trim()) {
       setOrderError("Lütfen teslimat adresinizi girin.");
-      return;
+      return false;
     }
     if (hasCampaignItems && !campaignValid) {
       setOrderError("Kampanyadan yararlanmak için sepete en az 1 ana ürün ve 1 ek ürün eklemeniz gerekmektedir.");
-      return;
+      return false;
     }
     if (donationDelivery) {
-      if (!donationRecipientName.trim()) { setOrderError("Lütfen bağış alıcısının adını girin."); return; }
-      if (!donationRecipientPhone.trim() || donationRecipientPhone.replace(/\D/g, "").length < 10) { setOrderError("Lütfen bağış alıcısının telefon numarasını girin."); return; }
-      if (!donationRecipientAddress.trim() || donationRecipientAddress.trim().length < 10) { setOrderError("Lütfen bağış alıcısının Atakum içi adresini girin."); return; }
-      if (paymentId !== "eft" && paymentId !== "online") { setOrderError("Bağış teslimatlarında sadece Banka Havalesi veya Online Kredi Kartı ile ödeme yapılabilir."); return; }
+      if (!donationRecipientName.trim()) { setOrderError("Lütfen bağış alıcısının adını girin."); return false; }
+      if (!donationRecipientPhone.trim() || donationRecipientPhone.replace(/\D/g, "").length < 10) { setOrderError("Lütfen bağış alıcısının telefon numarasını girin."); return false; }
+      if (!donationRecipientAddress.trim() || donationRecipientAddress.trim().length < 10) { setOrderError("Lütfen bağış alıcısının Atakum içi adresini girin."); return false; }
+      if (paymentId !== "eft" && paymentId !== "online") { setOrderError("Bağış teslimatlarında sadece Banka Havalesi veya Online Kredi Kartı ile ödeme yapılabilir."); return false; }
     }
     if (!effectiveMinReached || selectedProducts.length === 0 || orderLoading) {
-      return;
+      return false;
     }
     setOrderError("");
-    const pay = PAYMENT_OPTIONS.find((p) => p.id === paymentId)!;
+    return true;
+  };
 
+  const buildOrderPayload = (): Record<string, unknown> => {
+    const pay = PAYMENT_OPTIONS.find((p) => p.id === paymentId)!;
+    const orderItems = selectedProducts.map(({ product, qty }) => ({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      quantity: qty,
+      img: product.img || undefined,
+    }));
+
+    const payMethod = hasCampaignItems
+      ? "Kapıda Nakit"
+      : hasPreorderItems
+        ? "Ön Sipariş - Online Kredi Kartı"
+        : pay.name;
+    const finalTotal = displayTotal;
+
+    return {
+      items: orderItems,
+      subtotal,
+      shipping: effectiveShipping,
+      discount: effectiveDiscount,
+      grandTotal: finalTotal,
+      paymentMethod: payMethod,
+      customerName: donationDelivery ? donationRecipientName.trim() : customerName.trim(),
+      customerPhone: donationDelivery ? donationRecipientPhone.trim() : customerPhone.trim(),
+      customerAddress: donationDelivery ? donationRecipientAddress.trim() : customerAddress.trim(),
+      city: isCargo ? cargoCity : undefined,
+      district: isCargo ? cargoDistrict : undefined,
+      couponCode: appliedCoupon ? appliedCoupon.code : undefined,
+      donationAmount: donationAmount > 0 ? donationAmount : undefined,
+      customerNote: ((): string | undefined => {
+        const flags: string[] = [];
+        if (contactlessDelivery) flags.push("Temassız Teslimat");
+        if (doNotRing) flags.push("Zile Basma");
+        if (donationDelivery) flags.push("BAĞIŞ TESLİMATI (Atakum içi)");
+        if (hasPreorderItems) {
+          flags.push(`ÖN SİPARİŞ • Online Kredi Kartı ile tam ödeme`);
+        }
+        const flagText = flags.length ? `[${flags.join(" • ")}]` : "";
+        const donorText = donationDelivery
+          ? `Bağışçı: ${customerName.trim()} (${customerPhone.trim()}) — Fatura adresi: ${customerAddress.trim()}`
+          : "";
+        const combined = [flagText, donorText, orderNote.trim()].filter(Boolean).join(" | ");
+        return combined || undefined;
+      })(),
+      deliverySlot: (isCargo || selectedProducts.some(({ product }) => isPreorderProduct(String(product.id))) || hasCampaignItems) ? undefined : (deliverySlot || undefined),
+      campaignProductIds: hasCampaignItems ? Array.from(campaignCartIds) : undefined,
+      ...((paymentId === "pos" || paymentId === "online") && installmentMonths > 1 ? (() => {
+        const rRaw = installmentRates.find(x => x.months === installmentMonths);
+        const r = rRaw ? { ...rRaw, rate: rRaw.noInterest ? 0 : rRaw.rate } : rRaw;
+        if (!r) return {};
+        const grandTotal = displayTotal * (1 + (r.rate || 0) / 100);
+        return {
+          installmentMonths: r.months,
+          installmentRate: r.rate,
+          installmentMonthly: Math.round((grandTotal / r.months) * 100) / 100,
+          installmentTotal: Math.round(grandTotal * 100) / 100,
+        };
+      })() : {}),
+    };
+  };
+
+  // Misafir (üyeliksiz) akış: telefona tek seferlik SMS kodu gönder. Cihaz
+  // güvenilir kayıtlıysa SMS atlanır ve sipariş doğrudan tamamlanır.
+  const sendGuestOtp = async (normalized: string) => {
+    setAuthLoading(true);
+    try {
+      let deviceToken: string | undefined;
+      try {
+        const tokens = JSON.parse(localStorage.getItem("jetgo_trusted_devices") || "{}");
+        deviceToken = tokens[normalized];
+      } catch {}
+      const res = await apiRequest("POST", "/api/otp/send", { phone: normalized, deviceToken });
+      const data = await res.json();
+      if (data.trustedLogin && data.customer) {
+        setShowAuthModal(false);
+        setGuestMode(false);
+        const payload = pendingOrderRef.current;
+        pendingOrderRef.current = null;
+        if (payload) await placeOrder(payload, { loggedIn: true });
+        return;
+      }
+      setAuthCountdown(180);
+      setAuthOtpCode(["", "", "", ""]);
+      setTimeout(() => authOtpRefs.current[0]?.focus(), 100);
+    } catch (err: any) {
+      let msg = "SMS gönderilemedi";
+      try { msg = JSON.parse(err.message.replace(/^\d+:\s*/, "")).message; } catch {}
+      setAuthErrors({ otp: msg });
+    } finally {
+      setAuthLoading(false);
+    }
+  };
+
+  const startGuestOrder = async () => {
+    if (guestStartingRef.current) return;
+    // OTP send ve doğrulama AYNI numarayı kullanmalı: doAuthVerify authPhone
+    // üzerinden doğruladığı için normalized'i de formatAuthPhone'dan türetiyoruz.
+    const formatted = formatAuthPhone(customerPhone);
+    const normalized = formatted.replace(/\D/g, "");
+    if (normalized.length < 10) {
+      setOrderError("Lütfen geçerli bir telefon numarası girin.");
+      return;
+    }
+    guestStartingRef.current = true;
+    try {
+      pendingOrderRef.current = buildOrderPayload();
+      setAuthPhone(formatted);
+      setAuthOtpCode(["", "", "", ""]);
+      setAuthErrors({});
+      setGuestMode(true);
+      setShowAuthModal(true);
+      setAuthStep("otp");
+      await sendGuestOtp(normalized);
+    } finally {
+      guestStartingRef.current = false;
+    }
+  };
+
+  const placeOrder = async (orderPayload: Record<string, unknown>, opts?: { loggedIn?: boolean }) => {
+    if (placingOrderRef.current) return;
+    placingOrderRef.current = true;
+    const loggedIn = opts?.loggedIn ?? isLoggedIn;
+    setOrderError("");
     setOrderLoading(true);
     try {
-      const orderItems = selectedProducts.map(({ product, qty }) => ({
-        productId: product.id,
-        name: product.name,
-        price: product.price,
-        quantity: qty,
-        img: product.img || undefined,
-      }));
-
-      const payMethod = hasCampaignItems
-        ? "Kapıda Nakit"
-        : hasPreorderItems
-          ? "Ön Sipariş - Online Kredi Kartı"
-          : pay.name;
-      const finalTotal = displayTotal;
-
-      const orderPayload: Record<string, unknown> = {
-        items: orderItems,
-        subtotal,
-        shipping: effectiveShipping,
-        discount: effectiveDiscount,
-        grandTotal: finalTotal,
-        paymentMethod: payMethod,
-        customerName: donationDelivery ? donationRecipientName.trim() : customerName.trim(),
-        customerPhone: donationDelivery ? donationRecipientPhone.trim() : customerPhone.trim(),
-        customerAddress: donationDelivery ? donationRecipientAddress.trim() : customerAddress.trim(),
-        city: isCargo ? cargoCity : undefined,
-        district: isCargo ? cargoDistrict : undefined,
-        couponCode: appliedCoupon ? appliedCoupon.code : undefined,
-        donationAmount: donationAmount > 0 ? donationAmount : undefined,
-        customerNote: ((): string | undefined => {
-          const flags: string[] = [];
-          if (contactlessDelivery) flags.push("Temassız Teslimat");
-          if (doNotRing) flags.push("Zile Basma");
-          if (donationDelivery) flags.push("BAĞIŞ TESLİMATI (Atakum içi)");
-          if (hasPreorderItems) {
-            flags.push(`ÖN SİPARİŞ • Online Kredi Kartı ile tam ödeme`);
-          }
-          const flagText = flags.length ? `[${flags.join(" • ")}]` : "";
-          const donorText = donationDelivery
-            ? `Bağışçı: ${customerName.trim()} (${customerPhone.trim()}) — Fatura adresi: ${customerAddress.trim()}`
-            : "";
-          const combined = [flagText, donorText, orderNote.trim()].filter(Boolean).join(" | ");
-          return combined || undefined;
-        })(),
-        deliverySlot: (isCargo || selectedProducts.some(({ product }) => isPreorderProduct(String(product.id))) || hasCampaignItems) ? undefined : (deliverySlot || undefined),
-        campaignProductIds: hasCampaignItems ? Array.from(campaignCartIds) : undefined,
-        ...((paymentId === "pos" || paymentId === "online") && installmentMonths > 1 ? (() => {
-          const rRaw = installmentRates.find(x => x.months === installmentMonths);
-          const r = rRaw ? { ...rRaw, rate: rRaw.noInterest ? 0 : rRaw.rate } : rRaw;
-          if (!r) return {};
-          const grandTotal = displayTotal * (1 + (r.rate || 0) / 100);
-          return {
-            installmentMonths: r.months,
-            installmentRate: r.rate,
-            installmentMonthly: Math.round((grandTotal / r.months) * 100) / 100,
-            installmentTotal: Math.round(grandTotal * 100) / 100,
-          };
-        })() : {}),
-      };
-
       const orderRes = await apiRequest("POST", "/api/orders", orderPayload);
       const orderResult: any = await orderRes.json();
 
@@ -723,7 +800,8 @@ export default function Checkout() {
       if (typeof window !== "undefined" && (window as any).gtag) {
         try {
           const transactionId = `JG-${Date.now()}-${Math.floor(Math.random() * 9999)}`;
-          const ga4Items = orderItems.map((it) => ({
+          const gaItems = (orderPayload.items as Array<{ productId: unknown; name: string; price: number; quantity: number }>) || [];
+          const ga4Items = gaItems.map((it) => ({
             item_id: String(it.productId),
             item_name: it.name,
             price: it.price,
@@ -731,7 +809,7 @@ export default function Checkout() {
           }));
           (window as any).gtag("event", "purchase", {
             transaction_id: transactionId,
-            value: finalTotal,
+            value: orderPayload.grandTotal,
             currency: "TRY",
             shipping: effectiveShipping,
             items: ga4Items,
@@ -740,7 +818,7 @@ export default function Checkout() {
       }
 
       const trimmedAddress = customerAddress.trim();
-      if (isLoggedIn && trimmedAddress) {
+      if (loggedIn && trimmedAddress) {
         try {
           await updateProfile({ address: trimmedAddress });
         } catch {}
@@ -761,7 +839,7 @@ export default function Checkout() {
 
       queryClient.invalidateQueries({ queryKey: ["/api/customer/orders"] });
 
-      if (isLoggedIn) {
+      if (loggedIn) {
         setLocation("/hesabim?tab=orders");
       } else {
         setLocation("/giris?redirect=" + encodeURIComponent("/hesabim?tab=orders"));
@@ -779,7 +857,22 @@ export default function Checkout() {
       setOrderError(errorMsg);
     } finally {
       setOrderLoading(false);
+      placingOrderRef.current = false;
     }
+  };
+
+  const handleOrder = async () => {
+    if (!isLoggedIn) {
+      if (guestCheckout) {
+        if (!validateOrderForm()) return;
+        await startGuestOrder();
+        return;
+      }
+      setShowAuthModal(true);
+      return;
+    }
+    if (!validateOrderForm()) return;
+    await placeOrder(buildOrderPayload());
   };
 
   return (
@@ -794,25 +887,27 @@ export default function Checkout() {
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
             <div className="relative w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[90vh] overflow-y-auto bg-gradient-to-b from-blue-500 to-indigo-600 text-white" data-testid="modal-auth">
               <div className="px-5 pt-3 pb-2">
-                <div className="flex rounded-xl overflow-hidden mb-3 bg-white/10">
-                  <button
-                    type="button"
-                    onClick={() => { setAuthMode("login"); setAuthStep("phone"); setAuthErrors({}); }}
-                    className={`flex-1 py-2.5 text-sm font-bold text-center transition-colors ${authMode === "login" ? "bg-yellow-400 text-gray-900" : "text-white/80 hover:text-white"}`}
-                    data-testid="tab-auth-login"
-                  >
-                    ÜYE GİRİŞİ
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => { setAuthMode("register"); setAuthStep("phone"); setAuthErrors({}); }}
-                    className={`flex-1 py-2.5 text-sm font-bold text-center transition-colors ${authMode === "register" ? "bg-yellow-400 text-gray-900" : "text-white/80 hover:text-white"}`}
-                    data-testid="tab-auth-register"
-                  >
-                    YENİ ÜYE OL
-                  </button>
-                </div>
-                {authMode === "register" && (
+                {!guestMode && (
+                  <div className="flex rounded-xl overflow-hidden mb-3 bg-white/10">
+                    <button
+                      type="button"
+                      onClick={() => { setAuthMode("login"); setAuthStep("phone"); setAuthErrors({}); }}
+                      className={`flex-1 py-2.5 text-sm font-bold text-center transition-colors ${authMode === "login" ? "bg-yellow-400 text-gray-900" : "text-white/80 hover:text-white"}`}
+                      data-testid="tab-auth-login"
+                    >
+                      ÜYE GİRİŞİ
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { setAuthMode("register"); setAuthStep("phone"); setAuthErrors({}); }}
+                      className={`flex-1 py-2.5 text-sm font-bold text-center transition-colors ${authMode === "register" ? "bg-yellow-400 text-gray-900" : "text-white/80 hover:text-white"}`}
+                      data-testid="tab-auth-register"
+                    >
+                      YENİ ÜYE OL
+                    </button>
+                  </div>
+                )}
+                {!guestMode && authMode === "register" && (
                   <div className="flex items-center gap-3 mb-1">
                     <div className="w-11 h-11 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
                       <Gift className="w-6 h-6" />
@@ -823,7 +918,7 @@ export default function Checkout() {
                     </div>
                   </div>
                 )}
-                {authMode === "login" && (
+                {!guestMode && authMode === "login" && (
                   <div className="flex items-center gap-3 mb-1">
                     <div className="w-11 h-11 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
                       <LogIn className="w-6 h-6" />
@@ -831,6 +926,17 @@ export default function Checkout() {
                     <div>
                       <p className="font-bold text-lg leading-tight">Hoş Geldiniz</p>
                       <p className="text-sm text-white/90 leading-tight">Telefon numaranızla giriş yapın</p>
+                    </div>
+                  </div>
+                )}
+                {guestMode && (
+                  <div className="flex items-center gap-3 mb-1">
+                    <div className="w-11 h-11 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                      <PhoneIcon className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <p className="font-bold text-lg leading-tight">Siparişini Onayla</p>
+                      <p className="text-sm text-white/90 leading-tight">Telefonuna gönderdiğimiz SMS kodunu gir, üyelik gerekmez.</p>
                     </div>
                   </div>
                 )}
@@ -907,11 +1013,11 @@ export default function Checkout() {
                     )}
                     {authErrors.otp && <p className="text-yellow-200 text-xs text-center">{authErrors.otp}</p>}
                     <div className="flex items-center justify-between">
-                      <button type="button" className="text-xs text-white/70 hover:text-white" onClick={() => { setAuthStep("phone"); setAuthErrors({}); }} data-testid="btn-auth-back-phone">
-                        ← Numarayı Değiştir
+                      <button type="button" className="text-xs text-white/70 hover:text-white" onClick={() => { if (guestMode) { setShowAuthModal(false); setGuestMode(false); } else { setAuthStep("phone"); setAuthErrors({}); } }} data-testid="btn-auth-back-phone">
+                        {guestMode ? "← Vazgeç" : "← Numarayı Değiştir"}
                       </button>
                       {authCountdown <= 0 && (
-                        <button type="button" className="text-xs text-yellow-300 hover:text-yellow-200" onClick={handleAuthSendOtp} disabled={authLoading} data-testid="btn-auth-resend">
+                        <button type="button" className="text-xs text-yellow-300 hover:text-yellow-200" onClick={() => guestMode ? sendGuestOtp(authPhone.replace(/\D/g, "")) : handleAuthSendOtp()} disabled={authLoading} data-testid="btn-auth-resend">
                           Tekrar Gönder
                         </button>
                       )}
@@ -1086,6 +1192,47 @@ export default function Checkout() {
                 </CardContent>
               </Card>
             </section>
+
+            {guestCheckout && !isLoggedIn && (
+              <section className="mt-6">
+                <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-contact">
+                  <UserIcon className="w-4 h-4 inline mr-1.5 -mt-0.5" />
+                  İletişim Bilgileri
+                </h2>
+                <Card>
+                  <CardContent className="p-4 space-y-3">
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Ad Soyad*</label>
+                      <Input
+                        value={customerName}
+                        onChange={(e) => setCustomerName(e.target.value)}
+                        placeholder="Adınız Soyadınız"
+                        maxLength={100}
+                        data-testid="input-guest-name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Telefon*</label>
+                      <div className="relative">
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm font-medium">+90</span>
+                        <Input
+                          type="tel"
+                          inputMode="numeric"
+                          value={formatAuthPhone(customerPhone)}
+                          onChange={(e) => setCustomerPhone(e.target.value.replace(/\D/g, "").replace(/^0+/, "").slice(0, 10))}
+                          placeholder="5XX XXX XX XX"
+                          className="pl-12"
+                          data-testid="input-guest-phone"
+                        />
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-1.5">
+                        Üyelik gerekmez. Siparişinizi onaylamak için bu numaraya tek seferlik SMS kodu göndereceğiz.
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </section>
+            )}
 
             {hasStreetAnimalItems && (
               <section className="mt-6" data-testid="section-donation-delivery">
@@ -1434,7 +1581,7 @@ export default function Checkout() {
                       return (
                         <label
                           key={opt.id}
-                          className={`flex items-center gap-2 p-3 rounded-md cursor-pointer transition-colors ${paymentId === opt.id ? "bg-accent" : ""}`}
+                          className={`flex items-center gap-2 p-3 rounded-md cursor-pointer transition-colors ${paymentId === opt.id ? "bg-accent" : ""} ${guestCheckout && opt.id === "nakit" ? "border-2 border-emerald-500 dark:border-emerald-600" : "border-2 border-transparent"}`}
                           data-testid={`radio-payment-${opt.id}`}
                         >
                           <RadioGroupItem value={opt.id} data-testid={`input-radio-${opt.id}`} />
@@ -1446,6 +1593,9 @@ export default function Checkout() {
                                 <span className="ml-1 text-[10px] font-semibold text-muted-foreground">{surchargeLabel(surchargeRate)}</span>
                               ) : (
                                 <span className="ml-1 text-[10px] font-semibold text-emerald-600">en uygun</span>
+                              )}
+                              {guestCheckout && opt.id === "nakit" && (
+                                <span className="ml-1.5 text-[10px] font-bold text-white bg-emerald-600 px-1.5 py-0.5 rounded" data-testid="badge-payment-recommended">Önerilen</span>
                               )}
                             </span>
                             {opt.id === "online" && (
@@ -1639,12 +1789,12 @@ export default function Checkout() {
                     className="w-full mt-5"
                     variant="default"
                     size="lg"
-                    disabled={!effectiveMinReached || selectedProducts.length === 0 || orderLoading || (hasCampaignItems && !campaignValid)}
+                    disabled={!effectiveMinReached || selectedProducts.length === 0 || orderLoading || authLoading || (hasCampaignItems && !campaignValid)}
                     onClick={handleOrder}
                     data-testid="btn-order-submit"
                   >
                     {orderLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ShoppingBag className="w-5 h-5" />}
-                    {orderLoading ? "Kaydediliyor..." : "Şimdi Öde"}
+                    {orderLoading ? "Kaydediliyor..." : (guestCheckout && !isLoggedIn ? "Siparişi Tamamla" : "Şimdi Öde")}
                   </Button>
 
                   {orderError && (
