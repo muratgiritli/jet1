@@ -53,6 +53,12 @@ export interface StoreCommerce {
    * hesap oluşturulur). Üyelik duvarı gösterilmez. Yalnızca jetgo için açıktır.
    */
   guestCheckout?: boolean;
+  /**
+   * true ise liste/kategori sayfaları ve ürün detay sayfası yeni (modern) tasarımı
+   * kullanır: yatay ürün satırları (Ürünü İncele) + zengin ürün detay sayfası.
+   * Yalnızca jetgo (jetgomarket.com) için açıktır.
+   */
+  modernCatalogUI?: boolean;
 }
 
 /**
@@ -165,6 +171,7 @@ const jetgo: StoreConfig = {
     preorderEnabled: true,
     quickAddToCart: true,
     guestCheckout: true,
+    modernCatalogUI: true,
   },
 };
 
