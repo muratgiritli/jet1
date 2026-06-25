@@ -68,6 +68,7 @@ export default function Checkout() {
   const [customerPhone, setCustomerPhone] = useState("");
   const [customerName, setCustomerName] = useState("");
   const [customerAddress, setCustomerAddress] = useState("");
+  const [selectedMahalle, setSelectedMahalle] = useState("");
   const [isReturningCustomer, setIsReturningCustomer] = useState(false);
   const [lookupDone, setLookupDone] = useState(false);
   const [lookupLoading, setLookupLoading] = useState(false);
@@ -448,9 +449,14 @@ export default function Checkout() {
   const [couponResult, setCouponResult] = useState<{ valid: boolean; message: string; discountAmount?: number; discountType?: string; discountValue?: number } | null>(null);
   const [appliedCoupon, setAppliedCoupon] = useState<{ code: string; discountAmount: number } | null>(null);
 
+  const mahalleActive = jetgoModern && !isCargo && !donationDelivery;
   const matchedNeighborhood = useMemo(() => {
     const list = (deliveryNeighborhoods || []).filter(n => n.isActive);
     if (!list.length) return null;
+    if (mahalleActive && selectedMahalle) {
+      const exact = list.find(n => n.name === selectedMahalle);
+      if (exact) return exact;
+    }
     const addrLower = (customerAddress || "").toLocaleLowerCase("tr");
     if (!addrLower.trim()) return null;
     const compactAddr = addrLower.replace(/\s+/g, " ");
@@ -466,7 +472,24 @@ export default function Checkout() {
       }
     }
     return best;
-  }, [customerAddress, deliveryNeighborhoods]);
+  }, [customerAddress, deliveryNeighborhoods, selectedMahalle, mahalleActive]);
+
+  useEffect(() => {
+    if (!mahalleActive) return;
+    if (selectedMahalle) return;
+    const list = (deliveryNeighborhoods || []).filter(n => n.isActive);
+    if (!list.length) return;
+    const noSpaceAddr = (customerAddress || "").toLocaleLowerCase("tr").replace(/\s+/g, "");
+    if (!noSpaceAddr) return;
+    let best: typeof list[number] | null = null;
+    for (const nh of list) {
+      const noSpaceNb = (nh.name || "").toLocaleLowerCase("tr").replace(/\s+/g, "");
+      if (noSpaceNb && noSpaceAddr.includes(noSpaceNb)) {
+        if (!best || nh.name.length > best.name.length) best = nh;
+      }
+    }
+    if (best) setSelectedMahalle(best.name);
+  }, [mahalleActive, deliveryNeighborhoods, customerAddress, selectedMahalle]);
 
   const effShipFee = isCargo ? cargoFee : (matchedNeighborhood ? matchedNeighborhood.shippingFee : CONFIG.shipFee);
   const effShipLimit = isCargo ? (cargoFreeLimit > 0 ? cargoFreeLimit : Number.POSITIVE_INFINITY) : (matchedNeighborhood ? matchedNeighborhood.freeShippingLimit : CONFIG.shipLimit);
@@ -606,6 +629,10 @@ export default function Checkout() {
       setOrderError("Lütfen teslimat adresinizi girin.");
       return false;
     }
+    if (jetgoModern && !isCargo && !donationDelivery && !selectedMahalle) {
+      setOrderError("Lütfen mahallenizi seçin.");
+      return false;
+    }
     if (hasCampaignItems && !campaignValid) {
       setOrderError("Kampanyadan yararlanmak için sepete en az 1 ana ürün ve 1 ek ürün eklemeniz gerekmektedir.");
       return false;
@@ -639,6 +666,15 @@ export default function Checkout() {
         ? "Ön Sipariş - Online Kredi Kartı"
         : pay.name;
     const finalTotal = displayTotal;
+    const localAddress = (() => {
+      const base = customerAddress.trim();
+      if (mahalleActive && selectedMahalle) {
+        const baseLc = base.toLocaleLowerCase("tr").replace(/\s+/g, "");
+        const mhLc = selectedMahalle.toLocaleLowerCase("tr").replace(/\s+/g, "");
+        if (mhLc && !baseLc.includes(mhLc)) return `${selectedMahalle} Mah., ${base}`;
+      }
+      return base;
+    })();
 
     return {
       items: orderItems,
@@ -649,7 +685,8 @@ export default function Checkout() {
       paymentMethod: payMethod,
       customerName: donationDelivery ? donationRecipientName.trim() : customerName.trim(),
       customerPhone: donationDelivery ? donationRecipientPhone.trim() : customerPhone.trim(),
-      customerAddress: donationDelivery ? donationRecipientAddress.trim() : customerAddress.trim(),
+      customerAddress: donationDelivery ? donationRecipientAddress.trim() : localAddress,
+      neighborhood: (mahalleActive && selectedMahalle) ? selectedMahalle : undefined,
       city: isCargo ? cargoCity : undefined,
       district: isCargo ? cargoDistrict : undefined,
       couponCode: appliedCoupon ? appliedCoupon.code : undefined,
@@ -1349,8 +1386,27 @@ export default function Checkout() {
                       </div>
                     </div>
                   )}
+                  {jetgoModern && !isCargo && !donationDelivery && (
+                    <div className="mb-3">
+                      <label className="block text-xs font-medium text-muted-foreground mb-1">Mahalle*</label>
+                      <select
+                        value={selectedMahalle}
+                        onChange={(e) => setSelectedMahalle(e.target.value)}
+                        className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        data-testid="select-checkout-mahalle"
+                      >
+                        <option value="">Mahalle seçiniz</option>
+                        {[...deliveryNeighborhoods]
+                          .filter((n) => n.isActive)
+                          .sort((a, b) => a.name.localeCompare(b.name, "tr"))
+                          .map((n) => (
+                            <option key={n.id} value={n.name}>{n.district ? `${n.name} (${n.district})` : n.name}</option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
                   <Textarea
-                    placeholder="Mahalle, cadde, bina no, kat, daire no..."
+                    placeholder={mahalleActive ? "Cadde, sokak, bina no, kat, daire no..." : "Mahalle, cadde, bina no, kat, daire no..."}
                     value={customerAddress}
                     onChange={(e) => setCustomerAddress(e.target.value)}
                     className={`resize-none ${customerAddress.length > 0 && customerAddress.trim().length < 15 ? "border-amber-400 focus-visible:ring-amber-400" : customerAddress.trim().length >= 15 ? "border-green-400 focus-visible:ring-green-400" : ""}`}

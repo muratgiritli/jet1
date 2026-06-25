@@ -2622,27 +2622,44 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     let matchedNeighborhood: string | null = null;
     try {
       const nbRes = await sharedPool.query(
-        "SELECT name, min_order, shipping_fee, free_shipping_limit FROM delivery_neighborhoods WHERE is_active = true AND (store = 'all' OR store = $1)",
+        "SELECT name, min_order, shipping_fee, free_shipping_limit, store FROM delivery_neighborhoods WHERE is_active = true AND (store = 'all' OR store = $1)",
         [orderStore]
       );
-      const addrLower = String(orderData.customerAddress || "").toLocaleLowerCase("tr");
       let bestMatch: { name: string; min_order: number; shipping_fee: number; free_shipping_limit: number } | null = null;
-      for (const row of nbRes.rows) {
-        const nbName = String(row.name || "").trim();
-        if (!nbName) continue;
-        const nbLower = nbName.toLocaleLowerCase("tr");
-        const compactAddr = addrLower.replace(/\s+/g, " ");
-        const compactNb = nbLower.replace(/\s+/g, " ");
-        const noSpaceAddr = addrLower.replace(/\s+/g, "");
-        const noSpaceNb = nbLower.replace(/\s+/g, "");
-        if (compactAddr.includes(compactNb) || noSpaceAddr.includes(noSpaceNb)) {
-          if (!bestMatch || nbName.length > bestMatch.name.length) {
-            bestMatch = {
-              name: nbName,
-              min_order: Number(row.min_order),
-              shipping_fee: Number(row.shipping_fee),
-              free_shipping_limit: Number(row.free_shipping_limit),
-            };
+      // Mahalle açıkça seçildiyse (checkout dropdown) o satırı birebir kullan;
+      // store'a özel satır "all" satırına tercih edilir. Aksi halde adres metninden eşleştir.
+      const explicitNb = String((req.body as any)?.neighborhood || "").trim().toLocaleLowerCase("tr");
+      if (explicitNb) {
+        const exactRows = nbRes.rows.filter((row: any) => String(row.name || "").trim().toLocaleLowerCase("tr") === explicitNb);
+        const row = exactRows.find((r: any) => r.store === orderStore) || exactRows[0];
+        if (row) {
+          bestMatch = {
+            name: String(row.name || "").trim(),
+            min_order: Number(row.min_order),
+            shipping_fee: Number(row.shipping_fee),
+            free_shipping_limit: Number(row.free_shipping_limit),
+          };
+        }
+      }
+      if (!bestMatch) {
+        const addrLower = String(orderData.customerAddress || "").toLocaleLowerCase("tr");
+        for (const row of nbRes.rows) {
+          const nbName = String(row.name || "").trim();
+          if (!nbName) continue;
+          const nbLower = nbName.toLocaleLowerCase("tr");
+          const compactAddr = addrLower.replace(/\s+/g, " ");
+          const compactNb = nbLower.replace(/\s+/g, " ");
+          const noSpaceAddr = addrLower.replace(/\s+/g, "");
+          const noSpaceNb = nbLower.replace(/\s+/g, "");
+          if (compactAddr.includes(compactNb) || noSpaceAddr.includes(noSpaceNb)) {
+            if (!bestMatch || nbName.length > bestMatch.name.length) {
+              bestMatch = {
+                name: nbName,
+                min_order: Number(row.min_order),
+                shipping_fee: Number(row.shipping_fee),
+                free_shipping_limit: Number(row.free_shipping_limit),
+              };
+            }
           }
         }
       }
