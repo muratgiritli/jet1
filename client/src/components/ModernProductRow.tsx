@@ -146,70 +146,70 @@ export default function ModernProductRow({
             Son Kullanma: {skt}
           </div>
         )}
-      </div>
 
-      <div className="shrink-0 flex flex-col items-end justify-between gap-2 text-right w-28 sm:w-36">
-        <div>
-          {product.originalPrice && product.originalPrice > product.price && (
-            <div className="text-xs text-gray-400 line-through">
-              {product.originalPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
-            </div>
-          )}
-          <div className="text-lg font-extrabold leading-tight" style={{ color: ORANGE }} data-testid={`text-price-${id}`}>
-            {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} <span className="text-xs">TL</span>
-          </div>
-        </div>
-
-        <div className="flex flex-col items-stretch gap-1.5 w-full">
-          <Link href={href} className="w-full">
-            <Button
-              className="w-full h-9 font-bold text-xs sm:text-sm"
-              style={{ backgroundColor: ORANGE, color: "#fff" }}
-              data-testid={`button-detail-${id}`}
-            >
-              <Eye className="w-4 h-4 mr-1" />
-              Ürünü İncele
-            </Button>
-          </Link>
-
-          {canQuickAdd &&
-            (quantity === 0 ? (
-              <Button
-                variant="outline"
-                className="w-full h-8 text-xs font-semibold"
-                onClick={tryAdd}
-                data-testid={`button-quickadd-${id}`}
-              >
-                <ShoppingCart className="w-3.5 h-3.5 mr-1" />
-                Sepete Ekle
-              </Button>
-            ) : (
-              <div className="flex items-center justify-between gap-1 w-full" data-testid={`qty-control-${id}`}>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  onClick={() => onUpdate && onUpdate(id, -1)}
-                  data-testid={`btn-minus-${id}`}
-                >
-                  <Minus className="w-3.5 h-3.5" />
-                </Button>
-                <span className="flex-1 text-center font-bold text-primary text-sm" data-testid={`text-qty-${id}`}>
-                  {quantity}
-                </span>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-8 w-8 shrink-0"
-                  onClick={tryAdd}
-                  data-testid={`btn-plus-${id}`}
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </Button>
+        <div className="mt-auto pt-2 flex items-end justify-between gap-2">
+          <div className="min-w-0">
+            {product.originalPrice && product.originalPrice > product.price && (
+              <div className="text-xs text-gray-400 line-through">
+                {product.originalPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
               </div>
-            ))}
+            )}
+            <div className="text-lg font-extrabold leading-tight" style={{ color: ORANGE }} data-testid={`text-price-${id}`}>
+              {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} <span className="text-xs">TL</span>
+            </div>
+          </div>
 
-          {warn && <span className="text-[10px] text-red-600 font-medium">Stok kalmadı!</span>}
+          <div className="flex flex-col items-stretch gap-1.5 w-28 sm:w-36 shrink-0">
+            <Link href={href} className="w-full">
+              <Button
+                className="w-full h-9 font-bold text-xs sm:text-sm"
+                style={{ backgroundColor: ORANGE, color: "#fff" }}
+                data-testid={`button-detail-${id}`}
+              >
+                <Eye className="w-4 h-4 mr-1" />
+                Ürünü İncele
+              </Button>
+            </Link>
+
+            {canQuickAdd &&
+              (quantity === 0 ? (
+                <Button
+                  variant="outline"
+                  className="w-full h-8 text-xs font-semibold"
+                  onClick={tryAdd}
+                  data-testid={`button-quickadd-${id}`}
+                >
+                  <ShoppingCart className="w-3.5 h-3.5 mr-1" />
+                  Sepete Ekle
+                </Button>
+              ) : (
+                <div className="flex items-center justify-between gap-1 w-full" data-testid={`qty-control-${id}`}>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={() => onUpdate && onUpdate(id, -1)}
+                    data-testid={`btn-minus-${id}`}
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </Button>
+                  <span className="flex-1 text-center font-bold text-primary text-sm" data-testid={`text-qty-${id}`}>
+                    {quantity}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    onClick={tryAdd}
+                    data-testid={`btn-plus-${id}`}
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+              ))}
+
+            {warn && <span className="text-[10px] text-red-600 font-medium">Stok kalmadı!</span>}
+          </div>
         </div>
       </div>
     </div>
