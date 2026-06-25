@@ -610,6 +610,7 @@ export default function ProductDetailPage() {
     : 0;
   const useModernLayout = detailStore.id === "jetgo" && !!detailStore.commerce.modernCatalogUI && !isCampaignMode;
   const jetgoBottomNav = detailStore.id === "jetgo" && !!detailStore.commerce.modernCatalogUI;
+  const guestCheckoutEnabled = !!detailStore.commerce.guestCheckout;
   const modernName = cleanName(product.name);
   const modernSubtitle = useModernLayout ? deriveSubtitle(product.name) : null;
   const modernSizeLabel = useModernLayout ? sizeBadgeLabel(product.name) : null;
@@ -991,7 +992,7 @@ export default function ProductDetailPage() {
                           return;
                         }
                       }
-                      if (isLoggedIn) {
+                      if (isLoggedIn || guestCheckoutEnabled) {
                         setLocation("/odeme");
                       } else {
                         setConfirmDialogOpen(true);
@@ -1287,7 +1288,7 @@ export default function ProductDetailPage() {
                   className="font-bold px-8 h-12 text-base"
                   style={{ backgroundColor: "#e65100", color: "#fff" }}
                   onClick={() => {
-                    if (isLoggedIn) {
+                    if (isLoggedIn || guestCheckoutEnabled) {
                       setLocation("/odeme");
                     } else {
                       setConfirmDialogOpen(true);

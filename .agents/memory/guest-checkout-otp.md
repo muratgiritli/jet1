@@ -27,3 +27,11 @@ plus rapid double-clicks. **How to apply:** guard with synchronous refs, not jus
 React loading state — `placingOrderRef` around `placeOrder` (reset in `finally`,
 which still runs on the online-payment `window.location` redirect+return) and a
 start guard around `startGuestOrder`.
+
+**Every purchase entry point must respect guestCheckout, not just checkout.tsx.**
+The product page (product-detail.tsx) order buttons (`button-order-now`,
+`button-confirm-cart`) used to pop the "Hesabınız yok mu?" membership dialog for any
+guest. On a guestCheckout store that dialog is wrong (and rendered tiny/blank on
+phone → user: "sistem sapıtıyor"). **How to apply:** guest purchase paths route to
+`/odeme` when `isLoggedIn || !!store.commerce.guestCheckout`; only non-guestCheckout
+stores still open the dialog. If you add a new buy entry point, apply the same gate.
