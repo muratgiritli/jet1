@@ -16,9 +16,11 @@ interface FavoriteButtonProps {
   };
   size?: "sm" | "md";
   className?: string;
+  /** When set, renders a full-width labeled outline button instead of the icon-only heart. */
+  label?: string;
 }
 
-export default function FavoriteButton({ product, size = "sm", className = "" }: FavoriteButtonProps) {
+export default function FavoriteButton({ product, size = "sm", className = "", label }: FavoriteButtonProps) {
   const [localFav, setLocalFav] = useState(false);
   const { toast } = useToast();
   const { isLoggedIn } = useCustomer();
@@ -75,6 +77,23 @@ export default function FavoriteButton({ product, size = "sm", className = "" }:
 
   const iconSize = size === "sm" ? "w-4 h-4" : "w-5 h-5";
   const btnSize = size === "sm" ? "w-7 h-7" : "w-9 h-9";
+
+  if (label) {
+    return (
+      <button
+        onClick={handleToggle}
+        className={`w-full h-11 rounded-lg border-2 flex items-center justify-center gap-2 font-bold text-sm transition-colors ${
+          fav
+            ? "border-red-300 bg-red-50 text-red-600"
+            : "border-gray-200 text-gray-700 hover:border-red-300 hover:text-red-500"
+        } ${className}`}
+        data-testid={`btn-fav-label-${product.id}`}
+      >
+        <Heart className={`w-4 h-4 ${fav ? "fill-red-500 text-red-500" : ""}`} />
+        {fav ? "Favorilerde" : label}
+      </button>
+    );
+  }
 
   return (
     <motion.button

@@ -1614,6 +1614,24 @@ test("guestCheckout (frictionless misafir sipariş) is enabled ONLY on jetgomark
   }
 });
 
+test("modernCatalogUI (redesigned listing + product detail) is enabled ONLY on jetgomarket.com", () => {
+  // brand-products.tsx / category.tsx render ModernProductRow single-column lists
+  // and product-detail.tsx renders the modern top block + feature badges + tabbed
+  // description, all gated on `commerce.modernCatalogUI`. Only jetgo opts in; the
+  // other 8 stores must keep the legacy grid cards and the old detail layout.
+  const jetgo = getStoreByHost(JETGO_HOST);
+  assert.equal(jetgo.commerce.modernCatalogUI, true, "jetgomarket.com must use the modern catalog UI");
+
+  for (const store of STORES) {
+    if (store.id === "jetgo") continue;
+    assert.notEqual(
+      store.commerce.modernCatalogUI,
+      true,
+      `${store.id} must NOT enable the modern catalog UI (legacy grid + detail must stay)`,
+    );
+  }
+});
+
 test("brandify swaps shared JETGO body copy to the Atakum brand word", () => {
   const atakum = getStoreByHost(ATAKUM_HOST);
   assert.equal(brandifyFor(atakum, "Neden JETGO?"), "Neden Atakum?");

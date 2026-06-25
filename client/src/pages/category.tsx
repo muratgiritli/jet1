@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { Product } from "@shared/schema";
 import { productUrl } from "@/lib/data";
+import { useStore } from "@/lib/store";
+import ModernProductRow from "@/components/ModernProductRow";
 import CardPriceNote from "@/components/CardPriceNote";
 import ProductImage from "@/components/ProductImage";
 import FavoriteButton from "@/components/FavoriteButton";
@@ -138,6 +140,11 @@ function KemirgenProductCard({ product }: { product: Product }) {
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
+  const store = useStore();
+  if (store.id === "jetgo" && store.commerce.modernCatalogUI) {
+    return <ModernProductRow product={product} />;
+  }
+
   return (
     <Card
       className="transition-all duration-200"
@@ -207,6 +214,8 @@ export default function CategoryPage() {
 
   const [, setLocation] = useLocation();
   const [vetAnimal, setVetAnimal] = useState<"kedi" | "kopek">("kedi");
+  const store = useStore();
+  const modern = store.id === "jetgo" && !!store.commerce.modernCatalogUI;
 
   const isDirectProductAnimal = DIRECT_PRODUCT_ANIMALS.includes(animalSlug);
 
@@ -276,7 +285,7 @@ export default function CategoryPage() {
               <p className="text-muted-foreground text-sm" data-testid="text-no-products">Henüz ürün eklenmedi</p>
             </div>
           ) : (
-            <div className="grid gap-3 grid-cols-2" data-testid="grid-direct-products">
+            <div className={modern ? "flex flex-col gap-3" : "grid gap-3 grid-cols-2"} data-testid="grid-direct-products">
               {products.map((product) => (
                 <KemirgenProductCard key={product.id} product={product} />
               ))}

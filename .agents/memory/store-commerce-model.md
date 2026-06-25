@@ -28,6 +28,17 @@ plus WhatsApp via `CURRENT_STORE.phone`). This appears even on cargo stores whos
 do NOT "fix" this as a truthfulness contradiction during cargo-corpus work; it is intentional UI, separate
 from the corpus copy. Only revert if the user reverses the decision.
 
+**A jetgo-only UI variant must branch INSIDE shared components, default byte-identical.** The modern
+catalog redesign (listing rows + product detail) is gated on `commerce.modernCatalogUI` (jetgo only).
+When a shared component is involved (e.g. `LongDescriptionAccordions` in product-detail), add a prop
+(`singleSection`) and keep the default render path EXACTLY as before — do NOT wrap the shared call site
+in a new `<div>` unconditionally. **Why:** an unconditional wrapper adds DOM to all 8 other stores and
+breaks the "other stores byte-identical" contract (architect caught exactly this). **How to apply:**
+gate every per-store visual change with `store.id === "jetgo" && store.commerce.modernCatalogUI`; for
+shared components branch by prop with a default-false fallback; honest derivations (weight/per-kg/
+subtitle) must fail closed (omit when unparseable), and stars are fixed RATING=5 + deterministic
+representativeReviewCount(id) since no real reviews exist yet (ProductReviews self-hides at 0).
+
 **A payment restriction has more than one client surface.** Checkout renders payment options across
 several independent blocks (the method picker AND a separate door/installment block AND cash/EFT/QR
 info panels), each with its own visibility condition. An online-only restriction must gate ALL of

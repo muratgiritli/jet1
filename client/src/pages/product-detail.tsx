@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link, useRoute, useSearch, useLocation } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock, HelpCircle, MessageSquare, Stethoscope, FileText, Users, Package, Banknote } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock, HelpCircle, MessageSquare, Stethoscope, FileText, Users, Package, Banknote, Truck, ShieldCheck, Calendar, Check } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
@@ -27,6 +27,8 @@ import { addRecentlyViewed, useRecentlyViewed } from "@/hooks/useRecentlyViewed"
 import SEO, { SITE_DOMAIN, PRODUCT_JSONLD, BREADCRUMB_JSONLD, LOCAL_BUSINESS_JSONLD } from "@/components/SEO";
 import ProductReviews from "@/components/ProductReviews";
 import ProductPopup from "@/components/ProductPopup";
+import { StarRating } from "@/components/ModernProductRow";
+import { cleanName, deriveSubtitle, sizeBadgeLabel, pricePerKgLabel, formatSkt, representativeReviewCount } from "@/lib/product-display";
 import { SiWhatsapp, SiFacebook, SiX } from "react-icons/si";
 
 type ProductDetailData = {
@@ -36,8 +38,8 @@ type ProductDetailData = {
   breedStats?: BreedStat[];
 };
 
-function LongDescriptionAccordions({ html }: { html: string }) {
-  const sections = useMemo(() => {
+function LongDescriptionAccordions({ html, singleSection = false }: { html: string; singleSection?: boolean }) {
+  const { sections, fullHtml } = useMemo(() => {
     let clean = DOMPurify.sanitize(html, {
       ALLOWED_TAGS: ["h2","h3","h4","p","ul","ol","li","strong","em","u","s","a","blockquote","br","span","div"],
       ALLOWED_ATTR: ["href","target","rel","style","class"],
@@ -105,12 +107,24 @@ function LongDescriptionAccordions({ html }: { html: string }) {
       }
     }
     if (pending !== null) result.push({ title: pending, body: "" });
-    return result;
+    return { sections: result, fullHtml: clean };
   }, [html]);
 
   const [openIndex, setOpenIndex] = useState<number | null>(null);
 
   if (sections.length === 0) return null;
+
+  if (singleSection) {
+    return (
+      <section className="mt-2" data-testid="section-long-description">
+        <div
+          className="prose-product text-sm md:text-base"
+          data-testid="text-longdesc-single"
+          dangerouslySetInnerHTML={{ __html: fullHtml }}
+        />
+      </section>
+    );
+  }
 
   return (
     <section className="mt-6 space-y-2" data-testid="section-long-description">
@@ -588,11 +602,19 @@ export default function ProductDetailPage() {
   const campaignFiyat = isCampaignMode && campaignCheck?.campaignPrice ? campaignCheck.campaignPrice : null;
   const displayPrice = campaignFiyat ?? selectedVariant?.price ?? product.price;
   const displayOriginalPrice = campaignFiyat ? product.price : product.originalPrice;
-  const storePreorderEnabled = useStore().commerce.preorderEnabled;
+  const detailStore = useStore();
+  const storePreorderEnabled = detailStore.commerce.preorderEnabled;
   const isPreorder = storePreorderEnabled && product.stock === 0 && product.preorderEnabled;
   const discount = displayOriginalPrice && displayOriginalPrice > displayPrice
     ? Math.round(((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100)
     : 0;
+  const useModernLayout = detailStore.id === "jetgo" && !!detailStore.commerce.modernCatalogUI && !isCampaignMode;
+  const modernName = cleanName(product.name);
+  const modernSubtitle = useModernLayout ? deriveSubtitle(product.name) : null;
+  const modernSizeLabel = useModernLayout ? sizeBadgeLabel(product.name) : null;
+  const modernPerKg = useModernLayout ? pricePerKgLabel(displayPrice, product.name) : null;
+  const modernSkt = formatSkt(product.skt);
+  const modernReviews = representativeReviewCount(product.id);
   const quantity = basket[pid] || 0;
 
   const handleStockAlert = async () => {
@@ -652,22 +674,101 @@ export default function ProductDetailPage() {
                     size="md"
                     className="absolute bottom-2 right-2 shadow-md"
                   />
+                  {useModernLayout && modernSizeLabel && (
+                    <span className="absolute bottom-2 left-2 text-xs font-bold text-white bg-black/70 px-2 py-0.5 rounded" data-testid="badge-size-detail">
+                      {modernSizeLabel}
+                    </span>
+                  )}
                 </div>
               </ImageZoom>
 
             <div className="md:w-1/2 w-full flex flex-col gap-3">
-              <h1 className="text-base md:text-lg font-bold leading-snug" data-testid="text-product-name">
-                {product.name}
-              </h1>
+              {useModernLayout ? (
+                <>
+                  {category && (
+                    <Link
+                      href={`/siparis/${category.animal}/${category.subcategory}/${category.brandSlug}`}
+                      className="text-xs font-extrabold uppercase tracking-wider text-gray-500 hover:text-gray-700 w-fit"
+                      data-testid="link-brand-category"
+                    >
+                      {category.brandName}
+                    </Link>
+                  )}
+                  <h1 className="text-lg md:text-xl font-extrabold leading-snug text-gray-900" data-testid="text-product-name">
+                    {modernName}
+                  </h1>
+                  {modernSubtitle && (
+                    <p className="text-sm text-gray-500 -mt-1" data-testid="text-product-subtitle">
+                      {modernSubtitle}
+                    </p>
+                  )}
+                  <div className="flex items-center gap-3 flex-wrap mt-0.5">
+                    <StarRating count={modernReviews} size="md" />
+                  </div>
+                  <div className="flex items-end gap-2 flex-wrap mt-1">
+                    <span className="text-3xl font-extrabold" style={{ color: "#e65100" }} data-testid="text-pesin-price">
+                      {displayPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} <span className="text-base">TL</span>
+                    </span>
+                    {displayOriginalPrice && displayOriginalPrice > displayPrice && (
+                      <span className="text-base text-gray-400 line-through mb-1">
+                        {displayOriginalPrice.toLocaleString("tr-TR", { minimumFractionDigits: 2 })} TL
+                      </span>
+                    )}
+                    {discount > 0 && (
+                      <span className="text-xs font-bold text-white px-2 py-0.5 rounded mb-1.5" style={{ backgroundColor: "#e53935" }}>
+                        %{discount}
+                      </span>
+                    )}
+                  </div>
+                  {modernPerKg && (
+                    <p className="text-xs text-gray-500 -mt-1" data-testid="text-price-per-kg">{modernPerKg}</p>
+                  )}
+                  {!isPreorder && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium w-fit bg-gray-50 text-gray-600 border border-gray-200" data-testid="text-card-price">
+                      Kart / Havale / QR: {cardPrice(displayPrice, cardRate).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                      <span className="text-[11px] font-medium text-gray-400">({surchargeLabel(cardRate)})</span>
+                    </div>
+                  )}
+                  <div className="flex flex-col gap-1.5 mt-1">
+                    {product.stock > 0 ? (
+                      <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600" data-testid="text-stock-status">
+                        <Check className="w-4 h-4" />
+                        Stokta var ({product.stock} adet)
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-sm font-semibold text-red-500" data-testid="text-stock-status">
+                        <AlertTriangle className="w-4 h-4" />
+                        Tükendi
+                      </div>
+                    )}
+                    {modernSkt && (
+                      <div className="flex items-center gap-1.5 text-sm text-gray-500" data-testid="text-skt-detail">
+                        <Calendar className="w-4 h-4" />
+                        Son Kullanma Tarihi: {modernSkt}
+                      </div>
+                    )}
+                    <div className="flex items-center gap-1.5 text-sm text-gray-500" data-testid="text-original-guarantee">
+                      <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                      Orijinal Ürün Garantisi
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <h1 className="text-base md:text-lg font-bold leading-snug" data-testid="text-product-name">
+                    {product.name}
+                  </h1>
 
-              {category && (
-                <Link
-                  href={`/siparis/${category.animal}/${category.subcategory}/${category.brandSlug}`}
-                  className="text-sm text-primary hover:underline w-fit"
-                  data-testid="link-brand-category"
-                >
-                  {category.brandName}
-                </Link>
+                  {category && (
+                    <Link
+                      href={`/siparis/${category.animal}/${category.subcategory}/${category.brandSlug}`}
+                      className="text-sm text-primary hover:underline w-fit"
+                      data-testid="link-brand-category"
+                    >
+                      {category.brandName}
+                    </Link>
+                  )}
+                </>
               )}
 
 
@@ -710,6 +811,7 @@ export default function ProductDetailPage() {
                 </div>
               )}
 
+              {!useModernLayout && (
               <div className="flex items-center gap-3 mt-1 flex-wrap">
                 {campaignFiyat && (
                   <span className="text-xs font-semibold px-2 py-0.5 rounded-full" style={{ backgroundColor: "#6B3480", color: "#fff" }}>KAMPANYA FİYATI</span>
@@ -733,8 +835,9 @@ export default function ProductDetailPage() {
                   </span>
                 )}
               </div>
+              )}
 
-              {!isPreorder && (
+              {!useModernLayout && !isPreorder && (
                 <div
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium w-fit bg-gray-50 text-gray-600 border border-gray-200"
                   data-testid="text-card-price"
@@ -862,10 +965,91 @@ export default function ProductDetailPage() {
                 </div>
               ) : null}
 
+              {useModernLayout && product.stock > 0 && (
+                <div className="mt-2 space-y-3">
+                  <div className="flex items-center gap-3">
+                    <span className="text-sm text-muted-foreground font-medium">ADET</span>
+                    <QuantityControl
+                      productId={pid}
+                      quantity={quantity}
+                      onUpdate={(id, delta) => {
+                        if (delta > 0 && hasVariants && !selectedVariant) {
+                          toast({ title: "Lütfen önce seçenek belirleyin", variant: "destructive" });
+                          return false;
+                        }
+                        return updateQty(id, delta, isCampaignMode, selectedVariant ?? undefined);
+                      }}
+                    />
+                  </div>
+                  <Button
+                    className="w-full h-12 font-bold text-base"
+                    style={{ backgroundColor: "#e65100", color: "#fff" }}
+                    onClick={() => {
+                      if (hasVariants && !selectedVariant) {
+                        toast({ title: "Lütfen önce bir seçenek belirleyin", variant: "destructive" });
+                        return;
+                      }
+                      if (quantity === 0) {
+                        const blocked = updateQty(pid, 1, isCampaignMode, selectedVariant ?? undefined);
+                        if (blocked) {
+                          toast({ title: "Stok kalmadı!", variant: "destructive" });
+                          return;
+                        }
+                      }
+                      if (isLoggedIn) {
+                        setLocation("/odeme");
+                      } else {
+                        setConfirmDialogOpen(true);
+                      }
+                    }}
+                    data-testid="button-order-now"
+                  >
+                    <ShoppingCart className="w-5 h-5 mr-2" />
+                    HEMEN SİPARİŞ VER
+                  </Button>
+                  <FavoriteButton
+                    product={{ id: pid, name: product.name, price: product.price, img: product.img }}
+                    label="Favorilere Ekle"
+                  />
+                </div>
+              )}
+
             </div>
           </div>
         </div>
 
+        {useModernLayout && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-6" data-testid="section-feature-badges">
+            <div className="flex items-start gap-2 p-3 rounded-lg border border-gray-200 bg-white">
+              <Truck className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-gray-800">1 Saatte Kapında</p>
+                <p className="text-[11px] text-gray-500">Atakum içi hızlı teslimat</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 p-3 rounded-lg border border-gray-200 bg-white">
+              <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-gray-800">Orijinal Ürün</p>
+                <p className="text-[11px] text-gray-500">Yetkili satıcı garantisi</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 p-3 rounded-lg border border-gray-200 bg-white">
+              <Calendar className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-gray-800">Taze Ürün</p>
+                <p className="text-[11px] text-gray-500">Son kullanma tarihli</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-2 p-3 rounded-lg border border-gray-200 bg-white">
+              <Banknote className="w-5 h-5 text-emerald-600 shrink-0" />
+              <div>
+                <p className="text-xs font-bold text-gray-800">Kapıda Ödeme</p>
+                <p className="text-[11px] text-gray-500">Nakit, POS, QR, Havale</p>
+              </div>
+            </div>
+          </div>
+        )}
 
         {!isCampaignMode && breedStats && breedStats.length > 0 && (
           <div
@@ -908,7 +1092,16 @@ export default function ProductDetailPage() {
         )}
 
         {!isCampaignMode && (product as any).longDescription && (product as any).longDescription.trim() && (
-          <LongDescriptionAccordions html={(product as any).longDescription} />
+          useModernLayout ? (
+            <div className="mt-8" data-testid="section-modern-description">
+              <div className="mb-3 border-b-2 border-orange-500 pb-2 inline-block" data-testid="header-modern-description">
+                <h2 className="text-lg font-extrabold text-gray-900">Ürün Açıklaması</h2>
+              </div>
+              <LongDescriptionAccordions html={(product as any).longDescription} singleSection />
+            </div>
+          ) : (
+            <LongDescriptionAccordions html={(product as any).longDescription} />
+          )
         )}
 
         {!isCampaignMode && <ProductReviews productId={product.id} />}
@@ -1058,6 +1251,14 @@ export default function ProductDetailPage() {
           data-testid="bar-buy"
         >
           <div className="max-w-2xl mx-auto flex items-center gap-3">
+            {useModernLayout && (
+              <div className="flex items-center gap-2 min-w-0 max-w-[45%]">
+                <div className="w-10 h-10 rounded-md overflow-hidden bg-muted/30 shrink-0">
+                  <ProductImage src={product.img} alt={modernName} className="w-full h-full object-contain" />
+                </div>
+                <span className="text-xs font-semibold text-gray-800 line-clamp-2 leading-tight" data-testid="text-buy-bar-name">{modernName}</span>
+              </div>
+            )}
             <div className="flex flex-col leading-tight">
               {displayOriginalPrice && displayOriginalPrice > displayPrice && (
                 <span className="text-xs text-gray-400 line-through" data-testid="text-buy-bar-original-price">

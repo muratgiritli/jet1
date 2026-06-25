@@ -1,5 +1,5 @@
 import { useState, useMemo, useRef, useEffect } from "react";
-import { brandify } from "@/lib/store";
+import { brandify, useStore } from "@/lib/store";
 import { FreeShippingBanner } from "@/components/FreeShippingBanner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +16,7 @@ import FavoriteButton from "@/components/FavoriteButton";
 import { ProductGridSkeleton } from "@/components/ProductSkeleton";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import ProductImage from "@/components/ProductImage";
+import ModernProductRow from "@/components/ModernProductRow";
 
 interface SubcategoryInfo {
   name: string;
@@ -150,6 +151,19 @@ function BrandProductCard({
     : 0;
   const pid = String(product.id);
 
+  const store = useStore();
+  if (store.id === "jetgo" && store.commerce.modernCatalogUI) {
+    return (
+      <ModernProductRow
+        product={product}
+        quantity={quantity}
+        onUpdate={onUpdate}
+        showDetailLink={showDetailLink}
+        forceOrderLink={forceOrderLink}
+      />
+    );
+  }
+
   return (
     <Card
       className={`transition-all duration-200 ${isActive ? "ring-2 ring-inset ring-primary" : ""}`}
@@ -263,6 +277,19 @@ function InlineSubcategoryProductCard({
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
 
+  const store = useStore();
+  if (store.id === "jetgo" && store.commerce.modernCatalogUI) {
+    return (
+      <ModernProductRow
+        product={product}
+        quantity={quantity}
+        onUpdate={onUpdate}
+        showDetailLink={showDetailLink}
+        forceOrderLink={forceOrderLink}
+      />
+    );
+  }
+
   return (
     <Card
       className={`transition-all duration-200 ${isActive ? "ring-2 ring-inset ring-primary" : ""}`}
@@ -365,6 +392,8 @@ function InlineSubcategories({
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const sectionRef = useRef<HTMLDivElement>(null);
   const productsRef = useRef<HTMLDivElement>(null);
+  const store = useStore();
+  const modern = store.id === "jetgo" && !!store.commerce.modernCatalogUI;
 
   const subcategories = (ANIMAL_SUBCATEGORIES[animal] || []).filter(
     (sc) => sc.slug !== currentSubcategory
@@ -442,7 +471,7 @@ function InlineSubcategories({
           <p className="text-xs text-muted-foreground text-center mb-3" data-testid="text-inline-count">
             {inlineProducts.length} ürün
           </p>
-          <div className="grid grid-cols-2 gap-3">
+          <div className={modern ? "flex flex-col gap-3" : "grid grid-cols-2 gap-3"}>
             {inlineProducts.map((product) => (
               <div key={product.id}>
                 <InlineSubcategoryProductCard
@@ -491,6 +520,8 @@ export default function BrandProductsPage() {
 
   const { basket, updateQty, grandTotal, itemCount } = useCart();
   const [, setLocation] = useLocation();
+  const store = useStore();
+  const modern = store.id === "jetgo" && !!store.commerce.modernCatalogUI;
   const [activeMamaType, setActiveMamaType] = useState("");
   const backUrl = subcategory === brandSlug ? `/kategori/${animal}` : `/kategori/${animal}/${subcategory}`;
 
@@ -577,7 +608,7 @@ export default function BrandProductsPage() {
           );
         })()}
 
-        <div className="grid grid-cols-2 gap-3" data-testid="grid-products">
+        <div className={modern ? "flex flex-col gap-3" : "grid grid-cols-2 gap-3"} data-testid="grid-products">
           {data.products
             .filter(p => !activeMamaType || p.mamaType === activeMamaType)
             .map((product) => (
