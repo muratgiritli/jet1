@@ -1,10 +1,11 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { Link } from "wouter";
-import { X, ShoppingCart, Tag, Clock } from "lucide-react";
+import { X, ShoppingCart, Tag, Clock, Plus, Minus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import ProductImage from "@/components/ProductImage";
 import { productUrl } from "@/lib/data";
+import { CURRENT_STORE } from "@/lib/store";
 import CardPriceNote from "@/components/CardPriceNote";
 import type { Product } from "@shared/schema";
 
@@ -21,6 +22,7 @@ export default function ProductPopup({ product, quantity, onUpdate, onClose, isM
   const prevOverflow = useRef<string>("");
   const [imgZoomed, setImgZoomed] = useState(false);
   const pid = String(product.id);
+  const quickAdd = CURRENT_STORE.commerce.quickAddToCart === true;
 
   const stableClose = useCallback(() => onClose(), [onClose]);
 
@@ -124,16 +126,101 @@ export default function ProductPopup({ product, quantity, onUpdate, onClose, isM
                 <Clock className="w-3.5 h-3.5" />
                 Ön Sipariş — Ortalama 3 gün içinde teslimat
               </div>
-              <Link href={productUrl(product.id, product.name)} className="block w-full" onClick={stableClose}>
+              {quickAdd && product.preorderEnabled ? (
+                <>
+                  <p className="text-[11px] font-medium" style={{ color: "#e65100", backgroundColor: "#fff3e0", padding: "4px 8px", borderRadius: "4px" }}>
+                    Ödemeyi ürün tesliminde yapacaksınız. Ön sipariş verirken ödeme alınmaz.
+                  </p>
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-0 border rounded-lg overflow-hidden border-blue-300" data-testid="product-popup-preorder-qty">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 w-9 p-0 rounded-none"
+                        onClick={() => onUpdate(pid, -1)}
+                        data-testid="product-popup-preorder-minus"
+                      >
+                        <Minus className="w-4 h-4" />
+                      </Button>
+                      <div className="flex items-center justify-center w-10 h-9 text-sm font-bold text-blue-700">
+                        {quantity}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9 w-9 p-0 rounded-none"
+                        onClick={() => onUpdate(pid, 1)}
+                        data-testid="product-popup-preorder-plus"
+                      >
+                        <Plus className="w-4 h-4" />
+                      </Button>
+                    </div>
+                    {quantity === 0 && (
+                      <Button
+                        className="flex-1 h-9 text-sm font-semibold gap-1.5"
+                        style={{ backgroundColor: "#1565c0" }}
+                        onClick={() => onUpdate(pid, 1)}
+                        data-testid="product-popup-preorder-add"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        Sipariş Ver
+                      </Button>
+                    )}
+                  </div>
+                </>
+              ) : (
+                <Link href={productUrl(product.id, product.name)} className="block w-full" onClick={stableClose}>
+                  <Button
+                    className="w-full h-10 text-sm font-semibold gap-1.5"
+                    style={{ backgroundColor: "#1565c0" }}
+                    data-testid="product-popup-preorder-add"
+                  >
+                    <ShoppingCart className="w-4 h-4" />
+                    Sipariş Ver
+                  </Button>
+                </Link>
+              )}
+            </div>
+          ) : quickAdd ? (
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-0 border rounded-lg overflow-hidden" data-testid="product-popup-qty">
                 <Button
-                  className="w-full h-10 text-sm font-semibold gap-1.5"
-                  style={{ backgroundColor: "#1565c0" }}
-                  data-testid="product-popup-preorder-add"
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 rounded-none"
+                  onClick={() => onUpdate(pid, -1)}
+                  data-testid="product-popup-minus"
+                >
+                  <Minus className="w-4 h-4" />
+                </Button>
+                <div className="flex items-center justify-center font-bold text-primary w-10 text-base" data-testid="product-popup-qty-value">
+                  {quantity}
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-9 w-9 p-0 rounded-none"
+                  onClick={() => onUpdate(pid, 1)}
+                  data-testid="product-popup-plus"
+                >
+                  <Plus className="w-4 h-4" />
+                </Button>
+              </div>
+              {quantity === 0 && (
+                <Button
+                  className="flex-1 h-9 text-sm font-bold gap-1.5"
+                  onClick={() => onUpdate(pid, 1)}
+                  data-testid="product-popup-add"
                 >
                   <ShoppingCart className="w-4 h-4" />
-                  Sipariş Ver
+                  Sepete Ekle
                 </Button>
-              </Link>
+              )}
+              {quantity > 0 && (
+                <div className="flex-1 text-center text-sm font-bold text-primary" data-testid="product-popup-in-cart">
+                  Sepette: {quantity} adet
+                </div>
+              )}
             </div>
           ) : (
             <Link href={productUrl(product.id, product.name)} className="block w-full" onClick={stableClose}>

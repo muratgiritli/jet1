@@ -41,6 +41,12 @@ export interface StoreCommerce {
   onlinePaymentOnly: boolean;
   /** false ise ön sipariş bu sitede kapalıdır (stok bitince yalnızca "Gelince Haber Ver"). */
   preorderEnabled: boolean;
+  /**
+   * true ise ürün popup'ı ve kampanya kartlarında doğrudan "Sepete Ekle" + adet (+/-)
+   * kontrolü gösterilir (eski hızlı sipariş akışı). false/undefined ise butonlar ürün
+   * detay sayfasına yönlendirir. Yalnızca jetgo (jetgomarket.com) için açıktır.
+   */
+  quickAddToCart?: boolean;
 }
 
 /**
@@ -151,6 +157,7 @@ const jetgo: StoreConfig = {
     shippingLabel: "Getirmesi",
     onlinePaymentOnly: false,
     preorderEnabled: true,
+    quickAddToCart: true,
   },
 };
 
