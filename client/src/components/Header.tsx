@@ -15,12 +15,33 @@ const NAV_ITEMS = [
   { name: "Veteriner", href: "/kategori/veteriner" },
 ];
 
+// FİZİKİ MAĞAZAMIZA GİT + WHATSAPP barı ana sayfa, SEO ve bilgi/içerik
+// sayfalarında görünür; aşağıdaki alışveriş (e-ticaret) akış sayfalarında
+// gizlenir. Eşleşme ilk yol segmentine göre yapılır (ör. "/urun/123" → "/urun").
+const ECOMMERCE_ONLY_PATHS = new Set<string>([
+  "/urun", "/urun-demo",
+  "/kategori",
+  "/siparis", "/siparis-takip",
+  "/acik-mama",
+  "/veteriner",
+  "/odeme", "/odeme-sonuc",
+  "/favoriler",
+  "/hesabim",
+  "/giris",
+  "/kampanya", "/kampanya-demo", "/kampanya-urun-demo",
+  "/abone",
+  "/admin",
+  "/demo", "/demo1", "/demo2", "/demo-anasayfa", "/demo-kampanya",
+]);
+
 export default function Header() {
   const [location] = useLocation();
   const { isLoggedIn, customer } = useCustomer();
 
   const isHome = location === "/";
   const whatsappDigits = CURRENT_STORE.phone.replace(/\D/g, "");
+  const firstSegment = "/" + (location.split("?")[0].split("/")[1] || "");
+  const hideStoreBar = ECOMMERCE_ONLY_PATHS.has(firstSegment);
 
   return (
     <>
@@ -112,6 +133,7 @@ export default function Header() {
         </div>
       </nav>
 
+      {!hideStoreBar && (
       <div className="bg-white border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-2 md:px-4 py-2 flex items-center justify-center gap-2 md:gap-3 flex-nowrap">
           <a
@@ -138,6 +160,7 @@ export default function Header() {
           </a>
         </div>
       </div>
+      )}
     </>
   );
 }
