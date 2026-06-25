@@ -88,6 +88,7 @@ export default function Checkout() {
   const { customer, isLoggedIn, loginWithOtp, updateProfile } = useCustomer();
 
   const store = useStore();
+  const jetgoModern = store.id === "jetgo" && !!store.commerce.modernCatalogUI;
   const isCargo = store.commerce.fulfillment === "cargo";
   const onlinePaymentOnly = store.commerce.onlinePaymentOnly;
   const shippingLabel = store.commerce.shippingLabel;
@@ -1371,7 +1372,7 @@ export default function Checkout() {
                     )}
                     <p className="text-xs text-muted-foreground">{customerAddress.length}/500</p>
                   </div>
-                  {!isCargo && matchedNeighborhood && (
+                  {!isCargo && matchedNeighborhood && !jetgoModern && (
                     <div
                       className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-md border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-[11px] text-blue-900 dark:bg-blue-950/40 dark:text-blue-100 dark:border-blue-800"
                       data-testid="info-matched-neighborhood"
@@ -1384,7 +1385,7 @@ export default function Checkout() {
                       )}
                     </div>
                   )}
-                  {isLoggedIn && paymentVisibility.showNakitInfo && paymentId === "nakit" && (
+                  {isLoggedIn && paymentVisibility.showNakitInfo && paymentId === "nakit" && !jetgoModern && (
                     <div
                       className="mt-3 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-900"
                       data-testid="info-nakit-fatura-adres"
@@ -1451,7 +1452,7 @@ export default function Checkout() {
               </section>
             )}
 
-            {!isCargo && (
+            {!isCargo && !jetgoModern && (
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-delivery-options">
                 Teslimat Seçenekleri
@@ -1506,6 +1507,7 @@ export default function Checkout() {
             </section>
 
             {!hasPreorderItems && (<>
+            {!jetgoModern && (
             <section className="mt-6">
               <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wider mb-3" data-testid="text-section-coupon">
                 Kupon Kodu
@@ -1550,6 +1552,7 @@ export default function Checkout() {
                 </CardContent>
               </Card>
             </section>
+            )}
 
 
             <section className="mt-6">
@@ -1590,7 +1593,7 @@ export default function Checkout() {
                             <span className="text-sm font-medium block leading-tight" data-testid={`text-payment-name-${opt.id}`}>
                               {opt.name}
                               {opt.surcharge > 0 ? (
-                                <span className="ml-1 text-[10px] font-semibold text-muted-foreground">{surchargeLabel(surchargeRate)}</span>
+                                !jetgoModern && <span className="ml-1 text-[10px] font-semibold text-muted-foreground">{surchargeLabel(surchargeRate)}</span>
                               ) : (
                                 <span className="ml-1 text-[10px] font-semibold text-emerald-600">en uygun</span>
                               )}
