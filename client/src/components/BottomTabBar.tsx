@@ -5,6 +5,7 @@ import { useCart } from "@/contexts/CartContext";
 import { useCustomer } from "@/contexts/CustomerContext";
 import { motion, AnimatePresence } from "framer-motion";
 import ContactDialog from "@/components/ContactDialog";
+import { CURRENT_STORE } from "@/lib/store";
 
 export default function BottomTabBar() {
   const [location, setLocation] = useLocation();
@@ -12,8 +13,10 @@ export default function BottomTabBar() {
   const { isLoggedIn } = useCustomer();
   const [contactOpen, setContactOpen] = useState(false);
 
+  const jetgoModern = CURRENT_STORE.id === "jetgo" && !!CURRENT_STORE.commerce.modernCatalogUI;
+
   if (location.startsWith("/admin")) return null;
-  if (location.startsWith("/urun")) return null;
+  if (location.startsWith("/urun") && !jetgoModern) return null;
 
   const TABS = [
     { name: "Ana Sayfa", href: "/", icon: Home, testId: "tab-home" },

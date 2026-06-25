@@ -609,6 +609,7 @@ export default function ProductDetailPage() {
     ? Math.round(((displayOriginalPrice - displayPrice) / displayOriginalPrice) * 100)
     : 0;
   const useModernLayout = detailStore.id === "jetgo" && !!detailStore.commerce.modernCatalogUI && !isCampaignMode;
+  const jetgoBottomNav = detailStore.id === "jetgo" && !!detailStore.commerce.modernCatalogUI;
   const modernName = cleanName(product.name);
   const modernSubtitle = useModernLayout ? deriveSubtitle(product.name) : null;
   const modernSizeLabel = useModernLayout ? sizeBadgeLabel(product.name) : null;
@@ -1247,7 +1248,7 @@ export default function ProductDetailPage() {
 
       {product.stock > 0 && (
         <div
-          className="fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 py-3 shadow-[0_-2px_12px_rgba(0,0,0,0.08)]"
+          className={`fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 py-3 shadow-[0_-2px_12px_rgba(0,0,0,0.08)] ${jetgoBottomNav ? "hidden md:block" : ""}`}
           data-testid="bar-buy"
         >
           <div className="max-w-2xl mx-auto flex items-center gap-3">
