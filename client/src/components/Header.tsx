@@ -39,6 +39,10 @@ export default function Header() {
   const { isLoggedIn, customer } = useCustomer();
 
   const isHome = location === "/";
+  const navItems =
+    CURRENT_STORE.id === "jetgo"
+      ? NAV_ITEMS.filter((item) => item.href !== "/kategori/veteriner")
+      : NAV_ITEMS;
   const whatsappDigits = CURRENT_STORE.phone.replace(/\D/g, "");
   const firstSegment = "/" + (location.split("?")[0].split("/")[1] || "");
   const hideStoreBar = ECOMMERCE_ONLY_PATHS.has(firstSegment);
@@ -110,7 +114,7 @@ export default function Header() {
       <nav className="sticky top-[52px] z-[9998]" style={{ backgroundColor: CURRENT_STORE.theme.navBar }}>
         <div className="max-w-6xl mx-auto px-3 md:px-4">
           <ul className="flex items-center justify-start gap-0.5 md:gap-2 py-1 md:py-1.5 flex-nowrap whitespace-nowrap" data-testid="nav-categories">
-            {NAV_ITEMS.map((item) => {
+            {navItems.map((item) => {
               const isHighlight = "highlight" in item && item.highlight;
               const isActive = location.startsWith(item.href);
               return (
