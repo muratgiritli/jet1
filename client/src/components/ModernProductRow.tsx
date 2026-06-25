@@ -107,7 +107,7 @@ export default function ModernProductRow({
         <div className="flex items-start gap-2">
           <Link href={href} className="min-w-0 flex-1">
             <h3
-              className="text-sm font-bold leading-snug line-clamp-2 text-gray-900"
+              className="text-sm font-bold leading-snug text-gray-900"
               data-testid={`text-name-${id}`}
             >
               {name}
