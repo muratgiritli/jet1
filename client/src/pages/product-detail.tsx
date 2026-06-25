@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Link, useRoute, useSearch, useLocation } from "wouter";
-import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock, HelpCircle, MessageSquare, Stethoscope, FileText, Users, Package, Banknote, Truck, ShieldCheck, Calendar, Check } from "lucide-react";
+import { ShoppingCart, Plus, Minus, ArrowLeft, Loader2, Bell, ChevronDown, CreditCard, X, Gift, Tag, AlertTriangle, Share2, Clock, HelpCircle, MessageSquare, Stethoscope, FileText, Users, Package, Banknote, Truck, ShieldCheck, Calendar } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import DOMPurify from "dompurify";
 import type { Product, BrandCategory, CrossSellSection, BreedStat } from "@shared/schema";
@@ -727,16 +727,10 @@ export default function ProductDetailPage() {
                   {!isPreorder && (
                     <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium w-fit bg-gray-50 text-gray-600 border border-gray-200" data-testid="text-card-price">
                       Kart / Havale / QR: {cardPrice(displayPrice, cardRate).toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                      <span className="text-[11px] font-medium text-gray-400">({surchargeLabel(cardRate)})</span>
                     </div>
                   )}
                   <div className="flex flex-col gap-1.5 mt-1">
-                    {product.stock > 0 ? (
-                      <div className="flex items-center gap-1.5 text-sm font-semibold text-emerald-600" data-testid="text-stock-status">
-                        <Check className="w-4 h-4" />
-                        Stokta var ({product.stock} adet)
-                      </div>
-                    ) : (
+                    {product.stock === 0 && (
                       <div className="flex items-center gap-1.5 text-sm font-semibold text-red-500" data-testid="text-stock-status">
                         <AlertTriangle className="w-4 h-4" />
                         Tükendi
@@ -1008,10 +1002,6 @@ export default function ProductDetailPage() {
                     <ShoppingCart className="w-5 h-5 mr-2" />
                     HEMEN SİPARİŞ VER
                   </Button>
-                  <FavoriteButton
-                    product={{ id: pid, name: product.name, price: product.price, img: product.img }}
-                    label="Favorilere Ekle"
-                  />
                 </div>
               )}
 
