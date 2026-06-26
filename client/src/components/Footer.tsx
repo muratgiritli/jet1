@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info, Truck, Lock, ShieldCheck, ScrollText, Gift, ChevronRight, MessageSquare } from "lucide-react";
+import { Phone, Mail, MapPin, HelpCircle, FileText, Shield, Cookie, BookOpen, Info, Truck, Lock, ShieldCheck, ScrollText, Gift, ChevronRight, MessageSquare, Store } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
 import kartLogoPath from "@assets/kart_1775765432584.png";
 import ContactDialog from "@/components/ContactDialog";
@@ -69,24 +69,34 @@ export default function Footer() {
 
           <div>
             <h3 className="text-white font-bold text-lg mb-4">İletişim</h3>
+            <div className="flex flex-wrap gap-2 mb-4" data-testid="footer-store-buttons">
+              <a
+                href="https://www.enuygun.pet"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-green-600 hover:bg-green-700 text-white text-sm font-bold shadow-sm transition-colors whitespace-nowrap"
+                data-testid="btn-footer-physical-store"
+              >
+                <Store className="w-4 h-4 shrink-0" />
+                <span>Fiziki Mağaza</span>
+              </a>
+              <a
+                href={`https://wa.me/${whatsappDigits}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-gray-300 hover:border-green-500 hover:bg-green-50 text-gray-800 text-sm font-bold shadow-sm transition-colors whitespace-nowrap"
+                data-testid="btn-footer-whatsapp"
+              >
+                <SiWhatsapp className="w-4 h-4 text-green-600 shrink-0" />
+                <span>WhatsApp: {store.phoneDisplay}</span>
+              </a>
+            </div>
             <ul className="space-y-3">
               {showStoreContact && (
                 <>
                   <li className="flex items-start gap-2.5 text-sm text-gray-300" data-testid="footer-contact-address">
                     <MapPin className="w-4 h-4 flex-shrink-0 mt-0.5 text-emerald-400" />
                     <span>{store.address}</span>
-                  </li>
-                  <li>
-                    <a
-                      href={`https://wa.me/${whatsappDigits}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-2.5 text-sm text-green-400 hover:text-green-300 transition-colors"
-                      data-testid="footer-contact-whatsapp"
-                    >
-                      <SiWhatsapp className="w-4 h-4 flex-shrink-0" />
-                      <span>WhatsApp (sadece) {store.phone}</span>
-                    </a>
                   </li>
                   <li className="flex items-start gap-2.5 text-sm text-gray-300" data-testid="footer-contact-company">
                     <Info className="w-4 h-4 flex-shrink-0 mt-0.5 text-gray-400" />

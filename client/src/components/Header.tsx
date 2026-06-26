@@ -1,6 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, User, LogIn, UserPlus, Store } from "lucide-react";
-import { SiWhatsapp } from "react-icons/si";
+import { ArrowLeft, User, LogIn, UserPlus } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
@@ -15,25 +14,6 @@ const NAV_ITEMS = [
   { name: "Veteriner", href: "/kategori/veteriner" },
 ];
 
-// FİZİKİ MAĞAZAMIZA GİT + WHATSAPP barı ana sayfa, SEO ve bilgi/içerik
-// sayfalarında görünür; aşağıdaki alışveriş (e-ticaret) akış sayfalarında
-// gizlenir. Eşleşme ilk yol segmentine göre yapılır (ör. "/urun/123" → "/urun").
-const ECOMMERCE_ONLY_PATHS = new Set<string>([
-  "/urun", "/urun-demo",
-  "/kategori",
-  "/siparis", "/siparis-takip",
-  "/acik-mama",
-  "/veteriner",
-  "/odeme", "/odeme-sonuc",
-  "/favoriler",
-  "/hesabim",
-  "/giris",
-  "/kampanya", "/kampanya-demo", "/kampanya-urun-demo",
-  "/abone",
-  "/admin",
-  "/demo", "/demo1", "/demo2", "/demo-anasayfa", "/demo-kampanya",
-]);
-
 export default function Header() {
   const [location] = useLocation();
   const { isLoggedIn, customer } = useCustomer();
@@ -43,9 +23,6 @@ export default function Header() {
     CURRENT_STORE.id === "jetgo"
       ? NAV_ITEMS.filter((item) => item.href !== "/kategori/veteriner")
       : NAV_ITEMS;
-  const whatsappDigits = CURRENT_STORE.phone.replace(/\D/g, "");
-  const firstSegment = "/" + (location.split("?")[0].split("/")[1] || "");
-  const hideStoreBar = ECOMMERCE_ONLY_PATHS.has(firstSegment);
 
   return (
     <>
@@ -136,35 +113,6 @@ export default function Header() {
           </ul>
         </div>
       </nav>
-
-      {!hideStoreBar && (
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-2 md:px-4 py-2 flex items-center justify-center gap-2 md:gap-3 flex-nowrap">
-          <a
-            href="https://www.enuygun.pet"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-5 py-1.5 md:py-2 rounded-full bg-green-600 hover:bg-green-700 text-white text-[11px] md:text-sm font-bold shadow-sm transition-colors whitespace-nowrap"
-            data-testid="btn-header-physical-store"
-          >
-            <Store className="w-3.5 h-3.5 md:w-4 md:h-4 shrink-0" />
-            <span className="md:hidden">Fiziki Mağaza</span>
-            <span className="hidden md:inline">FİZİKİ MAĞAZAMIZA GİT</span>
-          </a>
-          <a
-            href={`https://wa.me/${whatsappDigits}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 md:gap-2 px-2.5 md:px-5 py-1.5 md:py-2 rounded-full bg-white border border-gray-300 hover:border-green-500 hover:bg-green-50 text-gray-800 text-[11px] md:text-sm font-bold shadow-sm transition-colors whitespace-nowrap"
-            data-testid="btn-header-whatsapp"
-          >
-            <SiWhatsapp className="w-3.5 h-3.5 md:w-4 md:h-4 text-green-600 shrink-0" />
-            <span className="md:hidden">{CURRENT_STORE.phoneDisplay}</span>
-            <span className="hidden md:inline">WHATSAPP: {CURRENT_STORE.phoneDisplay}</span>
-          </a>
-        </div>
-      </div>
-      )}
     </>
   );
 }
