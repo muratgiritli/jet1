@@ -3,7 +3,7 @@ import { Phone, Mail, MapPin, ChevronDown, ChevronUp, ShoppingCart, Truck, Credi
 import { SiWhatsapp } from "react-icons/si";
 import { useState } from "react";
 import SEO, { SITE_DOMAIN, FAQ_JSONLD } from "@/components/SEO";
-import { brandify } from "@/lib/store";
+import { brandify, CURRENT_STORE } from "@/lib/store";
 
 const COMPANY = {
   name: "Sizpa İnternet Tic. Ltd. Şti.",
@@ -314,7 +314,100 @@ export function TeslimatIadePage() {
   );
 }
 
+function MesafeliSatisJetgo() {
+  return (
+    <PageWrapper title="Mesafeli Satış Sözleşmesi">
+      <SEO title="Mesafeli Satış Sözleşmesi | JETGO" description="Jetgomarket.com mesafeli satış sözleşmesi: taraflar, teslimat, cayma hakkı, iade ve ödeme koşulları." canonical={`${SITE_DOMAIN}/mesafeli-satis`} />
+
+      <Section title="1. Taraflar">
+        <p><strong>SATICI / HİZMET SAĞLAYICI</strong></p>
+        <CompanyInfoBlock />
+        <p className="mt-3"><strong>ALICI / ÜYE / MÜŞTERİ</strong></p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Ad Soyad / Unvan: Sipariş sırasında beyan edilen bilgiler</li>
+          <li>Adres: Sipariş sırasında bildirilen teslimat adresi</li>
+          <li>Telefon / E-posta: Sipariş sırasında bildirilen iletişim bilgileri</li>
+        </ul>
+        <p className="mt-2">İşbu sözleşme, <strong>jetgomarket.com</strong> üzerinden ürün satın alan alıcı ile satıcı arasında elektronik ortamda kurulmuştur.</p>
+      </Section>
+
+      <Section title="2. Konu">
+        <p>İşbu sözleşmenin konusu, alıcının jetgomarket.com internet sitesi üzerinden elektronik ortamda sipariş verdiği ürünlerin satışı, teslimatı, ödeme koşulları, cayma hakkı, iade ve tarafların hak ve yükümlülüklerinin düzenlenmesidir.</p>
+        <p>Alıcı, siparişi onaylamadan önce ürün bilgilerini, fiyatı, teslimat ve ödeme şartlarını kontrol ettiğini kabul eder.</p>
+      </Section>
+
+      <Section title="3. Ürün ve Ödeme Bilgileri">
+        <p>Satın alınan ürünün cinsi, miktarı, satış fiyatı, ödeme şekli, teslimat bilgileri ve varsa kampanya/indirim bilgileri sipariş onay ekranında ve sipariş kayıtlarında yer almaktadır.</p>
+        <p>Alıcı, siparişi onaylamadan önce ürün bilgilerini, fiyatı, teslimat ve ödeme şartlarını kontrol ettiğini kabul eder.</p>
+      </Section>
+
+      <Section title="4. Teslimat Bilgileri">
+        <p>Ürünler, alıcının sipariş sırasında bildirdiği adrese teslim edilir.</p>
+        <p>Teslimat süresi, stok durumu, teslimat bölgesi ve operasyonel şartlara göre değişebilir. Atakum içi hızlı teslimat hizmeti sunulabilmekle birlikte, yoğunluk, hava şartları, trafik, stok durumu veya mücbir sebepler nedeniyle teslimat süresi değişebilir.</p>
+        <p>Teslimat sırasında alıcının adreste bulunmaması, eksik veya hatalı adres bildirmesi gibi nedenlerle teslimat yapılamazsa, bundan doğacak gecikme ve masraflardan alıcı sorumludur.</p>
+      </Section>
+
+      <Section title="5. Cayma Hakkı">
+        <p>Alıcı, mesafeli satış mevzuatı kapsamında, teslim aldığı tarihten itibaren 14 gün içinde herhangi bir gerekçe göstermeksizin cayma hakkını kullanabilir.</p>
+        <p>Cayma hakkının kullanılabilmesi için bu süre içinde satıcıya yazılı olarak veya kalıcı veri saklayıcısı ile bildirim yapılması gerekir.</p>
+        <p className="mt-2"><strong>Cayma bildirimi için iletişim:</strong></p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>E-posta: <a href={`mailto:${COMPANY.email}`} className="text-primary underline">{COMPANY.email}</a></li>
+          <li>Telefon / WhatsApp: {COMPANY.phone}</li>
+        </ul>
+      </Section>
+
+      <Section title="6. Cayma Hakkı Kullanılamayacak Ürünler">
+        <p>Aşağıdaki ürünlerde cayma hakkı kullanılamaz:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Ambalajı açılmış, kullanılmış veya yeniden satışa uygun olmayan ürünler,</li>
+          <li>Hijyen ve sağlık açısından iadesi uygun olmayan ürünler,</li>
+          <li>Son kullanma tarihi yaklaşan veya çabuk bozulabilecek ürünler,</li>
+          <li>Alıcının isteği doğrultusunda özel olarak hazırlanan ürünler,</li>
+          <li>Açık mama, açık ürün, özel tartım veya kişiye özel hazırlanan ürünler,</li>
+          <li>Teslimden sonra ambalajı açılmış pet bakım, hijyen ve tüketim ürünleri.</li>
+        </ul>
+      </Section>
+
+      <Section title="7. İade Şartları">
+        <p>İade edilecek ürünün kullanılmamış, ambalajı bozulmamış, yeniden satışa uygun ve varsa faturası/fişi ile birlikte gönderilmesi gerekir.</p>
+        <p>İade talebi satıcı tarafından incelenir. İade şartlarına uygun olmayan ürünlerde iade kabul edilmeyebilir.</p>
+        <p>Ürün bedeli, iade şartlarının sağlanması ve ürünün satıcıya ulaşmasından sonra mevzuata uygun süre içinde alıcıya iade edilir.</p>
+      </Section>
+
+      <Section title="8. Ayıplı / Hatalı Ürün">
+        <p>Teslim edilen ürünün ayıplı, hasarlı, eksik veya siparişten farklı olması halinde alıcı, durumu makul süre içinde satıcıya bildirmelidir.</p>
+        <p>Bu durumda ürün değişimi, iade veya bedel iadesi konusunda mevzuata uygun işlem yapılır.</p>
+      </Section>
+
+      <Section title="9. Alıcının Yükümlülükleri">
+        <p>Alıcı, sipariş verirken doğru ve eksiksiz bilgi vermekle yükümlüdür.</p>
+        <p>Alıcı, sipariş onayı ile birlikte ürün bilgilerini, satış fiyatını, ödeme ve teslimat koşullarını kabul etmiş sayılır.</p>
+        <p>Alıcının hatalı bilgi vermesi nedeniyle oluşabilecek teslimat sorunlarından satıcı sorumlu değildir.</p>
+      </Section>
+
+      <Section title="10. Satıcının Yükümlülükleri">
+        <p>Satıcı, siparişe konu ürünü belirtilen niteliklere uygun şekilde teslim etmekle yükümlüdür.</p>
+        <p>Stokta bulunmayan veya temini mümkün olmayan ürünlerde satıcı, alıcıyı bilgilendirerek siparişi iptal edebilir, muadil ürün önerebilir veya ücret iadesi yapabilir.</p>
+      </Section>
+
+      <Section title="11. Uyuşmazlıkların Çözümü">
+        <p>İşbu sözleşmeden doğabilecek uyuşmazlıklarda, Ticaret Bakanlığı tarafından ilan edilen parasal sınırlar dahilinde Tüketici Hakem Heyetleri ve Tüketici Mahkemeleri yetkilidir.</p>
+      </Section>
+
+      <Section title="12. Yürürlük">
+        <p>Alıcı, jetgomarket.com üzerinden sipariş vererek işbu Mesafeli Satış Sözleşmesi'ni okuduğunu, anladığını ve elektronik ortamda kabul ettiğini beyan eder.</p>
+      </Section>
+
+      <Section title="Satıcı Bilgileri">
+        <CompanyInfoBlock />
+      </Section>
+    </PageWrapper>
+  );
+}
+
 export function MesafeliSatisSozlesmesiPage() {
+  if (CURRENT_STORE.id === "jetgo") return <MesafeliSatisJetgo />;
   return (
     <PageWrapper title="Mesafeli Satış Sözleşmesi">
       <SEO title="Mesafeli Satış Sözleşmesi | JETGO Samsun Pet Shop" description="JETGO Pet Shop mesafeli satış sözleşmesi. 6502 sayılı Tüketicinin Korunması Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği kapsamında ön bilgilendirme ve sözleşme koşulları." canonical={`${SITE_DOMAIN}/mesafeli-satis`} />
@@ -918,7 +1011,121 @@ export function KullanimKosullariPage() {
   );
 }
 
+function CerezPolitikasiJetgo() {
+  return (
+    <PageWrapper title="Çerez (Cookie) Politikası">
+      <SEO title="Çerez Politikası | JETGO" description="Jetgomarket.com çerez (cookie) politikası: çerez türleri, üçüncü taraf çerezleri, saklama süreleri ve çerez yönetimi." canonical={`${SITE_DOMAIN}/cerez-politikasi`} />
+
+      <Section>
+        <p><strong>Son Güncelleme:</strong> 27.06.2026</p>
+        <p>Jetgomarket.com ("Site"), ziyaretçilerimize daha güvenli, hızlı ve verimli bir kullanıcı deneyimi sunabilmek amacıyla çerez (cookie) teknolojisini kullanmaktadır.</p>
+        <p>Bu politika, web sitemizde kullanılan çerezlerin türlerini, kullanım amaçlarını ve çerez tercihlerinizi nasıl yönetebileceğinizi açıklamaktadır.</p>
+      </Section>
+
+      <Section title="1. Çerez (Cookie) Nedir?">
+        <p>Çerezler; ziyaret ettiğiniz internet siteleri tarafından tarayıcınıza veya cihazınıza kaydedilen küçük metin dosyalarıdır.</p>
+        <p>Bu dosyalar sayesinde internet sitesi sizi sonraki ziyaretlerinizde tanıyabilir ve kullanıcı deneyiminizi geliştirebilir.</p>
+      </Section>
+
+      <Section title="2. Hangi Çerezleri Kullanıyoruz?">
+        <p><strong>a) Zorunlu Çerezler</strong></p>
+        <p>Bu çerezler web sitesinin düzgün çalışabilmesi için gereklidir. Örneğin;</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Oturum yönetimi</li>
+          <li>Sepet işlemleri</li>
+          <li>Güvenli giriş</li>
+          <li>Sipariş süreci</li>
+          <li>Güvenlik doğrulamaları</li>
+        </ul>
+        <p className="mt-1">Bu çerezler kapatılamaz.</p>
+
+        <p className="mt-3"><strong>b) Performans ve Analiz Çerezleri</strong></p>
+        <p>Web sitemizin performansını geliştirmek amacıyla anonim istatistikler oluşturulabilir. Bu kapsamda;</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Sayfa görüntüleme sayıları</li>
+          <li>Ziyaret süreleri</li>
+          <li>Hata kayıtları</li>
+          <li>Trafik kaynakları</li>
+        </ul>
+        <p className="mt-1">analiz edilebilir.</p>
+
+        <p className="mt-3"><strong>c) İşlevsellik Çerezleri</strong></p>
+        <p>Bu çerezler kullanıcı tercihlerini hatırlamak amacıyla kullanılabilir. Örneğin;</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Dil tercihi</li>
+          <li>Bölge seçimi</li>
+          <li>Sepetteki ürünler</li>
+          <li>Kullanıcı tercihleri</li>
+        </ul>
+
+        <p className="mt-3"><strong>d) Reklam ve Pazarlama Çerezleri</strong></p>
+        <p>Onay vermeniz halinde;</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>İlgi alanlarınıza uygun reklam gösterimi,</li>
+          <li>Reklam performansının ölçülmesi,</li>
+          <li>Yeniden pazarlama (Remarketing),</li>
+          <li>Kampanya analizleri</li>
+        </ul>
+        <p className="mt-1">amacıyla reklam çerezleri kullanılabilir.</p>
+      </Section>
+
+      <Section title="3. Üçüncü Taraf Çerezleri">
+        <p>Web sitemizde aşağıdaki hizmet sağlayıcıların çerezleri kullanılabilir:</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Google Analytics</li>
+          <li>Google Ads</li>
+          <li>Google Tag Manager</li>
+          <li>Meta (Facebook / Instagram)</li>
+          <li>Ödeme kuruluşları</li>
+          <li>Kargo takip sistemleri</li>
+        </ul>
+        <p className="mt-1">Bu hizmet sağlayıcılar kendi gizlilik politikaları doğrultusunda veri işleyebilir.</p>
+      </Section>
+
+      <Section title="4. Çerezlerin Saklanma Süresi">
+        <p>Çerezler;</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Oturum süresince,</li>
+          <li>Belirli bir süre boyunca,</li>
+          <li>Tarayıcı ayarlarınız değiştirilinceye kadar</li>
+        </ul>
+        <p className="mt-1">saklanabilir.</p>
+      </Section>
+
+      <Section title="5. Çerezleri Nasıl Kontrol Edebilirsiniz?">
+        <p>Tarayıcınızın ayarlarını değiştirerek;</p>
+        <ul className="list-disc list-inside space-y-1 ml-2">
+          <li>Çerezleri engelleyebilir,</li>
+          <li>Mevcut çerezleri silebilir,</li>
+          <li>Yeni çerezleri reddedebilir,</li>
+          <li>Belirli internet siteleri için izin verebilirsiniz.</li>
+        </ul>
+        <p className="mt-1">Ancak zorunlu çerezlerin devre dışı bırakılması durumunda web sitesinin bazı bölümleri düzgün çalışmayabilir.</p>
+      </Section>
+
+      <Section title="6. Kişisel Verilerin Korunması">
+        <p>Çerezler aracılığıyla elde edilen kişisel veriler, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) ve ilgili mevzuata uygun olarak işlenmektedir.</p>
+        <p>Detaylı bilgi için <Link href="/kvkk" className="text-primary underline">KVKK Aydınlatma Metni</Link> ve <Link href="/gizlilik" className="text-primary underline">Gizlilik Politikası</Link> sayfalarımızı inceleyebilirsiniz.</p>
+      </Section>
+
+      <Section title="7. Çerez Tercihleri">
+        <p>İlk ziyaretinizde sunulan çerez tercih ekranı üzerinden, zorunlu olmayan çerezlere ilişkin tercihlerinizi belirleyebilir ve dilediğiniz zaman değiştirebilirsiniz.</p>
+      </Section>
+
+      <Section title="8. Politika Değişiklikleri">
+        <p>Jetgomarket.com, işbu Çerez Politikası'nı yürürlükteki mevzuata veya hizmetlerinde meydana gelen değişikliklere bağlı olarak güncelleyebilir.</p>
+        <p>Güncel sürüm her zaman internet sitemizde yayımlanır.</p>
+      </Section>
+
+      <Section title="İletişim">
+        <CompanyInfoBlock />
+      </Section>
+    </PageWrapper>
+  );
+}
+
 export function CerezPage() {
+  if (CURRENT_STORE.id === "jetgo") return <CerezPolitikasiJetgo />;
   return (
     <PageWrapper title="Çerez Politikası">
       <SEO title="Çerez Politikası | JETGO Samsun Pet Shop" description="JETGO Pet Shop çerez (cookie) kullanımı hakkında detaylı bilgilendirme. Çerez türleri, kullanım amaçları ve yönetimi." canonical={`${SITE_DOMAIN}/cerez-politikasi`} />
