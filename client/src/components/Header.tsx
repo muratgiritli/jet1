@@ -4,6 +4,7 @@ import { useCustomer } from "@/contexts/CustomerContext";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
 import { CURRENT_STORE } from "@/lib/store";
+import { SiVisa } from "react-icons/si";
 
 const NAV_ITEMS = [
   { name: "Kedi", href: "/kategori/kedi" },
@@ -14,15 +15,61 @@ const NAV_ITEMS = [
   { name: "Veteriner", href: "/kategori/veteriner" },
 ];
 
+function VisaBadge() {
+  return (
+    <span
+      className="inline-flex items-center justify-center bg-white rounded px-1.5 h-6 shadow-sm"
+      data-testid="logo-visa"
+    >
+      <SiVisa className="h-3 w-auto" style={{ color: "#1434CB" }} aria-label="Visa" />
+    </span>
+  );
+}
+
+function MastercardBadge() {
+  return (
+    <span
+      className="inline-flex items-center justify-center bg-white rounded px-1.5 h-6 shadow-sm"
+      data-testid="logo-mastercard"
+    >
+      <svg viewBox="0 0 38 24" className="h-4 w-auto" role="img" aria-label="Mastercard">
+        <circle cx="15" cy="12" r="11" fill="#EB001B" />
+        <circle cx="23" cy="12" r="11" fill="#F79E1B" />
+        <path d="M19 1.753 A11 11 0 0 1 19 22.247 A11 11 0 0 1 19 1.753 Z" fill="#FF5F00" />
+      </svg>
+    </span>
+  );
+}
+
 export default function Header() {
   const [location] = useLocation();
   const { isLoggedIn, customer } = useCustomer();
 
   const isHome = location === "/";
-  const navItems =
-    CURRENT_STORE.id === "jetgo"
-      ? NAV_ITEMS.filter((item) => item.href !== "/kategori/veteriner")
-      : NAV_ITEMS;
+  const isJetgo = CURRENT_STORE.id === "jetgo";
+  const navItems = isJetgo
+    ? NAV_ITEMS.filter((item) => item.href !== "/kategori/veteriner")
+    : NAV_ITEMS;
+
+  const categoryItems = navItems.map((item) => {
+    const isHighlight = "highlight" in item && item.highlight;
+    const isActive = location.startsWith(item.href);
+    return (
+      <li key={item.name}>
+        <Link
+          href={item.href}
+          className={`px-1 md:px-6 py-0.5 md:py-1.5 text-[15px] md:text-base font-semibold transition-colors rounded-md md:rounded-lg ${
+            isHighlight
+              ? `font-bold animate-pulse ${isActive ? "bg-yellow-400 text-gray-900" : "bg-yellow-400 text-gray-900 hover:bg-yellow-300"}`
+              : `text-white/90 hover:text-white hover:bg-white/10 ${isActive ? "text-white bg-white/15 font-semibold" : ""}`
+          }`}
+          data-testid={`nav-link-${item.name}`}
+        >
+          {item.name}
+        </Link>
+      </li>
+    );
+  });
 
   return (
     <>
@@ -89,29 +136,23 @@ export default function Header() {
       </header>
 
       <nav className="sticky top-[52px] z-[9998]" style={{ backgroundColor: CURRENT_STORE.theme.navBar }}>
-        <div className="max-w-6xl mx-auto px-3 md:px-4 overflow-x-auto scrollbar-hide">
-          <ul className="flex items-center justify-start gap-0.5 md:gap-2 py-1 md:py-1.5 flex-nowrap whitespace-nowrap" data-testid="nav-categories">
-            {navItems.map((item) => {
-              const isHighlight = "highlight" in item && item.highlight;
-              const isActive = location.startsWith(item.href);
-              return (
-                <li key={item.name}>
-                  <Link
-                    href={item.href}
-                    className={`px-1 md:px-6 py-0.5 md:py-1.5 text-[15px] md:text-base font-semibold transition-colors rounded-md md:rounded-lg ${
-                      isHighlight
-                        ? `font-bold animate-pulse ${isActive ? "bg-yellow-400 text-gray-900" : "bg-yellow-400 text-gray-900 hover:bg-yellow-300"}`
-                        : `text-white/90 hover:text-white hover:bg-white/10 ${isActive ? "text-white bg-white/15 font-semibold" : ""}`
-                    }`}
-                    data-testid={`nav-link-${item.name}`}
-                  >
-                    {item.name}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+        {isJetgo ? (
+          <div className="max-w-6xl mx-auto px-3 md:px-4 flex items-center gap-2">
+            <ul className="min-w-0 flex-1 flex items-center justify-start gap-0.5 md:gap-2 py-1 md:py-1.5 flex-nowrap whitespace-nowrap overflow-x-auto scrollbar-hide" data-testid="nav-categories">
+              {categoryItems}
+            </ul>
+            <div className="shrink-0 flex items-center gap-1.5 pl-1" data-testid="header-card-logos">
+              <VisaBadge />
+              <MastercardBadge />
+            </div>
+          </div>
+        ) : (
+          <div className="max-w-6xl mx-auto px-3 md:px-4 overflow-x-auto scrollbar-hide">
+            <ul className="flex items-center justify-start gap-0.5 md:gap-2 py-1 md:py-1.5 flex-nowrap whitespace-nowrap" data-testid="nav-categories">
+              {categoryItems}
+            </ul>
+          </div>
+        )}
       </nav>
     </>
   );
