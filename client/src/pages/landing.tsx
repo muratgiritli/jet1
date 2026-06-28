@@ -17,9 +17,10 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { lazy, Suspense } from "react";
 const DemoAnasayfa = lazy(() => import("@/pages/demo-anasayfa"));
 function DemoAnasayfaEmbed() {
+  const store = useStore();
   return (
     <Suspense fallback={<div className="min-h-[400px] flex items-center justify-center text-gray-400 text-sm">Yükleniyor...</div>}>
-      <DemoAnasayfa />
+      <DemoAnasayfa hideFooter={store.id === DEFAULT_STORE.id} />
     </Suspense>
   );
 }

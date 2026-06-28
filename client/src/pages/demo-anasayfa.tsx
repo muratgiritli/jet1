@@ -126,7 +126,7 @@ function ProductCard({ p, badge }: { p: Product; badge?: string }) {
   );
 }
 
-export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean } = {}) {
+export default function DemoAnasayfa({ embedded = false, hideFooter = false }: { embedded?: boolean; hideFooter?: boolean } = {}) {
   const { data: products = [], isLoading } = useQuery<Product[]>({
     queryKey: ["/api/products"],
   });
@@ -469,7 +469,7 @@ export default function DemoAnasayfa({ embedded = false }: { embedded?: boolean 
         </div>
       </section>
 
-      {!embedded && (
+      {!embedded && !hideFooter && (
       /* Footer */
       <footer className="bg-gradient-to-b from-gray-900 to-black text-gray-300 mt-12">
         <div className="max-w-7xl mx-auto px-6 py-12">
