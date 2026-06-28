@@ -21,6 +21,10 @@ export interface MerchantConfig {
   /** Feed'deki kargo/teslimat ücreti override'ı ("X.XX"). Boş => ticaret modeline
    *  göre otomatik (kargo: cargo_fee, aynı gün: 0.00). */
   shippingAmount?: string;
+  /** Google Business Profile mağaza kodu — yerel envanter (Local Inventory) feed'i
+   *  için. Business Profile'daki konumun store code'u ile birebir aynı olmalı.
+   *  Boşsa yerel envanter feed'i ürün satırı üretmez. */
+  storeCode?: string;
 }
 
 export function normalizeMerchantConfig(raw: any): MerchantConfig {
@@ -33,6 +37,10 @@ export function normalizeMerchantConfig(raw: any): MerchantConfig {
     if (raw.shippingAmount != null && String(raw.shippingAmount).trim() !== "") {
       const n = Number(String(raw.shippingAmount).replace(",", "."));
       if (Number.isFinite(n) && n >= 0) cfg.shippingAmount = n.toFixed(2);
+    }
+    if (raw.storeCode != null && String(raw.storeCode).trim() !== "") {
+      const sc = String(raw.storeCode).replace(/[\x00-\x1F\x7F]/g, "").trim().slice(0, 60);
+      if (sc) cfg.storeCode = sc;
     }
   }
   return cfg;
@@ -104,6 +112,7 @@ export type MerchantRow = {
   domain: string;
   fulfillment: "local" | "cargo";
   feedUrl: string;
+  localFeedUrl: string;
   config: MerchantConfig;
   hasConfig: boolean;
 };
@@ -119,6 +128,7 @@ export async function getAllStoreMerchantConfigs(): Promise<MerchantRow[]> {
       domain: s.domain,
       fulfillment: s.commerce.fulfillment,
       feedUrl: `${s.domain}/google-merchant.xml`,
+      localFeedUrl: `${s.domain}/google-local-inventory.xml`,
       config,
       hasConfig: m.has(s.id),
     };

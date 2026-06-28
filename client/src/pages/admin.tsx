@@ -8555,17 +8555,18 @@ type GoogleTagRow = {
 };
 type GoogleForm = { gtmId: string; ga4Ids: string; adsIds: string; siteVerification: string };
 
-type MerchantConfig = { merchantId?: string; shippingAmount?: string };
+type MerchantConfig = { merchantId?: string; shippingAmount?: string; storeCode?: string };
 type MerchantRow = {
   id: string;
   name: string;
   domain: string;
   fulfillment: "local" | "cargo";
   feedUrl: string;
+  localFeedUrl: string;
   config: MerchantConfig;
   hasConfig: boolean;
 };
-type MerchantForm = { merchantId: string; shippingAmount: string };
+type MerchantForm = { merchantId: string; shippingAmount: string; storeCode: string };
 
 function GoogleTagsSection() {
   const { toast } = useToast();
@@ -8699,6 +8700,7 @@ function MerchantSection() {
       next[r.id] = {
         merchantId: r.config?.merchantId || "",
         shippingAmount: r.config?.shippingAmount || "",
+        storeCode: r.config?.storeCode || "",
       };
     }
     setForms(next);
@@ -8725,7 +8727,7 @@ function MerchantSection() {
   });
 
   const setField = (storeId: string, k: keyof MerchantForm, v: string) =>
-    setForms((p) => ({ ...p, [storeId]: { ...(p[storeId] || { merchantId: "", shippingAmount: "" }), [k]: v } }));
+    setForms((p) => ({ ...p, [storeId]: { ...(p[storeId] || { merchantId: "", shippingAmount: "", storeCode: "" }), [k]: v } }));
 
   const copyFeed = async (url: string) => {
     try {
@@ -8747,7 +8749,7 @@ function MerchantSection() {
         Kargo ücretini boş bırakırsanız kargo domainlerinde mağazanın kargo ayarı kullanılır.
       </div>
       {(data?.stores || []).map((r) => {
-        const f = forms[r.id] || { merchantId: "", shippingAmount: "" };
+        const f = forms[r.id] || { merchantId: "", shippingAmount: "", storeCode: "" };
         const busy = savingId === r.id && (saveMut.isPending || resetMut.isPending);
         const isCargo = r.fulfillment === "cargo";
         return (
@@ -8773,6 +8775,22 @@ function MerchantSection() {
                     <Copy className="w-3.5 h-3.5" />
                   </Button>
                 </div>
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Mağaza Kodu (yerel envanter — Business Profile ile birebir aynı)</Label>
+                <Input value={f.storeCode} onChange={(e) => setField(r.id, "storeCode", e.target.value)} placeholder="örn. atakum-magaza" className="font-mono text-xs" data-testid={`input-store-code-${r.id}`} />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Yerel Envanter Feed Adresi (Local Inventory)</Label>
+                <div className="flex items-center gap-2">
+                  <Input readOnly value={r.localFeedUrl} className="font-mono text-xs" data-testid={`input-local-feed-url-${r.id}`} />
+                  <Button size="sm" variant="outline" onClick={() => copyFeed(r.localFeedUrl)} data-testid={`btn-copy-local-feed-${r.id}`}>
+                    <Copy className="w-3.5 h-3.5" />
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground" data-testid={`text-local-feed-note-${r.id}`}>
+                  Fiziksel mağazada gösterim (yerel envanter reklamları) için. Çalışması için yukarıdaki Mağaza Kodu zorunludur ve Business Profile'daki konum koduyla birebir aynı olmalıdır. Stok ve fiyat ürünlerden otomatik gelir.
+                </p>
               </div>
               <div className={isCargo ? "grid gap-3 sm:grid-cols-2" : "grid gap-3"}>
                 <div className="space-y-1">

@@ -1652,6 +1652,77 @@ export async function registerRoutes(
     }
   });
 
+  // Google Yerel Envanter (Local Inventory) feed'i — fiziksel mağaza stok/fiyat verisi.
+  // Ürün feed'indeki (/google-merchant.xml) g:id ile eşleşir; her satır bir mağaza
+  // kodu (store_code) ile o üründeki yerel stok ve fiyatı bildirir. Mağaza kodu
+  // ayarlanmadıysa (merchant config) feed ürün satırı üretmez — Business Profile'daki
+  // konum koduyla birebir aynı olmalıdır.
+  app.get("/google-local-inventory.xml", async (req, res) => {
+    try {
+      const stCfg = reqStore(req);
+      const SITE = stCfg.domain;
+      const merchantCfg = await getStoreMerchantConfig(stCfg.id);
+      const storeCode = (merchantCfg?.storeCode || "").trim();
+
+      const clean = (s: string | null | undefined) =>
+        String(s ?? "")
+          .replace(/[\r\n\t]+/g, " ")
+          .replace(/[\x00-\x1F\x7F]/g, "")
+          .replace(/\s+/g, " ")
+          .trim();
+      const esc = (s: string | null | undefined) =>
+        clean(s)
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;").replace(/'/g, "&apos;");
+      const fmtPrice = (n: number) => `${Number(n).toFixed(2)} TRY`;
+
+      let xml = `<?xml version="1.0" encoding="UTF-8"?>\n`;
+      xml += `<rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">\n`;
+      xml += `  <channel>\n`;
+      xml += `    <title>${esc(stCfg.name)} — Yerel Envanter</title>\n`;
+      xml += `    <link>${SITE}</link>\n`;
+      xml += `    <description>${esc(stCfg.name)} fiziksel mağaza yerel envanteri.</description>\n`;
+
+      let included = 0;
+      if (storeCode) {
+        // Ürün feed'iyle aynı ürün kümesi (resimsiz ürünler ürün feed'inde yok).
+        const { rows } = await sharedPool.query(`
+          SELECT p.id, p.price, p.original_price, p.stock
+          FROM products p
+          WHERE p.is_active = true AND p.price > 0 AND p.img IS NOT NULL AND p.img <> ''
+          ORDER BY p.id
+        `);
+        for (const r of rows as any[]) {
+          const qty = Math.max(0, Math.floor(Number(r.stock) || 0));
+          const availability = qty > 0 ? "in_stock" : "out_of_stock";
+          const hasDiscount = r.original_price && r.original_price > r.price;
+          const listPrice = hasDiscount ? r.original_price : r.price;
+          xml += `    <item>\n`;
+          xml += `      <g:store_code>${esc(storeCode)}</g:store_code>\n`;
+          xml += `      <g:id>${r.id}</g:id>\n`;
+          xml += `      <g:quantity>${qty}</g:quantity>\n`;
+          xml += `      <g:availability>${availability}</g:availability>\n`;
+          xml += `      <g:price>${fmtPrice(listPrice)}</g:price>\n`;
+          if (hasDiscount) {
+            xml += `      <g:sale_price>${fmtPrice(r.price)}</g:sale_price>\n`;
+          }
+          xml += `    </item>\n`;
+          included++;
+        }
+      }
+      console.log(`[google-local-inventory] store=${stCfg.id} code=${storeCode ? "set" : "MISSING"} included=${included}`);
+
+      xml += `  </channel>\n</rss>\n`;
+
+      res.setHeader("Content-Type", "application/xml; charset=utf-8");
+      res.setHeader("Cache-Control", "public, max-age=3600");
+      res.send(xml);
+    } catch (err) {
+      console.error("Google Local Inventory feed error:", err);
+      res.status(500).send("Feed generation failed");
+    }
+  });
+
   app.get("/robots.txt", (req, res) => {
     res.set("Content-Type", "text/plain");
     const robotsStore = reqStore(req);
