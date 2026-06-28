@@ -11,6 +11,7 @@ import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SocialProofToast from "@/components/SocialProofToast";
+import { CURRENT_STORE } from "@/lib/store";
 const Landing = lazy(() => import("@/pages/landing"));
 const AdLanding = lazy(() => import("@/pages/ad-landing"));
 
@@ -222,7 +223,7 @@ function AppShell() {
       )}
       <ErrorBoundary><Router /></ErrorBoundary>
       {!isAdmin && !isDemo && isLandingLike && (
-        <div className="md:hidden"><Footer /></div>
+        <div className={CURRENT_STORE.id === "jetgo" ? "" : "md:hidden"}><Footer /></div>
       )}
       {!isAdmin && !isDemo && <FloatingCartBar />}
       {!isAdmin && !isDemo && <BottomTabBar />}
