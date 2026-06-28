@@ -27,6 +27,7 @@ export default function Footer() {
   const [contactOpen, setContactOpen] = useState(false);
   const store = useStore();
   const showStoreContact = store.id !== DEFAULT_STORE.id;
+  const isJetgo = store.id === DEFAULT_STORE.id;
   const whatsappDigits = store.phone.replace(/\D/g, "");
   return (
     <footer className="block bg-gray-900 text-gray-300 mt-8 pb-20 md:pb-0" data-testid="footer-desktop">
@@ -39,7 +40,7 @@ export default function Footer() {
               {FOOTER_LINKS.map((link) => {
                 const Icon = link.icon;
                 return (
-                  <li key={link.href} className={link.mobileHidden ? "hidden md:block" : ""}>
+                  <li key={link.href} className={link.mobileHidden && !isJetgo ? "hidden md:block" : ""}>
                     <Link href={link.href} className="flex items-center gap-2 text-sm hover:text-white transition-colors" data-testid={`footer-link-${link.href.slice(1)}`}>
                       <Icon className="w-4 h-4 flex-shrink-0" />
                       {link.label}
@@ -50,13 +51,13 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="hidden md:block">
+          <div className={isJetgo ? "" : "hidden md:block"}>
             <h3 className="text-white font-bold text-lg mb-4">Kurumsal</h3>
             <ul className="space-y-2">
               {LEGAL_LINKS.map((link) => {
                 const Icon = link.icon;
                 return (
-                  <li key={link.href} className={link.mobileHidden ? "hidden md:block" : ""}>
+                  <li key={link.href} className={link.mobileHidden && !isJetgo ? "hidden md:block" : ""}>
                     <Link href={link.href} className="flex items-center gap-2 text-sm hover:text-white transition-colors" data-testid={`footer-link-${link.href.slice(1)}`}>
                       <Icon className="w-4 h-4 flex-shrink-0" />
                       {link.label}
