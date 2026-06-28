@@ -1109,7 +1109,8 @@ function CerezPolitikasiJetgo() {
       </Section>
 
       <Section title="7. Çerez Tercihleri">
-        <p>İlk ziyaretinizde sunulan çerez tercih ekranı üzerinden, zorunlu olmayan çerezlere ilişkin tercihlerinizi belirleyebilir ve dilediğiniz zaman değiştirebilirsiniz.</p>
+        <p>Zorunlu olmayan çerezlere ilişkin tercihlerinizi tarayıcınızın ayarları üzerinden dilediğiniz zaman yönetebilir; bu çerezleri engelleyebilir veya silebilirsiniz.</p>
+        <p className="mt-1">Çerez kontrolüne ilişkin adımlar için yukarıdaki "Çerezleri Nasıl Kontrol Edebilirsiniz?" bölümünü inceleyebilirsiniz.</p>
       </Section>
 
       <Section title="8. Politika Değişiklikleri">
