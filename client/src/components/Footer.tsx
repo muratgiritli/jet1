@@ -23,6 +23,14 @@ const LEGAL_LINKS = [
   { label: "İletişim", href: "/iletisim", icon: Mail, mobileHidden: false },
 ];
 
+const JETGO_DISCOVER_LINKS = [
+  { label: "Markalar", href: "/kategori" },
+  { label: "Veteriner Maması", href: "/kategori/veteriner" },
+  { label: "Kampanyalar", href: "/kampanya" },
+  { label: "Sokak Canlıları", href: "/sokak-canlari" },
+  { label: "Blog", href: "/blog" },
+];
+
 export default function Footer() {
   const [contactOpen, setContactOpen] = useState(false);
   const store = useStore();
@@ -137,6 +145,24 @@ export default function Footer() {
             </Link>
           </div>
         </div>
+
+        {isJetgo && (
+          <div className="border-t border-gray-700 mt-8 pt-6" data-testid="footer-discover">
+            <h3 className="text-white font-bold text-lg mb-3">Keşfet</h3>
+            <div className="flex flex-wrap gap-x-5 gap-y-2">
+              {JETGO_DISCOVER_LINKS.map((l) => (
+                <Link
+                  key={l.href}
+                  href={l.href}
+                  className="text-sm text-gray-300 hover:text-white transition-colors"
+                  data-testid={`footer-discover-${l.href.slice(1).replace(/\//g, "-")}`}
+                >
+                  {l.label}
+                </Link>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="border-t border-gray-700 mt-8 pt-6 pb-4">
           <div className="flex flex-wrap gap-x-4 gap-y-1.5 mb-4">

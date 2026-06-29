@@ -46,6 +46,14 @@ const navLinks: { label: string; href: string }[] = [
   { label: "Blog", href: "/blog" },
 ];
 
+const JETGO_HEADER_NAV_HREFS = new Set([
+  "/kategori/kopek",
+  "/kategori/kedi",
+  "/kategori/kus",
+  "/kategori/kemirgen",
+  "/kategori/akvaryum",
+]);
+
 const brands = [
   { name: "Royal Canin", img: "/images/brands/royal-canin.webp" },
   { name: "Pro Plan", img: "/images/brands/pro-plan.webp" },
@@ -132,6 +140,9 @@ export default function DemoAnasayfa({ embedded = false, hideFooter = false }: {
   });
 
   const store = useStore();
+  const headerNav = store.id === "jetgo"
+    ? navLinks.filter((c) => JETGO_HEADER_NAV_HREFS.has(c.href))
+    : navLinks;
   const isCargo = store.commerce.fulfillment === "cargo";
   const brandText = store.id === "jetgo" ? "jetgo" : store.shortName;
   const deliveryBadge = isCargo ? "Türkiye geneli hızlı kargo" : "Atakum içi 1 SAATTE teslim";
@@ -220,7 +231,7 @@ export default function DemoAnasayfa({ embedded = false, hideFooter = false }: {
         {/* Mega nav */}
         <nav className="border-t border-gray-100 bg-white">
           <div className="max-w-7xl mx-auto px-6 flex items-center gap-1 text-sm">
-            {navLinks.map((c) => (
+            {headerNav.map((c) => (
               <Link
                 key={c.label}
                 href={c.href}
@@ -230,9 +241,11 @@ export default function DemoAnasayfa({ embedded = false, hideFooter = false }: {
                 {c.label}
               </Link>
             ))}
-            <Link href="/kampanya" className="ml-auto bg-gradient-to-r from-red-500 to-rose-600 text-white text-[12px] font-extrabold px-3 py-1 rounded-full hover:scale-105 transition-transform" data-testid="link-demo-indirimler">
-              🔥 İndirimler
-            </Link>
+            {store.id !== "jetgo" && (
+              <Link href="/kampanya" className="ml-auto bg-gradient-to-r from-red-500 to-rose-600 text-white text-[12px] font-extrabold px-3 py-1 rounded-full hover:scale-105 transition-transform" data-testid="link-demo-indirimler">
+                🔥 İndirimler
+              </Link>
+            )}
           </div>
         </nav>
       </header>
