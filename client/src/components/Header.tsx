@@ -4,7 +4,6 @@ import { useCustomer } from "@/contexts/CustomerContext";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
 import { CURRENT_STORE } from "@/lib/store";
-import { SiVisa } from "react-icons/si";
 
 const NAV_ITEMS = [
   { name: "Kedi", href: "/kategori/kedi" },
@@ -19,32 +18,6 @@ const JETGO_LEGAL_LINKS = [
   { name: "Mesafeli Satış", href: "/mesafeli-satis" },
   { name: "Çerez Politikası", href: "/cerez-politikasi" },
 ];
-
-function VisaBadge() {
-  return (
-    <span
-      className="inline-flex items-center justify-center bg-white rounded px-1.5 h-6 shadow-sm"
-      data-testid="logo-visa"
-    >
-      <SiVisa className="h-3 w-auto" style={{ color: "#1434CB" }} aria-label="Visa" />
-    </span>
-  );
-}
-
-function MastercardBadge() {
-  return (
-    <span
-      className="inline-flex items-center justify-center bg-white rounded px-1.5 h-6 shadow-sm"
-      data-testid="logo-mastercard"
-    >
-      <svg viewBox="0 0 38 24" className="h-4 w-auto" role="img" aria-label="Mastercard">
-        <circle cx="15" cy="12" r="11" fill="#EB001B" />
-        <circle cx="23" cy="12" r="11" fill="#F79E1B" />
-        <path d="M19 1.753 A11 11 0 0 1 19 22.247 A11 11 0 0 1 19 1.753 Z" fill="#FF5F00" />
-      </svg>
-    </span>
-  );
-}
 
 export default function Header() {
   const [location] = useLocation();
@@ -160,10 +133,6 @@ export default function Header() {
                 );
               })}
             </ul>
-            <div className="shrink-0 flex items-center gap-1.5 pl-1" data-testid="header-card-logos">
-              <VisaBadge />
-              <MastercardBadge />
-            </div>
           </div>
         ) : (
           <div className="max-w-6xl mx-auto px-3 md:px-4 overflow-x-auto scrollbar-hide">
