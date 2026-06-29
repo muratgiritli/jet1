@@ -2073,6 +2073,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
             { key: "eksik", label: "Eksik Ürünler", icon: <AlertTriangle className="w-3.5 h-3.5" /> },
             { key: "google", label: "Google", icon: <Tag className="w-3.5 h-3.5" /> },
             { key: "merchant", label: "Merchant", icon: <ShoppingBag className="w-3.5 h-3.5" /> },
+            { key: "localfeed", label: "Local Feed", icon: <MapPin className="w-3.5 h-3.5" /> },
             { key: "ayarlar", label: "Ayarlar", icon: <Settings className="w-3.5 h-3.5" /> },
           ].map(tab => (
             <button
@@ -2120,6 +2121,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
         {activeSection === "eksik" && <MissingProductsSection />}
         {activeSection === "google" && <GoogleTagsSection />}
         {activeSection === "merchant" && <MerchantSection />}
+        {activeSection === "localfeed" && <LocalFeedSection />}
         {activeSection === "ayarlar" && <SettingsSection />}
         {activeSection === "yonetim" && <>
           {!yonetimSub && (
@@ -8563,10 +8565,18 @@ type MerchantRow = {
   fulfillment: "local" | "cargo";
   feedUrl: string;
   localFeedUrl: string;
+  effectiveStoreCode?: string;
   config: MerchantConfig;
   hasConfig: boolean;
 };
 type MerchantForm = { merchantId: string; shippingAmount: string; storeCode: string };
+type LocalFeedStats = {
+  total: number;
+  inStock: number;
+  outOfStock: number;
+  generatedAt: string;
+  stores: { id: string; name: string; domain: string; localFeedUrl: string; storeCode: string; hasStoreCode: boolean }[];
+};
 
 function GoogleTagsSection() {
   const { toast } = useToast();
@@ -8823,6 +8833,101 @@ function MerchantSection() {
           </Card>
         );
       })}
+    </div>
+  );
+}
+
+function LocalFeedSection() {
+  const { toast } = useToast();
+  const { data, isLoading } = useQuery<LocalFeedStats>({
+    queryKey: ["/api/admin/local-feed-stats"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/local-feed-stats", { credentials: "include" });
+      if (!res.ok) throw new Error("İstatistikler yüklenemedi");
+      return res.json();
+    },
+    refetchInterval: 60000,
+  });
+
+  const copyFeed = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Kopyalandı", description: "Feed adresi panoya kopyalandı." });
+    } catch {
+      toast({ title: "Kopyalanamadı", description: url, variant: "destructive" });
+    }
+  };
+
+  const fmtTime = (iso?: string) => {
+    if (!iso) return "-";
+    try { return new Date(iso).toLocaleString("tr-TR"); } catch { return iso; }
+  };
+
+  if (isLoading) return <div className="p-4 text-sm text-muted-foreground">Yükleniyor...</div>;
+
+  const statCards = [
+    { label: "Toplam Ürün", value: data?.total ?? 0, color: "#6B3480", testid: "stat-localfeed-total" },
+    { label: "Stokta Var", value: data?.inStock ?? 0, color: "#16a34a", testid: "stat-localfeed-instock" },
+    { label: "Stokta Yok", value: data?.outOfStock ?? 0, color: "#dc2626", testid: "stat-localfeed-outofstock" },
+  ];
+
+  return (
+    <div className="space-y-4" data-testid="section-localfeed">
+      <div className="rounded-lg border bg-muted/40 p-3 text-xs text-muted-foreground leading-relaxed">
+        Google Yerel Envanter (Local Inventory) feed'i fiziksel mağazadaki stok ve fiyatı Google'a bildirir ve
+        "Yerel envanter verileri eksik" uyarısını giderir. Feed canlı üretilir: ürün fiyatı, stoğu veya aktifliği
+        değişince feed otomatik güncellenir; pasif ürünler dahil edilmez, stokta olmayanlar out_of_stock gönderilir.
+        Çalışması için mağaza kodu (store_code) zorunludur ve Google Business Profile'daki konum koduyla birebir aynı
+        olmalıdır. Mağaza kodu "Merchant" sekmesinden düzenlenir.
+      </div>
+
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {statCards.map((s) => (
+          <Card key={s.label} data-testid={s.testid}>
+            <CardContent className="p-3">
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+              <p className="text-2xl font-bold" style={{ color: s.color }}>{s.value.toLocaleString("tr-TR")}</p>
+            </CardContent>
+          </Card>
+        ))}
+        <Card data-testid="stat-localfeed-updated">
+          <CardContent className="p-3">
+            <p className="text-xs text-muted-foreground">Son Güncelleme</p>
+            <p className="text-sm font-semibold" data-testid="text-localfeed-updated">{fmtTime(data?.generatedAt)}</p>
+            <p className="text-[10px] text-muted-foreground mt-0.5">Feed her istekte canlı üretilir</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {(data?.stores || []).map((s) => (
+        <Card key={s.id} data-testid={`card-localfeed-${s.id}`}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center justify-between gap-2">
+              <span>{s.name}</span>
+              {s.hasStoreCode ? (
+                <Badge variant="default" data-testid={`badge-localfeed-code-${s.id}`}>{s.storeCode}</Badge>
+              ) : (
+                <Badge variant="secondary" data-testid={`badge-localfeed-nocode-${s.id}`}>Mağaza kodu yok</Badge>
+              )}
+            </CardTitle>
+            <p className="text-xs text-muted-foreground">{s.domain.replace(/^https?:\/\//, "")}</p>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <Label className="text-xs">Yerel Envanter Feed Adresi</Label>
+            <div className="flex items-center gap-2">
+              <Input readOnly value={s.localFeedUrl} className="font-mono text-xs" data-testid={`input-localfeed-url-${s.id}`} />
+              <Button size="sm" variant="outline" onClick={() => copyFeed(s.localFeedUrl)} data-testid={`btn-copy-localfeed-${s.id}`}>
+                <Copy className="w-3.5 h-3.5" />
+              </Button>
+            </div>
+            {!s.hasStoreCode && (
+              <p className="text-xs text-muted-foreground">
+                Mağaza kodu girilmediği için bu domainde feed boş kalır. "Merchant" sekmesinden mağaza kodu ekleyin.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      ))}
     </div>
   );
 }

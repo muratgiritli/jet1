@@ -17,7 +17,7 @@ import multer from "multer";
 import OpenAI from "openai";
 import { getSeoPagesForStore, getSitemapPagesForStore, isCargoStore } from "../client/src/lib/seo-data";
 import { getAllStoreGoogleConfigs, setStoreGoogleConfig, deleteStoreGoogleConfig } from "./google-tags";
-import { getAllStoreMerchantConfigs, getStoreMerchantConfig, setStoreMerchantConfig, deleteStoreMerchantConfig } from "./merchant";
+import { getAllStoreMerchantConfigs, getStoreMerchantConfig, setStoreMerchantConfig, deleteStoreMerchantConfig, effectiveStoreCode } from "./merchant";
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
 
@@ -1654,15 +1654,16 @@ export async function registerRoutes(
 
   // Google Yerel Envanter (Local Inventory) feed'i — fiziksel mağaza stok/fiyat verisi.
   // Ürün feed'indeki (/google-merchant.xml) g:id ile eşleşir; her satır bir mağaza
-  // kodu (store_code) ile o üründeki yerel stok ve fiyatı bildirir. Mağaza kodu
-  // ayarlanmadıysa (merchant config) feed ürün satırı üretmez — Business Profile'daki
-  // konum koduyla birebir aynı olmalıdır.
-  app.get("/google-local-inventory.xml", async (req, res) => {
+  // kodu (store_code) ile o üründeki yerel stok ve fiyatı bildirir. Mağaza kodu jetgo
+  // için ATAKUM001 varsayılanına düşer; diğer mağazalar kod girilmediyse ürün satırı
+  // ÜRETMEZ (davranış değişmez). Canlı üretilir: ürün fiyatı/stoğu/aktifliği anında
+  // yansır. Kanonik adres /google-local-inventory-feed.xml; eski adres alias korunur.
+  app.get(["/google-local-inventory-feed.xml", "/google-local-inventory.xml"], async (req, res) => {
     try {
       const stCfg = reqStore(req);
       const SITE = stCfg.domain;
       const merchantCfg = await getStoreMerchantConfig(stCfg.id);
-      const storeCode = (merchantCfg?.storeCode || "").trim();
+      const storeCode = effectiveStoreCode(stCfg.id, merchantCfg);
 
       const clean = (s: string | null | undefined) =>
         String(s ?? "")
@@ -1685,7 +1686,7 @@ export async function registerRoutes(
 
       let included = 0;
       if (storeCode) {
-        // Ürün feed'iyle aynı ürün kümesi (resimsiz ürünler ürün feed'inde yok).
+        // Ürün feed'iyle aynı ürün kümesi: aktif, fiyatı>0, resimli (pasif ürün hariç).
         const { rows } = await sharedPool.query(`
           SELECT p.id, p.price, p.original_price, p.stock
           FROM products p
@@ -1697,15 +1698,19 @@ export async function registerRoutes(
           const availability = qty > 0 ? "in_stock" : "out_of_stock";
           const hasDiscount = r.original_price && r.original_price > r.price;
           const listPrice = hasDiscount ? r.original_price : r.price;
+          // g:id ürün feed'iyle BİREBİR eşleşmeli (Google yerel satırı ürünle id ile
+          // eşler). Ayrı bir SKU alanı yok → ürün ID kullanılır.
           xml += `    <item>\n`;
           xml += `      <g:store_code>${esc(storeCode)}</g:store_code>\n`;
           xml += `      <g:id>${r.id}</g:id>\n`;
-          xml += `      <g:quantity>${qty}</g:quantity>\n`;
           xml += `      <g:availability>${availability}</g:availability>\n`;
+          xml += `      <g:quantity>${qty}</g:quantity>\n`;
           xml += `      <g:price>${fmtPrice(listPrice)}</g:price>\n`;
           if (hasDiscount) {
             xml += `      <g:sale_price>${fmtPrice(r.price)}</g:sale_price>\n`;
           }
+          xml += `      <g:pickup_method>buy</g:pickup_method>\n`;
+          xml += `      <g:pickup_sla>same day</g:pickup_sla>\n`;
           xml += `    </item>\n`;
           included++;
         }
@@ -1715,7 +1720,8 @@ export async function registerRoutes(
       xml += `  </channel>\n</rss>\n`;
 
       res.setHeader("Content-Type", "application/xml; charset=utf-8");
-      res.setHeader("Cache-Control", "public, max-age=3600");
+      // Yerel envanter stok/fiyata duyarlı; ürün feed'inden (3600) daha kısa cache.
+      res.setHeader("Cache-Control", "public, max-age=300");
       res.send(xml);
     } catch (err) {
       console.error("Google Local Inventory feed error:", err);
@@ -4012,6 +4018,39 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     } catch (err: any) {
       const invalid = err?.message === "invalid store";
       res.status(invalid ? 400 : 500).json({ message: invalid ? "Geçersiz mağaza" : "Silme başarısız" });
+    }
+  });
+
+  // Google Local Feed admin paneli istatistikleri. Ürün kataloğu tüm domainlerde
+  // ortaktır, bu yüzden sayımlar globaldir; mağaza bazlı tek fark feed adresi ve
+  // store_code'dur. Feed canlı üretildiği için generatedAt = anlık zamandır.
+  app.get("/api/admin/local-feed-stats", requireAdmin, async (_req, res) => {
+    try {
+      const { rows } = await sharedPool.query(
+        `SELECT COUNT(*)::int AS total,
+                COUNT(*) FILTER (WHERE stock > 0)::int AS in_stock
+         FROM products
+         WHERE is_active = true AND price > 0 AND img IS NOT NULL AND img <> ''`,
+      );
+      const total = rows[0]?.total ?? 0;
+      const inStock = rows[0]?.in_stock ?? 0;
+      const stores = (await getAllStoreMerchantConfigs()).map((s) => ({
+        id: s.id,
+        name: s.name,
+        domain: s.domain,
+        localFeedUrl: s.localFeedUrl,
+        storeCode: s.effectiveStoreCode,
+        hasStoreCode: !!s.effectiveStoreCode,
+      }));
+      res.json({
+        total,
+        inStock,
+        outOfStock: Math.max(0, total - inStock),
+        generatedAt: new Date().toISOString(),
+        stores,
+      });
+    } catch {
+      res.status(500).json({ message: "Local feed istatistikleri yüklenemedi" });
     }
   });
 

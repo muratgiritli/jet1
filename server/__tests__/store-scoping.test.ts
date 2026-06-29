@@ -53,9 +53,9 @@ import { SAMSUNPET_ALL_KEYWORD_PAGES, SAMSUNPET_ALL_SKIPPED_NOISE } from "../../
 import { ROYALCANIN_KEYWORD_PAGES } from "../../client/src/lib/keyword-pages-jetgo-royalcanin";
 import { MARKALAR_KEYWORD_PAGES, MARKALAR_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgo-markalar";
 import { DIGER_KEYWORD_PAGES, DIGER_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgo-diger";
-import { getStoreByHost, brandifyFor, STORES } from "../../shared/stores";
+import { getStoreByHost, brandifyFor, STORES, DEFAULT_STORE } from "../../shared/stores";
 import { setStoreGoogleConfig, deleteStoreGoogleConfig, getAllStoreGoogleConfigs } from "../google-tags";
-import { setStoreMerchantConfig, deleteStoreMerchantConfig, getAllStoreMerchantConfigs, normalizeMerchantConfig } from "../merchant";
+import { setStoreMerchantConfig, deleteStoreMerchantConfig, getAllStoreMerchantConfigs, normalizeMerchantConfig, effectiveStoreCode, DEFAULT_LOCAL_STORE_CODE } from "../merchant";
 import { pool } from "../storage";
 // The shared-edit protection helpers live in the client lib so they can be unit
 // tested here without booting the React app. STORE_SCOPED_SETTING_KEYS must stay
@@ -7500,4 +7500,24 @@ test("samsunpet-all: SSR serves samsunpet's bespoke local content, self-canonica
   assert.notEqual(petTitle, jetgoTitle, "samsunpet.com title must differ from jetgomarket at the same slug");
   assert.equal(jetgoCanon, `${JETGO_STORE.domain}/${overrideSlug}`, "jetgomarket canonical must bind to jetgomarket");
   assert.ok(!petCanon.includes(JETGO_STORE.domain), "samsunpet.com canonical must not leak the jetgomarket domain");
+});
+
+// Google Yerel Envanter (Local Inventory) feed'inin store_code kuralı: jetgo
+// (DEFAULT_STORE) varsayılan olarak Atakum fiziksel mağaza kodu ATAKUM001'e düşer;
+// diğer 8 mağaza kod girilmediği sürece BOŞ kalır → feed boş üretilir (davranış
+// değişmez). Açıkça girilen kod her mağaza için (jetgo dahil) geçerlidir.
+test("local feed store_code: jetgo defaults to ATAKUM001, other stores stay empty (behavior-identical)", () => {
+  assert.equal(DEFAULT_STORE.id, "jetgo", "default store must be jetgo");
+  assert.equal(effectiveStoreCode(DEFAULT_STORE.id), DEFAULT_LOCAL_STORE_CODE, "jetgo falls back to ATAKUM001");
+  assert.equal(effectiveStoreCode(DEFAULT_STORE.id, {}), DEFAULT_LOCAL_STORE_CODE, "jetgo empty cfg still ATAKUM001");
+
+  for (const s of STORES.filter((x) => x.id !== DEFAULT_STORE.id)) {
+    assert.equal(effectiveStoreCode(s.id), "", `${s.id} must have no default local store_code`);
+    assert.equal(effectiveStoreCode(s.id, {}), "", `${s.id} empty cfg must stay empty`);
+  }
+
+  // Explicit configured code wins for any store, including jetgo.
+  assert.equal(effectiveStoreCode(DEFAULT_STORE.id, { storeCode: "CUSTOM01" }), "CUSTOM01", "explicit code overrides jetgo default");
+  const other = STORES.find((x) => x.id !== DEFAULT_STORE.id)!;
+  assert.equal(effectiveStoreCode(other.id, { storeCode: "OTHER01" }), "OTHER01", "explicit code enables a non-default store");
 });

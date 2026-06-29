@@ -1,5 +1,5 @@
 import { pool } from "./storage";
-import { STORES } from "@shared/stores";
+import { STORES, DEFAULT_STORE } from "@shared/stores";
 
 // Her domain'in Google Merchant Center kurulumu admin panelinden DB'ye yazılır.
 // app_settings içinde "<storeId>:merchant" anahtarında tek bir JSON değeri olarak
@@ -44,6 +44,20 @@ export function normalizeMerchantConfig(raw: any): MerchantConfig {
     }
   }
   return cfg;
+}
+
+/** jetgo (varsayılan mağaza) için yerel envanter store_code varsayılanı — Atakum
+ *  fiziksel mağazasının Google Business Profile kodu. Diğer mağazalarda varsayılan
+ *  YOKTUR: kod girilmezse feed boş kalır (davranış değişmez). */
+export const DEFAULT_LOCAL_STORE_CODE = "ATAKUM001";
+
+/** Bir mağazanın yerel envanter feed'inde kullanacağı etkin store_code. Admin'de
+ *  kod girilmişse o kullanılır; girilmemişse yalnızca jetgo için ATAKUM001'e düşer,
+ *  diğer mağazalar için boş döner. */
+export function effectiveStoreCode(storeId: string, cfg?: MerchantConfig | null): string {
+  const sc = (cfg?.storeCode || "").trim();
+  if (sc) return sc;
+  return storeId === DEFAULT_STORE.id ? DEFAULT_LOCAL_STORE_CODE : "";
 }
 
 async function loadAll(): Promise<Map<string, MerchantConfig>> {
@@ -113,6 +127,7 @@ export type MerchantRow = {
   fulfillment: "local" | "cargo";
   feedUrl: string;
   localFeedUrl: string;
+  effectiveStoreCode: string;
   config: MerchantConfig;
   hasConfig: boolean;
 };
@@ -128,7 +143,8 @@ export async function getAllStoreMerchantConfigs(): Promise<MerchantRow[]> {
       domain: s.domain,
       fulfillment: s.commerce.fulfillment,
       feedUrl: `${s.domain}/google-merchant.xml`,
-      localFeedUrl: `${s.domain}/google-local-inventory.xml`,
+      localFeedUrl: `${s.domain}/google-local-inventory-feed.xml`,
+      effectiveStoreCode: effectiveStoreCode(s.id, config),
       config,
       hasConfig: m.has(s.id),
     };
