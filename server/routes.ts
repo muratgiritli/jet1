@@ -6266,16 +6266,18 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
   // Ziyaretçi raporu (admin) — günlük tarih seçimli
   app.get("/api/admin/visitors", requireAdmin, async (req: Request, res: Response) => {
     try {
-      const dateStr = typeof req.query.date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(req.query.date)
-        ? req.query.date
-        : null;
-      // Range-based (sargable) so idx_site_visits_created is used. Converts the
-      // selected Istanbul-local day to UTC instants for comparison.
-      const dayFilter = "created_at >= ($1::date::timestamp AT TIME ZONE 'Europe/Istanbul') AND created_at < (($1::date + 1)::timestamp AT TIME ZONE 'Europe/Istanbul')";
+      const isDate = (s: any): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+      const today = new Date().toISOString().slice(0, 10);
+      let fromStr = isDate(req.query.from) ? (req.query.from as string) : isDate(req.query.date) ? (req.query.date as string) : today;
+      let toStr = isDate(req.query.to) ? (req.query.to as string) : isDate(req.query.date) ? (req.query.date as string) : fromStr;
+      if (fromStr > toStr) { const t = fromStr; fromStr = toStr; toStr = t; }
+      // Range-based (sargable) so idx_site_visits_created is used. Istanbul-local
+      // [from 00:00, to+1 00:00) converted to UTC instants for comparison.
+      const dayFilter = "created_at >= ($1::date::timestamp AT TIME ZONE 'Europe/Istanbul') AND created_at < (($2::date + 1)::timestamp AT TIME ZONE 'Europe/Istanbul')";
       // Gerçek ziyaretçiler bot/veri merkezi trafiğinden ayrılır.
       const realFilter = `${dayFilter} AND is_bot = false`;
       const botFilter = `${dayFilter} AND is_bot = true`;
-      const params = dateStr ? [dateStr] : [new Date().toISOString().slice(0, 10)];
+      const params = [fromStr, toStr];
 
       const summaryQ = await sharedPool.query(
         `SELECT COUNT(*)::int AS total_visits, COUNT(DISTINCT ip)::int AS unique_visitors FROM site_visits WHERE ${realFilter}`,
@@ -6316,7 +6318,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       );
 
       res.json({
-        date: params[0],
+        from: fromStr,
+        to: toStr,
         summary: {
           totalVisits: summaryQ.rows[0]?.total_visits || 0,
           uniqueVisitors: summaryQ.rows[0]?.unique_visitors || 0,
@@ -6339,6 +6342,52 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     } catch (e) {
       console.error("admin/visitors error:", e);
       res.status(500).json({ message: "Ziyaretçi verileri alınamadı" });
+    }
+  });
+
+  // Ziyaretçi IP dışa aktarma (admin) — tarih aralıklı, sadece IP adresleri.
+  // type=real|bot, format=xlsx|txt
+  app.get("/api/admin/visitors/export", requireAdmin, async (req: Request, res: Response) => {
+    try {
+      const isDate = (s: any): s is string => typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+      const today = new Date().toISOString().slice(0, 10);
+      let fromStr = isDate(req.query.from) ? (req.query.from as string) : isDate(req.query.date) ? (req.query.date as string) : today;
+      let toStr = isDate(req.query.to) ? (req.query.to as string) : isDate(req.query.date) ? (req.query.date as string) : fromStr;
+      if (fromStr > toStr) { const t = fromStr; fromStr = toStr; toStr = t; }
+      const type = req.query.type === "bot" ? "bot" : "real";
+      const format = req.query.format === "txt" ? "txt" : "xlsx";
+
+      const dayFilter = "created_at >= ($1::date::timestamp AT TIME ZONE 'Europe/Istanbul') AND created_at < (($2::date + 1)::timestamp AT TIME ZONE 'Europe/Istanbul')";
+      const botCond = type === "bot" ? "is_bot = true" : "is_bot = false";
+      const { rows } = await sharedPool.query(
+        `SELECT ip, COUNT(*)::int AS visits FROM site_visits
+         WHERE ${dayFilter} AND ${botCond} AND ip IS NOT NULL AND ip <> ''
+         GROUP BY ip ORDER BY visits DESC, ip`,
+        [fromStr, toStr]
+      );
+      const ips: string[] = (rows as any[]).map((r) => String(r.ip));
+      const label = type === "bot" ? "bot" : "gercek";
+      const base = `jetgo_${label}_ip_${fromStr}_${toStr}`;
+
+      if (format === "txt") {
+        res.setHeader("Content-Disposition", `attachment; filename=${base}.txt`);
+        res.setHeader("Content-Type", "text/plain; charset=utf-8");
+        res.send(ips.join("\n"));
+        return;
+      }
+
+      const ExcelJS = (await import("exceljs")).default;
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet(type === "bot" ? "Bot IP" : "Gercek IP");
+      ws.columns = [{ header: "IP", key: "ip", width: 24 }];
+      for (const ip of ips) ws.addRow({ ip });
+      const buf = await wb.xlsx.writeBuffer();
+      res.setHeader("Content-Disposition", `attachment; filename=${base}.xlsx`);
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.send(Buffer.from(buf));
+    } catch (e) {
+      console.error("admin/visitors export error:", e);
+      res.status(500).json({ message: "Dışa aktarma başarısız" });
     }
   });
 

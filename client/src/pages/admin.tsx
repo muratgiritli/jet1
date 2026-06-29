@@ -8019,8 +8019,11 @@ function VisitorsSection() {
     const off = d.getTimezoneOffset();
     return new Date(d.getTime() - off * 60000).toISOString().slice(0, 10);
   };
-  const [date, setDate] = useState<string>(todayStr());
-  const { data, isLoading } = useQuery<any>({ queryKey: [`/api/admin/visitors?date=${date}`] });
+  const [fromDate, setFromDate] = useState<string>(todayStr());
+  const [toDate, setToDate] = useState<string>(todayStr());
+  const { data, isLoading } = useQuery<any>({ queryKey: [`/api/admin/visitors?from=${fromDate}&to=${toDate}`] });
+  const exportUrl = (type: "real" | "bot", format: "xlsx" | "txt") =>
+    `/api/admin/visitors/export?from=${fromDate}&to=${toDate}&type=${type}&format=${format}`;
 
   const summary = data?.summary;
   const bySource: any[] = data?.bySource || [];
@@ -8051,18 +8054,43 @@ function VisitorsSection() {
           <Eye className="w-5 h-5 text-purple-600" />
           <h2 className="text-lg font-bold">Ziyaretçi Takip</h2>
         </div>
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={date}
-            max={todayStr()}
-            onChange={(e) => setDate(e.target.value)}
-            className="border rounded-lg px-3 py-1.5 text-sm"
-            data-testid="input-visitor-date"
-          />
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="flex items-center gap-1 text-xs text-gray-500">
+            Başlangıç
+            <input
+              type="date"
+              value={fromDate}
+              max={toDate}
+              onChange={(e) => setFromDate(e.target.value)}
+              className="border rounded-lg px-2 py-1.5 text-sm"
+              data-testid="input-visitor-from"
+            />
+          </label>
+          <label className="flex items-center gap-1 text-xs text-gray-500">
+            Bitiş
+            <input
+              type="date"
+              value={toDate}
+              min={fromDate}
+              max={todayStr()}
+              onChange={(e) => setToDate(e.target.value)}
+              className="border rounded-lg px-2 py-1.5 text-sm"
+              data-testid="input-visitor-to"
+            />
+          </label>
         </div>
       </div>
-      <p className="text-xs text-gray-500 -mt-2">Seçili güne ait ziyaretçiler: nereden geldiği (Google, YouTube, sosyal medya, direkt), şehir ve IP bilgisiyle.</p>
+      <p className="text-xs text-gray-500 -mt-2">Seçili tarih aralığındaki ziyaretçiler: nereden geldiği (Google, YouTube, sosyal medya, direkt), şehir ve IP bilgisiyle.</p>
+
+      <div className="rounded-xl border bg-white p-3 flex flex-wrap items-center gap-2" data-testid="panel-visitor-export">
+        <span className="text-xs font-semibold text-gray-600 flex items-center gap-1">
+          <Download className="w-3.5 h-3.5" /> IP Dışa Aktar (sadece IP):
+        </span>
+        <a href={exportUrl("real", "xlsx")} className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200" data-testid="link-export-real-xlsx">Gerçek IP · Excel</a>
+        <a href={exportUrl("real", "txt")} className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200" data-testid="link-export-real-txt">Gerçek IP · Text</a>
+        <a href={exportUrl("bot", "xlsx")} className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300" data-testid="link-export-bot-xlsx">Bot IP · Excel</a>
+        <a href={exportUrl("bot", "txt")} className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-gray-100 text-gray-700 hover:bg-gray-200 border border-gray-300" data-testid="link-export-bot-txt">Bot IP · Text</a>
+      </div>
 
       {isLoading ? (
         <div className="flex justify-center py-12"><Loader2 className="w-6 h-6 animate-spin text-purple-600" /></div>
@@ -8095,7 +8123,7 @@ function VisitorsSection() {
 
           {(summary?.totalVisits ?? 0) === 0 && (bots.total ?? 0) === 0 ? (
             <div className="text-center py-10 text-sm text-gray-500" data-testid="text-visitors-empty">
-              Bu tarihte ziyaretçi kaydı yok.
+              Bu tarih aralığında ziyaretçi kaydı yok.
             </div>
           ) : (
             <>
