@@ -976,6 +976,7 @@ interface LandingSeoOverride {
 export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverride }) {
   const { isLoggedIn } = useCustomer();
   const isMobile = useIsMobile();
+  const store = useStore();
 
   const seoNode = seoOverride ? (
     <SEO
@@ -1009,6 +1010,21 @@ export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverr
       {seoNode}
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 md:px-6 lg:px-8">
+        {/* marka.pet ONLY: header altı Atakum mağaza ziyaret butonu */}
+        {store.id === "markapet" && (
+          <a
+            href="https://www.enuygun.pet"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-sm py-3 px-4 shadow-md transition-colors"
+            data-testid="link-atakum-store"
+          >
+            <MapPin className="w-4 h-4 shrink-0" />
+            ATAKUM MAĞAZAMIZI ZİYARET EDİNİZ
+            <ArrowRight className="w-4 h-4 shrink-0" />
+          </a>
+        )}
+
         {/* MOBILE-ONLY: admin-controlled top promo banner (Header altı) for new users */}
         {!isLoggedIn && (
           <div className="mt-2 md:hidden">
