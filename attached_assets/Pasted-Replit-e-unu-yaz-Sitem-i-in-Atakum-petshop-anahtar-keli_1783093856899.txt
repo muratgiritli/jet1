@@ -1,0 +1,133 @@
+Replit’e şunu yaz:
+
+
+Sitem için Atakum petshop anahtar kelimelerine özel SEO sayfa sistemi kur.
+
+Amaç:
+sana verdiğim dosyadaki anahtar kelimeler için
+
+Yapılacaklar:
+
+1. SEO sayfa altyapısı oluştur
+Her anahtar kelime için otomatik SEO sayfası üret.
+
+2. Her SEO sayfasında şu alanlar olsun:
+
+- H1 başlık
+- SEO title
+- Meta description
+- Açıklama metni
+- SSS alanı
+- Breadcrumb yapısı
+- LocalBusiness schema
+- FAQ schema
+
+3. Sayfa tasarımı mobil öncelikli olsun.
+
+Hero alanında şu tarz başlıklar kullan:
+
+“Atakum Petshop – 1 Saatte Kapında”
+“Atakum Kedi Maması Siparişi”
+“Atakum Köpek Maması ve Pet Ürünleri”
+“Atakum Kedi Kumu Hızlı Teslimat”
+
+4. Her sayfanın içeriği birbirinin kopyası olmasın.
+Anahtar kelimeye göre açıklama değişsin.
+
+Örnek:
+
+/atakum-kedi-mamasi sayfasında:
+Atakum’da kedi maması siparişi vermek isteyenler için yavru kedi maması, yetişkin kedi maması, kısır kedi maması ve premium kedi maması seçenekleri sunuyoruz. Atakum içi hızlı teslimat ile siparişler kısa sürede adresinize ulaştırılır.
+
+/atakum-kopek-mamasi sayfasında:
+Atakum’da köpek maması arayanlar için yavru, yetişkin, küçük ırk, büyük ırk ve premium köpek maması seçenekleri sunuyoruz. Siparişlerinizi Atakum içi hızlı teslimat avantajıyla kapınıza getiriyoruz.
+
+5. Ana sayfaya “Popüler Atakum Aramaları” bölümü ekle.
+Bu bölümden SEO sayfalarına iç link ver.
+
+Örnek linkler:
+Atakum Petshop
+Atakum Kedi Maması
+Atakum Köpek Maması
+Atakum Kedi Kumu
+Atakum Mama Siparişi
+Atakum Petshop Eve Teslim
+Atakum Royal Canin
+Atakum Pro Plan
+Atakum Hills
+
+6. Sitemap otomatik oluştur.
+Tüm SEO sayfaları sitemap.xml içinde yer alsın.
+
+7. robots.txt oluştur.
+Sitemap linki robots.txt içinde yer alsın.
+
+8. Her sayfaya canonical URL ekle.
+
+9. Sayfa title örnekleri:
+
+Atakum Petshop | 1 Saatte Kapında Pet Market
+Atakum Kedi Maması | Hızlı Teslimat
+Atakum Köpek Maması | Petshop Ürünleri
+Atakum Kedi Kumu | Eve Teslim
+Atakum Petshop Eve Teslim | Kapıda Ödeme
+
+10. Meta description örnekleri:
+
+Atakum petshop ürünleri, kedi maması, köpek maması, kedi kumu ve pet ihtiyaçları 1 saatte kapında. Kapıda ödeme ve kredi kartı imkanı.
+
+Atakum’da kedi maması siparişi ver. Yavru, yetişkin ve kısır kedi mamaları hızlı teslimat avantajıyla kapında.
+
+11. Sayfa altına SSS ekle:
+
+Atakum içinde teslimat yapıyor musunuz?
+Evet, Atakum içi siparişlerde hızlı teslimat yapılır.
+
+Kapıda ödeme var mı?
+Evet, kapıda nakit, POS ve QR ödeme seçenekleri vardır.
+
+Kredi kartına taksit var mı?
+Evet, uygun ürünlerde kredi kartına 6 taksit imkanı sunulur.
+
+Hangi ürünleri satıyorsunuz?
+Kedi maması, köpek maması, kedi kumu, kuş yemi, akvaryum ürünleri, oyuncak, tasma, yatak ve bakım ürünleri satıyoruz.
+
+12. LocalBusiness schema ekle.
+İşletme tipi: PetStore
+Bölge: Samsun, Atakum
+Hizmet alanı: Atakum
+Telefon: +90 850 840 39 59
+Site: jetgomarket.com
+
+13. Teknik SEO:
+- Sayfalar hızlı açılsın
+- Mobil uyumlu olsun
+- Lazy load kullanılsın
+- Görseller alt etiketi alsın
+- Her SEO sayfasında tek H1 olsun
+- H2 başlıklar mantıklı olsun
+- İç linkleme yapılsın
+- 404 sayfası olsun
+- Sitemap güncellensin
+
+14. SEO sayfa datasını tek bir dosyada tut.
+Örnek:
+
+const seoPages = [
+  {
+    slug: "atakum-petshop",
+    keyword: "atakum petshop",
+    title: "Atakum Petshop | 1 Saatte Kapında Pet Market",
+    description: "Atakum petshop ürünleri, kedi maması, köpek maması ve kedi kumu hızlı teslimatla kapında.",
+    h1: "Atakum Petshop – 1 Saatte Kapında",
+    category: "Genel Petshop"
+  }
+]
+
+Bu yapıdan otomatik sayfa üret.
+
+15. Sayfalarda aşırı anahtar kelime doldurma yapma.
+Doğal Türkçe kullan.
+Her sayfada anahtar kelime 3-5 kez geçsin.
+İlçe adı Atakum doğal şekilde kullanılsın.
+
