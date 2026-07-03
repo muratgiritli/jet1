@@ -54,6 +54,7 @@ import { ROYALCANIN_KEYWORD_PAGES } from "../../client/src/lib/keyword-pages-jet
 import { MARKALAR_KEYWORD_PAGES, MARKALAR_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgo-markalar";
 import { DIGER_KEYWORD_PAGES, DIGER_SKIPPED_NOISE } from "../../client/src/lib/keyword-pages-jetgo-diger";
 import { getStoreByHost, brandifyFor, STORES, DEFAULT_STORE } from "../../shared/stores";
+import { ATAKUM_POPULAR_SEARCHES } from "../../client/src/lib/atakum-popular-searches";
 import { setStoreGoogleConfig, deleteStoreGoogleConfig, getAllStoreGoogleConfigs } from "../google-tags";
 import { setStoreMerchantConfig, deleteStoreMerchantConfig, getAllStoreMerchantConfigs, normalizeMerchantConfig, effectiveStoreCode, DEFAULT_LOCAL_STORE_CODE } from "../merchant";
 import { pool } from "../storage";
@@ -4970,6 +4971,18 @@ test("atakum-all: every internal link resolves within atakum's own slug space", 
     }
   }
   assert.ok(checked > 1000, `expected many internal links to verify, got ${checked}`);
+});
+
+test("atakum-all: homepage 'Popüler Atakum Aramaları' links all resolve on atakum", () => {
+  const ataSet = availableSlugSet(ATAKUM_STORE);
+  assert.ok(ATAKUM_POPULAR_SEARCHES.length > 0, "expected some popular searches");
+  for (const l of ATAKUM_POPULAR_SEARCHES) {
+    const target = l.href.replace(/^\//, "");
+    assert.ok(
+      ataSet.has(target),
+      `homepage link "${l.href}" (${l.name}) must resolve on atakum`,
+    );
+  }
 });
 
 test("atakum-all: atakum-tagged pages never leak to any other store; overrides stay store-scoped", () => {

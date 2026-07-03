@@ -34,3 +34,4 @@
 - [Guest checkout inline OTP](guest-checkout-otp.md) — jetgo-only frictionless misafir order (store.commerce.guestCheckout); OTP send MUST equal formatAuthPhone-derived verify value or it fails; guard placeOrder/startGuestOrder with sync refs (trusted-device places order directly).
 - [Page overflow guard](pdp-overflow-guard.md) — mobile yana kayma from wide admin long_description in .prose-product; use #root{overflow-x:clip} (NOT html/body) + prose-product wrap/table hardening.
 - [Visitor tracking is global](visitor-tracking-global.md) — site_visits has no store col; tracking + admin report/IP export are intentionally global, exempt from per-store scoping; report takes from/to (date= fallback), export emits IP-only.
+- [Homepage internal-link guard](homepage-internal-link-guard.md) — React homepage link blocks bypass the SeoPageData orphan test; keep lists in a shared module + assert each href resolves in availableSlugSet(store); self-gate store-specific blocks.
