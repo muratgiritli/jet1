@@ -14,11 +14,6 @@ const NAV_ITEMS = [
   { name: "Veteriner", href: "/kategori/veteriner" },
 ];
 
-const JETGO_LEGAL_LINKS = [
-  { name: "Mesafeli Satış", href: "/mesafeli-satis" },
-  { name: "Çerez Politikası", href: "/cerez-politikasi" },
-];
-
 export default function Header() {
   const [location] = useLocation();
   const { isLoggedIn, customer } = useCustomer();
@@ -118,20 +113,6 @@ export default function Header() {
           <div className="max-w-6xl mx-auto px-3 md:px-4 flex items-center gap-2">
             <ul className="min-w-0 flex-1 flex items-center justify-start gap-0.5 md:gap-2 py-1 md:py-1.5 flex-nowrap whitespace-nowrap overflow-x-auto scrollbar-hide" data-testid="nav-categories">
               {categoryItems}
-              {JETGO_LEGAL_LINKS.map((item) => {
-                const isActive = location === item.href;
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={`px-1 md:px-3 py-0.5 md:py-1.5 text-[13px] md:text-sm font-medium whitespace-nowrap transition-colors rounded-md md:rounded-lg text-white/70 hover:text-white hover:bg-white/10 ${isActive ? "text-white bg-white/15" : ""}`}
-                      data-testid={`nav-legal-${item.href.slice(1)}`}
-                    >
-                      {item.name}
-                    </Link>
-                  </li>
-                );
-              })}
             </ul>
           </div>
         ) : (
