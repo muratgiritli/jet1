@@ -1729,14 +1729,13 @@ export async function registerRoutes(
     }
   });
 
-  // Per-domain PWA manifest. The flagship (Enuygun) needs its own name/theme so the
-  // installed app isn't labelled with the shared static "JETGO" manifest. Every other
-  // store falls through (next()) to the static client/public/manifest.json; that file
-  // still carries a legacy "JETGO" name shown on the 8 other domains' PWA install —
-  // tracked as a separate follow-up, intentionally left unchanged here.
-  app.get("/manifest.json", (req, res, next) => {
+  // Per-domain PWA manifest. Every store gets its own name/short_name/theme so the
+  // installed home-screen app is branded for the domain the customer visited, instead
+  // of the shared static client/public/manifest.json (which still carries the legacy
+  // "JETGO" name). This route serves all stores dynamically from per-store config, so
+  // the static file is only a fallback if this handler is ever bypassed.
+  app.get("/manifest.json", (req, res) => {
     const store = reqStore(req);
-    if (store.id !== DEFAULT_STORE.id) return next();
     res.type("application/manifest+json").json({
       name: store.name,
       short_name: store.shortName,
