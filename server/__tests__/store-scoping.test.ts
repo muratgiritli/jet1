@@ -124,6 +124,8 @@ const SETTING_KEYS = [
   "atakum:google_tags", "samsun:google_tags", "jetgopet:google_tags",
   // per-domain DB-backed Google Merchant config touched by the Merchant tests
   "samsun:merchant", "atakum:merchant", "markapet:merchant",
+  // card/non-cash surcharge: store-wide base rate + jetgo-only per-product overrides
+  "card_surcharge_percent", "jetgo:product_surcharge_overrides",
 ];
 
 let server: ReturnType<typeof createServer>;
@@ -218,6 +220,31 @@ async function deleteAdmin(path: string, host: string) {
     headers: { "X-Forwarded-Host": host, Cookie: adminCookie },
   });
   return { status: res.status, body: await res.json().catch(() => ({})) as any };
+}
+
+// GET as the forged admin (sends the admin session cookie). Needed for
+// admin-only read endpoints that also read their store from ?store=.
+async function getAdmin(path: string, host: string) {
+  const res = await fetch(`${baseUrl}${path}`, {
+    headers: { "X-Forwarded-Host": host, Cookie: adminCookie },
+  });
+  return { status: res.status, body: await res.json().catch(() => ({})) as any };
+}
+
+// POST as the authenticated test customer under an explicit client IP so the
+// per-IP order rate limiter never spills into the shared localhost bucket.
+async function postAsCustomerXff(path: string, host: string, payload: any, xff: string) {
+  const res = await fetch(`${baseUrl}${path}`, {
+    method: "POST",
+    headers: {
+      "X-Forwarded-Host": host,
+      "X-Forwarded-For": xff,
+      "Content-Type": "application/json",
+      Cookie: sessionCookie,
+    },
+    body: JSON.stringify(payload),
+  });
+  return { status: res.status, body: await res.json() as any };
 }
 
 // Forge a signed connect.sid cookie for a PgSession row carrying the given
@@ -605,6 +632,115 @@ test("order on atakumpetshop.com is tagged source_site=atakum", async () => {
 
 test("order on an unknown host falls back to source_site=jetgo (default store)", async () => {
   assert.equal(await placeOrderAndReadSource("some-preview.replit.dev"), "jetgo");
+});
+
+// ---- jetgomarket-only per-product non-cash surcharge overrides ----
+//
+// jetgomarket.com (store "jetgo") may set the non-cash surcharge percentage
+// PER PRODUCT; the store-wide single rate (card_surcharge_percent) still applies
+// to every other product and to all 8 other stores. The HARD RULE is that the
+// other stores stay byte-identical: they never see the override key and their
+// order totals keep using the single rate even when jetgo has overrides set.
+
+test("product-surcharge-overrides admin API is jetgo-gated, merges, and clears", async () => {
+  const pid = orderProductId;
+  const otherPid = 987654; // a throwaway id; the endpoint stores the map wholesale
+  const PATH = "/api/admin/product-surcharge-overrides";
+
+  // A non-jetgo store must be refused (feature does not exist for the other 8).
+  const refused = await patchAdmin(PATH, ATAKUM_HOST, { productId: pid, percent: 8, store: "atakum" });
+  assert.equal(refused.status, 400, "non-jetgo PATCH must be refused");
+  const ataGet = await getAdmin(`${PATH}?store=atakum`, ATAKUM_HOST);
+  assert.deepEqual(ataGet.body, {}, "non-jetgo GET must be empty");
+
+  // Out-of-range percentages are rejected.
+  const bad = await patchAdmin(PATH, JETGO_HOST, { productId: pid, percent: 101, store: "jetgo" });
+  assert.equal(bad.status, 400, "percent > 100 must be rejected");
+
+  // jetgo can set an override (rate is stored as a whole-number percent).
+  const set1 = await patchAdmin(PATH, JETGO_HOST, { productId: pid, percent: 8, store: "jetgo" });
+  assert.equal(set1.status, 200, `jetgo PATCH failed: ${JSON.stringify(set1.body)}`);
+  let g = await getAdmin(`${PATH}?store=jetgo`, JETGO_HOST);
+  assert.equal(g.body[String(pid)], 8, "override must be readable back");
+
+  // A second product merges in without clobbering the first (read-merge-write).
+  const set2 = await patchAdmin(PATH, JETGO_HOST, { productId: otherPid, percent: 3, store: "jetgo" });
+  assert.equal(set2.status, 200);
+  g = await getAdmin(`${PATH}?store=jetgo`, JETGO_HOST);
+  assert.equal(g.body[String(pid)], 8, "first override preserved on merge");
+  assert.equal(g.body[String(otherPid)], 3, "second override merged in");
+
+  // 0% is a valid, explicit "no surcharge on this product" value (not a clear).
+  const setZero = await patchAdmin(PATH, JETGO_HOST, { productId: otherPid, percent: 0, store: "jetgo" });
+  assert.equal(setZero.status, 200);
+  g = await getAdmin(`${PATH}?store=jetgo`, JETGO_HOST);
+  assert.equal(g.body[String(otherPid)], 0, "0% is stored, not treated as a clear");
+
+  // An empty percent clears just that one entry.
+  const clearOne = await patchAdmin(PATH, JETGO_HOST, { productId: otherPid, percent: "", store: "jetgo" });
+  assert.equal(clearOne.status, 200);
+  g = await getAdmin(`${PATH}?store=jetgo`, JETGO_HOST);
+  assert.equal(g.body[String(otherPid)], undefined, "cleared entry is gone");
+  assert.equal(g.body[String(pid)], 8, "the other entry survives a single clear");
+
+  // Clearing the last entry leaves an empty map.
+  const clearLast = await patchAdmin(PATH, JETGO_HOST, { productId: pid, percent: "", store: "jetgo" });
+  assert.equal(clearLast.status, 200);
+  g = await getAdmin(`${PATH}?store=jetgo`, JETGO_HOST);
+  assert.deepEqual(g.body, {}, "map is empty after clearing every entry");
+});
+
+test("product_surcharge_overrides surfaces on jetgo public-settings only", async () => {
+  const pid = orderProductId;
+  await patchAdmin("/api/admin/product-surcharge-overrides", JETGO_HOST, { productId: pid, percent: 8, store: "jetgo" });
+
+  const jet = await get("/api/public-settings", JETGO_HOST);
+  assert.ok(jet.body.product_surcharge_overrides, "jetgo public-settings must expose the overrides");
+  const map = JSON.parse(jet.body.product_surcharge_overrides);
+  assert.equal(map[String(pid)], 8, "jetgo public-settings carries the override percent");
+
+  // Every other store must be byte-identical: no override key at all.
+  const ata = await get("/api/public-settings", ATAKUM_HOST);
+  assert.equal(ata.body.product_surcharge_overrides, undefined, "other stores must NOT see the override key");
+});
+
+test("order surcharge: jetgo applies the per-product override; other stores stay single-rate", async () => {
+  const pid = orderProductId;
+  // Deterministic store-wide base rate for this test (default is also 5%).
+  await setSetting("card_surcharge_percent", "5");
+  // jetgo overrides THIS product to 8%.
+  await patchAdmin("/api/admin/product-surcharge-overrides", JETGO_HOST, { productId: pid, percent: 8, store: "jetgo" });
+
+  // The non-cash surcharge is added to the subtotal only (not shipping/discount),
+  // so isolate it as grand_total - subtotal - shipping (discount is 0 here). This
+  // stays correct regardless of each store's shipping / free-shipping rules.
+  const surchargeOf = (row: any) =>
+    Math.round((Number(row.grand_total) - Number(row.subtotal) - Number(row.shipping)) * 100) / 100;
+
+  // jetgo POS (non-cash) order: subtotal 100, this product overridden to 8% -> 8.
+  const jetRes = await postAsCustomerXff(
+    "/api/orders", JETGO_HOST,
+    { ...orderPayload(), paymentMethod: "Kapıda Kredi Kartı" },
+    "10.91.0.11",
+  );
+  assert.equal(jetRes.status, 201, `jetgo order failed: ${JSON.stringify(jetRes.body)}`);
+  ids.orders.push(jetRes.body.id);
+  const jetRow = (await pool.query("SELECT subtotal, shipping, grand_total FROM orders WHERE id = $1", [jetRes.body.id])).rows[0];
+  assert.equal(Number(jetRow.subtotal), 100, "subtotal recomputed from the seeded product");
+  assert.equal(surchargeOf(jetRow), 8, "jetgo uses the per-product 8% override");
+
+  // atakum POS order with the SAME jetgo override live: it never sees it, so it
+  // stays on the store-wide 5% -> surcharge 5 (byte-identical behavior).
+  const ataRes = await postAsCustomerXff(
+    "/api/orders", ATAKUM_HOST,
+    { ...orderPayload(), paymentMethod: "Kapıda Kredi Kartı" },
+    "10.91.0.12",
+  );
+  assert.equal(ataRes.status, 201, `atakum order failed: ${JSON.stringify(ataRes.body)}`);
+  ids.orders.push(ataRes.body.id);
+  const ataRow = (await pool.query("SELECT subtotal, shipping, grand_total FROM orders WHERE id = $1", [ataRes.body.id])).rows[0];
+  assert.equal(Number(ataRow.subtotal), 100, "subtotal recomputed from the seeded product");
+  assert.equal(surchargeOf(ataRow), 5, "atakum stays on the store-wide single rate");
 });
 
 // ---- Test-only OTP bypass: full SMS-gated registration + Atakum checkout ----

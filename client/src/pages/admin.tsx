@@ -321,6 +321,86 @@ function BrandTag({ brand, count, onDelete, onUpdate }: { brand: any; count: num
   );
 }
 
+// jetgomarket'e özel: bir ürüne nakit dışı ödeme farkı yüzdesi tanımlar. Kendi
+// GET/PATCH uç noktalarını kullanır (app_settings jetgo:product_surcharge_overrides).
+// Sadece adminStore === "jetgo" iken render edilir; diğer 8 mağaza hiç görmez.
+function JetgoProductSurcharge({ productId, store }: { productId: number; store: string }) {
+  const { toast } = useToast();
+  // adminStoreId() reads the store from ?store= (GET) / body.store (PATCH), so we
+  // must send it explicitly — the server refuses this endpoint unless store==="jetgo".
+  const { data: overrides } = useQuery<Record<string, number>>({
+    queryKey: ["/api/admin/product-surcharge-overrides", store],
+    queryFn: async () => {
+      const res = await fetch(`/api/admin/product-surcharge-overrides?store=${encodeURIComponent(store)}`, { credentials: "include" });
+      if (!res.ok) return {};
+      return res.json();
+    },
+  });
+  const current = overrides?.[String(productId)];
+  const [val, setVal] = useState<string>("");
+  useEffect(() => {
+    setVal(current === undefined || current === null ? "" : String(current));
+  }, [current, productId]);
+
+  const saveMutation = useMutation({
+    mutationFn: async (percent: string) =>
+      apiRequest("PATCH", "/api/admin/product-surcharge-overrides", { productId, percent, store }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/product-surcharge-overrides"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/public-settings"] });
+      toast({ title: "Ödeme farkı güncellendi" });
+    },
+    onError: (e: any) => {
+      toast({ title: "Kayıt başarısız", description: e?.message, variant: "destructive" });
+    },
+  });
+
+  const hasOverride = current !== undefined && current !== null;
+
+  return (
+    <div className="space-y-1.5 border rounded-md p-3 bg-muted/30">
+      <Label className="text-xs font-semibold">Nakit dışı ödeme farkı (bu ürüne özel %)</Label>
+      <p className="text-[11px] text-muted-foreground leading-snug">
+        Boş bırakırsanız mağaza geneli oran uygulanır. 0 girerseniz bu ürün için fark alınmaz.
+      </p>
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          min="0"
+          max="100"
+          step="0.1"
+          value={val}
+          onChange={(e) => setVal(e.target.value)}
+          placeholder="Mağaza geneli"
+          className="h-8 w-32"
+          data-testid="input-product-surcharge"
+        />
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => saveMutation.mutate(val.trim())}
+          disabled={saveMutation.isPending}
+          data-testid="btn-save-product-surcharge"
+        >
+          Kaydet
+        </Button>
+        {hasOverride && (
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => { setVal(""); saveMutation.mutate(""); }}
+            disabled={saveMutation.isPending}
+            data-testid="btn-clear-product-surcharge"
+          >
+            Sıfırla
+          </Button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function ProductForm({
   categories,
   product,
@@ -4428,25 +4508,30 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               <DialogTitle>Ürün Düzenle</DialogTitle>
             </DialogHeader>
             {editingProduct && (
-              <ProductForm
-                categories={categories}
-                product={editingProduct}
-                onSave={(data) =>
-                  updateProductMutation.mutate({ id: editingProduct.id, data })
-                }
-                isPending={updateProductMutation.isPending}
-                subcategoriesByAnimal={subcategoriesByAnimal}
-                campaignInfo={(() => {
-                  const ci = campaignItems.find(c => c.product_id === editingProduct.id && c.is_active);
-                  if (!ci) return null;
-                  return { id: ci.id, itemType: ci.item_type, campaignPrice: ci.campaign_price };
-                })()}
-                onCampaignPriceChange={(ciId, val) => {
-                  const ci = campaignItems.find(c => c.id === ciId);
-                  if (!confirmSharedEdit(ci?.store, adminStore)) return;
-                  toggleCampaignItemMutation.mutate({ id: ciId, campaignPrice: val });
-                }}
-              />
+              <>
+                <ProductForm
+                  categories={categories}
+                  product={editingProduct}
+                  onSave={(data) =>
+                    updateProductMutation.mutate({ id: editingProduct.id, data })
+                  }
+                  isPending={updateProductMutation.isPending}
+                  subcategoriesByAnimal={subcategoriesByAnimal}
+                  campaignInfo={(() => {
+                    const ci = campaignItems.find(c => c.product_id === editingProduct.id && c.is_active);
+                    if (!ci) return null;
+                    return { id: ci.id, itemType: ci.item_type, campaignPrice: ci.campaign_price };
+                  })()}
+                  onCampaignPriceChange={(ciId, val) => {
+                    const ci = campaignItems.find(c => c.id === ciId);
+                    if (!confirmSharedEdit(ci?.store, adminStore)) return;
+                    toggleCampaignItemMutation.mutate({ id: ciId, campaignPrice: val });
+                  }}
+                />
+                {adminStore === "jetgo" && (
+                  <JetgoProductSurcharge productId={editingProduct.id} store={adminStore} />
+                )}
+              </>
             )}
           </DialogContent>
         </Dialog>

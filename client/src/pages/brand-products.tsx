@@ -209,7 +209,7 @@ function BrandProductCard({
             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
           {!(product.stock === 0 && product.preorderEnabled) && (
-          <CardPriceNote price={product.price} testId={`text-card-price-${pid}`} />
+          <CardPriceNote price={product.price} productId={product.id} testId={`text-card-price-${pid}`} />
           )}
           {product.skt && (
             <span className="text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200" data-testid={`badge-skt-${pid}`}>
@@ -335,7 +335,7 @@ function InlineSubcategoryProductCard({
             {product.price.toLocaleString("tr-TR", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
           </span>
           {!(product.stock === 0 && product.preorderEnabled) && (
-          <CardPriceNote price={product.price} />
+          <CardPriceNote price={product.price} productId={product.id} />
           )}
         </div>
         {forceOrderLink ? (

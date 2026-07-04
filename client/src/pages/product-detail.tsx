@@ -17,7 +17,7 @@ import { useCustomer } from "@/contexts/CustomerContext";
 import { useToast } from "@/hooks/use-toast";
 import FastDeliveryBanner, { shouldShowFastDelivery } from "@/components/FastDeliveryBanner";
 import { CATEGORIES, productUrl, cardPrice } from "@/lib/data";
-import { useSurchargeRate, surchargeLabel } from "@/hooks/useSurchargeRate";
+import { useSurchargeRate, useSurchargeOverrides, effectiveSurchargeRate, surchargeLabel } from "@/hooks/useSurchargeRate";
 import FavoriteButton from "@/components/FavoriteButton";
 import ImageZoom from "@/components/ImageZoom";
 import ProductImage from "@/components/ProductImage";
@@ -410,7 +410,8 @@ export default function ProductDetailPage() {
     queryKey: ["/api/public-settings"],
   });
   const crossSellEnabled = (publicSettings?.cross_sell_enabled ?? "true") !== "false";
-  const cardRate = useSurchargeRate();
+  const cardBaseRate = useSurchargeRate();
+  const cardOverrides = useSurchargeOverrides();
 
   const isVeteriner = data?.category?.animal === "veteriner";
   const vetSubcategory = data?.category?.subcategory || "";
@@ -601,6 +602,7 @@ export default function ProductDetailPage() {
     : null;
   const campaignFiyat = isCampaignMode && campaignCheck?.campaignPrice ? campaignCheck.campaignPrice : null;
   const displayPrice = campaignFiyat ?? selectedVariant?.price ?? product.price;
+  const cardRate = effectiveSurchargeRate(product.id, cardBaseRate, cardOverrides);
   const displayOriginalPrice = campaignFiyat ? product.price : product.originalPrice;
   const detailStore = useStore();
   const storePreorderEnabled = detailStore.commerce.preorderEnabled;

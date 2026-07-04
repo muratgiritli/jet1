@@ -2804,14 +2804,43 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     // on the product subtotal only (not shipping). Cash (Kapıda Nakit) is the base price.
     // Campaign orders are cash-only, so they never get a surcharge.
     const pmForSurcharge = String(orderData.paymentMethod || "").toLowerCase();
-    const surchargeSettings = await resolveSettings(["card_surcharge_percent"], reqStore(req).id);
+    const surchargeStoreId = reqStore(req).id;
+    const surchargeSettings = await resolveSettings(["card_surcharge_percent", "product_surcharge_overrides"], surchargeStoreId);
     const surchargePctRaw = Number(surchargeSettings.card_surcharge_percent);
     const surchargeRate = (Number.isFinite(surchargePctRaw) && surchargePctRaw >= 0)
       ? Math.min(surchargePctRaw, 100) / 100
       : 0.05;
-    const paymentSurcharge = (!isCampaignOrder && !/nakit/.test(pmForSurcharge))
-      ? Math.round(orderData.subtotal * surchargeRate * 100) / 100
-      : 0;
+    // jetgomarket-only: per-product surcharge overrides (JSON map productId->percent).
+    // Any other store, or jetgo with no overrides, falls through to the store-wide
+    // single-rate branch below untouched (byte-identical to the previous behavior).
+    const surchargeOverrides: Record<number, number> = {};
+    if (surchargeStoreId === "jetgo" && surchargeSettings.product_surcharge_overrides) {
+      try {
+        const obj = JSON.parse(surchargeSettings.product_surcharge_overrides);
+        if (obj && typeof obj === "object") {
+          for (const [k, v] of Object.entries(obj)) {
+            const id = Number(k);
+            const pct = Number(v);
+            if (Number.isFinite(id) && Number.isFinite(pct) && pct >= 0 && pct <= 100) surchargeOverrides[id] = pct / 100;
+          }
+        }
+      } catch { /* malformed map -> ignore, keep single-rate */ }
+    }
+    let paymentSurcharge = 0;
+    if (!isCampaignOrder && !/nakit/.test(pmForSurcharge)) {
+      if (Object.keys(surchargeOverrides).length > 0) {
+        // Per-line: sum(item.price * qty * effectiveRate), rounded once.
+        let s = 0;
+        for (const item of orderData.items) {
+          const pid = parseInt(String(item.productId));
+          const rate = (Number.isFinite(pid) && surchargeOverrides[pid] !== undefined) ? surchargeOverrides[pid] : surchargeRate;
+          s += (Number(item.price) || 0) * (Number(item.quantity) || 0) * rate;
+        }
+        paymentSurcharge = Math.round(s * 100) / 100;
+      } else {
+        paymentSurcharge = Math.round(orderData.subtotal * surchargeRate * 100) / 100;
+      }
+    }
     if (paymentSurcharge > 0) {
       orderData.grandTotal = Math.round((orderData.grandTotal + paymentSurcharge) * 100) / 100;
     }
@@ -3952,6 +3981,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         "cross_sell_enabled",
         "cargo_fee", "cargo_free_limit", "cargo_min_order",
         "card_surcharge_percent",
+        "product_surcharge_overrides",
       ];
       const settings = await resolveSettings(keys, publicStoreId(req));
       res.set("Cache-Control", "no-store");
@@ -3959,6 +3989,76 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     } catch {
       res.set("Cache-Control", "no-store");
       res.json({});
+    }
+  });
+
+  // ===== jetgomarket'e özel: ürün bazlı nakit-dışı ödeme farkı (%) =====
+  // Sadece jetgo mağazasında geçerli. app_settings `jetgo:product_surcharge_overrides`
+  // JSON haritası { "<productId>": <yuzde> } olarak saklanır. Diğer 8 mağaza bu
+  // özelliğe hiç dokunmaz; tek oranlı card_surcharge_percent modelinde kalır.
+  app.get("/api/admin/product-surcharge-overrides", requireAdmin, async (req, res) => {
+    try {
+      if (adminStoreId(req) !== "jetgo") return res.json({});
+      const s = await resolveSettings(["product_surcharge_overrides"], "jetgo");
+      const map: Record<string, number> = {};
+      try {
+        const obj = s.product_surcharge_overrides ? JSON.parse(s.product_surcharge_overrides) : {};
+        if (obj && typeof obj === "object") {
+          for (const [k, v] of Object.entries(obj)) {
+            const id = Number(k); const pct = Number(v);
+            if (Number.isFinite(id) && Number.isFinite(pct) && pct >= 0 && pct <= 100) map[String(id)] = pct;
+          }
+        }
+      } catch { /* malformed -> empty */ }
+      res.json(map);
+    } catch {
+      res.json({});
+    }
+  });
+
+  app.patch("/api/admin/product-surcharge-overrides", requireAdmin, async (req, res) => {
+    try {
+      if (adminStoreId(req) !== "jetgo") {
+        return res.status(400).json({ message: "Ürün bazlı ödeme farkı yalnızca jetgomarket için ayarlanabilir." });
+      }
+      const pid = parseInt(String(req.body?.productId));
+      if (!Number.isFinite(pid) || pid <= 0) {
+        return res.status(400).json({ message: "Geçersiz ürün." });
+      }
+      const raw = req.body?.percent;
+      const clear = raw === "" || raw === null || raw === undefined;
+      let pct = 0;
+      if (!clear) {
+        pct = Number(raw);
+        if (!Number.isFinite(pct) || pct < 0 || pct > 100) {
+          return res.status(400).json({ message: "Yüzde 0 ile 100 arasında olmalı." });
+        }
+      }
+      // Read-merge-write ONE entry so a stale client can't clobber the whole map.
+      const key = settingsPrefix("jetgo") + "product_surcharge_overrides";
+      const existing = await sharedPool.query("SELECT value FROM app_settings WHERE key = $1", [key]);
+      const map: Record<string, number> = {};
+      if (existing.rows[0]?.value) {
+        try {
+          const obj = JSON.parse(existing.rows[0].value);
+          if (obj && typeof obj === "object") {
+            for (const [k, v] of Object.entries(obj)) {
+              const id = Number(k); const p = Number(v);
+              if (Number.isFinite(id) && Number.isFinite(p) && p >= 0 && p <= 100) map[String(id)] = p;
+            }
+          }
+        } catch { /* malformed -> start fresh */ }
+      }
+      if (clear) delete map[String(pid)];
+      else map[String(pid)] = pct;
+      await sharedPool.query(
+        "INSERT INTO app_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()",
+        [key, JSON.stringify(map)]
+      );
+      res.json({ ok: true, overrides: map });
+    } catch (e) {
+      console.error("product-surcharge-overrides patch error:", e);
+      res.status(500).json({ message: "Kayıt başarısız" });
     }
   });
 

@@ -147,7 +147,7 @@ export default function FavoritesPage() {
                           <p className="text-sm font-bold text-primary mt-0.5" data-testid={`text-fav-price-${product.id}`}>
                             {product.price} TL
                           </p>
-                          <CardPriceNote price={Number(product.price)} className="mt-0.5" testId={`text-fav-card-${product.id}`} />
+                          <CardPriceNote price={Number(product.price)} productId={product.id} className="mt-0.5" testId={`text-fav-card-${product.id}`} />
                           <div className="flex items-center gap-2 mt-1.5">
                             {qty > 0 ? (
                               <div className="flex items-center gap-0">

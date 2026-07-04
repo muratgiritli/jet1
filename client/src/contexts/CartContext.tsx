@@ -7,7 +7,7 @@ import {
 } from "@/lib/data";
 import type { Product as DbProduct } from "@shared/schema";
 import { toast } from "@/hooks/use-toast";
-import { parseSurchargeRate } from "@/hooks/useSurchargeRate";
+import { parseSurchargeRate, parseSurchargeOverrides, effectiveSurchargeRate } from "@/hooks/useSurchargeRate";
 
 interface CartProduct {
   id: string;
@@ -44,6 +44,7 @@ interface CartContextType {
   selectedProducts: { product: CartProduct; qty: number }[];
   shipping: number;
   surcharge: number;
+  surchargeAll: number;
   grandTotal: number;
   minReached: boolean;
   itemCount: number;
@@ -444,8 +445,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const { data: cartPublicSettings } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
   const surchargeRateCfg = parseSurchargeRate(cartPublicSettings?.card_surcharge_percent);
+  const surchargeOverrides = useMemo(
+    () => parseSurchargeOverrides(cartPublicSettings?.product_surcharge_overrides),
+    [cartPublicSettings?.product_surcharge_overrides],
+  );
 
-  const { subtotal, selectedProducts, shipping, surcharge, grandTotal, minReached } = useMemo(() => {
+  const { subtotal, selectedProducts, shipping, surcharge, surchargeAll, grandTotal, minReached } = useMemo(() => {
     let sub = 0;
     const selected: { product: CartProduct; qty: number }[] = [];
     allProducts.forEach((p) => {
@@ -458,8 +463,21 @@ export function CartProvider({ children }: { children: ReactNode }) {
     });
 
     const pay = PAYMENT_OPTIONS.find((p) => p.id === paymentId)!;
-    const surchargeRate = pay.surcharge > 0 ? surchargeRateCfg : 0;
-    const surchargeAmt = roundMoney(sub * surchargeRate);
+    // Full non-cash surcharge (as if a surcharged method were chosen). On jetgo with
+    // per-product overrides -> per-line sum then round once; otherwise the single-rate
+    // path, which is byte-identical to the previous behavior for the other 8 stores.
+    const hasOverrides = Object.keys(surchargeOverrides).length > 0;
+    let fullSurcharge = 0;
+    if (hasOverrides) {
+      let s = 0;
+      for (const { product, qty } of selected) {
+        s += qty * product.price * effectiveSurchargeRate(product.id, surchargeRateCfg, surchargeOverrides);
+      }
+      fullSurcharge = roundMoney(s);
+    } else {
+      fullSurcharge = roundMoney(sub * surchargeRateCfg);
+    }
+    const surchargeAmt = pay.surcharge > 0 ? fullSurcharge : 0;
     const ship = sub >= CONFIG.shipLimit ? 0 : CONFIG.shipFee;
     const total = sub + surchargeAmt + ship;
     const min = sub >= CONFIG.minLimit;
@@ -469,10 +487,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       selectedProducts: selected,
       shipping: ship,
       surcharge: surchargeAmt,
+      surchargeAll: fullSurcharge,
       grandTotal: total,
       minReached: min,
     };
-  }, [basket, paymentId, allProducts, surchargeRateCfg]);
+  }, [basket, paymentId, allProducts, surchargeRateCfg, surchargeOverrides]);
 
   const itemCount = Object.values(basket).reduce((a, b) => a + b, 0);
   const minPerc = Math.min((subtotal / CONFIG.minLimit) * 100, 100);
@@ -518,6 +537,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       selectedProducts,
       shipping,
       surcharge,
+      surchargeAll,
       grandTotal,
       minReached,
       itemCount,
@@ -535,7 +555,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       campaignCartIds,
       isPreorderProduct,
     }),
-    [basket, paymentId, updateQty, setVariant, getVariant, clearCart, subtotal, selectedProducts, shipping, surcharge, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock, updateStock, campaignCartIds, isPreorderProduct]
+    [basket, paymentId, updateQty, setVariant, getVariant, clearCart, subtotal, selectedProducts, shipping, surcharge, surchargeAll, grandTotal, minReached, itemCount, minPerc, shipPerc, hasCampaignItems, campaignMainCount, campaignExtraCount, campaignValid, campaignMainInCart, campaignData, isKediKumu, getProductStock, updateStock, campaignCartIds, isPreorderProduct]
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

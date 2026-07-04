@@ -113,7 +113,7 @@ export default function ProductPopup({ product, quantity, onUpdate, onClose, isM
               </span>
             )}
           </div>
-          <CardPriceNote price={product.price} testId="product-popup-card-price" />
+          <CardPriceNote price={product.price} productId={product.id} testId="product-popup-card-price" />
 
           {product.stock === 0 && !product.preorderEnabled && isMama ? (
             <div className="flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-semibold" style={{ backgroundColor: "#fff3e0", color: "#e65100" }}>
