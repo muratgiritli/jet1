@@ -1,3 +1,4 @@
+- [Single-store collapse](single-store-collapse.md) — only STORES=[jetgo] (Enuygun) remains; multi-store engine intact but DORMANT — read older per-store/cargo notes as capability, not live behavior.
 - [Multi-domain brandify pattern](multi-domain-branding.md) — one codebase, many branded domains; SEO.tsx auto-brandifies all meta/jsonLd, only visible body text needs manual brandify(), preserve shared email/social in JSON-LD.
 - [Web-perf open-speed levers](eager-store-bundle.md) — 3 levers for fast storefront opens: keep seo-data out of eager store.ts; static.ts immutable-cache /assets + no-cache html; app.use(compression). Last two regress on server rewrites.
 - [Order payment_status / visible-order rule](order-payment-status.md) — online orders are created 'pending' before payment (stock decremented early); only show/count orders where payment_status NOT IN (pending,awaiting).
