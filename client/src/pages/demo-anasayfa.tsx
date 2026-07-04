@@ -144,7 +144,7 @@ export default function DemoAnasayfa({ embedded = false, hideFooter = false }: {
     ? navLinks.filter((c) => JETGO_HEADER_NAV_HREFS.has(c.href))
     : navLinks;
   const isCargo = store.commerce.fulfillment === "cargo";
-  const brandText = store.id === "jetgo" ? "jetgo" : store.shortName;
+  const brandText = store.shortName;
   const deliveryBadge = isCargo ? "Türkiye geneli hızlı kargo" : "Atakum içi 1 SAATTE teslim";
   const heroPill = isCargo ? "TÜRKİYE GENELİ KARGO" : "SADECE ATAKUM İÇİ";
   const heroSub = isCargo

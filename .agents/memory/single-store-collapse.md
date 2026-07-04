@@ -30,6 +30,11 @@ possible future reuse, not because more stores exist.
   /sitemap*.xml (unlike the canonical redirect, which exempts crawler files) because
   these hosts are dead and must fully funnel to the live site. They are no longer in
   STORES, so without it they'd serve default-store content on a 200.
+- The internal `store.id` is STILL `"jetgo"` after the Enuygun rebrand — never derive a
+  DISPLAYED brand string from `store.id` (e.g. `store.id === "jetgo" ? "jetgo" : ...`),
+  or the old brand leaks into the UI (this bit the bespoke desktop-home wordmark in
+  `demo-anasayfa.tsx`). Display brand comes from `store.shortName` / `store.brandWord`
+  / `brandify()`; `store.id` is an internal key only.
 - jetgomarket.com was the ORIGINAL brand domain of the surviving store; it is now
   FULLY retired too (removed from jetgo.hostnames; www.enuygunpet.com is the SOLE
   live host). BUT the brandify SOURCE is still the hardcoded literal "jetgomarket.com"
