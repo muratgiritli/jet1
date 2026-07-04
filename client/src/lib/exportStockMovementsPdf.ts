@@ -1,3 +1,5 @@
+import { brandify } from "@/lib/store";
+
 type Movement = {
   id: number;
   product_id: number;
@@ -102,7 +104,7 @@ export function exportStockMovementsPdf(opts: ExportOpts) {
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<title>JETGO - ${period} Stok Hareket Raporu (${from} - ${to})</title>
+<title>${brandify("JETGO")} - ${period} Stok Hareket Raporu (${from} - ${to})</title>
 <style>
   @page { size: A4 portrait; margin: 12mm; }
   * { box-sizing: border-box; }
@@ -139,11 +141,11 @@ export function exportStockMovementsPdf(opts: ExportOpts) {
   </div>
   <header>
     <div>
-      <h1>JETGO - ${period} Stok Hareket Raporu</h1>
+      <h1>${brandify("JETGO")} - ${period} Stok Hareket Raporu</h1>
       <div class="meta">${from} - ${to} aralığı &middot; Toplam ${movements.length} hareket &middot; Rapor: ${now}</div>
     </div>
     <div class="meta" style="text-align:right">
-      jetgomarket.com<br/>Sizpa LTD
+      ${brandify("jetgomarket.com")}<br/>Sizpa LTD
     </div>
   </header>
   <div class="summary">

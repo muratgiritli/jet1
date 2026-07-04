@@ -1,6 +1,7 @@
 import type { Order } from "@shared/schema";
+import { brandify } from "@/lib/store";
 
-const STORE_NAME = "JETGO PET SHOP";
+const STORE_NAME = brandify("JETGO PET SHOP");
 const STORE_SUB = "Samsun - Hızlı Sipariş";
 
 function esc(s: any): string {
@@ -111,7 +112,7 @@ export function buildReceiptHtml(order: Order, opts: ReceiptOptions = {}): strin
   ${order.customerNote ? `<div class="hr"></div><div class="sec-title">Not</div><div class="note">${esc(order.customerNote)}</div>` : ""}
   <div class="hr"></div>
   <div class="center foot b">Teşekkür ederiz!</div>
-  <div class="center foot">JETGO Pet Shop</div>
+  <div class="center foot">${esc(brandify("JETGO Pet Shop"))}</div>
   <script>
     window.onload = function () {
       window.focus();

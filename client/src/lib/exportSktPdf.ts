@@ -1,3 +1,5 @@
+import { brandify } from "@/lib/store";
+
 type SktProduct = {
   id: number;
   name: string;
@@ -44,7 +46,7 @@ export function exportSktPdf(opts: ExportOpts) {
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<title>JETGO - SKT Takip Raporu (${escapeHtml(monthLabel)})</title>
+<title>${brandify("JETGO")} - SKT Takip Raporu (${escapeHtml(monthLabel)})</title>
 <style>
   @page { size: A4 portrait; margin: 12mm; }
   * { box-sizing: border-box; }
@@ -79,12 +81,12 @@ export function exportSktPdf(opts: ExportOpts) {
   </div>
   <header>
     <div>
-      <h1>JETGO - SKT Takip Raporu</h1>
+      <h1>${brandify("JETGO")} - SKT Takip Raporu</h1>
       <div class="meta">SKT Ayı: <strong>${escapeHtml(monthLabel)}</strong> <span class="badge ${statusClass}">${statusLabel}</span></div>
       <div class="meta" style="margin-top:3px">Rapor: ${now}</div>
     </div>
     <div class="meta" style="text-align:right">
-      jetgomarket.com<br/>Sizpa LTD
+      ${brandify("jetgomarket.com")}<br/>Sizpa LTD
     </div>
   </header>
   <div class="summary">

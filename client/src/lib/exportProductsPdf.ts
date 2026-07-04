@@ -1,3 +1,5 @@
+import { brandify } from "@/lib/store";
+
 type ExportProduct = {
   name: string;
   price: number;
@@ -80,7 +82,7 @@ export function exportProductsPdf(
 <html lang="tr">
 <head>
 <meta charset="UTF-8" />
-<title>JETGO - Ürün Listesi (${products.length})</title>
+<title>${brandify("JETGO")} - Ürün Listesi (${products.length})</title>
 <style>
   @page { size: A4 landscape; margin: 12mm; }
   * { box-sizing: border-box; }
@@ -110,12 +112,12 @@ export function exportProductsPdf(
   </div>
   <header>
     <div>
-      <h1>JETGO - Ürün Listesi</h1>
+      <h1>${brandify("JETGO")} - Ürün Listesi</h1>
       <div class="meta">Toplam ${products.length} ürün &middot; ${dateStr}</div>
       ${filterLines.length ? `<div class="filters">${filterLines.map((f) => `<span>${escapeHtml(f)}</span>`).join("")}</div>` : ""}
     </div>
     <div class="meta" style="text-align:right">
-      jetgomarket.com<br/>Sizpa LTD
+      ${brandify("jetgomarket.com")}<br/>Sizpa LTD
     </div>
   </header>
   <table>

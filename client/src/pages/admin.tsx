@@ -4,6 +4,7 @@ import { exportStockMovementsPdf } from "@/lib/exportStockMovementsPdf";
 import { exportSktPdf } from "@/lib/exportSktPdf";
 import { printOrderReceipt } from "@/lib/printReceipt";
 import { STORES, type StoreGoogle } from "@shared/stores";
+import { brandify } from "@/lib/store";
 import { isSharedRowInStoreView, confirmSharedEdit, storeCtxParam, STORE_SCOPED_SETTING_KEYS, confirmSharedSettingsSave } from "@/lib/storeScope";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -3804,7 +3805,7 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
                       <div className="flex items-center gap-2 shrink-0">
                         {!alert.isNotified && (
                           <a
-                            href={`https://wa.me/90${alert.phone.replace(/\D/g, "").replace(/^0/, "")}?text=${encodeURIComponent(`Merhaba ${alert.customerName}, ilgilendiginiz "${alert.productName}" urunu tekrar stoklarimizda! Siparis vermek icin JETGO'i ziyaret edin.`)}`}
+                            href={`https://wa.me/90${alert.phone.replace(/\D/g, "").replace(/^0/, "")}?text=${encodeURIComponent(brandify(`Merhaba ${alert.customerName}, ilgilendiginiz "${alert.productName}" urunu tekrar stoklarimizda! Siparis vermek icin JETGO'i ziyaret edin.`))}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 px-2 py-1 rounded text-[10px] font-medium text-white"
@@ -6149,7 +6150,7 @@ function ReorderRemindersSection() {
   const overdue = pending.filter((r: any) => new Date(r.reorderDate) <= now);
 
   const buildWhatsAppLink = (r: any) => {
-    const msg = `Merhaba ${r.customerName || ""}!\n\nDaha önce aldığınız *${r.productName}* mamayı yakında bitirmiş olabilirsiniz.\n\nYeni sipariş vermek ister misiniz?\n\nJETGO - Hızlı Sipariş`;
+    const msg = brandify(`Merhaba ${r.customerName || ""}!\n\nDaha önce aldığınız *${r.productName}* mamayı yakında bitirmiş olabilirsiniz.\n\nYeni sipariş vermek ister misiniz?\n\nJETGO - Hızlı Sipariş`);
     return `https://wa.me/${r.customerPhone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(msg)}`;
   };
 
@@ -6409,7 +6410,7 @@ function DashboardSection() {
                     size="sm"
                     variant="ghost"
                     className="h-6 px-2 text-[10px] text-blue-600 shrink-0"
-                    onClick={() => { setSmsTarget({ phone: c.phone, name: c.name }); setSmsText(`Merhaba ${c.name}, sizi özledik! 🐾 JETGO'da yeni ürünler sizi bekliyor. Hemen sipariş verin, kapınıza getirelim! jetgomarket.com`); }}
+                    onClick={() => { setSmsTarget({ phone: c.phone, name: c.name }); setSmsText(brandify(`Merhaba ${c.name}, sizi özledik! 🐾 JETGO'da yeni ürünler sizi bekliyor. Hemen sipariş verin, kapınıza getirelim! jetgomarket.com`)); }}
                     data-testid={`btn-remind-${c.id}`}
                   >
                     <Send className="w-3 h-3 mr-0.5" /> SMS
@@ -6800,9 +6801,9 @@ function NotificationsSection() {
   };
 
   const quickTemplates = [
-    { label: "Yeni Ürün", text: "JETGO'da yeni ürünler geldi! Hemen inceleyin: jetgomarket.com" },
-    { label: "Kampanya", text: "JETGO'da büyük kampanya başladı! Kaçırmayın: jetgomarket.com" },
-    { label: "Kargo Ücretsiz", text: "Bugüne özel kargo bedava! Sipariş verin: jetgomarket.com" },
+    { label: "Yeni Ürün", text: brandify("JETGO'da yeni ürünler geldi! Hemen inceleyin: jetgomarket.com") },
+    { label: "Kampanya", text: brandify("JETGO'da büyük kampanya başladı! Kaçırmayın: jetgomarket.com") },
+    { label: "Kargo Ücretsiz", text: brandify("Bugüne özel kargo bedava! Sipariş verin: jetgomarket.com") },
   ];
 
   return (
@@ -7921,7 +7922,7 @@ function SubscriptionsSection() {
               <div className="bg-white p-3 rounded-xl shadow-sm">
                 <img src={qrSrc} alt="Abone Karekod" className="w-64 h-64 block" data-testid="img-qr" />
               </div>
-              <p className="text-xs text-center text-muted-foreground mt-2">Karekodu okutarak <strong>jetgomarket.com/abone</strong> sayfasına ulaşılır.</p>
+              <p className="text-xs text-center text-muted-foreground mt-2">Karekodu okutarak <strong>{brandify("jetgomarket.com")}/abone</strong> sayfasına ulaşılır.</p>
               <div className="flex gap-2 mt-3">
                 <a href={qrSrc} download="jetgo-abone-qr.png">
                   <Button size="sm" variant="outline" data-testid="button-download-qr">İndir (PNG)</Button>
