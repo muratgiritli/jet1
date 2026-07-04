@@ -35,7 +35,8 @@ export function useStore(): StoreConfig {
 
 /**
  * Swap shared-content "JETGO" / "jetgomarket.com" mentions for the active
- * store's brand. No-op on the default (jetgo) site. Apply to user-facing text
+ * store's brand (the flagship is now branded Enuygun; the corpus keeps the JETGO
+ * tokens as the substitution source for every store). Apply to user-facing text
  * only (titles, descriptions, page bodies) — never to asset paths, testids,
  * localStorage keys or social handles.
  */

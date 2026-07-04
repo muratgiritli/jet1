@@ -4,7 +4,7 @@ import { type Server } from "http";
 import { storage, pool as sharedPool, db } from "./storage";
 import { seedDatabase } from "./seed";
 import { insertBrandCategorySchema, insertProductSchema, insertCrossSellSectionSchema, insertCrossSellItemSchema, insertOrderSchema, orderItemSchema, insertBreedStatSchema, insertStockAlertSchema, orders, virtualPets, petContestEntries, petContestVotes, productReviews, insertContactMessageSchema, brandCategories } from "@shared/schema";
-import { getStoreByHost, STORES, brandifyFor, canonicalHost } from "@shared/stores";
+import { getStoreByHost, STORES, brandifyFor, canonicalHost, DEFAULT_STORE } from "@shared/stores";
 import { eq, desc, and, sql } from "drizzle-orm";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
@@ -1727,6 +1727,33 @@ export async function registerRoutes(
       console.error("Google Local Inventory feed error:", err);
       res.status(500).send("Feed generation failed");
     }
+  });
+
+  // Per-domain PWA manifest. The flagship (Enuygun) needs its own name/theme so the
+  // installed app isn't labelled with the shared static "JETGO" manifest. Every other
+  // store falls through (next()) to the static client/public/manifest.json; that file
+  // still carries a legacy "JETGO" name shown on the 8 other domains' PWA install —
+  // tracked as a separate follow-up, intentionally left unchanged here.
+  app.get("/manifest.json", (req, res, next) => {
+    const store = reqStore(req);
+    if (store.id !== DEFAULT_STORE.id) return next();
+    res.type("application/manifest+json").json({
+      name: store.name,
+      short_name: store.shortName,
+      description: `${store.name} - Hızlı Sipariş, Kapınıza Teslimat`,
+      start_url: "/",
+      display: "standalone",
+      background_color: store.theme.topBar,
+      theme_color: store.theme.topBar,
+      orientation: "portrait",
+      scope: "/",
+      lang: "tr",
+      categories: ["shopping", "lifestyle"],
+      icons: [
+        { src: "/favicon-192.png", sizes: "192x192", type: "image/png", purpose: "any maskable" },
+        { src: "/favicon-512.png", sizes: "512x512", type: "image/png", purpose: "any maskable" },
+      ],
+    });
   });
 
   app.get("/robots.txt", (req, res) => {
@@ -4342,9 +4369,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (status === "tamamlandi" && order.customerPhone) {
       const stCfg = storeById((order as any).sourceSite);
       const apexHost = canonicalHost(stCfg).replace(/^www\./, "");
-      const smsMessage = stCfg.id === "jetgo"
-        ? `Siparissiniz teslim edildi. Jetgo ile alisveris yaptiginiz icin tesekkurler! Bir sonraki siparissinizde 50 TL indirim icin JETGO50 kodunu kullanin. jetgomarket.com`
-        : `Siparissiniz teslim edildi. ${stCfg.shortName} ile alisveris yaptiginiz icin tesekkurler! ${apexHost} adresinden tekrar siparis verebilirsiniz.`;
+      const smsMessage = `Siparissiniz teslim edildi. ${stCfg.shortName} ile alisveris yaptiginiz icin tesekkurler! ${apexHost} adresinden tekrar siparis verebilirsiniz.`;
       const stHeader = await resolveSmsHeader(stCfg.id);
       sendSmsViaNetgsm(order.customerPhone, smsMessage, stHeader).catch(err => {
         console.error("Post-delivery SMS error:", err);
@@ -4354,7 +4379,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (status === "iptal" && prevStatus !== "iptal" && order.customerPhone) {
       const stCfg = storeById((order as any).sourceSite);
       const apexHost = canonicalHost(stCfg).replace(/^www\./, "");
-      const brand = stCfg.id === "jetgo" ? "Jetgo" : stCfg.shortName;
+      const brand = stCfg.shortName;
       const smsMessage = `${brand} - ${order.id} numarali siparissiniz iptal edilmistir. Sorulariniz icin bizimle iletisime gecebilirsiniz. ${apexHost}`;
       const stHeader = await resolveSmsHeader(stCfg.id);
       sendSmsViaNetgsm(order.customerPhone, smsMessage, stHeader).catch(err => {
@@ -6278,7 +6303,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     if (!r) return "Direkt";
     try {
       const host = new URL(r).hostname.replace(/^www\./, "").toLowerCase();
-      if (host.includes("jetgomarket") || host.includes("localhost") || host.includes("replit")) return "Direkt";
+      if (host.includes("jetgomarket") || host.includes("enuygunpet") || host.includes("localhost") || host.includes("replit")) return "Direkt";
       return mapToken(host) || host;
     } catch {
       return "Direkt";

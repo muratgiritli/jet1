@@ -328,11 +328,11 @@ function MesafeliSatisJetgo() {
           <li>Adres: Sipariş sırasında bildirilen teslimat adresi</li>
           <li>Telefon / E-posta: Sipariş sırasında bildirilen iletişim bilgileri</li>
         </ul>
-        <p className="mt-2">İşbu sözleşme, <strong>jetgomarket.com</strong> üzerinden ürün satın alan alıcı ile satıcı arasında elektronik ortamda kurulmuştur.</p>
+        <p className="mt-2">İşbu sözleşme, <strong>{brandify("jetgomarket.com")}</strong> üzerinden ürün satın alan alıcı ile satıcı arasında elektronik ortamda kurulmuştur.</p>
       </Section>
 
       <Section title="2. Konu">
-        <p>İşbu sözleşmenin konusu, alıcının jetgomarket.com internet sitesi üzerinden elektronik ortamda sipariş verdiği ürünlerin satışı, teslimatı, ödeme koşulları, cayma hakkı, iade ve tarafların hak ve yükümlülüklerinin düzenlenmesidir.</p>
+        <p>{brandify("İşbu sözleşmenin konusu, alıcının jetgomarket.com internet sitesi üzerinden elektronik ortamda sipariş verdiği ürünlerin satışı, teslimatı, ödeme koşulları, cayma hakkı, iade ve tarafların hak ve yükümlülüklerinin düzenlenmesidir.")}</p>
         <p>Alıcı, siparişi onaylamadan önce ürün bilgilerini, fiyatı, teslimat ve ödeme şartlarını kontrol ettiğini kabul eder.</p>
       </Section>
 
@@ -396,7 +396,7 @@ function MesafeliSatisJetgo() {
       </Section>
 
       <Section title="12. Yürürlük">
-        <p>Alıcı, jetgomarket.com üzerinden sipariş vererek işbu Mesafeli Satış Sözleşmesi'ni okuduğunu, anladığını ve elektronik ortamda kabul ettiğini beyan eder.</p>
+        <p>{brandify("Alıcı, jetgomarket.com üzerinden sipariş vererek işbu Mesafeli Satış Sözleşmesi'ni okuduğunu, anladığını ve elektronik ortamda kabul ettiğini beyan eder.")}</p>
       </Section>
 
       <Section title="Satıcı Bilgileri">
@@ -1018,7 +1018,7 @@ function CerezPolitikasiJetgo() {
 
       <Section>
         <p><strong>Son Güncelleme:</strong> 27.06.2026</p>
-        <p>Jetgomarket.com ("Site"), ziyaretçilerimize daha güvenli, hızlı ve verimli bir kullanıcı deneyimi sunabilmek amacıyla çerez (cookie) teknolojisini kullanmaktadır.</p>
+        <p>{brandify('Jetgomarket.com ("Site"), ziyaretçilerimize daha güvenli, hızlı ve verimli bir kullanıcı deneyimi sunabilmek amacıyla çerez (cookie) teknolojisini kullanmaktadır.')}</p>
         <p>Bu politika, web sitemizde kullanılan çerezlerin türlerini, kullanım amaçlarını ve çerez tercihlerinizi nasıl yönetebileceğinizi açıklamaktadır.</p>
       </Section>
 
@@ -1114,7 +1114,7 @@ function CerezPolitikasiJetgo() {
       </Section>
 
       <Section title="8. Politika Değişiklikleri">
-        <p>Jetgomarket.com, işbu Çerez Politikası'nı yürürlükteki mevzuata veya hizmetlerinde meydana gelen değişikliklere bağlı olarak güncelleyebilir.</p>
+        <p>{brandify("Jetgomarket.com, işbu Çerez Politikası'nı yürürlükteki mevzuata veya hizmetlerinde meydana gelen değişikliklere bağlı olarak güncelleyebilir.")}</p>
         <p>Güncel sürüm her zaman internet sitemizde yayımlanır.</p>
       </Section>
 

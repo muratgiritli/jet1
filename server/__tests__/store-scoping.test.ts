@@ -2487,15 +2487,16 @@ test("jetgo.pet resolves the JETGO brand as a SEPARATE self-canonical store from
   assert.equal(jetgopet.id, "jetgopet");
   assert.equal(jetgopet.name, JETGOPET_BRAND, "homepage wordmark/title brand name");
   assert.equal(jetgopet.brandWord, "JETGO");
-  // Shares the JETGO brand word with the default store BY DESIGN, but must stay a
-  // separate store: distinct id + domain (host resolution is by hostname).
-  assert.equal(jetgopet.brandWord, jetgo.brandWord, "intentionally shares the JETGO brand word with the default store");
+  // jetgo.pet keeps the ORIGINAL JETGO brand word + logo. The default store was
+  // rebranded to Enuygun, so jetgo.pet must NO LONGER track it — it must hold the
+  // literal JETGO identity independently (distinct id + domain, host-resolved).
+  assert.notEqual(jetgopet.brandWord, jetgo.brandWord, "jetgo.pet keeps JETGO; the default store is now Enuygun");
   assert.equal(jetgopet.domain, "https://www.jetgo.pet");
   assert.notEqual(jetgopet.id, jetgo.id, "jetgo.pet must be a SEPARATE store from the default jetgo");
-  assert.notEqual(jetgopet.domain, jetgo.domain, "the two JETGO stores must keep distinct domains");
-  // "jetgomarket.com gibi": same look (theme + logo) as the flagship.
-  assert.deepEqual(jetgopet.theme, jetgo.theme, "jetgo.pet must look like jetgomarket.com");
-  assert.equal(jetgopet.logo, jetgo.logo, "jetgo.pet reuses the JETGO logo");
+  assert.notEqual(jetgopet.domain, jetgo.domain, "the two stores must keep distinct domains");
+  // Same theme as the flagship, but its own JETGO logo (the flagship moved to Enuygun).
+  assert.deepEqual(jetgopet.theme, jetgo.theme, "jetgo.pet keeps the flagship theme");
+  assert.equal(jetgopet.logo, "/logo-jetgo.webp", "jetgo.pet keeps the JETGO logo");
   // The apex host also resolves (not just the www form).
   assert.equal(getStoreByHost("jetgo.pet").id, "jetgopet");
   // Canonical-redirect contract: the apex host resolves to the SAME store, whose
@@ -2631,12 +2632,12 @@ test("jetgo.shop resolves the JETGO brand as a SEPARATE self-canonical store fro
   assert.equal(jetgoshop.id, "jetgoshop");
   assert.equal(jetgoshop.name, JETGOSHOP_BRAND, "homepage wordmark/title brand name");
   assert.equal(jetgoshop.brandWord, "JETGO");
-  assert.equal(jetgoshop.brandWord, jetgo.brandWord, "intentionally shares the JETGO brand word with the default store");
+  assert.notEqual(jetgoshop.brandWord, jetgo.brandWord, "jetgo.shop keeps JETGO; the default store is now Enuygun");
   assert.equal(jetgoshop.domain, "https://www.jetgo.shop");
   assert.notEqual(jetgoshop.id, jetgo.id, "jetgo.shop must be a SEPARATE store from the default jetgo");
-  assert.notEqual(jetgoshop.domain, jetgo.domain, "the two JETGO stores must keep distinct domains");
-  assert.deepEqual(jetgoshop.theme, jetgo.theme, "jetgo.shop must look like jetgomarket.com");
-  assert.equal(jetgoshop.logo, jetgo.logo, "jetgo.shop reuses the JETGO logo");
+  assert.notEqual(jetgoshop.domain, jetgo.domain, "the two stores must keep distinct domains");
+  assert.deepEqual(jetgoshop.theme, jetgo.theme, "jetgo.shop keeps the flagship theme");
+  assert.equal(jetgoshop.logo, "/logo-jetgo.webp", "jetgo.shop keeps the JETGO logo");
   // The apex host also resolves (not just the www form).
   assert.equal(getStoreByHost("jetgo.shop").id, "jetgoshop");
   // Canonical-redirect contract: apex resolves to the SAME store; canonical host
@@ -3003,8 +3004,9 @@ test("jetgomarket.com homepage SEO is Atakum-led with neighborhood reach, local 
   const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
   const description = html.match(/<meta\s+name="description"\s+content="([^"]*)"/i)?.[1] ?? "";
   const blob = `${title} ${description}`;
-  assert.match(title, /Atakum/i, "jetgomarket homepage title must lead with Atakum");
-  assert.match(title, /JETGO/, "jetgomarket homepage title must keep the JETGO brand");
+  assert.match(title, /Atakum/i, "flagship homepage title must lead with Atakum");
+  assert.match(title, /Enuygun/, "flagship homepage title must carry the Enuygun brand");
+  assert.ok(!/JETGO/i.test(title), "flagship homepage title must NOT leak the retired JETGO brand");
   assert.match(blob, SAME_DAY_SIGNATURE, "jetgomarket homepage must keep local same-day copy");
   assert.ok(!CARGO_SIGNATURE.test(blob), "jetgomarket homepage must not carry cargo (türkiye geneli) copy");
   assert.match(
@@ -3019,15 +3021,17 @@ test("jetgomarket.com homepage SEO is Atakum-led with neighborhood reach, local 
   assert.equal(page!.availability, "localOnly", "neighborhood page must be localOnly");
 });
 
-test("SEO landing page on the default (jetgo) host keeps the JETGO brand (contrast)", async () => {
-  // Proves the per-host checks above actually discriminate: on the default store
-  // brandify is a no-op, so the JETGO brand and domain are expected to remain.
+test("SEO landing page on the flagship host brandifies the shared corpus to Enuygun", async () => {
+  // The flagship was rebranded off JETGO: brandify is now ACTIVE for the default
+  // store too, rewriting the shared JETGO/jetgomarket corpus to Enuygun and its
+  // own domain. The retired JETGO brand must not appear on the flagship's surfaces.
   const store = getStoreByHost(JETGO_HOST);
   const html = await injectAllMeta(INDEX_HTML, `/${SEO_TEST_SLUG}`, JETGO_HOST);
   const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? "";
   const canonical = html.match(/<link\s+rel="canonical"\s+href="([^"]*)"/i)?.[1] ?? "";
-  assert.match(title, /JETGO/, "default-host SEO title keeps the JETGO brand (brandify is a no-op)");
-  assert.equal(canonical, `${store.domain}/${SEO_TEST_SLUG}`, "default-host SEO canonical binds to the jetgo domain");
+  assert.match(title, /Enuygun/, "flagship SEO title must carry the Enuygun brand");
+  assert.ok(!/JETGO/i.test(title), "flagship SEO title must NOT leak the retired JETGO brand");
+  assert.equal(canonical, `${store.domain}/${SEO_TEST_SLUG}`, "flagship SEO canonical binds to the enuygunpet domain");
 });
 
 // ---- Dormant cargo commerce path stays truthful + self-consistent (data layer) ----

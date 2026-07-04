@@ -1,6 +1,6 @@
 import { findSeoPage, type SeoPageData } from "../client/src/lib/seo-data";
 import { pool as sharedPool } from "./storage";
-import { getStoreByHost, brandifyFor, commercifyFor, type StoreConfig } from "@shared/stores";
+import { getStoreByHost, brandifyFor, commercifyFor, DEFAULT_STORE, type StoreConfig } from "@shared/stores";
 import { getStoreGoogleConfig } from "./google-tags";
 
 type ProductMeta = {
@@ -186,16 +186,23 @@ function applyGlobalBranding(html: string, store: StoreConfig): string {
   );
 
   // Brandify the static JSON-LD fallback block: brand name and self-referential
-  // URLs (url/image/logo) follow the request domain, but contact identifiers
-  // (email + sameAs social handles) are preserved as-is — they point to the single
-  // real business shared across every brand ("tek mutfak, çok tabela"), so they must
-  // NOT be domain-rewritten. No-op for the default store.
+  // URLs (url/image/logo) follow the request domain. Contact identifiers (email +
+  // sameAs social handles) point to the single real business shared across the
+  // non-default brands ("tek mutfak, çok tabela"), so for THOSE they are preserved
+  // as-is (not domain-rewritten). The flagship, however, was renamed off the shared
+  // JETGO/jetgomarket identity, so it uses its OWN config email/social instead of
+  // inheriting the static block's legacy jetgomarket handles.
   out = out.replace(/<script type="application\/ld\+json">[\s\S]*?<\/script>/i, (block) => {
     const origEmail = block.match(/"email":\s*"[^"]*"/i)?.[0];
     const origSameAs = block.match(/"sameAs":\s*\[[\s\S]*?\]/i)?.[0];
     let b = brandifyFor(store, block);
-    if (origEmail) b = b.replace(/"email":\s*"[^"]*"/i, origEmail);
-    if (origSameAs) b = b.replace(/"sameAs":\s*\[[\s\S]*?\]/i, origSameAs);
+    if (store.id === DEFAULT_STORE.id) {
+      b = b.replace(/"email":\s*"[^"]*"/i, `"email": ${JSON.stringify(store.email)}`);
+      b = b.replace(/"sameAs":\s*\[[\s\S]*?\]/i, `"sameAs": ${JSON.stringify(store.social)}`);
+    } else {
+      if (origEmail) b = b.replace(/"email":\s*"[^"]*"/i, origEmail);
+      if (origSameAs) b = b.replace(/"sameAs":\s*\[[\s\S]*?\]/i, origSameAs);
+    }
     // Cargo stores ship nationwide: the static block's Samsun-neighborhood
     // areaServed is a false local-delivery claim, so collapse it to Türkiye.
     if (isCargo) {
