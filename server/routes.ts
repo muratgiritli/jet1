@@ -960,7 +960,7 @@ export async function registerRoutes(
       }
 
       const buf = await wb.xlsx.writeBuffer();
-      res.setHeader("Content-Disposition", "attachment; filename=jetgo_urunler.xlsx");
+      res.setHeader("Content-Disposition", "attachment; filename=enuygun_urunler.xlsx");
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       res.send(Buffer.from(buf));
     } catch (err) {
@@ -977,15 +977,15 @@ export async function registerRoutes(
 
       let where = "1=1";
       let title = "Ürünler";
-      let filename = "jetgo_urunler.xlsx";
+      let filename = "enuygun_urunler.xlsx";
       if (type === "preorder") {
         where = "p.preorder_enabled = true";
         title = "Ön Sipariş Ürünleri";
-        filename = "jetgo_on_siparis.xlsx";
+        filename = "enuygun_on_siparis.xlsx";
       } else if (type === "out_of_stock") {
         where = "p.stock <= 0 AND p.is_active = true";
         title = "Stokta Yok Ürünler";
-        filename = "jetgo_stokta_yok.xlsx";
+        filename = "enuygun_stokta_yok.xlsx";
       }
 
       const { rows } = await sharedPool.query(`
@@ -1194,7 +1194,7 @@ export async function registerRoutes(
       wsSummary.addRow({ label: `Rapor tarihi: ${new Date().toLocaleString("tr-TR")}` }).font = { italic: true, color: { argb: "FF666666" } };
 
       const buf = await wb.xlsx.writeBuffer();
-      res.setHeader("Content-Disposition", `attachment; filename=jetgo_mama_stok_raporu.xlsx`);
+      res.setHeader("Content-Disposition", `attachment; filename=enuygun_mama_stok_raporu.xlsx`);
       res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
       res.send(Buffer.from(buf));
     } catch (err) {
@@ -1253,7 +1253,7 @@ export async function registerRoutes(
       }
       yml += "    </offers>\n  </shop>\n</yml_catalog>\n";
 
-      res.setHeader("Content-Disposition", `attachment; filename=${stCfg.id}_urunler.yml`);
+      res.setHeader("Content-Disposition", `attachment; filename=${stCfg.brandWord.toLowerCase()}_urunler.yml`);
       res.setHeader("Content-Type", "application/xml; charset=utf-8");
       res.send(yml);
     } catch (err) {
@@ -6491,7 +6491,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       );
       const ips: string[] = (rows as any[]).map((r) => String(r.ip));
       const label = type === "bot" ? "bot" : "gercek";
-      const base = `jetgo_${label}_ip_${fromStr}_${toStr}`;
+      const base = `enuygun_${label}_ip_${fromStr}_${toStr}`;
 
       if (format === "txt") {
         res.setHeader("Content-Disposition", `attachment; filename=${base}.txt`);
