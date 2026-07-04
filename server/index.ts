@@ -4,7 +4,7 @@ import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import path from "path";
-import { getStoreByExactHost, canonicalHost } from "@shared/stores";
+import { getStoreByExactHost, canonicalHost, normalizeHost, DEFAULT_STORE } from "@shared/stores";
 
 process.on("uncaughtException", (err) => {
   console.error("[uncaughtException - keeping process alive]", err?.message, err?.stack);
@@ -37,6 +37,29 @@ declare module "http" {
 }
 
 app.set("trust proxy", 1);
+
+// Legacy removed-store domains: the 8 shuttered storefronts were collapsed into
+// the single Enuygun store. Any request still arriving on one of those retired
+// hostnames (apex or www — normalizeHost strips the "www.") is permanently 301'd
+// to the SAME path on the flagship domain so old links and search results funnel
+// to one live site. These hosts are no longer in STORES, so without this they
+// would otherwise be served default-store content on a 200.
+const LEGACY_REMOVED_HOSTS = new Set([
+  "atakumpetshop.com",
+  "atakumpet.com",
+  "samsunpet.com",
+  "karadenizpetshop.com",
+  "atakum.biz",
+  "jetgo.pet",
+  "jetgo.shop",
+  "marka.pet",
+]);
+app.use((req, res, next) => {
+  if (LEGACY_REMOVED_HOSTS.has(normalizeHost(req.hostname))) {
+    return res.redirect(301, `${DEFAULT_STORE.domain}${req.originalUrl}`);
+  }
+  next();
+});
 
 // Canonical host: 301 redirect each configured store's non-canonical hostname
 // (e.g. apex) to its canonical domain so Google consolidates signals per site.
