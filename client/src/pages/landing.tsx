@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { brandify, useStore } from "@/lib/store";
 import { DEFAULT_STORE } from "@shared/stores";
-import { ATAKUM_POPULAR_SEARCHES } from "@/lib/atakum-popular-searches";
 import { Link } from "wouter";
 import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/lib/queryClient";
@@ -822,30 +821,6 @@ function RegionLinks() {
   );
 }
 
-function PopularAtakumSearches() {
-  const store = useStore();
-  if (store.id !== "atakum") return null;
-  const links = ATAKUM_POPULAR_SEARCHES;
-  return (
-    <div className="mt-5 md:mt-12" data-testid="section-popular-atakum">
-      <h3 className="text-base md:text-2xl font-extrabold text-gray-900 mb-3 md:mb-6 flex items-center gap-2">
-        <ShoppingBag className="w-4 h-4 md:w-6 md:h-6 text-[#6B3480]" />
-        Popüler Atakum Aramaları
-      </h3>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
-        {links.map((l) => (
-          <Link key={l.href} href={l.href}>
-            <div className="flex items-center gap-1.5 bg-white rounded-xl border border-[#6B3480]/10 px-3 py-2.5 md:px-4 md:py-3 cursor-pointer hover:shadow-md hover:border-[#6B3480]/30 transition-all h-full" data-testid={`link-popular-${l.href.slice(1)}`}>
-              <ChevronRight className="w-3.5 h-3.5 md:w-4 md:h-4 text-[#6B3480] shrink-0" />
-              <span className="text-xs md:text-sm font-semibold text-gray-800 leading-tight">{l.name}</span>
-            </div>
-          </Link>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 function DesktopDeliveryInfo() {
   return (
     <div className="hidden md:block" data-testid="section-desktop-delivery">
@@ -1035,20 +1010,6 @@ export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverr
       {seoNode}
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 md:px-6 lg:px-8">
-        {/* marka.pet ONLY: header altı Atakum mağaza ziyaret butonu */}
-        {store.id === "markapet" && (
-          <a
-            href="https://www.enuygun.pet"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 flex items-center justify-center gap-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-extrabold text-sm py-3 px-4 shadow-md transition-colors"
-            data-testid="link-atakum-store"
-          >
-            <MapPin className="w-4 h-4 shrink-0" />
-            ATAKUM MAĞAZAMIZI ZİYARET EDİNİZ
-            <ArrowRight className="w-4 h-4 shrink-0" />
-          </a>
-        )}
 
         {/* MOBILE-ONLY: admin-controlled top promo banner (Header altı) for new users */}
         {!isLoggedIn && (
@@ -1115,7 +1076,6 @@ export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverr
           <RegionLinks />
         </div>
 
-        <PopularAtakumSearches />
 
         <div className="mt-5 md:mt-12">
           <DesktopContactStrip />

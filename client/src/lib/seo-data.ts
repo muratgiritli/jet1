@@ -1,14 +1,5 @@
 import { BRAND_PAGES } from "./brand-seo-data";
 import { KEYWORD_AUTO_PAGES } from "./keyword-pages";
-import { ATAKUM_KEYWORD_PAGES } from "./keyword-pages-atakum";
-import { ATAKUM_ALL_KEYWORD_PAGES } from "./keyword-pages-atakum-all";
-import { JETGOSHOP_ALL_KEYWORD_PAGES } from "./keyword-pages-jetgoshop-all";
-import { ATAKUMBIZ_ALL_KEYWORD_PAGES } from "./keyword-pages-atakumbiz-all";
-import { MARKAPET_ALL_KEYWORD_PAGES } from "./keyword-pages-markapet-all";
-import { KARADENIZ_ALL_KEYWORD_PAGES } from "./keyword-pages-karadeniz-all";
-import { SAMSUN_ALL_KEYWORD_PAGES } from "./keyword-pages-samsun-all";
-import { JETGOPET_ALL_KEYWORD_PAGES } from "./keyword-pages-jetgopet-all";
-import { SAMSUNPET_ALL_KEYWORD_PAGES } from "./keyword-pages-samsunpet-all";
 import { JETGO_KEYWORD_PAGES } from "./keyword-pages-jetgo";
 import { ROYALCANIN_KEYWORD_PAGES } from "./keyword-pages-jetgo-royalcanin";
 import { MARKALAR_KEYWORD_PAGES } from "./keyword-pages-jetgo-markalar";
@@ -4176,42 +4167,13 @@ export const KEYWORD_AUTO_ADDED = KEYWORD_AUTO_PAGES.filter(
 );
 SEO_PAGES.push(...KEYWORD_AUTO_ADDED);
 
-// Atakum-EXCLUSIVE keyword pages (storeId "atakum"). They override the SHARED
-// keyword page at the same slug ONLY on atakumpetshop.com. We keep an override
-// only when the slug's shared page is itself a keyword page — never replace a
-// curated core/category/district/brand page with a templated keyword one.
 const _sharedTypeBySlug = new Map<string, SeoPageData["type"]>();
 for (const p of SEO_PAGES) {
   if (!_sharedTypeBySlug.has(p.slug)) _sharedTypeBySlug.set(p.slug, p.type);
 }
-export const ATAKUM_EXCLUSIVE_PAGES: SeoPageData[] = ATAKUM_KEYWORD_PAGES.filter(
-  (p) => _sharedTypeBySlug.get(p.slug) === "keyword",
-);
-SEO_PAGES.push(...ATAKUM_EXCLUSIVE_PAGES);
-
-// ATAKUM broad NEW-SLUG corpus (storeId "atakum"), served ONLY on
-// atakumpetshop.com. Unlike the legacy ATAKUM_EXCLUSIVE_PAGES above — which only
-// OVERRIDE shared keyword slugs 1:1 — this corpus ADDS brand-new long-tail slugs,
-// exactly like the jetgo corpora below. De-dup rules:
-//   • a slug already owned by ANY legacy atakum page LOSES (legacy wins);
-//   • a slug that would clobber a hand-authored NON-keyword curated page
-//     (core/category/district/brand) is SKIPPED;
-//   • a collision with a shared KEYWORD slug is allowed and becomes an atakum
-//     override; a brand-new slug is added outright.
-const _atakumAllSeen = new Set<string>(ATAKUM_KEYWORD_PAGES.map((p) => p.slug));
-export const ATAKUM_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
-for (const p of ATAKUM_ALL_KEYWORD_PAGES) {
-  if (_atakumAllSeen.has(p.slug)) continue;
-  const shared = _sharedTypeBySlug.get(p.slug);
-  if (shared !== undefined && shared !== "keyword") continue;
-  _atakumAllSeen.add(p.slug);
-  ATAKUM_ALL_EXCLUSIVE_PAGES.push(p);
-}
-SEO_PAGES.push(...ATAKUM_ALL_EXCLUSIVE_PAGES);
-
 // JETGO-EXCLUSIVE Pro Plan + Royal Canin / pet-food keyword pages (storeId
-// "jetgo"), served ONLY on jetgomarket.com. Unlike atakum's override-only set,
-// these are NEW product/brand slugs (not in the shared corpus), so we ADD every
+// "jetgo"), served on the flagship store. These are NEW product/brand slugs
+// (not in the shared corpus), so we ADD every
 // page UNLESS its slug would clobber a hand-authored NON-keyword curated page
 // (core/category/district/brand). A collision with a shared keyword page is
 // allowed and becomes a jetgo override.
@@ -4238,164 +4200,6 @@ for (const p of _jetgoCorpus) {
   JETGO_EXCLUSIVE_PAGES.push(p);
 }
 SEO_PAGES.push(...JETGO_EXCLUSIVE_PAGES);
-
-// JETGO SHOP broad multi-category corpus (storeId "jetgoshop"), served ONLY on
-// jetgo.shop. jetgo.shop shares the JETGO brand/theme with jetgomarket.com, so
-// it cannot differ by brand or NAP — the corpus is unique vs jetgomarket.com by
-// CONTENT (wholly separate prose/structure/FAQ in keyword-pages-jetgoshop-all).
-// De-dup mirrors the atakum-all rules:
-//   • a collision with a hand-authored NON-keyword curated page
-//     (core/category/district/brand) is SKIPPED — never clobber curated content;
-//   • a collision with a shared KEYWORD slug is allowed and becomes a jetgoshop
-//     override; a brand-new slug (incl. one only a jetgo-EXCLUSIVE page owns,
-//     which is store-scoped to jetgo and so absent from _sharedTypeBySlug) is
-//     added outright as a jetgoshop-scoped page.
-const _jetgoshopAllSeen = new Set<string>();
-export const JETGOSHOP_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
-for (const p of JETGOSHOP_ALL_KEYWORD_PAGES) {
-  if (_jetgoshopAllSeen.has(p.slug)) continue;
-  const shared = _sharedTypeBySlug.get(p.slug);
-  if (shared !== undefined && shared !== "keyword") continue;
-  _jetgoshopAllSeen.add(p.slug);
-  JETGOSHOP_ALL_EXCLUSIVE_PAGES.push(p);
-}
-SEO_PAGES.push(...JETGOSHOP_ALL_EXCLUSIVE_PAGES);
-
-// ATAKUM PET broad multi-category corpus (storeId "atakumbiz"), served ONLY on
-// atakum.biz. atakum.biz shares the "Atakum Pet" brand WORD with the cargo
-// `samsun` store and the same Atakum 1-saat angle as the atakum-all corpus, so it
-// cannot differ by facts — the corpus is unique vs jetgomarket.com AND vs the
-// atakum-all / jetgoshop-all corpora by CONTENT (wholly separate prose / FAQ /
-// section rhythm in keyword-pages-atakumbiz-all). De-dup mirrors the rules above:
-//   • a collision with a hand-authored NON-keyword curated page
-//     (core/category/district/brand) is SKIPPED — never clobber curated content;
-//   • a collision with a shared KEYWORD slug is allowed and becomes an atakumbiz
-//     override; a brand-new slug is added outright as an atakumbiz-scoped page.
-const _atakumbizAllSeen = new Set<string>();
-export const ATAKUMBIZ_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
-for (const p of ATAKUMBIZ_ALL_KEYWORD_PAGES) {
-  if (_atakumbizAllSeen.has(p.slug)) continue;
-  const shared = _sharedTypeBySlug.get(p.slug);
-  if (shared !== undefined && shared !== "keyword") continue;
-  _atakumbizAllSeen.add(p.slug);
-  ATAKUMBIZ_ALL_EXCLUSIVE_PAGES.push(p);
-}
-SEO_PAGES.push(...ATAKUMBIZ_ALL_EXCLUSIVE_PAGES);
-
-// MARKA.PET broad multi-category corpus (storeId "markapet"), served ONLY on
-// marka.pet. A store-exclusive corpus for a LOCAL same-day store: every page is
-// tagged availability "localOnly" by the generator, so it is served exclusively
-// on the same-day marka.pet domain. Its prose is wholly separate (local voice:
-// Samsun içi aynı gün teslimat, kapıda ödeme) so it is unique BY CONTENT vs
-// jetgomarket.com AND the atakum-all / jetgoshop-all / atakumbiz-all corpora.
-// De-dup mirrors the rules above:
-//   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
-//     never clobber curated content;
-//   • a collision with a shared KEYWORD slug becomes a markapet override; a
-//     brand-new slug is added outright as a markapet-scoped page.
-const _markapetAllSeen = new Set<string>();
-export const MARKAPET_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
-for (const p of MARKAPET_ALL_KEYWORD_PAGES) {
-  if (_markapetAllSeen.has(p.slug)) continue;
-  const shared = _sharedTypeBySlug.get(p.slug);
-  if (shared !== undefined && shared !== "keyword") continue;
-  _markapetAllSeen.add(p.slug);
-  MARKAPET_ALL_EXCLUSIVE_PAGES.push(p);
-}
-SEO_PAGES.push(...MARKAPET_ALL_EXCLUSIVE_PAGES);
-
-// KARADENIZ PET SHOP broad multi-category corpus (storeId "karadeniz"), served
-// ONLY on karadenizpetshop.com. A store-exclusive corpus for a LOCAL same-day
-// store: every page is tagged availability "localOnly" by the generator, so it is
-// served exclusively on the same-day karadeniz domain. Its prose is a wholly
-// separate local voice, unique BY CONTENT vs jetgomarket.com (the markalar+diger
-// universe it shares) AND the markapet-all sibling local corpus. De-dup mirrors
-// the rules above:
-//   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
-//     never clobber curated content;
-//   • a collision with a shared KEYWORD slug becomes a karadeniz override; a
-//     brand-new slug is added outright as a karadeniz-scoped page.
-const _karadenizAllSeen = new Set<string>();
-export const KARADENIZ_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
-for (const p of KARADENIZ_ALL_KEYWORD_PAGES) {
-  if (_karadenizAllSeen.has(p.slug)) continue;
-  const shared = _sharedTypeBySlug.get(p.slug);
-  if (shared !== undefined && shared !== "keyword") continue;
-  _karadenizAllSeen.add(p.slug);
-  KARADENIZ_ALL_EXCLUSIVE_PAGES.push(p);
-}
-SEO_PAGES.push(...KARADENIZ_ALL_EXCLUSIVE_PAGES);
-
-// ATAKUM PET broad multi-category corpus (storeId "samsun"), served ONLY on
-// atakumpet.com. A store-exclusive corpus for a LOCAL same-day store (alongside
-// marka.pet and karadenizpetshop.com): every page is tagged availability
-// "localOnly" by the generator, so it is served exclusively on the same-day samsun
-// domain. It consumes the SAME markalar+diger universe as the karadeniz corpus, so
-// the same slugs resolve on both domains — its prose is a wholly separate local
-// "Atakum Pet" voice, unique BY CONTENT vs jetgomarket.com AND the karadeniz-all /
-// markapet-all sibling local corpora. De-dup mirrors the rules above:
-//   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
-//     never clobber curated content;
-//   • a collision with a shared KEYWORD slug becomes a samsun override; a
-//     brand-new slug is added outright as a samsun-scoped page.
-const _samsunAllSeen = new Set<string>();
-export const SAMSUN_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
-for (const p of SAMSUN_ALL_KEYWORD_PAGES) {
-  if (_samsunAllSeen.has(p.slug)) continue;
-  const shared = _sharedTypeBySlug.get(p.slug);
-  if (shared !== undefined && shared !== "keyword") continue;
-  _samsunAllSeen.add(p.slug);
-  SAMSUN_ALL_EXCLUSIVE_PAGES.push(p);
-}
-SEO_PAGES.push(...SAMSUN_ALL_EXCLUSIVE_PAGES);
-
-// JETGO broad multi-category corpus (storeId "jetgopet"), served ONLY on
-// jetgo.pet. This is the FOURTH store-exclusive corpus built for a LOCAL store
-// (alongside atakum-all / jetgoshop-all / atakumbiz-all): every page is tagged
-// availability "localOnly" by the generator, so it is served exclusively on the
-// same-day jetgo.pet domain. jetgo.pet shares the JETGO brand/theme with
-// jetgomarket.com, so it cannot differ by brand or NAP — the corpus is unique vs
-// jetgomarket.com AND vs the atakum-all / jetgoshop-all / atakumbiz-all corpora by
-// CONTENT (wholly separate prose / FAQ / section rhythm). De-dup mirrors the rules
-// above:
-//   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
-//     never clobber curated content;
-//   • a collision with a shared KEYWORD slug becomes a jetgopet override; a
-//     brand-new slug is added outright as a jetgopet-scoped page.
-const _jetgopetAllSeen = new Set<string>();
-export const JETGOPET_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
-for (const p of JETGOPET_ALL_KEYWORD_PAGES) {
-  if (_jetgopetAllSeen.has(p.slug)) continue;
-  const shared = _sharedTypeBySlug.get(p.slug);
-  if (shared !== undefined && shared !== "keyword") continue;
-  _jetgopetAllSeen.add(p.slug);
-  JETGOPET_ALL_EXCLUSIVE_PAGES.push(p);
-}
-SEO_PAGES.push(...JETGOPET_ALL_EXCLUSIVE_PAGES);
-
-// SAMSUN PET SHOP broad multi-category corpus (storeId "samsunpet"), served ONLY
-// on samsunpet.com. A store-exclusive corpus for a LOCAL same-day store (alongside
-// marka.pet / karadenizpetshop.com / atakumpet.com): every page is tagged
-// availability "localOnly" by the generator, so it is served exclusively on the
-// same-day samsunpet domain. It consumes the SAME markalar+diger universe as the
-// samsun / karadeniz / markapet corpora, so the same slugs resolve on all of them —
-// its prose is a wholly separate local "Samsun Pet Shop" voice, unique BY CONTENT
-// vs jetgomarket.com AND the samsun-all / karadeniz-all / markapet-all sibling
-// local corpora. De-dup mirrors the rules above:
-//   • a collision with a hand-authored NON-keyword curated page is SKIPPED —
-//     never clobber curated content;
-//   • a collision with a shared KEYWORD slug becomes a samsunpet override; a
-//     brand-new slug is added outright as a samsunpet-scoped page.
-const _samsunpetAllSeen = new Set<string>();
-export const SAMSUNPET_ALL_EXCLUSIVE_PAGES: SeoPageData[] = [];
-for (const p of SAMSUNPET_ALL_KEYWORD_PAGES) {
-  if (_samsunpetAllSeen.has(p.slug)) continue;
-  const shared = _sharedTypeBySlug.get(p.slug);
-  if (shared !== undefined && shared !== "keyword") continue;
-  _samsunpetAllSeen.add(p.slug);
-  SAMSUNPET_ALL_EXCLUSIVE_PAGES.push(p);
-}
-SEO_PAGES.push(...SAMSUNPET_ALL_EXCLUSIVE_PAGES);
 
 // ---------------------------------------------------------------------------
 // Commerce-model availability + per-store resolution.
@@ -4442,28 +4246,12 @@ export function getSeoPagesForStore(store: StoreConfig): SeoPageData[] {
 }
 
 /**
- * Sibling domains that share ONE corpus but must each publish a DISTINCT sitemap.
- * Within a group, every landing slug is assigned to exactly one member by a stable
- * hash (`hash(slug) % group.length`, indexed into the group array), so the members'
- * sitemap-seo.xml files advertise disjoint, evenly-sized slices instead of
- * identical lists. The pages themselves stay reachable on every domain — only the
- * sitemap LISTING is sliced (serving / orphan-link checks are untouched).
- *
- *   Group 1 — the 3 independent JETGO LOCAL domains (shared local corpus):
- *     jetgomarket.com / jetgo.pet / jetgo.shop
- *   Group 2 — the 4 sibling domains sharing the markalar+diger keyword universe
- *     (each its own local corpus over the same slug space):
- *     atakumpet.com / samsunpet.com / karadenizpetshop.com / marka.pet
- *
- * ORDER & LENGTH ARE LOAD-BEARING *per group*: reordering or resizing a group
- * remaps every slug among that group's members (churns those sitemaps), so only
- * append/reorder a group deliberately. Groups are INDEPENDENT — editing one never
- * affects another. A store in NO group owns every slug (full corpus, unchanged).
+ * Sibling domains that share ONE corpus but must each publish a DISTINCT sitemap
+ * (disjoint hash-partitioned slices). With a single store there are no siblings,
+ * so this is empty and every store owns its full corpus (partitionGroupOf returns
+ * undefined). Re-add a group only if sibling domains sharing a corpus return.
  */
-export const SITEMAP_PARTITION_GROUPS: readonly (readonly string[])[] = [
-  ["jetgo", "jetgopet", "jetgoshop"],
-  ["samsun", "samsunpet", "karadeniz", "markapet"],
-] as const;
+export const SITEMAP_PARTITION_GROUPS: readonly (readonly string[])[] = [] as const;
 
 /** The partition group that contains `storeId`, or undefined if it is in none. */
 function partitionGroupOf(storeId: string): readonly string[] | undefined {
@@ -4546,86 +4334,6 @@ for (const group of SITEMAP_PARTITION_GROUPS) {
     if (m) for (const slug of m.keys()) claimed.add(slug);
   }
   for (const sid of group) _groupExclusiveSlugs.set(sid, claimed);
-}
-
-// marka.pet (local) internal links must resolve WITHIN the local slug space.
-// marka.pet is now a same-day local store, so it serves the "all" + localOnly
-// curated slugs (e.g. /kedi-mamasi, /en-yakin-petshop). Drop any single-segment
-// SEO link on a markapet-exclusive page that does not resolve to a slug reachable
-// on marka.pet; parametric/app routes (href containing a nested "/") are left
-// untouched.
-{
-  const _markapetServed = new Set<string>(_localSlugMap.keys());
-  for (const p of MARKAPET_ALL_EXCLUSIVE_PAGES) _markapetServed.add(p.slug);
-  for (const p of MARKAPET_ALL_EXCLUSIVE_PAGES) {
-    if (!p.internalLinks) continue;
-    p.internalLinks = p.internalLinks.filter((l) => {
-      const href = l.href || "";
-      if (!href.startsWith("/")) return true;
-      const slug = href.slice(1);
-      if (!slug || slug.includes("/")) return true; // app / parametric route
-      return _markapetServed.has(slug);
-    });
-  }
-}
-
-// karadenizpetshop.com (local) internal links must resolve WITHIN the local slug
-// space too — same rationale as the marka.pet filter above. Drop any single-segment
-// SEO link on a karadeniz-exclusive page that does not resolve to a slug reachable
-// on karadenizpetshop.com; parametric/app routes (nested "/") are left untouched.
-{
-  const _karadenizServed = new Set<string>(_localSlugMap.keys());
-  for (const p of KARADENIZ_ALL_EXCLUSIVE_PAGES) _karadenizServed.add(p.slug);
-  for (const p of KARADENIZ_ALL_EXCLUSIVE_PAGES) {
-    if (!p.internalLinks) continue;
-    p.internalLinks = p.internalLinks.filter((l) => {
-      const href = l.href || "";
-      if (!href.startsWith("/")) return true;
-      const slug = href.slice(1);
-      if (!slug || slug.includes("/")) return true; // app / parametric route
-      return _karadenizServed.has(slug);
-    });
-  }
-}
-
-// atakumpet.com (local) internal links must resolve WITHIN the local slug space
-// too — same rationale as the marka.pet / karadeniz filters above. Drop any
-// single-segment SEO link on a samsun-exclusive page that does not resolve to a
-// slug reachable on atakumpet.com; parametric/app routes (nested "/") are left
-// untouched.
-{
-  const _samsunServed = new Set<string>(_localSlugMap.keys());
-  for (const p of SAMSUN_ALL_EXCLUSIVE_PAGES) _samsunServed.add(p.slug);
-  for (const p of SAMSUN_ALL_EXCLUSIVE_PAGES) {
-    if (!p.internalLinks) continue;
-    p.internalLinks = p.internalLinks.filter((l) => {
-      const href = l.href || "";
-      if (!href.startsWith("/")) return true;
-      const slug = href.slice(1);
-      if (!slug || slug.includes("/")) return true; // app / parametric route
-      return _samsunServed.has(slug);
-    });
-  }
-}
-
-// samsunpet.com (local) internal links must resolve WITHIN the local slug space
-// too — same rationale as the marka.pet / karadeniz / samsun filters above. Drop
-// any single-segment SEO link on a samsunpet-exclusive page that does not resolve
-// to a slug reachable on samsunpet.com; parametric/app routes (nested "/") are
-// left untouched.
-{
-  const _samsunpetServed = new Set<string>(_localSlugMap.keys());
-  for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) _samsunpetServed.add(p.slug);
-  for (const p of SAMSUNPET_ALL_EXCLUSIVE_PAGES) {
-    if (!p.internalLinks) continue;
-    p.internalLinks = p.internalLinks.filter((l) => {
-      const href = l.href || "";
-      if (!href.startsWith("/")) return true;
-      const slug = href.slice(1);
-      if (!slug || slug.includes("/")) return true; // app / parametric route
-      return _samsunpetServed.has(slug);
-    });
-  }
 }
 
 /** Resolve a slug to the variant served by this store: its own exclusive
