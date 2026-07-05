@@ -1009,6 +1009,28 @@ export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverr
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 md:px-6 lg:px-8">
 
+        {/* HEADER ALTI: KONUM + WHATSAPP hızlı erişim butonları (mobil anasayfa) */}
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <a
+            href="https://www.google.com/maps/search/?api=1&query=Yenimahalle+Atatürk+3.+Kısım+Bulvarı+113%2FA+Atakum+Samsun"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold bg-[#6B3480] text-white shadow-sm active:scale-[0.98] transition"
+            data-testid="button-konum"
+          >
+            <MapPin className="w-4 h-4" /> KONUM
+          </a>
+          <a
+            href="https://wa.me/908508403959"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold bg-[#25D366] text-white shadow-sm active:scale-[0.98] transition"
+            data-testid="button-whatsapp"
+          >
+            <SiWhatsapp className="w-4 h-4" /> WHATSAPP
+          </a>
+        </div>
+
         {/* MOBILE-ONLY, HOME-ONLY: admin-controlled store banner (Header altı), default = store photo */}
         <div className="mt-2 md:hidden">
           <TopBanner />
