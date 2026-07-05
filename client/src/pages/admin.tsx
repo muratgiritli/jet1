@@ -5,6 +5,7 @@ import { exportSktPdf } from "@/lib/exportSktPdf";
 import { printOrderReceipt } from "@/lib/printReceipt";
 import { STORES, type StoreGoogle } from "@shared/stores";
 import { brandify } from "@/lib/store";
+import enuygunStoreBanner from "@assets/enuygunpet_magaza_1783254122911.webp";
 import { isSharedRowInStoreView, confirmSharedEdit, storeCtxParam, STORE_SCOPED_SETTING_KEYS, confirmSharedSettingsSave } from "@/lib/storeScope";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7497,8 +7498,9 @@ function TopPromoBannerAdmin() {
     <Card className="border-purple-300">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Package className="w-4 h-4 text-purple-600" /> Üst Promo Banner (Header altı)
+          <Package className="w-4 h-4 text-purple-600" /> Mağaza Banner (Ana Sayfa)
         </CardTitle>
+        <p className="text-[11px] text-muted-foreground">Sadece ana sayfada, mobil görünümde header'ın hemen altında gösterilir.</p>
       </CardHeader>
       <CardContent className="p-3 space-y-3">
         {isLoading ? (
@@ -7528,7 +7530,7 @@ function TopPromoBannerAdmin() {
               <p className="text-[10px] text-muted-foreground mt-1">Örn: /giris (üye ol), /kampanya, https://...</p>
             </div>
             <div>
-              <label className="text-xs text-muted-foreground block mb-1">Görsel (boş bırakılırsa bu sitede banner gösterilmez)</label>
+              <label className="text-xs text-muted-foreground block mb-1">Görsel (boş bırakılırsa varsayılan mağaza görseli gösterilir)</label>
               <input
                 type="file"
                 accept="image/*"
@@ -7536,7 +7538,7 @@ function TopPromoBannerAdmin() {
                 className="text-xs"
                 data-testid="input-top-banner-image"
               />
-              {preview && (
+              {preview ? (
                 <div className="mt-2 border rounded overflow-hidden bg-black">
                   <img src={preview} alt="önizleme" className="w-full h-auto max-h-32 object-contain" />
                   <button
@@ -7544,7 +7546,12 @@ function TopPromoBannerAdmin() {
                     onClick={() => { setImage(""); setPreview(""); }}
                     className="text-xs text-red-600 px-2 py-1 hover:underline"
                     data-testid="button-clear-top-banner-image"
-                  >Görseli sil (banner'ı gizle)</button>
+                  >Görseli sil (varsayılana dön)</button>
+                </div>
+              ) : (
+                <div className="mt-2 border rounded overflow-hidden bg-black">
+                  <img src={enuygunStoreBanner} alt="varsayılan mağaza görseli" className="w-full h-auto max-h-32 object-contain" />
+                  <div className="text-[10px] text-muted-foreground px-2 py-1">Şu an varsayılan mağaza görseli gösteriliyor</div>
                 </div>
               )}
             </div>

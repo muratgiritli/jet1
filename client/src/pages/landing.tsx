@@ -12,7 +12,6 @@ import {
   Stethoscope, ShoppingBag, Heart, Sparkles
 } from "lucide-react";
 import { SiWhatsapp } from "react-icons/si";
-import { useCustomer } from "@/contexts/CustomerContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { lazy, Suspense } from "react";
 const DemoAnasayfa = lazy(() => import("@/pages/demo-anasayfa"));
@@ -974,7 +973,6 @@ interface LandingSeoOverride {
 }
 
 export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverride }) {
-  const { isLoggedIn } = useCustomer();
   const isMobile = useIsMobile();
   const store = useStore();
 
@@ -1011,12 +1009,10 @@ export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverr
 
       <main className="flex-1 w-full max-w-7xl mx-auto px-3 md:px-6 lg:px-8">
 
-        {/* MOBILE-ONLY: admin-controlled top promo banner (Header altı) for new users */}
-        {!isLoggedIn && (
-          <div className="mt-2 md:hidden">
-            <TopBanner />
-          </div>
-        )}
+        {/* MOBILE-ONLY, HOME-ONLY: admin-controlled store banner (Header altı), default = store photo */}
+        <div className="mt-2 md:hidden">
+          <TopBanner />
+        </div>
 
         {/* DESKTOP/TABLET: promo banner image directly under header */}
         <div className="hidden md:block mt-6">

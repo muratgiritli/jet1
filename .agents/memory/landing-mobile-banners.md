@@ -25,6 +25,17 @@ HomeBannersBelowCategory (`home_below_category`), HomeBottomCarousel
 (`home_bottom_carousel`) via the banners CRUD table; BreedBannersRow
 (`/api/public/breed-banners`), CategoryBannersStack (`/api/public/category-banners`).
 
+**"Header altı" store banner = TopBanner** (settings-driven `top_banner_*`), NOT the
+banners-CRUD `home_top`. TopBanner renders ONLY inside `landing.tsx` (mobile home →
+home-only), shows to ALL users, and **falls back to a bundled `@assets` store photo
+when `top_banner_image` is empty** so it appears in prod with NO prod DB write and
+stays admin-overridable (image+link) via admin's "Mağaza Banner (Ana Sayfa)" section
+(`TopPromoBannerAdmin`, PATCH `/api/admin/top-banner`). Hidden only when admin sets
+`enabled=false`. Do NOT re-add a hardcoded banner in `Header.tsx` — that leaked onto
+every page. **Trap:** the banners-CRUD `home_top` row (e.g. old "üst", prod-only) also
+renders on mobile home via HomeBanners and will STACK below TopBanner; it's separate
+live admin data (prod DB read-only to agent) — user must delete it in the Banner list.
+
 **Simple settings-driven banners** (Sokak Canları, Veteriner Maması): image+link
 override stored in `app_settings` keys `sokak_banner_image/_link`,
 `veteriner_banner_image/_link`, served via `/api/public-settings`, saved via generic

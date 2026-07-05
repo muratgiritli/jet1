@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
+import defaultStoreBanner from "@assets/enuygunpet_magaza_1783254122911.webp";
 
 interface TopBannerData {
   enabled: boolean;
@@ -10,21 +11,31 @@ interface TopBannerData {
 export default function TopBanner() {
   const { data } = useQuery<TopBannerData>({ queryKey: ["/api/public/top-banner"] });
 
-  if (!data || !data.enabled || !data.image) return null;
+  // Admin can hide the banner entirely via the "Banner Aktif" toggle.
+  if (data && !data.enabled) return null;
 
-  const img = data.image;
-  const link = data.link || "/giris";
+  // Fall back to the bundled store photo when admin hasn't uploaded a custom image.
+  const img = data?.image || defaultStoreBanner;
+  const link = data?.link || "";
   const isExternal = /^https?:\/\//i.test(link);
 
   const imgEl = (
     <img
       src={img}
-      alt="Promosyon"
+      alt="Enuygun Pet Mağazamız"
       className="w-full h-auto rounded-xl"
       loading="eager"
       data-testid="img-top-banner"
     />
   );
+
+  if (!link) {
+    return (
+      <div className="w-full" data-testid="banner-top-promo">
+        {imgEl}
+      </div>
+    );
+  }
 
   return (
     <div className="w-full" data-testid="banner-top-promo">

@@ -4,7 +4,6 @@ import { useCustomer } from "@/contexts/CustomerContext";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
 import { CURRENT_STORE } from "@/lib/store";
-import enuygunStoreBanner from "@assets/enuygunpet_magaza_1783254122911.webp";
 
 const NAV_ITEMS = [
   { name: "Kedi", href: "/kategori/kedi" },
@@ -124,16 +123,6 @@ export default function Header() {
           </div>
         )}
       </nav>
-
-      <div className="md:hidden px-2 pt-2">
-        <img
-          src={enuygunStoreBanner}
-          alt="Enuygun Pet Mağazamız"
-          className="w-full h-auto rounded-xl"
-          loading="eager"
-          data-testid="img-store-banner"
-        />
-      </div>
     </>
   );
 }
