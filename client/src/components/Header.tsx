@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { ArrowLeft, User, LogIn, UserPlus } from "lucide-react";
+import { ArrowLeft, User, LogIn, UserPlus, MapPin } from "lucide-react";
 import { useCustomer } from "@/contexts/CustomerContext";
 import Logo from "@/components/Logo";
 import SearchBar from "@/components/SearchBar";
@@ -123,6 +123,17 @@ export default function Header() {
           </div>
         )}
       </nav>
+
+      <a
+        href="https://www.enyuygun.pet"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="md:hidden flex items-center justify-center gap-2 py-2.5 px-4 bg-yellow-400 text-gray-900 font-bold text-sm tracking-wide active:bg-yellow-500 transition-colors"
+        data-testid="link-atakum-store"
+      >
+        <MapPin className="w-4 h-4" />
+        ATAKUM MAĞAZAMIZ
+      </a>
     </>
   );
 }
