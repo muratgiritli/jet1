@@ -40,6 +40,15 @@ longer shows on the mobile home; TopBanner is the sole header-altı banner. The
 `HomeBanners()` function still exists as dead code and `home_top` still renders on
 desktop/other surfaces — re-adding it to mobile home would revive the stacking.
 
+**Header-altı buttons + slogan (mobile-home top of `<main>`):** a 2-col KONUM /
+WHATSAPP button row, then TopBanner, then a "nabız atışlı" slogan (pure-CSS
+`animate-ping` live dot, static text). KONUM link + WhatsApp number are
+admin-editable via app_settings keys `konum_link` / `whatsapp_number` (added to
+BOTH server `STORE_SCOPED_SETTING_KEYS` AND client `lib/storeScope.ts` — a
+store-scoping drift test fails if only one side is updated; also add to
+public-settings + `/api/admin/settings` textKeys). Empty falls back to client
+`DEFAULT_KONUM_URL` / `DEFAULT_WHATSAPP`.
+
 **Simple settings-driven banners** (Sokak Canları, Veteriner Maması): image+link
 override stored in `app_settings` keys `sokak_banner_image/_link`,
 `veteriner_banner_image/_link`, served via `/api/public-settings`, saved via generic

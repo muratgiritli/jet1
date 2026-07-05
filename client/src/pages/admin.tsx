@@ -7006,6 +7006,8 @@ function SimpleBannerVisibilityAdmin() {
   const [sokakLink, setSokakLink] = useState("");
   const [veterinerImage, setVeterinerImage] = useState("");
   const [veterinerLink, setVeterinerLink] = useState("");
+  const [konumLink, setKonumLink] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
 
   useEffect(() => {
     if (data) {
@@ -7015,6 +7017,8 @@ function SimpleBannerVisibilityAdmin() {
       setSokakLink(data.sokak_banner_link || "");
       setVeterinerImage(data.veteriner_banner_image || "");
       setVeterinerLink(data.veteriner_banner_link || "");
+      setKonumLink(data.konum_link || "");
+      setWhatsappNumber(data.whatsapp_number || "");
     }
   }, [data]);
 
@@ -7038,6 +7042,8 @@ function SimpleBannerVisibilityAdmin() {
         sokak_banner_link: sokakLink,
         veteriner_banner_image: veterinerImage,
         veteriner_banner_link: veterinerLink,
+        konum_link: konumLink,
+        whatsapp_number: whatsappNumber,
       });
     },
     onSuccess: () => {
@@ -7052,7 +7058,7 @@ function SimpleBannerVisibilityAdmin() {
     <Card className="border-emerald-300">
       <CardHeader className="pb-2">
         <CardTitle className="text-sm flex items-center gap-2">
-          <Package className="w-4 h-4 text-emerald-600" /> Anasayfa Banner'ları (Sokak Canları & Veteriner)
+          <Package className="w-4 h-4 text-emerald-600" /> Anasayfa Banner'ları & Header Butonları
         </CardTitle>
       </CardHeader>
       <CardContent className="p-3 space-y-4">
@@ -7117,6 +7123,19 @@ function SimpleBannerVisibilityAdmin() {
           <div>
             <label className="text-[10px] text-muted-foreground block mb-0.5">Tıklanınca gidilecek link (boş = /kategori/veteriner)</label>
             <Input value={veterinerLink} onChange={e => setVeterinerLink(e.target.value)} placeholder="/kategori/veteriner" className="h-9 text-sm" data-testid="input-veteriner-banner-link" />
+          </div>
+        </div>
+
+        <div className="border rounded-lg p-3 space-y-2">
+          <div className="text-sm font-medium">Header Altı Butonlar (KONUM & WhatsApp)</div>
+          <div className="text-[11px] text-muted-foreground">Mobil anasayfada header'ın altındaki iki buton</div>
+          <div>
+            <label className="text-[10px] text-muted-foreground block mb-0.5">KONUM butonu linki (Google Maps — boş = varsayılan)</label>
+            <Input value={konumLink} onChange={e => setKonumLink(e.target.value)} placeholder="https://www.google.com/maps/..." className="h-9 text-sm" data-testid="input-konum-link" />
+          </div>
+          <div>
+            <label className="text-[10px] text-muted-foreground block mb-0.5">WhatsApp numarası (ör: 908508403959 — boş = varsayılan)</label>
+            <Input value={whatsappNumber} onChange={e => setWhatsappNumber(e.target.value)} placeholder="908508403959" className="h-9 text-sm" data-testid="input-whatsapp-number" />
           </div>
         </div>
 

@@ -429,6 +429,7 @@ export async function registerRoutes(
     "sokak_banner_enabled", "veteriner_banner_enabled",
     "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
     "top_banner_enabled", "top_banner_text", "top_banner_link", "top_banner_bg", "top_banner_color",
+    "konum_link", "whatsapp_number",
     "breed_banners", "category_banners",
     "cargo_fee", "cargo_free_limit", "cargo_min_order",
     "card_surcharge_percent",
@@ -4007,6 +4008,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         "cross_sell_enabled",
         "cargo_fee", "cargo_free_limit", "cargo_min_order",
         "card_surcharge_percent",
+        "konum_link", "whatsapp_number",
         "product_surcharge_overrides",
       ];
       const settings = await resolveSettings(keys, publicStoreId(req));
@@ -4206,6 +4208,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
         "cross_sell_enabled",
         "cargo_fee", "cargo_free_limit", "cargo_min_order",
+        "konum_link", "whatsapp_number",
       ];
 
       const toslaFlag = updates.payment_tosla_enabled;
@@ -4268,6 +4271,12 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
             if (strVal && !/^https?:\/\//i.test(strVal) && !strVal.startsWith("/")) {
               strVal = "/" + strVal;
             }
+          } else if (key === "konum_link") {
+            if (strVal.length > 1000) strVal = strVal.slice(0, 1000);
+            // Sadece http(s) linkine izin ver; aksi halde boş = client varsayılana döner (javascript: vb. engellenir).
+            if (strVal && !/^https?:\/\//i.test(strVal)) strVal = "";
+          } else if (key === "whatsapp_number") {
+            strVal = strVal.replace(/[^\d+]/g, "").slice(0, 20);
           }
           await sharedPool.query(
             "INSERT INTO app_settings (key, value, updated_at) VALUES ($1, $2, NOW()) ON CONFLICT (key) DO UPDATE SET value = $2, updated_at = NOW()",

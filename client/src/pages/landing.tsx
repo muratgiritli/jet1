@@ -972,9 +972,17 @@ interface LandingSeoOverride {
   canonical?: string;
 }
 
+const DEFAULT_KONUM_URL = "https://www.google.com/maps/dir//Enuygun+Petshop+Samsun+Atakum,+Yenimahalle,+3082.+Sk.+No:1,+55200+Atakum%2FSamsun/@41.3489339,36.2486854,15z/data=!4m8!4m7!1m0!1m5!1m1!1s0x408879084590d33b:0x47f16b6777453014!2m2!1d36.243738!2d41.349366?entry=ttu&g_ep=EgoyMDI2MDYyOS4wIKXMDSoASAFQAw%3D%3D";
+const DEFAULT_WHATSAPP = "908508403959";
+
 export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverride }) {
   const isMobile = useIsMobile();
   const store = useStore();
+  const { data: pubSettings } = useQuery<Record<string, string>>({ queryKey: ["/api/public-settings"] });
+  const konumRaw = (pubSettings?.konum_link || "").trim();
+  const konumLink = /^https?:\/\//i.test(konumRaw) ? konumRaw : DEFAULT_KONUM_URL;
+  const whatsappDigits = (pubSettings?.whatsapp_number || "").replace(/[^\d]/g, "") || DEFAULT_WHATSAPP;
+  const whatsappLink = `https://wa.me/${whatsappDigits}`;
 
   const seoNode = seoOverride ? (
     <SEO
@@ -1012,7 +1020,7 @@ export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverr
         {/* HEADER ALTI: KONUM + WHATSAPP hızlı erişim butonları (mobil anasayfa) */}
         <div className="grid grid-cols-2 gap-2 mt-2">
           <a
-            href="https://www.google.com/maps/search/?api=1&query=Yenimahalle+Atatürk+3.+Kısım+Bulvarı+113%2FA+Atakum+Samsun"
+            href={konumLink}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold bg-[#6B3480] text-white shadow-sm active:scale-[0.98] transition"
@@ -1021,7 +1029,7 @@ export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverr
             <MapPin className="w-4 h-4" /> KONUM
           </a>
           <a
-            href="https://wa.me/908508403959"
+            href={whatsappLink}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center justify-center gap-2 rounded-xl py-2.5 text-sm font-semibold bg-[#25D366] text-white shadow-sm active:scale-[0.98] transition"
@@ -1034,6 +1042,27 @@ export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverr
         {/* MOBILE-ONLY, HOME-ONLY: admin-controlled store banner (Header altı), default = store photo */}
         <div className="mt-2 md:hidden">
           <TopBanner />
+        </div>
+
+        {/* MAĞAZA BANNER ALTI: nabız atışlı slogan (mobil) */}
+        <div className="mt-3 md:hidden">
+          <div className="rounded-2xl bg-gradient-to-r from-[#6B3480] to-[#9A4FB0] text-white px-4 py-3 shadow-md">
+            <div className="flex items-center justify-center gap-2 text-center">
+              <span className="relative flex h-2.5 w-2.5 shrink-0">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-300 opacity-75"></span>
+                <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-400"></span>
+              </span>
+              <span className="text-[15px] font-extrabold tracking-tight leading-tight" data-testid="text-slogan">
+                Sipariş ver, 1 saatte kapında öde
+              </span>
+            </div>
+            <div className="mt-2 flex items-center justify-center gap-1.5 flex-wrap text-[11px] font-semibold">
+              <span className="px-2.5 py-0.5 rounded-full bg-white/15">Kredi Kartı</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-white/15">QR</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-white/15">Nakit</span>
+              <span className="px-2.5 py-0.5 rounded-full bg-white/15">Havale</span>
+            </div>
+          </div>
         </div>
 
         {/* DESKTOP/TABLET: promo banner image directly under header */}

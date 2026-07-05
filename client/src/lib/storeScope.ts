@@ -40,6 +40,7 @@ export const STORE_SCOPED_SETTING_KEYS = new Set<string>([
   "sokak_banner_enabled", "veteriner_banner_enabled",
   "sokak_banner_image", "sokak_banner_link", "veteriner_banner_image", "veteriner_banner_link",
   "top_banner_enabled", "top_banner_text", "top_banner_link", "top_banner_bg", "top_banner_color",
+  "konum_link", "whatsapp_number",
   "breed_banners", "category_banners",
   "cargo_fee", "cargo_free_limit", "cargo_min_order",
 ]);
