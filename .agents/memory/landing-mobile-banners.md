@@ -32,9 +32,13 @@ when `top_banner_image` is empty** so it appears in prod with NO prod DB write a
 stays admin-overridable (image+link) via admin's "Mağaza Banner (Ana Sayfa)" section
 (`TopPromoBannerAdmin`, PATCH `/api/admin/top-banner`). Hidden only when admin sets
 `enabled=false`. Do NOT re-add a hardcoded banner in `Header.tsx` — that leaked onto
-every page. **Trap:** the banners-CRUD `home_top` row (e.g. old "üst", prod-only) also
-renders on mobile home via HomeBanners and will STACK below TopBanner; it's separate
-live admin data (prod DB read-only to agent) — user must delete it in the Banner list.
+every page. **home_top on mobile home is now REMOVED:** the `<HomeBanners/>`
+(`BannerStrip position="home_top"`) render was deleted from `landing.tsx` because a
+prod-only banners-CRUD `home_top` row (old "üst", still jetgo-branded) stacked below
+TopBanner and the agent can't delete prod data (prod DB read-only). So home_top no
+longer shows on the mobile home; TopBanner is the sole header-altı banner. The
+`HomeBanners()` function still exists as dead code and `home_top` still renders on
+desktop/other surfaces — re-adding it to mobile home would revive the stacking.
 
 **Simple settings-driven banners** (Sokak Canları, Veteriner Maması): image+link
 override stored in `app_settings` keys `sokak_banner_image/_link`,

@@ -1025,10 +1025,6 @@ export default function Landing({ seoOverride }: { seoOverride?: LandingSeoOverr
           />
         </div>
 
-        <div className="mt-1 md:hidden">
-          <HomeBanners />
-        </div>
-
         {/* CATEGORIES: mobile untouched; desktop centered & narrower so cards aren't gigantic */}
         <div className="mt-1 md:mt-10">
           <div className="md:max-w-4xl md:mx-auto">
