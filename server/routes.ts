@@ -1051,6 +1051,107 @@ export async function registerRoutes(
     }
   });
 
+  // ---- Toplu ürün yükleme şablonu dışa aktarma (enuygunpet bulk upload) ----
+  // Geçerli barkod: yalnızca rakam, 8-14 hane (EAN-8 / UPC-12 / EAN-13 / GTIN-14)
+  const BULK_BARCODE_RE = /^\d{8,14}$/;
+
+  async function getBulkUploadExportData() {
+    const { rows } = await sharedPool.query(`
+      SELECT id, name, price, is_active, stock, barcode
+      FROM products
+      ORDER BY name ASC
+    `);
+    const withoutBarcode: { id: number; name: string }[] = [];
+    const invalid: { id: number; name: string; barcode: string }[] = [];
+    const duplicates: { id: number; name: string; barcode: string; keptId: number; keptName: string }[] = [];
+    const seen = new Map<string, { id: number; name: string }>();
+    const exportRows: { barcode: string; price: number; isActive: 0 | 1 }[] = [];
+    let activeCount = 0;
+    let passiveCount = 0;
+    for (const r of rows as any[]) {
+      // Satışa açık VE stok > 0 ise aktif (stok 0 veya pasif ürün = 0)
+      const isActiveVal: 0 | 1 = r.is_active && Number(r.stock) > 0 ? 1 : 0;
+      if (isActiveVal) activeCount++; else passiveCount++;
+      const bc = String(r.barcode ?? "").trim();
+      if (!bc) { withoutBarcode.push({ id: r.id, name: r.name }); continue; }
+      if (!BULK_BARCODE_RE.test(bc)) { invalid.push({ id: r.id, name: r.name, barcode: bc }); continue; }
+      const first = seen.get(bc);
+      if (first) { duplicates.push({ id: r.id, name: r.name, barcode: bc, keptId: first.id, keptName: first.name }); continue; }
+      seen.set(bc, { id: r.id, name: r.name });
+      exportRows.push({ barcode: bc, price: Number(r.price) || 0, isActive: isActiveVal });
+    }
+    return {
+      summary: {
+        totalProducts: rows.length,
+        withBarcode: rows.length - withoutBarcode.length,
+        withoutBarcode: withoutBarcode.length,
+        activeCount,
+        passiveCount,
+        duplicateCount: duplicates.length,
+        invalidCount: invalid.length,
+        exportCount: exportRows.length,
+      },
+      withoutBarcodeList: withoutBarcode,
+      duplicateList: duplicates,
+      invalidList: invalid,
+      exportRows,
+    };
+  }
+
+  app.get("/api/admin/product-export/bulk-summary", requireAdmin, async (_req, res) => {
+    try {
+      const data = await getBulkUploadExportData();
+      res.json({
+        summary: data.summary,
+        withoutBarcode: data.withoutBarcodeList,
+        duplicates: data.duplicateList,
+        invalid: data.invalidList,
+      });
+    } catch (err) {
+      console.error("Bulk export summary error:", err);
+      res.status(500).json({ error: "Özet alınamadı" });
+    }
+  });
+
+  app.get("/api/admin/export/bulk-upload-xlsx", requireAdmin, async (_req, res) => {
+    try {
+      const ExcelJS = (await import("exceljs")).default;
+      const data = await getBulkUploadExportData();
+
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet("Menüye Ürün Ekleme");
+      ws.columns = [{ width: 24 }, { width: 14 }, { width: 52 }, { width: 44 }] as any;
+      // Barkod sütunu METİN: Excel bilimsel formata çevirmesin, son haneler bozulmasın
+      ws.getColumn(1).numFmt = "@";
+
+      const row1 = ws.addRow([
+        "Barkod (doldurulması zorunlu alan)",
+        "Fiyat (doldurulması zorunlu alan)",
+        "Aktiflik (0: Satışa Kapalı, 1: Satışa Açık) (doldurulması zorunlu alan)",
+        "Bir Siparişte Maksimum Satılabilir Adet (opsiyonel alan)",
+      ]);
+      row1.font = { bold: true };
+      const row2 = ws.addRow(["barcodes", "price", "isActive", "maxSellCount"]);
+      row2.font = { bold: true };
+
+      for (const r of data.exportRows) {
+        // Ürün bazlı özel limit alanı yok; varsayılan 10 (şablon kuralı)
+        ws.addRow([r.barcode, r.price, r.isActive, 10]);
+      }
+
+      const dateStr = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Istanbul" });
+      const filename = `enuygunpet-toplu-urun-yukleme-${dateStr}.xlsx`;
+
+      const buf = await wb.xlsx.writeBuffer();
+      res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.send(Buffer.from(buf));
+    } catch (err) {
+      console.error("Bulk upload export error:", err);
+      res.status(500).json({ error: "Export failed" });
+    }
+  });
+
   const MAMA_SUBCATS: Record<string, string[]> = {
     kedi: ["kedi-mamasi", "acik-mama", "yas-mama"],
     kopek: ["mama-markalari", "kopek-kuru-mama", "acik-mama", "uygun-cuval", "yas-mama"],

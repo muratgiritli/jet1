@@ -3990,6 +3990,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
               </button>
             </div>
 
+            <BulkUploadExportCard />
+
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[11px] text-muted-foreground font-medium">Sırala:</span>
               <Select value={sortMode} onValueChange={setSortMode}>
@@ -6986,6 +6988,147 @@ function BannersSection() {
       <CategoryBannersAdmin />
       <BannersListSection />
     </div>
+  );
+}
+
+type BulkExportSummary = {
+  summary: {
+    totalProducts: number;
+    withBarcode: number;
+    withoutBarcode: number;
+    activeCount: number;
+    passiveCount: number;
+    duplicateCount: number;
+    invalidCount: number;
+    exportCount: number;
+  };
+  withoutBarcode: { id: number; name: string }[];
+  duplicates: { id: number; name: string; barcode: string; keptId: number; keptName: string }[];
+  invalid: { id: number; name: string; barcode: string }[];
+};
+
+function BulkUploadExportCard() {
+  const [open, setOpen] = useState(false);
+  const [listView, setListView] = useState<"none" | "barkodsuz" | "mukerrer" | "gecersiz">("none");
+  const { data, isLoading } = useQuery<BulkExportSummary>({
+    queryKey: ["/api/admin/product-export/bulk-summary"],
+    enabled: open,
+    staleTime: 0,
+  });
+  const s = data?.summary;
+
+  const statBox = (label: string, value: number | undefined, tid: string, cls = "") => (
+    <div className={`rounded-lg border px-2 py-1.5 text-center ${cls}`}>
+      <div className="text-base font-bold" data-testid={tid}>{value ?? "-"}</div>
+      <div className="text-[10px] text-muted-foreground leading-tight">{label}</div>
+    </div>
+  );
+
+  const listBtnCls = (active: boolean) =>
+    `inline-flex items-center gap-1 px-2.5 py-1.5 rounded-md text-[11px] font-semibold border transition-colors ${active ? "bg-purple-100 border-purple-400 text-purple-800" : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"}`;
+
+  return (
+    <Card className="border-emerald-300 my-2">
+      <CardHeader className="pb-2 cursor-pointer select-none" onClick={() => setOpen(o => !o)} data-testid="button-toggle-bulk-export">
+        <CardTitle className="text-sm flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            <Download className="w-4 h-4 text-emerald-600" /> Ürün Dışa Aktarma (Toplu Yükleme Şablonu)
+          </span>
+          <ChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} />
+        </CardTitle>
+      </CardHeader>
+      {open && (
+        <CardContent className="p-3 pt-0 space-y-3">
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" /> Özet hazırlanıyor...
+            </div>
+          ) : s ? (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5">
+                {statBox("Toplam Ürün", s.totalProducts, "stat-bulk-total")}
+                {statBox("Barkodlu", s.withBarcode, "stat-bulk-with-barcode")}
+                {statBox("Barkodsuz", s.withoutBarcode, "stat-bulk-without-barcode", s.withoutBarcode > 0 ? "border-amber-300 bg-amber-50" : "")}
+                {statBox("Aktif", s.activeCount, "stat-bulk-active")}
+                {statBox("Pasif", s.passiveCount, "stat-bulk-passive")}
+                {statBox("Mükerrer Barkod", s.duplicateCount, "stat-bulk-duplicate", s.duplicateCount > 0 ? "border-red-300 bg-red-50" : "")}
+                {statBox("Excel'e Aktarılacak", s.exportCount, "stat-bulk-export-count", "border-emerald-300 bg-emerald-50")}
+              </div>
+              {s.invalidCount > 0 && (
+                <div className="text-[11px] text-red-600 flex items-center gap-1" data-testid="text-bulk-invalid-count">
+                  <AlertTriangle className="w-3.5 h-3.5" /> {s.invalidCount} geçersiz barkod bulundu — bu ürünler Excel'e aktarılmayacak.
+                </div>
+              )}
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href="/api/admin/export/bulk-upload-xlsx"
+                  download
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                  data-testid="button-bulk-export-xlsx"
+                >
+                  <Download className="w-3.5 h-3.5" /> Excel Şablonuna Aktar ({s.exportCount})
+                </a>
+                <button type="button" onClick={() => setListView(v => v === "barkodsuz" ? "none" : "barkodsuz")} className={listBtnCls(listView === "barkodsuz")} data-testid="button-show-no-barcode">
+                  Barkodsuz Ürünleri Göster ({s.withoutBarcode})
+                </button>
+                <button type="button" onClick={() => setListView(v => v === "mukerrer" ? "none" : "mukerrer")} className={listBtnCls(listView === "mukerrer")} data-testid="button-show-duplicate-barcode">
+                  Mükerrer Barkodları Göster ({s.duplicateCount})
+                </button>
+                <button type="button" onClick={() => setListView(v => v === "gecersiz" ? "none" : "gecersiz")} className={listBtnCls(listView === "gecersiz")} data-testid="button-show-invalid-barcode">
+                  Geçersiz Barkodları Göster ({s.invalidCount})
+                </button>
+              </div>
+              {listView === "barkodsuz" && (
+                <div className="border rounded-lg max-h-64 overflow-auto divide-y" data-testid="list-no-barcode">
+                  {(data?.withoutBarcode || []).length === 0 ? (
+                    <div className="p-2 text-xs text-muted-foreground">Barkodsuz ürün yok.</div>
+                  ) : (data?.withoutBarcode || []).map(p => (
+                    <div key={p.id} className="p-2 text-xs flex items-center gap-2" data-testid={`row-no-barcode-${p.id}`}>
+                      <span className="text-muted-foreground shrink-0">#{p.id}</span>
+                      <span className="truncate">{p.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {listView === "mukerrer" && (
+                <div className="border rounded-lg max-h-64 overflow-auto divide-y" data-testid="list-duplicate-barcode">
+                  {(data?.duplicates || []).length === 0 ? (
+                    <div className="p-2 text-xs text-muted-foreground">Mükerrer barkod yok.</div>
+                  ) : (data?.duplicates || []).map((p, i) => (
+                    <div key={`${p.id}-${i}`} className="p-2 text-xs space-y-0.5" data-testid={`row-duplicate-barcode-${p.id}`}>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono font-semibold shrink-0">{p.barcode}</span>
+                        <span className="text-muted-foreground shrink-0">#{p.id}</span>
+                        <span className="truncate">{p.name}</span>
+                      </div>
+                      <div className="text-[10px] text-muted-foreground">Excel'e eklenen: #{p.keptId} {p.keptName}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {listView === "gecersiz" && (
+                <div className="border rounded-lg max-h-64 overflow-auto divide-y" data-testid="list-invalid-barcode">
+                  {(data?.invalid || []).length === 0 ? (
+                    <div className="p-2 text-xs text-muted-foreground">Geçersiz barkod yok.</div>
+                  ) : (data?.invalid || []).map(p => (
+                    <div key={p.id} className="p-2 text-xs flex items-center gap-2" data-testid={`row-invalid-barcode-${p.id}`}>
+                      <span className="font-mono font-semibold text-red-600 shrink-0">{p.barcode || "(boş)"}</span>
+                      <span className="text-muted-foreground shrink-0">#{p.id}</span>
+                      <span className="truncate">{p.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="text-[10px] text-muted-foreground">
+                Kurallar: Barkodu boş, geçersiz (8-14 hane rakam dışı) veya mükerrer olan ürünler Excel'e eklenmez (mükerrerde ilk ürün eklenir). Aktiflik: satışa açık + stok &gt; 0 ise 1, değilse 0. Maksimum satılabilir adet varsayılan 10. Dosya adı: enuygunpet-toplu-urun-yukleme-YYYY-AA-GG.xlsx
+              </div>
+            </>
+          ) : (
+            <div className="text-sm text-muted-foreground">Özet alınamadı.</div>
+          )}
+        </CardContent>
+      )}
+    </Card>
   );
 }
 
