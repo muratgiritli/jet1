@@ -25,7 +25,7 @@ possible future reuse, not because more stores exist.
 - 9 retired domains (atakumpetshop.com, atakumpet.com, samsunpet.com,
   karadenizpetshop.com, atakum.biz, jetgo.pet, jetgo.shop, marka.pet, AND
   jetgomarket.com — apex+www) are permanently 301'd to `DEFAULT_STORE.domain`
-  (www.enuygunpet.com), same path, by a middleware in `server/index.ts` that runs
+  (www.enuygunpetshop.com), same path, by a middleware in `server/index.ts` that runs
   BEFORE the canonical-host redirect. It redirects EVERYTHING incl /robots.txt +
   /sitemap*.xml (unlike the canonical redirect, which exempts crawler files) because
   these hosts are dead and must fully funnel to the live site. They are no longer in
@@ -36,7 +36,7 @@ possible future reuse, not because more stores exist.
   `demo-anasayfa.tsx`). Display brand comes from `store.shortName` / `store.brandWord`
   / `brandify()`; `store.id` is an internal key only.
 - jetgomarket.com was the ORIGINAL brand domain of the surviving store; it is now
-  FULLY retired too (removed from jetgo.hostnames; www.enuygunpet.com is the SOLE
+  FULLY retired too (removed from jetgo.hostnames; www.enuygunpetshop.com is the SOLE
   live host). BUT the brandify SOURCE is still the hardcoded literal "jetgomarket.com"
   / "JETGO" (in `brandifyFor` + the index.html/llms.txt corpus) — that is independent
   of hostnames and MUST stay, or serve-time rewriting to Enuygun breaks.
