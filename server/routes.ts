@@ -1140,7 +1140,7 @@ export async function registerRoutes(
       }
 
       const dateStr = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Istanbul" });
-      const filename = `enuygunpet-toplu-urun-yukleme-${dateStr}.xlsx`;
+      const filename = `enuygunpetshop-toplu-urun-yukleme-${dateStr}.xlsx`;
 
       const buf = await wb.xlsx.writeBuffer();
       res.setHeader("Content-Disposition", `attachment; filename=${filename}`);

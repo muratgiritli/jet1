@@ -130,12 +130,12 @@ export interface StoreConfig {
 
 const jetgo: StoreConfig = {
   id: "jetgo",
-  hostnames: ["enuygunpet.com", "www.enuygunpet.com"],
+  hostnames: ["enuygunpetshop.com", "www.enuygunpetshop.com"],
   name: "Enuygun Pet Shop Samsun",
   shortName: "Enuygun",
   brandWord: "Enuygun",
   alternateNames: ["Enuygun Samsun Pet Shop", "Enuygun Pet", "Enuygun Atakum Pet Shop", "Enuygun"],
-  domain: "https://www.enuygunpet.com",
+  domain: "https://www.enuygunpetshop.com",
   logo: "/logo-enuygun.webp",
   favicon: "/favicon-192.png",
   phone: "+908508403959",

@@ -7120,7 +7120,7 @@ function BulkUploadExportCard() {
                 </div>
               )}
               <div className="text-[10px] text-muted-foreground">
-                Kurallar: Barkodu boş, geçersiz (8-14 hane rakam dışı) veya mükerrer olan ürünler Excel'e eklenmez (mükerrerde ilk ürün eklenir). Aktiflik: satışa açık + stok &gt; 0 ise 1, değilse 0. Maksimum satılabilir adet varsayılan 10. Dosya adı: enuygunpet-toplu-urun-yukleme-YYYY-AA-GG.xlsx
+                Kurallar: Barkodu boş, geçersiz (8-14 hane rakam dışı) veya mükerrer olan ürünler Excel'e eklenmez (mükerrerde ilk ürün eklenir). Aktiflik: satışa açık + stok &gt; 0 ise 1, değilse 0. Maksimum satılabilir adet varsayılan 10. Dosya adı: enuygunpetshop-toplu-urun-yukleme-YYYY-AA-GG.xlsx
               </div>
             </>
           ) : (

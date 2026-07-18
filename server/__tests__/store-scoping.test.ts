@@ -1726,7 +1726,7 @@ test("Merchant: admin overview lists every store with feed url + fulfillment", a
     assert.equal(sam.config.merchantId, "9988776655");
     assert.equal(sam.config.shippingAmount, "39.90");
     assert.ok(sam.feedUrl.endsWith("/google-merchant.xml"), "feed url points at the xml feed");
-    assert.ok(sam.feedUrl.includes("enuygunpet.com"), "feed url uses the store's OWN domain");
+    assert.ok(sam.feedUrl.includes("enuygunpetshop.com"), "feed url uses the store's OWN domain");
   } finally {
     await deleteStoreMerchantConfig("jetgo");
   }

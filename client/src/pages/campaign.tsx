@@ -64,7 +64,7 @@ function CampaignTopBanner() {
     />
   );
   const raw = (banner.linkUrl || "").trim();
-  const sameDomain = raw.match(/^https?:\/\/(www\.)?(?:jetgomarket|enuygunpet)\.com(\/.*)?$/i);
+  const sameDomain = raw.match(/^https?:\/\/(www\.)?(?:jetgomarket|enuygunpet|enuygunpetshop)\.com(\/.*)?$/i);
   const internalPath = sameDomain ? (sameDomain[2] || "/") : null;
   const isExternal = !sameDomain && /^https?:\/\//i.test(raw);
   return (

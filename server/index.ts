@@ -38,9 +38,10 @@ declare module "http" {
 
 app.set("trust proxy", 1);
 
-// Legacy removed domains: the 8 shuttered storefronts — plus jetgomarket.com, the
-// retired original brand domain of the surviving store — were all collapsed into
-// the single Enuygun site (www.enuygunpet.com). Any request still arriving on one
+// Legacy removed domains: the 8 shuttered storefronts — plus jetgomarket.com (the
+// retired original brand domain) and enuygunpet.com (the previous Enuygun domain)
+// — were all collapsed into the single Enuygun site (www.enuygunpetshop.com). Any
+// request still arriving on one
 // of those retired hostnames (apex or www — normalizeHost strips the "www.") is
 // permanently 301'd to the SAME path on the flagship domain so old links and
 // search results fully funnel to one live site. These hosts are no longer in
@@ -57,6 +58,7 @@ const LEGACY_REMOVED_HOSTS = new Set([
   "jetgo.shop",
   "marka.pet",
   "jetgomarket.com",
+  "enuygunpet.com",
 ]);
 app.use((req, res, next) => {
   if (LEGACY_REMOVED_HOSTS.has(normalizeHost(req.hostname))) {
