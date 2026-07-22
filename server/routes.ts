@@ -245,11 +245,21 @@ async function notifyAdminNewOrder(orderId: number, paymentConfirmed = false): P
 const PgSession = pgSession(session);
 
 async function ensureAdminExists() {
+  if (process.env.NODE_ENV === "production") {
+    const existing = await storage.getUserByUsername("admin");
+    if (!existing) {
+      console.warn(
+        "[SECURITY] No admin user found in production. " +
+        "Create one manually via the database before using the admin panel."
+      );
+    }
+    return;
+  }
   const existing = await storage.getUserByUsername("admin");
   if (!existing) {
     const hashed = await bcrypt.hash("jetgo2024", 10);
     await storage.createUser({ username: "admin", password: hashed });
-    console.log("Default admin user created (admin / jetgo2024)");
+    console.log("Default admin user created for development (admin / jetgo2024)");
   }
 }
 
