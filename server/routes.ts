@@ -3053,6 +3053,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
 
     let hasPreorderItems = false;
     const saleMovements: Array<{ productId: number; name: string; barcode: string | null; qty: number; newStock: number }> = [];
+    // Track successful stock deductions so we can roll them back if a later item fails.
+    const stockRollback: Array<{ productId: number; qty: number }> = [];
     for (const item of orderData.items) {
       const productId = parseInt(String(item.productId));
       if (!isNaN(productId)) {
@@ -3060,6 +3062,10 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         if (prod && prod.skt) {
           const sktDate = parseSkt(prod.skt);
           if (sktDate && sktDate < new Date()) {
+            // Roll back any stock already decremented for earlier items.
+            for (const rb of stockRollback) {
+              await sharedPool.query("UPDATE products SET stock = stock + $1 WHERE id = $2", [rb.qty, rb.productId]);
+            }
             return res.status(400).json({ message: `${item.name} ürününün son kullanma tarihi geçmiş. Sipariş verilemez.` });
           }
         }
@@ -3075,6 +3081,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
             (item as any).deductedQty = deducted;
             if (deducted > 0) {
               saleMovements.push({ productId, name: row.name, barcode: row.barcode ?? null, qty: deducted, newStock: row.new_stock });
+              stockRollback.push({ productId, qty: deducted });
             }
             if ((row.old_stock ?? 0) < item.quantity) {
               hasPreorderItems = true;
@@ -3088,11 +3095,16 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
             [item.quantity, productId]
           );
           if (upd.rows.length === 0) {
+            // Roll back stock decremented for any items processed before this one.
+            for (const rb of stockRollback) {
+              await sharedPool.query("UPDATE products SET stock = stock + $1 WHERE id = $2", [rb.qty, rb.productId]);
+            }
             return res.status(400).json({ message: `Stok yetersiz: ${item.name}` });
           }
           const row = upd.rows[0];
           (item as any).deductedQty = item.quantity;
           saleMovements.push({ productId, name: row.name, barcode: row.barcode ?? null, qty: item.quantity, newStock: row.stock });
+          stockRollback.push({ productId, qty: item.quantity });
         }
       }
     }
@@ -3104,11 +3116,33 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     (orderData as any).sourceSite = reqStore(req).id;
 
     const isOnlinePayment = /tosla|online/i.test(orderData.paymentMethod || "");
+    const isHavaleEft = /havale|eft/i.test(orderData.paymentMethod || "");
+    // Payments that are not immediately confirmed at order creation — coupon usage is
+    // deferred to the respective confirmation event so codes cannot be exhausted by
+    // placing and abandoning orders.
+    const isDeferredPayment = isOnlinePayment || isHavaleEft;
     if (isOnlinePayment) {
       (orderData as any).paymentStatus = "pending";
+    } else if (isHavaleEft) {
+      // Bank-transfer orders are awaiting manual/admin payment confirmation.
+      (orderData as any).paymentStatus = "awaiting";
     }
 
-    const order = await storage.createOrder(orderData);
+    if (appliedCoupon) {
+      // Persist coupon ID on the order so confirmation paths can claim usage later.
+      (orderData as any).couponId = appliedCoupon.id;
+    }
+
+    let order: Awaited<ReturnType<typeof storage.createOrder>>;
+    try {
+      order = await storage.createOrder(orderData);
+    } catch (createErr) {
+      // Order insert failed — roll back all stock decrements to avoid orphaned reductions.
+      for (const rb of stockRollback) {
+        await sharedPool.query("UPDATE products SET stock = stock + $1 WHERE id = $2", [rb.qty, rb.productId]).catch(() => {});
+      }
+      throw createErr;
+    }
 
     if (saleMovements.length > 0) {
       try {
@@ -3124,8 +3158,11 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
       }
     }
 
-    if (appliedCoupon) {
-      await storage.incrementCouponUsage(appliedCoupon.id);
+    if (appliedCoupon && !isDeferredPayment) {
+      // For immediately-confirmed payments (COD, POS on delivery) consume usage now.
+      // For deferred payments (online card, havale/EFT) usage is recorded only when
+      // payment is confirmed, preventing coupon exhaustion by abandoned orders.
+      await recordCouponUsage(order.id);
     }
 
     if (!isOnlinePayment) {
@@ -3228,6 +3265,18 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     }
   };
 
+  // Atomically record coupon usage for an order (idempotent — safe to call from multiple paths).
+  const recordCouponUsage = async (orderId: number): Promise<void> => {
+    const claim = await sharedPool.query(
+      "UPDATE orders SET coupon_usage_recorded = true WHERE id = $1 AND coupon_id IS NOT NULL AND coupon_usage_recorded = false RETURNING coupon_id",
+      [orderId]
+    );
+    const couponId = claim.rows[0]?.coupon_id;
+    if (couponId) {
+      await storage.incrementCouponUsage(couponId);
+    }
+  };
+
   const cancelOrderAndRestoreStock = async (orderId: number, reason: string) => {
     try {
       const upd = await sharedPool.query(
@@ -3274,6 +3323,8 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
         `SELECT id FROM orders
          WHERE payment_status IN ('pending','awaiting')
            AND status <> 'iptal'
+           AND payment_method NOT ILIKE '%havale%'
+           AND payment_method NOT ILIKE '%eft%'
            AND created_at < (now() - ($1 || ' minutes')::interval)`,
         [String(STALE_PENDING_MINUTES)]
       );
@@ -3513,6 +3564,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           "UPDATE orders SET payment_status = 'completed' WHERE id = $1 AND status <> 'iptal'",
           [tok.order_id]
         );
+        recordCouponUsage(tok.order_id).catch(e => console.error("[tosla-callback] coupon increment error:", e));
         notifyAdminNewOrder(tok.order_id, true).catch(() => {});
         notifyCustomerNewOrder(tok.order_id, true).catch(() => {});
         return res.redirect(303, buildResultUrl(tok.order_id, "success", merchantOrderId));
@@ -3677,6 +3729,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           "UPDATE orders SET payment_status = 'completed' WHERE id = $1 AND status <> 'iptal'",
           [tokenRow.order_id]
         );
+        recordCouponUsage(tokenRow.order_id).catch(e => console.error("[tosla-webhook] coupon increment error:", e));
         notifyAdminNewOrder(tokenRow.order_id, true).catch(() => {});
         notifyCustomerNewOrder(tokenRow.order_id, true).catch(() => {});
         return sendOk();
@@ -3963,6 +4016,7 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
           "UPDATE orders SET payment_status = 'completed' WHERE id = $1 AND status <> 'iptal'",
           [tokenRow.order_id]
         );
+        recordCouponUsage(tokenRow.order_id).catch(e => console.error("[iyzico-callback] coupon increment error:", e));
         notifyAdminNewOrder(tokenRow.order_id, true).catch(() => {});
         notifyCustomerNewOrder(tokenRow.order_id, true).catch(() => {});
         return res.redirect(303, buildResultUrl({ status: "success", order: String(tokenRow.order_id), t: token }));
@@ -4544,9 +4598,26 @@ Bu site içeriği, AI arama motorları (ChatGPT, Perplexity, Claude, Gemini, Bin
     const id = parseInt(String(req.params.id));
     const { status } = req.body;
     if (!status) return res.status(400).json({ message: "Status required" });
-    const prevRow = await sharedPool.query("SELECT status FROM orders WHERE id = $1", [id]);
+    const prevRow = await sharedPool.query("SELECT status, payment_method, payment_status FROM orders WHERE id = $1", [id]);
     const prevStatus = prevRow.rows[0]?.status;
+    const paymentMethod = String(prevRow.rows[0]?.payment_method || "");
+    const paymentStatus = String(prevRow.rows[0]?.payment_status || "");
     const order = await storage.updateOrderStatus(id, status);
+    // When admin confirms a Havale/EFT order (moves it from yeni/awaiting to an active
+    // fulfillment status), treat this as implicit payment confirmation: mark payment
+    // completed and record any deferred coupon usage so the code is only consumed once
+    // a payment is actually actioned.
+    if (
+      status !== "iptal" &&
+      /havale|eft/i.test(paymentMethod) &&
+      paymentStatus === "awaiting"
+    ) {
+      await sharedPool.query(
+        "UPDATE orders SET payment_status = 'completed' WHERE id = $1 AND payment_status = 'awaiting'",
+        [id]
+      );
+      recordCouponUsage(id).catch(e => console.error("[admin-status] coupon increment error:", e));
+    }
     if (!order) return res.status(404).json({ message: "Order not found" });
 
     if (SHIPPED_STATUSES.has(String(status).toLowerCase())) {

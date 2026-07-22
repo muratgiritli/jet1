@@ -137,6 +137,8 @@ export const orders = pgTable("orders", {
   paymentStatus: text("payment_status").notNull().default("completed"),
   isCampaign: boolean("is_campaign").notNull().default(false),
   sourceSite: text("source_site"),
+  couponId: integer("coupon_id"),
+  couponUsageRecorded: boolean("coupon_usage_recorded").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
