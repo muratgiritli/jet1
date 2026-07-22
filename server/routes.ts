@@ -1152,6 +1152,74 @@ export async function registerRoutes(
     }
   });
 
+  // ---- Yemek Sepeti ürün ekleme listesi (barkodlu ürünler) ----
+  // Aynı barkod kuralları: boş atlanır, 8-14 hane dışı geçersiz sayılır,
+  // mükerrer barkodda ilk ürün tutulur. Kolonlar: Barkod | Ürün İsmi |
+  // Ana Kategori | Alt Kategori | FİYAT (şablon: tek başlık satırı).
+  app.get("/api/admin/export/yemeksepeti-xlsx", requireAdmin, async (_req, res) => {
+    try {
+      const ExcelJS = (await import("exceljs")).default;
+      const ANIMAL_MAP: Record<string, string> = { kedi: "Kedi", kopek: "Köpek", kus: "Kuş", kemirgen: "Kemirgen", akvaryum: "Akvaryum" };
+      const { rows } = await sharedPool.query(`
+        SELECT p.id, p.name, p.price, p.barcode,
+               bc.animal, bc.subcategory AS subcategory_slug, s.display_name AS subcategory_name
+        FROM products p
+        LEFT JOIN brand_categories bc ON p.brand_category_id = bc.id
+        LEFT JOIN subcategories s ON bc.subcategory = s.slug AND bc.animal = s.animal
+        ORDER BY p.name ASC
+      `);
+      // Veteriner diyetlerinde hayvan türü alt kategori slug'ından çıkarılır
+      // (…-kedi-mamalari / …-kopek-mamalari) — Yemek Sepeti Ana Kategori hayvan bazlı.
+      const mainCatOf = (animal: string, subSlug: string): string => {
+        if (animal === "veteriner") {
+          if (/kedi/.test(subSlug)) return "Kedi";
+          if (/kopek/.test(subSlug)) return "Köpek";
+          return "Veteriner Mama";
+        }
+        return ANIMAL_MAP[animal] || (animal ? String(animal) : "");
+      };
+      const seen = new Set<string>();
+      const exportRows: { barcode: string; name: string; mainCat: string; subCat: string; price: number }[] = [];
+      for (const r of rows as any[]) {
+        const bc = String(r.barcode ?? "").trim();
+        if (!bc || !BULK_BARCODE_RE.test(bc) || seen.has(bc)) continue;
+        seen.add(bc);
+        exportRows.push({
+          barcode: bc,
+          name: String(r.name ?? "").trim(),
+          mainCat: mainCatOf(String(r.animal ?? ""), String(r.subcategory_slug ?? "")),
+          subCat: String(r.subcategory_name ?? "").replace(/\s+/g, " ").trim(),
+          price: Number(r.price) || 0,
+        });
+      }
+
+      const wb = new ExcelJS.Workbook();
+      const ws = wb.addWorksheet("Yemek Sepeti Ürün Ekleme");
+      ws.columns = [{ width: 20 }, { width: 64 }, { width: 16 }, { width: 34 }, { width: 12 }] as any;
+      // Barkod sütunu METİN: Excel bilimsel formata çevirmesin
+      ws.getColumn(1).numFmt = "@";
+
+      const header = ws.addRow(["Barkod", "Ürün İsmi", "Ana Kategori", "Alt Kategori", "FİYAT"]);
+      header.font = { bold: true };
+      header.alignment = { horizontal: "center" };
+
+      for (const r of exportRows) {
+        ws.addRow([r.barcode, r.name, r.mainCat, r.subCat, r.price]);
+      }
+
+      const dateStr = new Date().toLocaleDateString("en-CA", { timeZone: "Europe/Istanbul" });
+      const filename = `yemeksepeti-urun-ekleme-${dateStr}.xlsx`;
+
+      const buf = await wb.xlsx.writeBuffer();
+      res.setHeader("Content-Disposition", `attachment; filename=${filename}`);
+      res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+      res.send(Buffer.from(buf));
+    } catch (err) {
+      console.error("Yemeksepeti export error:", err);
+      res.status(500).json({ error: "Export failed" });
+    }
+  });
+
   const MAMA_SUBCATS: Record<string, string[]> = {
     kedi: ["kedi-mamasi", "acik-mama", "yas-mama"],
     kopek: ["mama-markalari", "kopek-kuru-mama", "acik-mama", "uygun-cuval", "yas-mama"],

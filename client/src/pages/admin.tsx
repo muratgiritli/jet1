@@ -3992,6 +3992,8 @@ function AdminDashboard({ onLogout }: { onLogout: () => void }) {
 
             <BulkUploadExportCard />
 
+            <YemeksepetiExportCard />
+
             <div className="flex items-center gap-2 flex-wrap">
               <span className="text-[11px] text-muted-foreground font-medium">Sırala:</span>
               <Select value={sortMode} onValueChange={setSortMode}>
@@ -7125,6 +7127,52 @@ function BulkUploadExportCard() {
             </>
           ) : (
             <div className="text-sm text-muted-foreground">Özet alınamadı.</div>
+          )}
+        </CardContent>
+      )}
+    </Card>
+  );
+}
+
+function YemeksepetiExportCard() {
+  const [open, setOpen] = useState(false);
+  const { data, isLoading } = useQuery<BulkExportSummary>({
+    queryKey: ["/api/admin/product-export/bulk-summary"],
+    enabled: open,
+    staleTime: 0,
+  });
+  const s = data?.summary;
+
+  return (
+    <Card className="border-rose-300 my-2">
+      <CardHeader className="pb-2 cursor-pointer select-none" onClick={() => setOpen(o => !o)} data-testid="button-toggle-yemeksepeti-export">
+        <CardTitle className="text-sm flex items-center justify-between gap-2">
+          <span className="flex items-center gap-2">
+            <Download className="w-4 h-4 text-rose-600" /> Yemek Sepeti Ürün Ekleme
+          </span>
+          <ChevronDown className={`w-4 h-4 transition-transform ${open ? "rotate-180" : ""}`} />
+        </CardTitle>
+      </CardHeader>
+      {open && (
+        <CardContent className="p-3 pt-0 space-y-3">
+          {isLoading ? (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="w-4 h-4 animate-spin" /> Özet hazırlanıyor...
+            </div>
+          ) : (
+            <>
+              <a
+                href="/api/admin/export/yemeksepeti-xlsx"
+                download
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-semibold bg-rose-600 text-white hover:bg-rose-700 transition-colors"
+                data-testid="button-yemeksepeti-export-xlsx"
+              >
+                <Download className="w-3.5 h-3.5" /> Excel'e Aktar{s ? ` (${s.exportCount})` : ""}
+              </a>
+              <div className="text-[10px] text-muted-foreground">
+                Sadece geçerli barkodlu ürünler aktarılır (boş, geçersiz veya mükerrer barkodlar hariç — mükerrerde ilk ürün eklenir). Kolonlar: Barkod, Ürün İsmi, Ana Kategori, Alt Kategori, FİYAT. Dosya adı: yemeksepeti-urun-ekleme-YYYY-AA-GG.xlsx
+              </div>
+            </>
           )}
         </CardContent>
       )}
