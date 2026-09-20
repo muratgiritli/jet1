@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 import TopBar from "@/components/community/TopBar";
 import BottomNavigation from "@/components/community/BottomNavigation";
+import { useCommunityI18n } from "@/lib/community-i18n";
 
 export default function CommunityLayout({
   children,
@@ -9,8 +10,19 @@ export default function CommunityLayout({
   children: ReactNode;
   hideTopBar?: boolean;
 }) {
+  const { locale } = useCommunityI18n();
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const previous = html.lang;
+    html.lang = locale;
+    return () => {
+      html.lang = previous || "tr";
+    };
+  }, [locale]);
+
   return (
-    <div className="min-h-screen bg-white text-[#1C1B1F] max-w-lg mx-auto">
+    <div lang={locale} className="min-h-screen bg-white text-[#1C1B1F] max-w-lg mx-auto">
       {!hideTopBar && <TopBar />}
       <div
         style={{

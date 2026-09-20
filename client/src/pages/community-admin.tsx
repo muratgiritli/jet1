@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "wouter";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import { useSocialAuth } from "@/contexts/SocialAuthContext";
@@ -12,7 +12,16 @@ type Tab = "users" | "posts" | "comments" | "topics" | "reports";
 
 export default function CommunityAdminPage() {
   const { me, loading, isLoggedIn } = useSocialAuth();
-  const { t } = useCommunityI18n();
+  const { t, locale } = useCommunityI18n();
+
+  useEffect(() => {
+    const html = document.documentElement;
+    const previous = html.lang;
+    html.lang = locale;
+    return () => {
+      html.lang = previous || "tr";
+    };
+  }, [locale]);
   const [tab, setTab] = useState<Tab>("users");
 
   const overview = useQuery({
