@@ -663,9 +663,16 @@ export const socialForumReplies = pgTable("social_forum_replies", {
 export const socialClubs = pgTable("social_clubs", {
   id: varchar("id").primaryKey(),
   name: text("name").notNull(),
+  nameTr: text("name_tr").notNull().default(""),
+  nameEn: text("name_en").notNull().default(""),
   city: text("city").notNull(),
+  kind: text("kind").notNull().default("city"),
   cover: text("cover").notNull(),
   description: text("description").notNull(),
+  descriptionTr: text("description_tr").notNull().default(""),
+  descriptionEn: text("description_en").notNull().default(""),
+  aboutTr: text("about_tr").notNull().default(""),
+  aboutEn: text("about_en").notNull().default(""),
 });
 
 export const socialClubMembers = pgTable("social_club_members", {

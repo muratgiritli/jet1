@@ -216,15 +216,56 @@ export function categoryDescription(locale: SocialLocale, category: Pick<ForumCa
   return locale === "en" ? category.descriptionEn : category.descriptionTr;
 }
 
+export type ClubKind = "walk" | "groom" | "puppy" | "city";
+
+export type ClubEventDto = {
+  id: string;
+  titleTr: string;
+  titleEn: string;
+  placeTr: string;
+  placeEn: string;
+  at: string;
+};
+
+export type ClubPostDto = {
+  id: string;
+  author: string;
+  avatar: string;
+  bodyTr: string;
+  bodyEn: string;
+  createdAt: string;
+};
+
 export type ClubDto = {
   id: string;
   name: string;
+  nameTr: string;
+  nameEn: string;
   city: string;
+  kind: ClubKind;
   members: number;
   cover: string;
   description: string;
+  descriptionTr: string;
+  descriptionEn: string;
+  aboutTr: string;
+  aboutEn: string;
   joined: boolean;
+  events: ClubEventDto[];
+  posts: ClubPostDto[];
 };
+
+export function clubName(locale: SocialLocale, club: Pick<ClubDto, "nameTr" | "nameEn" | "name">): string {
+  return (locale === "en" ? club.nameEn : club.nameTr) || club.name;
+}
+
+export function clubDescription(locale: SocialLocale, club: Pick<ClubDto, "descriptionTr" | "descriptionEn" | "description">): string {
+  return (locale === "en" ? club.descriptionEn : club.descriptionTr) || club.description;
+}
+
+export function clubAbout(locale: SocialLocale, club: Pick<ClubDto, "aboutTr" | "aboutEn" | "description">): string {
+  return (locale === "en" ? club.aboutEn : club.aboutTr) || club.description;
+}
 
 export type NotificationDto = {
   id: string;

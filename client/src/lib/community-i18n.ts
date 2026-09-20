@@ -63,7 +63,19 @@ const tr = {
   views: "görüntülenme",
   topicLoading: "Konu yükleniyor…",
   clubsTitle: "Kulüpler",
-  clubsLead: "Şehrindeki poodle sahipleriyle tanış ve yürüyüşlere katıl.",
+  clubsLead: "Yürüyüş, bakım, yavru okulu ve şehir kulüpleri. Karttan katıl veya detayı aç.",
+  clubsCount: "{n} kulüp",
+  aboutClub: "Hakkında",
+  upcomingMeetups: "Yaklaşan buluşmalar",
+  recentTalk: "Son paylaşımlar",
+  viewClub: "Gör",
+  noEvents: "Yakında yeni bir buluşma yok.",
+  noClubPosts: "Henüz paylaşım yok.",
+  kindWalk: "Yürüyüş",
+  kindGroom: "Bakım",
+  kindPuppy: "Yavru",
+  kindCity: "Şehir",
+  moreMembers: "+{n} üye",
   members: "üye",
   join: "Katıl",
   joined: "Üyesin",
@@ -241,7 +253,19 @@ const en: Record<keyof typeof tr, string> = {
   views: "views",
   topicLoading: "Loading topic…",
   clubsTitle: "Clubs",
-  clubsLead: "Meet poodle owners in your city and join walks.",
+  clubsLead: "Walks, grooming, puppy school, and city clubs. Join from the card or open the page.",
+  clubsCount: "{n} clubs",
+  aboutClub: "About",
+  upcomingMeetups: "Upcoming meetups",
+  recentTalk: "Recent posts",
+  viewClub: "View",
+  noEvents: "No meetup scheduled yet.",
+  noClubPosts: "No posts yet.",
+  kindWalk: "Walks",
+  kindGroom: "Grooming",
+  kindPuppy: "Puppies",
+  kindCity: "City",
+  moreMembers: "+{n} members",
   members: "members",
   join: "Join",
   joined: "Joined",
@@ -369,6 +393,17 @@ export function translate(locale: SocialLocale, key: I18nKey, vars?: Record<stri
     }
   }
   return text;
+}
+
+export function clubKindLabel(locale: SocialLocale, kind: string): string {
+  const map: Record<string, I18nKey> = {
+    walk: "kindWalk",
+    groom: "kindGroom",
+    puppy: "kindPuppy",
+    city: "kindCity",
+  };
+  const key = map[kind];
+  return key ? translate(locale, key) : kind;
 }
 
 export function forumTagLabel(locale: SocialLocale, tag: string): string {

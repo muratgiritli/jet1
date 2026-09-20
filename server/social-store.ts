@@ -12,6 +12,9 @@ import {
   slugifyDogName,
   forumTopicPath,
   type ClubDto,
+  type ClubEventDto,
+  type ClubKind,
+  type ClubPostDto,
   type CommentDto,
   type FeedPostDto,
   type ForumCategoryDto,
@@ -100,12 +103,24 @@ export type SocialReply = {
   createdAt: string;
 };
 
+export type SocialClubEvent = ClubEventDto;
+export type SocialClubPost = ClubPostDto;
+
 export type SocialClub = {
   id: string;
-  name: string;
+  name?: string;
+  nameTr: string;
+  nameEn: string;
   city: string;
+  kind: ClubKind;
   cover: string;
-  description: string;
+  description?: string;
+  descriptionTr: string;
+  descriptionEn: string;
+  aboutTr: string;
+  aboutEn: string;
+  events: SocialClubEvent[];
+  posts: SocialClubPost[];
 };
 
 export type SocialClubMember = { id: string; clubId: string; memberId: string };
@@ -164,6 +179,10 @@ function nid(): string {
 
 function hoursAgo(hours: number): string {
   return new Date(Date.now() - hours * 3600_000).toISOString();
+}
+
+function hoursFromNow(hours: number): string {
+  return new Date(Date.now() + hours * 3600_000).toISOString();
 }
 
 function finalizeMembers(
@@ -240,6 +259,187 @@ function categoryIdForTag(tag: string, categories: SocialForumCategory[]): strin
   return categories[0]?.id || "fc-bakim";
 }
 
+function defaultClubs(): SocialClub[] {
+  return [
+    {
+      id: "c1",
+      nameTr: "İstanbul Poodle Kulübü",
+      nameEn: "Istanbul Poodle Club",
+      city: "İstanbul",
+      kind: "city",
+      cover: SOCIAL_PHOTOS[0],
+      descriptionTr: "Maçka, Caddebostan ve Belgrad Ormanı buluşmaları. Tasma zorunlu, küçük ırklar öncelikli.",
+      descriptionEn: "Meetups in Maçka, Caddebostan, and Belgrade Forest. Leash required, small breeds first.",
+      aboutTr: "Avrupa ve Anadolu yakasından toy ve minyatür poodle sahipleri her hafta parkta bir araya geliyor. Yeni üyeler ilk yürüyüşte tanışır, sonra WhatsApp yerine buradan tarih alır.",
+      aboutEn: "Toy and miniature poodle owners from both sides of Istanbul meet in parks each week. New members join a first walk, then pick dates here.",
+      events: [
+        { id: "e1a", titleTr: "Cumartesi Maçka yürüyüşü", titleEn: "Saturday Maçka walk", placeTr: "Maçka Parkı girişi", placeEn: "Maçka Park entrance", at: hoursFromNow(48) },
+        { id: "e1b", titleTr: "Caddebostan sahil temposu", titleEn: "Caddebostan seaside pace", placeTr: "Caddebostan iskele", placeEn: "Caddebostan pier", at: hoursFromNow(120) },
+      ],
+      posts: [
+        { id: "cp1a", author: "Lara Şen", avatar: SOCIAL_PHOTOS[3], bodyTr: "Bu hafta dokuz köpek geldik, tasma kuralına herkes uydu. Yarın da aynı saatteyiz.", bodyEn: "Nine dogs showed up this week and everyone kept a leash. Same time tomorrow.", createdAt: hoursAgo(6) },
+        { id: "cp1b", author: "Elif Kaya", avatar: SOCIAL_PHOTOS[1], bodyTr: "Pamuk ilk kez Belgrad'a çıktı, su molası için termos getirdik.", bodyEn: "Pamuk's first Belgrade Forest walk — we brought a thermos for a water break.", createdAt: hoursAgo(20) },
+      ],
+    },
+    {
+      id: "c2",
+      nameTr: "Ankara Küçük Irklar",
+      nameEn: "Ankara Small Breeds",
+      city: "Ankara",
+      kind: "city",
+      cover: SOCIAL_PHOTOS[6],
+      descriptionTr: "Poodle, pomeranian ve yorkie sahipleri için park günleri. Çankaya ve Bahçelievler.",
+      descriptionEn: "Park days for poodle, Pomeranian, and Yorkie owners in Çankaya and Bahçelievler.",
+      aboutTr: "Başkentte küçük ırk köpeklerin büyük parkta ezilmemesi için ayrı tempo tutuyoruz. Aşı karnesi ilk buluşmada bakılır, yavrular için kısa tur var.",
+      aboutEn: "We keep a slower pace so small breeds are not crowded out. Vaccine booklets are checked on the first meetup; puppies get a short loop.",
+      events: [
+        { id: "e2a", titleTr: "Kuğulu Park akşam turu", titleEn: "Kuğulu Park evening loop", placeTr: "Kuğulu Park", placeEn: "Kuğulu Park", at: hoursFromNow(30) },
+        { id: "e2b", titleTr: "Bahçelievler çim günü", titleEn: "Bahçelievler lawn day", placeTr: "Bahçelievler parkı", placeEn: "Bahçelievler park", at: hoursFromNow(96) },
+      ],
+      posts: [
+        { id: "cp2a", author: "Ayşe Tekin", avatar: SOCIAL_PHOTOS[6], bodyTr: "Muffin Çankaya'da yeni arkadaş arıyor, bu akşam Kuğulu'ya gelebiliriz.", bodyEn: "Muffin wants new friends in Çankaya — we can come to Kuğulu tonight.", createdAt: hoursAgo(8) },
+      ],
+    },
+    {
+      id: "c3",
+      nameTr: "Ege Poodle Yürüyüşü",
+      nameEn: "Aegean Poodle Walks",
+      city: "İzmir",
+      kind: "walk",
+      cover: SOCIAL_PHOTOS[2],
+      descriptionTr: "Alsancak ve İnciraltı sahil yürüyüşleri. Yavru köpekler için ayrı tempo.",
+      descriptionEn: "Alsancak and İnciraltı seaside walks, with a slower puppy pace.",
+      aboutTr: "Ege rüzgârında kısa tasma, bol su. Yazın erken saatte, kışın öğleden sonra çıkıyoruz. İlk kez gelenler Leo'nun grubuna takılır.",
+      aboutEn: "Short leash, lots of water in the Aegean wind. Early in summer, afternoon in winter. First-timers shadow Leo's group.",
+      events: [
+        { id: "e3a", titleTr: "Alsancak gün doğumu", titleEn: "Alsancak sunrise", placeTr: "Kordon başlangıcı", placeEn: "Start of the Kordon", at: hoursFromNow(18) },
+        { id: "e3b", titleTr: "İnciraltı gölge turu", titleEn: "İnciraltı shade walk", placeTr: "İnciraltı çamlık", placeEn: "İnciraltı pines", at: hoursFromNow(72) },
+      ],
+      posts: [
+        { id: "cp3a", author: "Deniz Aksoy", avatar: SOCIAL_PHOTOS[3], bodyTr: "Leo ilk sahil gezisinde dalı bırakmadı. Yarın yavru temposu var.", bodyEn: "Leo would not drop the stick on his first beach walk. Puppy pace tomorrow.", createdAt: hoursAgo(4) },
+      ],
+    },
+    {
+      id: "c4",
+      nameTr: "Toy Poodle Yavru Okulu",
+      nameEn: "Toy Poodle Puppy School",
+      city: "İstanbul",
+      kind: "puppy",
+      cover: SOCIAL_PHOTOS[2],
+      descriptionTr: "4–8 aylık toy poodle'lar için sosyalleşme, tırnak ve ödül maması çalışmaları.",
+      descriptionEn: "Socializing, nail care, and treat training for 4–8 month toy poodles.",
+      aboutTr: "Aşıları tamamlanmış yavrular küçük grupta tanışır. Her seans 40 dakika: çağırma, tasma, insan kalabalığı. Sahipler de birbirine aşı takvimi sorabilir.",
+      aboutEn: "Fully vaccinated puppies meet in a small group. Each session is 40 minutes: recall, leash, crowds. Owners can compare vaccine calendars.",
+      events: [
+        { id: "e4a", titleTr: "Kadıköy yavru halkası", titleEn: "Kadıköy puppy ring", placeTr: "Göztepe parkı", placeEn: "Göztepe park", at: hoursFromNow(36) },
+        { id: "e4b", titleTr: "Tırnak ve ödül atölyesi", titleEn: "Nails and treats workshop", placeTr: "Moda iskele yanı", placeEn: "Near Moda pier", at: hoursFromNow(108) },
+      ],
+      posts: [
+        { id: "cp4a", author: "Mert Şahin", avatar: SOCIAL_PHOTOS[9], bodyTr: "Mini ilk tırnak kesiminde ödül mamasıyla durdu. Atölyeye geliyoruz.", bodyEn: "Mini stayed still for nail clipping with treats. We are coming to the workshop.", createdAt: hoursAgo(14) },
+        { id: "cp4b", author: "Hakan Öz", avatar: SOCIAL_PHOTOS[2], bodyTr: "Yavru aşı takvimini paylaşan var mı? Boncuk on haftalık.", bodyEn: "Anyone sharing a puppy vaccine calendar? Boncuk is ten weeks.", createdAt: hoursAgo(28) },
+      ],
+    },
+    {
+      id: "c5",
+      nameTr: "Tüy ve Kuaför Çemberi",
+      nameEn: "Coat and Groomer Circle",
+      city: "Bursa",
+      kind: "groom",
+      cover: SOCIAL_PHOTOS[1],
+      descriptionTr: "Tarak, fırça, kulak ve ev bakımı. Kuaför önerileri ve evde bakım günleri.",
+      descriptionEn: "Combs, brushes, ears, and home grooming. Groomer tips and at-home care days.",
+      aboutTr: "Poodle tüyü evde tutulmazsa bir haftada düğümlenir. Ayda bir ev bakımı, dört haftada bir kuaför diyoruz. Fotoğrafla tüy sorusu sorabilirsiniz.",
+      aboutEn: "Poodle coats mat in a week without home care. We do home grooming monthly and a groomer every four weeks. Ask coat questions with a photo.",
+      events: [
+        { id: "e5a", titleTr: "Evde tarama günü", titleEn: "Home brushing day", placeTr: "Osmangazi parkı çardak", placeEn: "Osmangazi park pavilion", at: hoursFromNow(54) },
+        { id: "e5b", titleTr: "Kulak bakım sohbeti", titleEn: "Ear-care chat", placeTr: "Nilüfer yürüyüş yolu", placeEn: "Nilüfer walking path", at: hoursFromNow(140) },
+      ],
+      posts: [
+        { id: "cp5a", author: "Burak Yılmaz", avatar: SOCIAL_PHOTOS[7], bodyTr: "Tarçın'ın kulaklarını nemli havada her gün kontrol ediyoruz. Pin fırça işe yaradı.", bodyEn: "We check Tarçın's ears every damp day. The pin brush helped.", createdAt: hoursAgo(11) },
+        { id: "cp5b", author: "Zeynep Arslan", avatar: SOCIAL_PHOTOS[0], bodyTr: "Kulak arkası düğüm için sprey + seyrek tarak önerisi arıyorum.", bodyEn: "Looking for spray + wide-comb tips for mats behind the ears.", createdAt: hoursAgo(22) },
+      ],
+    },
+    {
+      id: "c6",
+      nameTr: "Antalya Sahil Poodle",
+      nameEn: "Antalya Seaside Poodles",
+      city: "Antalya",
+      kind: "walk",
+      cover: SOCIAL_PHOTOS[5],
+      descriptionTr: "Konyaaltı ve Lara'da serin saat yürüyüşü. Sıcakta kısa tur, evde oyun.",
+      descriptionEn: "Cool-hour walks in Konyaaltı and Lara. Short loops in the heat, play at home.",
+      aboutTr: "Akdeniz sıcağında asfaltı kontrol ediyoruz. Patiler için sabah 07.30, akşam 19.00. Su kabı ve gölge zorunlu.",
+      aboutEn: "We check the pavement in Mediterranean heat. Paws go out at 07:30 and 19:00. Water bowl and shade required.",
+      events: [
+        { id: "e6a", titleTr: "Konyaaltı sabah serini", titleEn: "Konyaaltı morning cool", placeTr: "Konyaaltı 2. iskele", placeEn: "Konyaaltı pier 2", at: hoursFromNow(16) },
+        { id: "e6b", titleTr: "Lara akşam turu", titleEn: "Lara evening loop", placeTr: "Lara parkı", placeEn: "Lara park", at: hoursFromNow(88) },
+      ],
+      posts: [
+        { id: "cp6a", author: "Selin Mutlu", avatar: SOCIAL_PHOTOS[8], bodyTr: "Coco ile sıcakta on dakika yetti. Yarın sabah erken çıkıyoruz.", bodyEn: "Ten minutes in the heat was enough for Coco. We go out early tomorrow.", createdAt: hoursAgo(9) },
+      ],
+    },
+    {
+      id: "c7",
+      nameTr: "Karadeniz Poodle Sohbeti",
+      nameEn: "Black Sea Poodle Chat",
+      city: "Samsun",
+      kind: "city",
+      cover: SOCIAL_PHOTOS[4],
+      descriptionTr: "Samsun ve Ordu sahilinde nemli hava bakımı, park buluşması.",
+      descriptionEn: "Humid-weather care and park meetups along the Samsun and Ordu coast.",
+      aboutTr: "Karadeniz neminde kulak ve tüy ayrı konuşulur. Batıpark'ta ayda iki kez, yağmurda kapalı mekân.",
+      aboutEn: "Black Sea humidity means extra ear and coat talk. Twice a month at Batıpark; indoor if it rains.",
+      events: [
+        { id: "e7a", titleTr: "Batıpark nemli hava yürüyüşü", titleEn: "Batıpark humid-weather walk", placeTr: "Batıpark köpek alanı", placeEn: "Batıpark dog area", at: hoursFromNow(64) },
+      ],
+      posts: [
+        { id: "cp7a", author: "Onur Bilgin", avatar: SOCIAL_PHOTOS[5], bodyTr: "Max ile yağmurdan sonra tüy kurulaması şart. Havlu önerisi olan var mı?", bodyEn: "Max needs a full dry after rain. Anyone have a towel tip?", createdAt: hoursAgo(16) },
+      ],
+    },
+  ];
+}
+
+function mergeDefaultClubs(state: SocialDb) {
+  const seeds = defaultClubs();
+  if (!Array.isArray(state.clubs)) state.clubs = [];
+  if (!Array.isArray(state.clubMembers)) state.clubMembers = [];
+  for (const seed of seeds) {
+    const row = state.clubs.find((c) => c.id === seed.id) as SocialClub | undefined;
+    if (!row) {
+      state.clubs.push(seed);
+      continue;
+    }
+    row.nameTr = row.nameTr || row.name || seed.nameTr;
+    row.nameEn = row.nameEn || seed.nameEn;
+    row.kind = row.kind || seed.kind;
+    row.descriptionTr = row.descriptionTr || row.description || seed.descriptionTr;
+    row.descriptionEn = row.descriptionEn || seed.descriptionEn;
+    row.aboutTr = row.aboutTr || seed.aboutTr;
+    row.aboutEn = row.aboutEn || seed.aboutEn;
+    if (!row.events?.length) row.events = seed.events;
+    if (!row.posts?.length) row.posts = seed.posts;
+    if (!row.cover) row.cover = seed.cover;
+  }
+  const extraMembers: SocialClubMember[] = [
+    { id: "cm8", clubId: "c4", memberId: "m-mert" },
+    { id: "cm9", clubId: "c4", memberId: "m-hakan" },
+    { id: "cm10", clubId: "c4", memberId: "m-elif" },
+    { id: "cm11", clubId: "c5", memberId: "m-burak" },
+    { id: "cm12", clubId: "c5", memberId: "m-zeynep" },
+    { id: "cm13", clubId: "c6", memberId: "m-selin" },
+    { id: "cm14", clubId: "c6", memberId: "m-deniz" },
+    { id: "cm15", clubId: "c7", memberId: "m-onur" },
+    { id: "cm16", clubId: "c7", memberId: "m-lara" },
+    { id: "cm17", clubId: "c1", memberId: "m-admin" },
+    { id: "cm18", clubId: "c3", memberId: "m-selin" },
+  ];
+  for (const extra of extraMembers) {
+    if (!state.clubMembers.some((m) => m.clubId === extra.clubId && m.memberId === extra.memberId)) {
+      state.clubMembers.push(extra);
+    }
+  }
+}
+
 function migrateDb(state: SocialDb) {
   const taken: string[] = [];
   for (const member of state.members) {
@@ -252,6 +452,7 @@ function migrateDb(state: SocialDb) {
   if (!state.categories?.length) {
     state.categories = defaultCategories();
   }
+  mergeDefaultClubs(state);
   for (const topic of state.topics) {
     if (!topic.categoryId) {
       topic.categoryId = categoryIdForTag(topic.tag, state.categories);
@@ -599,29 +800,7 @@ function buildSeed(): SocialDb {
     { id: "r6", topicId: "t4", authorId: "m-hakan", body: "Çankaya'dayız, bu hafta sonu tanışabiliriz. Aşı karnesini görebilir miyiz?", hidden: false, createdAt: hoursAgo(10) },
   ];
 
-  const clubs: SocialClub[] = [
-    {
-      id: "c1",
-      name: "İstanbul Poodle Kulübü",
-      city: "İstanbul",
-      cover: SOCIAL_PHOTOS[0],
-      description: "Maçka, Caddebostan ve Belgrad Ormanı buluşmaları. Tasma zorunlu, küçük ırklar öncelikli.",
-    },
-    {
-      id: "c2",
-      name: "Ankara Küçük Irklar",
-      city: "Ankara",
-      cover: SOCIAL_PHOTOS[6],
-      description: "Poodle, pomeranian ve yorkie sahipleri için park günleri. Çankaya ve Bahçelievler.",
-    },
-    {
-      id: "c3",
-      name: "Ege Poodle Yürüyüşü",
-      city: "İzmir",
-      cover: SOCIAL_PHOTOS[2],
-      description: "Alsancak ve İnciraltı sahil yürüyüşleri. Yavru köpekler için ayrı tempo.",
-    },
-  ];
+  const clubs = defaultClubs();
 
   const clubMembers: SocialClubMember[] = [
     { id: "cm1", clubId: "c1", memberId: "m-elif" },
@@ -631,6 +810,17 @@ function buildSeed(): SocialDb {
     { id: "cm5", clubId: "c2", memberId: "m-ayse" },
     { id: "cm6", clubId: "c2", memberId: "m-hakan" },
     { id: "cm7", clubId: "c3", memberId: "m-deniz" },
+    { id: "cm8", clubId: "c4", memberId: "m-mert" },
+    { id: "cm9", clubId: "c4", memberId: "m-hakan" },
+    { id: "cm10", clubId: "c4", memberId: "m-elif" },
+    { id: "cm11", clubId: "c5", memberId: "m-burak" },
+    { id: "cm12", clubId: "c5", memberId: "m-zeynep" },
+    { id: "cm13", clubId: "c6", memberId: "m-selin" },
+    { id: "cm14", clubId: "c6", memberId: "m-deniz" },
+    { id: "cm15", clubId: "c7", memberId: "m-onur" },
+    { id: "cm16", clubId: "c7", memberId: "m-lara" },
+    { id: "cm17", clubId: "c1", memberId: "m-admin" },
+    { id: "cm18", clubId: "c3", memberId: "m-selin" },
   ];
 
   const notifications: SocialNotification[] = [
@@ -910,14 +1100,25 @@ function toCategoryDto(category: SocialForumCategory, includeHiddenTopics = fals
 }
 
 function toClub(club: SocialClub, viewerId?: string | null): ClubDto {
+  const nameTr = club.nameTr || club.name || "";
+  const descriptionTr = club.descriptionTr || club.description || "";
   return {
     id: club.id,
-    name: club.name,
+    name: nameTr,
+    nameTr,
+    nameEn: club.nameEn || nameTr,
     city: club.city,
+    kind: club.kind || "city",
     members: db.clubMembers.filter((c) => c.clubId === club.id).length,
     cover: club.cover,
-    description: club.description,
+    description: descriptionTr,
+    descriptionTr,
+    descriptionEn: club.descriptionEn || descriptionTr,
+    aboutTr: club.aboutTr || descriptionTr,
+    aboutEn: club.aboutEn || club.descriptionEn || descriptionTr,
     joined: viewerId ? db.clubMembers.some((c) => c.clubId === club.id && c.memberId === viewerId) : false,
+    events: (club.events || []).slice().sort((a, b) => a.at.localeCompare(b.at)),
+    posts: (club.posts || []).slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
   };
 }
 
