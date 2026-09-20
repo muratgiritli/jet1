@@ -147,16 +147,20 @@ app.use((req, res, next) => {
   registerSocialRoutes(app);
 
   // Shop routes wait on Postgres. YourPoodle social must boot even when PG is down.
-  try {
-    const shopReady = await Promise.race([
-      registerRoutes(httpServer, app).then(() => true),
-      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 2500)),
-    ]);
-    if (!shopReady) {
-      log("shop database not ready; YourPoodle social API is live");
+  if (process.env.DATABASE_URL) {
+    try {
+      const shopReady = await Promise.race([
+        registerRoutes(httpServer, app).then(() => true),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 2500)),
+      ]);
+      if (!shopReady) {
+        log("shop database not ready; YourPoodle social API is live");
+      }
+    } catch (err) {
+      console.error("shop registerRoutes failed; continuing with social API", err);
     }
-  } catch (err) {
-    console.error("shop registerRoutes failed; continuing with social API", err);
+  } else {
+    log("no DATABASE_URL; serving YourPoodle social without shop routes");
   }
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
@@ -178,8 +182,12 @@ app.use((req, res, next) => {
   if (process.env.NODE_ENV === "production") {
     serveStatic(app);
   } else {
-    const { setupVite } = await import("./vite");
-    await setupVite(httpServer, app);
+    try {
+      const { setupVite } = await import("./vite");
+      await setupVite(httpServer, app);
+    } catch (err) {
+      console.error("vite setup failed; social API still serving", err);
+    }
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
