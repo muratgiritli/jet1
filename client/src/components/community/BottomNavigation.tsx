@@ -73,7 +73,7 @@ export default function BottomNavigation() {
               data-testid={tab.testId}
             >
               <tab.icon className={`w-5 h-5 ${active ? "stroke-[2.6] text-[#8E7CC3]" : ""}`} />
-              <span className={`text-[10px] leading-none ${active ? "font-semibold text-[#8E7CC3]" : "font-medium"}`}>
+              <span className={`text-[12px] leading-none ${active ? "font-semibold text-[#8E7CC3]" : "font-medium"}`}>
                 {tab.name}
               </span>
             </button>
@@ -85,7 +85,7 @@ export default function BottomNavigation() {
           <DialogHeader className="text-left space-y-2">
             <DialogTitle className="text-[18px] text-[#1C1B1F]">Yeni gönderi</DialogTitle>
             <DialogDescription className="text-[13px] text-[#5F5B66]">
-              Poodle’ının anını toplulukla paylaş.
+              Poodle'ının anını toplulukla paylaş.
             </DialogDescription>
           </DialogHeader>
           {posted ? (

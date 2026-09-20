@@ -50,7 +50,7 @@ export function AuthPromptProvider({ children }: { children: ReactNode }) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-[320px] rounded-2xl p-5" data-testid="dialog-auth-prompt">
           <DialogHeader className="text-left space-y-2">
-            <DialogTitle className="text-[18px] text-[#1C1B1F]">YourPoodle’a katıl</DialogTitle>
+            <DialogTitle className="text-[18px] text-[#1C1B1F]">YourPoodle'a katıl</DialogTitle>
             <DialogDescription className="text-[13px] leading-relaxed text-[#5F5B66]">
               Beğenmek, yorum yapmak, kaydetmek veya paylaşmak için giriş yapın ya da üye olun.
             </DialogDescription>

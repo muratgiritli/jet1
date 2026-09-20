@@ -17,7 +17,7 @@ export default function CommunityClubsPage() {
       />
       <div className="px-3 pt-4 pb-2">
         <h1 className="text-lg font-extrabold text-[#1C1B1F]" data-testid="text-clubs-title">Kulüpler</h1>
-        <p className="text-[13px] text-[#6B6573] mt-1">Şehrindeki poodle sahipleriyle buluş.</p>
+        <p className="text-[13px] text-[#6B6573] mt-1">Şehrindeki poodle sahipleriyle tanış ve yürüyüşlere katıl.</p>
       </div>
       <ul className="px-3 space-y-3">
         {CLUBS.map((club) => (

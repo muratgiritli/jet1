@@ -11,7 +11,7 @@ export default function ForumPreview({ topic }: { topic: ForumTopic }) {
         data-testid={`link-forum-${topic.id}`}
       >
         <div className="flex items-center gap-2 mb-2">
-          <span className="inline-flex items-center gap-1 h-6 px-2 rounded-full bg-[#F3EFFA] text-[#6A5A96] text-[10px] font-semibold uppercase tracking-wide">
+          <span className="inline-flex items-center gap-1 h-6 px-2 rounded-full bg-[#F3EFFA] text-[#6A5A96] text-[11px] font-semibold">
             <MessagesSquare className="w-3 h-3" />
             Forum
           </span>
