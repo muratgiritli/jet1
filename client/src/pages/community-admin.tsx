@@ -5,10 +5,10 @@ import { useSocialAuth } from "@/contexts/SocialAuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { socialGet, socialSend } from "@/lib/social-api";
 import { queryClient } from "@/lib/queryClient";
-import type { PublicMember, ReportDto } from "@shared/social";
+import { categoryLabel, type ForumCategoryDto, type PublicMember, type ReportDto } from "@shared/social";
 import { useCommunityI18n } from "@/lib/community-i18n";
 
-type Tab = "users" | "posts" | "comments" | "topics" | "reports";
+type Tab = "users" | "posts" | "comments" | "topics" | "categories" | "reports";
 
 export default function CommunityAdminPage() {
   const { me, loading, isLoggedIn } = useSocialAuth();
@@ -49,6 +49,12 @@ export default function CommunityAdminPage() {
     queryFn: () => socialGet<{ topics: Array<{ id: string; title: string; author: string; hidden: boolean; replies: number; time: string }> }>("/api/social/admin/topics"),
     enabled: !!me?.isAdmin && tab === "topics",
   });
+  const categories = useQuery({
+    queryKey: ["/api/social/admin/categories"],
+    queryFn: () => socialGet<{ categories: ForumCategoryDto[] }>("/api/social/admin/categories"),
+    enabled: !!me?.isAdmin && tab === "categories",
+  });
+  const [catForm, setCatForm] = useState({ nameTr: "", nameEn: "", descriptionTr: "", descriptionEn: "" });
   const reports = useQuery({
     queryKey: ["/api/social/admin/reports"],
     queryFn: () => socialGet<{ reports: ReportDto[] }>("/api/social/admin/reports"),
@@ -65,6 +71,7 @@ export default function CommunityAdminPage() {
     void comments.refetch();
     void topics.refetch();
     void reports.refetch();
+    void categories.refetch();
   };
 
   if (loading) {
@@ -101,6 +108,7 @@ export default function CommunityAdminPage() {
           ["posts", t("tabPosts")],
           ["comments", t("tabComments")],
           ["topics", t("tabForum")],
+          ["categories", t("tabCategories")],
           ["reports", t("tabReports")],
         ] as const).map(([key, label]) => (
           <button
@@ -156,6 +164,48 @@ export default function CommunityAdminPage() {
             onDelete={() => socialSend("DELETE", `/api/social/admin/comments/${comment.id}`).then(refreshTab)}
           />
         ))}
+
+        {tab === "categories" && (
+          <div className="space-y-2">
+            <div className="rounded-2xl border border-[#E4DCF3] bg-[#FAF8FD] p-3 space-y-2" data-testid="admin-new-category">
+              <input value={catForm.nameTr} onChange={(e) => setCatForm((f) => ({ ...f, nameTr: e.target.value }))} placeholder={t("categoryNameTr")} className="w-full h-9 rounded-xl border border-[#E4DCF3] bg-white px-3 text-sm" />
+              <input value={catForm.nameEn} onChange={(e) => setCatForm((f) => ({ ...f, nameEn: e.target.value }))} placeholder={t("categoryNameEn")} className="w-full h-9 rounded-xl border border-[#E4DCF3] bg-white px-3 text-sm" />
+              <input value={catForm.descriptionTr} onChange={(e) => setCatForm((f) => ({ ...f, descriptionTr: e.target.value }))} placeholder={t("categoryDescTr")} className="w-full h-9 rounded-xl border border-[#E4DCF3] bg-white px-3 text-sm" />
+              <input value={catForm.descriptionEn} onChange={(e) => setCatForm((f) => ({ ...f, descriptionEn: e.target.value }))} placeholder={t("categoryDescEn")} className="w-full h-9 rounded-xl border border-[#E4DCF3] bg-white px-3 text-sm" />
+              <button
+                type="button"
+                onClick={() => void socialSend("POST", "/api/social/admin/categories", catForm).then(() => { setCatForm({ nameTr: "", nameEn: "", descriptionTr: "", descriptionEn: "" }); refreshTab(); })}
+                className="h-9 w-full rounded-full bg-[#8E7CC3] text-white text-[12px] font-semibold"
+              >
+                {t("newCategory")}
+              </button>
+            </div>
+            {(categories.data?.categories || []).map((category) => (
+              <div key={category.id} className="rounded-2xl border border-[#F1EDF6] p-3">
+                <p className="text-[13px] font-semibold">{categoryLabel(locale, category)} {category.hidden && <span className="text-[#8E7CC3]">· {t("hidden")}</span>}</p>
+                <p className="text-[12px] text-[#6B6573]">/{category.slug} · {t("topicsCount", { n: category.topicCount })}</p>
+                <div className="mt-2 flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void socialSend("PATCH", `/api/social/admin/categories/${category.id}`, { hidden: !category.hidden }).then(refreshTab)}
+                    className="h-8 px-3 rounded-full bg-[#F6F3FB] text-[#5B4B86] text-[12px] font-semibold"
+                  >
+                    {category.hidden ? t("show") : t("hide")}
+                  </button>
+                </div>
+                <input
+                  defaultValue={category.nameTr}
+                  onBlur={(e) => {
+                    const nameTr = e.target.value.trim();
+                    if (nameTr && nameTr !== category.nameTr) void socialSend("PATCH", `/api/social/admin/categories/${category.id}`, { nameTr }).then(refreshTab);
+                  }}
+                  className="mt-2 w-full h-8 rounded-lg border border-[#E4DCF3] px-2 text-[12px]"
+                  aria-label={t("rename")}
+                />
+              </div>
+            ))}
+          </div>
+        )}
 
         {tab === "topics" && (topics.data?.topics || []).map((topic) => (
           <ModRow

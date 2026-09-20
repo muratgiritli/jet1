@@ -629,9 +629,21 @@ export const socialFollows = pgTable("social_follows", {
   followingId: varchar("following_id").notNull(),
 });
 
+export const socialForumCategories = pgTable("social_forum_categories", {
+  id: varchar("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  nameTr: text("name_tr").notNull(),
+  nameEn: text("name_en").notNull(),
+  descriptionTr: text("description_tr").notNull().default(""),
+  descriptionEn: text("description_en").notNull().default(""),
+  hidden: boolean("hidden").notNull().default(false),
+  sort: integer("sort").notNull().default(0),
+});
+
 export const socialForumTopics = pgTable("social_forum_topics", {
   id: varchar("id").primaryKey(),
   authorId: varchar("author_id").notNull(),
+  categoryId: varchar("category_id").notNull().default(""),
   title: text("title").notNull(),
   body: text("body").notNull(),
   tag: text("tag").notNull(),

@@ -4,25 +4,30 @@ import { ArrowLeft, MessageCircle } from "lucide-react";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import CommunityLayout from "@/components/community/CommunityLayout";
 import { useQuery } from "@tanstack/react-query";
-import type { ForumTopicDto } from "@shared/social";
+import { forumTopicPath, profilePath, type ForumTopicDto } from "@shared/social";
 import { socialGet, socialSend } from "@/lib/social-api";
 import { useAuthPrompt } from "@/components/community/AuthPrompt";
 import { queryClient } from "@/lib/queryClient";
 import { forumTagLabel, useCommunityI18n } from "@/lib/community-i18n";
-import { profilePath } from "@shared/social";
 
 export default function CommunityForumTopicPage() {
-  const [, params] = useRoute("/forum/:id");
-  const id = params?.id || "";
+  const [, nested] = useRoute("/forum/:categorySlug/:topicId");
+  const [, legacy] = useRoute("/forum/:id");
+  const id = nested?.topicId || legacy?.id || "";
+  const categorySlug = nested?.categorySlug || "";
   const { requireAuth } = useAuthPrompt();
   const { t, locale, timeAgo } = useCommunityI18n();
   const [reply, setReply] = useState("");
   const [showBox, setShowBox] = useState(false);
   const [error, setError] = useState("");
 
+  const path = categorySlug && id
+    ? `/api/social/forum/${categorySlug}/${id}`
+    : `/api/social/forum/${id}`;
+
   const { data, isLoading } = useQuery({
-    queryKey: ["/api/social/forum", id],
-    queryFn: () => socialGet<{ topic: ForumTopicDto }>(`/api/social/forum/${id}`),
+    queryKey: ["/api/social/forum", categorySlug || id, id],
+    queryFn: () => socialGet<{ topic: ForumTopicDto }>(path),
     enabled: !!id,
     staleTime: 5_000,
   });
@@ -30,13 +35,12 @@ export default function CommunityForumTopicPage() {
   const topic = data?.topic;
 
   const send = async () => {
-    if (!requireAuth()) return;
+    if (!requireAuth() || !topic) return;
     setError("");
     try {
-      await socialSend("POST", `/api/social/forum/${id}/replies`, { body: reply });
+      await socialSend("POST", `/api/social/forum/${topic.categorySlug}/${topic.id}/replies`, { body: reply });
       setReply("");
       setShowBox(false);
-      await queryClient.invalidateQueries({ queryKey: ["/api/social/forum", id] });
       await queryClient.invalidateQueries({ queryKey: ["/api/social/forum"] });
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : t("replyFailed"));
@@ -69,16 +73,16 @@ export default function CommunityForumTopicPage() {
       <SEO
         title={`${topic.title} — YourPoodle Forum`}
         description={topic.excerpt}
-        canonical={`${SITE_DOMAIN}/forum/${topic.id}`}
+        canonical={`${SITE_DOMAIN}${forumTopicPath(topic)}`}
       />
       <div className="px-3 pt-3">
         <Link
-          href="/forum"
+          href={topic.categorySlug ? `/forum/${topic.categorySlug}` : "/forum"}
           className="inline-flex items-center gap-1 text-[13px] font-medium text-[#6A5A96]"
           data-testid="link-back-forum"
         >
           <ArrowLeft className="w-4 h-4" />
-          {t("backForum")}
+          {forumTagLabel(locale, topic.tag) || t("backForum")}
         </Link>
       </div>
       <article className="px-3 pt-3 pb-4" data-testid={`forum-topic-${topic.id}`}>

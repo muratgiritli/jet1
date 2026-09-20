@@ -170,11 +170,26 @@ export type ForumReplyDto = {
   createdAt: string;
 };
 
+export type ForumCategoryDto = {
+  id: string;
+  slug: string;
+  nameTr: string;
+  nameEn: string;
+  descriptionTr: string;
+  descriptionEn: string;
+  hidden: boolean;
+  sort: number;
+  topicCount: number;
+  lastActivity?: string;
+};
+
 export type ForumTopicDto = {
   id: string;
   authorId: string;
   username: string;
   dogSlug: string;
+  categoryId: string;
+  categorySlug: string;
   title: string;
   author: string;
   city: string;
@@ -188,6 +203,18 @@ export type ForumTopicDto = {
   body: string;
   comments: ForumReplyDto[];
 };
+
+export function forumTopicPath(topic: { categorySlug?: string; id: string }): string {
+  return topic.categorySlug ? `/forum/${topic.categorySlug}/${topic.id}` : `/forum/${topic.id}`;
+}
+
+export function categoryLabel(locale: SocialLocale, category: Pick<ForumCategoryDto, "nameTr" | "nameEn">): string {
+  return locale === "en" ? category.nameEn : category.nameTr;
+}
+
+export function categoryDescription(locale: SocialLocale, category: Pick<ForumCategoryDto, "descriptionTr" | "descriptionEn">): string {
+  return locale === "en" ? category.descriptionEn : category.descriptionTr;
+}
 
 export type ClubDto = {
   id: string;

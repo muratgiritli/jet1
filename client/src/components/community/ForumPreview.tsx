@@ -1,6 +1,6 @@
 import { ChevronRight, MessagesSquare } from "lucide-react";
 import { Link } from "wouter";
-import type { ForumTopicDto } from "@shared/social";
+import { forumTopicPath, type ForumTopicDto } from "@shared/social";
 import { forumTagLabel, useCommunityI18n } from "@/lib/community-i18n";
 
 export default function ForumPreview({ topic }: { topic: ForumTopicDto }) {
@@ -8,7 +8,7 @@ export default function ForumPreview({ topic }: { topic: ForumTopicDto }) {
   return (
     <article className="px-3 py-3 bg-[#F6F3FB] scroll-mt-16" data-testid={`forum-preview-${topic.id}`}>
       <Link
-        href={`/forum/${topic.id}`}
+        href={forumTopicPath(topic)}
         className="block rounded-2xl border border-[#E4DCF3] bg-white p-3.5 shadow-[0_1px_0_rgba(142,124,195,0.08)]"
         data-testid={`link-forum-${topic.id}`}
       >

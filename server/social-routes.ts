@@ -241,17 +241,42 @@ export function registerSocialRoutes(app: Express) {
     res.json({ posts: store.listSaved(member.id) });
   });
 
-  app.get("/api/social/forum", (_req, res) => {
-    res.json({ topics: store.listForum() });
+  app.get("/api/social/forum", (req, res) => {
+    const admin = currentMember(req)?.isAdmin === true;
+    res.json({ categories: store.listCategories(admin), topics: store.listForum(admin) });
   });
 
-  app.get("/api/social/forum/:id", (req, res) => {
-    const topic = store.getForumTopic(req.params.id, true);
+  app.get("/api/social/forum/:categorySlug/:topicId", (req, res) => {
+    const admin = currentMember(req)?.isAdmin === true;
+    const topic = store.getForumTopic(req.params.topicId, true, admin);
     if (!topic) return res.status(404).json({ message: tMsg(req, "Konu bulunamadı.", "Topic not found.") });
+    if (topic.categorySlug && topic.categorySlug !== req.params.categorySlug) {
+      return res.json({ topic, redirect: `/forum/${topic.categorySlug}/${topic.id}` });
+    }
     res.json({ topic });
   });
 
-  app.post("/api/social/forum", (req, res) => {
+  app.post("/api/social/forum/:categorySlug/:topicId/replies", (req, res) => {
+    const member = requireMember(req, res);
+    if (!member) return;
+    try {
+      const topic = store.addReply(req.params.topicId, member.id, String(req.body?.body || ""));
+      res.status(201).json({ topic });
+    } catch (err) {
+      fail(res, err);
+    }
+  });
+
+  app.get("/api/social/forum/:categorySlug", (req, res) => {
+    const admin = currentMember(req)?.isAdmin === true;
+    const data = store.getCategoryBySlug(req.params.categorySlug, admin);
+    if (data) return res.json(data);
+    const topic = store.getForumTopic(req.params.categorySlug, false, admin);
+    if (topic) return res.json({ topic, redirect: `/forum/${topic.categorySlug}/${topic.id}` });
+    res.status(404).json({ message: tMsg(req, "Başlık bulunamadı.", "Category not found.") });
+  });
+
+  app.post("/api/social/forum/:categorySlug", (req, res) => {
     const member = requireMember(req, res);
     if (!member) return;
     try {
@@ -259,7 +284,7 @@ export function registerSocialRoutes(app: Express) {
         member.id,
         String(req.body?.title || ""),
         String(req.body?.body || ""),
-        String(req.body?.tag || "Sohbet"),
+        req.params.categorySlug,
       );
       res.status(201).json({ topic });
     } catch (err) {
@@ -273,6 +298,45 @@ export function registerSocialRoutes(app: Express) {
     try {
       const topic = store.addReply(req.params.id, member.id, String(req.body?.body || ""));
       res.status(201).json({ topic });
+    } catch (err) {
+      fail(res, err);
+    }
+  });
+
+  app.get("/api/social/admin/categories", (req, res) => {
+    if (!requireAdmin(req, res)) return;
+    res.json({ categories: store.listCategories(true) });
+  });
+
+  app.post("/api/social/admin/categories", (req, res) => {
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
+    try {
+      const category = store.createCategory(admin.id, {
+        nameTr: String(req.body?.nameTr || req.body?.name || ""),
+        nameEn: String(req.body?.nameEn || ""),
+        descriptionTr: String(req.body?.descriptionTr || req.body?.description || ""),
+        descriptionEn: String(req.body?.descriptionEn || ""),
+      });
+      res.status(201).json({ category });
+    } catch (err) {
+      fail(res, err);
+    }
+  });
+
+  app.patch("/api/social/admin/categories/:id", (req, res) => {
+    const admin = requireAdmin(req, res);
+    if (!admin) return;
+    try {
+      const category = store.updateCategory(admin.id, req.params.id, {
+        nameTr: req.body?.nameTr,
+        nameEn: req.body?.nameEn,
+        descriptionTr: req.body?.descriptionTr,
+        descriptionEn: req.body?.descriptionEn,
+        hidden: req.body?.hidden,
+        slug: req.body?.slug,
+      });
+      res.json({ category });
     } catch (err) {
       fail(res, err);
     }

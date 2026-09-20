@@ -9,9 +9,12 @@ import {
   SOCIAL_PHOTOS,
   formatTimeAgo,
   uniqueDogSlug,
+  slugifyDogName,
+  forumTopicPath,
   type ClubDto,
   type CommentDto,
   type FeedPostDto,
+  type ForumCategoryDto,
   type ForumTopicDto,
   type NotificationDto,
   type PublicMember,
@@ -65,9 +68,21 @@ export type SocialLike = { id: string; postId: string; memberId: string };
 export type SocialSave = { id: string; postId: string; memberId: string };
 export type SocialFollow = { id: string; followerId: string; followingId: string };
 
+export type SocialForumCategory = {
+  id: string;
+  slug: string;
+  nameTr: string;
+  nameEn: string;
+  descriptionTr: string;
+  descriptionEn: string;
+  hidden: boolean;
+  sort: number;
+};
+
 export type SocialTopic = {
   id: string;
   authorId: string;
+  categoryId: string;
   title: string;
   body: string;
   tag: string;
@@ -130,6 +145,7 @@ type SocialDb = {
   likes: SocialLike[];
   saves: SocialSave[];
   follows: SocialFollow[];
+  categories: SocialForumCategory[];
   topics: SocialTopic[];
   replies: SocialReply[];
   clubs: SocialClub[];
@@ -162,6 +178,68 @@ function finalizeMembers(
   });
 }
 
+function defaultCategories(): SocialForumCategory[] {
+  return [
+    {
+      id: "fc-bakim",
+      slug: "bakim",
+      nameTr: "Bakım",
+      nameEn: "Grooming",
+      descriptionTr: "Tüy, tarak, kuaför ve ev bakımı.",
+      descriptionEn: "Coat, brush, groomer, and home care.",
+      hidden: false,
+      sort: 1,
+    },
+    {
+      id: "fc-saglik",
+      slug: "saglik",
+      nameTr: "Sağlık",
+      nameEn: "Health",
+      descriptionTr: "Aşı, veteriner ve yavru sağlığı.",
+      descriptionEn: "Vaccines, vets, and puppy health.",
+      hidden: false,
+      sort: 2,
+    },
+    {
+      id: "fc-geziler",
+      slug: "geziler",
+      nameTr: "Geziler",
+      nameEn: "Walks",
+      descriptionTr: "Park yürüyüşleri ve gezi planları.",
+      descriptionEn: "Park walks and outing plans.",
+      hidden: false,
+      sort: 3,
+    },
+    {
+      id: "fc-sahiplenme",
+      slug: "sahiplenme",
+      nameTr: "Sahiplenme",
+      nameEn: "Adoption",
+      descriptionTr: "Sahiplenme ve yeni poodle sahipleri.",
+      descriptionEn: "Adoption and new poodle owners.",
+      hidden: false,
+      sort: 4,
+    },
+  ];
+}
+
+function categoryIdForTag(tag: string, categories: SocialForumCategory[]): string {
+  const map: Record<string, string> = {
+    Bakım: "fc-bakim",
+    Sağlık: "fc-saglik",
+    Kulüp: "fc-geziler",
+    Sohbet: "fc-geziler",
+    Sahiplenme: "fc-sahiplenme",
+    Grooming: "fc-bakim",
+    Health: "fc-saglik",
+    Walks: "fc-geziler",
+    Adoption: "fc-sahiplenme",
+  };
+  const id = map[tag];
+  if (id && categories.some((c) => c.id === id)) return id;
+  return categories[0]?.id || "fc-bakim";
+}
+
 function migrateDb(state: SocialDb) {
   const taken: string[] = [];
   for (const member of state.members) {
@@ -171,6 +249,14 @@ function migrateDb(state: SocialDb) {
     }
     taken.push(member.dogSlug);
   }
+  if (!state.categories?.length) {
+    state.categories = defaultCategories();
+  }
+  for (const topic of state.topics) {
+    if (!topic.categoryId) {
+      topic.categoryId = categoryIdForTag(topic.tag, state.categories);
+    }
+  }
   for (const note of state.notifications) {
     if (!note.actorName) {
       note.actorName = note.text.split(" ")[0] ? note.text.replace(/ (seni|gönderine|gönderini|forum).*$/, "").trim() : "";
@@ -179,6 +265,12 @@ function migrateDb(state: SocialDb) {
       const username = note.href.slice("/uye/".length);
       const target = state.members.find((m) => m.username === username);
       if (target?.dogSlug) note.href = `/${target.dogSlug}`;
+    }
+    if (/^\/forum\/[^/]+$/.test(note.href)) {
+      const topicId = note.href.slice("/forum/".length);
+      const topic = state.topics.find((t) => t.id === topicId);
+      const category = state.categories.find((c) => c.id === topic?.categoryId);
+      if (topic && category) note.href = `/forum/${category.slug}/${topic.id}`;
     }
   }
 }
@@ -450,10 +542,12 @@ function buildSeed(): SocialDb {
     { id: "f7", followerId: "m-admin", followingId: "m-elif" },
   ];
 
+  const categories = defaultCategories();
   const topics: SocialTopic[] = [
     {
       id: "t1",
       authorId: "m-zeynep",
+      categoryId: "fc-bakim",
       title: "Toy poodle tüy bakımı için tarak mı yoksa fırça mı kullanıyorsunuz?",
       body: "Merhaba, on bir aylık toy poodle'ım Pamuk var. Her sabah tarıyorum ama kulak arkası ve koltuk altı yine düğümleniyor. Siz metal tarak mı yoksa pin fırça mı kullanıyorsunuz? Kuaföre kaç haftada bir götürüyorsunuz?",
       tag: "Bakım",
@@ -464,6 +558,7 @@ function buildSeed(): SocialDb {
     {
       id: "t2",
       authorId: "m-hakan",
+      categoryId: "fc-saglik",
       title: "Yavru poodle için ilk aşı takvimi nasıl olmalı?",
       body: "Sekiz haftalık krem rengi bir poodle aldık. İç parazit, karma ve kuduz aşılarının sırasını netleştirmek istiyorum. Ankara'da güvendiğiniz bir veteriner var mı?",
       tag: "Sağlık",
@@ -474,12 +569,24 @@ function buildSeed(): SocialDb {
     {
       id: "t3",
       authorId: "m-lara",
+      categoryId: "fc-geziler",
       title: "İstanbul Avrupa yakasında poodle yürüyüş grubu kuruyoruz",
       body: "Her cumartesi saat 09.30'da Maçka Parkı girişinde toy ve minyatür poodle'larla yürüyoruz. Sakin köpekler geliyor ve tasma zorunlu. Bu hafta dokuz kişi var, yeni yüzler bekleriz.",
-      tag: "Kulüp",
+      tag: "Geziler",
       hidden: false,
       views: 502,
       createdAt: hoursAgo(50),
+    },
+    {
+      id: "t4",
+      authorId: "m-ayse",
+      categoryId: "fc-sahiplenme",
+      title: "Ankara'da toy poodle sahiplendirmek isteyen var mı?",
+      body: "Tanıdık bir evde üç yaşında, aşıları tam bir dişi toy poodle yeni yuva arıyor. Sorumlu sahiplenme, sözleşme ve ilk veteriner kontrolü şart. Çankaya'da tanışabiliriz.",
+      tag: "Sahiplenme",
+      hidden: false,
+      views: 88,
+      createdAt: hoursAgo(12),
     },
   ];
 
@@ -489,6 +596,7 @@ function buildSeed(): SocialDb {
     { id: "r3", topicId: "t2", authorId: "m-ayse", body: "Sekiz, on ve on iki haftada karma aşı, kuduz ise on ikinci haftadan sonra yapılıyor. Çankaya'da Pati Kliniği'ni öneririm.", hidden: false, createdAt: hoursAgo(20) },
     { id: "r4", topicId: "t3", authorId: "m-ceren", body: "Anadolu yakasından da gelen oluyor. Feribotla on dakikada Maçka'ya iniyoruz.", hidden: false, createdAt: hoursAgo(30) },
     { id: "r5", topicId: "t3", authorId: "m-deniz", body: "İzmir'de benzer bir grup kursak çok iyi olur. Toplantı düzeninizi yazar mısınız?", hidden: false, createdAt: hoursAgo(28) },
+    { id: "r6", topicId: "t4", authorId: "m-hakan", body: "Çankaya'dayız, bu hafta sonu tanışabiliriz. Aşı karnesini görebilir miyiz?", hidden: false, createdAt: hoursAgo(10) },
   ];
 
   const clubs: SocialClub[] = [
@@ -588,6 +696,7 @@ function buildSeed(): SocialDb {
     likes,
     saves,
     follows,
+    categories,
     topics,
     replies,
     clubs,
@@ -607,6 +716,7 @@ function emptyDb(): SocialDb {
     likes: [],
     saves: [],
     follows: [],
+    categories: [],
     topics: [],
     replies: [],
     clubs: [],
@@ -623,6 +733,7 @@ function loadFile(): SocialDb | null {
     const raw = fs.readFileSync(DATA_PATH, "utf8");
     const parsed = JSON.parse(raw) as SocialDb;
     if (!parsed?.members?.length) return null;
+    if (!Array.isArray(parsed.categories)) parsed.categories = [];
     return parsed;
   } catch {
     return null;
@@ -763,8 +874,38 @@ function toTopic(topic: SocialTopic, includeHiddenReplies = false): ForumTopicDt
     views: topic.views,
     excerpt: topic.body.slice(0, 140),
     tag: topic.tag,
+    categoryId: topic.categoryId,
+    categorySlug: categoryById(topic.categoryId)?.slug || "",
     body: topic.body,
     comments,
+  };
+}
+
+function categoryById(id: string) {
+  return db.categories.find((c) => c.id === id);
+}
+
+function categoryBySlug(slug: string) {
+  const key = decodeURIComponent(slug).toLowerCase();
+  return db.categories.find((c) => c.slug.toLowerCase() === key);
+}
+
+function toCategoryDto(category: SocialForumCategory, includeHiddenTopics = false): ForumCategoryDto {
+  const topics = db.topics.filter(
+    (t) => t.categoryId === category.id && (includeHiddenTopics || !t.hidden),
+  );
+  const last = topics.slice().sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+  return {
+    id: category.id,
+    slug: category.slug,
+    nameTr: category.nameTr,
+    nameEn: category.nameEn,
+    descriptionTr: category.descriptionTr,
+    descriptionEn: category.descriptionEn,
+    hidden: category.hidden,
+    sort: category.sort,
+    topicCount: topics.length,
+    lastActivity: last?.createdAt,
   };
 }
 
@@ -1080,25 +1221,58 @@ export function listSaved(memberId: string): FeedPostDto[] {
 
 export function listForum(viewerAdmin = false): ForumTopicDto[] {
   return db.topics
-    .filter((t) => viewerAdmin || !t.hidden)
+    .filter((t) => {
+      if (!viewerAdmin && t.hidden) return false;
+      const category = categoryById(t.categoryId);
+      if (!category) return false;
+      if (!viewerAdmin && category.hidden) return false;
+      return true;
+    })
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .map((t) => toTopic(t, viewerAdmin))
     .filter((t): t is ForumTopicDto => !!t);
 }
 
-export function getForumTopic(id: string, increment = false) {
-  const topic = db.topics.find((t) => t.id === id && !t.hidden);
-  if (!topic) return null;
-  if (increment) {
-    mutate((state) => {
-      const row = state.topics.find((t) => t.id === id);
-      if (row) row.views += 1;
-    });
-  }
-  return toTopic(topic);
+export function listCategories(viewerAdmin = false): ForumCategoryDto[] {
+  return db.categories
+    .filter((c) => viewerAdmin || !c.hidden)
+    .sort((a, b) => a.sort - b.sort || a.nameTr.localeCompare(b.nameTr, "tr"))
+    .map((c) => toCategoryDto(c, viewerAdmin));
 }
 
-export function createTopic(authorId: string, title: string, body: string, tag: string) {
+export function getCategoryBySlug(slug: string, viewerAdmin = false) {
+  const category = categoryBySlug(slug);
+  if (!category) return null;
+  if (category.hidden && !viewerAdmin) return null;
+  const topics = db.topics
+    .filter((t) => t.categoryId === category.id && (viewerAdmin || !t.hidden))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    .map((t) => toTopic(t, viewerAdmin))
+    .filter((t): t is ForumTopicDto => !!t);
+  return { category: toCategoryDto(category, viewerAdmin), topics };
+}
+
+export function getForumTopic(id: string, increment = false, viewerAdmin = false) {
+  const topic = db.topics.find((t) => t.id === id);
+  if (!topic) return null;
+  const category = categoryById(topic.categoryId);
+  if (!topic.hidden && category && (viewerAdmin || !category.hidden)) {
+    if (increment) {
+      mutate((state) => {
+        const row = state.topics.find((t) => t.id === id);
+        if (row) row.views += 1;
+      });
+    }
+    return toTopic(topic);
+  }
+  if (viewerAdmin) return toTopic(topic, true);
+  if (topic.hidden) return null;
+  return null;
+}
+
+export function createTopic(authorId: string, title: string, body: string, categorySlug: string) {
+  const category = categoryBySlug(categorySlug);
+  if (!category || category.hidden) errFor(authorId, "Başlık bulunamadı.", "Category not found.", 404);
   const t = title.trim();
   const b = body.trim();
   if (t.length < 8 || b.length < 8) {
@@ -1107,9 +1281,10 @@ export function createTopic(authorId: string, title: string, body: string, tag: 
   const topic: SocialTopic = {
     id: nid(),
     authorId,
+    categoryId: category.id,
     title: t,
     body: b,
-    tag: tag.trim() || "Sohbet",
+    tag: category.nameTr,
     hidden: false,
     views: 1,
     createdAt: new Date().toISOString(),
@@ -1117,6 +1292,57 @@ export function createTopic(authorId: string, title: string, body: string, tag: 
   return mutate((state) => {
     state.topics.unshift(topic);
     return toTopic(topic);
+  });
+}
+
+export function createCategory(
+  actorId: string,
+  input: { nameTr: string; nameEn?: string; descriptionTr?: string; descriptionEn?: string },
+): ForumCategoryDto {
+  const actor = memberById(actorId);
+  if (!actor?.isAdmin) errFor(actorId, "Yalnızca yöneticiler başlık açabilir.", "Only administrators can create categories.", 403);
+  const nameTr = input.nameTr.trim();
+  const nameEn = (input.nameEn || input.nameTr).trim();
+  if (nameTr.length < 2) errFor(actorId, "Başlık adı daha uzun olmalı.", "Category name needs to be longer.");
+  const taken = db.categories.map((c) => c.slug);
+  const slug = uniqueDogSlug(nameTr, taken);
+  const category: SocialForumCategory = {
+    id: nid(),
+    slug,
+    nameTr,
+    nameEn: nameEn || nameTr,
+    descriptionTr: (input.descriptionTr || "").trim().slice(0, 180),
+    descriptionEn: (input.descriptionEn || input.descriptionTr || "").trim().slice(0, 180),
+    hidden: false,
+    sort: (db.categories.reduce((max, c) => Math.max(max, c.sort), 0) || 0) + 1,
+  };
+  return mutate((state) => {
+    state.categories.push(category);
+    return toCategoryDto(category, true);
+  });
+}
+
+export function updateCategory(
+  actorId: string,
+  id: string,
+  patch: Partial<Pick<SocialForumCategory, "nameTr" | "nameEn" | "descriptionTr" | "descriptionEn" | "hidden" | "slug">>,
+): ForumCategoryDto {
+  const actor = memberById(actorId);
+  if (!actor?.isAdmin) errFor(actorId, "Yalnızca yöneticiler başlık düzenleyebilir.", "Only administrators can edit categories.", 403);
+  return mutate((state) => {
+    const category = state.categories.find((c) => c.id === id);
+    if (!category) errFor(actorId, "Başlık bulunamadı.", "Category not found.", 404);
+    if (patch.nameTr !== undefined) category.nameTr = patch.nameTr.trim() || category.nameTr;
+    if (patch.nameEn !== undefined) category.nameEn = patch.nameEn.trim() || category.nameEn;
+    if (patch.descriptionTr !== undefined) category.descriptionTr = patch.descriptionTr.trim().slice(0, 180);
+    if (patch.descriptionEn !== undefined) category.descriptionEn = patch.descriptionEn.trim().slice(0, 180);
+    if (patch.hidden !== undefined) category.hidden = !!patch.hidden;
+    if (patch.slug !== undefined) {
+      const next = slugifyDogName(patch.slug);
+      const clash = state.categories.some((c) => c.id !== id && c.slug === next);
+      if (next && !clash) category.slug = next;
+    }
+    return toCategoryDto(category, true);
   });
 }
 
@@ -1136,7 +1362,8 @@ export function addReply(topicId: string, memberId: string, body: string) {
   return mutate((state) => {
     state.replies.push(reply);
     const actor = memberById(memberId);
-    notify(topic.authorId, "reply", `${actor?.name || "Bir üye"} forum konusuna yanıt verdi.`, `/forum/${topicId}`, memberId);
+    const dto = toTopic(topic);
+    notify(topic.authorId, "reply", `${actor?.name || "Bir üye"} forum konusuna yanıt verdi.`, dto ? forumTopicPath(dto) : `/forum/${topicId}`, memberId);
     return toTopic(topic);
   });
 }

@@ -3,7 +3,7 @@ import { Link, useSearch } from "wouter";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import CommunityLayout from "@/components/community/CommunityLayout";
 import { useQuery } from "@tanstack/react-query";
-import { profilePath, type FeedPostDto, type ForumTopicDto, type PublicMember } from "@shared/social";
+import { forumTopicPath, profilePath, type FeedPostDto, type ForumTopicDto, type PublicMember } from "@shared/social";
 import { socialGet } from "@/lib/social-api";
 import { useCommunityI18n } from "@/lib/community-i18n";
 
@@ -93,7 +93,7 @@ export default function CommunitySearchPage() {
             {(data?.topics || []).map((topic) => (
               <li key={topic.id}>
                 <Link
-                  href={`/forum/${topic.id}`}
+                  href={forumTopicPath(topic)}
                   className="block rounded-xl border border-[#E4DCF3] p-3"
                   data-testid={`search-topic-${topic.id}`}
                 >

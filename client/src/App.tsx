@@ -18,6 +18,7 @@ const Landing = lazy(() => import("@/pages/landing"));
 const AdLanding = lazy(() => import("@/pages/ad-landing"));
 const CommunityFeedPage = lazy(() => import("@/pages/community-feed"));
 const CommunityForumPage = lazy(() => import("@/pages/community-forum"));
+const CommunityForumCategoryPage = lazy(() => import("@/pages/community-forum-category"));
 const CommunityForumTopicPage = lazy(() => import("@/pages/community-forum-topic"));
 const CommunityClubsPage = lazy(() => import("@/pages/community-clubs"));
 const CommunityProfilePage = lazy(() => import("@/pages/community-profile"));
@@ -140,7 +141,8 @@ function Router() {
     <Suspense fallback={<PageLoader />}>
       <Switch>
         <Route path="/">{() => <CommunityFeedPage />}</Route>
-        <Route path="/forum/:id" component={CommunityForumTopicPage} />
+        <Route path="/forum/:categorySlug/:topicId" component={CommunityForumTopicPage} />
+        <Route path="/forum/:categorySlug" component={CommunityForumCategoryPage} />
         <Route path="/forum" component={CommunityForumPage} />
         <Route path="/kulupler/:id" component={CommunityClubPage} />
         <Route path="/kulupler" component={CommunityClubsPage} />
