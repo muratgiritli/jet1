@@ -15,16 +15,27 @@ function readCookie(req: Request, name: string): string | undefined {
   return undefined;
 }
 
-function setSessionCookie(res: Response, token: string) {
-  const secure = process.env.NODE_ENV === "production" ? "; Secure" : "";
-  res.setHeader(
-    "Set-Cookie",
-    `${COOKIE}=${encodeURIComponent(token)}; Path=/; HttpOnly; SameSite=Lax; Max-Age=${14 * 24 * 3600}${secure}`,
-  );
+function isHttpsRequest(req: Request): boolean {
+  const forwarded = String(req.headers["x-forwarded-proto"] || "")
+    .split(",")[0]
+    .trim()
+    .toLowerCase();
+  if (forwarded === "https") return true;
+  if (forwarded === "http") return false;
+  return req.secure === true || req.protocol === "https";
 }
 
-function clearSessionCookie(res: Response) {
-  res.setHeader("Set-Cookie", `${COOKIE}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`);
+function cookieFlags(req: Request, maxAge: number): string {
+  const secure = isHttpsRequest(req) ? "; Secure" : "";
+  return `Path=/; HttpOnly; SameSite=Lax; Max-Age=${maxAge}${secure}`;
+}
+
+function setSessionCookie(req: Request, res: Response, token: string) {
+  res.setHeader("Set-Cookie", `${COOKIE}=${encodeURIComponent(token)}; ${cookieFlags(req, 14 * 24 * 3600)}`);
+}
+
+function clearSessionCookie(req: Request, res: Response) {
+  res.setHeader("Set-Cookie", `${COOKIE}=; ${cookieFlags(req, 0)}`);
 }
 
 function currentMember(req: Request) {
@@ -69,7 +80,7 @@ export function registerSocialRoutes(app: Express) {
       const password = String(req.body?.password || "");
       const member = store.login(identifier, password);
       if (!member) return res.status(401).json({ message: "Kullanıcı adı veya şifre yanlış." });
-      setSessionCookie(res, store.createSession(member.id));
+      setSessionCookie(req, res, store.createSession(member.id));
       res.json({ member: store.toPublicMember(member, member.id) });
     } catch (err) {
       fail(res, err);
@@ -86,7 +97,7 @@ export function registerSocialRoutes(app: Express) {
         city: String(req.body?.city || ""),
         dogName: String(req.body?.dogName || ""),
       });
-      setSessionCookie(res, store.createSession(member.id));
+      setSessionCookie(req, res, store.createSession(member.id));
       res.status(201).json({ member: store.toPublicMember(member, member.id) });
     } catch (err) {
       fail(res, err);
@@ -95,7 +106,7 @@ export function registerSocialRoutes(app: Express) {
 
   app.post("/api/social/logout", (req, res) => {
     store.destroySession(readCookie(req, COOKIE));
-    clearSessionCookie(res);
+    clearSessionCookie(req, res);
     res.json({ ok: true });
   });
 
