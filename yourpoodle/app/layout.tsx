@@ -1,0 +1,1 @@
+import "./globals.css";export const metadata={title:"YourPoodle — Global Poodle Community",description:"One Global Poodle Family"};export default function Layout({children}:{children:React.ReactNode}){return <html lang="tr"><body>{children}</body></html>}
