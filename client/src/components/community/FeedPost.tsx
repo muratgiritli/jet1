@@ -1,6 +1,7 @@
 import { Link, useLocation } from "wouter";
 import { Bookmark, Heart, MessageCircle } from "lucide-react";
-import type { FeedPostDto } from "@shared/social";
+import { profilePath, type FeedPostDto } from "@shared/social";
+import { useCommunityI18n } from "@/lib/community-i18n";
 import { useAuthPrompt } from "@/components/community/AuthPrompt";
 import { socialSend } from "@/lib/social-api";
 import { queryClient } from "@/lib/queryClient";
@@ -9,7 +10,9 @@ import { useSocialAuth } from "@/contexts/SocialAuthContext";
 export default function FeedPost({ post }: { post: FeedPostDto }) {
   const { requireAuth } = useAuthPrompt();
   const { me } = useSocialAuth();
+  const { t, timeAgo } = useCommunityI18n();
   const [, setLocation] = useLocation();
+  const href = profilePath(post);
 
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
@@ -45,7 +48,7 @@ export default function FeedPost({ post }: { post: FeedPostDto }) {
   return (
     <article className="bg-white scroll-mt-16" data-testid={`feed-post-${post.id}`}>
       <div className="flex items-center gap-2.5 px-3 py-2.5">
-        <Link href={`/uye/${post.username}`}>
+        <Link href={href}>
           <img
             src={post.avatar}
             alt=""
@@ -53,11 +56,11 @@ export default function FeedPost({ post }: { post: FeedPostDto }) {
           />
         </Link>
         <div className="min-w-0 flex-1">
-          <Link href={`/uye/${post.username}`} className="text-[13px] font-semibold text-[#1C1B1F] leading-tight truncate block">
+          <Link href={href} className="text-[13px] font-semibold text-[#1C1B1F] leading-tight truncate block">
             {post.author}
           </Link>
           <p className="text-[11px] text-[#6B6573] truncate">
-            {post.city} · {post.time}
+            {post.city} · {timeAgo(post.createdAt)}
           </p>
         </div>
         {me?.username !== post.username && (
@@ -71,7 +74,7 @@ export default function FeedPost({ post }: { post: FeedPostDto }) {
             }`}
             data-testid={`btn-follow-${post.id}`}
           >
-            {post.isFollowing ? "Takip" : "Takip et"}
+            {post.isFollowing ? t("following") : t("follow")}
           </button>
         )}
       </div>
@@ -79,7 +82,7 @@ export default function FeedPost({ post }: { post: FeedPostDto }) {
       <button type="button" className="block w-full" onClick={() => setLocation(`/gonderi/${post.id}`)}>
         <img
           src={post.image}
-          alt={`${post.dogName} paylaşımı`}
+          alt={t("photoAlt", { name: post.dogName })}
           className="w-full aspect-square object-cover bg-[#F3EFFA]"
           data-testid={`img-post-${post.id}`}
         />
@@ -110,7 +113,7 @@ export default function FeedPost({ post }: { post: FeedPostDto }) {
           type="button"
           onClick={() => void save()}
           className="h-10 w-10 ml-auto flex items-center justify-center text-[#1C1B1F]"
-          aria-label="Kaydet"
+          aria-label={t("save")}
           data-testid={`btn-save-${post.id}`}
         >
           <Bookmark className={`w-6 h-6 ${post.saved ? "fill-[#8E7CC3] text-[#8E7CC3]" : ""}`} />
@@ -118,7 +121,7 @@ export default function FeedPost({ post }: { post: FeedPostDto }) {
       </div>
 
       <p className="px-3 pb-3 text-[13px] leading-relaxed text-[#1C1B1F]">
-        <Link href={`/uye/${post.username}`} className="font-semibold mr-1">
+        <Link href={href} className="font-semibold mr-1">
           {post.author}
         </Link>
         {post.caption}

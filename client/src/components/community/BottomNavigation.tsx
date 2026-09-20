@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Home, MessagesSquare, Plus, Users, User } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuthPrompt } from "@/components/community/AuthPrompt";
+import { useCommunityI18n } from "@/lib/community-i18n";
 import { SOCIAL_PHOTOS } from "@shared/social";
 import { socialSend } from "@/lib/social-api";
 import { queryClient } from "@/lib/queryClient";
@@ -13,17 +14,17 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-const TABS = [
-  { name: "Akış", href: "/", icon: Home, testId: "nav-akis" },
-  { name: "Forum", href: "/forum", icon: MessagesSquare, testId: "nav-forum" },
-  { name: "+", href: "__compose", icon: Plus, testId: "nav-compose" },
-  { name: "Kulüpler", href: "/kulupler", icon: Users, testId: "nav-kulupler" },
-  { name: "Profil", href: "/profil", icon: User, testId: "nav-profil" },
-] as const;
-
 export default function BottomNavigation() {
   const [location, setLocation] = useLocation();
   const { requireAuth } = useAuthPrompt();
+  const { t } = useCommunityI18n();
+  const tabs = [
+    { name: t("navFeed"), href: "/", icon: Home, testId: "nav-akis" },
+    { name: t("navForum"), href: "/forum", icon: MessagesSquare, testId: "nav-forum" },
+    { name: "+", href: "__compose", icon: Plus, testId: "nav-compose" },
+    { name: t("navClubs"), href: "/kulupler", icon: Users, testId: "nav-kulupler" },
+    { name: t("navProfile"), href: "/profil", icon: User, testId: "nav-profil" },
+  ] as const;
   const [composeOpen, setComposeOpen] = useState(false);
   const [caption, setCaption] = useState("");
   const [image, setImage] = useState<string>(SOCIAL_PHOTOS[0]);
@@ -48,7 +49,7 @@ export default function BottomNavigation() {
       await queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
       setLocation("/");
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Paylaşılamadı.");
+      setError(err instanceof Error && err.message ? err.message : t("shareFailed"));
     } finally {
       setBusy(false);
     }
@@ -61,7 +62,7 @@ export default function BottomNavigation() {
       data-testid="community-bottom-nav"
     >
       <div className="max-w-lg mx-auto h-14 flex items-center justify-around px-1">
-        {TABS.map((tab) => {
+        {tabs.map((tab) => {
           const compose = tab.href === "__compose";
           const active = !compose && isActive(tab.href);
 
@@ -77,7 +78,7 @@ export default function BottomNavigation() {
                   }
                 }}
                 className="-mt-4 h-12 w-12 rounded-full bg-[#8E7CC3] text-white shadow-[0_6px_16px_rgba(142,124,195,0.35)] flex items-center justify-center"
-                aria-label="Yeni gönderi"
+                aria-label={t("composeAria")}
                 data-testid={tab.testId}
               >
                 <Plus className="w-6 h-6" />
@@ -106,9 +107,9 @@ export default function BottomNavigation() {
       <Dialog open={composeOpen} onOpenChange={setComposeOpen}>
         <DialogContent className="max-w-[320px] rounded-2xl p-5" data-testid="dialog-compose">
           <DialogHeader className="text-left space-y-2">
-            <DialogTitle className="text-[18px] text-[#1C1B1F]">Yeni gönderi</DialogTitle>
+            <DialogTitle className="text-[18px] text-[#1C1B1F]">{t("newPost")}</DialogTitle>
             <DialogDescription className="text-[13px] text-[#5F5B66]">
-              Poodle'ının anını toplulukla paylaş.
+              {t("newPostHint")}
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-5 gap-1.5">
@@ -127,7 +128,7 @@ export default function BottomNavigation() {
             value={caption}
             onChange={(e) => setCaption(e.target.value)}
             rows={4}
-            placeholder="Ne anlatmak istersin?"
+            placeholder={t("captionPlaceholder")}
             className="w-full rounded-xl border border-[#E4DCF3] bg-[#FAF8FD] p-3 text-sm text-[#1C1B1F] placeholder:text-[#8A8494] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C4B5E8]"
             data-testid="input-compose-caption"
           />
@@ -139,7 +140,7 @@ export default function BottomNavigation() {
             className="h-11 w-full rounded-full bg-[#8E7CC3] text-white text-sm font-semibold disabled:opacity-60"
             data-testid="btn-compose-share"
           >
-            {busy ? "Paylaşılıyor…" : "Paylaş"}
+            {busy ? t("sharing") : t("share")}
           </button>
         </DialogContent>
       </Dialog>

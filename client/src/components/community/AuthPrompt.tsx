@@ -1,6 +1,7 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
 import { useSocialAuth } from "@/contexts/SocialAuthContext";
+import { useCommunityI18n } from "@/lib/community-i18n";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ export function useAuthPrompt() {
 
 export function AuthPromptProvider({ children }: { children: ReactNode }) {
   const { isLoggedIn } = useSocialAuth();
+  const { t } = useCommunityI18n();
   const [open, setOpen] = useState(false);
   const [location, setLocation] = useLocation();
 
@@ -50,9 +52,9 @@ export function AuthPromptProvider({ children }: { children: ReactNode }) {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-[320px] rounded-2xl p-5" data-testid="dialog-auth-prompt">
           <DialogHeader className="text-left space-y-2">
-            <DialogTitle className="text-[18px] text-[#1C1B1F]">YourPoodle'a katıl</DialogTitle>
+            <DialogTitle className="text-[18px] text-[#1C1B1F]">{t("joinCommunityTitle")}</DialogTitle>
             <DialogDescription className="text-[13px] leading-relaxed text-[#5F5B66]">
-              Beğenmek, yorum yapmak, kaydetmek veya paylaşmak için giriş yapın ya da üye olun.
+              {t("joinCommunityBody")}
             </DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2 mt-1">
@@ -62,7 +64,7 @@ export function AuthPromptProvider({ children }: { children: ReactNode }) {
               className="h-11 rounded-full bg-[#8E7CC3] text-white text-sm font-semibold"
               data-testid="btn-auth-login"
             >
-              Giriş yap
+              {t("loginAction")}
             </button>
             <button
               type="button"
@@ -70,7 +72,7 @@ export function AuthPromptProvider({ children }: { children: ReactNode }) {
               className="h-11 rounded-full border border-[#D9D0EC] bg-[#F6F3FB] text-[#5B4B86] text-sm font-semibold"
               data-testid="btn-auth-register"
             >
-              Üye ol
+              {t("register")}
             </button>
           </div>
         </DialogContent>

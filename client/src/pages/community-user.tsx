@@ -1,40 +1,52 @@
-import { Link, useRoute } from "wouter";
+import { useEffect } from "react";
+import { Link, useLocation, useRoute } from "wouter";
 import { ArrowLeft } from "lucide-react";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import CommunityLayout from "@/components/community/CommunityLayout";
 import { useQuery } from "@tanstack/react-query";
-import type { FeedPostDto, PublicMember } from "@shared/social";
+import { profilePath, type FeedPostDto, type PublicMember } from "@shared/social";
 import { socialGet, socialSend } from "@/lib/social-api";
 import { useAuthPrompt } from "@/components/community/AuthPrompt";
 import { useSocialAuth } from "@/contexts/SocialAuthContext";
+import { useCommunityI18n } from "@/lib/community-i18n";
 import { queryClient } from "@/lib/queryClient";
 
-export default function CommunityUserPage() {
-  const [, params] = useRoute("/uye/:username");
-  const username = params?.username || "";
+export default function CommunityUserPage({ dogSlug }: { dogSlug?: string }) {
+  const [, userParams] = useRoute("/uye/:username");
+  const username = userParams?.username || "";
   const { requireAuth } = useAuthPrompt();
   const { me } = useSocialAuth();
+  const { t } = useCommunityI18n();
+  const [, setLocation] = useLocation();
+
   const { data, isLoading } = useQuery({
-    queryKey: ["/api/social/members", username],
+    queryKey: dogSlug ? ["/api/social/slug", dogSlug] : ["/api/social/members", username],
     queryFn: () =>
       socialGet<{ member: PublicMember; posts: FeedPostDto[]; followers: PublicMember[]; following: PublicMember[] }>(
-        `/api/social/members/${username}`,
+        dogSlug ? `/api/social/slug/${dogSlug}` : `/api/social/members/${username}`,
       ),
-    enabled: !!username,
+    enabled: !!(dogSlug || username),
     staleTime: 5_000,
   });
 
+  useEffect(() => {
+    if (!dogSlug && data?.member?.dogSlug) {
+      setLocation(profilePath(data.member));
+    }
+  }, [dogSlug, data?.member, setLocation]);
+
   const follow = async () => {
-    if (!requireAuth()) return;
-    await socialSend("POST", `/api/social/members/${username}/follow`);
-    await queryClient.invalidateQueries({ queryKey: ["/api/social/members", username] });
+    if (!requireAuth() || !data?.member) return;
+    await socialSend("POST", `/api/social/members/${data.member.username}/follow`);
+    await queryClient.invalidateQueries({ queryKey: ["/api/social/members", data.member.username] });
+    await queryClient.invalidateQueries({ queryKey: ["/api/social/slug", data.member.dogSlug] });
     await queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
   };
 
   if (!isLoading && !data) {
     return (
       <CommunityLayout>
-        <div className="px-4 py-12 text-center text-sm text-[#6B6573]">Üye bulunamadı.</div>
+        <div className="px-4 py-12 text-center text-sm text-[#6B6573]">{t("memberMissing")}</div>
       </CommunityLayout>
     );
   }
@@ -44,28 +56,28 @@ export default function CommunityUserPage() {
   return (
     <CommunityLayout>
       <SEO
-        title={`${member?.name || username} — YourPoodle`}
-        description={member?.bio || "Poodle sahibi profili"}
-        canonical={`${SITE_DOMAIN}/uye/${username}`}
+        title={`${member?.name || username || dogSlug} — YourPoodle`}
+        description={member?.bio || t("poodleProfile")}
+        canonical={`${SITE_DOMAIN}${member ? profilePath(member) : `/uye/${username}`}`}
       />
       <div className="px-3 pt-3">
         <Link href="/" className="inline-flex items-center gap-1 text-[13px] font-medium text-[#6A5A96]">
           <ArrowLeft className="w-4 h-4" />
-          Akış
+          {t("backFeed")}
         </Link>
       </div>
       {member && (
-        <div className="px-4 pt-4 text-center">
+        <div className="px-4 pt-4 text-center" data-testid="dog-profile">
           <img src={member.avatar} alt="" className="mx-auto w-20 h-20 rounded-full object-cover ring-2 ring-[#D9D0EC]" />
           <h1 className="mt-3 text-lg font-extrabold">{member.name}</h1>
           <p className="text-[13px] text-[#6B6573]">{member.dogName} · {member.city} · @{member.username}</p>
           {member.bio && <p className="mt-2 text-[13px] text-[#2B2833]">{member.bio}</p>}
           <p className="mt-2 text-[12px] text-[#6B6573]">
-            {member.postCount} gönderi · {member.followers} takipçi · {member.following} takip
+            {t("postsCount", { n: member.postCount })} · {t("followersCount", { n: member.followers })} · {t("followingCount", { n: member.following })}
           </p>
           {me?.username === member.username ? (
             <Link href="/profil" className="mt-3 inline-flex h-10 px-4 items-center rounded-full border border-[#D9D0EC] text-sm font-semibold text-[#5B4B86]">
-              Panele git
+              {t("goToPanel")}
             </Link>
           ) : (
             <button
@@ -76,7 +88,7 @@ export default function CommunityUserPage() {
               }`}
               data-testid="btn-follow-profile"
             >
-              {member.isFollowing ? "Takiptesin" : "Takip et"}
+              {member.isFollowing ? t("followingYou") : t("follow")}
             </button>
           )}
         </div>

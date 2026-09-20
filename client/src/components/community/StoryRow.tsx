@@ -5,11 +5,13 @@ import { useAuthPrompt } from "@/components/community/AuthPrompt";
 import { socialSend } from "@/lib/social-api";
 import { queryClient } from "@/lib/queryClient";
 import { useSocialAuth } from "@/contexts/SocialAuthContext";
+import { useCommunityI18n } from "@/lib/community-i18n";
 
 export default function StoryRow({ stories }: { stories: StoryDto[] }) {
   const [active, setActive] = useState<StoryDto | null>(null);
   const { requireAuth } = useAuthPrompt();
   const { me } = useSocialAuth();
+  const { t, timeAgo } = useCommunityI18n();
 
   const follow = async (story: StoryDto) => {
     if (!requireAuth()) return;
@@ -38,7 +40,7 @@ export default function StoryRow({ stories }: { stories: StoryDto[] }) {
                 <span className="block w-full h-full rounded-full p-[2px] bg-white">
                   <img
                     src={story.avatar}
-                    alt={`${story.dogName} hikâyesi`}
+                    alt={`${story.dogName} ${t("storyAria")}`}
                     className="w-full h-full rounded-full object-cover"
                   />
                 </span>
@@ -74,14 +76,14 @@ export default function StoryRow({ stories }: { stories: StoryDto[] }) {
               <img src={active.avatar} alt="" className="w-8 h-8 rounded-full object-cover ring-2 ring-white/70" />
               <div className="min-w-0">
                 <p className="text-white text-sm font-semibold truncate">{active.dogName}</p>
-                <p className="text-white/70 text-[11px] truncate">{active.name} · {active.city} · {active.time}</p>
+                <p className="text-white/70 text-[11px] truncate">{active.name} · {active.city} · {timeAgo(active.createdAt)}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setActive(null)}
               className="h-9 w-9 rounded-full bg-white/15 text-white flex items-center justify-center"
-              aria-label="Kapat"
+              aria-label={t("close")}
               data-testid="btn-close-story"
             >
               <X className="w-5 h-5" />
@@ -105,7 +107,7 @@ export default function StoryRow({ stories }: { stories: StoryDto[] }) {
                 className="w-full h-11 rounded-full bg-white text-[#5B4B86] text-sm font-semibold"
                 data-testid="btn-follow-story"
               >
-                {active.isFollowing ? "Takip ediliyor" : "Takip et"}
+                {active.isFollowing ? t("followingLong") : t("follow")}
               </button>
             )}
           </div>

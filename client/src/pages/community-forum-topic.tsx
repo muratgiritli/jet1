@@ -8,11 +8,14 @@ import type { ForumTopicDto } from "@shared/social";
 import { socialGet, socialSend } from "@/lib/social-api";
 import { useAuthPrompt } from "@/components/community/AuthPrompt";
 import { queryClient } from "@/lib/queryClient";
+import { forumTagLabel, useCommunityI18n } from "@/lib/community-i18n";
+import { profilePath } from "@shared/social";
 
 export default function CommunityForumTopicPage() {
   const [, params] = useRoute("/forum/:id");
   const id = params?.id || "";
   const { requireAuth } = useAuthPrompt();
+  const { t, locale, timeAgo } = useCommunityI18n();
   const [reply, setReply] = useState("");
   const [showBox, setShowBox] = useState(false);
   const [error, setError] = useState("");
@@ -36,7 +39,7 @@ export default function CommunityForumTopicPage() {
       await queryClient.invalidateQueries({ queryKey: ["/api/social/forum", id] });
       await queryClient.invalidateQueries({ queryKey: ["/api/social/forum"] });
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Yanıt gönderilemedi.");
+      setError(err instanceof Error && err.message ? err.message : t("replyFailed"));
     }
   };
 
@@ -44,9 +47,9 @@ export default function CommunityForumTopicPage() {
     return (
       <CommunityLayout>
         <div className="px-4 py-12 text-center">
-          <p className="text-sm text-[#6B6573]">Konu bulunamadı.</p>
+          <p className="text-sm text-[#6B6573]">{t("topicMissing")}</p>
           <Link href="/forum" className="mt-3 inline-block text-sm font-semibold text-[#8E7CC3]">
-            Foruma dön
+            {t("backToForum")}
           </Link>
         </div>
       </CommunityLayout>
@@ -56,7 +59,7 @@ export default function CommunityForumTopicPage() {
   if (!topic) {
     return (
       <CommunityLayout>
-        <p className="px-4 py-10 text-center text-sm text-[#6B6573]">Konu yükleniyor…</p>
+        <p className="px-4 py-10 text-center text-sm text-[#6B6573]">{t("topicLoading")}</p>
       </CommunityLayout>
     );
   }
@@ -75,14 +78,14 @@ export default function CommunityForumTopicPage() {
           data-testid="link-back-forum"
         >
           <ArrowLeft className="w-4 h-4" />
-          Forum
+          {t("backForum")}
         </Link>
       </div>
       <article className="px-3 pt-3 pb-4" data-testid={`forum-topic-${topic.id}`}>
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-[#8E7CC3]">{topic.tag}</span>
+        <span className="text-[10px] font-semibold uppercase tracking-wide text-[#8E7CC3]">{forumTagLabel(locale, topic.tag)}</span>
         <h1 className="mt-1 text-[20px] font-extrabold leading-snug text-[#1C1B1F]">{topic.title}</h1>
         <p className="mt-1 text-[12px] text-[#6B6573]">
-          {topic.author} · {topic.city} · {topic.time} · {topic.views} görüntülenme
+          {topic.author} · {topic.city} · {timeAgo(topic.createdAt)} · {topic.views} {t("views")}
         </p>
         <p className="mt-3 text-[14px] leading-relaxed text-[#2B2833]">{topic.body}</p>
         <button
@@ -94,7 +97,7 @@ export default function CommunityForumTopicPage() {
           data-testid="btn-reply-topic"
         >
           <MessageCircle className="w-4 h-4" />
-          Yanıtla
+          {t("reply")}
         </button>
         {showBox && (
           <div className="mt-3 space-y-2">
@@ -102,7 +105,7 @@ export default function CommunityForumTopicPage() {
               value={reply}
               onChange={(e) => setReply(e.target.value)}
               rows={3}
-              placeholder="Yanıtını yaz"
+              placeholder={t("writeReply")}
               className="w-full rounded-xl border border-[#E4DCF3] bg-[#FAF8FD] p-3 text-sm"
               data-testid="input-forum-reply"
             />
@@ -113,18 +116,18 @@ export default function CommunityForumTopicPage() {
               className="h-10 px-4 rounded-full bg-[#8E7CC3] text-white text-sm font-semibold"
               data-testid="btn-send-reply"
             >
-              Gönder
+              {t("send")}
             </button>
           </div>
         )}
       </article>
       <section className="border-t border-[#F1EDF6] px-3 py-3">
-        <h2 className="text-[13px] font-bold text-[#1C1B1F] mb-2">{topic.comments.length} yanıt</h2>
+        <h2 className="text-[13px] font-bold text-[#1C1B1F] mb-2">{topic.comments.length} {t("replies")}</h2>
         <ul className="space-y-3">
           {topic.comments.map((item) => (
             <li key={item.id} className="rounded-2xl bg-[#FAF8FD] p-3" data-testid={`forum-reply-${item.id}`}>
-              <Link href={`/uye/${item.username}`} className="text-[12px] font-semibold text-[#1C1B1F]">
-                {item.author} <span className="font-normal text-[#6B6573]">· {item.city} · {item.time}</span>
+              <Link href={profilePath(item)} className="text-[12px] font-semibold text-[#1C1B1F]">
+                {item.author} <span className="font-normal text-[#6B6573]">· {item.city} · {timeAgo(item.createdAt)}</span>
               </Link>
               <p className="mt-1 text-[13px] leading-relaxed text-[#2B2833]">{item.body}</p>
             </li>

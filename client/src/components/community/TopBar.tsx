@@ -1,9 +1,11 @@
 import { Bell, Search } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useSocialAuth } from "@/contexts/SocialAuthContext";
+import { useCommunityI18n } from "@/lib/community-i18n";
 
 export default function TopBar() {
   const { isLoggedIn, unread } = useSocialAuth();
+  const { t } = useCommunityI18n();
   const [, setLocation] = useLocation();
 
   return (
@@ -25,7 +27,7 @@ export default function TopBar() {
           type="button"
           onClick={() => setLocation("/ara")}
           className="ml-auto h-9 w-9 rounded-full flex items-center justify-center text-[#3F3A4A] hover:bg-[#F6F3FB]"
-          aria-label="Ara"
+          aria-label={t("search")}
           data-testid="btn-search"
         >
           <Search className="w-[18px] h-[18px]" />
@@ -34,7 +36,7 @@ export default function TopBar() {
           <Link
             href="/bildirimler"
             className="relative h-9 w-9 rounded-full flex items-center justify-center text-[#3F3A4A] hover:bg-[#F6F3FB]"
-            aria-label="Bildirimler"
+            aria-label={t("notifications")}
             data-testid="btn-notifications"
           >
             <Bell className="w-[18px] h-[18px]" />
@@ -50,7 +52,7 @@ export default function TopBar() {
             className="h-8 px-3 rounded-full bg-[#8E7CC3] text-white text-xs font-semibold flex items-center"
             data-testid="btn-guest-login"
           >
-            Giriş
+            {t("login")}
           </Link>
         )}
       </div>

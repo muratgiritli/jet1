@@ -578,6 +578,8 @@ export const socialMembers = pgTable("social_members", {
   name: text("name").notNull(),
   city: text("city").notNull().default(""),
   dogName: text("dog_name").notNull().default(""),
+  dogSlug: text("dog_slug").notNull().default(""),
+  locale: text("locale").notNull().default("tr"),
   avatar: text("avatar").notNull().default("/assets/poodle-face.jpg"),
   bio: text("bio").notNull().default(""),
   isAdmin: boolean("is_admin").notNull().default(false),

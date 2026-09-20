@@ -1,5 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
-import type { PublicMember } from "@shared/social";
+import type { PublicMember, SocialLocale } from "@shared/social";
 import { socialGet, socialSend } from "@/lib/social-api";
 import { queryClient } from "@/lib/queryClient";
 
@@ -10,6 +10,8 @@ type SocialAuthValue = {
   unread: number;
   loading: boolean;
   isLoggedIn: boolean;
+  profileSlugs: string[];
+  slugsReady: boolean;
   refresh: () => Promise<void>;
   login: (username: string, password: string) => Promise<void>;
   register: (input: {
@@ -19,6 +21,7 @@ type SocialAuthValue = {
     name: string;
     city: string;
     dogName: string;
+    locale: SocialLocale;
   }) => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -35,6 +38,19 @@ export function SocialAuthProvider({ children }: { children: ReactNode }) {
   const [me, setMe] = useState<PublicMember | null>(null);
   const [unread, setUnread] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [profileSlugs, setProfileSlugs] = useState<string[]>([]);
+  const [slugsReady, setSlugsReady] = useState(false);
+
+  const refreshSlugs = useCallback(async () => {
+    try {
+      const data = await socialGet<{ slugs: string[] }>("/api/social/slugs");
+      setProfileSlugs((data.slugs || []).map((s) => s.toLowerCase()));
+    } catch {
+      setProfileSlugs([]);
+    } finally {
+      setSlugsReady(true);
+    }
+  }, []);
 
   const refresh = useCallback(async () => {
     try {
@@ -47,7 +63,8 @@ export function SocialAuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, []);
+    await refreshSlugs();
+  }, [refreshSlugs]);
 
   useEffect(() => {
     void refresh();
@@ -67,6 +84,7 @@ export function SocialAuthProvider({ children }: { children: ReactNode }) {
     name: string;
     city: string;
     dogName: string;
+    locale: SocialLocale;
   }) => {
     const data = await socialSend<{ member: PublicMember }>("POST", "/api/social/register", input);
     setMe(data.member);
@@ -83,7 +101,18 @@ export function SocialAuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <SocialAuthContext.Provider
-      value={{ me, unread, loading, isLoggedIn: !!me, refresh, login, register, logout }}
+      value={{
+        me,
+        unread,
+        loading,
+        isLoggedIn: !!me,
+        profileSlugs,
+        slugsReady,
+        refresh,
+        login,
+        register,
+        logout,
+      }}
     >
       {children}
     </SocialAuthContext.Provider>

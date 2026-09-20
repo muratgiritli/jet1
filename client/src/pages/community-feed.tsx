@@ -6,6 +6,7 @@ import ForumPreview from "@/components/community/ForumPreview";
 import { useQuery } from "@tanstack/react-query";
 import type { FeedPostDto, ForumTopicDto, StoryDto } from "@shared/social";
 import { socialGet } from "@/lib/social-api";
+import { useCommunityI18n } from "@/lib/community-i18n";
 
 function buildFeed(posts: FeedPostDto[], topics: ForumTopicDto[]) {
   const items: Array<{ type: "post"; post: FeedPostDto } | { type: "forum"; topic: ForumTopicDto }> = [];
@@ -25,6 +26,7 @@ function buildFeed(posts: FeedPostDto[], topics: ForumTopicDto[]) {
 }
 
 export default function CommunityFeedPage() {
+  const { t } = useCommunityI18n();
   const { data, isLoading } = useQuery({
     queryKey: ["/api/social/feed"],
     queryFn: () => socialGet<{ posts: FeedPostDto[]; stories: StoryDto[]; topics: ForumTopicDto[] }>("/api/social/feed"),
@@ -36,14 +38,14 @@ export default function CommunityFeedPage() {
   return (
     <CommunityLayout>
       <SEO
-        title="YourPoodle — Poodle sahipleri için sosyal akış"
-        description="Türkiye’deki poodle sahiplerinin paylaşım akışı, hikâyeleri ve forum konuları. Giriş yapmadan bakabilirsiniz."
+        title={t("seoTitleFeed")}
+        description={t("seoDescFeed")}
         keywords="poodle, toy poodle, poodle sahipleri, köpek forumu, YourPoodle"
         canonical={`${SITE_DOMAIN}/`}
       />
       <StoryRow stories={data?.stories || []} />
       {isLoading && (
-        <p className="px-4 py-8 text-center text-sm text-[#6B6573]">Akış yükleniyor…</p>
+        <p className="px-4 py-8 text-center text-sm text-[#6B6573]">{t("feedLoading")}</p>
       )}
       <div className="divide-y divide-[#F1EDF6]" data-testid="community-feed">
         {items.map((item) =>

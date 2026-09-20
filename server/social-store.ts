@@ -8,6 +8,7 @@ import {
   DEMO_PASSWORD,
   SOCIAL_PHOTOS,
   formatTimeAgo,
+  uniqueDogSlug,
   type ClubDto,
   type CommentDto,
   type FeedPostDto,
@@ -15,6 +16,7 @@ import {
   type NotificationDto,
   type PublicMember,
   type ReportDto,
+  type SocialLocale,
   type StoryDto,
 } from "@shared/social";
 
@@ -26,6 +28,8 @@ export type SocialMember = {
   name: string;
   city: string;
   dogName: string;
+  dogSlug: string;
+  locale: SocialLocale;
   avatar: string;
   bio: string;
   isAdmin: boolean;
@@ -95,6 +99,7 @@ export type SocialNotification = {
   id: string;
   memberId: string;
   kind: string;
+  actorName: string;
   text: string;
   href: string;
   read: boolean;
@@ -145,11 +150,44 @@ function hoursAgo(hours: number): string {
   return new Date(Date.now() - hours * 3600_000).toISOString();
 }
 
+function finalizeMembers(
+  raw: Array<Omit<SocialMember, "dogSlug" | "locale"> & Partial<Pick<SocialMember, "dogSlug" | "locale">>>,
+): SocialMember[] {
+  const taken: string[] = [];
+  return raw.map((member) => {
+    const locale: SocialLocale = member.locale === "en" ? "en" : "tr";
+    const dogSlug = member.dogSlug || uniqueDogSlug(member.dogName || member.username, taken);
+    taken.push(dogSlug);
+    return { ...member, locale, dogSlug };
+  });
+}
+
+function migrateDb(state: SocialDb) {
+  const taken: string[] = [];
+  for (const member of state.members) {
+    if (member.locale !== "en") member.locale = "tr";
+    if (!member.dogSlug) {
+      member.dogSlug = uniqueDogSlug(member.dogName || member.username, taken);
+    }
+    taken.push(member.dogSlug);
+  }
+  for (const note of state.notifications) {
+    if (!note.actorName) {
+      note.actorName = note.text.split(" ")[0] ? note.text.replace(/ (seni|gönderine|gönderini|forum).*$/, "").trim() : "";
+    }
+    if (note.href.startsWith("/uye/")) {
+      const username = note.href.slice("/uye/".length);
+      const target = state.members.find((m) => m.username === username);
+      if (target?.dogSlug) note.href = `/${target.dogSlug}`;
+    }
+  }
+}
+
 function buildSeed(): SocialDb {
   const demoHash = bcrypt.hashSync(DEMO_PASSWORD, 8);
   const adminHash = bcrypt.hashSync(ADMIN_PASSWORD, 8);
 
-  const members: SocialMember[] = [
+  const members = finalizeMembers([
     {
       id: "m-admin",
       username: ADMIN_USERNAME,
@@ -306,7 +344,7 @@ function buildSeed(): SocialDb {
       isAdmin: false,
       createdAt: hoursAgo(5 * 24),
     },
-  ];
+  ]);
 
   const posts: SocialPost[] = [
     {
@@ -492,8 +530,9 @@ function buildSeed(): SocialDb {
       id: "n1",
       memberId: "m-elif",
       kind: "follow",
+      actorName: "Ayşe Tekin",
       text: "Ayşe Tekin seni takip etmeye başladı.",
-      href: "/uye/ayse",
+      href: "/muffin",
       read: false,
       createdAt: hoursAgo(0.8),
     },
@@ -501,6 +540,7 @@ function buildSeed(): SocialDb {
       id: "n2",
       memberId: "m-elif",
       kind: "comment",
+      actorName: "Deniz Aksoy",
       text: "Deniz Aksoy gönderine yorum yazdı.",
       href: "/gonderi/p1",
       read: false,
@@ -510,8 +550,9 @@ function buildSeed(): SocialDb {
       id: "n3",
       memberId: "m-elif",
       kind: "follow",
+      actorName: "Ceren Demir",
       text: "Ceren Demir seni takip etmeye başladı.",
-      href: "/uye/ceren",
+      href: "/lila",
       read: true,
       createdAt: hoursAgo(8),
     },
@@ -519,6 +560,7 @@ function buildSeed(): SocialDb {
       id: "n4",
       memberId: "m-deniz",
       kind: "comment",
+      actorName: "Elif Kaya",
       text: "Elif Kaya gönderine yorum yazdı.",
       href: "/gonderi/p2",
       read: false,
@@ -593,7 +635,8 @@ function persist(db: SocialDb) {
 }
 
 let db: SocialDb = loadFile() ?? buildSeed();
-if (!loadFile()) persist(db);
+migrateDb(db);
+persist(db);
 
 let writeChain = Promise.resolve();
 
@@ -614,6 +657,15 @@ function memberByUsername(username: string) {
   return db.members.find((m) => m.username.toLowerCase() === username.toLowerCase());
 }
 
+function localeOf(memberId?: string | null): SocialLocale {
+  if (!memberId) return "tr";
+  return memberById(memberId)?.locale === "en" ? "en" : "tr";
+}
+
+function errFor(memberId: string | null | undefined, tr: string, en: string, status = 400): never {
+  throw Object.assign(new Error(localeOf(memberId) === "en" ? en : tr), { status });
+}
+
 export function toPublicMember(member: SocialMember, viewerId?: string | null): PublicMember {
   return {
     id: member.id,
@@ -621,6 +673,8 @@ export function toPublicMember(member: SocialMember, viewerId?: string | null): 
     name: member.name,
     city: member.city,
     dogName: member.dogName,
+    dogSlug: member.dogSlug,
+    locale: member.locale === "en" ? "en" : "tr",
     avatar: member.avatar,
     bio: member.bio,
     isAdmin: member.isAdmin,
@@ -640,6 +694,7 @@ export function toFeedPost(post: SocialPost, viewerId?: string | null): FeedPost
     authorId: author.id,
     username: author.username,
     author: author.name,
+    dogSlug: author.dogSlug,
     dogName: author.dogName,
     city: author.city,
     time: formatTimeAgo(post.createdAt),
@@ -662,6 +717,7 @@ function toComment(comment: SocialComment): CommentDto | null {
     id: comment.id,
     authorId: author.id,
     username: author.username,
+    dogSlug: author.dogSlug,
     author: author.name,
     city: author.city,
     avatar: author.avatar,
@@ -683,7 +739,8 @@ function toTopic(topic: SocialTopic, includeHiddenReplies = false): ForumTopicDt
       id: r.id,
       authorId: r.authorId,
       username: ra?.username || "",
-      author: ra?.name || "Üye",
+      dogSlug: ra?.dogSlug || "",
+      author: ra?.name || "YourPoodle",
       city: ra?.city || "",
       avatar: ra?.avatar || SOCIAL_PHOTOS[1],
       body: r.body,
@@ -695,6 +752,7 @@ function toTopic(topic: SocialTopic, includeHiddenReplies = false): ForumTopicDt
     id: topic.id,
     authorId: author.id,
     username: author.username,
+    dogSlug: author.dogSlug,
     title: topic.title,
     author: author.name,
     city: author.city,
@@ -724,10 +782,12 @@ function toClub(club: SocialClub, viewerId?: string | null): ClubDto {
 
 function notify(memberId: string, kind: string, text: string, href: string, actorId?: string) {
   if (!memberId || memberId === actorId) return;
+  const actor = actorId ? memberById(actorId) : undefined;
   db.notifications.unshift({
     id: nid(),
     memberId,
     kind,
+    actorName: actor?.name || "",
     text,
     href,
     read: false,
@@ -776,32 +836,40 @@ export function registerMember(input: {
   name: string;
   city: string;
   dogName: string;
+  locale?: string;
 }): SocialMember {
+  const locale: SocialLocale = input.locale === "en" ? "en" : "tr";
+  const err = (tr: string, en: string, status = 400) => {
+    throw Object.assign(new Error(locale === "en" ? en : tr), { status });
+  };
   const username = input.username.trim().toLowerCase();
   const email = input.email.trim().toLowerCase();
   if (!/^[a-z0-9._]{3,20}$/.test(username)) {
-    throw Object.assign(new Error("Kullanıcı adı 3-20 karakter olmalı; harf, rakam, nokta veya alt çizgi kullanın."), { status: 400 });
+    err("Kullanıcı adı 3-20 karakter olmalı; harf, rakam, nokta veya alt çizgi kullanın.", "Username must be 3-20 characters: letters, numbers, dot, or underscore.");
   }
   if (!email.includes("@") || email.length < 5) {
-    throw Object.assign(new Error("Geçerli bir e-posta yazın."), { status: 400 });
+    err("Geçerli bir e-posta yazın.", "Enter a valid email address.");
   }
   if (input.password.length < 6) {
-    throw Object.assign(new Error("Şifre en az 6 karakter olmalı."), { status: 400 });
+    err("Şifre en az 6 karakter olmalı.", "Password must be at least 6 characters.");
   }
   if (!input.name.trim()) {
-    throw Object.assign(new Error("Adınızı yazın."), { status: 400 });
+    err("Adınızı yazın.", "Enter your name.");
   }
   if (memberByUsername(username) || db.members.some((m) => m.email.toLowerCase() === email)) {
-    throw Object.assign(new Error("Bu kullanıcı adı veya e-posta zaten kayıtlı."), { status: 409 });
+    err("Bu kullanıcı adı veya e-posta zaten kayıtlı.", "This username or email is already registered.", 409);
   }
+  const dogName = input.dogName.trim() || "Poodle";
   const member: SocialMember = {
     id: nid(),
     username,
     email,
     passwordHash: bcrypt.hashSync(input.password, 8),
     name: input.name.trim(),
-    city: input.city.trim() || "Türkiye",
-    dogName: input.dogName.trim() || "Poodle",
+    city: input.city.trim() || (locale === "en" ? "Turkey" : "Türkiye"),
+    dogName,
+    dogSlug: uniqueDogSlug(dogName, db.members.map((m) => m.dogSlug)),
+    locale,
     avatar: SOCIAL_PHOTOS[0],
     bio: "",
     isAdmin: false,
@@ -815,14 +883,19 @@ export function registerMember(input: {
 
 export function updateProfile(
   memberId: string,
-  patch: Partial<Pick<SocialMember, "name" | "city" | "dogName" | "avatar" | "bio">>,
+  patch: Partial<Pick<SocialMember, "name" | "city" | "dogName" | "avatar" | "bio" | "locale">>,
 ): SocialMember {
   return mutate((state) => {
     const member = state.members.find((m) => m.id === memberId);
-    if (!member) throw Object.assign(new Error("Üye bulunamadı."), { status: 404 });
+    if (!member) errFor(memberId, "Üye bulunamadı.", "Member not found.", 404);
     if (patch.name !== undefined) member.name = patch.name.trim() || member.name;
     if (patch.city !== undefined) member.city = patch.city.trim();
-    if (patch.dogName !== undefined) member.dogName = patch.dogName.trim();
+    if (patch.locale === "en" || patch.locale === "tr") member.locale = patch.locale;
+    if (patch.dogName !== undefined) {
+      member.dogName = patch.dogName.trim() || member.dogName;
+      const taken = state.members.filter((m) => m.id !== memberId).map((m) => m.dogSlug);
+      member.dogSlug = uniqueDogSlug(member.dogName, taken);
+    }
     if (patch.avatar !== undefined && SOCIAL_PHOTOS.includes(patch.avatar as typeof SOCIAL_PHOTOS[number])) {
       member.avatar = patch.avatar;
     } else if (patch.avatar !== undefined && patch.avatar.startsWith("/assets/")) {
@@ -853,11 +926,13 @@ export function listStories(viewerId?: string | null): StoryDto[] {
         authorId: author.id,
         username: author.username,
         name: author.name,
+        dogSlug: author.dogSlug,
         dogName: author.dogName,
         city: author.city,
         avatar: author.avatar,
         image: story.image,
         time: formatTimeAgo(story.createdAt),
+        createdAt: story.createdAt,
         isFollowing: viewerId ? db.follows.some((f) => f.followerId === viewerId && f.followingId === author.id) : false,
       } satisfies StoryDto;
     })
@@ -879,7 +954,7 @@ export function getPost(id: string, viewerId?: string | null) {
 
 export function createPost(authorId: string, caption: string, image: string): FeedPostDto {
   const clean = caption.trim();
-  if (clean.length < 3) throw Object.assign(new Error("Gönderi yazısı çok kısa."), { status: 400 });
+  if (clean.length < 3) errFor(authorId, "Gönderi yazısı çok kısa.", "Post caption is too short.");
   const photo = SOCIAL_PHOTOS.includes(image as typeof SOCIAL_PHOTOS[number]) ? image : SOCIAL_PHOTOS[0];
   const post: SocialPost = {
     id: nid(),
@@ -892,14 +967,14 @@ export function createPost(authorId: string, caption: string, image: string): Fe
   return mutate((state) => {
     state.posts.unshift(post);
     const dto = toFeedPost(post, authorId);
-    if (!dto) throw Object.assign(new Error("Gönderi oluşturulamadı."), { status: 500 });
+    if (!dto) errFor(authorId, "Gönderi oluşturulamadı.", "Could not create post.", 500);
     return dto;
   });
 }
 
 export function toggleLike(postId: string, memberId: string) {
   const post = db.posts.find((p) => p.id === postId && !p.hidden);
-  if (!post) throw Object.assign(new Error("Gönderi bulunamadı."), { status: 404 });
+  if (!post) errFor(memberId, "Gönderi bulunamadı.", "Post not found.", 404);
   return mutate((state) => {
     const existing = state.likes.find((l) => l.postId === postId && l.memberId === memberId);
     if (existing) {
@@ -915,7 +990,7 @@ export function toggleLike(postId: string, memberId: string) {
 
 export function toggleSave(postId: string, memberId: string) {
   const post = db.posts.find((p) => p.id === postId && !p.hidden);
-  if (!post) throw Object.assign(new Error("Gönderi bulunamadı."), { status: 404 });
+  if (!post) errFor(memberId, "Gönderi bulunamadı.", "Post not found.", 404);
   return mutate((state) => {
     const existing = state.saves.find((s) => s.postId === postId && s.memberId === memberId);
     if (existing) state.saves = state.saves.filter((s) => s.id !== existing.id);
@@ -926,9 +1001,9 @@ export function toggleSave(postId: string, memberId: string) {
 
 export function addComment(postId: string, memberId: string, body: string) {
   const post = db.posts.find((p) => p.id === postId && !p.hidden);
-  if (!post) throw Object.assign(new Error("Gönderi bulunamadı."), { status: 404 });
+  if (!post) errFor(memberId, "Gönderi bulunamadı.", "Post not found.", 404);
   const text = body.trim();
-  if (text.length < 1) throw Object.assign(new Error("Yorum yazın."), { status: 400 });
+  if (text.length < 1) errFor(memberId, "Yorum yazın.", "Write a comment.");
   const comment: SocialComment = {
     id: nid(),
     postId,
@@ -947,8 +1022,8 @@ export function addComment(postId: string, memberId: string, body: string) {
 
 export function toggleFollow(username: string, followerId: string) {
   const target = memberByUsername(username);
-  if (!target) throw Object.assign(new Error("Üye bulunamadı."), { status: 404 });
-  if (target.id === followerId) throw Object.assign(new Error("Kendinizi takip edemezsiniz."), { status: 400 });
+  if (!target) errFor(followerId, "Üye bulunamadı.", "Member not found.", 404);
+  if (target.id === followerId) errFor(followerId, "Kendinizi takip edemezsiniz.", "You cannot follow yourself.");
   return mutate((state) => {
     const existing = state.follows.find((f) => f.followerId === followerId && f.followingId === target.id);
     if (existing) {
@@ -956,7 +1031,7 @@ export function toggleFollow(username: string, followerId: string) {
     } else {
       state.follows.push({ id: nid(), followerId, followingId: target.id });
       const actor = memberById(followerId);
-      notify(target.id, "follow", `${actor?.name || "Bir üye"} seni takip etmeye başladı.`, `/uye/${actor?.username || ""}`, followerId);
+      notify(target.id, "follow", `${actor?.name || "Bir üye"} seni takip etmeye başladı.`, actor?.dogSlug ? `/${actor.dogSlug}` : `/uye/${actor?.username || ""}`, followerId);
     }
     return toPublicMember(target, followerId);
   });
@@ -981,6 +1056,17 @@ export function getMemberProfile(username: string, viewerId?: string | null) {
     .filter((m): m is SocialMember => !!m)
     .map((m) => toPublicMember(m, viewerId));
   return { member: toPublicMember(member, viewerId), posts, followers, following };
+}
+
+export function listProfileSlugs(): string[] {
+  return db.members.map((m) => m.dogSlug).filter(Boolean);
+}
+
+export function getMemberBySlug(slug: string, viewerId?: string | null) {
+  const key = decodeURIComponent(slug).toLowerCase();
+  const member = db.members.find((m) => m.dogSlug.toLowerCase() === key);
+  if (!member) return null;
+  return getMemberProfile(member.username, viewerId);
 }
 
 export function listSaved(memberId: string): FeedPostDto[] {
@@ -1016,7 +1102,7 @@ export function createTopic(authorId: string, title: string, body: string, tag: 
   const t = title.trim();
   const b = body.trim();
   if (t.length < 8 || b.length < 8) {
-    throw Object.assign(new Error("Başlık ve metin daha uzun olmalı."), { status: 400 });
+    errFor(authorId, "Başlık ve metin daha uzun olmalı.", "Title and body need to be longer.");
   }
   const topic: SocialTopic = {
     id: nid(),
@@ -1036,9 +1122,9 @@ export function createTopic(authorId: string, title: string, body: string, tag: 
 
 export function addReply(topicId: string, memberId: string, body: string) {
   const topic = db.topics.find((t) => t.id === topicId && !t.hidden);
-  if (!topic) throw Object.assign(new Error("Konu bulunamadı."), { status: 404 });
+  if (!topic) errFor(memberId, "Konu bulunamadı.", "Topic not found.", 404);
   const text = body.trim();
-  if (text.length < 1) throw Object.assign(new Error("Yanıt yazın."), { status: 400 });
+  if (text.length < 1) errFor(memberId, "Yanıt yazın.", "Write a reply.");
   const reply: SocialReply = {
     id: nid(),
     topicId,
@@ -1072,7 +1158,7 @@ export function getClub(id: string, viewerId?: string | null) {
 
 export function toggleClub(id: string, memberId: string) {
   const club = db.clubs.find((c) => c.id === id);
-  if (!club) throw Object.assign(new Error("Kulüp bulunamadı."), { status: 404 });
+  if (!club) errFor(memberId, "Kulüp bulunamadı.", "Club not found.", 404);
   return mutate((state) => {
     const existing = state.clubMembers.find((c) => c.clubId === id && c.memberId === memberId);
     if (existing) state.clubMembers = state.clubMembers.filter((c) => c.id !== existing.id);
@@ -1094,6 +1180,7 @@ export function listNotifications(memberId: string): NotificationDto[] {
     .map((n) => ({
       id: n.id,
       kind: n.kind,
+      actorName: n.actorName || "",
       text: n.text,
       href: n.href,
       read: n.read,
@@ -1132,9 +1219,9 @@ export function searchAll(query: string, viewerId?: string | null) {
 export function createReport(reporterId: string, targetType: string, targetId: string, reason: string) {
   const allowed = ["post", "comment", "topic", "reply"];
   if (!allowed.includes(targetType)) {
-    throw Object.assign(new Error("Geçersiz rapor türü."), { status: 400 });
+    errFor(reporterId, "Geçersiz rapor türü.", "Invalid report type.");
   }
-  const text = reason.trim() || "İncelenmesini istiyorum.";
+  const text = reason.trim() || (localeOf(reporterId) === "en" ? "Please review this." : "İncelenmesini istiyorum.");
   return mutate((state) => {
     const report: SocialReport = {
       id: nid(),

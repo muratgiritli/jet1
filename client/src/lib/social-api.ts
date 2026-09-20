@@ -23,8 +23,8 @@ export async function socialSend<T>(method: string, url: string, data?: unknown)
 async function readError(res: Response): Promise<string> {
   try {
     const body = await res.json();
-    return body.message || res.statusText;
+    return body.message || "";
   } catch {
-    return res.statusText || "İstek başarısız.";
+    return "";
   }
 }

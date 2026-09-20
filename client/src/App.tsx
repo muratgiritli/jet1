@@ -12,7 +12,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SocialProofToast from "@/components/SocialProofToast";
 import { AuthPromptProvider } from "@/components/community/AuthPrompt";
-import { SocialAuthProvider } from "@/contexts/SocialAuthContext";
+import { SocialAuthProvider, useSocialAuth } from "@/contexts/SocialAuthContext";
 import { CURRENT_STORE } from "@/lib/store";
 const Landing = lazy(() => import("@/pages/landing"));
 const AdLanding = lazy(() => import("@/pages/ad-landing"));
@@ -28,6 +28,7 @@ const CommunityClubPage = lazy(() => import("@/pages/community-club"));
 const CommunityNotificationsPage = lazy(() => import("@/pages/community-notifications"));
 const CommunityPostPage = lazy(() => import("@/pages/community-post"));
 const CommunityAdminPage = lazy(() => import("@/pages/community-admin"));
+const CommunityDogOrSeoPage = lazy(() => import("@/pages/community-dog-or-seo"));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; errorMsg: string }> {
   state = { hasError: false, errorMsg: "" };
@@ -201,7 +202,7 @@ function Router() {
         <Route path="/teslimat-iade" component={TeslimatIadePage} />
         <Route path="/gizlilik-sozlesmesi" component={GizlilikSozlesmesiPage} />
         <Route path="/mesafeli-satis" component={MesafeliSatisSozlesmesiPage} />
-        <Route path="/:slug" component={SeoPage} />
+        <Route path="/:dogSlug" component={CommunityDogOrSeoPage} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
@@ -217,28 +218,34 @@ const LANDING_LIKE_ROUTES = new Set([
   "/getir-petshop",
 ]);
 
-function isCommunityRoute(location: string) {
-  return (
-    location === "/" ||
-    location === "/forum" ||
-    location.startsWith("/forum/") ||
-    location === "/kulupler" ||
-    location.startsWith("/kulupler/") ||
-    location === "/profil" ||
-    location.startsWith("/uye/") ||
-    location.startsWith("/gonderi/") ||
-    location === "/ara" ||
-    location === "/yp-giris" ||
-    location === "/bildirimler" ||
-    location === "/yp-admin"
-  );
+function isCommunityRoute(location: string, profileSlugs: string[] = []) {
+  const path = location.split("?")[0];
+  const segment = path.startsWith("/") ? path.slice(1) : path;
+  if (
+    path === "/" ||
+    path === "/forum" ||
+    path.startsWith("/forum/") ||
+    path === "/kulupler" ||
+    path.startsWith("/kulupler/") ||
+    path === "/profil" ||
+    path.startsWith("/uye/") ||
+    path.startsWith("/gonderi/") ||
+    path === "/ara" ||
+    path === "/yp-giris" ||
+    path === "/bildirimler" ||
+    path === "/yp-admin"
+  ) {
+    return true;
+  }
+  return !segment.includes("/") && profileSlugs.includes(segment.toLowerCase());
 }
 
 function AppShell() {
   const [location] = useLocation();
+  const { profileSlugs } = useSocialAuth();
   const isAdmin = location.startsWith("/admin");
   const isDemo = location === "/demo" || location.startsWith("/demo-kampanya") || location === "/demo1" || location === "/demo2" || location === "/demo-anasayfa";
-  const isCommunity = isCommunityRoute(location);
+  const isCommunity = isCommunityRoute(location, profileSlugs);
   const isLandingLike = LANDING_LIKE_ROUTES.has(location);
 
   useEffect(() => {

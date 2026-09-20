@@ -42,10 +42,18 @@ function currentMember(req: Request) {
   return store.getSessionMember(readCookie(req, COOKIE));
 }
 
+function memberLocale(req: Request): "tr" | "en" {
+  return currentMember(req)?.locale === "en" ? "en" : "tr";
+}
+
+function tMsg(req: Request, tr: string, en: string) {
+  return memberLocale(req) === "en" ? en : tr;
+}
+
 function requireMember(req: Request, res: Response): NonNullable<ReturnType<typeof currentMember>> | null {
   const member = currentMember(req);
   if (!member) {
-    res.status(401).json({ message: "Giriş yapmanız gerekiyor." });
+    res.status(401).json({ message: tMsg(req, "Giriş yapmanız gerekiyor.", "You need to log in.") });
     return null;
   }
   return member;
@@ -55,7 +63,7 @@ function requireAdmin(req: Request, res: Response) {
   const member = requireMember(req, res);
   if (!member) return null;
   if (!member.isAdmin) {
-    res.status(403).json({ message: "Bu sayfa yalnızca yöneticiler içindir." });
+    res.status(403).json({ message: tMsg(req, "Bu sayfa yalnızca yöneticiler içindir.", "This page is for administrators only.") });
     return null;
   }
   return member;
@@ -63,7 +71,7 @@ function requireAdmin(req: Request, res: Response) {
 
 function fail(res: Response, err: unknown) {
   const status = typeof err === "object" && err && "status" in err ? Number((err as { status: number }).status) : 500;
-  const message = err instanceof Error ? err.message : "Bir hata oluştu.";
+  const message = err instanceof Error ? err.message : "Something went wrong.";
   res.status(status || 500).json({ message });
 }
 
@@ -79,7 +87,7 @@ export function registerSocialRoutes(app: Express) {
       const identifier = String(req.body?.username || req.body?.email || "").trim();
       const password = String(req.body?.password || "");
       const member = store.login(identifier, password);
-      if (!member) return res.status(401).json({ message: "Kullanıcı adı veya şifre yanlış." });
+      if (!member) return res.status(401).json({ message: String(req.body?.locale) === "en" ? "Wrong username or password." : "Kullanıcı adı veya şifre yanlış." });
       setSessionCookie(req, res, store.createSession(member.id));
       res.json({ member: store.toPublicMember(member, member.id) });
     } catch (err) {
@@ -96,6 +104,7 @@ export function registerSocialRoutes(app: Express) {
         name: String(req.body?.name || ""),
         city: String(req.body?.city || ""),
         dogName: String(req.body?.dogName || ""),
+        locale: String(req.body?.locale || "tr"),
       });
       setSessionCookie(req, res, store.createSession(member.id));
       res.status(201).json({ member: store.toPublicMember(member, member.id) });
@@ -120,6 +129,7 @@ export function registerSocialRoutes(app: Express) {
         dogName: req.body?.dogName,
         avatar: req.body?.avatar,
         bio: req.body?.bio,
+        locale: req.body?.locale,
       });
       res.json({ member: store.toPublicMember(updated, updated.id) });
     } catch (err) {
@@ -142,7 +152,7 @@ export function registerSocialRoutes(app: Express) {
 
   app.get("/api/social/posts/:id", (req, res) => {
     const data = store.getPost(req.params.id, currentMember(req)?.id);
-    if (!data) return res.status(404).json({ message: "Gönderi bulunamadı." });
+    if (!data) return res.status(404).json({ message: tMsg(req, "Gönderi bulunamadı.", "Post not found.") });
     res.json(data);
   });
 
@@ -211,7 +221,17 @@ export function registerSocialRoutes(app: Express) {
 
   app.get("/api/social/members/:username", (req, res) => {
     const data = store.getMemberProfile(req.params.username, currentMember(req)?.id);
-    if (!data) return res.status(404).json({ message: "Üye bulunamadı." });
+    if (!data) return res.status(404).json({ message: tMsg(req, "Üye bulunamadı.", "Member not found.") });
+    res.json(data);
+  });
+
+  app.get("/api/social/slugs", (_req, res) => {
+    res.json({ slugs: store.listProfileSlugs() });
+  });
+
+  app.get("/api/social/slug/:slug", (req, res) => {
+    const data = store.getMemberBySlug(req.params.slug, currentMember(req)?.id);
+    if (!data) return res.status(404).json({ message: tMsg(req, "Üye bulunamadı.", "Member not found.") });
     res.json(data);
   });
 
@@ -227,7 +247,7 @@ export function registerSocialRoutes(app: Express) {
 
   app.get("/api/social/forum/:id", (req, res) => {
     const topic = store.getForumTopic(req.params.id, true);
-    if (!topic) return res.status(404).json({ message: "Konu bulunamadı." });
+    if (!topic) return res.status(404).json({ message: tMsg(req, "Konu bulunamadı.", "Topic not found.") });
     res.json({ topic });
   });
 
@@ -264,7 +284,7 @@ export function registerSocialRoutes(app: Express) {
 
   app.get("/api/social/clubs/:id", (req, res) => {
     const data = store.getClub(req.params.id, currentMember(req)?.id);
-    if (!data) return res.status(404).json({ message: "Kulüp bulunamadı." });
+    if (!data) return res.status(404).json({ message: tMsg(req, "Kulüp bulunamadı.", "Club not found.") });
     res.json(data);
   });
 
