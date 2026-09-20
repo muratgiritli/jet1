@@ -11,9 +11,16 @@ import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SocialProofToast from "@/components/SocialProofToast";
+import { AuthPromptProvider } from "@/components/community/AuthPrompt";
 import { CURRENT_STORE } from "@/lib/store";
 const Landing = lazy(() => import("@/pages/landing"));
 const AdLanding = lazy(() => import("@/pages/ad-landing"));
+const CommunityFeedPage = lazy(() => import("@/pages/community-feed"));
+const CommunityForumPage = lazy(() => import("@/pages/community-forum"));
+const CommunityForumTopicPage = lazy(() => import("@/pages/community-forum-topic"));
+const CommunityClubsPage = lazy(() => import("@/pages/community-clubs"));
+const CommunityProfilePage = lazy(() => import("@/pages/community-profile"));
+const CommunitySearchPage = lazy(() => import("@/pages/community-search"));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; errorMsg: string }> {
   state = { hasError: false, errorMsg: "" };
@@ -124,7 +131,12 @@ function Router() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Switch>
-        <Route path="/">{() => <Landing />}</Route>
+        <Route path="/">{() => <CommunityFeedPage />}</Route>
+        <Route path="/forum/:id" component={CommunityForumTopicPage} />
+        <Route path="/forum" component={CommunityForumPage} />
+        <Route path="/kulupler" component={CommunityClubsPage} />
+        <Route path="/profil" component={CommunityProfilePage} />
+        <Route path="/ara" component={CommunitySearchPage} />
         <Route path="/petshop">{() => <Landing />}</Route>
         <Route path="/en-yakin-petshop" component={AdLanding} />
         <Route path="/en-yakin-petshoplar" component={AdLanding} />
@@ -184,7 +196,6 @@ function Router() {
 }
 
 const LANDING_LIKE_ROUTES = new Set([
-  "/",
   "/petshop",
   "/en-yakin-petshop",
   "/en-yakin-petshoplar",
@@ -193,10 +204,22 @@ const LANDING_LIKE_ROUTES = new Set([
   "/getir-petshop",
 ]);
 
+function isCommunityRoute(location: string) {
+  return (
+    location === "/" ||
+    location === "/forum" ||
+    location.startsWith("/forum/") ||
+    location === "/kulupler" ||
+    location === "/profil" ||
+    location === "/ara"
+  );
+}
+
 function AppShell() {
   const [location] = useLocation();
   const isAdmin = location.startsWith("/admin");
   const isDemo = location === "/demo" || location.startsWith("/demo-kampanya") || location === "/demo1" || location === "/demo2" || location === "/demo-anasayfa";
+  const isCommunity = isCommunityRoute(location);
   const isLandingLike = LANDING_LIKE_ROUTES.has(location);
 
   useEffect(() => {
@@ -216,17 +239,17 @@ function AppShell() {
 
   return (
     <>
-      {!isAdmin && !isDemo && (
+      {!isAdmin && !isDemo && !isCommunity && (
         <div className={isLandingLike ? "md:hidden" : ""}>
           <Header />
         </div>
       )}
       <ErrorBoundary><Router /></ErrorBoundary>
-      {!isAdmin && !isDemo && isLandingLike && (
+      {!isAdmin && !isDemo && !isCommunity && isLandingLike && (
         <div className={CURRENT_STORE.id === "jetgo" ? "" : "md:hidden"}><Footer /></div>
       )}
-      {!isAdmin && !isDemo && <FloatingCartBar />}
-      {!isAdmin && !isDemo && <BottomTabBar />}
+      {!isAdmin && !isDemo && !isCommunity && <FloatingCartBar />}
+      {!isAdmin && !isDemo && !isCommunity && <BottomTabBar />}
     </>
   );
 }
@@ -236,10 +259,12 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <CustomerProvider>
-          <CartProvider>
-            <Toaster />
-            <AppShell />
-          </CartProvider>
+          <AuthPromptProvider>
+            <CartProvider>
+              <Toaster />
+              <AppShell />
+            </CartProvider>
+          </AuthPromptProvider>
         </CustomerProvider>
       </TooltipProvider>
     </QueryClientProvider>
