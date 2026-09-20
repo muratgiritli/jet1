@@ -14,7 +14,7 @@ export default function CommunityLayout({
       {!hideTopBar && <TopBar />}
       <div
         style={{
-          paddingBottom: "calc(4.25rem + env(safe-area-inset-bottom, 0px))",
+            paddingBottom: "calc(5.5rem + env(safe-area-inset-bottom, 0px))",
         }}
       >
         {children}

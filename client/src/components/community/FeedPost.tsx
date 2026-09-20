@@ -14,7 +14,7 @@ export default function FeedPost({ post }: { post: Post }) {
   };
 
   return (
-    <article className="bg-white" data-testid={`feed-post-${post.id}`}>
+    <article className="bg-white scroll-mt-16" data-testid={`feed-post-${post.id}`}>
       <div className="flex items-center gap-2.5 px-3 py-2.5">
         <img
           src={post.avatar}
@@ -46,7 +46,7 @@ export default function FeedPost({ post }: { post: Post }) {
       <img
         src={post.image}
         alt={`${post.dogName} paylaşımı`}
-        className="w-full aspect-[4/5] object-cover bg-[#F3EFFA]"
+        className="w-full aspect-square object-cover bg-[#F3EFFA]"
         data-testid={`img-post-${post.id}`}
       />
 
@@ -81,7 +81,7 @@ export default function FeedPost({ post }: { post: Post }) {
       </div>
 
       <p className="px-3 pb-3 text-[13px] leading-relaxed text-[#1C1B1F]">
-        <span className="font-semibold mr-1">{post.dogName}</span>
+        <span className="font-semibold mr-1">{post.author}</span>
         {post.caption}
       </p>
     </article>

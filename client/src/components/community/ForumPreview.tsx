@@ -4,7 +4,7 @@ import type { ForumTopic } from "@/lib/community-feed";
 
 export default function ForumPreview({ topic }: { topic: ForumTopic }) {
   return (
-    <article className="px-3 py-3 bg-[#FAF8FD]" data-testid={`forum-preview-${topic.id}`}>
+    <article className="px-3 py-3 bg-[#F6F3FB] scroll-mt-16" data-testid={`forum-preview-${topic.id}`}>
       <Link
         href={`/forum/${topic.id}`}
         className="block rounded-2xl border border-[#E4DCF3] bg-white p-3.5 shadow-[0_1px_0_rgba(142,124,195,0.08)]"

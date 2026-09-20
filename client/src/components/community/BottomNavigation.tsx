@@ -72,8 +72,8 @@ export default function BottomNavigation() {
               }`}
               data-testid={tab.testId}
             >
-              <tab.icon className={`w-5 h-5 ${active ? "stroke-[2.4]" : ""}`} />
-              <span className={`text-[10px] leading-none ${active ? "font-semibold" : "font-medium"}`}>
+              <tab.icon className={`w-5 h-5 ${active ? "stroke-[2.6] text-[#8E7CC3]" : ""}`} />
+              <span className={`text-[10px] leading-none ${active ? "font-semibold text-[#8E7CC3]" : "font-medium"}`}>
                 {tab.name}
               </span>
             </button>
