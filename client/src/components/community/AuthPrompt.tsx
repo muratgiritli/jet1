@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useState, type ReactNode } from "react";
 import { useLocation } from "wouter";
-import { useCustomer } from "@/contexts/CustomerContext";
+import { useSocialAuth } from "@/contexts/SocialAuthContext";
 import {
   Dialog,
   DialogContent,
@@ -25,7 +25,7 @@ export function useAuthPrompt() {
 }
 
 export function AuthPromptProvider({ children }: { children: ReactNode }) {
-  const { isLoggedIn } = useCustomer();
+  const { isLoggedIn } = useSocialAuth();
   const [open, setOpen] = useState(false);
   const [location, setLocation] = useLocation();
 
@@ -58,7 +58,7 @@ export function AuthPromptProvider({ children }: { children: ReactNode }) {
           <div className="flex flex-col gap-2 mt-1">
             <button
               type="button"
-              onClick={() => go(`/giris?redirect=${redirect}`)}
+              onClick={() => go(`/yp-giris?redirect=${redirect}`)}
               className="h-11 rounded-full bg-[#8E7CC3] text-white text-sm font-semibold"
               data-testid="btn-auth-login"
             >
@@ -66,7 +66,7 @@ export function AuthPromptProvider({ children }: { children: ReactNode }) {
             </button>
             <button
               type="button"
-              onClick={() => go(`/giris?tab=register&redirect=${redirect}`)}
+              onClick={() => go(`/yp-giris?tab=register&redirect=${redirect}`)}
               className="h-11 rounded-full border border-[#D9D0EC] bg-[#F6F3FB] text-[#5B4B86] text-sm font-semibold"
               data-testid="btn-auth-register"
             >

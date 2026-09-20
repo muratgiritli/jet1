@@ -1,12 +1,23 @@
 import { useState } from "react";
 import { X } from "lucide-react";
-import { STORIES, type Story } from "@/lib/community-feed";
+import type { StoryDto } from "@shared/social";
 import { useAuthPrompt } from "@/components/community/AuthPrompt";
+import { socialSend } from "@/lib/social-api";
+import { queryClient } from "@/lib/queryClient";
+import { useSocialAuth } from "@/contexts/SocialAuthContext";
 
-export default function StoryRow() {
-  const [active, setActive] = useState<Story | null>(null);
-  const [following, setFollowing] = useState(false);
+export default function StoryRow({ stories }: { stories: StoryDto[] }) {
+  const [active, setActive] = useState<StoryDto | null>(null);
   const { requireAuth } = useAuthPrompt();
+  const { me } = useSocialAuth();
+
+  const follow = async (story: StoryDto) => {
+    if (!requireAuth()) return;
+    if (me?.username === story.username) return;
+    await socialSend("POST", `/api/social/members/${story.username}/follow`);
+    await queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
+    await queryClient.invalidateQueries({ queryKey: ["/api/social/stories"] });
+  };
 
   return (
     <>
@@ -15,14 +26,11 @@ export default function StoryRow() {
         data-testid="story-row"
       >
         <div className="flex gap-3 overflow-x-auto px-3 py-3 scrollbar-hide">
-          {STORIES.map((story) => (
+          {stories.map((story) => (
             <button
               key={story.id}
               type="button"
-              onClick={() => {
-                setFollowing(false);
-                setActive(story);
-              }}
+              onClick={() => setActive(story)}
               className="flex flex-col items-center gap-1 shrink-0 w-[68px]"
               data-testid={`story-${story.id}`}
             >
@@ -51,7 +59,7 @@ export default function StoryRow() {
           <div
             className="absolute inset-0"
             style={{
-              backgroundImage: `url(${active.avatar})`,
+              backgroundImage: `url(${active.image})`,
               backgroundSize: "cover",
               backgroundPosition: "center",
               filter: "blur(28px) brightness(0.45)",
@@ -66,7 +74,7 @@ export default function StoryRow() {
               <img src={active.avatar} alt="" className="w-8 h-8 rounded-full object-cover ring-2 ring-white/70" />
               <div className="min-w-0">
                 <p className="text-white text-sm font-semibold truncate">{active.dogName}</p>
-                <p className="text-white/70 text-[11px] truncate">{active.name} · {active.city}</p>
+                <p className="text-white/70 text-[11px] truncate">{active.name} · {active.city} · {active.time}</p>
               </div>
             </div>
             <button
@@ -81,7 +89,7 @@ export default function StoryRow() {
           </div>
           <div className="relative z-10 flex-1 flex items-center justify-center px-2">
             <img
-              src={active.avatar}
+              src={active.image}
               alt={active.dogName}
               className="max-h-full max-w-full object-contain rounded-2xl"
             />
@@ -90,16 +98,16 @@ export default function StoryRow() {
             className="relative z-10 px-4 pb-4"
             style={{ paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))" }}
           >
-            <button
-              type="button"
-              onClick={() => {
-                if (requireAuth()) setFollowing((v) => !v);
-              }}
-              className="w-full h-11 rounded-full bg-white text-[#5B4B86] text-sm font-semibold"
-              data-testid="btn-follow-story"
-            >
-              {following ? "Takip ediliyor" : "Takip et"}
-            </button>
+            {me?.username !== active.username && (
+              <button
+                type="button"
+                onClick={() => void follow(active)}
+                className="w-full h-11 rounded-full bg-white text-[#5B4B86] text-sm font-semibold"
+                data-testid="btn-follow-story"
+              >
+                {active.isFollowing ? "Takip ediliyor" : "Takip et"}
+              </button>
+            )}
           </div>
         </div>
       )}

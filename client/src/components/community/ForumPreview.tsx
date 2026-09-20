@@ -1,8 +1,8 @@
 import { ChevronRight, MessagesSquare } from "lucide-react";
 import { Link } from "wouter";
-import type { ForumTopic } from "@/lib/community-feed";
+import type { ForumTopicDto } from "@shared/social";
 
-export default function ForumPreview({ topic }: { topic: ForumTopic }) {
+export default function ForumPreview({ topic }: { topic: ForumTopicDto }) {
   return (
     <article className="px-3 py-3 bg-[#F6F3FB] scroll-mt-16" data-testid={`forum-preview-${topic.id}`}>
       <Link

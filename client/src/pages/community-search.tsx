@@ -1,14 +1,23 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Link, useSearch } from "wouter";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import CommunityLayout from "@/components/community/CommunityLayout";
-import { searchCommunity } from "@/lib/community-feed";
+import { useQuery } from "@tanstack/react-query";
+import type { FeedPostDto, ForumTopicDto, PublicMember } from "@shared/social";
+import { socialGet } from "@/lib/social-api";
 
 export default function CommunitySearchPage() {
   const searchString = useSearch();
   const initial = new URLSearchParams(searchString).get("q") || "";
   const [query, setQuery] = useState(initial);
-  const results = useMemo(() => searchCommunity(query), [query]);
+  const { data } = useQuery({
+    queryKey: ["/api/social/search", query],
+    queryFn: () =>
+      socialGet<{ posts: FeedPostDto[]; topics: ForumTopicDto[]; members: PublicMember[] }>(
+        `/api/social/search?q=${encodeURIComponent(query)}`,
+      ),
+    staleTime: 5_000,
+  });
 
   return (
     <CommunityLayout>
@@ -32,18 +41,41 @@ export default function CommunitySearchPage() {
       </div>
 
       <section className="px-3 pt-4">
+        <h2 className="text-[13px] font-bold text-[#1C1B1F] mb-2">Üyeler</h2>
+        {(data?.members || []).length === 0 ? (
+          <p className="text-[13px] text-[#6B6573]">Eşleşen üye yok.</p>
+        ) : (
+          <ul className="space-y-2">
+            {(data?.members || []).slice(0, 8).map((member) => (
+              <li key={member.id}>
+                <Link href={`/uye/${member.username}`} className="flex items-center gap-2.5 rounded-xl border border-[#F1EDF6] p-2">
+                  <img src={member.avatar} alt="" className="w-10 h-10 rounded-full object-cover" />
+                  <div>
+                    <p className="text-[13px] font-semibold">{member.name}</p>
+                    <p className="text-[11px] text-[#6B6573]">{member.dogName} · {member.city}</p>
+                  </div>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="px-3 pt-4">
         <h2 className="text-[13px] font-bold text-[#1C1B1F] mb-2">Gönderiler</h2>
-        {results.posts.length === 0 ? (
+        {(data?.posts || []).length === 0 ? (
           <p className="text-[13px] text-[#6B6573]">Eşleşen gönderi yok.</p>
         ) : (
           <ul className="space-y-2">
-            {results.posts.map((post) => (
-              <li key={post.id} className="flex gap-2.5 rounded-xl border border-[#F1EDF6] p-2">
-                <img src={post.image} alt="" className="w-14 h-14 rounded-lg object-cover" />
-                <div className="min-w-0">
-                  <p className="text-[13px] font-semibold truncate">{post.author} · {post.dogName}</p>
-                  <p className="text-[12px] text-[#5F5B66] line-clamp-2">{post.caption}</p>
-                </div>
+            {(data?.posts || []).map((post) => (
+              <li key={post.id}>
+                <Link href={`/gonderi/${post.id}`} className="flex gap-2.5 rounded-xl border border-[#F1EDF6] p-2">
+                  <img src={post.image} alt="" className="w-14 h-14 rounded-lg object-cover" />
+                  <div className="min-w-0">
+                    <p className="text-[13px] font-semibold truncate">{post.author} · {post.dogName}</p>
+                    <p className="text-[12px] text-[#5F5B66] line-clamp-2">{post.caption}</p>
+                  </div>
+                </Link>
               </li>
             ))}
           </ul>
@@ -52,11 +84,11 @@ export default function CommunitySearchPage() {
 
       <section className="px-3 pt-5">
         <h2 className="text-[13px] font-bold text-[#1C1B1F] mb-2">Forum</h2>
-        {results.topics.length === 0 ? (
+        {(data?.topics || []).length === 0 ? (
           <p className="text-[13px] text-[#6B6573]">Eşleşen konu yok.</p>
         ) : (
           <ul className="space-y-2">
-            {results.topics.map((topic) => (
+            {(data?.topics || []).map((topic) => (
               <li key={topic.id}>
                 <Link
                   href={`/forum/${topic.id}`}

@@ -1,16 +1,46 @@
+import { useState } from "react";
 import { Link, useRoute } from "wouter";
 import { ArrowLeft, MessageCircle } from "lucide-react";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import CommunityLayout from "@/components/community/CommunityLayout";
-import { getForumTopic } from "@/lib/community-feed";
+import { useQuery } from "@tanstack/react-query";
+import type { ForumTopicDto } from "@shared/social";
+import { socialGet, socialSend } from "@/lib/social-api";
 import { useAuthPrompt } from "@/components/community/AuthPrompt";
+import { queryClient } from "@/lib/queryClient";
 
 export default function CommunityForumTopicPage() {
   const [, params] = useRoute("/forum/:id");
-  const topic = params?.id ? getForumTopic(params.id) : undefined;
+  const id = params?.id || "";
   const { requireAuth } = useAuthPrompt();
+  const [reply, setReply] = useState("");
+  const [showBox, setShowBox] = useState(false);
+  const [error, setError] = useState("");
 
-  if (!topic) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["/api/social/forum", id],
+    queryFn: () => socialGet<{ topic: ForumTopicDto }>(`/api/social/forum/${id}`),
+    enabled: !!id,
+    staleTime: 5_000,
+  });
+
+  const topic = data?.topic;
+
+  const send = async () => {
+    if (!requireAuth()) return;
+    setError("");
+    try {
+      await socialSend("POST", `/api/social/forum/${id}/replies`, { body: reply });
+      setReply("");
+      setShowBox(false);
+      await queryClient.invalidateQueries({ queryKey: ["/api/social/forum", id] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/social/forum"] });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Yanıt gönderilemedi.");
+    }
+  };
+
+  if (!isLoading && !topic) {
     return (
       <CommunityLayout>
         <div className="px-4 py-12 text-center">
@@ -19,6 +49,14 @@ export default function CommunityForumTopicPage() {
             Foruma dön
           </Link>
         </div>
+      </CommunityLayout>
+    );
+  }
+
+  if (!topic) {
+    return (
+      <CommunityLayout>
+        <p className="px-4 py-10 text-center text-sm text-[#6B6573]">Konu yükleniyor…</p>
       </CommunityLayout>
     );
   }
@@ -49,23 +87,46 @@ export default function CommunityForumTopicPage() {
         <p className="mt-3 text-[14px] leading-relaxed text-[#2B2833]">{topic.body}</p>
         <button
           type="button"
-          onClick={() => requireAuth()}
+          onClick={() => {
+            if (requireAuth()) setShowBox(true);
+          }}
           className="mt-4 h-10 px-4 rounded-full bg-[#8E7CC3] text-white text-sm font-semibold inline-flex items-center gap-1.5"
           data-testid="btn-reply-topic"
         >
           <MessageCircle className="w-4 h-4" />
           Yanıtla
         </button>
+        {showBox && (
+          <div className="mt-3 space-y-2">
+            <textarea
+              value={reply}
+              onChange={(e) => setReply(e.target.value)}
+              rows={3}
+              placeholder="Yanıtını yaz"
+              className="w-full rounded-xl border border-[#E4DCF3] bg-[#FAF8FD] p-3 text-sm"
+              data-testid="input-forum-reply"
+            />
+            {error && <p className="text-[12px] text-red-600">{error}</p>}
+            <button
+              type="button"
+              onClick={() => void send()}
+              className="h-10 px-4 rounded-full bg-[#8E7CC3] text-white text-sm font-semibold"
+              data-testid="btn-send-reply"
+            >
+              Gönder
+            </button>
+          </div>
+        )}
       </article>
       <section className="border-t border-[#F1EDF6] px-3 py-3">
         <h2 className="text-[13px] font-bold text-[#1C1B1F] mb-2">{topic.comments.length} yanıt</h2>
         <ul className="space-y-3">
-          {topic.comments.map((reply) => (
-            <li key={reply.id} className="rounded-2xl bg-[#FAF8FD] p-3" data-testid={`forum-reply-${reply.id}`}>
-              <p className="text-[12px] font-semibold text-[#1C1B1F]">
-                {reply.author} <span className="font-normal text-[#6B6573]">· {reply.city} · {reply.time}</span>
-              </p>
-              <p className="mt-1 text-[13px] leading-relaxed text-[#2B2833]">{reply.body}</p>
+          {topic.comments.map((item) => (
+            <li key={item.id} className="rounded-2xl bg-[#FAF8FD] p-3" data-testid={`forum-reply-${item.id}`}>
+              <Link href={`/uye/${item.username}`} className="text-[12px] font-semibold text-[#1C1B1F]">
+                {item.author} <span className="font-normal text-[#6B6573]">· {item.city} · {item.time}</span>
+              </Link>
+              <p className="mt-1 text-[13px] leading-relaxed text-[#2B2833]">{item.body}</p>
             </li>
           ))}
         </ul>

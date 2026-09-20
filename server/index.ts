@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import { registerRoutes } from "./routes";
+import { registerSocialRoutes } from "./social-routes";
 import { serveStatic } from "./static";
 import { createServer } from "http";
 import path from "path";
@@ -143,7 +144,20 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  await registerRoutes(httpServer, app);
+  registerSocialRoutes(app);
+
+  // Shop routes wait on Postgres. YourPoodle social must boot even when PG is down.
+  try {
+    const shopReady = await Promise.race([
+      registerRoutes(httpServer, app).then(() => true),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 2500)),
+    ]);
+    if (!shopReady) {
+      log("shop database not ready; YourPoodle social API is live");
+    }
+  } catch (err) {
+    console.error("shop registerRoutes failed; continuing with social API", err);
+  }
 
   app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
     const status = err.status || err.statusCode || 500;

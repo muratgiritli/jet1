@@ -2,6 +2,9 @@ import { useState } from "react";
 import { Home, MessagesSquare, Plus, Users, User } from "lucide-react";
 import { useLocation } from "wouter";
 import { useAuthPrompt } from "@/components/community/AuthPrompt";
+import { SOCIAL_PHOTOS } from "@shared/social";
+import { socialSend } from "@/lib/social-api";
+import { queryClient } from "@/lib/queryClient";
 import {
   Dialog,
   DialogContent,
@@ -23,12 +26,32 @@ export default function BottomNavigation() {
   const { requireAuth } = useAuthPrompt();
   const [composeOpen, setComposeOpen] = useState(false);
   const [caption, setCaption] = useState("");
-  const [posted, setPosted] = useState(false);
+  const [image, setImage] = useState<string>(SOCIAL_PHOTOS[0]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
 
   const isActive = (href: string) => {
     if (href === "/") return location === "/";
     if (href === "/forum") return location === "/forum" || location.startsWith("/forum/");
+    if (href === "/kulupler") return location === "/kulupler" || location.startsWith("/kulupler/");
+    if (href === "/profil") return location === "/profil" || location.startsWith("/uye/");
     return location === href || location.startsWith(`${href}?`);
+  };
+
+  const share = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await socialSend("POST", "/api/social/posts", { caption, image });
+      setCaption("");
+      setComposeOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
+      setLocation("/");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Paylaşılamadı.");
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -49,7 +72,7 @@ export default function BottomNavigation() {
                 type="button"
                 onClick={() => {
                   if (requireAuth()) {
-                    setPosted(false);
+                    setError("");
                     setComposeOpen(true);
                   }
                 }}
@@ -88,30 +111,36 @@ export default function BottomNavigation() {
               Poodle'ının anını toplulukla paylaş.
             </DialogDescription>
           </DialogHeader>
-          {posted ? (
-            <p className="text-sm text-[#5B4B86]" data-testid="text-compose-done">
-              Gönderin kuyruğa alındı. Onaydan sonra akışta görünecek.
-            </p>
-          ) : (
-            <>
-              <textarea
-                value={caption}
-                onChange={(e) => setCaption(e.target.value)}
-                rows={4}
-                placeholder="Ne anlatmak istersin?"
-                className="w-full rounded-xl border border-[#E4DCF3] bg-[#FAF8FD] p-3 text-sm text-[#1C1B1F] placeholder:text-[#8A8494] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C4B5E8]"
-                data-testid="input-compose-caption"
-              />
+          <div className="grid grid-cols-5 gap-1.5">
+            {SOCIAL_PHOTOS.map((photo) => (
               <button
+                key={photo}
                 type="button"
-                onClick={() => setPosted(true)}
-                className="h-11 w-full rounded-full bg-[#8E7CC3] text-white text-sm font-semibold"
-                data-testid="btn-compose-share"
+                onClick={() => setImage(photo)}
+                className={`rounded-lg overflow-hidden ring-2 ${image === photo ? "ring-[#8E7CC3]" : "ring-transparent"}`}
               >
-                Paylaş
+                <img src={photo} alt="" className="aspect-square w-full object-cover" />
               </button>
-            </>
-          )}
+            ))}
+          </div>
+          <textarea
+            value={caption}
+            onChange={(e) => setCaption(e.target.value)}
+            rows={4}
+            placeholder="Ne anlatmak istersin?"
+            className="w-full rounded-xl border border-[#E4DCF3] bg-[#FAF8FD] p-3 text-sm text-[#1C1B1F] placeholder:text-[#8A8494] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#C4B5E8]"
+            data-testid="input-compose-caption"
+          />
+          {error && <p className="text-[12px] text-red-600">{error}</p>}
+          <button
+            type="button"
+            onClick={() => void share()}
+            disabled={busy}
+            className="h-11 w-full rounded-full bg-[#8E7CC3] text-white text-sm font-semibold disabled:opacity-60"
+            data-testid="btn-compose-share"
+          >
+            {busy ? "Paylaşılıyor…" : "Paylaş"}
+          </button>
         </DialogContent>
       </Dialog>
     </nav>

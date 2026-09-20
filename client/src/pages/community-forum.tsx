@@ -1,10 +1,43 @@
+import { useState } from "react";
 import { Link } from "wouter";
 import { ChevronRight, MessagesSquare } from "lucide-react";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import CommunityLayout from "@/components/community/CommunityLayout";
-import { FORUM_TOPICS } from "@/lib/community-feed";
+import { useQuery } from "@tanstack/react-query";
+import type { ForumTopicDto } from "@shared/social";
+import { socialGet, socialSend } from "@/lib/social-api";
+import { useAuthPrompt } from "@/components/community/AuthPrompt";
+import { queryClient } from "@/lib/queryClient";
 
 export default function CommunityForumPage() {
+  const { requireAuth } = useAuthPrompt();
+  const [open, setOpen] = useState(false);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [tag, setTag] = useState("Sohbet");
+  const [error, setError] = useState("");
+  const { data } = useQuery({
+    queryKey: ["/api/social/forum"],
+    queryFn: () => socialGet<{ topics: ForumTopicDto[] }>("/api/social/forum"),
+    staleTime: 10_000,
+  });
+
+  const create = async () => {
+    if (!requireAuth()) return;
+    setError("");
+    try {
+      const res = await socialSend<{ topic: ForumTopicDto }>("POST", "/api/social/forum", { title, body, tag });
+      setTitle("");
+      setBody("");
+      setOpen(false);
+      await queryClient.invalidateQueries({ queryKey: ["/api/social/forum"] });
+      await queryClient.invalidateQueries({ queryKey: ["/api/social/feed"] });
+      if (res.topic) window.location.assign(`/forum/${res.topic.id}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Konu açılamadı.");
+    }
+  };
+
   return (
     <CommunityLayout>
       <SEO
@@ -12,12 +45,62 @@ export default function CommunityForumPage() {
         description="Poodle bakımı, sağlık ve kulüp sohbetleri."
         canonical={`${SITE_DOMAIN}/forum`}
       />
-      <div className="px-3 pt-4 pb-2">
-        <h1 className="text-lg font-extrabold text-[#1C1B1F]" data-testid="text-forum-title">Forum</h1>
-        <p className="text-[13px] text-[#6B6573] mt-1">Bakım, sağlık ve yürüyüş konuları.</p>
+      <div className="px-3 pt-4 pb-2 flex items-start justify-between gap-3">
+        <div>
+          <h1 className="text-lg font-extrabold text-[#1C1B1F]" data-testid="text-forum-title">Forum</h1>
+          <p className="text-[13px] text-[#6B6573] mt-1">Bakım, sağlık ve yürüyüş konuları.</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (requireAuth()) setOpen((v) => !v);
+          }}
+          className="h-9 px-3 rounded-full bg-[#8E7CC3] text-white text-[12px] font-semibold shrink-0"
+          data-testid="btn-new-topic"
+        >
+          Yeni konu
+        </button>
       </div>
+      {open && (
+        <div className="mx-3 mb-3 rounded-2xl border border-[#E4DCF3] bg-[#FAF8FD] p-3 space-y-2">
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Konu başlığı"
+            className="w-full h-10 rounded-xl border border-[#E4DCF3] bg-white px-3 text-sm"
+            data-testid="input-topic-title"
+          />
+          <select
+            value={tag}
+            onChange={(e) => setTag(e.target.value)}
+            className="w-full h-10 rounded-xl border border-[#E4DCF3] bg-white px-3 text-sm"
+          >
+            <option>Sohbet</option>
+            <option>Bakım</option>
+            <option>Sağlık</option>
+            <option>Kulüp</option>
+          </select>
+          <textarea
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            rows={4}
+            placeholder="Sorunu veya deneyimini yaz"
+            className="w-full rounded-xl border border-[#E4DCF3] bg-white p-3 text-sm"
+            data-testid="input-topic-body"
+          />
+          {error && <p className="text-[12px] text-red-600">{error}</p>}
+          <button
+            type="button"
+            onClick={() => void create()}
+            className="h-10 w-full rounded-full bg-[#8E7CC3] text-white text-sm font-semibold"
+            data-testid="btn-submit-topic"
+          >
+            Konuyu aç
+          </button>
+        </div>
+      )}
       <ul className="px-3 space-y-2.5">
-        {FORUM_TOPICS.map((topic) => (
+        {(data?.topics || []).map((topic) => (
           <li key={topic.id}>
             <Link
               href={`/forum/${topic.id}`}

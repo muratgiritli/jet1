@@ -1,9 +1,9 @@
-import { Search } from "lucide-react";
+import { Bell, Search } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useCustomer } from "@/contexts/CustomerContext";
+import { useSocialAuth } from "@/contexts/SocialAuthContext";
 
 export default function TopBar() {
-  const { isLoggedIn } = useCustomer();
+  const { isLoggedIn, unread } = useSocialAuth();
   const [, setLocation] = useLocation();
 
   return (
@@ -32,15 +32,21 @@ export default function TopBar() {
         </button>
         {isLoggedIn ? (
           <Link
-            href="/profil"
-            className="h-8 px-3 rounded-full bg-[#F6F3FB] text-[#5B4B86] text-xs font-semibold flex items-center"
-            data-testid="btn-topbar-profile"
+            href="/bildirimler"
+            className="relative h-9 w-9 rounded-full flex items-center justify-center text-[#3F3A4A] hover:bg-[#F6F3FB]"
+            aria-label="Bildirimler"
+            data-testid="btn-notifications"
           >
-            Profil
+            <Bell className="w-[18px] h-[18px]" />
+            {unread > 0 && (
+              <span className="absolute top-1 right-1 min-w-[14px] h-[14px] px-0.5 rounded-full bg-[#8E7CC3] text-white text-[9px] font-bold flex items-center justify-center">
+                {unread > 9 ? "9+" : unread}
+              </span>
+            )}
           </Link>
         ) : (
           <Link
-            href="/giris?redirect=/"
+            href="/yp-giris?redirect=/"
             className="h-8 px-3 rounded-full bg-[#8E7CC3] text-white text-xs font-semibold flex items-center"
             data-testid="btn-guest-login"
           >

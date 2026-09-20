@@ -12,6 +12,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SocialProofToast from "@/components/SocialProofToast";
 import { AuthPromptProvider } from "@/components/community/AuthPrompt";
+import { SocialAuthProvider } from "@/contexts/SocialAuthContext";
 import { CURRENT_STORE } from "@/lib/store";
 const Landing = lazy(() => import("@/pages/landing"));
 const AdLanding = lazy(() => import("@/pages/ad-landing"));
@@ -21,6 +22,12 @@ const CommunityForumTopicPage = lazy(() => import("@/pages/community-forum-topic
 const CommunityClubsPage = lazy(() => import("@/pages/community-clubs"));
 const CommunityProfilePage = lazy(() => import("@/pages/community-profile"));
 const CommunitySearchPage = lazy(() => import("@/pages/community-search"));
+const CommunityAuthPage = lazy(() => import("@/pages/community-auth"));
+const CommunityUserPage = lazy(() => import("@/pages/community-user"));
+const CommunityClubPage = lazy(() => import("@/pages/community-club"));
+const CommunityNotificationsPage = lazy(() => import("@/pages/community-notifications"));
+const CommunityPostPage = lazy(() => import("@/pages/community-post"));
+const CommunityAdminPage = lazy(() => import("@/pages/community-admin"));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; errorMsg: string }> {
   state = { hasError: false, errorMsg: "" };
@@ -134,9 +141,15 @@ function Router() {
         <Route path="/">{() => <CommunityFeedPage />}</Route>
         <Route path="/forum/:id" component={CommunityForumTopicPage} />
         <Route path="/forum" component={CommunityForumPage} />
+        <Route path="/kulupler/:id" component={CommunityClubPage} />
         <Route path="/kulupler" component={CommunityClubsPage} />
         <Route path="/profil" component={CommunityProfilePage} />
+        <Route path="/uye/:username" component={CommunityUserPage} />
+        <Route path="/gonderi/:id" component={CommunityPostPage} />
         <Route path="/ara" component={CommunitySearchPage} />
+        <Route path="/yp-giris" component={CommunityAuthPage} />
+        <Route path="/bildirimler" component={CommunityNotificationsPage} />
+        <Route path="/yp-admin" component={CommunityAdminPage} />
         <Route path="/petshop">{() => <Landing />}</Route>
         <Route path="/en-yakin-petshop" component={AdLanding} />
         <Route path="/en-yakin-petshoplar" component={AdLanding} />
@@ -210,8 +223,14 @@ function isCommunityRoute(location: string) {
     location === "/forum" ||
     location.startsWith("/forum/") ||
     location === "/kulupler" ||
+    location.startsWith("/kulupler/") ||
     location === "/profil" ||
-    location === "/ara"
+    location.startsWith("/uye/") ||
+    location.startsWith("/gonderi/") ||
+    location === "/ara" ||
+    location === "/yp-giris" ||
+    location === "/bildirimler" ||
+    location === "/yp-admin"
   );
 }
 
@@ -259,12 +278,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <CustomerProvider>
-          <AuthPromptProvider>
-            <CartProvider>
-              <Toaster />
-              <AppShell />
-            </CartProvider>
-          </AuthPromptProvider>
+          <SocialAuthProvider>
+            <AuthPromptProvider>
+              <CartProvider>
+                <Toaster />
+                <AppShell />
+              </CartProvider>
+            </AuthPromptProvider>
+          </SocialAuthProvider>
         </CustomerProvider>
       </TooltipProvider>
     </QueryClientProvider>
