@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link, useLocation, useSearch } from "wouter";
+import { useLocation, useSearch } from "wouter";
 import SEO, { SITE_DOMAIN } from "@/components/SEO";
 import CommunityLayout from "@/components/community/CommunityLayout";
 import { useSocialAuth } from "@/contexts/SocialAuthContext";
@@ -100,10 +100,6 @@ export default function CommunityAuthPage() {
             </button>
           </form>
         )}
-        <p className="mt-4 text-[12px] text-[#6B6573]">
-          {t("shopLogin")}{" "}
-          <Link href="/giris" className="font-semibold text-[#8E7CC3]">{t("shopLoginLink")}</Link>
-        </p>
       </div>
     </CommunityLayout>
   );
