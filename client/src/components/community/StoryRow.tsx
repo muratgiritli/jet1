@@ -83,7 +83,7 @@ export default function StoryRow({ stories }: { stories: StoryDto[] }) {
       >
         <div
           ref={scroller}
-          className="flex gap-3 overflow-x-auto px-10 py-3 scrollbar-hide"
+          className="flex gap-3 overflow-x-auto px-3 md:px-10 py-3 scrollbar-hide"
         >
           {stories.map((story) => (
             <button
@@ -112,7 +112,7 @@ export default function StoryRow({ stories }: { stories: StoryDto[] }) {
           <button
             type="button"
             onClick={() => scrollStories(-1)}
-            className="absolute left-1 top-[34px] z-10 h-8 w-8 rounded-full bg-white text-[#8E7CC3] shadow-[0_1px_6px_rgba(44,36,64,0.16)] ring-1 ring-[#E6E0F0] flex items-center justify-center"
+            className="hidden md:flex absolute left-1 top-[34px] z-10 h-8 w-8 rounded-full bg-white text-[#8E7CC3] shadow-[0_1px_6px_rgba(44,36,64,0.16)] ring-1 ring-[#E6E0F0] items-center justify-center"
             aria-label={t("storyPrev")}
             data-testid="btn-story-row-prev"
           >
@@ -123,7 +123,7 @@ export default function StoryRow({ stories }: { stories: StoryDto[] }) {
           <button
             type="button"
             onClick={() => scrollStories(1)}
-            className="absolute right-1 top-[34px] z-10 h-8 w-8 rounded-full bg-white text-[#8E7CC3] shadow-[0_1px_6px_rgba(44,36,64,0.16)] ring-1 ring-[#E6E0F0] flex items-center justify-center"
+            className="hidden md:flex absolute right-1 top-[34px] z-10 h-8 w-8 rounded-full bg-white text-[#8E7CC3] shadow-[0_1px_6px_rgba(44,36,64,0.16)] ring-1 ring-[#E6E0F0] items-center justify-center"
             aria-label={t("storyNext")}
             data-testid="btn-story-row-next"
           >
@@ -168,12 +168,12 @@ export default function StoryRow({ stories }: { stories: StoryDto[] }) {
               <X className="w-5 h-5" />
             </button>
           </div>
-          <div className="relative z-10 flex-1 flex items-center justify-center px-11">
+          <div className="relative z-10 flex-1 flex items-center justify-center px-2 md:px-11">
             {hasPrevStory && (
               <button
                 type="button"
                 onClick={() => goStory(-1)}
-                className="absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 text-[#8E7CC3] shadow-[0_2px_10px_rgba(0,0,0,0.28)] flex items-center justify-center"
+                className="hidden md:flex absolute left-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 text-[#8E7CC3] shadow-[0_2px_10px_rgba(0,0,0,0.28)] items-center justify-center"
                 aria-label={t("storyPrev")}
                 data-testid="btn-story-viewer-prev"
               >
@@ -189,7 +189,7 @@ export default function StoryRow({ stories }: { stories: StoryDto[] }) {
               <button
                 type="button"
                 onClick={() => goStory(1)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 text-[#8E7CC3] shadow-[0_2px_10px_rgba(0,0,0,0.28)] flex items-center justify-center"
+                className="hidden md:flex absolute right-2 top-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-white/90 text-[#8E7CC3] shadow-[0_2px_10px_rgba(0,0,0,0.28)] items-center justify-center"
                 aria-label={t("storyNext")}
                 data-testid="btn-story-viewer-next"
               >
