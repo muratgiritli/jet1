@@ -568,3 +568,135 @@ export const ipGeoCache = pgTable("ip_geo_cache", {
   resolvedAt: timestamp("resolved_at").notNull().defaultNow(),
 });
 export type IpGeoCache = typeof ipGeoCache.$inferSelect;
+
+/** YourPoodle social network tables (Drizzle). Runtime can also use the JSON store. */
+export const socialMembers = pgTable("social_members", {
+  id: varchar("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  email: text("email").notNull().unique(),
+  passwordHash: text("password_hash").notNull(),
+  name: text("name").notNull(),
+  city: text("city").notNull().default(""),
+  dogName: text("dog_name").notNull().default(""),
+  dogSlug: text("dog_slug").notNull().default(""),
+  locale: text("locale").notNull().default("tr"),
+  avatar: text("avatar").notNull().default("/assets/poodle-face.jpg"),
+  bio: text("bio").notNull().default(""),
+  isAdmin: boolean("is_admin").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const socialPosts = pgTable("social_posts", {
+  id: varchar("id").primaryKey(),
+  authorId: varchar("author_id").notNull(),
+  image: text("image").notNull(),
+  caption: text("caption").notNull(),
+  hidden: boolean("hidden").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const socialStories = pgTable("social_stories", {
+  id: varchar("id").primaryKey(),
+  authorId: varchar("author_id").notNull(),
+  image: text("image").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const socialComments = pgTable("social_comments", {
+  id: varchar("id").primaryKey(),
+  postId: varchar("post_id").notNull(),
+  authorId: varchar("author_id").notNull(),
+  body: text("body").notNull(),
+  hidden: boolean("hidden").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const socialLikes = pgTable("social_likes", {
+  id: varchar("id").primaryKey(),
+  postId: varchar("post_id").notNull(),
+  memberId: varchar("member_id").notNull(),
+});
+
+export const socialSaves = pgTable("social_saves", {
+  id: varchar("id").primaryKey(),
+  postId: varchar("post_id").notNull(),
+  memberId: varchar("member_id").notNull(),
+});
+
+export const socialFollows = pgTable("social_follows", {
+  id: varchar("id").primaryKey(),
+  followerId: varchar("follower_id").notNull(),
+  followingId: varchar("following_id").notNull(),
+});
+
+export const socialForumCategories = pgTable("social_forum_categories", {
+  id: varchar("id").primaryKey(),
+  slug: text("slug").notNull().unique(),
+  nameTr: text("name_tr").notNull(),
+  nameEn: text("name_en").notNull(),
+  descriptionTr: text("description_tr").notNull().default(""),
+  descriptionEn: text("description_en").notNull().default(""),
+  hidden: boolean("hidden").notNull().default(false),
+  sort: integer("sort").notNull().default(0),
+});
+
+export const socialForumTopics = pgTable("social_forum_topics", {
+  id: varchar("id").primaryKey(),
+  authorId: varchar("author_id").notNull(),
+  categoryId: varchar("category_id").notNull().default(""),
+  title: text("title").notNull(),
+  body: text("body").notNull(),
+  tag: text("tag").notNull(),
+  hidden: boolean("hidden").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const socialForumReplies = pgTable("social_forum_replies", {
+  id: varchar("id").primaryKey(),
+  topicId: varchar("topic_id").notNull(),
+  authorId: varchar("author_id").notNull(),
+  body: text("body").notNull(),
+  hidden: boolean("hidden").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const socialClubs = pgTable("social_clubs", {
+  id: varchar("id").primaryKey(),
+  name: text("name").notNull(),
+  nameTr: text("name_tr").notNull().default(""),
+  nameEn: text("name_en").notNull().default(""),
+  city: text("city").notNull(),
+  kind: text("kind").notNull().default("city"),
+  cover: text("cover").notNull(),
+  description: text("description").notNull(),
+  descriptionTr: text("description_tr").notNull().default(""),
+  descriptionEn: text("description_en").notNull().default(""),
+  aboutTr: text("about_tr").notNull().default(""),
+  aboutEn: text("about_en").notNull().default(""),
+});
+
+export const socialClubMembers = pgTable("social_club_members", {
+  id: varchar("id").primaryKey(),
+  clubId: varchar("club_id").notNull(),
+  memberId: varchar("member_id").notNull(),
+});
+
+export const socialNotifications = pgTable("social_notifications", {
+  id: varchar("id").primaryKey(),
+  memberId: varchar("member_id").notNull(),
+  kind: text("kind").notNull(),
+  text: text("text").notNull(),
+  href: text("href").notNull().default("/"),
+  read: boolean("read").notNull().default(false),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
+export const socialReports = pgTable("social_reports", {
+  id: varchar("id").primaryKey(),
+  reporterId: varchar("reporter_id").notNull(),
+  targetType: text("target_type").notNull(),
+  targetId: varchar("target_id").notNull(),
+  reason: text("reason").notNull(),
+  status: text("status").notNull().default("open"),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});

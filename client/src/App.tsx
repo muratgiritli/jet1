@@ -11,9 +11,25 @@ import FloatingCartBar from "@/components/FloatingCartBar";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import SocialProofToast from "@/components/SocialProofToast";
+import { AuthPromptProvider } from "@/components/community/AuthPrompt";
+import { SocialAuthProvider, useSocialAuth } from "@/contexts/SocialAuthContext";
 import { CURRENT_STORE } from "@/lib/store";
 const Landing = lazy(() => import("@/pages/landing"));
 const AdLanding = lazy(() => import("@/pages/ad-landing"));
+const CommunityFeedPage = lazy(() => import("@/pages/community-feed"));
+const CommunityForumPage = lazy(() => import("@/pages/community-forum"));
+const CommunityForumCategoryPage = lazy(() => import("@/pages/community-forum-category"));
+const CommunityForumTopicPage = lazy(() => import("@/pages/community-forum-topic"));
+const CommunityClubsPage = lazy(() => import("@/pages/community-clubs"));
+const CommunityProfilePage = lazy(() => import("@/pages/community-profile"));
+const CommunitySearchPage = lazy(() => import("@/pages/community-search"));
+const CommunityAuthPage = lazy(() => import("@/pages/community-auth"));
+const CommunityUserPage = lazy(() => import("@/pages/community-user"));
+const CommunityClubPage = lazy(() => import("@/pages/community-club"));
+const CommunityNotificationsPage = lazy(() => import("@/pages/community-notifications"));
+const CommunityPostPage = lazy(() => import("@/pages/community-post"));
+const CommunityAdminPage = lazy(() => import("@/pages/community-admin"));
+const CommunityDogOrSeoPage = lazy(() => import("@/pages/community-dog-or-seo"));
 
 class ErrorBoundary extends Component<{ children: ReactNode }, { hasError: boolean; errorMsg: string }> {
   state = { hasError: false, errorMsg: "" };
@@ -124,7 +140,19 @@ function Router() {
   return (
     <Suspense fallback={<PageLoader />}>
       <Switch>
-        <Route path="/">{() => <Landing />}</Route>
+        <Route path="/">{() => <CommunityFeedPage />}</Route>
+        <Route path="/forum/:categorySlug/:topicId" component={CommunityForumTopicPage} />
+        <Route path="/forum/:categorySlug" component={CommunityForumCategoryPage} />
+        <Route path="/forum" component={CommunityForumPage} />
+        <Route path="/kulupler/:id" component={CommunityClubPage} />
+        <Route path="/kulupler" component={CommunityClubsPage} />
+        <Route path="/profil" component={CommunityProfilePage} />
+        <Route path="/uye/:username" component={CommunityUserPage} />
+        <Route path="/gonderi/:id" component={CommunityPostPage} />
+        <Route path="/ara" component={CommunitySearchPage} />
+        <Route path="/yp-giris" component={CommunityAuthPage} />
+        <Route path="/bildirimler" component={CommunityNotificationsPage} />
+        <Route path="/yp-admin" component={CommunityAdminPage} />
         <Route path="/petshop">{() => <Landing />}</Route>
         <Route path="/en-yakin-petshop" component={AdLanding} />
         <Route path="/en-yakin-petshoplar" component={AdLanding} />
@@ -176,7 +204,7 @@ function Router() {
         <Route path="/teslimat-iade" component={TeslimatIadePage} />
         <Route path="/gizlilik-sozlesmesi" component={GizlilikSozlesmesiPage} />
         <Route path="/mesafeli-satis" component={MesafeliSatisSozlesmesiPage} />
-        <Route path="/:slug" component={SeoPage} />
+        <Route path="/:dogSlug" component={CommunityDogOrSeoPage} />
         <Route component={NotFound} />
       </Switch>
     </Suspense>
@@ -184,7 +212,6 @@ function Router() {
 }
 
 const LANDING_LIKE_ROUTES = new Set([
-  "/",
   "/petshop",
   "/en-yakin-petshop",
   "/en-yakin-petshoplar",
@@ -193,10 +220,34 @@ const LANDING_LIKE_ROUTES = new Set([
   "/getir-petshop",
 ]);
 
+function isCommunityRoute(location: string, profileSlugs: string[] = []) {
+  const path = location.split("?")[0];
+  const segment = path.startsWith("/") ? path.slice(1) : path;
+  if (
+    path === "/" ||
+    path === "/forum" ||
+    path.startsWith("/forum/") ||
+    path === "/kulupler" ||
+    path.startsWith("/kulupler/") ||
+    path === "/profil" ||
+    path.startsWith("/uye/") ||
+    path.startsWith("/gonderi/") ||
+    path === "/ara" ||
+    path === "/yp-giris" ||
+    path === "/bildirimler" ||
+    path === "/yp-admin"
+  ) {
+    return true;
+  }
+  return !segment.includes("/") && profileSlugs.includes(segment.toLowerCase());
+}
+
 function AppShell() {
   const [location] = useLocation();
+  const { profileSlugs } = useSocialAuth();
   const isAdmin = location.startsWith("/admin");
   const isDemo = location === "/demo" || location.startsWith("/demo-kampanya") || location === "/demo1" || location === "/demo2" || location === "/demo-anasayfa";
+  const isCommunity = isCommunityRoute(location, profileSlugs);
   const isLandingLike = LANDING_LIKE_ROUTES.has(location);
 
   useEffect(() => {
@@ -216,17 +267,17 @@ function AppShell() {
 
   return (
     <>
-      {!isAdmin && !isDemo && (
+      {!isAdmin && !isDemo && !isCommunity && (
         <div className={isLandingLike ? "md:hidden" : ""}>
           <Header />
         </div>
       )}
       <ErrorBoundary><Router /></ErrorBoundary>
-      {!isAdmin && !isDemo && isLandingLike && (
+      {!isAdmin && !isDemo && !isCommunity && isLandingLike && (
         <div className={CURRENT_STORE.id === "jetgo" ? "" : "md:hidden"}><Footer /></div>
       )}
-      {!isAdmin && !isDemo && <FloatingCartBar />}
-      {!isAdmin && !isDemo && <BottomTabBar />}
+      {!isAdmin && !isDemo && !isCommunity && <FloatingCartBar />}
+      {!isAdmin && !isDemo && !isCommunity && <BottomTabBar />}
     </>
   );
 }
@@ -236,10 +287,14 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <CustomerProvider>
-          <CartProvider>
-            <Toaster />
-            <AppShell />
-          </CartProvider>
+          <SocialAuthProvider>
+            <AuthPromptProvider>
+              <CartProvider>
+                <Toaster />
+                <AppShell />
+              </CartProvider>
+            </AuthPromptProvider>
+          </SocialAuthProvider>
         </CustomerProvider>
       </TooltipProvider>
     </QueryClientProvider>

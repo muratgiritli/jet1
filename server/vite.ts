@@ -4,7 +4,7 @@ import { type Server } from "http";
 import viteConfig from "../vite.config";
 import fs from "fs";
 import path from "path";
-import { nanoid } from "nanoid";
+import crypto from "crypto";
 import { injectAllMeta } from "./seo-meta";
 
 const viteLogger = createLogger();
@@ -47,7 +47,7 @@ export async function setupVite(server: Server, app: Express) {
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
+        `src="/src/main.tsx?v=${crypto.randomUUID()}"`,
       );
       let page = await vite.transformIndexHtml(url, template);
       page = await injectAllMeta(page, url, req.hostname);
